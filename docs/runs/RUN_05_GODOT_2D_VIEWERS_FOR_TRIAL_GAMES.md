@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Godot viewers for economy and military trials — snapshot display and command submission only.
+Godot **visual client** viewers (`godot_project/client/`) for economy and military trials — snapshot display and command submission only. The authoritative GDScript simulation core (`sim/`) already exists from RUN_01–03; the viewer renders its snapshots in-process. No Python runtime is involved.
 
 ## Branch Name
 
@@ -18,8 +18,8 @@ Godot viewers for economy and military trials — snapshot display and command s
 
 ## In-Scope Work
 
-- `godot_viewer/` project (or split economy/military scenes)
-- Snapshot loader, layer renderer, command submitter
+- `godot_project/client/` viewer (scenes/renderers/adapters; may split economy/military scenes)
+- Snapshot loader, layer renderer, command submitter (adapters submit commands to the in-process `sim/` core)
 - Placeholder art
 - GOD-SMOKE-001, GOD-SMOKE-002
 
@@ -36,7 +36,8 @@ VIS-SNAP-001, VIS-CMD-001 tests per Godot test plan.
 
 ## Implementation Requirements
 
-- Python sim runs separately; Godot consumes snapshots
+- The authoritative GDScript simulation core runs in-process; the visual client consumes its snapshots and submits commands (no Python, no subprocess, no socket on device)
+- Visual client must not implement rules or hold authoritative state
 - Optional hex grid toggle (off by default)
 
 ## Smoke-Test Requirements
@@ -48,7 +49,7 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_05 section.
 - [ ] Economy snapshot renders all layers
 - [ ] Military snapshot renders units and intel
 - [ ] One command round-trip each variant
-- [ ] No gameplay logic in GDScript beyond display
+- [ ] No gameplay logic in the visual client beyond display (rules stay in `sim/`)
 - [ ] GOD-SMOKE-001–002 pass
 
 ## Final Report Format

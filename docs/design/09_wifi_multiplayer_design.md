@@ -4,19 +4,19 @@ Scope: RUN_12 — local Wi-Fi multiplayer and mobile packaging.
 
 ---
 
-## Architecture
+## Architecture (host-authoritative first — DDR-030)
 
 ```
-Player A Godot ──┐
-                 ├──► Host Python Sim (authoritative) ◄── LAN
-Player B Godot ──┘
+Player A Godot client ──┐
+                        ├──► Host GDScript simulation core (authoritative) ◄── LAN
+Player B Godot client ──┘
 ```
 
-- **One authoritative sim** per match (host device or dedicated headless host)
-- Clients submit commands over LAN; host validates and steps sim
-- Clients receive snapshots/events for display
+- **One authoritative GDScript simulation core** per match, on the host device (or a dedicated headless host running Godot)
+- Clients submit commands over LAN; the host validates and steps the core
+- Clients receive snapshots/events/results for display; clients do **not** run independent authoritative simulations
 
-Alternative: lockstep command relay with deterministic sim on all peers — choose in RUN_12 implementation; both require identical command validation.
+This host-authoritative model is the **first** multiplayer architecture. Lockstep (deterministic core on all peers) remains a possible future optimisation only after deterministic replay is proven robust; it is out of scope for the first RUN_12 implementation.
 
 ---
 
@@ -28,11 +28,11 @@ Alternative: lockstep command relay with deterministic sim on all peers — choo
 
 ---
 
-## Deterministic Sync
+## State Sync (host-authoritative)
 
 - **NET-SYNC-001:** Shared seed agreed at match start
-- **NET-SYNC-002:** All peers apply same command stream
-- **NET-SYNC-003:** Periodic snapshot hash compare for desync detection
+- **NET-SYNC-002:** The host is the single source of truth; it applies the ordered command stream and broadcasts authoritative snapshots/events to clients
+- **NET-SYNC-003:** Periodic snapshot hash compare between host and clients for desync detection (clients reconcile to the host snapshot rather than relying on lockstep determinism)
 
 ---
 
@@ -52,9 +52,9 @@ Alternative: lockstep command relay with deterministic sim on all peers — choo
 
 ## Packaging
 
-- **NET-PKG-001:** Mobile export preset exists (Android minimum) and produces a build that can reach the authoritative sim
+- **NET-PKG-001:** Mobile export preset exists (Android minimum) and produces a build containing the in-process authoritative GDScript simulation core
 - Android/iOS export via Godot
-- Python sim bundled (embedded) or host-only mode **TBD in RUN_12** — this transport choice is an open project-level decision; see **DDR-026** in `docs/design/11_design_decision_register.md`
+- The authoritative core ships **in-process** inside the Godot app — no embedded Python and no external Python process for gameplay (DDR-026)
 - No proprietary assets in repo
 
 ---

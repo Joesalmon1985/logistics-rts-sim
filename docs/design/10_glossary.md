@@ -29,11 +29,11 @@ Test naming: `test_{PREFIX}_{SUBSYSTEM}_{NNN}_{short_description}` — e.g. `tes
 
 | Term | Definition |
 |------|------------|
-| **Simulation (sim)** | The authoritative Python game engine. Owns all rules and state. |
-| **Tick** | One deterministic simulation step. All clients advance by submitting commands and stepping ticks. |
+| **Simulation core (sim)** | The authoritative **Godot/GDScript** game engine (pure scripts/resources, headless-capable, separate from UI/rendering). Owns all rules and state. |
+| **Tick** | One deterministic simulation step. All clients advance by submitting commands and stepping ticks. Decoupled from render frame rate; never uses frame delta or wall-clock. |
 | **Command** | A validated, serializable player or agent intent (e.g. `PlaceRoadCommand`). Mutates state only after validation. |
 | **Event** | A serializable record emitted when state changes (e.g. `ware_delivered`). Append-only log for replay and diagnostics. |
-| **Snapshot** | JSON export of sim state at a point in time. Godot and bots consume snapshots; snapshots do not drive authority. |
+| **Snapshot** | JSON export of sim-core state at a point in time. The Godot visual client and bots consume snapshots; snapshots do not drive authority. |
 | **Replay** | Ordered command log + initial seed/state. Re-executing must reproduce identical events and snapshot hashes. |
 | **Variant** | A game mode (`economy_trial`, `military_trial`, `hybrid`). Variant registry selects rule sets and content. |
 | **Entity ID** | Stable unique identifier for map objects, buildings, units, workers, carriers. |
@@ -84,7 +84,7 @@ Test naming: `test_{PREFIX}_{SUBSYSTEM}_{NNN}_{short_description}` — e.g. `tes
 
 | Term | Definition |
 |------|------------|
-| **Credits** | Military trial abstract currency for direct production (trial mode only). |
+| **Credits** | Military **trial-only** abstract currency for direct production. The Hybrid Game has **no credits** — hybrid costs are ware/logistics only (DDR-031). |
 | **Power supply / demand** | Generator output vs building consumption. Unpowered buildings are non-functional. |
 | **Production queue** | Ordered list of units or upgrades at a military building. |
 | **Infantry / vehicle** | Unit categories with distinct movement, armour, and weapon profiles. |
@@ -110,9 +110,11 @@ Test naming: `test_{PREFIX}_{SUBSYSTEM}_{NNN}_{short_description}` — e.g. `tes
 
 | Term | Definition |
 |------|------------|
-| **Godot adapter** | GDScript layer that loads snapshots and submits commands; no authority. |
+| **Simulation core** | Authoritative GDScript layer (`sim/`) owning all rules and state. |
+| **Godot visual client / UI** | Non-authoritative GDScript layer (`client/`) that loads snapshots and submits commands; no rules. |
+| **Godot adapter** | The part of the visual client that loads snapshots and submits commands; no authority. |
 | **Bot** | Automated client using the same command API as humans. |
-| **Agent** | Bot or neural-network controller. |
+| **Agent** | Bot or neural-network controller. Python agents (RUN_06) drive the core via Godot headless; Python is trainer, not engine. |
 | **Diagnostics** | Structured stall/block/health reports exportable in snapshots and events. |
 | **Smoke test** | End-to-end scenario verifying a milestone's critical path. |
 | **Scenario** | Deterministic test fixture: map + seed + command script + expected outcomes. |

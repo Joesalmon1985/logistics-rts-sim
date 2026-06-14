@@ -37,8 +37,8 @@ BOT-CMD-001, BOT-DET-001, REP-SMOKE-001.
 
 ## Implementation Requirements
 
-- Bots use same command validator as tests
-- Replay files compatible with kernel hash mechanism
+- Bots are **in-engine GDScript** clients in the simulation core, using the same command validator as humans/tests (not Python; Python training is RUN_06)
+- Replay files compatible with the kernel hash mechanism
 
 ## Smoke-Test Requirements
 

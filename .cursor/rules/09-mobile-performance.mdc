@@ -1,22 +1,24 @@
 ---
-description: Mobile performance constraints for Godot client
-globs: godot_*/**/*
+description: Mobile performance constraints for the Godot app
+globs: godot_project/**/*
 alwaysApply: false
 ---
 
 # Mobile Performance
 
-Target platform: **mobile devices** running Godot 2D viewer.
+Target platform: **mobile devices** running the Godot app (authoritative GDScript simulation core + 2D visual client, in-process).
 
-## Simulation Side
+## Simulation Core Side
 
-- Keep snapshot JSON compact; avoid redundant per-tick data.
+- The core runs in-process inside the Godot app — there is no per-frame Python round-trip on mobile.
+- Keep snapshots compact; avoid redundant per-tick data.
 - Batch entity updates; use stable entity IDs for diffing.
 - Target tick budget: configurable, default 10–20 ticks/sec for economy-heavy scenarios.
+- Keep the authoritative tick decoupled from render frame rate (tick on a fixed cadence, render from latest snapshot).
 
-## Godot Viewer Side
+## Visual Client Side
 
-- Render from snapshot layers; avoid per-frame Python round-trips.
+- Render from snapshot layers produced by the in-process simulation core.
 - Use sprite atlases and pooled nodes where possible.
 - Optional hex grid overlay must be toggleable (hidden by default on mobile).
 - Limit diagnostic overlay complexity on low-end devices.

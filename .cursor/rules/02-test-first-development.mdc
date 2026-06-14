@@ -12,7 +12,15 @@ Every major mechanic must have **deterministic headless tests** before or alongs
 1. Write failing tests that encode the requirement (reference rule IDs from design docs).
 2. Implement the minimum code to pass tests.
 3. **Never** weaken, delete, skip, or bypass tests to make implementation pass.
-4. **Never** use `@pytest.mark.skip` or equivalent without explicit user approval.
+4. **Never** disable or skip a test without explicit user approval.
+
+## Test harness
+
+- Gameplay-rule tests target the **GDScript simulation core** and run under **Godot headless** (no rendered UI).
+- RUN_01 establishes the harness: a lightweight custom Godot headless runner, GUT, gdUnit4, or another documented Godot-compatible framework (see DDR-032). The choice is recorded in the RUN_01 report.
+- Tests must be deterministic, CLI-runnable, report clear pass/fail for Cursor, and use rule-ID-based names.
+- Authoritative state under test must use integers / fixed-point (no float comparisons in hashed-state assertions).
+- Python `pytest` is reserved for Python training/tooling — it is **not** the gameplay-rule harness.
 
 ## Simplified ≠ Incomplete
 
@@ -30,6 +38,6 @@ Each mechanic family may start with the simplest correct rule, but it must:
 | Unit | Single rule or function (e.g. `test_ECON_ROAD_001_...`) |
 | Integration | Subsystem interaction (pathfinding + roads + carriers) |
 | Scenario | Multi-tick deterministic scenario with replay hash check |
-| Smoke | End-to-end milestone verification per run |
+| Smoke | End-to-end milestone verification per run (headless smoke runner) |
 
 See `docs/testing/` for matrices and per-run smoke requirements.

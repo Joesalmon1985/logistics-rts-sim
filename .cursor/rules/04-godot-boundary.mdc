@@ -1,29 +1,33 @@
 ---
-description: Godot client boundary — non-authoritative viewer
-globs: godot_*/**/*
+description: Godot visual client/UI boundary — non-authoritative
+globs: godot_project/client/**/*
 alwaysApply: false
 ---
 
-# Godot Boundary
+# Godot Visual Client / UI Boundary
 
-Godot is a **mobile client, viewer, debugger, replay viewer, and command-submission frontend**.
+This boundary governs the **Godot visual client/UI layer** (`godot_project/client/`). It is **non-authoritative**. The authoritative rules live in the **GDScript simulation core** (`godot_project/sim/`), governed by `03-godot-sim-authority.mdc`.
 
-## Godot MAY
+> The simulation core is authoritative even though it is also GDScript. "Godot is authoritative" is never correct — only the simulation core is.
 
-- Load JSON snapshots and render 2D layers
-- Submit player commands to the Python sim (never execute them locally)
+## The UI client MAY
+
+- Load snapshots from the simulation core and render 2D layers
+- Submit player commands to the simulation core (never execute rules locally)
 - Display diagnostics, replay timelines, and debug overlays
 - Handle touch input, camera, and UI chrome
+- Use floats for presentation-only animation (never fed back into authoritative state)
 
-## Godot MUST NOT
+## The UI client MUST NOT
 
-- Implement authoritative gameplay rules in GDScript or scene logic
-- Maintain a parallel game state that diverges from Python snapshots
+- Implement authoritative gameplay rules in scene/UI logic
+- Maintain a parallel game state that diverges from simulation-core snapshots
 - Generate gameplay randomness
 - Hard-code economy chains, combat formulas, or production logic
+- Mutate authoritative state directly (always go through commands)
 
 ## Adapter Contract
 
 Follow `docs/architecture/03_godot_adapter_contract.md` for snapshot schema, command submission format, and layer rendering.
 
-When in doubt: if it changes game state, it belongs in Python.
+When in doubt: if it changes game state, it belongs in the simulation core (`sim/`), not the UI client (`client/`).

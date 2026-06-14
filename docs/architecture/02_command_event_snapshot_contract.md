@@ -26,11 +26,13 @@
 
 Rejected commands: `accepted: false`, `reason` human-readable code (e.g. `TERRAIN_BLOCKED`).
 
-## Base Command Classes (RUN_01)
+## Base Command Structures (RUN_01, GDScript)
 
-- `Command` — abstract base with `type`, `player_id`, `tick`, `validate(state)`, `apply(state)`
-- `CommandRegistry` — maps type string → class
-- `CommandValidator` — runs validate; returns `CommandResult`
+- `Command` — base GDScript class/resource with `type`, `player_id`, `tick`, `validate(state)`, `apply(state)`
+- `CommandRegistry` — maps type string → command class/resource
+- `CommandValidator` — runs `validate`; returns `CommandResult`
+
+These live in the authoritative simulation core (`sim/core`), not in UI scene code.
 
 ## Event Envelope
 
@@ -76,7 +78,7 @@ See requirement docs:
 }
 ```
 
-Godot reads snapshot only; never writes back except via new commands.
+The Godot visual client reads snapshots only; it never writes back except via new commands.
 
 ## Replay Format
 
@@ -93,10 +95,10 @@ Replay runner: load initial → apply commands in order → compute hash → com
 ## Validation Pipeline
 
 ```
-Raw JSON → Deserialize → Schema check → validate(state) → Queue → apply on tick
+Command (UI dict / bot / peer) → Deserialize → Schema check → validate(state) → Queue → apply on tick
 ```
 
-All clients use identical pipeline code path.
+All clients use the identical pipeline code path in the GDScript simulation core. (Commands may originate as JSON over LAN or as in-process GDScript objects from the local UI; both converge on the same validator.)
 
 ## Versioning
 

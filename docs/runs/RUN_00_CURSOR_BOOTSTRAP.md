@@ -24,7 +24,7 @@ None (first run).
 
 ## Out-of-Scope Work
 
-- Python simulation code, pytest, Godot project
+- Simulation/gameplay code, tests, Godot project (documentation-only run)
 - Trial economy, military, hybrid gameplay
 - Neural training, model weights
 - Any reference-game code or assets

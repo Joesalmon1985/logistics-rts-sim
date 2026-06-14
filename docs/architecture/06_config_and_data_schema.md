@@ -2,18 +2,25 @@
 
 ## File Locations
 
+Config and scenario data live under the simulation core's data folder (`godot_project/sim/data/`):
+
 ```
-config/
-  buildings.yaml
-  recipes.yaml
-  units.yaml
-  terrain.yaml
-  variants.yaml
-scenarios/
-  economy_tutorial.json
-  military_skirmish.json
-  hybrid_smoke.json
+godot_project/sim/data/
+  config/
+    buildings.(yaml|tres|json)
+    recipes.(yaml|tres|json)
+    units.(yaml|tres|json)
+    terrain.(yaml|tres|json)
+    variants.(yaml|tres|json)
+  scenarios/
+    economy_tutorial.json
+    military_skirmish.json
+    hybrid_smoke.json
+  maps/
+    tutorial.json
 ```
+
+Config may be authored as JSON/YAML or as Godot resources (`.tres`); the loader normalises to in-core data structures. The format is chosen in RUN_01; examples below use YAML for readability.
 
 ## buildings.yaml (example structure)
 
@@ -84,8 +91,9 @@ variants:
 
 ## Validation
 
-- JSON Schema or pydantic models in RUN_01 for config load
+- GDScript config loader validates schema on load in RUN_01 (typed parse + range/required checks)
 - Invalid config fails at startup, not mid-tick
+- All numeric authoritative fields are integers or fixed-point (no floats; DDR-027)
 
 ## IP
 

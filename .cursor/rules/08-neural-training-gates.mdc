@@ -17,7 +17,8 @@ Neural network training is **not allowed** before RUN_06 prerequisites are met.
 ## Training Rules
 
 - Training uses the **same command API** as bots and humans.
-- Observations come from **snapshots**, not Godot scene state.
+- Python is the **trainer, not the engine**: it drives the authoritative GDScript simulation core by running **Godot headless** and exchanging commands/snapshots/replays (development-time transport; see DDR-033). There is no Python simulation package to import.
+- Observations come from **snapshots**, not Godot scene/render state.
 - Rollouts must be **reproducible** from seed + command log.
 - Model weights go in `models/` or `checkpoints/` — both are gitignored.
 - Do not commit trained weights unless explicitly requested.

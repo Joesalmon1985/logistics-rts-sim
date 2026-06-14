@@ -76,6 +76,8 @@ Workers are provisioned from Headquarters or Storehouses (see ECON-WORKER-*).
 
 ## Military Buildings (Trial / Hybrid)
 
+> Trial mode uses **credits** as a simplified cost. The **Hybrid Game has no credits** (DDR-031): the "Hybrid construction wares" column is the only cost path in hybrid.
+
 | ID | Name | Footprint | Trial cost | Hybrid construction wares |
 |----|------|-----------|------------|---------------------------|
 | command_hub | Command hub | 3×3 | credits | planks, stone, tools, builder_work |
@@ -128,7 +130,7 @@ Trial mode: fields feed resource processor → credits. Hybrid mode: economy dep
 | tank | Tank | vehicle | vehicle plant | credits |
 | artillery | Artillery | vehicle | vehicle plant | credits |
 
-Hybrid production recipes (example placeholders):
+Hybrid production recipes (example placeholders) — **ware-only, no credits** (DDR-031):
 
 | Unit | Wares required |
 |------|----------------|

@@ -8,11 +8,12 @@ Original mobile Godot strategy game combining settlement logistics, RTS military
 
 | Layer | Role |
 |-------|------|
-| **Python simulation** | Authoritative, headless, deterministic. Commands, events, snapshots, replay. |
-| **Godot client** | Mobile 2D viewer, command submission, diagnostics. Non-authoritative. |
-| **Bots / agents** | Same command API as humans |
+| **Godot/GDScript simulation core** (`sim/`) | Authoritative, headless-capable, deterministic, integer/fixed-point state. Commands, events, snapshots, replay. Separate from UI/rendering. |
+| **Godot visual client/UI** (`client/`) | Mobile 2D viewer, command submission, diagnostics. **Non-authoritative.** |
+| **Python tools** (`python_tools/`) | Training, analysis, tooling only. Drives the core via Godot headless. Never the shipped runtime; never embedded in the mobile app. |
+| **Bots / agents** | Same command API as humans (in-engine GDScript bots; Python training agents drive Godot headless) |
 
-All randomness uses a seeded RNG in simulation state. See `docs/architecture/00_system_architecture.md`.
+All randomness uses a seeded RNG in simulation state. Authoritative hashed state uses integers/fixed-point (no floats). See `docs/architecture/00_system_architecture.md` and the ratified decisions in `docs/design/11_design_decision_register.md`.
 
 ## Run Sequence
 

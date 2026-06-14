@@ -43,9 +43,9 @@ Combine settlement logistics with RTS military gameplay so that military buildin
 | Building construction | Wares | Credits/ instant | Wares via construction sites |
 | Unit control | N/A | Direct commands | Delegated orders only |
 | Power | N/A | Generator supply | Integrated; economy buildings may need power |
-| Credits | N/A | Trial currency | Removed or secondary (see note) |
+| Credits | N/A | Trial currency | **Removed** — hybrid is ware/logistics only |
 
-> **Open decision (DDR-031):** Whether hybrid removes credits entirely (ware-only economy) or retains them as a secondary currency is **not yet settled**. RUN_07 must not silently pick one — confirm via `docs/design/11_design_decision_register.md` (DDR-031) before implementing hybrid costs.
+> **Ratified (DDR-031):** The Hybrid Game has **no credits**. All hybrid construction, unit production, repair, and research are ware/logistics based. The Trial Military Game may still use credits as a standalone simplified mechanic, but the hybrid variant must not. If a future "command capacity"/"permission" abstraction is added, it must not replace ware delivery.
 
 ---
 
@@ -58,7 +58,9 @@ All `ECON-*` rules from `02_` apply unless overridden:
 
 **HYB-ECON-001:** Economy engine is not duplicated; hybrid extends variant registry.
 
-**HYB-ECON-002:** Military resource/credit loop in hybrid uses economy deposit extraction feeding resource processor where configured; trial collector micro not exposed to player.
+**HYB-ECON-002:** There is **no credit loop** in hybrid. Military buildings/units are paid for entirely in wares via the economy. Where the trial military used a collector→processor→credits loop, hybrid uses economy deposit extraction and ware logistics instead; trial collector micro is not exposed to the player.
+
+**HYB-ECON-003:** No credits as a build, production, repair, or research resource anywhere in the hybrid variant (DDR-031).
 
 ---
 
@@ -66,10 +68,11 @@ All `ECON-*` rules from `02_` apply unless overridden:
 
 All `MIL-*` rules from `03_` apply except:
 
-- **HYB-MIL-001:** `QueueUnitCommand` requires ware inputs, not credits alone
+- **HYB-MIL-001:** `QueueUnitCommand` requires **ware inputs only** — credits are not used in hybrid
 - **HYB-MIL-002:** `MoveUnitCommand`, `AttackUnitCommand`, `AttackMoveCommand`, `PatrolCommand`, `GuardCommand` are **not** accepted from human players
 - **HYB-MIL-003:** AI/bot delegated logic may still issue internal unit intents via sim AI layer (not player commands)
-- **HYB-MIL-004:** Trial collector/harvester loop replaced by economy deposit extraction feeding military processor where configured
+- **HYB-MIL-004:** Trial collector/harvester→credits loop is removed; replaced by economy deposit extraction and ware logistics feeding military production/construction/repair/research
+- **HYB-MIL-005:** Any `MIL-*` rule that consumes credits (construction, production, repair, research) is overridden to consume wares in hybrid
 
 ---
 

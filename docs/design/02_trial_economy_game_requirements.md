@@ -58,12 +58,14 @@ Data and schema **hooks** must remain so military, hybrid, multiplayer, and cont
 
 ---
 
-## 5. Python Simulation Authority
+## 5. Simulation Authority
 
-- All economy rules execute in Python only
-- Godot displays snapshots; it does not compute production, pathfinding, or ware movement
-- Commands are validated and applied in the sim; events record all state changes
-- See `docs/architecture/01_python_sim_authoritative_core.md`
+- All economy rules execute in the authoritative **GDScript simulation core** only
+- The Godot visual client/UI displays snapshots; it does not compute production, pathfinding, or ware movement
+- Commands are validated and applied in the core; events record all state changes
+- Authoritative state uses integers / fixed-point (no floats in hashed state; DDR-027)
+- The economy uses the **shared axial hex map** from the RUN_01 kernel (DDR-029)
+- See `docs/architecture/01_simulation_core_authoritative.md`
 
 ---
 
@@ -561,7 +563,8 @@ Checklist:
 - [ ] Statistics/diagnostics §31 and exports §36 functional
 - [ ] Snapshot layers §13 complete for Godot-readiness
 - [ ] Replay hash verification passes
-- [ ] No military, combat, multiplayer, campaigns, ports, or Godot code in RUN_02
+- [ ] No military, combat, multiplayer, campaigns, or ports in RUN_02
+- [ ] No Godot visual-client/UI/scene/rendering code in RUN_02 (the economy is GDScript **simulation-core** code, headless; UI is RUN_05)
 
 ---
 

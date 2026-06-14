@@ -24,7 +24,7 @@ Scope: RUN_05 (trial viewers), RUN_09 (hybrid observer), RUN_10 (human play poli
 
 ### Command Round-Trip (VIS-CMD-001)
 
-- UI action → command JSON → Python → new snapshot → visual update
+- UI action → command → simulation core → new snapshot → visual update
 - Rejected command shows reason in UI
 - No visual change on rejected command except error toast
 
@@ -36,19 +36,19 @@ Scope: RUN_05 (trial viewers), RUN_09 (hybrid observer), RUN_10 (human play poli
 ### Replay Timeline (VIS-REP-001)
 
 - Step forward/back through replay snapshots
-- Hash at end matches Python replay runner
+- Hash at end matches the simulation core's replay runner
 
 ## Test Methods
 
 | Method | When |
 |--------|------|
-| GUT/unit tests in Godot | Snapshot parser, layer counts |
-| Integration | Godot headless + Python subprocess |
+| Godot headless unit tests | Snapshot parser, layer counts (visual client) |
+| Integration | Visual client + in-process simulation core (Godot headless) |
 | Manual | Touch UX RUN_10 |
 
 ## Non-Goals
 
-- Gameplay rule tests in GDScript (those belong in Python pytest)
+- Authoritative gameplay-rule tests here (those belong in the simulation-core test harness, `sim/tests/`); this plan covers the **visual client** only
 
 ## Pass Criteria for RUN_05
 

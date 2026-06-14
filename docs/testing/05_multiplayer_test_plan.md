@@ -7,10 +7,10 @@ Scope: RUN_12 — Wi-Fi multiplayer and packaging.
 - Two clients submit commands same tick → host orders deterministically
 - Rejected command on client B does not advance host state incorrectly
 
-## Deterministic Sync (NET-SYNC-001)
+## State Sync (NET-SYNC-001, host-authoritative)
 
-- Host + one client: at tick 100, snapshot hashes match
-- Host + two clients: all three hashes match
+- Host + one client: at tick 100, the client's displayed snapshot matches the host's authoritative snapshot hash
+- Host + two clients: both clients match the host snapshot (host is source of truth; not lockstep)
 
 ## Desync Detection (NET-DESYNC-001)
 
@@ -31,12 +31,12 @@ Scope: RUN_12 — Wi-Fi multiplayer and packaging.
 ## Packaging (NET-PKG-001)
 
 - Godot export preset exists for Android (minimum)
-- Python sim accessible to packaged build (embedded or host mode)
+- The packaged build contains the in-process authoritative GDScript simulation core (no Python runtime; DDR-026)
 
 ## Test Environment
 
 - Local loopback or LAN in CI optional
-- Headless host sim + two Python test clients sufficient for sync tests
+- Headless host core (Godot headless) + two headless test clients sufficient for sync tests
 
 ## Pass Criteria
 

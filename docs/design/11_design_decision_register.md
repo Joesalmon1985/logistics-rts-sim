@@ -12,27 +12,27 @@ This register is the single place where uncertain decisions live. Do not bury un
 
 ---
 
-## DDR-001 — Python simulation is authoritative
+## DDR-001 — The Godot/GDScript simulation core is authoritative
 
-- **Decision:** All gameplay rules, state, and randomness live in an authoritative Python simulation.
-- **Status:** Accepted
-- **Rationale:** Single source of truth enables deterministic tests, replay, bots, and multiplayer sync without rule duplication.
-- **Consequences:** Every client (Godot, bot, agent, peer) must round-trip through the sim. No gameplay logic in GDScript.
-- **Documents affected:** `.cursor/rules/03-python-sim-authority.mdc`, `docs/architecture/00_`, `01_`, `docs/design/00_`.
-- **Open questions:** None.
+- **Decision:** All gameplay rules, state, and randomness live in an authoritative **Godot/GDScript simulation core** (pure scripts/resources/classes), separate from UI scenes and rendering. *(Revised by DDR-026 on the RUN_00 architecture decision pass — previously "Python simulation is authoritative.")*
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** Single source of truth enables deterministic tests, replay, bots, and multiplayer sync without rule duplication, while shipping inside the Godot app with no mobile Python runtime.
+- **Consequences:** Every client (Godot UI, bot, agent, peer) round-trips through the core. The core must not depend on scene tree, Node/sprite positions, animation, frame delta, physics, cameras, UI nodes, input events, or wall-clock time.
+- **Documents affected:** `.cursor/rules/03-godot-sim-authority.mdc`, `docs/architecture/00_`, `01_`, `docs/design/00_`.
+- **Open questions:** None. See **DDR-026** for the full pivot rationale.
 
-## DDR-002 — Godot is a non-authoritative client/viewer/frontend
+## DDR-002 — The Godot visual client/UI is non-authoritative
 
-- **Decision:** Godot only renders snapshots, collects input, serializes commands, and shows diagnostics/replays.
-- **Status:** Accepted
-- **Rationale:** Prevents rule drift and keeps determinism in one engine.
-- **Consequences:** Godot may never compute economy, combat, pathfinding, or RNG outcomes.
+- **Decision:** The Godot **visual/UI/client layer** only renders snapshots, collects input, serializes commands, and shows diagnostics/replays. It is distinct from the authoritative GDScript simulation core (DDR-001).
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** Keeps rules in the simulation core and prevents rule drift into scenes/rendering.
+- **Consequences:** UI scenes may never compute economy, combat, pathfinding, or RNG outcomes; "Godot is authoritative" is never an accurate phrasing — only the **simulation core** is.
 - **Documents affected:** `.cursor/rules/04-godot-boundary.mdc`, `docs/architecture/03_`, `docs/design/06_`.
-- **Open questions:** Transport between Godot and Python on mobile — see **DDR-026**.
+- **Open questions:** None.
 
 ## DDR-003 — All clients use the same command validation/execution pipeline
 
-- **Decision:** Humans, bots, neural agents, and multiplayer peers submit commands through one validator/apply path.
+- **Decision:** Humans (via UI), bots, neural agents, and multiplayer peers submit commands through one validator/apply path in the simulation core.
 - **Status:** Accepted
 - **Rationale:** Guarantees fairness, replayability, and a single attack surface for validation.
 - **Consequences:** No privileged side-channel for bots except scenario fixtures in tests.
@@ -44,9 +44,9 @@ This register is the single place where uncertain decisions live. Do not bury un
 - **Decision:** Discrete monotonic ticks; all randomness from a seeded RNG stored in state; fixed subsystem order per variant.
 - **Status:** Accepted
 - **Rationale:** Determinism underpins replay, tests, training, and multiplayer sync.
-- **Consequences:** No use of the bare `random` module or wall-clock in authoritative rules. RNG state must be serialized.
+- **Consequences:** No ad-hoc/unseeded RNG and no wall-clock or frame-delta in authoritative rules. RNG state must be serialized.
 - **Documents affected:** `docs/architecture/01_`, `05_`, `docs/design/02_` §6–§7, `03_` §6.
-- **Open questions:** Floating-point determinism policy — see **DDR-027**.
+- **Open questions:** Integer/fixed-point math policy — see **DDR-027** (Accepted).
 
 ## DDR-005 — Event log and snapshot export are core architecture
 
@@ -80,7 +80,7 @@ This register is the single place where uncertain decisions live. Do not bury un
 - **Decision:** Deterministic headless tests precede or accompany every major mechanic; tests reference rule IDs; tests are never weakened to pass.
 - **Status:** Accepted
 - **Rationale:** Locks requirements to verifiable behaviour and prevents silent scope erosion.
-- **Consequences:** No `@pytest.mark.skip` without explicit approval; rule matrix drives test creation.
+- **Consequences:** No skipping/disabling tests without explicit approval; rule matrix drives test creation. Gameplay-rule tests target the GDScript simulation core via a headless Godot test harness (see DDR-032); Python pytest is reserved for Python training/tooling.
 - **Documents affected:** `.cursor/rules/02-`, `docs/testing/00_`, `01_`.
 - **Open questions:** None.
 
@@ -215,9 +215,9 @@ This register is the single place where uncertain decisions live. Do not bury un
 - **Decision:** Wi-Fi multiplayer (RUN_12) reuses the single-player validation pipeline with periodic hash compare and desync handling.
 - **Status:** Accepted
 - **Rationale:** Reuses determinism guarantees; avoids a separate netcode rule engine.
-- **Consequences:** Host-authoritative vs lockstep choice is deferred — see **DDR-030**.
+- **Consequences:** First architecture is **host-authoritative** (DDR-030, Accepted); clients submit commands and never run independent authoritative sims. Lockstep is a future optimisation only.
 - **Documents affected:** `docs/design/09_`, `docs/testing/05_`, `docs/runs/RUN_12_`.
-- **Open questions:** Architecture choice; float determinism for lockstep.
+- **Open questions:** None (resolved by DDR-030).
 
 ## DDR-024 — Originality/IP policy: nothing copied from reference games
 
@@ -237,72 +237,126 @@ This register is the single place where uncertain decisions live. Do not bury un
 - **Documents affected:** `docs/design/08_`, `docs/runs/RUN_11_`.
 - **Open questions:** None.
 
-## DDR-026 — Mobile Godot display uses snapshot layers and avoids duplicating rules — but the Python-on-mobile transport is unresolved
+## DDR-026 — Authoritative runtime is a Godot/GDScript simulation core; Python is training/tooling only
 
-- **Decision (display):** Godot renders from snapshot layers; the layer stack and budgets are defined.
-- **Decision (transport):** How the authoritative Python sim is reached from a packaged mobile Godot app (embedded interpreter, on-device host process, or networked host) is **not yet decided**. Docs currently say "subprocess pipe, socket, or embedded library (RUN_05 choice)" and "embedded or host-only mode TBD (RUN_12)".
-- **Status:** Needs Human Confirmation
-- **Rationale:** Running CPython on Android/iOS inside a Godot app is non-trivial; the chosen transport affects RUN_05, RUN_10, and RUN_12 architecture. This is the single largest latent project risk. It does **not** block headless runs RUN_01–RUN_04/RUN_07–RUN_08.
-- **Consequences:** If deferred too long, viewer/packaging runs may require rework. A spike to validate the transport before RUN_05 is recommended.
-- **Documents affected:** `docs/architecture/03_`, `docs/design/06_`, `09_`, `docs/runs/RUN_05_`, `RUN_10_`, `RUN_12_`.
-- **Open questions:** Embedded Python vs on-device host vs LAN-only host? Acceptable mobile footprint and latency? Confirm before RUN_05.
+- **Decision:** Pivot away from "Python simulation is authoritative." The authoritative game simulation is a **pure Godot/GDScript simulation core** that ships inside the Godot app. Python is retained only for neural-network training, analysis, tournament processing, CSV/JSON tooling, and external batch workflows. Python is **not** the shipped authoritative runtime and is **not** embedded in the mobile app.
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** Embedding CPython in a packaged mobile Godot app (or requiring the app to talk to a Python process for normal gameplay) is fragile and was the single largest latent project risk. A GDScript-authoritative core removes the mobile transport problem entirely while preserving determinism, replay, and the command pipeline.
+- **Consequences:**
+  - The authoritative GDScript simulation core is separate from UI scenes and rendering code; it must not depend on the scene tree, sprite/Node positions, animation timing, frame delta, physics side effects, camera state, UI nodes, input events, or wall-clock time.
+  - The Godot **visual client/UI is non-authoritative**: it renders snapshots and submits commands only.
+  - The mobile game ships with the authoritative GDScript core; no Python mobile runtime dependency for normal gameplay.
+  - Python training tools drive the sim by running **Godot headless** and exchanging commands/snapshots/replays via JSON, files, sockets, or another documented development-time transport (see DDR-033). Python is the trainer, not the engine.
+  - Use the wording "Godot/GDScript simulation core is authoritative" — never "Godot is authoritative" (which would wrongly imply scenes/rendering own rules).
+- **Documents affected:** all Cursor rules, `docs/architecture/00_`–`06_`, `docs/design/00_`, `06_`, `09_`, `docs/testing/00_`, `03_`, `04_`, `05_`, `docs/runs/RUN_01_`, `RUN_05_`, `RUN_06_`, `RUN_10_`, `RUN_12_`, `README.md`.
+- **Open questions:** Development-time Python↔Godot-headless transport detail tracked separately as **DDR-033** (decided at RUN_06; non-blocking now).
 
-## DDR-027 — Floating-point determinism policy
+## DDR-027 — Authoritative math uses integers / fixed-point (no floats in hashed state)
 
-- **Decision:** Authoritative math should prefer integers; current wording is "avoid floats where possible."
-- **Status:** Needs Human Confirmation
-- **Rationale:** Cross-machine replay hashing and the lockstep multiplayer option are sensitive to float non-determinism. "Where possible" is too soft to guarantee identical hashes across platforms/CPUs.
-- **Consequences:** If floats are used for movement/combat/economy rates, replay hashes may diverge across devices, breaking DDR-006 and DDR-023. Recommend mandating integer or fixed-point for all hashed authoritative state.
-- **Documents affected:** `docs/architecture/05_`, `docs/design/02_` §6, `03_` §6.
-- **Open questions:** Adopt strict integer/fixed-point mandate for hashed state? Confirm before RUN_01 finalizes the hash and RNG/math conventions.
+- **Decision:** Use **integers or fixed-point scaled integers** for all authoritative, replay-hashed state. No floats in authoritative hashed state.
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** Cross-machine replay hashing (and any future lockstep option) is sensitive to float non-determinism. Integer/fixed-point math guarantees identical hashes across platforms and GDScript builds.
+- **Consequences:**
+  - Authoritative positions use hex coordinates and integer progress.
+  - Movement progress uses integer ticks or integer progress units.
+  - Production, cooldowns, health, damage, resource/ware quantities, visibility timers, construction progress, repair progress, and training/research progress are integers.
+  - Fractional rates use fixed-point scaled integers or integer "per N ticks" rates.
+  - Godot visual animation may use floats, but those are **presentation-only**: never part of authoritative state, replay hash, command validation, combat, pathfinding, production, or logistics outcomes.
+- **Documents affected:** `docs/architecture/05_`, `docs/design/02_` §6, `03_` §6, `docs/runs/RUN_01_`.
+- **Open questions:** None.
 
-## DDR-028 — Run sizing for RUN_02, RUN_03, RUN_07
+## DDR-028 — Run sizing: one long run preferred, one controlled A/B fallback allowed
 
-- **Decision:** RUN_02 (full economy), RUN_03 (full military), and RUN_07 (hybrid) are each specified as a single large run.
-- **Status:** Needs Human Confirmation
-- **Rationale:** Each bundles a very large number of mechanic families, ~10 scenarios, multiple smoke tests, diagnostics, exports, and (RUN_02) a heuristic bot completing a full logistics chain. A single autonomous run may not finish RUN_02/RUN_03 to the stated Definition of Done.
-- **Consequences:** Risk of partial completion and an over-long run. Consider pre-authorizing a split (e.g. RUN_02a map/roads/carriers/chains, RUN_02b workers/tools/forest/food/mines/upgrades/bot) or explicitly allowing a run to land a coherent subset and hand off.
-- **Documents affected:** `docs/runs/RUN_02_`, `RUN_03_`, `RUN_07_`, `docs/design/02_` §43, `03_` §31, `04_` §23.
-- **Open questions:** Permit splitting RUN_02/RUN_03, or require one long run? Define a minimum coherent deliverable if a run must stop early.
+- **Decision:** The preferred plan is that RUN_02 (full economy), RUN_03 (full military), and RUN_07 (hybrid) each complete in **one dedicated long autonomous run**. If a run genuinely cannot complete safely, the agent may split **once** into an A/B continuation, but only at a coherent acceptance boundary.
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** These runs bundle many mechanic families, ~10 scenarios, multiple smoke tests, diagnostics, exports, and (RUN_02) a chain-completing bot. One long run is preferred for coherence, but a single controlled continuation is a safer fallback than failing or faking completion.
+- **Consequences / fallback policy:** A permitted A/B split requires, before stopping:
+  1. commit and push the completed subset;
+  2. document exactly what passed;
+  3. document exactly what remains;
+  4. produce a clear gap report;
+  5. **not** claim the full milestone is complete until the full acceptance checklist passes.
+  - Do **not** weaken Definitions of Done. Do **not** call a skeleton complete. Do **not** silently split into many small runs. Pre-authorise only **one** continuation branch (e.g. `feature/run-02b-...`) where genuinely necessary.
+- **Documents affected:** `docs/runs/RUN_02_`, `RUN_03_`, `RUN_07_`, `.cursor/rules/01-`, `docs/design/02_` §43, `03_` §31, `04_` §23.
+- **Open questions:** None.
 
-## DDR-029 — Shared map/grid between economy and military trials
+## DDR-029 — Shared axial hex map across economy, military, and hybrid
 
-- **Decision (proposed):** Both trials build on the RUN_01 shared hex-map primitives so the hybrid composes without reconciling two map systems.
-- **Status:** Needs Human Confirmation
-- **Rationale:** `docs/design/03_` MIL-MOVE-001 says units pathfind on a "passability grid" that "may share hex map with economy later." If RUN_03 builds an independent grid, RUN_07 integration becomes a partial rewrite — the exact "three disconnected prototypes" risk.
-- **Consequences:** Recommend requiring the military trial to use the kernel hex map (terrain/height as passability inputs) rather than a parallel grid. A safe clarification was added to `docs/architecture/01_` and RUN_03 during this audit.
-- **Documents affected:** `docs/architecture/01_`, `docs/design/03_`, `docs/runs/RUN_03_`, `RUN_07_`.
-- **Open questions:** Confirm both trials must reuse the shared hex map from RUN_01.
+- **Decision:** The Trial Economy Game, Trial Military Game, and Hybrid Game **must** use the same shared **axial hex-map primitives** created in the RUN_01 core simulation kernel.
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** A single shared map model prevents the "three disconnected prototypes" risk and lets the hybrid compose economy and military without reconciling different map systems.
+- **Consequences:**
+  - RUN_01 creates the shared hex-map primitives.
+  - The Trial Military Game must **not** create a separate square grid, unrelated passability grid, or parallel map system.
+  - Military passability, range, vision, building placement, attack range, movement, and pathfinding all derive from the shared hex map (terrain/height as inputs).
+  - The hybrid composes economy + military without reconciling different map models.
+- **Documents affected:** `docs/architecture/01_`, `docs/design/03_`, `docs/runs/RUN_01_`, `RUN_02_`, `RUN_03_`, `RUN_07_`.
+- **Open questions:** None.
 
-## DDR-030 — Multiplayer architecture: host-authoritative vs lockstep
+## DDR-030 — Multiplayer architecture: host-authoritative first
 
-- **Decision:** Two options are documented; choice deferred to RUN_12.
-- **Status:** Needs Human Confirmation
-- **Rationale:** Host-authoritative is simpler and tolerant of float drift; lockstep is bandwidth-light but demands strict cross-machine determinism (ties to DDR-027).
-- **Consequences:** The choice interacts with the float policy and the mobile transport (DDR-026).
-- **Documents affected:** `docs/design/09_`, `docs/runs/RUN_12_`.
-- **Open questions:** Pick an architecture (or keep both viable) before RUN_12; resolve alongside DDR-027.
+- **Decision:** Use **host-authoritative** multiplayer as the first multiplayer architecture (RUN_12). Lockstep is a possible future optimisation only after deterministic replay is proven robust.
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** Host-authoritative is simpler and tolerant of any residual non-determinism; it reuses the single-player command pipeline directly. Lockstep demands strict cross-machine determinism and is premature as a first target.
+- **Consequences:**
+  - The host runs the authoritative GDScript simulation core; clients submit commands.
+  - The host validates commands and sends snapshots/events/results; clients do **not** run independent authoritative simulations.
+  - Desync detection remains useful, but the first implementation must not depend on deterministic lockstep across all clients.
+- **Documents affected:** `docs/design/09_`, `docs/testing/05_`, `docs/runs/RUN_12_`.
+- **Open questions:** None (lockstep deferred as future optimisation).
 
-## DDR-031 — Hybrid credits: removed or secondary
+## DDR-031 — No credits in the Hybrid Game (ware/logistics only)
 
-- **Decision:** `docs/design/04_` §4 states credits are "Removed or secondary" in hybrid; HYB-ECON-002/HYB-MIL-004 route the military resource loop through economy deposits/processor.
-- **Status:** Needs Human Confirmation
-- **Rationale:** "Removed or secondary" is ambiguous. RUN_07 needs to know whether credits exist at all in hybrid, or whether all military costs are ware-denominated.
-- **Consequences:** Affects hybrid production/repair/research cost modelling and bot reasoning. Left unresolved, two agents could implement it differently.
-- **Documents affected:** `docs/design/04_` §4–§6, `docs/design/05_`.
-- **Open questions:** Are credits fully removed in hybrid (ware-only economy), or retained as a secondary currency? Confirm before RUN_07.
+- **Decision:** The Hybrid Game has **no credits**. Hybrid production, construction, repair, and research are entirely ware/logistics based.
+- **Status:** Accepted — *Ratified on RUN_00 architecture decision pass.*
+- **Rationale:** Credits as a build/production resource undercut the core hybrid pillar that military depends on logistics. Removing them makes the hybrid unambiguous.
+- **Consequences:**
+  - The Trial Military Game may still use credits/resource stock as a simplified standalone RTS mechanic.
+  - The Hybrid Game must not use credits as a build, unit-production, repair, or research resource.
+  - Hybrid military buildings and units require physical wares, logistics delivery, production time, power where relevant, and tech/research where relevant.
+  - If a future "command capacity" / "permission" abstraction is added, it must **not** replace ware delivery.
+  - Hybrid costs are ware-only unless a later human decision changes this.
+- **Documents affected:** `docs/design/04_` §4–§6, `docs/design/05_`, `docs/runs/RUN_07_`.
+- **Open questions:** None.
+
+## DDR-032 — Godot-compatible headless test harness for gameplay-rule tests
+
+- **Decision:** RUN_01 must establish a headless, deterministic, CLI-runnable test harness for the GDScript simulation core. The specific framework is chosen in RUN_01 from: a lightweight custom Godot headless test runner, GUT, gdUnit4, or another documented Godot-compatible framework. Python `pytest` remains available for Python training/tooling only.
+- **Status:** Needs Human Confirmation *(new — created by the architecture pivot)*
+- **Rationale:** The pivot to a GDScript-authoritative core means gameplay-rule tests can no longer rely on Python `pytest`. The framework choice is a concrete RUN_01 decision but the exact tool is not yet fixed.
+- **Consequences:** Tests must run headlessly, be deterministic, validate the core without rendered UI, run from CLI, report clear pass/fail for Cursor, and support rule-ID-based test names (`test_<RULE_ID>_<desc>`). RUN_01 records the chosen framework.
+- **Documents affected:** `.cursor/rules/02-`, `docs/testing/00_`, `docs/runs/RUN_01_`.
+- **Open questions:** Which framework (custom runner vs GUT vs gdUnit4)? Decide at RUN_01 start; does not block doc work.
+
+## DDR-033 — Python ↔ Godot-headless training transport (development-time)
+
+- **Decision:** Python training drives the authoritative sim by running **Godot headless** and exchanging commands/snapshots/replays. The exact transport (CLI invocation with JSON files, stdin/stdout pipes, local socket, or a Godot headless "env" wrapper) is chosen at RUN_06.
+- **Status:** Needs Human Confirmation *(new — created by the architecture pivot)*
+- **Rationale:** Python is no longer the engine; it must reach the GDScript core for training. This is a development-time/tooling transport only and never ships in the mobile app.
+- **Consequences:** No Python simulation package to import; observations come from exported snapshots; rollouts must be reproducible from seed + command log; the transport must not become an authoritative side-channel.
+- **Documents affected:** `docs/architecture/04_`, `docs/testing/04_`, `docs/runs/RUN_06_`.
+- **Open questions:** Which headless transport for training? Decide at RUN_06; non-blocking for RUN_01–RUN_05.
 
 ---
 
-## Summary of items needing human confirmation before RUN_01
+## Status summary
 
-| ID | Topic | Blocks |
+All RUN_00 architecture decisions are now ratified. The following were flipped to **Accepted** on the RUN_00 architecture decision pass:
+
+| ID | Topic | Status |
 |----|-------|--------|
-| DDR-027 | Float vs integer/fixed-point for hashed state | RUN_01 (hash/math conventions) |
-| DDR-029 | Shared hex map across trials | RUN_03 design, RUN_07 composition |
-| DDR-028 | Run sizing / permitted splits | RUN_02, RUN_03, RUN_07 |
-| DDR-026 | Python-on-mobile transport | RUN_05, RUN_10, RUN_12 (not RUN_01) |
-| DDR-030 | Multiplayer architecture | RUN_12 |
-| DDR-031 | Hybrid credits semantics | RUN_07 |
+| DDR-026 | GDScript-authoritative core; Python = training/tooling only | Accepted |
+| DDR-027 | Integer / fixed-point authoritative hashed state | Accepted |
+| DDR-028 | One long run preferred; one controlled A/B fallback | Accepted |
+| DDR-029 | Shared axial hex map for economy/military/hybrid | Accepted |
+| DDR-030 | Host-authoritative multiplayer first | Accepted |
+| DDR-031 | No credits in the Hybrid Game (ware/logistics only) | Accepted |
 
-DDR-027 and DDR-029 are the two that most directly touch RUN_01 and the earliest implementation runs; the rest can be confirmed later but should not be forgotten.
+### Remaining items needing human confirmation (non-blocking for RUN_01 doc work)
+
+| ID | Topic | Decide at |
+|----|-------|-----------|
+| DDR-032 | Godot test framework (custom / GUT / gdUnit4) | Start of RUN_01 |
+| DDR-033 | Python↔Godot-headless training transport | RUN_06 |
+
+DDR-032 is the only open item that touches RUN_01; it is a tool choice to make at the start of RUN_01, not a blocker for these documentation updates.

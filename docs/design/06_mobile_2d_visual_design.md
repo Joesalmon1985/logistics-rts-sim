@@ -1,16 +1,16 @@
 # Mobile 2D Visual Design
 
-Godot renders simulation state from JSON snapshots. Godot does not compute gameplay.
+The Godot visual client renders simulation state from snapshots produced by the authoritative GDScript simulation core. The visual client does not compute gameplay.
 
 ---
 
 ## Rendering Model
 
-1. Python sim exports snapshot each tick (or on demand)
-2. Godot adapter loads snapshot, diff-updates scene nodes
-3. Player input serializes commands → sent to Python → next snapshot
+1. The GDScript simulation core exports a snapshot each tick (or on demand)
+2. The Godot client adapter loads the snapshot, diff-updates scene nodes
+3. Player input serializes commands → submitted to the simulation core (in-process on mobile) → next snapshot
 
-See `docs/architecture/03_godot_adapter_contract.md`.
+The simulation core runs in-process inside the app; there is no Python runtime and no external process for normal gameplay. See `docs/architecture/03_godot_adapter_contract.md`.
 
 ---
 
@@ -46,7 +46,7 @@ See `docs/architecture/03_godot_adapter_contract.md`.
 
 - Pinch/pan camera
 - Tap hex to select; long-press for context (RUN_10 detail)
-- Command palette submits commands to Python; no local rule execution
+- Command palette submits commands to the simulation core; no local rule execution
 
 ---
 

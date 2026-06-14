@@ -9,9 +9,11 @@
 
 ## Test Environment
 
-- pytest
-- No Godot required for sim tests
+- Headless Godot test harness for the GDScript simulation core (framework chosen in RUN_01: a lightweight custom Godot headless runner, GUT, gdUnit4, or another documented Godot-compatible framework — DDR-032)
+- Tests run headlessly (Godot headless / no rendered UI), are deterministic, CLI-runnable, and report clear pass/fail for Cursor
+- Test names use rule IDs (see below)
 - No network required for unit/integration/scenario tests
+- Python `pytest` is used only for Python training/tooling (`python_tools/`), not for gameplay-rule tests
 
 ## Determinism
 
@@ -38,7 +40,7 @@ Example: `test_ECON_ROAD_001_roads_connect_adjacent_hexes`
 
 ## CI (Future)
 
-RUN_01 establishes pytest scaffold; CI added when repo has GitHub Actions (optional RUN_01+).
+RUN_01 establishes the headless Godot test harness and a CLI to run tests/smokes; CI added when repo has GitHub Actions (optional RUN_01+), invoking the harness headlessly.
 
 ## Documentation Cross-Refs
 

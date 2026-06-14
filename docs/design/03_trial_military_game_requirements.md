@@ -59,9 +59,9 @@ Original placeholder names from `05_units_resources_buildings_catalogue.md`. Gen
 
 ---
 
-## 5. Python Simulation Authority
+## 5. Simulation Authority
 
-All military rules in Python. Commands validated centrally. Events for every state change. Snapshots for Godot.
+All military rules execute in the authoritative **GDScript simulation core**. Commands validated centrally. Events for every state change. Snapshots for the Godot visual client. Authoritative state uses integers / fixed-point (no floats in hashed state; DDR-027). The military trial uses the **shared axial hex map** from the RUN_01 kernel — no separate square grid or parallel passability/map system (DDR-029); passability, range, vision, placement, attack range, movement, and pathfinding all derive from the shared hex map.
 
 ---
 
@@ -165,7 +165,7 @@ Placeholder unit names in catalogue; no reference-game names.
 
 ## 14. Movement and Pathfinding (MIL-MOVE)
 
-- **MIL-MOVE-001:** Units pathfind on passability grid (may share hex map with economy later)
+- **MIL-MOVE-001:** Units pathfind on the **shared axial hex map** from the RUN_01 kernel (terrain/height as passability inputs); no separate or parallel grid (DDR-029)
 - **MIL-MOVE-002:** Direct move/attack commands allowed in trial mode
 - **MIL-MOVE-003:** Movement cost respects terrain modifiers and obstacles
 - **MIL-MOVE-004:** Impassable terrain blocks movement; diagnostics on path failure

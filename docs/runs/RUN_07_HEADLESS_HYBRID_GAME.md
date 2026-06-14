@@ -21,7 +21,8 @@ Trial→hybrid delegation: no direct unit micro; logistics-fed construction, pro
 
 ## In-Scope Work
 
-- `hybrid` variant composing modules
+- `hybrid` variant composing economy + military modules (shared hex map, no duplication)
+- **No credits** — all hybrid construction, production, repair, and research are ware/logistics based (DDR-031)
 - Logistics-fed construction, production, and repair
 - Delegated military commands per translation table `04_` §13
 - Reject all direct trial unit commands from human player
@@ -31,7 +32,7 @@ Trial→hybrid delegation: no direct unit micro; logistics-fed construction, pro
 
 ## Out-of-Scope Work
 
-- Godot (RUN_09)
+- Godot visual client / UI (RUN_09)
 - Hybrid bots (RUN_08)
 - Human UX (RUN_10)
 
@@ -42,8 +43,9 @@ All HYB-* rows in test matrix.
 ## Implementation Requirements
 
 - No instant sidebar production
+- No credits in hybrid: military costs are wares only; remove/override any credit-based cost from the military module (HYB-MIL-005)
 - Sim AI executes unit behaviour for delegated orders, patrol zones, guard policies
-- Economy deposits may feed military processor (no trial collector micro)
+- Economy deposits + ware logistics feed military production/construction/repair/research (no trial collector micro, no credit loop)
 
 ## Smoke-Test Requirements
 
@@ -51,7 +53,8 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_07 section.
 
 ## Acceptance Checklist
 
-- [ ] Hybrid variant loads economy + military without duplication
+- [ ] Hybrid variant loads economy + military without duplication (shared hex map)
+- [ ] No credits anywhere in hybrid; all costs are ware/logistics based (DDR-031)
 - [ ] Military buildings require ware construction
 - [ ] Unit production requires ware delivery
 - [ ] Repair depot requires ware-fed repair jobs with priority policy

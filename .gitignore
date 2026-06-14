@@ -3,8 +3,11 @@
 .venv/
 *.pyc
 .godot/
+godot_project/.godot/
 godot_client/.godot/
 godot_viewer/.godot/
+*.import
+.godot/imported/
 *.tmp
 *.log
 models/

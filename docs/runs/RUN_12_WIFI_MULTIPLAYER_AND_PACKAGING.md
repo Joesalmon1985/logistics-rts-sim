@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Local Wi-Fi multiplayer, desync handling, reconnect, and mobile packaging.
+Local Wi-Fi multiplayer (**host-authoritative first**, DDR-030), desync handling, reconnect, and mobile packaging.
 
-Command sync must match single-player validation pipeline; fog/intel per-client from authoritative snapshot.
+The host runs the authoritative GDScript simulation core; clients submit commands and receive snapshots/events/results. Clients do **not** run independent authoritative simulations. Command handling reuses the single-player validation pipeline; fog/intel per-client derives from the host's authoritative snapshot.
 
 ## Branch Name
 
@@ -18,12 +18,13 @@ Command sync must match single-player validation pipeline; fog/intel per-client 
 
 ## In-Scope Work
 
-- Host authoritative sim over LAN
-- Command relay and sync (same validation as single-player)
+- Host-authoritative GDScript simulation core over LAN
+- Command relay and host-side validation (same pipeline as single-player)
+- Host broadcasts authoritative snapshots/events; clients reconcile to host (not lockstep)
 - Desync detection and pause
 - Reconnect flow
-- Per-client fog/intel from authoritative snapshot (NET-SMOKE-003)
-- Android export preset (minimum)
+- Per-client fog/intel from the host's authoritative snapshot (NET-SMOKE-003)
+- Android export preset (minimum), shipping the in-process core (no Python runtime)
 - NET-SMOKE-*, PKG-SMOKE-001
 
 ## Out-of-Scope Work
@@ -37,9 +38,11 @@ Per `docs/testing/05_multiplayer_test_plan.md`.
 
 ## Implementation Requirements
 
+- Host-authoritative: one authoritative GDScript core on the host; clients are non-authoritative (DDR-030)
 - Same command validation as single-player
-- Periodic hash compare
+- Periodic host↔client snapshot-hash compare for desync detection (not dependent on lockstep determinism across clients)
 - Replay determinism compatible with MIL-REPLAY / HYB replay requirements
+- Lockstep is explicitly out of scope (possible future optimisation only)
 
 ## Smoke-Test Requirements
 
@@ -47,8 +50,9 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_12 section.
 
 ## Acceptance Checklist
 
-- [ ] Two clients sync to tick 100 with matching hash
-- [ ] Command sync identical to single-player pipeline
+- [ ] Host-authoritative: clients hold no independent authoritative sim (DDR-030)
+- [ ] Two clients match the host's authoritative snapshot hash at tick 100
+- [ ] Command validation identical to single-player pipeline
 - [ ] Per-client fog/intel consistent with authoritative snapshot
 - [ ] Desync test harness triggers pause
 - [ ] Reconnect restores consistent state

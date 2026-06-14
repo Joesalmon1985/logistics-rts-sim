@@ -16,9 +16,11 @@ Target: **OpenRA-like RTS mechanic coverage, not OpenRA feature parity.**
 - `docs/design/01_mechanic_coverage_contract.md`
 - `docs/design/05_units_resources_buildings_catalogue.md`
 - `docs/design/10_glossary.md`
-- `docs/architecture/01_python_sim_authoritative_core.md`
+- `docs/architecture/01_simulation_core_authoritative.md`
 - `docs/testing/01_rule_contract_test_matrix.md` (MIL-* rows)
 - `docs/runs/RUN_01_CORE_SIMULATION_KERNEL.md` (complete)
+
+Depends on the **shared axial hex map** primitives from RUN_01 (DDR-029) and the GDScript-authoritative core (DDR-026); military code is pure simulation-core GDScript, headless. Trial military may use credits (hybrid removes them — DDR-031).
 
 ## In-Scope Work
 
@@ -30,7 +32,7 @@ Direct unit commands allowed (trial only).
 
 - Economy ware logistics (RUN_02 integration is RUN_07)
 - Hybrid delegated control (RUN_07)
-- Godot (RUN_05)
+- Godot visual client / UI scenes / rendering (RUN_05)
 - Campaign content breadth (RUN_11)
 
 ## Test-First Requirements
@@ -53,7 +55,8 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_03 section.
 ## Acceptance Checklist
 
 - [ ] OpenRA-like coverage families in `03_` §7–§22 implemented (not OpenRA parity)
-- [ ] Resource harvest → processor → credits loop works
+- [ ] Movement/range/vision/placement/pathfinding derive from the shared RUN_01 hex map; no parallel grid (DDR-029)
+- [ ] Resource harvest → processor → credits loop works (trial credits only)
 - [ ] Construction queue and unit production queues with prerequisites
 - [ ] Power gating and underpowered behaviour correct
 - [ ] Fog/shroud/vision exported per player

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Training pipeline for trial games using bot API and snapshots.
+Training pipeline for trial games using the bot API and snapshots. **Python is the trainer, not the engine**: it drives the authoritative GDScript simulation core by running **Godot headless** and exchanging commands/snapshots/replays (development-time transport, DDR-033). There is no Python simulation package to import.
 
 ## Branch Name
 
@@ -17,9 +17,10 @@ Training pipeline for trial games using bot API and snapshots.
 
 ## In-Scope Work
 
-- Observation encoder from snapshot
+- Python↔Godot-headless training transport (DDR-033): launch/control the core headlessly and exchange commands/snapshots/replays
+- Observation encoder from exported snapshots
 - Action space for economy and military trials
-- Training loop skeleton
+- Training loop skeleton in `python_tools/training/`
 - Checkpoint output to gitignored dirs
 - TRN-SMOKE-001, TRN-SMOKE-002
 
@@ -35,8 +36,9 @@ Per `docs/testing/04_training_test_plan.md`.
 
 ## Implementation Requirements
 
-- Deterministic rollouts mandatory
-- Replay equivalence after rollout
+- Python never computes gameplay rules; it submits commands and reads snapshots/events from the GDScript core
+- Deterministic rollouts mandatory (seed the policy's own sampling RNG)
+- Replay equivalence after rollout (verified by re-running the core)
 
 ## Smoke-Test Requirements
 
@@ -45,6 +47,7 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_06 section.
 ## Acceptance Checklist
 
 - [ ] Prerequisites from neural training gates met
+- [ ] Python drives the GDScript core via Godot headless (no Python sim package; DDR-033)
 - [ ] 10 rollouts identical command logs
 - [ ] Replay hash matches after rollout
 - [ ] Weights not committed to git

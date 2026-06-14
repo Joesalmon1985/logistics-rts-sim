@@ -26,7 +26,7 @@ Bots use delegated commands only; must respect fog/intel.
 
 ## Out-of-Scope Work
 
-- Godot (RUN_09)
+- Godot visual client / UI (RUN_09)
 - Campaign content (RUN_11)
 
 ## Test-First Requirements

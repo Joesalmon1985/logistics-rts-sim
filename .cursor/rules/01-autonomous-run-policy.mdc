@@ -26,8 +26,15 @@ During implementation:
 
 At run end:
 
-- Run relevant verification (`pytest`, smoke tests, `git diff --check`).
+- Run relevant verification (headless GDScript tests, smoke runner, `git diff --check`).
 - Commit coherent changes on the feature branch.
 - Push the feature branch; do **not** merge to `main` unless explicitly instructed.
 - Deliver the final report per `07-final-report-format.mdc`.
 - Report honestly — do not claim milestones complete unless acceptance criteria are met.
+
+## Run sizing and the one controlled A/B fallback (DDR-028)
+
+- The preferred plan is that each large run (RUN_02, RUN_03, RUN_07) completes in **one** dedicated long run.
+- If a run genuinely cannot complete safely, you may split **once** into an A/B continuation, but only at a coherent acceptance boundary, and only after: committing and pushing the completed subset, documenting exactly what passed, documenting exactly what remains, and producing a clear gap report.
+- Do **not** weaken Definitions of Done, do **not** call a skeleton complete, and do **not** silently split into many small runs.
+- Do not claim the full milestone is complete until the full acceptance checklist passes.

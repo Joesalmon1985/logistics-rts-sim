@@ -36,7 +36,8 @@ Automated tests where possible; manual checklist for touch UX.
 
 - Delegated control only; no unit micro UI
 - Economy priority UI accessible
-- Fog/shroud display matches authoritative snapshot
+- Fog/shroud display matches the authoritative snapshot
+- The authoritative GDScript simulation core runs **in-process** inside the app; the UI is non-authoritative and submits commands to it. No Python runtime, embedded interpreter, subprocess, or socket-to-Python for gameplay (DDR-026)
 
 ## Smoke-Test Requirements
 

@@ -1,5 +1,7 @@
 # RUN_00 — Final Documentation and Cursor-Rules Audit
 
+> **Superseded in part (architecture decision pass):** This audit predates the RUN_00 architecture decision ratification. Several risks it raised have since been resolved by ratified decisions — notably the mobile Python transport risk (old DDR-026), now resolved by pivoting to a **Godot/GDScript-authoritative simulation core** with Python as training/tooling only. DDR-027 (integer/fixed-point), DDR-028 (run sizing + A/B fallback), DDR-029 (shared hex map), DDR-030 (host-authoritative multiplayer), and DDR-031 (no credits in hybrid) are now Accepted. References below to "Python simulation" as the authoritative runtime are historical. See `docs/audit/RUN_00_ARCHITECTURE_DECISION_RATIFICATION.md` and `docs/design/11_design_decision_register.md`.
+
 Audit of all project documentation, run plans, architecture, testing docs, and Cursor rules to judge whether they form a strong enough foundation for autonomous Cursor runs (RUN_01 onward) to execute with minimal human supervision.
 
 Scope: documentation/rules audit only. No simulation, Godot, bots, or training code was written. No reference-game content was copied or introduced.

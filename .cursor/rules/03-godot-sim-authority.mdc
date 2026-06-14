@@ -1,0 +1,50 @@
+---
+description: Godot/GDScript simulation core authority rules
+alwaysApply: true
+---
+
+# Godot/GDScript Simulation Authority
+
+The **Godot/GDScript simulation core** is the **single source of truth** for all gameplay rules. It is a pure GDScript layer (scripts/resources/classes) that is separate from UI scenes and rendering.
+
+> Use the phrase "Godot/GDScript simulation core is authoritative" — never "Godot is authoritative." Scenes, rendering, and UI are **not** authoritative.
+
+## Requirements
+
+- The simulation core runs **headlessly** (Godot headless / no rendered scene required).
+- All randomness comes from an explicit **seeded RNG** stored in simulation state.
+- All authoritative, replay-hashed state uses **integers or fixed-point scaled integers** — never floats (see `.cursor/rules/02-` and `docs/architecture/05_`).
+- All state changes emit **serializable events**.
+- **Snapshots** are JSON-compatible and contain enough data for the Godot UI to render the game.
+- **Commands** are validated and executed only in the simulation core.
+
+## The simulation core MUST NOT depend on
+
+- Scene tree state, Node or sprite positions
+- Animation timing, frame delta (`_process`/`_physics_process` deltas), or wall-clock time
+- Physics engine side effects, cameras, UI nodes, or input events
+
+## Command Pipeline
+
+All clients submit commands through the same path:
+
+```
+Client (UI / bot / agent / peer) → CommandValidator → Simulation Core → Events + Snapshot
+```
+
+Clients include: human (via Godot UI), bots, neural agents, future multiplayer peers.
+
+## Python role
+
+Python is **training and tooling only** (neural training, analysis, tournament processing, CSV/JSON tools, batch workflows). Python is **not** the shipped authoritative runtime and is **not** embedded in the mobile app. Python training reaches the sim by running Godot headless (see `docs/architecture/04_bot_and_training_architecture.md`).
+
+## Forbidden in UI / scene / rendering code
+
+- Authoritative gameplay rules (damage, production, pathfinding, economy)
+- Random number generation for gameplay outcomes
+- Direct state mutation bypassing the command pipeline
+- Using float animation/presentation values as authoritative state
+
+The Godot visual client may: display snapshots, collect input, serialize commands, show diagnostics.
+
+See `docs/architecture/01_simulation_core_authoritative.md`.

@@ -7,6 +7,7 @@ Scope: RUN_06 — neural training for trial games. Gates in `.cursor/rules/08-ne
 - RUN_01–04 complete with replay hash tests passing
 - Bot API stable
 - Observation encoder specified
+- Python↔Godot-headless training transport chosen (DDR-033): Python drives the authoritative GDScript core via Godot headless; there is no Python simulation package to import
 
 ## Test Categories
 
@@ -21,9 +22,9 @@ Scope: RUN_06 — neural training for trial games. Gates in `.cursor/rules/08-ne
 
 ### Observation Encoding
 
-- Encoder uses snapshot fields only
+- Encoder uses exported snapshot fields only
 - Same snapshot → same observation vector
-- No hidden state leakage tests (grep for private sim fields in encoder)
+- No hidden state leakage: the encoder consumes only exported snapshots (it has no access to internal core state, since the core runs in Godot headless behind the transport)
 
 ### Action Space
 
@@ -33,7 +34,7 @@ Scope: RUN_06 — neural training for trial games. Gates in `.cursor/rules/08-ne
 
 ### Reward Signal (RUN_06 defines)
 
-- Reward computed from events post-tick, not from Godot
+- Reward computed from exported events/snapshots post-tick, not from rendered scene state
 - Deterministic given event log
 
 ### Training Smoke (TRN-SMOKE-001)

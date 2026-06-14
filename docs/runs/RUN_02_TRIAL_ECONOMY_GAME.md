@@ -16,10 +16,12 @@ Target: **Widelands-like mechanic coverage, not Widelands feature parity.** Run 
 - `docs/design/01_mechanic_coverage_contract.md`
 - `docs/design/05_units_resources_buildings_catalogue.md`
 - `docs/design/10_glossary.md`
-- `docs/architecture/01_python_sim_authoritative_core.md`
+- `docs/architecture/01_simulation_core_authoritative.md`
 - `docs/architecture/06_config_and_data_schema.md`
 - `docs/testing/01_rule_contract_test_matrix.md` (ECON-* rows)
 - `docs/runs/RUN_01_CORE_SIMULATION_KERNEL.md` (complete)
+
+Depends on the **shared axial hex map** primitives from RUN_01 (DDR-029) and the GDScript-authoritative core (DDR-026); economy code is pure simulation-core GDScript, headless.
 
 ## In-Scope Work
 
@@ -50,7 +52,7 @@ All ECON-* mechanic families including:
 - Ports, ships, inter-player trade
 - Multiple tribes
 - Hybrid rules (RUN_07)
-- Godot scenes (RUN_05)
+- Godot visual client / UI scenes / rendering (RUN_05)
 - Neural training (RUN_06)
 - Formal bot framework polish (RUN_04 expands heuristic bot)
 
@@ -93,7 +95,8 @@ All ECON-* mechanic families including:
 - [ ] All ten scenario maps pass
 - [ ] ECON-SMOKE-001–005 pass
 - [ ] Definition of done §43 in `02_` satisfied
-- [ ] No military, multiplayer, campaigns, ports, or Godot in RUN_02
+- [ ] Uses the shared RUN_01 hex map; no parallel map system (DDR-029)
+- [ ] No military, multiplayer, campaigns, or ports; no Godot visual-client/UI/scene/rendering code (economy is headless simulation-core GDScript)
 
 ## Final Report Format
 

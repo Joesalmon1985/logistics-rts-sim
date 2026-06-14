@@ -19,9 +19,11 @@ This repository builds an **original mobile Godot strategy game** combining:
 
 ## Core Principles
 
-- Python simulation is **authoritative**; Godot is a client/viewer only.
+- The **Godot/GDScript simulation core** is **authoritative**; the Godot visual client/UI is non-authoritative.
+- The authoritative core is pure GDScript, headless-capable, deterministic, with a seeded RNG and integer/fixed-point state.
+- **Python is training/tooling only** — not the shipped runtime and never embedded in the mobile app.
 - Test-first development with deterministic headless tests.
-- All clients (human, bot, neural agent, multiplayer) use the same command pipeline.
+- All clients (human via UI, bot, neural agent, multiplayer) use the same command pipeline.
 - Use original placeholder names; avoid protected or iconic reference-game identity.
 
 ## Run Sequence
