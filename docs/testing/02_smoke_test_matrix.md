@@ -64,6 +64,12 @@ Bundled skirmish fixtures: fixed `skirmish_1v1` map + seeded `generated_skirmish
 | BOT-SMOKE-002 | Military bot wins skirmish | opponent defeated |
 | REP-SMOKE-001 | Export/import replay | Identical hash |
 
+**RUN_04 per-rule-ID economy test hardening:** Deferred from RUN_02. Add dedicated headless tests
+for each individual ECON-* rule ID listed in `docs/testing/01_rule_contract_test_matrix.md`
+(RUN_02 implemented coverage → Known coverage gap / RUN_04 per-rule-ID subsection) and in
+`docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope. Pass criteria: each rule ID has a
+dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
+
 ## RUN_05 — Godot Trial Viewers
 
 | ID | Scenario | Pass criteria |

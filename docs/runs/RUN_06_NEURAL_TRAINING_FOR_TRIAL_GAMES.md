@@ -24,6 +24,8 @@ Training pipeline for trial games using the bot API and snapshots. **Python is t
 - Checkpoint output to gitignored dirs
 - TRN-SMOKE-001, TRN-SMOKE-002
 
+**RUN_02 carryover:** Observation encoders must consume exported economy snapshot and diagnostics fields from RUN_02 (`ECON-SNAP-002`, `ECON-DIAG-001` families) — not Godot scene or render state.
+
 ## Out-of-Scope Work
 
 - Hybrid training (extend in RUN_08 if needed)

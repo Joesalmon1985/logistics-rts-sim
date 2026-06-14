@@ -61,6 +61,12 @@ All HYB-* rows in test matrix.
 - Sim AI executes unit behaviour for delegated orders, patrol zones, guard policies
 - Economy deposits + ware logistics feed military production/construction/repair/research (no trial collector micro, no credit loop)
 
+**RUN_02 carryover (composition risks):**
+
+- Prune finished delivery jobs and avoid doomed job creation — per-tick cost rises with job churn when economy and military ticks compose.
+- Paused production/buildings must re-evaluate each tick so logistics-fed military construction resumes when inputs/workers return.
+- Hex-neighbour pathing only for any shared road/logistics routes — no axial Manhattan shortcuts on the hex grid.
+
 ## Smoke-Test Requirements
 
 Per `docs/testing/02_smoke_test_matrix.md` RUN_07 section.

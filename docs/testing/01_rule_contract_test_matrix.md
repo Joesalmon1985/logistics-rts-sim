@@ -202,7 +202,14 @@ single rule ID enumerated above (e.g. ECON-WORKER-001/002/004/005, ECON-TOOL-001
 ECON-FOREST-001/003/004/005, ECON-FOOD-001/003/004/005, ECON-MINE-002..006, ECON-UPGRADE-001/003/004/005,
 ECON-ROAD-003..006, ECON-PATH-002/003, ECON-PRI-002/003, ECON-CARR-*, ECON-CONS-001, ECON-DIAG-004,
 ECON-STALL-001, ECON-EVT-*). Those mechanics are implemented and exercised by family/scenario/smoke
-tests; per-rule-ID test expansion is scheduled as RUN_04 test hardening.
+tests; **per-rule-ID test expansion is explicit RUN_04 scope** (see `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope and Acceptance Checklist).
+
+### RUN_04 per-rule-ID economy test hardening (scheduled)
+
+RUN_04 must add dedicated headless tests for each rule ID listed in the Known coverage gap above.
+Each test must assert state change + event/diagnostic + downstream effect for its rule ID.
+Cross-reference: `docs/audit/RUN_02_LESSONS_LEARNED.md` ("Known remaining caveat") and
+`docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` acceptance checkbox for hardening completion.
 
 ## Military (MIL-*)
 

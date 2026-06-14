@@ -23,6 +23,8 @@ Godot **visual client** viewers (`godot_project/client/`) for economy and milita
 - Placeholder art
 - GOD-SMOKE-001, GOD-SMOKE-002
 
+**RUN_02 carryover:** Economy snapshot display layers and per-building diagnostics exported by RUN_02 (`ECON-SNAP-002`, `ECON-DIAG-001`) must render from snapshot JSON only — do not re-derive logistics rules in `client/`.
+
 ## Out-of-Scope Work
 
 - Authoritative GDScript gameplay rules

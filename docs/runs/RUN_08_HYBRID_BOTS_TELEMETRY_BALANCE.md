@@ -24,6 +24,8 @@ Bots use delegated commands only; must respect fog/intel.
 - HYB-BOT-001, HYB-BOT-002, BAL-SMOKE-001
 - Enhanced hybrid diagnostics (stall, power, ware shortages, military idle)
 
+**RUN_02 carryover:** Hybrid bot rollouts inherit economy delivery-job churn — monitor stall diagnostics under bot load and keep timeout wrappers generous for logistics-heavy scenarios (see `docs/audit/RUN_02_LESSONS_LEARNED.md`).
+
 ## Out-of-Scope Work
 
 - Godot visual client / UI (RUN_09)
