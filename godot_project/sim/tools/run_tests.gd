@@ -58,6 +58,11 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/military/test_mil_map_001_shared_hex_map_no_parallel_grid.gd",
 	"res://sim/tests/military/test_mil_cmd_001_invalid_command_no_mutation.gd",
 	"res://sim/tests/military/test_mil_res_001_harvest_return_credits.gd",
+	"res://sim/tests/military/test_mil_build_001_placement_radius_footprint.gd",
+	"res://sim/tests/military/test_mil_cons_001_construction_completes.gd",
+	"res://sim/tests/military/test_mil_power_001_underpowered_blocks_production.gd",
+	"res://sim/tests/military/test_mil_prod_001_queue_spawns_at_rally.gd",
+	"res://sim/tests/military/test_mil_tech_001_prerequisite_unlocks_unit.gd",
 ]
 
 
