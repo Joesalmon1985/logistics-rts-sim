@@ -42,6 +42,8 @@ All randomness uses a seeded RNG in simulation state. See `docs/architecture/00_
 | Testing | `docs/testing/` |
 | Run plans | `docs/runs/` |
 | Glossary | `docs/design/10_glossary.md` |
+| Design decision register | `docs/design/11_design_decision_register.md` |
+| Audits | `docs/audit/` |
 
 Key requirement contracts:
 

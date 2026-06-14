@@ -29,7 +29,7 @@ Separate viewers for economy trial, military trial, hybrid — may share adapter
 ## Command Submission
 
 1. UI collects intent → build command JSON matching `02_command_event_snapshot_contract.md`
-2. Send to Python via subprocess pipe, socket, or embedded library (RUN_05 choice)
+2. Send to Python via subprocess pipe, socket, or embedded library — the on-device transport for packaged mobile builds is an **open project-level decision** (see **DDR-026** in `docs/design/11_design_decision_register.md`); confirm before RUN_05
 3. Display `CommandResult` reason on rejection
 4. Wait for next snapshot before updating authoritative display
 

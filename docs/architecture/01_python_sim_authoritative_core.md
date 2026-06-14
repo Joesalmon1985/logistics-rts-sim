@@ -53,6 +53,10 @@ Subsystem order is fixed per variant and documented in variant config.
 | military_trial | map, military, diagnostics |
 | hybrid | map, economy, military, hybrid, diagnostics |
 
+### Shared map (anti-divergence)
+
+All variants load the **same RUN_01 `map` primitives** (axial hex, terrain, height). The military trial builds its passability/pathfinding on top of these shared primitives (terrain/height as passability inputs) rather than a parallel grid, so the hybrid variant composes economy and military without reconciling two map systems. See **DDR-029** in `docs/design/11_design_decision_register.md`.
+
 ## Entity IDs
 
 - Assigned at creation; never reused in same match

@@ -53,8 +53,8 @@ Events are append-only. IDs monotonic per game.
 ## Event Categories
 
 See requirement docs:
-- Economy: `02_trial_economy_game_requirements.md` §28
-- Military: `03_trial_military_game_requirements.md` §19
+- Economy: `02_trial_economy_game_requirements.md` §33
+- Military: `03_trial_military_game_requirements.md` §25
 - Hybrid: `04_hybrid_game_requirements.md` §18
 
 ## Snapshot Schema (versioned)

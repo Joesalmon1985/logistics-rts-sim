@@ -44,3 +44,4 @@ Thirteen autonomous Cursor runs (`docs/runs/RUN_00` through `RUN_12`) each deliv
 | Run plans | `docs/runs/` |
 | Cursor rules | `.cursor/rules/` |
 | Glossary | `docs/design/10_glossary.md` |
+| Design decision register | `docs/design/11_design_decision_register.md` |

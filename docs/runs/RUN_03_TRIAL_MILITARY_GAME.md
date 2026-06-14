@@ -13,7 +13,10 @@ Target: **OpenRA-like RTS mechanic coverage, not OpenRA feature parity.**
 ## Prerequisite Documents
 
 - `docs/design/03_trial_military_game_requirements.md`
+- `docs/design/01_mechanic_coverage_contract.md`
 - `docs/design/05_units_resources_buildings_catalogue.md`
+- `docs/design/10_glossary.md`
+- `docs/architecture/01_python_sim_authoritative_core.md`
 - `docs/testing/01_rule_contract_test_matrix.md` (MIL-* rows)
 - `docs/runs/RUN_01_CORE_SIMULATION_KERNEL.md` (complete)
 
@@ -37,6 +40,7 @@ All MIL-* rows in test matrix. MIL-SMOKE-001 through MIL-SMOKE-009.
 ## Implementation Requirements
 
 - `military_trial` variant
+- Movement/pathfinding built on the **shared RUN_01 hex map** (terrain/height as passability inputs), not a parallel grid — see DDR-029
 - Deterministic combat resolution with cooldown and type modifiers
 - Fog/shroud/vision in snapshot for bots and Godot
 - Seeded map generation hooks for skirmish

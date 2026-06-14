@@ -43,7 +43,9 @@ Combine settlement logistics with RTS military gameplay so that military buildin
 | Building construction | Wares | Credits/ instant | Wares via construction sites |
 | Unit control | N/A | Direct commands | Delegated orders only |
 | Power | N/A | Generator supply | Integrated; economy buildings may need power |
-| Credits | N/A | Trial currency | Removed or secondary |
+| Credits | N/A | Trial currency | Removed or secondary (see note) |
+
+> **Open decision (DDR-031):** Whether hybrid removes credits entirely (ware-only economy) or retains them as a secondary currency is **not yet settled**. RUN_07 must not silently pick one — confirm via `docs/design/11_design_decision_register.md` (DDR-031) before implementing hybrid costs.
 
 ---
 

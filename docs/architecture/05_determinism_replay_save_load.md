@@ -47,7 +47,7 @@ Every scenario fixture includes `expected_hash`. CI runs replay on each PR touch
 
 ## Floating Point
 
-Avoid floats in authoritative rules where possible. Use integers for combat/economy math.
+All authoritative state that contributes to the replay/state hash must use **integers or fixed-point**, not floats, to guarantee identical hashes across machines and platforms (required for cross-device replay verification and the lockstep multiplayer option). Use integers for combat/economy math. This is the strict reading recommended by **DDR-027**; confirm/ratify it in `docs/design/11_design_decision_register.md` before RUN_01 fixes the hash and math conventions.
 
 ## Related
 

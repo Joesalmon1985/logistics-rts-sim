@@ -18,6 +18,8 @@ Deliver real simulation infrastructure so RUN_02 and RUN_03 build without rewrit
 - `docs/architecture/05_determinism_replay_save_load.md`
 - `docs/architecture/06_config_and_data_schema.md`
 - `docs/testing/00_test_first_policy.md`
+- `docs/testing/02_smoke_test_matrix.md` (KERN-SMOKE rows)
+- `docs/design/11_design_decision_register.md` (confirm DDR-027 float policy and DDR-029 shared map before fixing hash/math conventions)
 
 ## In-Scope Work
 

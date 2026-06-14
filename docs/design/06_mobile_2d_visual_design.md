@@ -77,3 +77,5 @@ RUN_05 uses coloured rectangles / simple icons. Final art is RUN_11 scope.
 | VIS-GRID-001 | Optional hex grid toggle |
 | VIS-CMD-001 | Command submission round-trip |
 | VIS-DIAG-001 | Diagnostics overlay from snapshot |
+| VIS-UX-001 | Touch camera, pan/pinch, and tap-to-select (non-authoritative highlight only) |
+| VIS-REP-001 | Replay timeline: step through snapshot sequence; end hash matches Python replay runner |

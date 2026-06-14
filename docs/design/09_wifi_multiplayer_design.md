@@ -52,8 +52,9 @@ Alternative: lockstep command relay with deterministic sim on all peers — choo
 
 ## Packaging
 
+- **NET-PKG-001:** Mobile export preset exists (Android minimum) and produces a build that can reach the authoritative sim
 - Android/iOS export via Godot
-- Python sim bundled (embedded) or host-only mode TBD in RUN_12
+- Python sim bundled (embedded) or host-only mode **TBD in RUN_12** — this transport choice is an open project-level decision; see **DDR-026** in `docs/design/11_design_decision_register.md`
 - No proprietary assets in repo
 
 ---

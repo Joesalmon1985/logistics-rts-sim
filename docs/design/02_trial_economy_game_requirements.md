@@ -455,7 +455,7 @@ Formal bot framework expansion is RUN_04; Run 02 includes minimal heuristic bot 
 | Scenario | ECON-TEST-SCEN | One test per bundled scenario map (§37) |
 | Replay hash | ECON-TEST-REP | Same seed+log → same hash |
 
-Every rule ID in §19–§31 must have at least one matrix row in `docs/testing/01_rule_contract_test_matrix.md`.
+Every mechanic family (rule-ID prefix) in §19–§31 must have at least one representative row in `docs/testing/01_rule_contract_test_matrix.md`. During RUN_02, every individual rule ID in §19–§31 must additionally gain at least one test (added to the matrix and/or the test suite); the matrix lists representative rows and is expanded during implementation without removing existing rows.
 
 ---
 

@@ -25,7 +25,9 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 | ECON-ROAD-005 | integration | test_ECON_ROAD_005_carrier_moves_along_road |
 | ECON-ROAD-006 | integration | test_ECON_ROAD_006_congestion_in_diagnostics |
 | ECON-ROAD-007 | integration | test_ECON_ROAD_007_blocked_route_in_diagnostics |
+| ECON-NODE-001 | integration | test_ECON_NODE_001_node_adjacent_to_building_port |
 | ECON-PATH-001 | unit | test_ECON_PATH_001_shortest_path_on_network |
+| ECON-PATH-002 | unit | test_ECON_PATH_002_slope_affects_path_cost |
 | ECON-PATH-003 | integration | test_ECON_PATH_003_blocked_path_returns_failure_reason |
 
 ### Workers, tools, provisioning
@@ -84,13 +86,18 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 |---------|-----------|-------------------|
 | ECON-WARE-001 | unit | test_ECON_WARE_001_ware_types_enumerated |
 | ECON-CARR-001 | integration | test_ECON_CARR_001_carrier_delivers_one_ware |
+| ECON-CARR-002 | integration | test_ECON_CARR_002_carrier_moves_per_tick_speed |
 | ECON-JOB-001 | integration | test_ECON_JOB_001_job_created_on_missing_input |
+| ECON-JOB-003 | integration | test_ECON_JOB_003_job_lifecycle_transitions |
 | ECON-STOR-001 | unit | test_ECON_STOR_001_storage_full_blocks_input |
 | ECON-CONS-001 | integration | test_ECON_CONS_001_construction_consumes_wares |
+| ECON-CONS-003 | integration | test_ECON_CONS_003_completion_spawns_building |
 | ECON-CHAIN-001 | scenario | test_ECON_CHAIN_001_forest_to_timber |
 | ECON-CHAIN-010 | scenario | test_ECON_CHAIN_010_workshop_produces_tools |
 | ECON-CHAIN-011 | scenario | test_ECON_CHAIN_011_full_building_completion |
 | ECON-PRI-001 | unit | test_ECON_PRI_001_construction_priority_order |
+| ECON-PRI-002 | unit | test_ECON_PRI_002_production_priority_order |
+| ECON-PRI-003 | integration | test_ECON_PRI_003_ware_routing_priority_when_scarce |
 
 ### Diagnostics, snapshot, determinism
 
