@@ -194,9 +194,37 @@ func _run_smoke_005(_seed_value: int) -> bool:
 	return false
 
 
-func _run_smoke_006(_seed_value: int) -> bool:
-	print("MIL-SMOKE-006 PENDING: combat not yet implemented")
-	return false
+func _run_smoke_006(seed_value: int) -> bool:
+	var scenario: Dictionary = {
+		"variant": "military_trial",
+		"seed": seed_value,
+		"map_file": "maps/military/flat_16.json",
+		"players": ["p1", "p2"],
+		"build_radius": 30,
+		"starting_credits": 1000,
+		"fog_enabled": 0,
+		"spawns": [
+			{"player_id": "p1", "q": 1, "r": 1, "units": [{"type": "rifle_squad", "q": 5, "r": 5}]},
+			{"player_id": "p2", "q": 14, "r": 14, "units": [{"type": "scout", "q": 7, "r": 5}]},
+		],
+	}
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	var attacker_id: int = _first_unit_of(state, "p1", "rifle_squad")
+	var target_id: int = _first_unit_of(state, "p2", "scout")
+	if attacker_id <= 0 or target_id <= 0:
+		print("MIL-SMOKE-006 FAIL: missing attacker or target")
+		return false
+	var validator := CommandValidator.new(CommandRegistry.create_default())
+	validator.validate_and_apply(state, MoveUnitCommand.new("p1", 0, {"unit_id": attacker_id, "q": 6, "r": 5}))
+	state = runner.run_ticks(state, 20)
+	validator.validate_and_apply(state, AttackUnitCommand.new("p1", 0, {"unit_id": attacker_id, "target_id": target_id}))
+	state = runner.run_ticks(state, 60)
+	if not MilitaryState.get_unit(state, target_id).is_empty():
+		print("MIL-SMOKE-006 FAIL: enemy unit not destroyed")
+		return false
+	print("MIL-SMOKE-006 PASS: moved to engage and destroyed enemy unit")
+	return true
 
 
 func _run_smoke_007(_seed_value: int) -> bool:
@@ -204,9 +232,39 @@ func _run_smoke_007(_seed_value: int) -> bool:
 	return false
 
 
-func _run_smoke_008(_seed_value: int) -> bool:
-	print("MIL-SMOKE-008 PENDING: win/loss not yet implemented")
-	return false
+func _run_smoke_008(seed_value: int) -> bool:
+	var scenario: Dictionary = {
+		"variant": "military_trial",
+		"seed": seed_value,
+		"map_file": "maps/military/flat_16.json",
+		"players": ["p1", "p2"],
+		"build_radius": 30,
+		"starting_credits": 1000,
+		"fog_enabled": 0,
+		"spawns": [
+			{"player_id": "p1", "q": 1, "r": 1, "units": [{"type": "rocket_squad", "q": 9, "r": 12, "count": 5}]},
+			{"player_id": "p2", "q": 12, "r": 12},
+		],
+	}
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	var hub_id: int = _building_of_player_type(state, "p2", "command_hub")
+	if hub_id <= 0:
+		print("MIL-SMOKE-008 FAIL: missing enemy hub")
+		return false
+	var validator := CommandValidator.new(CommandRegistry.create_default())
+	for unit in MilitaryState.all_units(state):
+		if str(unit.get("player_id", "")) == "p1":
+			validator.validate_and_apply(state, AttackUnitCommand.new("p1", 0, {"unit_id": int(unit.get("id", 0)), "target_id": hub_id}))
+	state = runner.run_ticks(state, 250)
+	if int(MilitaryState.get_meta_value(state, "victory_decided", 0)) != 1:
+		print("MIL-SMOKE-008 FAIL: victory not decided")
+		return false
+	if str(MilitaryState.get_meta_value(state, "winner_player_id", "")) != "p1":
+		print("MIL-SMOKE-008 FAIL: wrong winner")
+		return false
+	print("MIL-SMOKE-008 PASS: enemy hub destroyed, p1 wins")
+	return true
 
 
 func _run_smoke_009(_seed_value: int, _export_dir: String) -> bool:
@@ -262,3 +320,17 @@ func _count_units_of_type(state: GameState, unit_type: String) -> int:
 		if str(unit.get("unit_type", "")) == unit_type:
 			n += 1
 	return n
+
+
+func _first_unit_of(state: GameState, player_id: String, unit_type: String) -> int:
+	for unit in MilitaryState.all_units(state):
+		if str(unit.get("player_id", "")) == player_id and str(unit.get("unit_type", "")) == unit_type:
+			return int(unit.get("id", 0))
+	return 0
+
+
+func _building_of_player_type(state: GameState, player_id: String, building_type: String) -> int:
+	for building in MilitaryState.all_buildings(state):
+		if str(building.get("player_id", "")) == player_id and str(building.get("building_type", "")) == building_type:
+			return int(building.get("id", 0))
+	return 0

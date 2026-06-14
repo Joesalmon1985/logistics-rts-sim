@@ -63,6 +63,11 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/military/test_mil_power_001_underpowered_blocks_production.gd",
 	"res://sim/tests/military/test_mil_prod_001_queue_spawns_at_rally.gd",
 	"res://sim/tests/military/test_mil_tech_001_prerequisite_unlocks_unit.gd",
+	"res://sim/tests/military/test_mil_move_001_pathfinding_and_blocked.gd",
+	"res://sim/tests/military/test_mil_combat_001_range_cooldown_damage.gd",
+	"res://sim/tests/military/test_mil_combat_002_armour_and_projectile.gd",
+	"res://sim/tests/military/test_mil_orders_001_attack_move_patrol_guard.gd",
+	"res://sim/tests/military/test_mil_victory_001_hub_destroyed.gd",
 ]
 
 
