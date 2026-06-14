@@ -189,9 +189,35 @@ func _run_smoke_004(seed_value: int) -> bool:
 	return true
 
 
-func _run_smoke_005(_seed_value: int) -> bool:
-	print("MIL-SMOKE-005 PENDING: scouting not yet implemented")
-	return false
+func _run_smoke_005(seed_value: int) -> bool:
+	var scenario: Dictionary = {
+		"variant": "military_trial",
+		"seed": seed_value,
+		"map_file": "maps/military/flat_16.json",
+		"players": ["p1", "p2"],
+		"build_radius": 30,
+		"starting_credits": 1000,
+		"fog_enabled": 1,
+		"spawns": [
+			{"player_id": "p1", "q": 2, "r": 2, "units": [{"type": "scout", "q": 3, "r": 3}]},
+			{"player_id": "p2", "q": 13, "r": 13},
+		],
+	}
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	state = runner.run_ticks(state, 1)
+	if MilitaryState.intel_level(state, "p1", 13, 13) != MilitaryConstants.INTEL_UNEXPLORED:
+		print("MIL-SMOKE-005 FAIL: enemy base should start unexplored")
+		return false
+	var scout_id: int = _first_unit_of_type(state, "scout")
+	var validator := CommandValidator.new(CommandRegistry.create_default())
+	validator.validate_and_apply(state, MoveUnitCommand.new("p1", 0, {"unit_id": scout_id, "q": 11, "r": 11}))
+	state = runner.run_ticks(state, 120)
+	if MilitaryState.intel_level(state, "p1", 13, 13) != MilitaryConstants.INTEL_VISIBLE:
+		print("MIL-SMOKE-005 FAIL: scout did not reveal enemy base")
+		return false
+	print("MIL-SMOKE-005 PASS: scout revealed enemy base")
+	return true
 
 
 func _run_smoke_006(seed_value: int) -> bool:
@@ -227,9 +253,44 @@ func _run_smoke_006(seed_value: int) -> bool:
 	return true
 
 
-func _run_smoke_007(_seed_value: int) -> bool:
-	print("MIL-SMOKE-007 PENDING: repair not yet implemented")
-	return false
+func _run_smoke_007(seed_value: int) -> bool:
+	var scenario: Dictionary = {
+		"variant": "military_trial",
+		"seed": seed_value,
+		"map_file": "maps/military/flat_16.json",
+		"players": ["p1"],
+		"build_radius": 30,
+		"starting_credits": 1000,
+		"fog_enabled": 0,
+		"spawns": [
+			{
+				"player_id": "p1", "q": 2, "r": 2,
+				"buildings": [
+					{"type": "repair_depot", "q": 8, "r": 8},
+					{"type": "power_generator", "q": 2, "r": 8},
+				],
+				"units": [{"type": "rifle_squad", "q": 9, "r": 8}],
+			},
+		],
+	}
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	state = runner.run_ticks(state, 1)
+	var unit_id: int = _first_unit_of_type(state, "rifle_squad")
+	var unit: Dictionary = MilitaryState.get_unit(state, unit_id)
+	unit["hp"] = 30
+	var validator := CommandValidator.new(CommandRegistry.create_default())
+	var res: CommandResult = validator.validate_and_apply(state, RepairTargetCommand.new("p1", 0, {"target_id": unit_id}))
+	if not res.success:
+		print("MIL-SMOKE-007 FAIL: repair not accepted")
+		return false
+	state = runner.run_ticks(state, 30)
+	var healed: Dictionary = MilitaryState.get_unit(state, unit_id)
+	if int(healed.get("hp", 0)) != int(healed.get("max_hp", 0)):
+		print("MIL-SMOKE-007 FAIL: unit not fully repaired (hp=%d)" % int(healed.get("hp", 0)))
+		return false
+	print("MIL-SMOKE-007 PASS: repair depot healed damaged unit")
+	return true
 
 
 func _run_smoke_008(seed_value: int) -> bool:

@@ -89,6 +89,7 @@ static func spawn_building(
 		"powered": 1,
 		"enabled": 1,
 		"sight": int(bdef.get("sight", 3)),
+		"weapon": str(bdef.get("weapon", "")),
 		"weapon_cooldown": 0,
 		"rally_q": -1,
 		"rally_r": -1,
