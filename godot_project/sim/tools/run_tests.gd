@@ -57,6 +57,7 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/military/test_mil_scaffold_002_config_loads.gd",
 	"res://sim/tests/military/test_mil_map_001_shared_hex_map_no_parallel_grid.gd",
 	"res://sim/tests/military/test_mil_cmd_001_invalid_command_no_mutation.gd",
+	"res://sim/tests/military/test_mil_res_001_harvest_return_credits.gd",
 ]
 
 
