@@ -1,0 +1,104 @@
+# Command, Event, and Snapshot Contract
+
+## Command Envelope
+
+```json
+{
+  "type": "PlaceRoadCommand",
+  "player_id": "p1",
+  "tick": 42,
+  "payload": {
+    "hex_a": {"q": 1, "r": 2},
+    "hex_b": {"q": 2, "r": 2}
+  }
+}
+```
+
+## Command Result
+
+```json
+{
+  "accepted": true,
+  "reason": null,
+  "events": ["evt_001", "evt_002"]
+}
+```
+
+Rejected commands: `accepted: false`, `reason` human-readable code (e.g. `TERRAIN_BLOCKED`).
+
+## Base Command Classes (RUN_01)
+
+- `Command` — abstract base with `type`, `player_id`, `tick`, `validate(state)`, `apply(state)`
+- `CommandRegistry` — maps type string → class
+- `CommandValidator` — runs validate; returns `CommandResult`
+
+## Event Envelope
+
+```json
+{
+  "id": "evt_001",
+  "type": "ware_delivered",
+  "tick": 42,
+  "payload": {
+    "job_id": "job_7",
+    "ware": "planks",
+    "quantity": 1,
+    "destination": "bld_sawmill_1"
+  }
+}
+```
+
+Events are append-only. IDs monotonic per game.
+
+## Event Categories
+
+See requirement docs:
+- Economy: `02_trial_economy_game_requirements.md` §28
+- Military: `03_trial_military_game_requirements.md` §19
+- Hybrid: `04_hybrid_game_requirements.md` §18
+
+## Snapshot Schema (versioned)
+
+```json
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "tick": 42,
+  "seed": 12345,
+  "rng_state": "...",
+  "map": { "width": 32, "height": 32, "hexes": [] },
+  "roads": [],
+  "road_nodes": [],
+  "buildings": [],
+  "entities": [],
+  "diagnostics": {},
+  "players": []
+}
+```
+
+Godot reads snapshot only; never writes back except via new commands.
+
+## Replay Format
+
+```json
+{
+  "initial_state": { ... },
+  "commands": [ ... ],
+  "expected_hash": "sha256:..."
+}
+```
+
+Replay runner: load initial → apply commands in order → compute hash → compare.
+
+## Validation Pipeline
+
+```
+Raw JSON → Deserialize → Schema check → validate(state) → Queue → apply on tick
+```
+
+All clients use identical pipeline code path.
+
+## Versioning
+
+- `schema_version` increment on breaking snapshot/event changes
+- Config data version separate (see `06_config_and_data_schema.md`)

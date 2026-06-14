@@ -1,0 +1,29 @@
+---
+description: Godot client boundary — non-authoritative viewer
+globs: godot_*/**/*
+alwaysApply: false
+---
+
+# Godot Boundary
+
+Godot is a **mobile client, viewer, debugger, replay viewer, and command-submission frontend**.
+
+## Godot MAY
+
+- Load JSON snapshots and render 2D layers
+- Submit player commands to the Python sim (never execute them locally)
+- Display diagnostics, replay timelines, and debug overlays
+- Handle touch input, camera, and UI chrome
+
+## Godot MUST NOT
+
+- Implement authoritative gameplay rules in GDScript or scene logic
+- Maintain a parallel game state that diverges from Python snapshots
+- Generate gameplay randomness
+- Hard-code economy chains, combat formulas, or production logic
+
+## Adapter Contract
+
+Follow `docs/architecture/03_godot_adapter_contract.md` for snapshot schema, command submission format, and layer rendering.
+
+When in doubt: if it changes game state, it belongs in Python.

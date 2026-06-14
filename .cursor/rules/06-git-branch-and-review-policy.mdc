@@ -1,0 +1,40 @@
+---
+description: Git branch and review policy
+alwaysApply: true
+---
+
+# Git Branch and Review Policy
+
+## Before Editing
+
+```bash
+git status --short
+git branch --show-current
+git log --oneline -5
+```
+
+Report results. Treat "no commits yet" as normal for new repos.
+
+## Branch Rules
+
+- Work on `feature/run-XX-<slug>` branches named in the run document.
+- Do **not** work directly on `main`.
+- Do **not** force push.
+- Do **not** delete user work or unrelated branches.
+- Do **not** merge to `main` unless explicitly instructed.
+
+## Commit Rules
+
+- Only commit when the run requires it or the user asks.
+- Do not commit: caches, `.venv/`, model weights, Godot import cache, downloaded reference repos, proprietary assets, temp logs, large binaries.
+- Use coherent commit messages focused on "why".
+
+## Push Rules
+
+- Push the feature branch at run end: `git push -u origin <branch>`.
+- Do not push to `main` without explicit instruction.
+
+## Safety
+
+- Never run `git config` changes.
+- Never use `--no-verify`, `--force`, or destructive resets unless explicitly requested.

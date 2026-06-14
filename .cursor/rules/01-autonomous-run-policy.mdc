@@ -1,0 +1,33 @@
+---
+description: Autonomous long-run policy for Cursor agents
+alwaysApply: true
+---
+
+# Autonomous Run Policy
+
+Before editing any code or docs:
+
+1. Run and report: `git status --short`, `git branch --show-current`, `git log --oneline -5`.
+   - If `git log` fails with no commits, report "no commits yet" and continue.
+2. If unexplained uncommitted changes exist, **stop and report** — do not overwrite user work.
+3. Create or checkout the run's feature branch; never work directly on `main`.
+
+Before implementing:
+
+1. Read the run document in `docs/runs/`.
+2. Read prerequisite design, architecture, and testing docs listed in that run.
+3. Stay within in-scope work; do not implement out-of-scope milestones early.
+
+During implementation:
+
+- Write tests before implementation (see `02-test-first-development.mdc`).
+- Keep changes focused on the run's acceptance checklist.
+- Do not weaken, skip, or bypass failing tests.
+
+At run end:
+
+- Run relevant verification (`pytest`, smoke tests, `git diff --check`).
+- Commit coherent changes on the feature branch.
+- Push the feature branch; do **not** merge to `main` unless explicitly instructed.
+- Deliver the final report per `07-final-report-format.mdc`.
+- Report honestly — do not claim milestones complete unless acceptance criteria are met.

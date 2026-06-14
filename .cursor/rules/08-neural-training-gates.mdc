@@ -1,0 +1,31 @@
+---
+description: Neural network training gates and prerequisites
+alwaysApply: true
+---
+
+# Neural Training Gates
+
+Neural network training is **not allowed** before RUN_06 prerequisites are met.
+
+## Prerequisites (must exist and pass tests)
+
+- Deterministic simulation kernel (RUN_01)
+- Trial economy and military games with bots (RUN_02–04)
+- Replay hash verification (RUN_04)
+- Snapshot export stable enough for observation encoding
+
+## Training Rules
+
+- Training uses the **same command API** as bots and humans.
+- Observations come from **snapshots**, not Godot scene state.
+- Rollouts must be **reproducible** from seed + command log.
+- Model weights go in `models/` or `checkpoints/` — both are gitignored.
+- Do not commit trained weights unless explicitly requested.
+
+## Forbidden Before RUN_06
+
+- Starting training loops
+- Adding ML dependencies without run scope approval
+- Bypassing command validation for agent actions
+
+See `docs/architecture/04_bot_and_training_architecture.md` and `docs/testing/04_training_test_plan.md`.

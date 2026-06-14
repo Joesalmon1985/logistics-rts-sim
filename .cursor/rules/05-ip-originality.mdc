@@ -1,0 +1,32 @@
+---
+description: IP originality and reference-game avoidance
+alwaysApply: true
+---
+
+# IP Originality
+
+This project must remain **legally and creatively distinct** from reference games.
+
+## Do Not Copy
+
+From Widelands, OpenRA, Command & Conquer, Red Alert, or any other game:
+
+- Protected names, code, art, sounds, maps, factions, missions
+- Exact UI layouts, exact data tables, exact economy chains
+- Exact unit names, exact balance, exact visual identity
+
+## Do Use
+
+- Original placeholder names (may be renamed later)
+- Original rules inspired by genre conventions, not specific titles
+- Original data, balance, and assets created for this project
+
+## Naming Guidance
+
+Use generic descriptive placeholders until art direction is finalized:
+
+- "Command Hub" not "Construction Yard"
+- "Fabricator" not "War Factory"
+- "Settlement" not "Base"
+
+When adding content, check `docs/design/05_units_resources_buildings_catalogue.md` and `docs/design/10_glossary.md` for canonical terms.

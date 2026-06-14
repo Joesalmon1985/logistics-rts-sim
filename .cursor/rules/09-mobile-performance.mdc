@@ -1,0 +1,29 @@
+---
+description: Mobile performance constraints for Godot client
+globs: godot_*/**/*
+alwaysApply: false
+---
+
+# Mobile Performance
+
+Target platform: **mobile devices** running Godot 2D viewer.
+
+## Simulation Side
+
+- Keep snapshot JSON compact; avoid redundant per-tick data.
+- Batch entity updates; use stable entity IDs for diffing.
+- Target tick budget: configurable, default 10–20 ticks/sec for economy-heavy scenarios.
+
+## Godot Viewer Side
+
+- Render from snapshot layers; avoid per-frame Python round-trips.
+- Use sprite atlases and pooled nodes where possible.
+- Optional hex grid overlay must be toggleable (hidden by default on mobile).
+- Limit diagnostic overlay complexity on low-end devices.
+
+## Snapshot Size Guidance
+
+- Full map snapshot should stay under ~2 MB JSON for typical trial maps.
+- Use layer culling and viewport-based interest management in later runs.
+
+See `docs/design/06_mobile_2d_visual_design.md` for visual layer stack and UX budgets.

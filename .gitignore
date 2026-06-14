@@ -1,0 +1,14 @@
+**/__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+.godot/
+godot_client/.godot/
+godot_viewer/.godot/
+*.tmp
+*.log
+models/
+checkpoints/
+runs/
+wandb/
+.DS_Store

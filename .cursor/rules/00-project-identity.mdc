@@ -1,0 +1,29 @@
+---
+description: Project identity and scope boundaries
+alwaysApply: true
+---
+
+# Project Identity
+
+This repository builds an **original mobile Godot strategy game** combining:
+
+1. **Trial Economy Game** — settlement logistics and production chains on a hex map.
+2. **Trial Military Game** — generic RTS base-building and combat (standalone trial).
+3. **Hybrid Game** — economy feeds military construction and production; delegated military control.
+
+## What This Is Not
+
+- Not Widelands, OpenRA, Command & Conquer, or Red Alert.
+- Not a clone, port, or re-skin of any reference game.
+- Not a throwaway prototype — the Trial Economy Game is the permanent abstract economy engine.
+
+## Core Principles
+
+- Python simulation is **authoritative**; Godot is a client/viewer only.
+- Test-first development with deterministic headless tests.
+- All clients (human, bot, neural agent, multiplayer) use the same command pipeline.
+- Use original placeholder names; avoid protected or iconic reference-game identity.
+
+## Run Sequence
+
+Work follows the 13-run plan in `docs/runs/`. Read the relevant run document before coding.

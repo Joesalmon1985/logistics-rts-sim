@@ -1,0 +1,35 @@
+---
+description: Test-first development mandate
+alwaysApply: true
+---
+
+# Test-First Development
+
+Every major mechanic must have **deterministic headless tests** before or alongside implementation.
+
+## Rules
+
+1. Write failing tests that encode the requirement (reference rule IDs from design docs).
+2. Implement the minimum code to pass tests.
+3. **Never** weaken, delete, skip, or bypass tests to make implementation pass.
+4. **Never** use `@pytest.mark.skip` or equivalent without explicit user approval.
+
+## Simplified ≠ Incomplete
+
+Each mechanic family may start with the simplest correct rule, but it must:
+
+- Exist in simulation state
+- Be covered by at least one test
+- Appear in diagnostics where applicable
+- Be referenced in the rule contract test matrix
+
+## Test Types
+
+| Type | Purpose |
+|------|---------|
+| Unit | Single rule or function (e.g. `test_ECON_ROAD_001_...`) |
+| Integration | Subsystem interaction (pathfinding + roads + carriers) |
+| Scenario | Multi-tick deterministic scenario with replay hash check |
+| Smoke | End-to-end milestone verification per run |
+
+See `docs/testing/` for matrices and per-run smoke requirements.

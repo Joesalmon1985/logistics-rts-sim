@@ -1,0 +1,36 @@
+---
+description: Required final report format for every run
+alwaysApply: true
+---
+
+# Final Report Format
+
+Every autonomous run must end with **exactly** this format:
+
+```
+Branch:
+Summary:
+Files changed:
+Tests run:
+Results:
+Known issues:
+Unimplemented requirements:
+Uncommitted changes:
+Suggested next run:
+```
+
+## Field Guidance
+
+| Field | Content |
+|-------|---------|
+| Branch | Feature branch name worked on |
+| Summary | 2–4 sentences on what was accomplished |
+| Files changed | Key files added/modified (not every file if numerous) |
+| Tests run | Commands executed, or "none — documentation only" |
+| Results | Pass/fail counts or N/A |
+| Known issues | Honest blockers or limitations |
+| Unimplemented requirements | Acceptance items not met |
+| Uncommitted changes | `git status --short` output or "none" |
+| Suggested next run | Next run ID from `docs/runs/` |
+
+Do not claim milestones complete unless acceptance checklists are satisfied.
