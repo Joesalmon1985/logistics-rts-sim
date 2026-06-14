@@ -25,13 +25,17 @@ Depends on the **shared axial hex map** primitives from RUN_01 (DDR-029) and the
 
 ## Pre-flight (before any RUN_02 implementation)
 
+Before implementing new mechanics (see `.cursor/rules/10-run-verification-and-logging.mdc`):
+
 1. Read `docs/audit/RUN_01_LESSONS_LEARNED.md`.
 2. Confirm RUN_01 kernel regression per `docs/verification/local_verification.md`:
    - `run_tests.gd` — 13/13 pass, exit 0
    - three variant smokes — exit 0 each
    - `verify_failure_modes.gd` — exit 0
-3. Use `timeout` wrappers; kill stale Godot processes if needed.
-4. Do not count aborted or timed-out commands as passes.
+3. Use `timeout` wrappers; export `GODOT_USER_DATA_DIR`; `--import` after fresh checkout or new `class_name` types.
+4. Kill only confirmed stale project Godot processes; never broad `pkill -f Godot`.
+5. Confirm exit code `0` and the expected summary on each command.
+6. Do not count aborted, timed-out, errored, or not-run commands as passes. If verification fails, **stop and report** before editing gameplay systems.
 
 ## In-Scope Work
 

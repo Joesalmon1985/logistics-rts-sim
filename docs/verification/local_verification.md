@@ -45,6 +45,10 @@ pkill -f 'Godot.*WideRTS' || true
 pkill -f 'Godot.*godot_project' || true
 ```
 
+**Warning:** never run a broad unscoped `pkill -f Godot` / `pkill -f godot`. It can kill the user's unrelated Godot editor or other projects. Always scope the pattern to this project and confirm the matched PIDs with `pgrep -af` first.
+
+A Cursor "task aborted" or killed task is **not** a pass — it is a not-run/failed result. Discard its stdout; rely on a clean rerun's exit code and `EXIT:` line.
+
 ## First-time project import
 
 Run once after cloning or when adding new GDScript `class_name` types:

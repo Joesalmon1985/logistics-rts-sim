@@ -19,6 +19,20 @@ Trial→hybrid delegation: no direct unit micro; logistics-fed construction, pro
 - `docs/runs/RUN_02_TRIAL_ECONOMY_GAME.md` (complete)
 - `docs/runs/RUN_03_TRIAL_MILITARY_GAME.md` (complete)
 
+## Pre-flight (before any RUN_07 implementation)
+
+Before implementing new mechanics (see `.cursor/rules/10-run-verification-and-logging.mdc`):
+
+1. Read `docs/audit/RUN_01_LESSONS_LEARNED.md` plus the RUN_02 and RUN_03 lessons-learned notes if present.
+2. Confirm RUN_01 kernel regression per `docs/verification/local_verification.md`:
+   - `run_tests.gd` — 13/13 pass, exit 0
+   - three variant smokes — exit 0 each
+   - `verify_failure_modes.gd` — exit 0
+3. Rerun the RUN_02 economy and RUN_03 military test/smoke suites and confirm exit 0 before composing them.
+4. Use `timeout` wrappers; export `GODOT_USER_DATA_DIR`; `--import` after fresh checkout or new `class_name` types.
+5. Kill only confirmed stale project Godot processes; never broad `pkill -f Godot`.
+6. Do not count aborted, timed-out, errored, or not-run commands as passes. If verification fails, **stop and report** before editing gameplay systems.
+
 ## In-Scope Work
 
 - `hybrid` variant composing economy + military modules (shared hex map, no duplication)

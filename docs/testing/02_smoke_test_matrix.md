@@ -2,6 +2,14 @@
 
 End-to-end smoke scenarios per run. Pass = all criteria met headlessly unless noted.
 
+## Smoke reporting rules (all runs)
+
+- Wrap every smoke command in a `timeout` (see `docs/verification/local_verification.md`); exit code `0` is required for a pass.
+- Each smoke resolves to exactly one status: **passed**, **failed**, **errored**, **timed out**, or **not run**.
+- A report **must not** collapse `errored`, `timed out`, or `not run` into `passed`. Exit code `124` is a timeout (failure); an aborted/killed task is `not run`, never a pass.
+- Where practical, include the negative/failure-mode checks (`sim/tools/verify_failure_modes.gd`) that must exit non-zero.
+- Report the exact command run and its exit code. See `.cursor/rules/10-run-verification-and-logging.mdc`.
+
 ## RUN_01 — Core Simulation Kernel
 
 | ID | Scenario | Pass criteria |

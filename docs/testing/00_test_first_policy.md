@@ -21,9 +21,28 @@
 - Exit code `0` = pass; non-zero = fail; `124` = timed out (failure).
 - **Never** report pass for aborted, killed, hung, or timed-out commands.
 - Import success (`godot --import`) is not test success.
-- RUN_02 and later runs must **rerun RUN_01 kernel tests and smokes** before adding new mechanics.
-- Final reports must distinguish: passed, failed, errored, timed out, not run.
+- RUN_02 and later runs must **rerun RUN_01 kernel tests and smokes** before adding new mechanics (and prior RUN_02/RUN_03 suites before RUN_07).
 - Run `sim/tools/verify_failure_modes.gd` on closure passes to confirm failure paths exit non-zero.
+- See `.cursor/rules/10-run-verification-and-logging.mdc` for the full verification/logging discipline.
+
+### Status categories (never collapse)
+
+Every test/smoke/integrity command resolves to exactly one status. Reports must keep these distinct and **must not** collapse `errored`, `timed out`, or `not run` into `passed`:
+
+| Status | Meaning |
+|--------|---------|
+| passed | Completed, exit `0`, expected summary printed |
+| failed | Completed, reported failure (exit `1`) |
+| errored | Load/parse/script error; no clean result |
+| timed out | Hit the `timeout` wrapper (exit `124`) — failure |
+| not run | Never executed, aborted, or killed — never a pass |
+
+### Reporting discipline
+
+- Report the **exact commands** actually run, not idealised ones.
+- Report the **exit code** for each verification command where relevant.
+- A Cursor "task aborted" result is `not run`, never a pass.
+- A run is not complete if verification was skipped, timed out, aborted, or errored.
 
 ## Determinism
 

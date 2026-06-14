@@ -1,0 +1,69 @@
+---
+description: Run verification, command logging, and lessons-learned discipline
+alwaysApply: true
+---
+
+# Run Verification and Logging
+
+This rule encodes the RUN_01 operational lessons (`docs/audit/RUN_01_LESSONS_LEARNED.md`). It applies to every run that executes Godot tests, smokes, or integrity checks. It does not change settled design decisions.
+
+## Verify before adding new mechanics
+
+Before starting a new major run (RUN_02, RUN_03, RUN_07, and later), rerun the **prior** kernel verification first:
+
+1. RUN_01 kernel tests (`run_tests.gd`).
+2. RUN_01 variant smokes (all three).
+3. Failure-mode integrity checks (`verify_failure_modes.gd`).
+
+Follow `docs/verification/local_verification.md` exactly. If any prior-run verification fails, times out, or cannot run, **stop and report** before editing any gameplay system. Do not begin new mechanics on an unverified kernel.
+
+## Run commands safely
+
+- Wrap every Godot CLI test/smoke/integrity command in a `timeout` (e.g. `timeout 60s ...`) where the platform supports it.
+- Export `GODOT_USER_DATA_DIR` to a project-local, gitignored path; the default userdata path can segfault in sandboxed shells.
+- Godot may not be on `PATH`; use the full binary path or `$GODOT`.
+- Run `godot --headless --path godot_project --import` once after a fresh clone or whenever new `class_name` types are added. Import success is **not** test success.
+- Before reruns, list Godot processes (`pgrep -af Godot`) and kill **only** confirmed stale processes for this project (e.g. `pkill -f 'Godot.*godot_project'`). Never run a broad unscoped `pkill -f Godot` — it can kill the user's unrelated Godot work.
+
+## Status categories (never collapse)
+
+Every test/smoke/integrity command resolves to exactly one status:
+
+| Status | Meaning |
+|--------|---------|
+| passed | Completed, exit `0`, expected summary printed |
+| failed | Completed, reported failure (exit `1`) |
+| errored | Load/parse/script error (no clean result) |
+| timed out | Hit the `timeout` wrapper (exit `124`) |
+| not run | Never executed, aborted, or killed |
+
+**Never** report `passed` for a command that was aborted, killed, timed out, or errored. A Cursor "task aborted" result is **not run**, never a pass. Exit code `124` is a failure. `SMOKE PASS` text printed after an earlier `SCRIPT ERROR` is not a pass — check the exit code and the `EXIT:` line from **this** run, not stale terminal output.
+
+## Logging discipline
+
+In every run report, include:
+
+- The **exact commands** actually run (not idealised ones).
+- The **exit code** for each verification command where relevant.
+- The status of each test/smoke per the table above.
+
+If verification was skipped, timed out, aborted, or errored, the run is **not** complete. Do not claim a milestone complete unless its acceptance checklist passed under clean, completed, exit-`0` runs.
+
+## Preserve failure-mode integrity
+
+Do not weaken, delete, or skip the failure-mode integrity checks (`verify_failure_modes.gd`) or the deliberate-fail fixtures. Negative checks must keep exiting non-zero.
+
+## Lessons learned (end of each major run)
+
+At the end of each major run, create or append `docs/audit/RUN_XX_LESSONS_LEARNED.md` capturing, briefly:
+
+- what worked
+- what broke
+- test/verification lessons
+- command changes (and update `docs/verification/local_verification.md` if commands changed)
+- risks for next runs
+- prompt improvements for next runs
+
+Keep it lightweight — a useful handoff note, not bureaucracy.
+
+See `.cursor/rules/01-autonomous-run-policy.mdc`, `.cursor/rules/02-test-first-development.mdc`, `.cursor/rules/07-final-report-format.mdc`, and `docs/verification/local_verification.md`.
