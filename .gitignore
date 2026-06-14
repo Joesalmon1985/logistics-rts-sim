@@ -9,6 +9,6 @@ godot_viewer/.godot/
 *.log
 models/
 checkpoints/
-runs/
+/runs/
 wandb/
 .DS_Store
