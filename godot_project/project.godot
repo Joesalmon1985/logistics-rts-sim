@@ -1,0 +1,18 @@
+; Engine configuration file.
+; RUN_01 — headless simulation kernel (no main scene required).
+
+config_version=5
+
+[application]
+
+config/name="WideRTS Simulation"
+config/description="Authoritative GDScript simulation core (headless-capable)."
+config/features=PackedStringArray("4.5")
+
+[debug]
+
+gdscript/warnings/untyped_declaration=1
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"

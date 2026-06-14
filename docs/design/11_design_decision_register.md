@@ -321,12 +321,12 @@ This register is the single place where uncertain decisions live. Do not bury un
 
 ## DDR-032 — Godot-compatible headless test harness for gameplay-rule tests
 
-- **Decision:** RUN_01 must establish a headless, deterministic, CLI-runnable test harness for the GDScript simulation core. The specific framework is chosen in RUN_01 from: a lightweight custom Godot headless test runner, GUT, gdUnit4, or another documented Godot-compatible framework. Python `pytest` remains available for Python training/tooling only.
-- **Status:** Needs Human Confirmation *(new — created by the architecture pivot)*
-- **Rationale:** The pivot to a GDScript-authoritative core means gameplay-rule tests can no longer rely on Python `pytest`. The framework choice is a concrete RUN_01 decision but the exact tool is not yet fixed.
-- **Consequences:** Tests must run headlessly, be deterministic, validate the core without rendered UI, run from CLI, report clear pass/fail for Cursor, and support rule-ID-based test names (`test_<RULE_ID>_<desc>`). RUN_01 records the chosen framework.
-- **Documents affected:** `.cursor/rules/02-`, `docs/testing/00_`, `docs/runs/RUN_01_`.
-- **Open questions:** Which framework (custom runner vs GUT vs gdUnit4)? Decide at RUN_01 start; does not block doc work.
+- **Decision:** Use a **lightweight custom Godot headless test runner** (`godot_project/sim/tools/run_tests.gd`) for gameplay-rule tests. Tests are pure GDScript `RefCounted` classes under `godot_project/sim/tests/` with rule-ID-based names. GUT and gdUnit4 were not adopted — they add addon/scene dependencies unnecessary for a pure simulation-core test suite at this stage.
+- **Status:** Accepted — *Decided at RUN_01 implementation.*
+- **Rationale:** Zero addon dependencies; tests target the authoritative `RefCounted` simulation core without rendered UI or scene tree; CLI-runnable via `godot --headless --script`; clear pass/fail with non-zero exit code on failure; deterministic.
+- **Consequences:** Verification command documented in `docs/verification/local_verification.md`. Python `pytest` remains for Python training/tooling only. Project import (`godot --headless --import`) required once to register `class_name` types before first test run.
+- **Documents affected:** `.cursor/rules/02-`, `docs/testing/00_`, `docs/runs/RUN_01_`, `docs/verification/local_verification.md`.
+- **Open questions:** None.
 
 ## DDR-033 — Python ↔ Godot-headless training transport (development-time)
 
@@ -351,12 +351,12 @@ All RUN_00 architecture decisions are now ratified. The following were flipped t
 | DDR-029 | Shared axial hex map for economy/military/hybrid | Accepted |
 | DDR-030 | Host-authoritative multiplayer first | Accepted |
 | DDR-031 | No credits in the Hybrid Game (ware/logistics only) | Accepted |
+| DDR-032 | Godot test framework (custom headless runner) | Accepted |
 
 ### Remaining items needing human confirmation (non-blocking for RUN_01 doc work)
 
 | ID | Topic | Decide at |
 |----|-------|-----------|
-| DDR-032 | Godot test framework (custom / GUT / gdUnit4) | Start of RUN_01 |
 | DDR-033 | Python↔Godot-headless training transport | RUN_06 |
 
-DDR-032 is the only open item that touches RUN_01; it is a tool choice to make at the start of RUN_01, not a blocker for these documentation updates.
+DDR-032 was resolved at RUN_01: custom lightweight headless runner (see DDR-032 entry above).

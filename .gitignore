@@ -4,6 +4,7 @@
 *.pyc
 .godot/
 godot_project/.godot/
+godot_project/.godot_user/
 *.import
 .godot/imported/
 *.tmp

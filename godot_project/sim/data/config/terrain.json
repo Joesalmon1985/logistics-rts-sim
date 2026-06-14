@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "terrain_types": ["grass", "water", "rock", "forest"],
+  "terrain_defs": {
+    "grass": {
+      "passability": 1,
+      "buildability": 1
+    },
+    "water": {
+      "passability": 0,
+      "buildability": 0
+    },
+    "rock": {
+      "passability": 0,
+      "buildability": 0
+    },
+    "forest": {
+      "passability": 1,
+      "buildability": 1
+    }
+  }
+}

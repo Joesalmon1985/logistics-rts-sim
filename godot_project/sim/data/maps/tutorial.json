@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "width": 8,
+  "height": 8,
+  "hexes": [
+    {"q": 0, "r": 0, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 1, "r": 0, "terrain_type": "grass", "height_level": 1, "passability": 1, "buildability": 1},
+    {"q": 2, "r": 0, "terrain_type": "forest", "height_level": 1, "passability": 1, "buildability": 1},
+    {"q": 3, "r": 0, "terrain_type": "water", "height_level": 0, "passability": 0, "buildability": 0},
+    {"q": 4, "r": 0, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 5, "r": 0, "terrain_type": "rock", "height_level": 2, "passability": 0, "buildability": 0},
+    {"q": 6, "r": 0, "terrain_type": "grass", "height_level": 1, "passability": 1, "buildability": 1},
+    {"q": 7, "r": 0, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 0, "r": 1, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 1, "r": 1, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 2, "r": 1, "terrain_type": "grass", "height_level": 1, "passability": 1, "buildability": 1},
+    {"q": 3, "r": 1, "terrain_type": "grass", "height_level": 1, "passability": 1, "buildability": 1},
+    {"q": 4, "r": 1, "terrain_type": "forest", "height_level": 1, "passability": 1, "buildability": 1},
+    {"q": 5, "r": 1, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 6, "r": 1, "terrain_type": "grass", "height_level": 0, "passability": 1, "buildability": 1},
+    {"q": 7, "r": 1, "terrain_type": "water", "height_level": 0, "passability": 0, "buildability": 0}
+  ]
+}

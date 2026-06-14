@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "variants": {
+    "economy_trial": {
+      "subsystems": ["map", "economy", "diagnostics"],
+      "commands": ["NoopCommand", "PlaceRoadCommand"]
+    },
+    "military_trial": {
+      "subsystems": ["map", "military", "diagnostics"],
+      "commands": ["NoopCommand", "PlaceBuildingCommand", "MoveUnitCommand"]
+    },
+    "hybrid": {
+      "subsystems": ["map", "economy", "military", "hybrid", "diagnostics"],
+      "commands": ["NoopCommand", "PlaceRoadCommand", "SetBuildingStanceCommand"],
+      "forbidden_player_commands": ["MoveUnitCommand", "AttackUnitCommand"]
+    }
+  }
+}

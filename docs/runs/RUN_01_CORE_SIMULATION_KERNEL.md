@@ -24,7 +24,7 @@ Deliver the authoritative **Godot/GDScript simulation core** infrastructure so R
 ## In-Scope Work
 
 - Godot project skeleton with the pure-GDScript simulation-core package layout (`godot_project/sim/core`, `sim/variants/{economy_trial,military_trial,hybrid}`, `sim/data`, `sim/tests`, `sim/tools`) — see `docs/architecture/01_simulation_core_authoritative.md`
-- Choose and stand up the **headless Godot test harness** (custom runner / GUT / gdUnit4 — DDR-032) with one passing smoke test; record the choice in the final report
+- Choose and stand up the **headless Godot test harness** (custom runner — DDR-032 Accepted) with all kernel tests passing; record the choice in the final report
 - Deterministic tick loop (no frame delta / wall-clock)
 - Integer / fixed-point policy and helpers (no floats in hashed state — DDR-027)
 - Seeded RNG stored in simulation state
@@ -72,17 +72,17 @@ Deliver the authoritative **Godot/GDScript simulation core** infrastructure so R
 
 ## Acceptance Checklist
 
-- [ ] `sim/` GDScript core loads and runs headlessly
-- [ ] Headless test harness chosen (DDR-032), documented, and passes all kernel tests
-- [ ] Command registry accepts registered command types
-- [ ] Events append with monotonic IDs
-- [ ] Snapshot exports map + tick + seed
-- [ ] Replay hash stable across two runs (integer/fixed-point state only)
-- [ ] Shared axial hex map primitives present and used by variant stubs (DDR-029)
-- [ ] Variant registry loads three variant names
-- [ ] Smoke runner executes scenario fixture (KERN-SMOKE-001–004)
-- [ ] Core has no dependency on scene tree / rendering / UI / frame delta / wall-clock
-- [ ] No Godot visual-client/UI/scene/rendering code (that is RUN_05)
+- [x] `sim/` GDScript core loads and runs headlessly
+- [x] Headless test harness chosen (DDR-032), documented, and passes all kernel tests
+- [x] Command registry accepts registered command types
+- [x] Events append with monotonic IDs
+- [x] Snapshot exports map + tick + seed
+- [x] Replay hash stable across two runs (integer/fixed-point state only)
+- [x] Shared axial hex map primitives present and used by variant stubs (DDR-029)
+- [x] Variant registry loads three variant names
+- [x] Smoke runner executes scenario fixture (KERN-SMOKE-001–004)
+- [x] Core has no dependency on scene tree / rendering / UI / frame delta / wall-clock
+- [x] No Godot visual-client/UI/scene/rendering code (that is RUN_05)
 
 ## Final Report Format
 
