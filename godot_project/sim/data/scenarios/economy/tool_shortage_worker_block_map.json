@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 50,
+  "map_file": "maps/economy/tool_shortage_worker_block_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 4,
+    "r": 4
+  },
+  "build_radius": 8,
+  "victory": {
+    "type": "none"
+  },
+  "expected_hash": null,
+  "starting_tools": 0,
+  "starting_wares": {
+    "timber": 0,
+    "planks": 0,
+    "stone": 0,
+    "tools": 0
+  }
+}

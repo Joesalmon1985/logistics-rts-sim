@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 43,
+  "map_file": "maps/economy/blocked_route_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 2,
+    "r": 6
+  },
+  "build_radius": 8,
+  "victory": {
+    "type": "none"
+  },
+  "expected_hash": null,
+  "stall_config": {
+    "type": "blocked_delivery",
+    "ticks": 50
+  }
+}

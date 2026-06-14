@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Headless test runner for the authoritative simulation core (DDR-032).
+## RUN_01+02 headless test harness for the authoritative simulation core (DDR-032).
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
 
@@ -18,6 +18,32 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/variants/test_run01_variant_001_all_variants_register.gd",
 	"res://sim/tests/variants/test_run01_variant_002_all_variants_smoke_headless.gd",
 	"res://sim/tests/determinism/test_run01_determinism_001_no_float_in_hashed_state_fixture.gd",
+	"res://sim/tests/economy/test_econ_map_001_axial_neighbors_reuse.gd",
+	"res://sim/tests/economy/test_econ_terr_001_water_not_buildable.gd",
+	"res://sim/tests/economy/test_econ_slope_001_slope_blocks_steep_road.gd",
+	"res://sim/tests/economy/test_econ_build_001_footprint_overlap_rejected.gd",
+	"res://sim/tests/economy/test_econ_road_001_roads_connect_adjacent_hexes.gd",
+	"res://sim/tests/economy/test_econ_road_002_terrain_blocks_road_on_water.gd",
+	"res://sim/tests/economy/test_econ_road_007_blocked_route_in_diagnostics.gd",
+	"res://sim/tests/economy/test_econ_path_001_shortest_path_on_network.gd",
+	"res://sim/tests/economy/test_econ_ware_001_ware_types_enumerated.gd",
+	"res://sim/tests/economy/test_econ_job_003_job_lifecycle_transitions.gd",
+	"res://sim/tests/economy/test_econ_stor_001_storage_full_blocks_input.gd",
+	"res://sim/tests/economy/test_econ_worker_003_missing_worker_pauses_production.gd",
+	"res://sim/tests/economy/test_econ_tool_002_missing_tool_blocks_assignment.gd",
+	"res://sim/tests/economy/test_econ_forest_002_woodcutter_reduces_density.gd",
+	"res://sim/tests/economy/test_econ_food_002_mine_requires_food.gd",
+	"res://sim/tests/economy/test_econ_mine_001_requires_matching_deposit.gd",
+	"res://sim/tests/economy/test_econ_upgrade_002_upgrade_requires_materials.gd",
+	"res://sim/tests/economy/test_econ_cons_003_completion_spawns_building.gd",
+	"res://sim/tests/economy/test_econ_pri_001_construction_priority_order.gd",
+	"res://sim/tests/economy/test_econ_chain_001_forest_to_timber.gd",
+	"res://sim/tests/economy/test_econ_chain_010_workshop_produces_tools.gd",
+	"res://sim/tests/economy/test_econ_diag_001_per_building_status.gd",
+	"res://sim/tests/economy/test_econ_snap_002_all_display_layers_present.gd",
+	"res://sim/tests/economy/test_econ_det_002_replay_hash_stable.gd",
+	"res://sim/tests/economy/test_econ_cmd_road_001_place_road_command.gd",
+	"res://sim/tests/economy/test_econ_scenarios_bundled_maps.gd",
 ]
 
 
@@ -28,7 +54,7 @@ func _initialize() -> void:
 	var failed: int = 0
 	var errored: int = 0
 	var ran: int = 0
-	print("RUN_01 headless test harness — %d tests expected" % expected)
+	print("RUN_01+02 headless test harness — %d tests expected" % expected)
 
 	for script_path in TEST_SCRIPTS:
 		var script: Script = load(script_path)

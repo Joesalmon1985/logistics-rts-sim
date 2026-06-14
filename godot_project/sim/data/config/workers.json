@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "worker_types": {
+    "builder": {"display_name": "Builder", "default_building": ""},
+    "carrier": {"display_name": "Carrier operator", "default_building": ""},
+    "woodcutter": {"display_name": "Woodcutter", "default_building": "woodcutter"},
+    "forester": {"display_name": "Forester", "default_building": "forester"},
+    "farmer": {"display_name": "Farmer", "default_building": "farm"},
+    "fisher": {"display_name": "Fisher", "default_building": "fisher_hut"},
+    "hunter": {"display_name": "Hunter", "default_building": "hunter_lodge"},
+    "baker": {"display_name": "Baker", "default_building": "bakery"},
+    "quarrier": {"display_name": "Quarrier", "default_building": "quarry"},
+    "miner": {"display_name": "Miner", "default_building": "coal_mine"},
+    "smelter_worker": {"display_name": "Smelter worker", "default_building": "smelter"},
+    "toolmaker": {"display_name": "Toolmaker", "default_building": "workshop"},
+    "surveyor": {"display_name": "Surveyor", "default_building": "surveyor_hut"},
+    "carpenter": {"display_name": "Carpenter", "default_building": "sawmill"}
+  }
+}

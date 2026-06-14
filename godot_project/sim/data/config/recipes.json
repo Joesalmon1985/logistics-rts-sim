@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "recipes": {
+    "timber_from_forest": {
+      "building": "woodcutter",
+      "inputs": {},
+      "outputs": {"timber": 1},
+      "ticks": 3,
+      "requires_worker": 1,
+      "consumes_deposit": 0,
+      "consumes_tree_density": 1
+    },
+    "forest_renewal": {
+      "building": "forester",
+      "inputs": {},
+      "outputs": {},
+      "ticks": 5,
+      "requires_worker": 1,
+      "increases_tree_density": 1
+    },
+    "planks_from_timber": {
+      "building": "sawmill",
+      "inputs": {"timber": 1},
+      "outputs": {"planks": 1},
+      "ticks": 4,
+      "requires_worker": 1
+    },
+    "planks_from_timber_fast": {
+      "building": "enhanced_sawmill",
+      "inputs": {"timber": 1},
+      "outputs": {"planks": 2},
+      "ticks": 3,
+      "requires_worker": 1
+    },
+    "stone_from_rock": {
+      "building": "quarry",
+      "inputs": {},
+      "outputs": {"stone": 1},
+      "ticks": 4,
+      "requires_worker": 1,
+      "consumes_deposit": 1
+    },
+    "bricks_from_stone": {
+      "building": "brick_kiln",
+      "inputs": {"stone": 1, "coal": 1},
+      "outputs": {"bricks": 1},
+      "ticks": 5,
+      "requires_worker": 1
+    },
+    "water_from_source": {
+      "building": "well",
+      "inputs": {},
+      "outputs": {"water": 2},
+      "ticks": 3,
+      "requires_worker": 0
+    },
+    "grain_from_fertile": {
+      "building": "farm",
+      "inputs": {},
+      "outputs": {"grain": 1},
+      "ticks": 5,
+      "requires_worker": 1
+    },
+    "fish_from_water": {
+      "building": "fisher_hut",
+      "inputs": {},
+      "outputs": {"fish": 1},
+      "ticks": 4,
+      "requires_worker": 1
+    },
+    "meat_from_wild": {
+      "building": "hunter_lodge",
+      "inputs": {},
+      "outputs": {"meat": 1},
+      "ticks": 4,
+      "requires_worker": 1
+    },
+    "bread_from_grain_water": {
+      "building": "bakery",
+      "inputs": {"grain": 1, "water": 1},
+      "outputs": {"bread": 1},
+      "ticks": 4,
+      "requires_worker": 1
+    },
+    "rations_from_food": {
+      "building": "tavern",
+      "inputs": {"bread": 1},
+      "outputs": {"rations": 1},
+      "ticks": 4,
+      "requires_worker": 1
+    },
+    "meals_from_rations": {
+      "building": "canteen",
+      "inputs": {"rations": 1, "bread": 1},
+      "outputs": {"meals": 1},
+      "ticks": 5,
+      "requires_worker": 1
+    },
+    "survey_deposits": {
+      "building": "surveyor_hut",
+      "inputs": {},
+      "outputs": {},
+      "ticks": 3,
+      "requires_worker": 1,
+      "reveals_deposits": 1
+    },
+    "coal_from_deposit": {
+      "building": "coal_mine",
+      "inputs": {"rations": 1},
+      "outputs": {"coal": 1},
+      "ticks": 5,
+      "requires_worker": 1,
+      "consumes_deposit": 1,
+      "requires_food": 1
+    },
+    "coal_from_deposit_deep": {
+      "building": "deep_coal_mine",
+      "inputs": {"meals": 1},
+      "outputs": {"coal": 2},
+      "ticks": 4,
+      "requires_worker": 1,
+      "consumes_deposit": 1,
+      "requires_food": 1
+    },
+    "iron_ore_from_deposit": {
+      "building": "iron_mine",
+      "inputs": {"rations": 1},
+      "outputs": {"iron_ore": 1},
+      "ticks": 5,
+      "requires_worker": 1,
+      "consumes_deposit": 1,
+      "requires_food": 1
+    },
+    "iron_ore_from_deposit_deep": {
+      "building": "deep_iron_mine",
+      "inputs": {"meals": 1},
+      "outputs": {"iron_ore": 2},
+      "ticks": 4,
+      "requires_worker": 1,
+      "consumes_deposit": 1,
+      "requires_food": 1
+    },
+    "iron_ingots_from_ore_coal": {
+      "building": "smelter",
+      "inputs": {"iron_ore": 1, "coal": 1},
+      "outputs": {"iron_ingots": 1},
+      "ticks": 5,
+      "requires_worker": 1
+    },
+    "tools_from_ingots_planks": {
+      "building": "workshop",
+      "inputs": {"iron_ingots": 1, "planks": 1},
+      "outputs": {"tools": 1},
+      "ticks": 6,
+      "requires_worker": 1
+    }
+  }
+}

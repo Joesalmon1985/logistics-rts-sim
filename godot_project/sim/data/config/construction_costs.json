@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "default_cost": {
+    "planks": 2,
+    "stone": 2,
+    "tools": 1,
+    "builder_work": 5
+  },
+  "building_costs": {
+    "storehouse": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 8},
+    "road_node": {"planks": 1, "stone": 1, "builder_work": 2},
+    "woodcutter": {"planks": 2, "stone": 1, "tools": 1, "builder_work": 5},
+    "forester": {"planks": 2, "stone": 1, "tools": 1, "builder_work": 5},
+    "sawmill": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 8},
+    "quarry": {"planks": 3, "stone": 1, "tools": 1, "builder_work": 8},
+    "brick_kiln": {"planks": 3, "stone": 3, "tools": 1, "builder_work": 10},
+    "well": {"planks": 2, "stone": 2, "builder_work": 5},
+    "farm": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 8},
+    "fisher_hut": {"planks": 2, "stone": 1, "builder_work": 5},
+    "hunter_lodge": {"planks": 2, "stone": 1, "tools": 1, "builder_work": 5},
+    "bakery": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 8},
+    "tavern": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 8},
+    "canteen": {"planks": 4, "stone": 3, "tools": 1, "builder_work": 10},
+    "surveyor_hut": {"planks": 2, "stone": 2, "tools": 1, "builder_work": 6},
+    "coal_mine": {"planks": 4, "stone": 3, "tools": 2, "builder_work": 12},
+    "iron_mine": {"planks": 4, "stone": 3, "tools": 2, "builder_work": 12},
+    "smelter": {"planks": 4, "stone": 4, "tools": 2, "builder_work": 12},
+    "workshop": {"planks": 5, "stone": 4, "tools": 2, "builder_work": 15},
+    "storage_yard": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 8}
+  }
+}

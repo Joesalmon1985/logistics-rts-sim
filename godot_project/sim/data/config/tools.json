@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "tool_requirements": {
+    "woodcutter": {"ware": "tools", "amount": 1},
+    "forester": {"ware": "tools", "amount": 1},
+    "builder": {"ware": "tools", "amount": 1},
+    "farmer": {"ware": "tools", "amount": 1},
+    "fisher": {"ware": "tools", "amount": 0},
+    "hunter": {"ware": "tools", "amount": 1},
+    "baker": {"ware": "tools", "amount": 0},
+    "quarrier": {"ware": "tools", "amount": 1},
+    "miner": {"ware": "tools", "amount": 1},
+    "smelter_worker": {"ware": "tools", "amount": 1},
+    "toolmaker": {"ware": "tools", "amount": 1},
+    "surveyor": {"ware": "tools", "amount": 1},
+    "carpenter": {"ware": "tools", "amount": 1},
+    "carrier": {"ware": "tools", "amount": 0}
+  },
+  "future_categories": [
+    "cutting_tool",
+    "digging_tool",
+    "building_tool",
+    "farming_tool",
+    "mining_tool",
+    "smithing_tool"
+  ]
+}

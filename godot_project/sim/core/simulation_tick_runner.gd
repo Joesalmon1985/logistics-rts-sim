@@ -36,7 +36,14 @@ func tick(state: GameState) -> GameState:
 
 	while not state.command_queue.is_empty():
 		var command: SimCommand = state.command_queue.pop_front()
-		command_validator.validate_and_apply(state, command)
+		var result: CommandResult = command_validator.validate_and_apply(state, command)
+		for event_data in result.events:
+			if typeof(event_data) == TYPE_DICTIONARY:
+				state.event_log.append_event(
+					str(event_data.get("type", "unknown")),
+					int(event_data.get("tick", state.tick)),
+					event_data.get("payload", {}),
+				)
 
 	var rng := SeededRng.new(state.rng_state)
 	for subsystem_name in module.get_subsystem_order():

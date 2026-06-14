@@ -6,8 +6,14 @@ func _init() -> void:
 
 
 func create_initial_state(scenario: Dictionary, config: Dictionary) -> GameState:
-	return _build_initial_state(variant_id, scenario, config)
+	var state := _build_initial_state(variant_id, scenario, config)
+	EconomyInit.initialize(state, scenario, config)
+	return state
 
 
 func get_subsystem_order() -> Array[String]:
-	return ["map", "economy", "diagnostics"]
+	return EconomyTick.get_subsystem_order()
+
+
+func step_subsystem(name: String, state: GameState, rng: SeededRng) -> void:
+	EconomyTick.step_subsystem(name, state, rng)
