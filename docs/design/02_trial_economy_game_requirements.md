@@ -8,30 +8,57 @@ Binding contract for the **Trial Economy Game** — the permanent abstract econo
 
 Deliver a headless, deterministic hex-map settlement logistics simulation where players build roads, place buildings, run production chains, and satisfy construction goals using workers, carriers, and ware routing.
 
-The Trial Economy Game is the **foundation** for the Hybrid Game. Military construction and production in hybrid mode will consume wares defined here.
+The Trial Economy Game is the **foundation** for the Hybrid Game. Military construction and production in hybrid mode will consume wares and logistics rules defined here.
+
+This engine must be **deeper than a small logistics demo**. It is the complete abstract economy layer for the final hybrid game.
 
 ---
 
-## 2. Non-Goals
+## 2. Coverage Target
 
-- Military units, combat, power, or intel (see `03_trial_military_game_requirements.md`)
-- Hybrid integration rules (see `04_hybrid_game_requirements.md`)
-- Godot rendering (see `06_mobile_2d_visual_design.md` and RUN_05)
-- Neural training (RUN_06)
-- Multiplayer (RUN_12)
-- Copying Widelands economy chains, names, or balance
+> **Widelands-like mechanic coverage, not Widelands feature parity.**
+
+The Trial Economy Game must include **all major settlement-logistics economy mechanic families** in simplified, original, testable form — the same *kind* of systems Widelands uses for economy (roads, flags, carriers, chains, workers, mines, food support, forest management, upgrades), but:
+
+- Original placeholder names, data, and balance
+- No copied Widelands tribes, campaigns, maps, UI, art, or identity
+- No requirement to match Widelands content breadth (tribes, ports, military territory, etc.)
+
+A mechanic may be **simple**, but it must **not be a placeholder**. It must affect state, emit events where relevant, appear in diagnostics, and have tests.
 
 ---
 
-## 3. Originality Rules
+## 3. Non-Goals (Trial Economy)
+
+The Trial Economy Game does **not** need:
+
+- Multiple Widelands-style tribes
+- Campaigns or map editor
+- Multiplayer
+- Ports, ships, overseas trade, inter-player trade
+- Military, combat, unit attack logic, territory conquest via military buildings
+- Neural-network training (RUN_06)
+- Godot scenes or final art (RUN_05)
+- Copied Widelands economy data, names, balance, UI, or art
+
+Also excluded (other documents / runs):
+
+- Hybrid integration rules (`04_hybrid_game_requirements.md`)
+- Military trial systems (`03_trial_military_game_requirements.md`)
+
+Data and schema **hooks** must remain so military, hybrid, multiplayer, and content expansion can attach later without rewriting the economy core.
+
+---
+
+## 4. Originality Rules
 
 - Use original placeholder building and ware names from `05_units_resources_buildings_catalogue.md` and `10_glossary.md`
 - Do not copy protected names, exact chains, or iconic identity from Widelands or other reference games
-- Rules may follow genre conventions; data and naming must be original
+- Rules may follow **genre conventions** (logistics settlement games); data and naming must be **original**
 
 ---
 
-## 4. Python Simulation Authority
+## 5. Python Simulation Authority
 
 - All economy rules execute in Python only
 - Godot displays snapshots; it does not compute production, pathfinding, or ware movement
@@ -40,7 +67,7 @@ The Trial Economy Game is the **foundation** for the Hybrid Game. Military const
 
 ---
 
-## 5. Determinism
+## 6. Determinism
 
 - **ECON-DET-001:** All randomness uses seeded RNG stored in simulation state
 - **ECON-DET-002:** Same seed + same command log → identical events and snapshot hash
@@ -48,16 +75,16 @@ The Trial Economy Game is the **foundation** for the Hybrid Game. Military const
 
 ---
 
-## 6. Tick Loop
+## 7. Tick Loop
 
 - **ECON-TICK-001:** Simulation advances in discrete ticks
 - **ECON-TICK-002:** Each tick processes: command queue → economy subsystems → event emission
 - **ECON-TICK-003:** Tick number is monotonic and included in events and snapshots
-- Subsystem order within a tick is fixed and documented (deposits → production → construction → carriers → diagnostics)
+- Subsystem order within a tick is fixed and documented (forest → deposits → worker requests → production → construction → upgrades → carriers → diagnostics → statistics)
 
 ---
 
-## 7. Success and Failure States
+## 8. Success and Failure States
 
 | State | Condition | Rule ID |
 |-------|-----------|---------|
@@ -65,28 +92,28 @@ The Trial Economy Game is the **foundation** for the Hybrid Game. Military const
 | Economy stalled | No progress possible for N ticks (configurable) with diagnostic reason | ECON-STALL-001 |
 | Scenario timeout | Max ticks reached without success | ECON-TIME-001 |
 
-Diagnostics must report stall reasons: missing input, blocked output, no path, storage full, no workers.
+Diagnostics must report stall reasons including: missing input, blocked output, no path, storage full, worker shortage, tool shortage, food shortage, forest depletion, deposit depletion, road congestion.
 
 ---
 
-## 8. Hex Map (Axial Coordinates)
+## 9. Hex Map (Axial Coordinates)
 
 - **ECON-MAP-001:** Map uses axial coordinates `(q, r)` with standard hex neighbour definitions
 - **ECON-MAP-002:** Map bounds are rectangular in axial space; out-of-bounds queries fail gracefully
-- **ECON-MAP-003:** Each hex has terrain, height, owner, and optional road/building references
+- **ECON-MAP-003:** Each hex has terrain, height, tree density (where applicable), owner, and optional road/building references
 - **ECON-MAP-004:** Snapshots export full map dimensions and per-hex display data
 
 ---
 
-## 9. Terrain
+## 10. Terrain
 
 - **ECON-TERR-001:** Terrain types include at minimum: grass, water, rock, forest, fertile
-- **ECON-TERR-002:** Terrain affects buildability and movement cost
+- **ECON-TERR-002:** Terrain affects buildability, road legality, and movement cost
 - **ECON-TERR-003:** Water hexes are not buildable except for designated water-source buildings (well)
 
 ---
 
-## 10. Height and Slope
+## 11. Height and Slope
 
 - **ECON-SLOPE-001:** Each hex has integer height
 - **ECON-SLOPE-002:** Slope between adjacent hexes = `abs(height_a - height_b)`
@@ -95,36 +122,40 @@ Diagnostics must report stall reasons: missing input, blocked output, no path, s
 
 ---
 
-## 11. Buildability
+## 12. Buildability
 
 - **ECON-BUILD-001:** Placement checks terrain, slope, footprint overlap, and ownership
 - **ECON-BUILD-002:** Failed placement returns structured rejection reason in command result
 
 ---
 
-## 12. Display / Snapshot Requirements (2D Godot Viewer)
+## 13. Display / Godot-Readiness (Snapshot Layers)
 
-Snapshots must include layers Godot renders without sim logic:
+RUN_02 is headless, but snapshots must export enough display state for RUN_05 to visualise without reverse-engineering the sim. Godot **must not** own any of these rules — it only displays exported state.
 
-| Layer | Content |
-|-------|---------|
-| terrain | terrain type, height |
-| roads | road segments per hex edge |
-| road_nodes | node positions and connections |
-| buildings | plan, construction progress, completed |
-| wares | in-transit and stored (aggregated per node where needed) |
-| workers / carriers | position and assignment |
-| ownership | per-hex or per-building player colour |
-| diagnostics | stall flags, blocked jobs |
+| Layer | Snapshot field / content |
+|-------|--------------------------|
+| Hex terrain | terrain type per hex |
+| Height / slope / buildability overlay | height, slope, buildable flag |
+| Resource overlay | deposits, depletion state |
+| Tree-density overlay | tree_density per forest hex |
+| Ownership / build-radius overlay | player ownership, buildable territory |
+| Road layer | road segments, quality if applicable |
+| Road node / flag layer | node positions, buffer ware counts |
+| Building layer | completed buildings |
+| Construction site layer | plans, progress, missing wares |
+| Worker / carrier markers | positions, assignments, load |
+| Ware movement markers | in-transit jobs |
+| Blocked job markers | blocked delivery/construction |
+| Diagnostics overlay | stall flags, reasons |
+| Optional hex grid | toggle metadata (Godot default: hidden on mobile) |
+| Selected entity details | entity id, status, diagnostics (on request) |
 
-- **ECON-SNAP-001:** Snapshot is JSON-compatible
-- **ECON-SNAP-002:** Optional hex grid overlay toggled in Godot (hidden by default on mobile)
+- **ECON-SNAP-001:** Snapshot is JSON-compatible with `schema_version`
+- **ECON-SNAP-002:** All layers above populated from sim state (empty arrays where none)
+- **ECON-SNAP-003:** Optional hex grid overlay toggled in Godot only
 
----
-
-## 13. Visual Layers (Future Godot)
-
-See `06_mobile_2d_visual_design.md`. Economy trial requires snapshot data for all layers above; art assets are RUN_05 scope.
+See `06_mobile_2d_visual_design.md` for rendering order.
 
 ---
 
@@ -137,9 +168,25 @@ See `06_mobile_2d_visual_design.md`. Economy trial requires snapshot data for al
 
 ## 15. Resources and Wares
 
-- **ECON-WARE-001:** Wares are typed, countable, and transportable (timber, planks, stone, grain, water, bread, coal, iron_ore, iron_ingots, tools, builder_work)
+- **ECON-WARE-001:** Wares are typed, countable, and transportable
 - **ECON-WARE-002:** Wares exist in storage, at road nodes, in transit on carriers, or consumed by production/construction
-- **ECON-DEP-001:** Deposits (forest, rock, coal, iron, fertile, water source) are map features with extraction or renewal rules
+
+**Minimum ware set (Run 02):**
+
+| Ware | Role |
+|------|------|
+| timber | Raw wood |
+| planks | Processed wood |
+| stone | Construction |
+| grain, water | Food chain inputs |
+| bread | Basic food product |
+| rations | Basic mine food support |
+| meals | Upgraded mine food support |
+| coal, iron_ore, iron_ingots | Metal chain |
+| tools | Generic tools (Run 02); schema supports tool categories later |
+| builder_work | Construction labour |
+
+- **ECON-DEP-001:** Deposits (forest, rock, coal, iron, fertile, water source) are map features with extraction and depletion rules
 
 ---
 
@@ -147,12 +194,14 @@ See `06_mobile_2d_visual_design.md`. Economy trial requires snapshot data for al
 
 | Chain | Rule ID |
 |-------|---------|
-| forest/trees → woodcutter → timber | ECON-CHAIN-001 |
+| forest/tree density → woodcutter → timber | ECON-CHAIN-001 |
 | timber → sawmill → planks | ECON-CHAIN-002 |
 | rock/deposit → quarry → stone | ECON-CHAIN-003 |
 | fertile land → farm → grain | ECON-CHAIN-004 |
 | water source → well → water | ECON-CHAIN-005 |
 | grain + water → bakery → bread | ECON-CHAIN-006 |
+| bread (or grain+water) → rations processing → rations | ECON-CHAIN-012 |
+| rations + additional inputs → meals | ECON-CHAIN-013 |
 | coal deposit → coal mine → coal | ECON-CHAIN-007 |
 | iron deposit → iron mine → iron ore | ECON-CHAIN-008 |
 | iron ore + coal → smelter → iron ingots | ECON-CHAIN-009 |
@@ -165,8 +214,10 @@ Each chain must be testable in isolation and as an integrated scenario.
 
 ## 17. Buildings
 
-- **ECON-BLD-001:** Buildings have footprints, input/output ports (road node links), worker slots, and enable/disable state
+- **ECON-BLD-001:** Buildings have footprints, input/output ports (road node links), worker slots, enable/disable state, and optional upgrade targets
 - **ECON-BLD-002:** Building types match catalogue in `05_units_resources_buildings_catalogue.md`
+
+**Minimum building set includes:** Headquarters, Storehouse, Woodcutter, Forester, Sawmill, Quarry, Farm, Well, Bakery, Rations kitchen, Meal hall, Coal mine, Iron mine, Deep coal mine, Deep iron mine, Smelter, Workshop, Storage yard.
 
 ---
 
@@ -177,54 +228,127 @@ Each chain must be testable in isolation and as an integrated scenario.
 
 ---
 
-## 19. Workers
+## 19. Warehouse / HQ Worker Provisioning
 
-- **ECON-WORK-001:** Workers are assigned to buildings or construction sites
-- **ECON-WORK-002:** Production and construction progress require assigned workers (simplified: 1 worker = 1 work unit per tick unless configured otherwise)
-- **ECON-WORK-003:** `AssignWorkerCommand` or `SetWorkerPolicyCommand` controls assignment
+Workers are **not** freely assignable without supply. Simplified original rules:
 
----
+- **ECON-WORKER-001:** Production buildings request required worker types (e.g. woodcutter, miner, carrier operator)
+- **ECON-WORKER-002:** Workers are supplied from **Headquarters** or **Storehouses** connected by road network
+- **ECON-WORKER-003:** Missing workers pause production with clear diagnostic
+- **ECON-WORKER-004:** Some worker types require tools before assignment (see §20)
+- **ECON-WORKER-005:** Worker assignment, release, and shortage emit events and appear in diagnostics
 
-## 20. Roads and Road Nodes
-
-- **ECON-ROAD-001:** Roads connect adjacent hexes; placement requires valid terrain and ownership
-- **ECON-ROAD-002:** `RemoveRoadCommand` removes road if no blocking constraints
-- **ECON-NODE-001:** Road nodes are junctions for carrier pickup/delivery; at least one node adjacent to each building port
-- **ECON-NODE-002:** Roads must form a connected network for carriers to reach destinations
+Player commands may influence policy (`AssignWorkerCommand`, `SetWorkerPolicyCommand`) but cannot bypass availability rules.
 
 ---
 
-## 21. Pathfinding
+## 20. Tool-Based Worker Availability
 
-- **ECON-PATH-001:** Carriers pathfind on the road network graph (nodes and edges)
-- **ECON-PATH-002:** Blocked paths emit events and diagnostics with failure reason
-- **ECON-PATH-003:** Path cost may incorporate slope at hex endpoints
+Run 02 uses generic `tools` ware. Schema must support future tool categories without rewrite:
+
+- `cutting_tool`, `digging_tool`, `building_tool`, `farming_tool`, `mining_tool`, `smithing_tool` (future)
+
+- **ECON-TOOL-001:** Specialist workers may require tools (configurable per worker type)
+- **ECON-TOOL-002:** Missing tools block worker creation or assignment
+- **ECON-TOOL-003:** Tool requirements are configurable by worker type in data files
+- **ECON-TOOL-004:** Tool shortages appear in diagnostics and emit events
+
+Run 02 minimum: assigning a miner or woodcutter consumes or reserves `tools` per config.
 
 ---
 
-## 22. Logistics and Delivery Jobs
+## 21. Forest Management
+
+Forest is dynamic, not a static infinite deposit.
+
+- **ECON-FOREST-001:** Forest hexes have `tree_density` (integer 0–100 or equivalent)
+- **ECON-FOREST-002:** Woodcutters reduce tree density on worked hexes when producing timber
+- **ECON-FOREST-003:** Foresters increase tree density over time on adjacent forest hexes
+- **ECON-FOREST-004:** Low tree density reduces or blocks timber production
+- **ECON-FOREST-005:** Forest depletion and renewal emit events and appear in diagnostics/overlays
+
+---
+
+## 22. Food Tiers and Miner Support
+
+Food is functional production support, not decorative output.
+
+- **ECON-FOOD-001:** Food wares (`bread`, `rations`, `meals`) can be consumed as production support
+- **ECON-FOOD-002:** Mines require food delivery to operate
+- **ECON-FOOD-003:** Basic mines accept `rations`; upgraded/deep mines require `meals` (configurable)
+- **ECON-FOOD-004:** Missing food pauses mine production
+- **ECON-FOOD-005:** Food shortages appear in diagnostics
+
+Food delivery uses the normal carrier logistics system.
+
+---
+
+## 23. Mine Depth / Mine Upgrade Tiers
+
+- **ECON-MINE-001:** Mines require matching revealed deposits on map hexes
+- **ECON-MINE-002:** Mines consume food support while producing
+- **ECON-MINE-003:** Deposits deplete over time; output reduces or stops when exhausted
+- **ECON-MINE-004:** Mines have at least **basic** and **upgraded/deep** tier (via upgrade or separate building type)
+- **ECON-MINE-005:** Higher-tier mines require higher-tier food and/or more inputs; produce more efficiently or access deeper deposit reserves
+- **ECON-MINE-006:** Depletion and missing support appear in diagnostics
+
+---
+
+## 24. Building Upgrades / Enhancements
+
+- **ECON-UPGRADE-001:** Some completed buildings have configured upgrade targets (e.g. sawmill → enhanced sawmill, coal mine → deep coal mine)
+- **ECON-UPGRADE-002:** Upgrades require delivered materials and builder work
+- **ECON-UPGRADE-003:** Upgrades use construction/logistics system (construction site at same footprint)
+- **ECON-UPGRADE-004:** Upgraded buildings expose changed capabilities (speed, storage, slots, recipes)
+- **ECON-UPGRADE-005:** Upgrade progress and completion emit events
+
+Command: `UpgradeBuildingCommand` (target building id, upgrade target type).
+
+---
+
+## 25. Roads, Slope, and Capacity
+
+Roads are not a thin connected/not-connected graph only.
+
+- **ECON-ROAD-001:** Roads connect adjacent legal hexes over hex paths/edges
+- **ECON-ROAD-002:** Terrain affects road legality
+- **ECON-ROAD-003:** Slope affects road legality or movement cost
+- **ECON-ROAD-004:** Road nodes act as transfer/buffer points (ware staging)
+- **ECON-ROAD-005:** Carriers transport wares along road network edges
+- **ECON-ROAD-006:** Road capacity or congestion is represented (at minimum in diagnostics; may limit concurrent carriers per segment)
+- **ECON-ROAD-007:** Blocked routes appear in diagnostics with reason
+
+`RemoveRoadCommand` remains valid where no blocking constraints exist.
+
+Road nodes (**ECON-NODE-001**): at least one node adjacent to each building port; network must be connected for delivery.
+
+Pathfinding (**ECON-PATH-001**–**003**): carriers pathfind on road graph; slope may affect cost; blocked paths emit events.
+
+---
+
+## 26. Logistics and Delivery Jobs
 
 - **ECON-JOB-001:** When a site needs wares, a delivery job is created
-- **ECON-JOB-002:** Jobs are assigned to idle carriers by priority
+- **ECON-JOB-002:** Jobs assigned to idle carriers by priority
 - **ECON-JOB-003:** Job lifecycle: created → assigned → in_transit → delivered | blocked
 
 ---
 
-## 23. Carriers
+## 27. Carriers
 
 - **ECON-CARR-001:** Carriers carry one ware type at a time (simplified)
-- **ECON-CARR-002:** Carriers move one edge per tick along computed path (configurable speed)
+- **ECON-CARR-002:** Carriers move along road edges per tick (configurable speed)
 
 ---
 
-## 24. Storage
+## 28. Storage
 
-- **ECON-STOR-001:** Storage buildings hold wares up to capacity
+- **ECON-STOR-001:** Storehouses and HQ hold wares and available workers up to capacity
 - **ECON-STOR-002:** Storage full emits event and blocks input delivery
 
 ---
 
-## 25. Construction Sites
+## 29. Construction Sites
 
 - **ECON-CONS-001:** Construction consumes delivered wares and builder work over ticks
 - **ECON-CONS-002:** Progress events emitted each tick while active
@@ -232,7 +356,7 @@ Each chain must be testable in isolation and as an integrated scenario.
 
 ---
 
-## 26. Economy Priorities
+## 30. Economy Priorities
 
 - **ECON-PRI-001:** `SetConstructionPriorityCommand` orders competing construction sites
 - **ECON-PRI-002:** `SetProductionPriorityCommand` orders production at buildings
@@ -240,40 +364,70 @@ Each chain must be testable in isolation and as an integrated scenario.
 
 ---
 
-## 27. Required Commands
+## 31. Economy Statistics and Diagnostics
 
-| Command | Rule ID | Description |
-|---------|---------|-------------|
-| PlaceRoadCommand | ECON-CMD-ROAD-001 | Place road on hex edge |
-| RemoveRoadCommand | ECON-CMD-ROAD-002 | Remove road segment |
-| PlaceBuildingPlanCommand | ECON-CMD-BLD-001 | Place building plan footprint |
-| CancelConstructionCommand | ECON-CMD-BLD-002 | Cancel in-progress construction |
-| SetConstructionPriorityCommand | ECON-CMD-PRI-001 | Set construction priority |
-| SetProductionPriorityCommand | ECON-CMD-PRI-002 | Set production priority |
-| SetWarePriorityCommand | ECON-CMD-PRI-003 | Set ware routing priority |
-| EnableBuildingCommand | ECON-CMD-BLD-003 | Enable production at building |
-| DisableBuildingCommand | ECON-CMD-BLD-004 | Disable production at building |
-| AssignWorkerCommand | ECON-CMD-WORK-001 | Assign worker to building/site |
-| SetWorkerPolicyCommand | ECON-CMD-WORK-002 | Alternative: auto/manual worker policy |
+Required diagnostic fields (snapshot + exportable):
 
-All commands return structured result: `{ accepted, reason, events[] }`.
+| Category | Content |
+|----------|---------|
+| Ware totals | by type, by storage location |
+| Production | building status, paused reasons |
+| Construction | active sites, blocked sites, missing wares |
+| Delivery | active jobs, blocked jobs |
+| Utilisation | carrier utilisation, worker utilisation |
+| Network | road congestion, connectivity gaps |
+| Resources | deposit depletion, forest tree density summary |
+| Shortages | food, tools, workers |
+| Routing | no-route problems |
+| Progress | economy progress score toward victory |
+| Stall | primary stall reason |
+
+- **ECON-DIAG-001:** Per-building and per-site diagnostic records
+- **ECON-DIAG-002:** Global economy health summary in snapshot
+- **ECON-DIAG-003:** Diagnostics update when state changes
+- **ECON-DIAG-004:** Statistics exportable to CSV (see §36)
 
 ---
 
-## 28. Required Event Categories
+## 32. Required Commands
+
+| Command | Rule ID | Description |
+|---------|---------|-------------|
+| PlaceRoadCommand | ECON-CMD-ROAD-001 | Place road segment |
+| RemoveRoadCommand | ECON-CMD-ROAD-002 | Remove road segment |
+| PlaceBuildingPlanCommand | ECON-CMD-BLD-001 | Place building plan |
+| CancelConstructionCommand | ECON-CMD-BLD-002 | Cancel construction |
+| UpgradeBuildingCommand | ECON-CMD-BLD-003 | Start building upgrade |
+| EnableBuildingCommand | ECON-CMD-BLD-004 | Enable production |
+| DisableBuildingCommand | ECON-CMD-BLD-005 | Disable production |
+| SetConstructionPriorityCommand | ECON-CMD-PRI-001 | Construction priority |
+| SetProductionPriorityCommand | ECON-CMD-PRI-002 | Production priority |
+| SetWarePriorityCommand | ECON-CMD-PRI-003 | Ware routing priority |
+| AssignWorkerCommand | ECON-CMD-WORK-001 | Request/policy for worker assignment |
+| SetWorkerPolicyCommand | ECON-CMD-WORK-002 | Auto/manual worker provisioning policy |
+
+All commands return: `{ accepted, reason, events[] }`.
+
+---
+
+## 33. Required Event Categories
 
 | Category | Rule ID |
 |----------|---------|
 | game_created | ECON-EVT-001 |
 | tick_advanced | ECON-EVT-002 |
-| road_placed / removed / blocked | ECON-EVT-003 |
+| road_placed / removed / blocked / congested | ECON-EVT-003 |
 | building_plan_placed | ECON-EVT-004 |
 | construction_started / progressed / completed | ECON-EVT-005 |
+| upgrade_started / progressed / completed | ECON-EVT-017 |
 | delivery_job_created / assigned / blocked | ECON-EVT-006 |
 | ware_reserved / picked_up / moved / delivered / consumed | ECON-EVT-007 |
-| worker_assigned / moved | ECON-EVT-008 |
+| worker_assigned / released / unavailable | ECON-EVT-008 |
 | production_started / paused / completed | ECON-EVT-009 |
 | resource_extracted / depleted / renewed | ECON-EVT-010 |
+| tree_density_changed / forest_depleted / forest_renewed | ECON-EVT-018 |
+| food_consumed / food_missing | ECON-EVT-019 |
+| tool_consumed / tool_missing | ECON-EVT-020 |
 | storage_full | ECON-EVT-011 |
 | input_missing | ECON-EVT-012 |
 | output_blocked | ECON-EVT-013 |
@@ -283,91 +437,134 @@ All commands return structured result: `{ accepted, reason, events[] }`.
 
 ---
 
-## 29. Diagnostics
+## 34. Bots (Run 02 minimum)
 
-- **ECON-DIAG-001:** Per-building and per-site diagnostic records: status, missing inputs, blocked outputs, path failures
-- **ECON-DIAG-002:** Global economy health summary in snapshot
-- **ECON-DIAG-003:** Diagnostics update every tick when state changes
+- **ECON-BOT-001:** Heuristic economy bot uses same command API as humans
+- **ECON-BOT-002:** Bot must complete ECON-SMOKE-005 (workshop via full logistics chain)
 
----
-
-## 30. Bots
-
-- **ECON-BOT-001:** Bots submit same commands as humans via Python API
-- **ECON-BOT-002:** Minimal bot: place roads, building plan, set priorities (RUN_04)
+Formal bot framework expansion is RUN_04; Run 02 includes minimal heuristic bot for smoke proof.
 
 ---
 
-## 31. Tests
+## 35. Tests
 
 | Category | Rule ID | Examples |
 |----------|---------|----------|
 | Unit | ECON-TEST-UNIT | `test_ECON_ROAD_001_roads_connect_adjacent_hexes` |
-| Integration | ECON-TEST-INT | `test_ECON_PATH_003_blocked_path_returns_failure_reason` |
-| Scenario | ECON-TEST-SCEN | Full chain: timber → planks → tools → building |
+| Integration | ECON-TEST-INT | `test_ECON_WORKER_003_missing_worker_pauses_production` |
+| Scenario | ECON-TEST-SCEN | One test per bundled scenario map (§37) |
 | Replay hash | ECON-TEST-REP | Same seed+log → same hash |
+
+Every rule ID in §19–§31 must have at least one matrix row in `docs/testing/01_rule_contract_test_matrix.md`.
 
 ---
 
-## 32. Smoke Tests
+## 36. Data Exports
+
+In addition to snapshot JSON and event log (JSON or JSONL):
+
+| Export | Content |
+|--------|---------|
+| production_status.csv | Per-building production state |
+| construction_status.csv | Active/blocked construction sites |
+| delivery_jobs.csv | Active/blocked jobs |
+| resource_status.csv | Deposits, forest density summary |
+| worker_carrier_status.csv | Utilisation, assignments |
+| bot_decision.csv | Heuristic bot commands per tick (when bot active) |
+
+---
+
+## 37. Deterministic Scenarios (Required)
+
+Each scenario is a bundled map fixture with seed, victory/stall config, and expected hash or event assertions:
+
+| Scenario | Purpose |
+|----------|---------|
+| `tiny_success_map` | Minimal win path |
+| `blocked_route_map` | No-route / blocked delivery diagnostics |
+| `missing_resource_map` | Missing deposit/input stall |
+| `priority_test_map` | Construction/ware priority ordering |
+| `storage_full_map` | Storage full blocks chain |
+| `pathfinding_test_map` | Multi-node path selection |
+| `forest_depletion_regrowth_map` | ECON-FOREST-* behaviour |
+| `mine_food_support_map` | ECON-FOOD-* and ECON-MINE-* |
+| `tool_shortage_worker_block_map` | ECON-TOOL-* and ECON-WORKER-* |
+| `building_upgrade_map` | ECON-UPGRADE-* |
+
+---
+
+## 38. Smoke Tests
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| ECON-SMOKE-001 | Build road network between two nodes | Carriers can path |
-| ECON-SMOKE-002 | Complete wood → planks chain | Planks in storage |
-| ECON-SMOKE-003 | Complete full building construction | Building completed event |
-| ECON-SMOKE-004 | Replay 500 ticks | Hash match |
+| ECON-SMOKE-001 | Road network with slope/terrain | Carriers path; ECON-ROAD-* satisfied |
+| ECON-SMOKE-002 | Timber → planks chain | Planks in storage |
+| ECON-SMOKE-003 | Full building construction | construction_completed |
+| ECON-SMOKE-004 | 500-tick replay | Hash match |
+| ECON-SMOKE-005 | Heuristic bot → completed **Workshop** | Full logistics chain (see below) |
+
+**ECON-SMOKE-005** must require actual:
+
+- Road placement and road nodes
+- Carriers and ware movement
+- Timber/planks, stone, iron/coal/ingots chains
+- Tool production
+- Construction site with delivered materials and builder work
+- Worker/tool provisioning from HQ/Storehouse
+- Diagnostics, event log, snapshot export
 
 ---
 
-## 33. Replay
+## 39. Replay
 
 - **ECON-REP-001:** Command log + initial state + seed replays identically
-- **ECON-REP-002:** Replay export/import JSON format documented in architecture docs
+- **ECON-REP-002:** Replay export/import JSON documented in architecture docs
 
 ---
 
-## 34. Configuration / Data
+## 40. Configuration / Data
 
-- Buildings, recipes, terrain, map fixtures in YAML/JSON per `docs/architecture/06_config_and_data_schema.md`
-- Scenario files define map, starting entities, victory conditions
-
----
-
-## 35. Deterministic Scenarios
-
-At least three bundled scenarios: small tutorial map, medium chain test, stall diagnostic test. Each has expected event sequence or hash.
+- Buildings, recipes, worker types, tool requirements, upgrades, terrain, maps in YAML/JSON per `docs/architecture/06_config_and_data_schema.md`
+- Tool category schema optional in Run 02; generic `tools` required
+- Scenario files reference map fixtures in §37
 
 ---
 
-## 36. Future Hybrid Compatibility
+## 41. Future Hybrid Compatibility
 
-- Ware types and building footprints must be extensible for military buildings (RUN_07)
-- Road network and carriers serve hybrid logistics-fed production
-- No economy shortcuts that bypass ware delivery (reserved for hybrid rules in `04_`)
+- Ware types, worker provisioning, and road logistics extensible for military buildings (RUN_07)
+- No economy shortcuts that bypass ware delivery
+- HQ/Storehouse model supports hybrid military construction queues
 
 ---
 
-## 37. Performance Expectations
+## 42. Performance Expectations
 
-- 64×64 hex map, 50 carriers, 30 buildings: tick under 50ms on dev hardware
+- 64×64 hex map, 50 carriers, 40 buildings: tick under 50ms on dev hardware
 - Snapshot export under 100ms
+- CSV exports under 200ms
 
 ---
 
-## 38. Definition of Done (RUN_02)
+## 43. Definition of Done (RUN_02)
 
-- [ ] All mechanic families in Section coverage exist in state
-- [ ] All required commands validated and tested
-- [ ] All event categories emitted in appropriate scenarios
-- [ ] All production chains completable in integration test
-- [ ] Diagnostics report stall reasons
-- [ ] Replay hash test passes
-- [ ] Smoke tests ECON-SMOKE-001 through 004 pass
-- [ ] No Godot code required for above
+> Run 02 is complete only when **every major economy mechanic family** is implemented in simplified, original, deterministic, testable form. A mechanic may be simple, but it must not be a placeholder. It must affect state, emit events where relevant, appear in diagnostics, and have tests.
+
+Checklist:
+
+- [ ] Widelands-like coverage families §19–§31 all implemented (not Widelands parity)
+- [ ] All production chains §16 completable
+- [ ] All commands §32 validated and tested
+- [ ] All event categories §33 emitted in appropriate scenarios
+- [ ] All ten scenarios §37 pass with deterministic hashes where configured
+- [ ] All smoke tests §38 including ECON-SMOKE-005 pass
+- [ ] Statistics/diagnostics §31 and exports §36 functional
+- [ ] Snapshot layers §13 complete for Godot-readiness
+- [ ] Replay hash verification passes
+- [ ] No military, combat, multiplayer, campaigns, ports, or Godot code in RUN_02
 
 ---
 
-## 39. Cursor Final Report Format
+## 44. Cursor Final Report Format
 
 Per `.cursor/rules/07-final-report-format.mdc`.

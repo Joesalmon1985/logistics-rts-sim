@@ -15,10 +15,13 @@ End-to-end smoke scenarios per run. Pass = all criteria met headlessly unless no
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| ECON-SMOKE-001 | Road network | Carriers path between nodes |
+| ECON-SMOKE-001 | Road network (terrain/slope) | Carriers path; road diagnostics OK |
 | ECON-SMOKE-002 | Timber → planks | Planks in storage |
 | ECON-SMOKE-003 | Full building | construction_completed event |
 | ECON-SMOKE-004 | 500-tick replay | Hash match |
+| ECON-SMOKE-005 | Heuristic bot → Workshop | Full logistics chain via bot; see `02_` §38 |
+
+Bundled scenario maps (each must pass as scenario tests): `tiny_success_map`, `blocked_route_map`, `missing_resource_map`, `priority_test_map`, `storage_full_map`, `pathfinding_test_map`, `forest_depletion_regrowth_map`, `mine_food_support_map`, `tool_shortage_worker_block_map`, `building_upgrade_map`.
 
 ## RUN_03 — Trial Military Game
 

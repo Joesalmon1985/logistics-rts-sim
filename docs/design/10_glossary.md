@@ -58,9 +58,14 @@ Test naming: `test_{PREFIX}_{SUBSYSTEM}_{NNN}_{short_description}` — e.g. `tes
 
 | Term | Definition |
 |------|------------|
-| **Ware** | A transportable economic good (timber, planks, grain, tools, etc.). Canonical term — not "item", "good", or "material". |
-| **Deposit** | A map resource node (forest, rock, coal, iron, fertile land, water source) subject to extraction or renewal rules. |
-| **Worker** | An entity assigned to a building or construction site. Performs production or building labour. |
+| **Ware** | A transportable economic good (timber, planks, rations, tools, etc.). Canonical term — not "item", "good", or "material". |
+| **Deposit** | A map resource node (forest, rock, coal, iron, fertile land, water source) subject to extraction or depletion rules. |
+| **Tree density** | Per-hex forest measure (0–100). Woodcutters reduce it; foresters increase it. Affects timber production. |
+| **Headquarters (HQ)** | Starting hub building. Holds available workers and initial wares. |
+| **Storehouse** | Storage building that holds wares and available workers for provisioning. |
+| **Worker** | A typed labour unit (woodcutter, miner, etc.) provisioned from HQ/Storehouse to buildings. Not freely created without supply. |
+| **Tool** | Ware (generic `tools` in Run 02) required before some workers can be assigned. Schema supports tool categories later. |
+| **Rations / meals** | Food support tiers for mines. Rations = basic; meals = upgraded/deep mines. |
 | **Carrier** | An entity that transports wares along roads between road nodes, storage, and buildings. |
 | **Road** | A built connection on hex edges or hexes enabling carrier pathfinding. |
 | **Road node** | A junction point on the road network where carriers pick up, drop off, or change direction. Also called **flag** in some docs — prefer **road node**. |
@@ -118,8 +123,13 @@ Test naming: `test_{PREFIX}_{SUBSYSTEM}_{NNN}_{short_description}` — e.g. `tes
 
 | Placeholder | Role |
 |-------------|------|
-| Woodcutter | Extracts timber from forest |
+| Woodcutter | Extracts timber from forest (tree density) |
+| Forester | Increases tree density on adjacent forest hexes |
 | Sawmill | Timber → planks |
+| Rations kitchen | Bread/grain → rations |
+| Meal hall | Rations → meals |
+| Headquarters | Worker pool and starting storage |
+| Storehouse | Worker pool and ware storage |
 | Quarry | Rock deposit → stone |
 | Farm / Well | Fertile land / water → grain / water |
 | Bakery | Grain + water → bread |

@@ -6,6 +6,12 @@
 
 > All major mechanic families represented by simplified, original, testable systems.
 
+For the Trial Economy Game specifically:
+
+> **Widelands-like mechanic coverage, not Widelands feature parity.**
+
+The economy engine must include all major settlement-logistics mechanic families (roads, carriers, chains, worker provisioning, forest management, mine food support, upgrades, etc.) in original simplified form. It does **not** need Widelands tribes, campaigns, copied data, or full content breadth.
+
 This does **not** mean cloning Widelands, OpenRA, Command & Conquer, or Red Alert. Each family must exist in state, be tested deterministically, and appear in diagnostics where applicable — but rules, names, and balance are original.
 
 ## Traceability Requirement
@@ -32,20 +38,30 @@ Every mechanic family below must appear in:
 | Road nodes | ECON-NODE | `02_` |
 | Pathfinding | ECON-PATH | `02_` |
 | Wares | ECON-WARE | `02_` |
-| Workers | ECON-WORK | `02_` |
+| HQ / Storehouse worker provisioning | ECON-WORKER | `02_` |
+| Tool-based worker availability | ECON-TOOL | `02_` |
+| Forest management (density, forester) | ECON-FOREST | `02_` |
+| Food tiers / miner support | ECON-FOOD | `02_` |
+| Mine depth / upgrade tiers | ECON-MINE | `02_` |
+| Building upgrades | ECON-UPGRADE | `02_` |
+| Road quality, slope, capacity | ECON-ROAD | `02_` |
 | Carriers | ECON-CARR | `02_` |
-| Storage | ECON-STOR | `02_` |
+| Storage (HQ, Storehouse) | ECON-STOR | `02_` |
 | Production recipes | ECON-REC | `02_` |
 | Production chains | ECON-CHAIN | `02_` |
 | Construction sites | ECON-CONS | `02_` |
 | Builder work | ECON-BUILDER | `02_` |
 | Priorities | ECON-PRI | `02_` |
-| Diagnostics | ECON-DIAG | `02_` |
-| Bots | ECON-BOT | `02_` |
-| Snapshot export | ECON-SNAP | `02_` |
+| Economy statistics / diagnostics | ECON-DIAG | `02_` |
+| Data exports (CSV, JSONL) | ECON-EXPORT | `02_` |
+| Godot-ready snapshot layers | ECON-SNAP | `02_` |
+| Heuristic economy bot (smoke) | ECON-BOT | `02_` |
 | Replay | ECON-REP | `02_` |
+| Deterministic scenario maps | ECON-SCEN | `02_` |
 
-**Run:** RUN_02, RUN_04 (bots/replay)
+**Explicitly not required for Trial Economy:** tribes, campaigns, map editor, multiplayer, ports/ships, military territory, copied Widelands content.
+
+**Run:** RUN_02 (full engine), RUN_04 (formal bots/replay expansion)
 
 ---
 

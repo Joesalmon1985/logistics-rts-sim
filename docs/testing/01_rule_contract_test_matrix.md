@@ -4,6 +4,8 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 
 ## Economy (ECON-*)
 
+### Map, terrain, buildability
+
 | Rule ID | Test type | Example test name |
 |---------|-----------|-------------------|
 | ECON-MAP-001 | unit | test_ECON_MAP_001_axial_neighbors_correct |
@@ -11,23 +13,125 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 | ECON-TERR-001 | unit | test_ECON_TERR_001_water_not_buildable |
 | ECON-SLOPE-001 | unit | test_ECON_SLOPE_001_slope_blocks_steep_road |
 | ECON-BUILD-001 | unit | test_ECON_BUILD_001_footprint_overlap_rejected |
+
+### Roads, nodes, pathfinding
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
 | ECON-ROAD-001 | unit | test_ECON_ROAD_001_roads_connect_adjacent_hexes |
-| ECON-NODE-001 | integration | test_ECON_NODE_001_building_requires_adjacent_node |
+| ECON-ROAD-002 | unit | test_ECON_ROAD_002_terrain_blocks_road_on_water |
+| ECON-ROAD-003 | unit | test_ECON_ROAD_003_slope_affects_road_legality |
+| ECON-ROAD-004 | integration | test_ECON_ROAD_004_node_buffers_wares |
+| ECON-ROAD-005 | integration | test_ECON_ROAD_005_carrier_moves_along_road |
+| ECON-ROAD-006 | integration | test_ECON_ROAD_006_congestion_in_diagnostics |
+| ECON-ROAD-007 | integration | test_ECON_ROAD_007_blocked_route_in_diagnostics |
 | ECON-PATH-001 | unit | test_ECON_PATH_001_shortest_path_on_network |
 | ECON-PATH-003 | integration | test_ECON_PATH_003_blocked_path_returns_failure_reason |
+
+### Workers, tools, provisioning
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-WORKER-001 | unit | test_ECON_WORKER_001_building_requests_worker_type |
+| ECON-WORKER-002 | integration | test_ECON_WORKER_002_worker_supplied_from_storehouse |
+| ECON-WORKER-003 | integration | test_ECON_WORKER_003_missing_worker_pauses_production |
+| ECON-WORKER-004 | integration | test_ECON_WORKER_004_tool_required_before_assign |
+| ECON-WORKER-005 | integration | test_ECON_WORKER_005_shortage_emits_event |
+| ECON-TOOL-001 | unit | test_ECON_TOOL_001_specialist_requires_tools |
+| ECON-TOOL-002 | integration | test_ECON_TOOL_002_missing_tool_blocks_assignment |
+| ECON-TOOL-003 | unit | test_ECON_TOOL_003_requirements_configurable_by_type |
+| ECON-TOOL-004 | integration | test_ECON_TOOL_004_shortage_in_diagnostics |
+
+### Forest management
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-FOREST-001 | unit | test_ECON_FOREST_001_tree_density_on_hex |
+| ECON-FOREST-002 | integration | test_ECON_FOREST_002_woodcutter_reduces_density |
+| ECON-FOREST-003 | integration | test_ECON_FOREST_003_forester_increases_density |
+| ECON-FOREST-004 | integration | test_ECON_FOREST_004_low_density_blocks_timber |
+| ECON-FOREST-005 | scenario | test_ECON_FOREST_005_depletion_regrowth_events |
+
+### Food and mines
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-FOOD-001 | unit | test_ECON_FOOD_001_food_consumed_as_support |
+| ECON-FOOD-002 | integration | test_ECON_FOOD_002_mine_requires_food |
+| ECON-FOOD-003 | integration | test_ECON_FOOD_003_deep_mine_requires_meals |
+| ECON-FOOD-004 | integration | test_ECON_FOOD_004_missing_food_pauses_mine |
+| ECON-FOOD-005 | integration | test_ECON_FOOD_005_shortage_in_diagnostics |
+| ECON-MINE-001 | unit | test_ECON_MINE_001_requires_matching_deposit |
+| ECON-MINE-002 | integration | test_ECON_MINE_002_consumes_food_while_producing |
+| ECON-MINE-003 | integration | test_ECON_MINE_003_deposit_depletes_over_time |
+| ECON-MINE-004 | integration | test_ECON_MINE_004_basic_and_deep_tier |
+| ECON-MINE-005 | integration | test_ECON_MINE_005_deep_requires_meals |
+| ECON-MINE-006 | integration | test_ECON_MINE_006_depletion_in_diagnostics |
+
+### Upgrades
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-UPGRADE-001 | unit | test_ECON_UPGRADE_001_building_has_upgrade_target |
+| ECON-UPGRADE-002 | integration | test_ECON_UPGRADE_002_upgrade_requires_materials |
+| ECON-UPGRADE-003 | integration | test_ECON_UPGRADE_003_uses_logistics_construction |
+| ECON-UPGRADE-004 | integration | test_ECON_UPGRADE_004_upgraded_changes_capabilities |
+| ECON-UPGRADE-005 | integration | test_ECON_UPGRADE_005_upgrade_emits_events |
+
+### Logistics, wares, chains
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
 | ECON-WARE-001 | unit | test_ECON_WARE_001_ware_types_enumerated |
 | ECON-CARR-001 | integration | test_ECON_CARR_001_carrier_delivers_one_ware |
 | ECON-JOB-001 | integration | test_ECON_JOB_001_job_created_on_missing_input |
 | ECON-STOR-001 | unit | test_ECON_STOR_001_storage_full_blocks_input |
 | ECON-CONS-001 | integration | test_ECON_CONS_001_construction_consumes_wares |
 | ECON-CHAIN-001 | scenario | test_ECON_CHAIN_001_forest_to_timber |
-| ECON-CHAIN-002 | scenario | test_ECON_CHAIN_002_timber_to_planks |
+| ECON-CHAIN-010 | scenario | test_ECON_CHAIN_010_workshop_produces_tools |
 | ECON-CHAIN-011 | scenario | test_ECON_CHAIN_011_full_building_completion |
 | ECON-PRI-001 | unit | test_ECON_PRI_001_construction_priority_order |
+
+### Diagnostics, snapshot, determinism
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-DIAG-001 | integration | test_ECON_DIAG_001_per_building_status |
+| ECON-DIAG-004 | integration | test_ECON_DIAG_004_csv_exports_generated |
+| ECON-SNAP-002 | integration | test_ECON_SNAP_002_all_display_layers_present |
 | ECON-DET-002 | scenario | test_ECON_DET_002_replay_hash_stable |
 | ECON-STALL-001 | integration | test_ECON_STALL_001_stall_emits_diagnostic |
+
+### Commands and events
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
 | ECON-CMD-ROAD-001 | unit | test_ECON_CMD_ROAD_001_place_road_command |
+| ECON-CMD-BLD-003 | unit | test_ECON_CMD_BLD_003_upgrade_building_command |
 | ECON-EVT-007 | integration | test_ECON_EVT_007_ware_delivered_event_emitted |
+| ECON-EVT-018 | integration | test_ECON_EVT_018_tree_density_changed_event |
+
+### Scenarios (bundled maps)
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-SCEN-tiny_success | scenario | test_scenario_tiny_success_map |
+| ECON-SCEN-blocked_route | scenario | test_scenario_blocked_route_map |
+| ECON-SCEN-missing_resource | scenario | test_scenario_missing_resource_map |
+| ECON-SCEN-priority_test | scenario | test_scenario_priority_test_map |
+| ECON-SCEN-storage_full | scenario | test_scenario_storage_full_map |
+| ECON-SCEN-pathfinding | scenario | test_scenario_pathfinding_test_map |
+| ECON-SCEN-forest | scenario | test_scenario_forest_depletion_regrowth_map |
+| ECON-SCEN-mine_food | scenario | test_scenario_mine_food_support_map |
+| ECON-SCEN-tool_shortage | scenario | test_scenario_tool_shortage_worker_block_map |
+| ECON-SCEN-upgrade | scenario | test_scenario_building_upgrade_map |
+
+### Smoke and bot
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| ECON-SMOKE-005 | smoke | test_ECON_SMOKE_005_bot_builds_workshop_via_logistics |
+| ECON-BOT-001 | smoke | test_ECON_BOT_001_heuristic_uses_command_api |
 
 ## Military (MIL-*)
 

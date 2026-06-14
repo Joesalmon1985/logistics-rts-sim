@@ -28,7 +28,7 @@ This is **not** Widelands, OpenRA, Command & Conquer, or Red Alert. We use origi
 
 ## Mechanic Coverage Definition
 
-"All functionality" means: **all major mechanic families represented by simplified, original, testable systems.** See `docs/design/01_mechanic_coverage_contract.md`.
+"All functionality" means: **all major mechanic families represented by simplified, original, testable systems** — for economy, **Widelands-like coverage without Widelands feature parity**. See `docs/design/01_mechanic_coverage_contract.md`.
 
 ## Development Model
 

@@ -17,10 +17,13 @@ Add bots, replay export/import, and diagnostics telemetry for economy and milita
 
 ## In-Scope Work
 
-- Bot interface and minimal economy + military bots
+- Formal bot interface (extends RUN_02 heuristic bot)
+- Economy + military bots using observation/snapshot API
 - Replay export/import JSON
-- Telemetry/diagnostics export in snapshots
+- Telemetry/diagnostics export; bot_decision CSV
 - BOT-SMOKE-*, REP-SMOKE-*
+
+Note: RUN_02 already requires a minimal heuristic economy bot for ECON-SMOKE-005. RUN_04 generalizes the bot framework and adds military bot.
 
 ## Out-of-Scope Work
 
@@ -43,7 +46,7 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_04 section.
 
 ## Acceptance Checklist
 
-- [ ] Economy bot completes tutorial scenario
+- [ ] Economy bot completes tutorial scenario (builds on RUN_02 ECON-SMOKE-005 heuristic)
 - [ ] Military bot wins skirmish scenario
 - [ ] Replay export/import hash identical
 - [ ] Diagnostics visible in snapshot JSON

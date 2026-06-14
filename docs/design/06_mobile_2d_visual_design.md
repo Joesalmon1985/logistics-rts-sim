@@ -18,8 +18,9 @@ See `docs/architecture/03_godot_adapter_contract.md`.
 
 | Order | Layer | Source field | Notes |
 |-------|-------|--------------|-------|
-| 0 | Terrain | `map.terrain`, `map.height` | Flat colour + height shading |
-| 1 | Ownership tint | `map.ownership` | Semi-transparent player colour |
+| 0 | Terrain | `map.terrain`, `map.height`, `map.buildability` |
+| 0b | Tree density | `map.tree_density` (forest hexes) |
+| 1 | Ownership tint | `map.ownership` |
 | 2 | Roads | `roads[]` | Edge sprites |
 | 3 | Road nodes | `road_nodes[]` | Junction markers |
 | 4 | Deposits | `deposits[]` | Overlay icons |
