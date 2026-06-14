@@ -21,6 +21,8 @@ func _initialize() -> void:
 	failures.append_array(_check_subprocess_hash_mismatch())
 	failures.append_array(_check_subprocess_invalid_ticks())
 	failures.append_array(_check_subprocess_economy_smoke_invalid())
+	failures.append_array(_check_subprocess_military_smoke_invalid())
+	failures.append_array(_check_subprocess_military_scenario_invalid())
 
 	print("—")
 	if failures.is_empty():
@@ -77,6 +79,37 @@ func _check_subprocess_invalid_ticks() -> Array[String]:
 func _check_subprocess_economy_smoke_invalid() -> Array[String]:
 	var result: Dictionary = _run_economy_smoke_subprocess(["--smoke=999"])
 	return _expect_nonzero_exit(result, "invalid economy smoke id")
+
+
+func _check_subprocess_military_smoke_invalid() -> Array[String]:
+	var result: Dictionary = _run_military_smoke_subprocess(["--smoke=999"])
+	return _expect_nonzero_exit(result, "invalid military smoke id")
+
+
+func _check_subprocess_military_scenario_invalid() -> Array[String]:
+	# A missing military scenario must fail the smoke runner, not silently pass.
+	var result: Dictionary = _run_smoke_subprocess(
+		["--variant=military_trial", "--scenario=scenarios/military/does_not_exist.json", "--ticks=10", "--seed=1", "--no-hash-check"]
+	)
+	return _expect_nonzero_exit(result, "invalid military scenario")
+
+
+func _run_military_smoke_subprocess(smoke_args: Array) -> Dictionary:
+	var godot_bin: String = OS.get_environment("GODOT")
+	if godot_bin.is_empty():
+		godot_bin = DEFAULT_GODOT
+	var project_dir: String = ProjectSettings.globalize_path("res://")
+	var user_data: String = project_dir.path_join(".godot_user")
+	var args_tail: String = " ".join(smoke_args)
+	var shell_cmd: String = (
+		"export GODOT_USER_DATA_DIR=\"%s\"; timeout %d \"%s\" --headless --path \"%s\" "
+		% [user_data, TIMEOUT_SECONDS, godot_bin, project_dir]
+		+ "--script res://sim/tools/run_military_smoke.gd -- "
+		+ args_tail
+	)
+	var output: Array = []
+	var exit_code: int = OS.execute("bash", ["-c", shell_cmd], output, true, false)
+	return {"exit_code": exit_code, "output": "\n".join(output)}
 
 
 func _run_economy_smoke_subprocess(smoke_args: Array) -> Dictionary:

@@ -1,5 +1,12 @@
 # RUN_03 — Trial Military Game
 
+> **Status: COMPLETE** (feature branch `feature/run-03-trial-military-game`). 68/68 headless
+> tests pass (13 RUN_01 + 35 RUN_02 + 20 RUN_03); MIL-SMOKE-001–009 pass; three kernel smokes,
+> economy smokes, and failure-mode integrity (incl. mandatory invalid-military-smoke /
+> invalid-military-scenario checks) all exit 0. Per-individual-rule-ID test granularity is
+> deferred to RUN_04 (no whole mechanic family deferred). See
+> `docs/audit/RUN_03_LESSONS_LEARNED.md`.
+
 ## Purpose
 
 Implement standalone RTS trial per `docs/design/03_trial_military_game_requirements.md` with direct unit control.
@@ -80,20 +87,20 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_03 section.
 
 ## Acceptance Checklist
 
-- [ ] OpenRA-like coverage families in `03_` §7–§22 implemented (not OpenRA parity)
-- [ ] Movement/range/vision/placement/pathfinding derive from the shared RUN_01 hex map; no parallel grid (DDR-029)
-- [ ] Resource harvest → processor → credits loop works (trial credits only)
-- [ ] Construction queue and unit production queues with prerequisites
-- [ ] Power gating and underpowered behaviour correct
-- [ ] Fog/shroud/vision exported per player
-- [ ] Direct MoveUnitCommand, AttackMoveCommand, PatrolCommand, GuardCommand work
-- [ ] Combat with range, cooldown, armour/type modifiers
-- [ ] Static defence turret auto-targeting works
-- [ ] Repair depot functional
-- [ ] Skirmish fixtures and seeded map generation hooks present
-- [ ] MIL-SMOKE-001–009 pass
-- [ ] Replay hash and diagnostics export verified
-- [ ] Definition of done in `03_` §31 satisfied
+- [x] OpenRA-like coverage families in `03_` §7–§22 implemented (not OpenRA parity)
+- [x] Movement/range/vision/placement/pathfinding derive from the shared RUN_01 hex map; no parallel grid (DDR-029)
+- [x] Resource harvest → processor → credits loop works (trial credits only)
+- [x] Construction queue and unit production queues with prerequisites
+- [x] Power gating and underpowered behaviour correct
+- [x] Fog/shroud/vision exported per player
+- [x] Direct MoveUnitCommand, AttackMoveCommand, PatrolCommand, GuardCommand work
+- [x] Combat with range, cooldown, armour/type modifiers
+- [x] Static defence turret auto-targeting works
+- [x] Repair depot functional
+- [x] Skirmish fixtures and seeded map generation hooks present
+- [x] MIL-SMOKE-001–009 pass
+- [x] Replay hash and diagnostics export verified
+- [x] Definition of done in `03_` §31 satisfied (per-rule-ID granularity deferred to RUN_04)
 
 ## Final Report Format
 
