@@ -43,7 +43,16 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/economy/test_econ_snap_002_all_display_layers_present.gd",
 	"res://sim/tests/economy/test_econ_det_002_replay_hash_stable.gd",
 	"res://sim/tests/economy/test_econ_cmd_road_001_place_road_command.gd",
-	"res://sim/tests/economy/test_econ_scenarios_bundled_maps.gd",
+	"res://sim/tests/economy/test_scenario_tiny_success_map.gd",
+	"res://sim/tests/economy/test_scenario_blocked_route_map.gd",
+	"res://sim/tests/economy/test_scenario_missing_resource_map.gd",
+	"res://sim/tests/economy/test_scenario_priority_test_map.gd",
+	"res://sim/tests/economy/test_scenario_storage_full_map.gd",
+	"res://sim/tests/economy/test_scenario_pathfinding_test_map.gd",
+	"res://sim/tests/economy/test_scenario_forest_depletion_regrowth_map.gd",
+	"res://sim/tests/economy/test_scenario_mine_food_support_map.gd",
+	"res://sim/tests/economy/test_scenario_tool_shortage_worker_block_map.gd",
+	"res://sim/tests/economy/test_scenario_building_upgrade_map.gd",
 ]
 
 

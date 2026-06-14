@@ -140,6 +140,70 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 | ECON-SMOKE-005 | smoke | test_ECON_SMOKE_005_bot_builds_workshop_via_logistics |
 | ECON-BOT-001 | smoke | test_ECON_BOT_001_heuristic_uses_command_api |
 
+### RUN_02 implemented coverage (actual)
+
+This subsection records the **actual** automated coverage delivered by RUN_02, distinct from
+the aspirational representative rows above. The rows above are not removed (traceability).
+
+Headless suite: `sim/tools/run_tests.gd` — **48 tests** (13 RUN_01 + 35 RUN_02), exit `0`.
+Economy smokes: `sim/tools/run_economy_smoke.gd` — ECON-SMOKE-001..005, exit `0`.
+
+Dedicated economy test files (one representative behaviour test per §19–§31 family, plus map/road/path/ware/chain/diag/snap/det/cmd):
+
+| Test file | Primary rule ID(s) | Verifies |
+|-----------|--------------------|----------|
+| test_econ_map_001_axial_neighbors_reuse | ECON-MAP-001 | shared hex neighbours reused |
+| test_econ_terr_001_water_not_buildable | ECON-TERR-001 | water not buildable |
+| test_econ_slope_001_slope_blocks_steep_road | ECON-SLOPE-001 | slope blocks steep road |
+| test_econ_build_001_footprint_overlap_rejected | ECON-BUILD-001 | footprint overlap rejected |
+| test_econ_road_001_roads_connect_adjacent_hexes | ECON-ROAD-001 | road connects adjacent hexes |
+| test_econ_road_002_terrain_blocks_road_on_water | ECON-ROAD-002 | terrain blocks road |
+| test_econ_road_007_blocked_route_in_diagnostics | ECON-ROAD-007 | blocked route in diagnostics |
+| test_econ_path_001_shortest_path_on_network | ECON-PATH-001 | shortest path on road graph |
+| test_econ_ware_001_ware_types_enumerated | ECON-WARE-001 | ware types enumerated |
+| test_econ_job_003_job_lifecycle_transitions | ECON-JOB-003 | job created→delivered lifecycle |
+| test_econ_stor_001_storage_full_blocks_input | ECON-STOR-001 | storage-full blocks input |
+| test_econ_worker_003_missing_worker_pauses_production | ECON-WORKER-003 | missing worker pauses production |
+| test_econ_tool_002_missing_tool_blocks_assignment | ECON-TOOL-002 | missing tool blocks assignment |
+| test_econ_forest_002_woodcutter_reduces_density | ECON-FOREST-002 | woodcutter reduces tree density + event |
+| test_econ_food_002_mine_requires_food | ECON-FOOD-002 | mine requires food support |
+| test_econ_mine_001_requires_matching_deposit | ECON-MINE-001 | mine requires matching deposit |
+| test_econ_upgrade_002_upgrade_requires_materials | ECON-UPGRADE-002 | upgrade requires materials |
+| test_econ_cons_003_completion_spawns_building | ECON-CONS-003 | construction completion spawns building |
+| test_econ_pri_001_construction_priority_order | ECON-PRI-001 | construction priority order |
+| test_econ_chain_001_forest_to_timber | ECON-CHAIN-001 | forest → timber chain |
+| test_econ_chain_010_workshop_produces_tools | ECON-CHAIN-010 | workshop produces tools |
+| test_econ_diag_001_per_building_status | ECON-DIAG-001 | per-building diagnostics |
+| test_econ_snap_002_all_display_layers_present | ECON-SNAP-002 | all snapshot display layers present |
+| test_econ_det_002_replay_hash_stable | ECON-DET-002 | replay hash stable |
+| test_econ_cmd_road_001_place_road_command | ECON-CMD-ROAD-001 | place-road command pipeline |
+
+Dedicated per-scenario behaviour tests (one per §37 bundled map, each asserts scenario-specific
+state/diagnostics **and** per-scenario replay-hash determinism):
+
+| Test file | Rule ID |
+|-----------|---------|
+| test_scenario_tiny_success_map | ECON-SCEN-tiny_success |
+| test_scenario_blocked_route_map | ECON-SCEN-blocked_route |
+| test_scenario_missing_resource_map | ECON-SCEN-missing_resource |
+| test_scenario_priority_test_map | ECON-SCEN-priority_test |
+| test_scenario_storage_full_map | ECON-SCEN-storage_full |
+| test_scenario_pathfinding_test_map | ECON-SCEN-pathfinding |
+| test_scenario_forest_depletion_regrowth_map | ECON-SCEN-forest |
+| test_scenario_mine_food_support_map | ECON-SCEN-mine_food |
+| test_scenario_tool_shortage_worker_block_map | ECON-SCEN-tool_shortage |
+| test_scenario_building_upgrade_map | ECON-SCEN-upgrade |
+
+**Known coverage gap (honest):** §35/§460 of `docs/design/02_trial_economy_game_requirements.md`
+calls for every *individual* rule ID in §19–§31 to additionally gain a test. RUN_02 delivers at
+least one dedicated **behaviour** test per family (state change + event/diagnostic + downstream
+effect) plus the smokes and scenario suite, but does not yet have a separate test file for every
+single rule ID enumerated above (e.g. ECON-WORKER-001/002/004/005, ECON-TOOL-001/003/004,
+ECON-FOREST-001/003/004/005, ECON-FOOD-001/003/004/005, ECON-MINE-002..006, ECON-UPGRADE-001/003/004/005,
+ECON-ROAD-003..006, ECON-PATH-002/003, ECON-PRI-002/003, ECON-CARR-*, ECON-CONS-001, ECON-DIAG-004,
+ECON-STALL-001, ECON-EVT-*). Those mechanics are implemented and exercised by family/scenario/smoke
+tests; per-rule-ID test expansion is scheduled as RUN_04 test hardening.
+
 ## Military (MIL-*)
 
 ### Economy, harvesting, credits
