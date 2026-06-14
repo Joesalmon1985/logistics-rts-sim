@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 44,
+  "map_file": "maps/economy/missing_resource_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 4,
+    "r": 4
+  },
+  "build_radius": 10,
+  "victory": {
+    "type": "complete_building",
+    "building": "quarry"
+  },
+  "expected_hash": null
+}

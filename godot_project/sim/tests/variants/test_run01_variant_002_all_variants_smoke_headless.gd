@@ -26,7 +26,13 @@ func _run_body() -> void:
 		assert_true(hash.begins_with("sha256:"))
 
 		var tick_events: int = 0
+		var economy_events: int = 0
 		for event in state.event_log.events:
 			if event.type == "tick_advanced":
 				tick_events += 1
-		assert_eq(tick_events, 3, "%s should emit tick_advanced events" % variant_id)
+			if event.type == "economy_initialized":
+				economy_events += 1
+		if variant_id == "economy_trial":
+			assert_true(economy_events >= 1, "%s should emit economy_initialized" % variant_id)
+		else:
+			assert_eq(tick_events, 3, "%s should emit tick_advanced events" % variant_id)

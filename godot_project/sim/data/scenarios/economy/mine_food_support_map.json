@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 49,
+  "map_file": "maps/economy/mine_food_support_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 4,
+    "r": 5
+  },
+  "build_radius": 10,
+  "victory": {
+    "type": "complete_building",
+    "building": "coal_mine"
+  },
+  "expected_hash": null
+}

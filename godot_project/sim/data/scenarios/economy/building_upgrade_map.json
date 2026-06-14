@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 51,
+  "map_file": "maps/economy/building_upgrade_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 4,
+    "r": 4
+  },
+  "build_radius": 8,
+  "victory": {
+    "type": "upgrade_building",
+    "building": "sawmill",
+    "target": "enhanced_sawmill"
+  },
+  "expected_hash": null,
+  "starting_buildings": [
+    {
+      "type": "sawmill",
+      "q": 6,
+      "r": 5
+    }
+  ]
+}

@@ -73,15 +73,27 @@ func _initialize() -> void:
 	state = runner.run_ticks(state, ticks)
 
 	var tick_advanced_count: int = 0
+	var economy_initialized: bool = false
 	for event in state.event_log.events:
 		if event.type == "tick_advanced":
 			tick_advanced_count += 1
-	if tick_advanced_count < ticks:
+		if event.type == "economy_initialized":
+			economy_initialized = true
+	if variant_id == "economy_trial":
+		if not economy_initialized:
+			_smoke_fail("KERN-SMOKE-002 economy_initialized event missing for economy_trial")
+			return
+		if state.tick != ticks:
+			_smoke_fail("KERN-SMOKE-002 expected tick=%d got %d" % [ticks, state.tick])
+			return
+		print("KERN-SMOKE-002 PASS: economy_initialized and tick=%d" % state.tick)
+	elif tick_advanced_count < ticks:
 		_smoke_fail(
 			"KERN-SMOKE-002 expected %d tick_advanced, got %d" % [ticks, tick_advanced_count]
 		)
 		return
-	print("KERN-SMOKE-002 PASS: %d tick_advanced events" % tick_advanced_count)
+	else:
+		print("KERN-SMOKE-002 PASS: %d tick_advanced events" % tick_advanced_count)
 
 	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
 	if int(snapshot.get("schema_version", 0)) != 1:

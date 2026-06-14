@@ -31,7 +31,14 @@ Verification must use timeout-wrapped Godot commands; exit code `0` required. Se
 | ECON-SMOKE-004 | 500-tick replay | Hash match |
 | ECON-SMOKE-005 | Heuristic bot → Workshop | Full logistics chain via bot; see `02_` §38 |
 
-Bundled scenario maps (each must pass as scenario tests): `tiny_success_map`, `blocked_route_map`, `missing_resource_map`, `priority_test_map`, `storage_full_map`, `pathfinding_test_map`, `forest_depletion_regrowth_map`, `mine_food_support_map`, `tool_shortage_worker_block_map`, `building_upgrade_map`.
+RUN_02 smoke runner: `sim/tools/run_economy_smoke.gd` (all five smokes, exit `0`). ECON-SMOKE-005
+completes the workshop in **~5s wall clock**, well under its `BOT_MAX_TICKS` budget — the earlier
+"~450s" runtime note was a debugging-era figure and is obsolete after the bot/placement/logistics fixes.
+
+Bundled scenario maps each have a **dedicated** scenario test under `sim/tests/economy/`
+(`test_scenario_<map>.gd`), run as part of `sim/tools/run_tests.gd`. Each loads the map, runs the
+scenario, asserts scenario-specific state/diagnostics, and asserts per-scenario replay-hash
+determinism: `tiny_success_map`, `blocked_route_map`, `missing_resource_map`, `priority_test_map`, `storage_full_map`, `pathfinding_test_map`, `forest_depletion_regrowth_map`, `mine_food_support_map`, `tool_shortage_worker_block_map`, `building_upgrade_map`.
 
 ## RUN_03 — Trial Military Game
 

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 45,
+  "map_file": "maps/economy/priority_test_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 4,
+    "r": 4
+  },
+  "build_radius": 8,
+  "victory": {
+    "type": "complete_building",
+    "building": "sawmill"
+  },
+  "expected_hash": null,
+  "construction_targets": [
+    {
+      "building": "sawmill",
+      "q": 4,
+      "r": 1,
+      "priority": 2
+    },
+    {
+      "building": "woodcutter",
+      "q": 4,
+      "r": 8,
+      "priority": 1
+    }
+  ]
+}

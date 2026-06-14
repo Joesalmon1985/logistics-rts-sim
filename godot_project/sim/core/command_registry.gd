@@ -38,4 +38,5 @@ static func create_default() -> CommandRegistry:
 			int(payload.get("tick", 0)),
 		)
 	)
+	EconomyCommandRegistry.register_all(registry)
 	return registry

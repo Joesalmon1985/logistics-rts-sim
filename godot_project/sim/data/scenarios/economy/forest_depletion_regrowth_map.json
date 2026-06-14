@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 48,
+  "map_file": "maps/economy/forest_depletion_regrowth_map.json",
+  "players": [
+    "p1"
+  ],
+  "hq_position": {
+    "q": 3,
+    "r": 6
+  },
+  "build_radius": 10,
+  "victory": {
+    "type": "none"
+  },
+  "expected_hash": null
+}

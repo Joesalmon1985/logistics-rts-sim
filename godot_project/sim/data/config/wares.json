@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "wares": {
+    "timber": {"display_name": "Timber", "transportable": 1},
+    "planks": {"display_name": "Planks", "transportable": 1},
+    "stone": {"display_name": "Stone", "transportable": 1},
+    "bricks": {"display_name": "Bricks", "transportable": 1},
+    "grain": {"display_name": "Grain", "transportable": 1},
+    "water": {"display_name": "Water", "transportable": 1},
+    "bread": {"display_name": "Bread", "transportable": 1},
+    "fish": {"display_name": "Fish", "transportable": 1},
+    "meat": {"display_name": "Meat", "transportable": 1},
+    "rations": {"display_name": "Rations", "transportable": 1},
+    "meals": {"display_name": "Meals", "transportable": 1},
+    "coal": {"display_name": "Coal", "transportable": 1},
+    "iron_ore": {"display_name": "Iron ore", "transportable": 1},
+    "iron_ingots": {"display_name": "Iron ingots", "transportable": 1},
+    "tools": {"display_name": "Tools", "transportable": 1},
+    "builder_work": {"display_name": "Builder work", "transportable": 0}
+  }
+}

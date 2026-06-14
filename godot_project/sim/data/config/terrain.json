@@ -1,22 +1,73 @@
 {
   "schema_version": 1,
-  "terrain_types": ["grass", "water", "rock", "forest"],
+  "terrain_types": [
+    "grass",
+    "water",
+    "rock",
+    "forest",
+    "hills",
+    "mountain",
+    "sand",
+    "swamp",
+    "fertile"
+  ],
   "terrain_defs": {
     "grass": {
       "passability": 1,
-      "buildability": 1
+      "buildability": 1,
+      "road_legal": 1,
+      "movement_cost": 1
     },
     "water": {
       "passability": 0,
-      "buildability": 0
+      "buildability": 0,
+      "road_legal": 0,
+      "movement_cost": 99
     },
     "rock": {
-      "passability": 0,
-      "buildability": 0
+      "passability": 1,
+      "buildability": 0,
+      "road_legal": 1,
+      "movement_cost": 2
     },
     "forest": {
       "passability": 1,
-      "buildability": 1
+      "buildability": 1,
+      "road_legal": 1,
+      "movement_cost": 2,
+      "default_tree_density": 80
+    },
+    "hills": {
+      "passability": 1,
+      "buildability": 1,
+      "road_legal": 1,
+      "movement_cost": 2
+    },
+    "mountain": {
+      "passability": 0,
+      "buildability": 0,
+      "road_legal": 0,
+      "movement_cost": 99
+    },
+    "sand": {
+      "passability": 1,
+      "buildability": 1,
+      "road_legal": 1,
+      "movement_cost": 2
+    },
+    "swamp": {
+      "passability": 1,
+      "buildability": 0,
+      "road_legal": 0,
+      "movement_cost": 3
+    },
+    "fertile": {
+      "passability": 1,
+      "buildability": 1,
+      "road_legal": 1,
+      "movement_cost": 1,
+      "default_fertility": 100
     }
-  }
+  },
+  "deposit_types": ["rock", "coal", "iron", "fertile", "water_source", "forest"]
 }

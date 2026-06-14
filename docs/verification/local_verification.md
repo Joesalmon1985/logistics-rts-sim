@@ -1,4 +1,4 @@
-# Local Verification — RUN_01
+# Local Verification — RUN_01 + RUN_02
 
 Godot version used for verification: **4.5.2.stable.official** (`6ce3de25a`).
 
@@ -60,17 +60,17 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (13 tests)
+## Headless unit/integration tests (39 tests — RUN_01 + RUN_02)
 
 ```bash
-timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 echo "exit=$?"
 ```
 
 Expected output includes:
 
 ```text
-Results: 13/13 ran, 13 passed, 0 failed, 0 errored
+Results: 39/39 ran, 39 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
@@ -100,6 +100,28 @@ echo "exit=$?"
 ```
 
 Expected: all four `KERN-SMOKE-*` lines pass, `EXIT: 0 (pass)`, exit code `0`.
+
+For `economy_trial`, KERN-SMOKE-002 checks `economy_initialized` and tick count (not `tick_advanced`).
+
+Pinned economy hash in `scenarios/kernel_smoke.json` (RUN_02):
+
+`sha256:1d69994a924390478e89397dc3e0ff9b5d65118eeb2995fe1de8c53a5898332b`
+
+## Economy smoke tests (ECON-SMOKE-001–005)
+
+```bash
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd
+echo "exit=$?"
+```
+
+Single smoke:
+
+```bash
+timeout 450s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd -- --smoke=005
+echo "exit=$?"
+```
+
+Expected: `ECON SMOKE PASS`, `EXIT: 0 (pass)`.
 
 ## Failure-mode integrity checks
 
