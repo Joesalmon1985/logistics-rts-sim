@@ -61,6 +61,8 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/military/military_init.gd",
 	"res://sim/military/military_tick.gd",
 	"res://sim/military/military_snapshot_exporter.gd",
+	"res://sim/military/military_skirmish.gd",
+	"res://sim/military/military_export.gd",
 	"res://sim/military/commands/place_building_command.gd",
 	"res://sim/military/commands/cancel_military_construction_command.gd",
 	"res://sim/military/commands/sell_building_command.gd",

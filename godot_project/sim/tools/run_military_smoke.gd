@@ -328,9 +328,45 @@ func _run_smoke_008(seed_value: int) -> bool:
 	return true
 
 
-func _run_smoke_009(_seed_value: int, _export_dir: String) -> bool:
-	print("MIL-SMOKE-009 PENDING: replay/diagnostics not yet implemented")
-	return false
+func _run_smoke_009(seed_value: int, export_dir: String) -> bool:
+	var ticks: int = 60
+	var scenario: Dictionary = MilitarySkirmish.build_scenario(seed_value, 2, 24, 24)
+
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	state = runner.run_ticks(state, ticks)
+
+	# Snapshot must be JSON-compatible with schema_version 1.
+	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
+	if int(snapshot.get("schema_version", 0)) != 1:
+		print("MIL-SMOKE-009 FAIL: bad snapshot schema_version")
+		return false
+	if typeof(JSON.parse_string(JSON.stringify(snapshot))) != TYPE_DICTIONARY:
+		print("MIL-SMOKE-009 FAIL: snapshot not JSON-compatible")
+		return false
+
+	var hash_a: String = ReplayHash.compute_state_hash(state)
+
+	# Deterministic replay: identical seed/scenario/ticks => identical hash.
+	var runner_b := SimulationTickRunner.new()
+	var state_b: GameState = runner_b.create_game(scenario)
+	state_b = runner_b.run_ticks(state_b, ticks)
+	var hash_b: String = ReplayHash.compute_state_hash(state_b)
+	if hash_a != hash_b:
+		print("MIL-SMOKE-009 FAIL: non-deterministic replay")
+		print("  hash A: %s" % hash_a)
+		print("  hash B: %s" % hash_b)
+		return false
+
+	if export_dir != "":
+		var results: Dictionary = MilitaryExporter.export_all(state, export_dir)
+		for key in results:
+			if not bool(results[key]):
+				print("MIL-SMOKE-009 FAIL: export '%s' failed" % str(key))
+				return false
+
+	print("MIL-SMOKE-009 PASS: deterministic skirmish, hash=%s" % hash_a)
+	return true
 
 
 # --- Helpers ----------------------------------------------------------------

@@ -71,6 +71,8 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/military/test_mil_vision_001_fog_reveal_demote.gd",
 	"res://sim/tests/military/test_mil_defence_001_turret_auto_targets.gd",
 	"res://sim/tests/military/test_mil_repair_001_depot_heals_for_credits.gd",
+	"res://sim/tests/military/test_mil_skirmish_001_seeded_setup_deterministic.gd",
+	"res://sim/tests/military/test_mil_diag_001_snapshot_and_determinism.gd",
 ]
 
 
