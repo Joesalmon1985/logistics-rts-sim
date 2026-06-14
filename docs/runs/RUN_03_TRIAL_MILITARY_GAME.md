@@ -4,6 +4,8 @@
 
 Implement standalone RTS trial per `docs/design/03_trial_military_game_requirements.md` with direct unit control.
 
+Target: **OpenRA-like RTS mechanic coverage, not OpenRA feature parity.**
+
 ## Branch Name
 
 `feature/run-03-trial-military-game`
@@ -17,25 +19,28 @@ Implement standalone RTS trial per `docs/design/03_trial_military_game_requireme
 
 ## In-Scope Work
 
-All MIL-* systems: buildings, power, credits, queues, infantry, vehicles, movement, combat, intel, repair, tech, defeat, commands, events, diagnostics, snapshot, replay.
+All MIL-* systems: resource fields, harvester/collector loop, buildings, construction queue, power, credits, unit/build queues, prerequisites/tech, infantry/vehicles, movement, combat, fog/shroud/vision, repair, trial unit orders (move, attack, attack-move, patrol, guard), skirmish setup, map generation hooks, commands, events, diagnostics, snapshot, replay.
 
-Direct unit commands allowed.
+Direct unit commands allowed (trial only).
 
 ## Out-of-Scope Work
 
 - Economy ware logistics (RUN_02 integration is RUN_07)
 - Hybrid delegated control (RUN_07)
 - Godot (RUN_05)
+- Campaign content breadth (RUN_11)
 
 ## Test-First Requirements
 
-MIL-* rows in test matrix. MIL-SMOKE-001 through MIL-SMOKE-005.
+All MIL-* rows in test matrix. MIL-SMOKE-001 through MIL-SMOKE-009.
 
 ## Implementation Requirements
 
 - `military_trial` variant
-- Deterministic combat resolution
-- Fog of war in snapshot
+- Deterministic combat resolution with cooldown and type modifiers
+- Fog/shroud/vision in snapshot for bots and Godot
+- Seeded map generation hooks for skirmish
+- Data-driven config for buildings, units, weapons, tech tree
 
 ## Smoke-Test Requirements
 
@@ -43,14 +48,19 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_03 section.
 
 ## Acceptance Checklist
 
-- [ ] All buildings functional with power gating
-- [ ] Production queues for infantry and vehicles
-- [ ] Combat with armour modifiers
-- [ ] Intel/fog correct
-- [ ] Defeat on hub destruction
-- [ ] Direct MoveUnitCommand and AttackUnitCommand work
-- [ ] MIL-SMOKE-001–005 pass
-- [ ] Definition of done in `03_` §25 satisfied
+- [ ] OpenRA-like coverage families in `03_` §7–§22 implemented (not OpenRA parity)
+- [ ] Resource harvest → processor → credits loop works
+- [ ] Construction queue and unit production queues with prerequisites
+- [ ] Power gating and underpowered behaviour correct
+- [ ] Fog/shroud/vision exported per player
+- [ ] Direct MoveUnitCommand, AttackMoveCommand, PatrolCommand, GuardCommand work
+- [ ] Combat with range, cooldown, armour/type modifiers
+- [ ] Static defence turret auto-targeting works
+- [ ] Repair depot functional
+- [ ] Skirmish fixtures and seeded map generation hooks present
+- [ ] MIL-SMOKE-001–009 pass
+- [ ] Replay hash and diagnostics export verified
+- [ ] Definition of done in `03_` §31 satisfied
 
 ## Final Report Format
 

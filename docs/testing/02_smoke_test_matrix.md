@@ -27,11 +27,17 @@ Bundled scenario maps (each must pass as scenario tests): `tiny_success_map`, `b
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| MIL-SMOKE-001 | Base setup | Hub + generator + barracks placed |
-| MIL-SMOKE-002 | Produce infantry | unit_spawned |
-| MIL-SMOKE-003 | Combat | Target building destroyed |
-| MIL-SMOKE-004 | Defeat | player_defeated on hub loss |
-| MIL-SMOKE-005 | Replay hash | Hash match |
+| MIL-SMOKE-001 | Build base | Hub + generator + processor + barracks placed |
+| MIL-SMOKE-002 | Harvest/process | Credits increase from collector → processor loop |
+| MIL-SMOKE-003 | Maintain power | Unpowered production blocked; power restored |
+| MIL-SMOKE-004 | Unlock tech | Prerequisite research; advanced unit queued |
+| MIL-SMOKE-005 | Scout enemy | Fog/shroud updates; enemy revealed in vision |
+| MIL-SMOKE-006 | Attack enemy | Attack-move or patrol destroys hostile unit/building |
+| MIL-SMOKE-007 | Repair | Damaged unit or building healed at repair depot |
+| MIL-SMOKE-008 | Win/loss | Command hub destroyed → defeat; opponent hub destroyed → victory |
+| MIL-SMOKE-009 | Replay/diagnostics | Replay hash match; diagnostics export readable |
+
+Bundled skirmish fixtures: fixed `skirmish_1v1` map + seeded `generated_skirmish` map (see MIL-MAPGEN).
 
 ## RUN_04 — Trial Bots / Replay / Telemetry
 
@@ -59,25 +65,31 @@ Bundled scenario maps (each must pass as scenario tests): `tiny_success_map`, `b
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| HYB-SMOKE-001 | Military building via wares | military_construction_completed |
-| HYB-SMOKE-002 | Ware-fed unit production | unit_spawned |
-| HYB-SMOKE-003 | Delegated attack | Hostile hub destroyed |
-| HYB-SMOKE-004 | Reject direct move | Command rejected |
-| HYB-SMOKE-005 | Replay hash | Hash match |
+| HYB-SMOKE-001 | Logistics-fed construction | military_construction_completed via wares |
+| HYB-SMOKE-002 | Logistics-fed production | unit_spawned after ware delivery |
+| HYB-SMOKE-003 | Power/radar/tech | Integrated systems functional |
+| HYB-SMOKE-004 | Delegated attack | Hostile hub destroyed via DelegatedAttackCommand |
+| HYB-SMOKE-005 | Defence priorities | Patrol zone or guard policy engages hostiles |
+| HYB-SMOKE-006 | Repair priority | Repair depot heals with ware-fed jobs |
+| HYB-SMOKE-007 | Reject direct move | MoveUnitCommand rejected for human |
+| HYB-SMOKE-008 | Win/loss/stall | Victory, defeat, or stall diagnostic detected |
+| HYB-SMOKE-009 | Replay hash | Hash match |
 
 ## RUN_08 — Hybrid Bots / Balance
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| HYB-BOT-001 | Hybrid bot 200 ticks | No deadlock stall |
+| HYB-BOT-001 | Hybrid bot 200 ticks | No deadlock stall; delegated attack/defence/repair used |
+| HYB-BOT-002 | Hybrid bot skirmish | Two bots complete with win/loss; fog-respecting |
 | BAL-SMOKE-001 | Balance scenario | Both players viable path |
 
 ## RUN_09 — Godot Hybrid Observer
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| GOD-HYB-001 | Hybrid snapshot render | Economy + military layers |
-| GOD-HYB-002 | Delegated order UI | Command accepted |
+| GOD-HYB-001 | Hybrid snapshot render | Economy + military + fog/shroud layers |
+| GOD-HYB-002 | Delegated order UI | Attack, patrol, guard, repair priority commands accepted |
+| GOD-HYB-003 | Replay/spectator | Snapshot sequence displays without local rule inference |
 
 ## RUN_10 — Human Playable Hybrid
 
@@ -97,6 +109,7 @@ Bundled scenario maps (each must pass as scenario tests): `tiny_success_map`, `b
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| NET-SMOKE-001 | Two clients same LAN | Same hash at tick 100 |
+| NET-SMOKE-001 | Two clients same LAN | Same hash at tick 100; command sync identical |
 | NET-SMOKE-002 | Desync injection detected | Pause triggered |
+| NET-SMOKE-003 | Fog/intel sync | Per-client intel consistent with authoritative snapshot |
 | PKG-SMOKE-001 | Export APK/IPA | Builds without error |

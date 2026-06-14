@@ -4,6 +4,8 @@
 
 Hybrid bots, extended telemetry, and balance smoke scenarios for headless hybrid.
 
+Bots use delegated commands only; must respect fog/intel.
+
 ## Branch Name
 
 `feature/run-08-hybrid-bots-telemetry-balance`
@@ -16,10 +18,11 @@ Hybrid bots, extended telemetry, and balance smoke scenarios for headless hybrid
 
 ## In-Scope Work
 
-- Hybrid bot using delegated + economy commands only
+- Hybrid bot using delegated + economy commands only (attack, defence, repair priorities)
+- Two-bot skirmish smoke (HYB-BOT-002)
 - Balance scenario fixtures (two-player)
-- HYB-BOT-001, BAL-SMOKE-001
-- Enhanced hybrid diagnostics
+- HYB-BOT-001, HYB-BOT-002, BAL-SMOKE-001
+- Enhanced hybrid diagnostics (stall, power, ware shortages, military idle)
 
 ## Out-of-Scope Work
 
@@ -28,12 +31,13 @@ Hybrid bots, extended telemetry, and balance smoke scenarios for headless hybrid
 
 ## Test-First Requirements
 
-HYB-BOT-001 scenario; no stall deadlock in 200-tick run.
+HYB-BOT-001 and HYB-BOT-002 scenarios; no stall deadlock in 200-tick run.
 
 ## Implementation Requirements
 
-- Bot observes same snapshot as human would
+- Bot observes same snapshot/fog as human would
 - No privileged intel
+- Bot exercises delegated attack, patrol/defence zone, repair priority at least once in skirmish
 
 ## Smoke-Test Requirements
 
@@ -42,9 +46,11 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_08 section.
 ## Acceptance Checklist
 
 - [ ] Hybrid bot completes 200 ticks without unrecoverable stall
+- [ ] Two-bot skirmish completes with win/loss detection
+- [ ] Delegated orders only from bot (no direct unit commands)
+- [ ] Bot respects fog of war
 - [ ] Balance scenario playable by two bots
-- [ ] Delegated orders only from bot
-- [ ] HYB-BOT-001, BAL-SMOKE-001 pass
+- [ ] HYB-BOT-001, HYB-BOT-002, BAL-SMOKE-001 pass
 - [ ] RUN_08 DoD items in `04_` §23 satisfied
 
 ## Final Report Format

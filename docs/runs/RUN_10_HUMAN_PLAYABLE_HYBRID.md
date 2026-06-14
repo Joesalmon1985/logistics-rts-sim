@@ -4,6 +4,8 @@
 
 Make hybrid game human-playable on mobile with touch UX, tutorial, and player diagnostics.
 
+Delegated control only — no unit micro UI.
+
 ## Branch Name
 
 `feature/run-10-human-playable-hybrid`
@@ -17,8 +19,8 @@ Make hybrid game human-playable on mobile with touch UX, tutorial, and player di
 ## In-Scope Work
 
 - Touch-optimized UI per human play design
-- Tutorial scenario flow
-- Player-readable diagnostics panels
+- Tutorial scenario flow covering logistics-fed military, delegated attack, defence, repair
+- Player-readable diagnostics panels (stall, power, production, repair, intel)
 - HUM-SMOKE-001, HUM-SMOKE-002
 
 ## Out-of-Scope Work
@@ -34,6 +36,7 @@ Automated tests where possible; manual checklist for touch UX.
 
 - Delegated control only; no unit micro UI
 - Economy priority UI accessible
+- Fog/shroud display matches authoritative snapshot
 
 ## Smoke-Test Requirements
 
@@ -41,9 +44,9 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_10 section.
 
 ## Acceptance Checklist
 
-- [ ] Tutorial completable start to finish
+- [ ] Tutorial completable start to finish (economy → military → delegated attack → win)
 - [ ] Touch targets meet minimum size (44pt equivalent)
-- [ ] Stall/power/production panels readable
+- [ ] Stall/power/production/repair/intel panels readable
 - [ ] HUM-UX-*, HUM-CTRL-*, HUM-TUT-* criteria met
 - [ ] HUM-SMOKE-001–002 pass
 

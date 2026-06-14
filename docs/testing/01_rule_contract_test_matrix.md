@@ -135,16 +135,116 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 
 ## Military (MIL-*)
 
+### Economy, harvesting, credits
+
 | Rule ID | Test type | Example test name |
 |---------|-----------|-------------------|
+| MIL-ECON-001 | unit | test_MIL_ECON_001_resource_field_on_map |
+| MIL-ECON-003 | integration | test_MIL_ECON_003_collector_harvests_node |
+| MIL-ECON-005 | integration | test_MIL_ECON_005_processor_converts_to_credits |
+| MIL-CRED-001 | unit | test_MIL_CRED_001_credits_consumed_on_production |
+
+### Construction, buildability, prerequisites
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-BUILD-003 | integration | test_MIL_BUILD_003_construction_queue_completes |
+| MIL-BUILD-004 | unit | test_MIL_BUILD_004_missing_prerequisite_rejected |
+| MIL-BUILD-005 | unit | test_MIL_BUILD_005_outside_build_radius_rejected |
 | MIL-HUB-001 | unit | test_MIL_HUB_001_hub_destruction_defeats_player |
+
+### Power
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
 | MIL-POWER-003 | unit | test_MIL_POWER_003_unpowered_barracks_cannot_produce |
-| MIL-QUEUE-001 | integration | test_MIL_QUEUE_001_queue_processes_in_order |
-| MIL-COMBAT-002 | unit | test_MIL_COMBAT_002_armour_modifier_applied |
-| MIL-INTEL-001 | integration | test_MIL_INTEL_001_fog_hides_unexplored |
+| MIL-POWER-005 | integration | test_MIL_POWER_005_low_power_in_diagnostics |
+
+### Production queues
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-QUEUE-001 | integration | test_MIL_QUEUE_001_unit_queue_processes_in_order |
+| MIL-QUEUE-004 | integration | test_MIL_QUEUE_004_building_construction_queue_separate |
+| MIL-QUEUE-005 | unit | test_MIL_QUEUE_005_unpowered_queue_blocked |
+
+### Tech / prerequisites
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-TECH-004 | unit | test_MIL_TECH_004_prerequisite_blocks_unit_queue |
+| MIL-TECH-002 | integration | test_MIL_TECH_002_research_unlocks_building |
+
+### Fog, shroud, vision
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-FOG-001 | integration | test_MIL_FOG_001_unexplored_hidden |
+| MIL-FOG-002 | integration | test_MIL_FOG_002_shroud_hides_enemy_outside_vision |
+| MIL-VISION-002 | integration | test_MIL_VISION_002_radar_extends_sight |
+| MIL-VISION-003 | unit | test_MIL_VISION_003_scout_bonus_sight |
+
+### Movement and pathfinding
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
 | MIL-MOVE-002 | unit | test_MIL_MOVE_002_move_command_updates_position |
+| MIL-MOVE-003 | unit | test_MIL_MOVE_003_terrain_modifier_affects_cost |
+| MIL-MOVE-005 | integration | test_MIL_MOVE_005_collector_paths_to_processor |
+
+### Trial unit orders
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-ORDER-003 | integration | test_MIL_ORDER_003_attack_move_engages_en_route |
+| MIL-ORDER-004 | integration | test_MIL_ORDER_004_patrol_loops_waypoints |
+| MIL-ORDER-005 | integration | test_MIL_ORDER_005_guard_stays_near_target |
+
+### Combat and damage
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-COMBAT-002 | unit | test_MIL_COMBAT_002_projectile_or_instant_hit_config |
+| MIL-COMBAT-003 | unit | test_MIL_COMBAT_003_cooldown_blocks_refire |
+| MIL-COMBAT-007 | integration | test_MIL_COMBAT_007_turret_auto_targets |
+| MIL-DAMAGE-002 | unit | test_MIL_DAMAGE_002_armour_modifier_applied |
+
+### Repair
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-REPAIR-002 | integration | test_MIL_REPAIR_002_depot_heals_for_credits |
+| MIL-REPAIR-004 | unit | test_MIL_REPAIR_004_unpowered_repair_stalled |
+
+### Optional capture / veterancy
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-CAPTURE-001 | integration | test_MIL_CAPTURE_001_engineer_captures_structure |
+| MIL-VET-001 | integration | test_MIL_VET_001_veterancy_bonus_after_combat |
+
+### Map generation / skirmish
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-MAPGEN-002 | scenario | test_MIL_MAPGEN_002_seeded_map_deterministic |
+| MIL-MAPGEN-003 | smoke | test_MIL_MAPGEN_003_generated_skirmish_playable |
+
+### Replay / diagnostics
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
 | MIL-DET-002 | scenario | test_MIL_DET_002_replay_hash_stable |
-| MIL-SMOKE-003 | smoke | test_MIL_SMOKE_003_unit_destroys_building |
+| MIL-DIAG-001 | integration | test_MIL_DIAG_001_stalled_harvest_flagged |
+| MIL-REPLAY-002 | scenario | test_MIL_REPLAY_002_skirmish_replay_hash |
+| MIL-SNAP-002 | integration | test_MIL_SNAP_002_fog_layers_in_snapshot |
+
+### Smoke and bot
+
+| Rule ID | Test type | Example test name |
+|---------|-----------|-------------------|
+| MIL-SMOKE-008 | smoke | test_MIL_SMOKE_008_win_loss_triggers |
+| MIL-BOT-003 | smoke | test_MIL_BOT_003_two_bot_skirmish_completes |
 
 ## Hybrid (HYB-*)
 
@@ -152,11 +252,16 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 |---------|-----------|-------------------|
 | HYB-LOGCON-001 | integration | test_HYB_LOGCON_001_military_site_uses_construction |
 | HYB-LOGPROD-001 | integration | test_HYB_LOGPROD_001_barracks_requires_tool_delivery |
+| HYB-LOGREP-001 | integration | test_HYB_LOGREP_001_repair_requires_ware_delivery |
 | HYB-NOSIDE-001 | unit | test_HYB_NOSIDE_001_no_instant_spawn |
 | HYB-CTRL-001 | unit | test_HYB_CTRL_001_rejects_direct_move_unit |
 | HYB-CTRL-006 | integration | test_HYB_CTRL_006_delegated_attack_visible_target |
+| HYB-CTRL-009 | integration | test_HYB_CTRL_009_patrol_zone_engages_hostiles |
+| HYB-CTRL-010 | integration | test_HYB_CTRL_010_guard_policy_defends_building |
+| HYB-CTRL-011 | integration | test_HYB_CTRL_011_repair_priority_heals_target |
 | HYB-DEF-001 | integration | test_HYB_DEF_001_turret_target_priority |
-| HYB-SMOKE-005 | smoke | test_HYB_SMOKE_005_full_scenario_replay_hash |
+| HYB-INTEL-001 | integration | test_HYB_INTEL_001_merged_fog_with_economy |
+| HYB-SMOKE-009 | smoke | test_HYB_SMOKE_009_full_scenario_replay_hash |
 
 ## Visualisation (VIS-*)
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Godot observer for hybrid game — combined economy and military layers with delegated command UI.
+Godot observer for hybrid game — combined economy and military layers with delegated command UI and fog/shroud display.
 
 ## Branch Name
 
@@ -19,10 +19,11 @@ Godot observer for hybrid game — combined economy and military layers with del
 
 ## In-Scope Work
 
-- Hybrid snapshot rendering (economy + military + intel)
-- Delegated command UI (stance, rally, delegated attack)
+- Hybrid snapshot rendering (economy + military + fog/shroud/intel layers)
+- Delegated command UI (stance, rally, delegated attack, patrol zone, guard policy, repair priority)
 - Reject direct unit move UI in hybrid mode
-- GOD-HYB-001, GOD-HYB-002
+- Spectator/replay snapshot sequence display
+- GOD-HYB-001, GOD-HYB-002, GOD-HYB-003
 
 ## Out-of-Scope Work
 
@@ -36,7 +37,8 @@ VIS-* hybrid tests in Godot test plan.
 ## Implementation Requirements
 
 - Reuse adapter from RUN_05 where possible
-- Diagnostics overlay for hybrid stalls
+- Diagnostics overlay for hybrid stalls, power, ware shortages
+- Fog/shroud rendered from snapshot only (no local inference)
 
 ## Smoke-Test Requirements
 
@@ -44,10 +46,11 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_09 section.
 
 ## Acceptance Checklist
 
-- [ ] Hybrid snapshot renders all combined layers
-- [ ] Delegated attack command round-trip works
+- [ ] Hybrid snapshot renders all combined layers including fog/shroud
+- [ ] Delegated attack, patrol zone, guard, repair priority round-trip works
 - [ ] Direct unit move not exposed in UI
-- [ ] GOD-HYB-001–002 pass
+- [ ] Replay/spectator mode displays snapshot sequence without local rule inference
+- [ ] GOD-HYB-001–003 pass
 
 ## Final Report Format
 

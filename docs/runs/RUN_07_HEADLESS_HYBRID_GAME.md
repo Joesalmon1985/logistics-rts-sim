@@ -4,6 +4,8 @@
 
 Compose economy + military with hybrid integration rules per `docs/design/04_hybrid_game_requirements.md`.
 
+Trial→hybrid delegation: no direct unit micro; logistics-fed construction, production, and repair.
+
 ## Branch Name
 
 `feature/run-07-headless-hybrid-game`
@@ -20,10 +22,12 @@ Compose economy + military with hybrid integration rules per `docs/design/04_hyb
 ## In-Scope Work
 
 - `hybrid` variant composing modules
-- Logistics-fed construction and production
-- Delegated military commands; reject direct unit commands from human player
-- Power/radar/research integration
-- HYB-SMOKE-001 through HYB-SMOKE-005
+- Logistics-fed construction, production, and repair
+- Delegated military commands per translation table `04_` §13
+- Reject all direct trial unit commands from human player
+- Power/radar/tech integration
+- Merged fog/intel with economy exploration
+- HYB-SMOKE-001 through HYB-SMOKE-009
 
 ## Out-of-Scope Work
 
@@ -38,7 +42,8 @@ All HYB-* rows in test matrix.
 ## Implementation Requirements
 
 - No instant sidebar production
-- Sim AI executes unit behaviour for delegated orders
+- Sim AI executes unit behaviour for delegated orders, patrol zones, guard policies
+- Economy deposits may feed military processor (no trial collector micro)
 
 ## Smoke-Test Requirements
 
@@ -49,9 +54,12 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_07 section.
 - [ ] Hybrid variant loads economy + military without duplication
 - [ ] Military buildings require ware construction
 - [ ] Unit production requires ware delivery
-- [ ] Direct MoveUnitCommand rejected for human player
-- [ ] DelegatedAttackCommand works on visible targets
-- [ ] HYB-SMOKE-001–005 pass
+- [ ] Repair depot requires ware-fed repair jobs with priority policy
+- [ ] All direct trial unit commands rejected for human player
+- [ ] DelegatedAttackCommand, patrol zone, guard policy work on visible targets
+- [ ] Power/radar/tech integration functional
+- [ ] Merged fog/intel snapshot present
+- [ ] HYB-SMOKE-001–009 pass
 - [ ] Definition of done RUN_07 items in `04_` §23 satisfied
 
 ## Final Report Format

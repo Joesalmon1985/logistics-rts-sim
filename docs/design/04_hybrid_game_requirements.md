@@ -56,6 +56,8 @@ All `ECON-*` rules from `02_` apply unless overridden:
 
 **HYB-ECON-001:** Economy engine is not duplicated; hybrid extends variant registry.
 
+**HYB-ECON-002:** Military resource/credit loop in hybrid uses economy deposit extraction feeding resource processor where configured; trial collector micro not exposed to player.
+
 ---
 
 ## 6. Inherited Military Rules
@@ -63,8 +65,9 @@ All `ECON-*` rules from `02_` apply unless overridden:
 All `MIL-*` rules from `03_` apply except:
 
 - **HYB-MIL-001:** `QueueUnitCommand` requires ware inputs, not credits alone
-- **HYB-MIL-002:** `MoveUnitCommand`, `AttackUnitCommand`, etc. are **not** accepted from human players
+- **HYB-MIL-002:** `MoveUnitCommand`, `AttackUnitCommand`, `AttackMoveCommand`, `PatrolCommand`, `GuardCommand` are **not** accepted from human players
 - **HYB-MIL-003:** AI/bot delegated logic may still issue internal unit intents via sim AI layer (not player commands)
+- **HYB-MIL-004:** Trial collector/harvester loop replaced by economy deposit extraction feeding military processor where configured
 
 ---
 
@@ -89,6 +92,14 @@ All `MIL-*` rules from `03_` apply except:
 - **HYB-LOGPROD-001:** Barracks/vehicle plant production recipes consume wares (e.g. tools, iron ingots, bread for crew)
 - **HYB-LOGPROD-002:** Production queue shows ware requirements and delivery status
 - **HYB-LOGPROD-003:** `SetProductionPriorityCommand` applies to military production buildings
+
+---
+
+## 9b. Logistics-Fed Repair (HYB-LOGREP)
+
+- **HYB-LOGREP-001:** Repair depot consumes wares (e.g. iron ingots, tools) over ticks to heal targets
+- **HYB-LOGREP-002:** Missing wares stall repair with `input_missing` event
+- **HYB-LOGREP-003:** `SetRepairPriorityCommand` orders repair targets by policy
 
 ---
 
@@ -118,6 +129,27 @@ All `MIL-*` rules from `03_` apply except:
 
 Players **must not** directly select or micro individual units in the main hybrid game.
 
+### Trial → Hybrid translation
+
+For each Trial Military direct-control family, the hybrid game provides a **delegated equivalent**:
+
+| Trial Military (direct) | Hybrid (delegated) | Rule ID |
+|-------------------------|-------------------|---------|
+| `MoveUnitCommand` | Rally point + garrison preference + building stance | HYB-CTRL-003, HYB-CTRL-004, HYB-CTRL-002 |
+| `AttackUnitCommand` | `DelegatedAttackCommand` on visible building/sector target | HYB-CTRL-006 |
+| `AttackMoveCommand` | Delegated attack order or aggressive/pressure stance | HYB-CTRL-006, HYB-CTRL-002 |
+| `PatrolCommand` | Patrol zone / defence policy on sector or route | HYB-CTRL-009 |
+| `GuardCommand` | Defend building / road node / storage policy | HYB-CTRL-010 |
+| `QueueUnitCommand` (credits) | Logistics-fed production priority at barracks/plant | HYB-LOGPROD-001, HYB-CTRL-001 |
+| `PlaceBuildingCommand` (instant/credits) | `PlaceBuildingPlanCommand` + construction site wares | HYB-LOGCON-001 |
+| Building construction queue | Economy construction site flow + priorities | HYB-LOGCON-001, ECON-PRI-* |
+| `RepairTargetCommand` | Repair priority policy + logistics-fed repair jobs | HYB-CTRL-011, HYB-LOGREP-001 |
+| Collector harvest loop | Economy ore/coal deposits + military processor (no direct collector micro) | HYB-ECON-002, HYB-MIL-004 |
+| `StartResearchCommand` (credits only) | Research lab with ware + power inputs | HYB-TECH-001 |
+| Scout / vision orders | Radar tower + economy exploration + delegated scout stance | HYB-INTEL-001, HYB-CTRL-012 |
+
+Sim AI executes unit pathfinding, combat, and harvest-adjacent behaviour internally (`HYB-MIL-003`); players set policies and targets only.
+
 ### Allowed player controls
 
 | Control | Rule ID | Description |
@@ -128,6 +160,10 @@ Players **must not** directly select or micro individual units in the main hybri
 | Garrison preferences | HYB-CTRL-004 | Units stay near assigned building |
 | Defence priorities | HYB-CTRL-005 | Target priorities for turrets and defensive buildings |
 | Delegated attack orders | HYB-CTRL-006 | Attack visible hostile **target** (building/sector), not individual unit pathing |
+| Patrol / defence zone | HYB-CTRL-009 | Assign patrol or defence sector; sim AI loops units |
+| Guard policy | HYB-CTRL-010 | Defend assigned building, road hub, or storage |
+| Repair priority | HYB-CTRL-011 | Set repair depot priority; wares feed repair jobs |
+| Scout / intel stance | HYB-CTRL-012 | Emphasize vision sectors without direct unit selection |
 | Cancellation / recall | HYB-CTRL-007 | Cancel delegated orders, recall to rally |
 | Economy / logistics priorities | HYB-CTRL-008 | Existing economy priority commands |
 
@@ -171,6 +207,10 @@ Players **must not** directly select or micro individual units in the main hybri
 | DelegatedAttackCommand | HYB-CMD-005 |
 | CancelDelegatedOrderCommand | HYB-CMD-006 |
 | RecallUnitsCommand | HYB-CMD-007 |
+| SetPatrolZoneCommand | HYB-CMD-008 |
+| SetGuardPolicyCommand | HYB-CMD-009 |
+| SetRepairPriorityCommand | HYB-CMD-010 |
+| SetScoutStanceCommand | HYB-CMD-011 |
 | (All economy commands from ECON-CMD-*) | HYB-CMD-ECON |
 | (Military placement via economy construction) | HYB-CMD-BLD |
 
@@ -223,9 +263,13 @@ All economy and military events plus:
 |----|---------------|
 | HYB-SMOKE-001 | Complete military building via ware construction |
 | HYB-SMOKE-002 | Produce unit with ware-fed queue |
-| HYB-SMOKE-003 | Delegated attack destroys hostile hub |
-| HYB-SMOKE-004 | Direct unit command rejected for human player |
-| HYB-SMOKE-005 | Full scenario replay hash match |
+| HYB-SMOKE-003 | Power/radar/tech integration functional |
+| HYB-SMOKE-004 | Delegated attack destroys hostile hub |
+| HYB-SMOKE-005 | Patrol/defence zone or guard policy engages hostiles |
+| HYB-SMOKE-006 | Repair priority heals damaged unit/building with wares |
+| HYB-SMOKE-007 | Direct unit command rejected for human player |
+| HYB-SMOKE-008 | Win/loss/stall detection on hybrid scenario |
+| HYB-SMOKE-009 | Full scenario replay hash match |
 
 ---
 
@@ -234,12 +278,15 @@ All economy and military events plus:
 **RUN_07 (headless):**
 - [ ] Variant `hybrid` composes economy + military modules
 - [ ] Logistics-fed construction and production work
-- [ ] Delegated commands accepted; direct unit commands rejected for humans
-- [ ] HYB-SMOKE-001–005 pass headlessly
+- [ ] Logistics-fed repair with priority policy works
+- [ ] Delegated commands accepted; all direct unit commands rejected for humans
+- [ ] Trial→hybrid translation table §13 satisfied
+- [ ] HYB-SMOKE-001–009 pass headlessly
 
 **RUN_08 (bots/balance):**
-- [ ] Hybrid bot plays delegated scenario
+- [ ] Hybrid bot plays delegated scenario (attack, defence, repair priorities)
 - [ ] Balance smoke scenarios complete without stall deadlocks
+- [ ] Bot respects fog/intel (no privileged vision)
 
 ---
 

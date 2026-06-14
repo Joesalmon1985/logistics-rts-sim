@@ -90,22 +90,6 @@ Workers are provisioned from Headquarters or Storehouses (see ECON-WORKER-*).
 
 ---
 
-## Military Units
-
-| ID | Name | Category | Produced at | Trial cost |
-|----|------|----------|-------------|------------|
-| rifle_squad | Rifle squad | infantry | barracks | credits |
-| scout_vehicle | Scout vehicle | vehicle | vehicle plant | credits |
-
-Hybrid production recipes (example placeholders):
-
-| Unit | Wares required |
-|------|----------------|
-| rifle_squad | tools, bread |
-| scout_vehicle | iron_ingots, tools, planks |
-
----
-
 ## Deposits and Forest
 
 | ID | Terrain association | Behaviour |
@@ -116,6 +100,47 @@ Hybrid production recipes (example placeholders):
 | iron | iron overlay | finite; depletes |
 | fertile | fertile hex | permanent |
 | water_source | water hex | permanent |
+
+---
+
+## Military Resource Fields (Trial)
+
+| ID | Name | Behaviour |
+|----|------|-----------|
+| mineral_field | Mineral field | Abstract harvestable patch; depletes; collector gathers |
+| rich_mineral_field | Rich mineral field | Higher yield; optional scenario variant |
+
+Trial mode: fields feed resource processor → credits. Hybrid mode: economy deposits may substitute or supplement per scenario config.
+
+---
+
+## Military Units (expanded)
+
+| ID | Name | Category | Produced at | Trial cost |
+|----|------|----------|-------------|------------|
+| rifle_squad | Rifle squad | infantry | barracks | credits |
+| rocket_squad | Rocket squad | infantry | barracks | credits |
+| scout | Scout | infantry | barracks | credits |
+| engineer | Engineer | infantry | barracks | credits |
+| collector | Collector | vehicle | vehicle plant | credits |
+| scout_vehicle | Scout vehicle | vehicle | vehicle plant | credits |
+| light_vehicle | Light vehicle | vehicle | vehicle plant | credits |
+| tank | Tank | vehicle | vehicle plant | credits |
+| artillery | Artillery | vehicle | vehicle plant | credits |
+
+Hybrid production recipes (example placeholders):
+
+| Unit | Wares required |
+|------|----------------|
+| rifle_squad | tools, bread |
+| rocket_squad | tools, bread, iron_ingots |
+| scout | tools, bread |
+| engineer | tools, iron_ingots |
+| collector | iron_ingots, tools, planks |
+| scout_vehicle | iron_ingots, tools, planks |
+| light_vehicle | iron_ingots, tools, planks |
+| tank | iron_ingots, tools, planks |
+| artillery | iron_ingots, tools, planks |
 
 ---
 

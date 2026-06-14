@@ -12,6 +12,12 @@ For the Trial Economy Game specifically:
 
 The economy engine must include all major settlement-logistics mechanic families (roads, carriers, chains, worker provisioning, forest management, mine food support, upgrades, etc.) in original simplified form. It does **not** need Widelands tribes, campaigns, copied data, or full content breadth.
 
+For the Trial Military Game specifically:
+
+> **OpenRA-like RTS mechanic coverage, not OpenRA feature parity.**
+
+The Trial Military Game must cover major OpenRA-like RTS mechanic families in simplified, original, deterministic, testable form — just as the Trial Economy Game covers major Widelands-like economy mechanic families in simplified original form. It does **not** need OpenRA factions, campaigns, copied YAML/traits, maps, UI, art, balance, or full content breadth.
+
 This does **not** mean cloning Widelands, OpenRA, Command & Conquer, or Red Alert. Each family must exist in state, be tested deterministically, and appear in diagnostics where applicable — but rules, names, and balance are original.
 
 ## Traceability Requirement
@@ -69,26 +75,42 @@ Every mechanic family below must appear in:
 
 | Family | Rule ID prefix | Requirement doc |
 |--------|----------------|-----------------|
-| Command hub | MIL-HUB | `03_trial_military_game_requirements.md` |
-| Power generator | MIL-POWER | `03_` |
-| Resource processor | MIL-PROC | `03_` |
+| Resource fields / nodes | MIL-ECON | `03_trial_military_game_requirements.md` |
+| Harvester / collector | MIL-ECON | `03_` |
+| Resource processor / credits | MIL-ECON, MIL-CRED | `03_` |
+| Base construction / buildability | MIL-BUILD | `03_` |
+| Construction radius | MIL-BUILD | `03_` |
+| Construction queue | MIL-QUEUE, MIL-BUILD | `03_` |
+| Command hub | MIL-HUB | `03_` |
+| Power generator / supply / demand | MIL-POWER | `03_` |
+| Underpowered behaviour | MIL-POWER | `03_` |
 | Barracks / vehicle plant | MIL-PROD | `03_` |
+| Unit production queue | MIL-QUEUE | `03_` |
+| Building prerequisites / tech tree | MIL-TECH, MIL-BUILD | `03_` |
 | Radar tower | MIL-RADAR | `03_` |
 | Research lab | MIL-TECH | `03_` |
-| Repair depot | MIL-REP | `03_` |
-| Defence turret | MIL-TUR | `03_` |
-| Credits / stock | MIL-CRED | `03_` |
-| Power supply / demand | MIL-POWER | `03_` |
-| Production queues | MIL-QUEUE | `03_` |
-| Infantry / vehicles | MIL-UNIT | `03_` |
-| Movement / pathfinding | MIL-MOVE | `03_` |
-| Combat (range, damage, armour) | MIL-COMBAT | `03_` |
-| Target selection | MIL-TARGET | `03_` |
-| Building / unit destruction | MIL-DEST | `03_` |
-| Intel / visibility | MIL-INTEL | `03_` |
-| Tech unlocks | MIL-TECH | `03_` |
-| Defeat condition | MIL-DEFEAT | `03_` |
-| Diagnostics / bots / replay | MIL-DIAG | `03_` |
+| Repair depot / repair jobs | MIL-REPAIR | `03_` |
+| Defence turret / static defence | MIL-TUR | `03_` |
+| Infantry / vehicles / unit types | MIL-UNIT | `03_` |
+| Target types | MIL-DAMAGE | `03_` |
+| Movement / pathfinding / terrain | MIL-MOVE | `03_` |
+| Direct unit orders (trial only) | MIL-ORDER | `03_` |
+| Attack-move / patrol / guard | MIL-ORDER | `03_` |
+| Combat (range, cooldown, projectiles) | MIL-COMBAT | `03_` |
+| Damage / armour / type modifiers | MIL-DAMAGE | `03_` |
+| Capture / sabotage (optional) | MIL-CAPTURE | `03_` |
+| Veterancy (optional) | MIL-VET | `03_` |
+| Fog / shroud / vision / scouting | MIL-FOG, MIL-VISION | `03_` |
+| Skirmish setup | MIL-MAPGEN | `03_` |
+| Deterministic map generation hooks | MIL-MAPGEN | `03_` |
+| Defeat / victory conditions | MIL-DEFEAT | `03_` |
+| Replay determinism | MIL-REPLAY | `03_` |
+| Snapshot export | MIL-SNAP | `03_` |
+| Diagnostics | MIL-DIAG | `03_` |
+| Bots / smoke tests | MIL-BOT | `03_` |
+| Mod / data-driven config hooks | MIL-CONFIG | `03_` |
+| Scenario / campaign hooks | MIL-SCEN | `03_` |
+| Superweapon / special power (optional future) | MIL-SPECIAL | `03_` |
 
 **Run:** RUN_03, RUN_04
 
@@ -107,6 +129,9 @@ Every mechanic family below must appear in:
 | Radar / intel integration | HYB-INTEL | `04_` |
 | Research integration | HYB-TECH | `04_` |
 | Delegated military control | HYB-CTRL | `04_` |
+| Patrol / defence zone | HYB-CTRL | `04_` |
+| Guard policy | HYB-CTRL | `04_` |
+| Repair priority / logistics-fed repair | HYB-LOGREP, HYB-CTRL | `04_` |
 | Defence priorities | HYB-DEF | `04_` |
 | Garrison / rally | HYB-GARR | `04_` |
 | Hybrid diagnostics / bots | HYB-DIAG | `04_` |
