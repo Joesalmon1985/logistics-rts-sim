@@ -5,5 +5,5 @@
   "map_file": "maps/tutorial.json",
   "players": ["p1"],
   "victory": {"type": "none"},
-  "expected_hash": "sha256:0be7643d91862787c8ca4fc9c671e16d0824f14ed4786b47ef8584762045f525"
+  "expected_hash": "sha256:df8a8f6f934b8ecfe92ddce7cb3c0d4ab61b6da38097812bb5297c62effe0be1"
 }

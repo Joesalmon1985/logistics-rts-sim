@@ -53,6 +53,10 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/economy/test_scenario_mine_food_support_map.gd",
 	"res://sim/tests/economy/test_scenario_tool_shortage_worker_block_map.gd",
 	"res://sim/tests/economy/test_scenario_building_upgrade_map.gd",
+	"res://sim/tests/military/test_mil_scaffold_001_buckets_initialised.gd",
+	"res://sim/tests/military/test_mil_scaffold_002_config_loads.gd",
+	"res://sim/tests/military/test_mil_map_001_shared_hex_map_no_parallel_grid.gd",
+	"res://sim/tests/military/test_mil_cmd_001_invalid_command_no_mutation.gd",
 ]
 
 

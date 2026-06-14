@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "weapons": {
+    "rifle": {
+      "display_name": "Rifle",
+      "damage": 15,
+      "damage_type": "small_arms",
+      "range": 3,
+      "min_range": 0,
+      "cooldown_ticks": 4,
+      "mode": "instant",
+      "travel_ticks": 0,
+      "valid_targets": ["infantry", "vehicle", "structure"]
+    },
+    "rocket": {
+      "display_name": "Rocket",
+      "damage": 40,
+      "damage_type": "explosive",
+      "range": 4,
+      "min_range": 0,
+      "cooldown_ticks": 8,
+      "mode": "projectile",
+      "travel_ticks": 2,
+      "valid_targets": ["vehicle", "structure"]
+    },
+    "autocannon": {
+      "display_name": "Autocannon",
+      "damage": 20,
+      "damage_type": "small_arms",
+      "range": 3,
+      "min_range": 0,
+      "cooldown_ticks": 3,
+      "mode": "instant",
+      "travel_ticks": 0,
+      "valid_targets": ["infantry", "vehicle", "structure"]
+    },
+    "tank_cannon": {
+      "display_name": "Tank Cannon",
+      "damage": 50,
+      "damage_type": "cannon",
+      "range": 4,
+      "min_range": 0,
+      "cooldown_ticks": 6,
+      "mode": "projectile",
+      "travel_ticks": 1,
+      "valid_targets": ["infantry", "vehicle", "structure"]
+    },
+    "artillery_gun": {
+      "display_name": "Artillery Gun",
+      "damage": 70,
+      "damage_type": "explosive",
+      "range": 7,
+      "min_range": 2,
+      "cooldown_ticks": 12,
+      "mode": "projectile",
+      "travel_ticks": 3,
+      "valid_targets": ["infantry", "vehicle", "structure"]
+    },
+    "turret_cannon": {
+      "display_name": "Turret Cannon",
+      "damage": 35,
+      "damage_type": "cannon",
+      "range": 5,
+      "min_range": 0,
+      "cooldown_ticks": 5,
+      "mode": "instant",
+      "travel_ticks": 0,
+      "valid_targets": ["infantry", "vehicle", "structure"]
+    }
+  }
+}

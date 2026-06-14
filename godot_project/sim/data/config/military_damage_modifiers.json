@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "default_modifier": 100,
+  "modifiers": {
+    "small_arms": {
+      "infantry": 100,
+      "vehicle": 75,
+      "heavy": 40,
+      "structure": 30
+    },
+    "explosive": {
+      "infantry": 90,
+      "vehicle": 130,
+      "heavy": 120,
+      "structure": 150
+    },
+    "cannon": {
+      "infantry": 60,
+      "vehicle": 120,
+      "heavy": 100,
+      "structure": 110
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "field_types": {
+    "mineral_field": {
+      "display_name": "Mineral Field",
+      "start_amount": 2000,
+      "yield_per_harvest": 50,
+      "depletion_per_harvest": 50
+    },
+    "rich_mineral_field": {
+      "display_name": "Rich Mineral Field",
+      "start_amount": 4000,
+      "yield_per_harvest": 80,
+      "depletion_per_harvest": 80
+    }
+  },
+  "collector_capacity": 50,
+  "harvest_ticks": 5,
+  "credits_per_cargo_unit": 1,
+  "processor_unload_ticks": 3
+}

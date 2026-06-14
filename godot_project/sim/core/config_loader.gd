@@ -87,6 +87,66 @@ static func load_construction_costs_config() -> Dictionary:
 	return config
 
 
+static func load_military_buildings_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_buildings.json")
+	_validate_schema_version(config, "military_buildings")
+	return config
+
+
+static func load_military_units_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_units.json")
+	_validate_schema_version(config, "military_units")
+	return config
+
+
+static func load_military_weapons_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_weapons.json")
+	_validate_schema_version(config, "military_weapons")
+	return config
+
+
+static func load_military_armour_types_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_armour_types.json")
+	_validate_schema_version(config, "military_armour_types")
+	return config
+
+
+static func load_military_damage_modifiers_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_damage_modifiers.json")
+	_validate_schema_version(config, "military_damage_modifiers")
+	return config
+
+
+static func load_military_tech_tree_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_tech_tree.json")
+	_validate_schema_version(config, "military_tech_tree")
+	return config
+
+
+static func load_military_power_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_power.json")
+	_validate_schema_version(config, "military_power")
+	return config
+
+
+static func load_military_resources_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_resources.json")
+	_validate_schema_version(config, "military_resources")
+	return config
+
+
+static func load_military_orders_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_orders.json")
+	_validate_schema_version(config, "military_orders")
+	return config
+
+
+static func load_military_scenarios_config() -> Dictionary:
+	var config: Dictionary = load_json("config/military_scenarios.json")
+	_validate_schema_version(config, "military_scenarios")
+	return config
+
+
 static func _validate_schema_version(config: Dictionary, label: String) -> void:
 	if not config.has("schema_version"):
 		push_error("ConfigLoader: %s missing schema_version" % label)
