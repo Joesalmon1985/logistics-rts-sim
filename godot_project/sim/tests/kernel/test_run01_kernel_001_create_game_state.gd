@@ -7,7 +7,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_001_create_game_state"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var scenario: Dictionary = {
 		"variant": "economy_trial",
 		"seed": 42,

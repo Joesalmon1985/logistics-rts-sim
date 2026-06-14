@@ -23,6 +23,16 @@ Target: **Widelands-like mechanic coverage, not Widelands feature parity.** Run 
 
 Depends on the **shared axial hex map** primitives from RUN_01 (DDR-029) and the GDScript-authoritative core (DDR-026); economy code is pure simulation-core GDScript, headless.
 
+## Pre-flight (before any RUN_02 implementation)
+
+1. Read `docs/audit/RUN_01_LESSONS_LEARNED.md`.
+2. Confirm RUN_01 kernel regression per `docs/verification/local_verification.md`:
+   - `run_tests.gd` — 13/13 pass, exit 0
+   - three variant smokes — exit 0 each
+   - `verify_failure_modes.gd` — exit 0
+3. Use `timeout` wrappers; kill stale Godot processes if needed.
+4. Do not count aborted or timed-out commands as passes.
+
 ## In-Scope Work
 
 All ECON-* mechanic families including:

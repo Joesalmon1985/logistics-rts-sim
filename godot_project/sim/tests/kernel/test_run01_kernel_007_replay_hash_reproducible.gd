@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_007_replay_hash_reproducible"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var scenario: Dictionary = {
 		"variant": "hybrid",
 		"seed": 99,

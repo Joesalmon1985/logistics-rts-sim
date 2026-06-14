@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_VARIANT_001_all_variants_register"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var registry := VariantRegistry.create_default()
 	var expected: Array = ["economy_trial", "hybrid", "military_trial"]
 	var registered: Array = registry.registered_variant_ids()

@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_002_seeded_rng_reproducible"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var rng_a := SeededRng.from_seed(12345)
 	var rng_b := SeededRng.from_seed(12345)
 	var draws_a: Array = []

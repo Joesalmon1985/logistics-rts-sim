@@ -9,11 +9,21 @@
 
 ## Test Environment
 
-- Headless Godot test harness for the GDScript simulation core (framework chosen in RUN_01: a lightweight custom Godot headless runner, GUT, gdUnit4, or another documented Godot-compatible framework — DDR-032)
+- Headless Godot test harness for the GDScript simulation core (custom lightweight runner — DDR-032 Accepted; see `docs/verification/local_verification.md`)
 - Tests run headlessly (Godot headless / no rendered UI), are deterministic, CLI-runnable, and report clear pass/fail for Cursor
 - Test names use rule IDs (see below)
 - No network required for unit/integration/scenario tests
 - Python `pytest` is used only for Python training/tooling (`python_tools/`), not for gameplay-rule tests
+
+## Verification integrity (RUN_01+)
+
+- Use `timeout` wrappers on Linux for all Godot CLI test/smoke commands (see `docs/verification/local_verification.md`).
+- Exit code `0` = pass; non-zero = fail; `124` = timed out (failure).
+- **Never** report pass for aborted, killed, hung, or timed-out commands.
+- Import success (`godot --import`) is not test success.
+- RUN_02 and later runs must **rerun RUN_01 kernel tests and smokes** before adding new mechanics.
+- Final reports must distinguish: passed, failed, errored, timed out, not run.
+- Run `sim/tools/verify_failure_modes.gd` on closure passes to confirm failure paths exit non-zero.
 
 ## Determinism
 

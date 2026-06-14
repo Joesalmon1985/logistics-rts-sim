@@ -23,26 +23,32 @@ const TEST_SCRIPTS: Array[String] = [
 
 func _initialize() -> void:
 	BootstrapScript.load_all()
+	var expected: int = TEST_SCRIPTS.size()
 	var passed: int = 0
 	var failed: int = 0
-	print("RUN_01 headless test harness — %d tests" % TEST_SCRIPTS.size())
+	var errored: int = 0
+	var ran: int = 0
+	print("RUN_01 headless test harness — %d tests expected" % expected)
 
 	for script_path in TEST_SCRIPTS:
 		var script: Script = load(script_path)
 		if script == null:
-			failed += 1
-			print("FAIL %s (could not load script)" % script_path)
+			errored += 1
+			ran += 1
+			print("ERROR %s (could not load script)" % script_path)
 			continue
 
 		if not script.can_instantiate():
-			failed += 1
-			print("FAIL %s (script cannot instantiate)" % script_path)
+			errored += 1
+			ran += 1
+			print("ERROR %s (script cannot instantiate)" % script_path)
 			continue
 
 		var test_instance: Object = script.new()
 		if test_instance == null:
-			failed += 1
-			print("FAIL %s (could not instantiate)" % script_path)
+			errored += 1
+			ran += 1
+			print("ERROR %s (could not instantiate)" % script_path)
 			continue
 
 		var test_name: String = script_path.get_file()
@@ -50,6 +56,17 @@ func _initialize() -> void:
 			test_name = str(test_instance.call("get_name"))
 
 		test_instance.call("run")
+		ran += 1
+
+		var completed: bool = true
+		if test_instance.has_method("run_completed"):
+			completed = bool(test_instance.call("run_completed"))
+
+		if not completed:
+			errored += 1
+			print("ERROR %s — run did not complete (possible script error)" % test_name)
+			continue
+
 		var ok: bool = bool(test_instance.call("passed"))
 		if ok:
 			passed += 1
@@ -58,6 +75,19 @@ func _initialize() -> void:
 			failed += 1
 			print("FAIL %s — %s" % [test_name, str(test_instance.call("failure_message"))])
 
+	var exit_code: int = 0
+	if failed > 0 or errored > 0 or ran != expected:
+		exit_code = 1
+
 	print("—")
-	print("Results: %d passed, %d failed" % [passed, failed])
-	call_deferred("quit", 0 if failed == 0 else 1)
+	print(
+		"Results: %d/%d ran, %d passed, %d failed, %d errored"
+		% [ran, expected, passed, failed, errored]
+	)
+	if ran != expected:
+		print("ERROR: expected %d tests but ran %d" % [expected, ran])
+	if exit_code == 0:
+		print("EXIT: 0 (pass)")
+	else:
+		print("EXIT: 1 (fail)")
+	call_deferred("quit", exit_code)

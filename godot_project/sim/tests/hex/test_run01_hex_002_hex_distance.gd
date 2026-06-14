@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_HEX_002_hex_distance"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var a := HexCoord.new(0, 0)
 	var b := HexCoord.new(3, 0)
 	assert_eq(a.distance(b), 3)

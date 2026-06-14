@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_005_event_serialization"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var log := EventLog.new()
 	var event: SimEvent = log.append_event("tick_advanced", 5, {"tick": 5})
 	var serialized: Dictionary = event.to_dict()

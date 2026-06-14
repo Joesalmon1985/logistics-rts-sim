@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_004_invalid_command_does_not_mutate_state"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var scenario: Dictionary = {
 		"variant": "economy_trial",
 		"seed": 7,

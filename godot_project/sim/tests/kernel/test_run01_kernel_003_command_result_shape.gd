@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_003_command_result_shape"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var ok_result := CommandResult.ok(true, ["evt_001"], "done")
 	var fail_result := CommandResult.fail("TERRAIN_BLOCKED", "blocked")
 

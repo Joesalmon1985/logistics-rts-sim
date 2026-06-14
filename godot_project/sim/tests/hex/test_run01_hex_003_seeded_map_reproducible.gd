@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_HEX_003_seeded_map_reproducible"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var terrain_config: Dictionary = ConfigLoader.load_terrain_config()
 	var map_a: HexMap = MapGenerator.generate_from_seed(555, 10, 10, terrain_config)
 	var map_b: HexMap = MapGenerator.generate_from_seed(555, 10, 10, terrain_config)

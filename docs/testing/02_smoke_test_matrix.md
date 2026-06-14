@@ -11,6 +11,8 @@ End-to-end smoke scenarios per run. Pass = all criteria met headlessly unless no
 | KERN-SMOKE-003 | Export snapshot | Valid JSON schema_version |
 | KERN-SMOKE-004 | Replay hash | Hash matches expected |
 
+Verification must use timeout-wrapped Godot commands; exit code `0` required. See `docs/verification/local_verification.md` and `sim/tools/verify_failure_modes.gd` for failure-mode integrity checks.
+
 ## RUN_02 — Trial Economy Game
 
 | ID | Scenario | Pass criteria |

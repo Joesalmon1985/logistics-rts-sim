@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_KERNEL_006_snapshot_json_shape"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var scenario: Dictionary = {
 		"variant": "military_trial",
 		"seed": 11,

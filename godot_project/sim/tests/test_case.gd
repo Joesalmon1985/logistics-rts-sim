@@ -2,6 +2,7 @@ class_name TestCase
 extends RefCounted
 
 var _failures: Array[String] = []
+var _run_completed: bool = false
 
 
 func get_name() -> String:
@@ -9,7 +10,18 @@ func get_name() -> String:
 
 
 func run() -> void:
+	_run_completed = false
+	_failures.clear()
+	_run_body()
+	_run_completed = true
+
+
+func _run_body() -> void:
 	pass
+
+
+func run_completed() -> bool:
+	return _run_completed
 
 
 func assert_true(condition: bool, message: String = "expected true") -> void:
@@ -41,8 +53,10 @@ func assert_has_keys(data: Dictionary, keys: Array, message: String = "") -> voi
 
 
 func passed() -> bool:
-	return _failures.is_empty()
+	return _failures.is_empty() and _run_completed
 
 
 func failure_message() -> String:
+	if not _run_completed:
+		return "run did not complete (possible script error)"
 	return "; ".join(_failures)

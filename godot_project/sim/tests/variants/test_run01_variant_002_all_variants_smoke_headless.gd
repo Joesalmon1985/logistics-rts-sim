@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_VARIANT_002_all_variants_smoke_headless"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var runner := SimulationTickRunner.new()
 	for variant_id in ["economy_trial", "military_trial", "hybrid"]:
 		var scenario: Dictionary = {

@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_HEX_001_hex_has_six_neighbours"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var center := HexCoord.new(3, 4)
 	var neighbors: Array[HexCoord] = center.neighbors()
 	assert_eq(neighbors.size(), 6)

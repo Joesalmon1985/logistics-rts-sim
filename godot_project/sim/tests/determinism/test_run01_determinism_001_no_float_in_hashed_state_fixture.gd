@@ -5,7 +5,7 @@ func get_name() -> String:
 	return "test_RUN01_DETERMINISM_001_no_float_in_hashed_state_fixture"
 
 
-func run() -> void:
+func _run_body() -> void:
 	var scenario: Dictionary = {
 		"variant": "economy_trial",
 		"seed": 21,
