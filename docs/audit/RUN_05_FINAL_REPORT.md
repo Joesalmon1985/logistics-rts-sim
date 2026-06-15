@@ -78,6 +78,6 @@ Known issues:
 
 Unimplemented requirements: none — all RUN_05 acceptance checklist items closed.
 
-Uncommitted changes: (filled at commit time)
+Uncommitted changes: none
 
 Suggested next run: **RUN_06** — Neural Training for Trial Games (`feature/run-06-neural-training-trial-games`). See pre-entry checklist in `docs/runs/RUN_06_NEURAL_TRAINING_FOR_TRIAL_GAMES.md`.
