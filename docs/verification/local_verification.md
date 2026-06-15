@@ -1,4 +1,4 @@
-# Local Verification — RUN_01 + RUN_02
+# Local Verification — RUN_01 + RUN_02 + RUN_03
 
 Godot version used for verification: **4.5.2.stable.official** (`6ce3de25a`).
 
@@ -60,21 +60,24 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (39 tests — RUN_01 + RUN_02)
+## Headless unit/integration tests (68 tests — RUN_01 + RUN_02 + RUN_03)
 
 ```bash
-timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 echo "exit=$?"
 ```
 
 Expected output includes:
 
 ```text
-Results: 39/39 ran, 39 passed, 0 failed, 0 errored
+Results: 68/68 ran, 68 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
-Exit code must be `0`.
+Exit code must be `0`. A clean run must print **no** `SCRIPT ERROR` lines in stdout/stderr.
+
+The test harness (`sim/tests/test_case.gd`) marks a test as incomplete when `_run_body()` aborts
+before returning (e.g. a script error mid-test). Such tests report as **errored**, not passed.
 
 ## Headless smoke tests (KERN-SMOKE-001–004)
 
@@ -107,6 +110,29 @@ Pinned economy hash in `scenarios/kernel_smoke.json` (RUN_02):
 
 `sha256:1d69994a924390478e89397dc3e0ff9b5d65118eeb2995fe1de8c53a5898332b`
 
+Pinned military hash in `scenarios/kernel_smoke_military.json` (RUN_03, re-pinned after
+`spawn_building` began carrying the building `weapon` field; triple-run stable):
+
+`sha256:5ce6102c91f7ad9191d6b25442d72170b82904ccc0be1b78be8183e5bfc3e08f`
+
+## Military smoke tests (MIL-SMOKE-001–009)
+
+```bash
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_military_smoke.gd -- --smoke=all --seed=1
+echo "exit=$?"
+```
+
+Single smoke (e.g. the deterministic skirmish + export):
+
+```bash
+timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_military_smoke.gd -- --smoke=009 --seed=1 --export-dir=/tmp/mil_export
+echo "exit=$?"
+```
+
+Expected: `MIL SMOKE PASS`, `EXIT: 0 (pass)`. The whole suite runs in well under 30s on the
+reference machine. MIL-SMOKE-009 asserts a deterministic replay hash (two runs from the
+same seed/scenario must match) and writes snapshot/events/metrics/unit/building exports.
+
 ## Economy smoke tests (ECON-SMOKE-001–005)
 
 ```bash
@@ -125,10 +151,11 @@ Expected: `ECON SMOKE PASS`, `EXIT: 0 (pass)`.
 
 ## Failure-mode integrity checks
 
-Verifies invalid variant, hash mismatch, and invalid ticks **exit non-zero**:
+Verifies invalid variant, hash mismatch, invalid ticks, invalid economy smoke id,
+**invalid military smoke id**, and **invalid military scenario** all **exit non-zero**:
 
 ```bash
-timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
 echo "exit=$?"
 ```
 

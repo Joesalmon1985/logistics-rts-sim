@@ -324,6 +324,42 @@ Cross-reference: `docs/audit/RUN_02_LESSONS_LEARNED.md` ("Known remaining caveat
 | MIL-SMOKE-008 | smoke | test_MIL_SMOKE_008_win_loss_triggers |
 | MIL-BOT-003 | smoke | test_MIL_BOT_003_two_bot_skirmish_completes |
 
+### RUN_03 implemented coverage (DoD level)
+
+The table above lists the aspirational per-rule-ID target set. RUN_03 implements **every
+military mechanic family** to Definition-of-Done level with behaviour-proving headless tests
+(state change + event/diagnostic + downstream effect), under `sim/tests/military/` and registered
+in `sim/tools/run_tests.gd`. Family → covering test(s):
+
+| Family | Covering RUN_03 test(s) |
+|--------|--------------------------|
+| Scaffold / shared map / no parallel grid | `test_mil_scaffold_001`, `test_mil_scaffold_002`, `test_mil_map_001` |
+| Invalid command no mutation | `test_mil_cmd_001` |
+| Resource harvest → processor → credits | `test_mil_res_001` |
+| Placement / build radius / footprint / buildability | `test_mil_build_001` |
+| Construction queue completion | `test_mil_cons_001` |
+| Power supply/demand gating of production | `test_mil_power_001` |
+| Unit production queue + rally | `test_mil_prod_001` |
+| Tech prerequisite unlock | `test_mil_tech_001` |
+| Pathfinding + movement + blocked path | `test_mil_move_001` |
+| Combat range/cooldown/damage/destruction | `test_mil_combat_001` |
+| Armour/damage-type modifier + projectile timing | `test_mil_combat_002` |
+| Orders: attack-move / patrol / guard | `test_mil_orders_001` |
+| Victory / defeat (hub destruction) | `test_mil_victory_001` |
+| Fog/shroud/vision reveal + demote | `test_mil_vision_001` |
+| Defence turret auto-target | `test_mil_defence_001` |
+| Repair depot heal-for-credits + stall | `test_mil_repair_001` |
+| Seeded skirmish setup determinism | `test_mil_skirmish_001` |
+| Snapshot completeness + diagnostics + deterministic replay | `test_mil_diag_001` |
+
+Smokes MIL-SMOKE-001–009 are implemented in `sim/tools/run_military_smoke.gd`.
+
+**Deferred to RUN_04 (per-rule-ID granularity only):** following the RUN_02 precedent, the
+expansion of every individual MIL-* rule ID above into its own dedicated 1:1 test is deferred to
+RUN_04 hardening. **No whole mechanic family is deferred** — each family already has DoD-level
+behaviour coverage in RUN_03. Speculative families not yet in scope (engineer capture
+`MIL-CAPTURE-*`, veterancy `MIL-VET-*`, two-bot skirmish `MIL-BOT-*`) remain for their owning runs.
+
 ## Hybrid (HYB-*)
 
 | Rule ID | Test type | Example test name |

@@ -7,7 +7,26 @@
     },
     "military_trial": {
       "subsystems": ["map", "military", "diagnostics"],
-      "commands": ["NoopCommand", "PlaceBuildingCommand", "MoveUnitCommand"]
+      "commands": [
+        "NoopCommand",
+        "PlaceBuildingCommand",
+        "CancelMilitaryConstructionCommand",
+        "SellBuildingCommand",
+        "QueueUnitCommand",
+        "CancelProductionCommand",
+        "SetRallyPointCommand",
+        "MoveUnitCommand",
+        "AttackUnitCommand",
+        "AttackMoveCommand",
+        "PatrolCommand",
+        "GuardCommand",
+        "StopUnitCommand",
+        "StartResearchCommand",
+        "RepairTargetCommand",
+        "EnableMilitaryBuildingCommand",
+        "DisableMilitaryBuildingCommand",
+        "HarvestResourceCommand"
+      ]
     },
     "hybrid": {
       "subsystems": ["map", "economy", "military", "hybrid", "diagnostics"],

@@ -5,6 +5,12 @@ const SCHEMA_VERSION: int = 1
 
 
 static func export_snapshot(state: GameState) -> Dictionary:
+	if state.variant_id == "military_trial":
+		# Dynamic load avoids a compile-time core->military class_name dependency
+		# cycle (which would make sibling military classes resolve to bare GDScript).
+		var military_exporter: GDScript = load("res://sim/military/military_snapshot_exporter.gd")
+		return military_exporter.export_snapshot(state)
+
 	var player_data: Array = []
 	for player in players_to_array(state):
 		player_data.append(player.to_dict())

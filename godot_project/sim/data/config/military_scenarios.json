@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "win_condition_types": ["destroy_all_hubs", "destroy_target_hub", "survive_ticks", "none"],
+  "campaign_mission_schema": {
+    "id": "string",
+    "scenario_file": "string",
+    "briefing": "string",
+    "objectives": "array",
+    "unlock_next": "string"
+  },
+  "scenarios": {
+    "skirmish_1v1": {
+      "scenario_file": "scenarios/military/skirmish_1v1.json",
+      "win_condition": "destroy_all_hubs"
+    },
+    "generated_skirmish": {
+      "scenario_file": "scenarios/military/generated_skirmish.json",
+      "win_condition": "destroy_all_hubs"
+    }
+  }
+}

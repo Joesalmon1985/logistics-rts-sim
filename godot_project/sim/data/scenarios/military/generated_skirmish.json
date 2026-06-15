@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "variant": "military_trial",
+  "seed": 1337,
+  "map_width": 24,
+  "map_height": 24,
+  "players": ["p1", "p2"],
+  "build_radius": 12,
+  "starting_credits": 3000,
+  "fog_enabled": 1,
+  "win_condition": "destroy_all_hubs",
+  "spawns": [
+    {"player_id": "p1", "q": 4, "r": 4},
+    {"player_id": "p2", "q": 19, "r": 19}
+  ],
+  "resource_fields": [
+    {"q": 6, "r": 4, "field_type": "mineral_field"},
+    {"q": 17, "r": 19, "field_type": "mineral_field"},
+    {"q": 12, "r": 12, "field_type": "rich_mineral_field"}
+  ]
+}

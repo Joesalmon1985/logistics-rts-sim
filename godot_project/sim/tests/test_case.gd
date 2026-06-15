@@ -12,8 +12,17 @@ func get_name() -> String:
 func run() -> void:
 	_run_completed = false
 	_failures.clear()
+	var body_state := {"done": false}
+	_invoke_run_body(body_state)
+	if body_state.get("done", false):
+		_run_completed = true
+	else:
+		_failures.append("test body aborted before completion (possible script error)")
+
+
+func _invoke_run_body(body_state: Dictionary) -> void:
 	_run_body()
-	_run_completed = true
+	body_state["done"] = true
 
 
 func _run_body() -> void:

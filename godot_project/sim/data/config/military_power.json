@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "underpowered_production_blocked": 1,
+  "underpowered_research_blocked": 1,
+  "underpowered_repair_blocked": 1,
+  "underpowered_turret_blocked": 1,
+  "globals": {
+    "default_build_radius": 10,
+    "default_starting_credits": 2000,
+    "move_cost_scale": 100,
+    "construction_progress_per_tick": 1,
+    "production_progress_per_tick": 1,
+    "research_progress_per_tick": 1,
+    "cancel_refund_percent": 50,
+    "sell_refund_percent": 50,
+    "stall_tick_threshold": 200,
+    "repair_hp_per_tick": 8,
+    "repair_credit_per_tick": 1,
+    "repair_range": 4
+  }
+}

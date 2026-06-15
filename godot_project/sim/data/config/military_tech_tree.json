@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "tech": {
+    "advanced_weapons": {
+      "display_name": "Advanced Weapons",
+      "research_ticks": 60,
+      "credit_cost": 500,
+      "requires_building": ["research_lab"],
+      "requires_tech": [],
+      "unlocks": ["tank", "artillery"]
+    },
+    "improved_armour": {
+      "display_name": "Improved Armour",
+      "research_ticks": 50,
+      "credit_cost": 400,
+      "requires_building": ["research_lab"],
+      "requires_tech": [],
+      "unlocks": []
+    }
+  }
+}

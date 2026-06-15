@@ -54,7 +54,16 @@ determinism: `tiny_success_map`, `blocked_route_map`, `missing_resource_map`, `p
 | MIL-SMOKE-008 | Win/loss | Command hub destroyed → defeat; opponent hub destroyed → victory |
 | MIL-SMOKE-009 | Replay/diagnostics | Replay hash match; diagnostics export readable |
 
-Bundled skirmish fixtures: fixed `skirmish_1v1` map + seeded `generated_skirmish` map (see MIL-MAPGEN).
+RUN_03 smoke runner: `sim/tools/run_military_smoke.gd` (all nine smokes, exit `0`; whole suite
+< 30s wall clock on the reference machine). MIL-SMOKE-009 asserts a deterministic replay hash
+(two runs from the same seed must match) and writes snapshot/events/metrics/unit/building exports
+via `MilitaryExporter` (`sim/tools/military_export.gd`). Failure-mode integrity
+(`sim/tools/verify_failure_modes.gd`) includes mandatory **invalid military smoke id** and
+**invalid military scenario** checks, both of which must exit non-zero.
+
+Bundled skirmish fixtures: fixed `skirmish_1v1` map (`scenarios/military/skirmish_1v1.json`) +
+seeded `generated_skirmish` (`scenarios/military/generated_skirmish.json`) plus the in-code seeded
+skirmish hook `MilitarySkirmish.build_scenario(seed, players, w, h)` used by MIL-SMOKE-009.
 
 ## RUN_04 — Trial Bots / Replay / Telemetry
 
