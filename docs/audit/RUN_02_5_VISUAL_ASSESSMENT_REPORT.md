@@ -87,6 +87,6 @@ Documented as **pattern inspiration only** in design 12. No asset/code copying.
 
 ## Phase C Findings
 
-*(Updated after legibility review execution.)*
+See [`RUN_02_5_VISUAL_LEGIBILITY_REVIEW.md`](RUN_02_5_VISUAL_LEGIBILITY_REVIEW.md).
 
-TBD — populated at run completion.
+Six rollouts exported (economy + military × random/untrained/trained). Observer captures pass for economy and military random rollouts at steps 0 and 10. Primary remaining gaps: policy confidence, patrol/guard export, readable stall strings — documented, not faked in client.

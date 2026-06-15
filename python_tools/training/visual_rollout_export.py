@@ -257,7 +257,9 @@ def export_visual_rollout(
         "variant": variant,
     }
     artefact.write_metadata(output_dir, metadata)
-
+    events_path = output_dir / artefact.EVENTS_FILE
+    if not events_path.is_file():
+        events_path.write_text("", encoding="utf-8")
     ok, msg = artefact.validate_rollout_folder(output_dir)
     if not ok:
         raise RuntimeError(f"rollout validation failed: {msg}")

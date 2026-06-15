@@ -23,8 +23,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	custom_minimum_size = SCREEN_SIZE
 	size = SCREEN_SIZE
-	controller = RolloutController.new()
-	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
+	_ensure_controller()
 	_build_ui()
 	_play_timer = Timer.new()
 	_play_timer.one_shot = false
@@ -32,7 +31,15 @@ func _ready() -> void:
 	add_child(_play_timer)
 
 
+func _ensure_controller() -> void:
+	if controller != null:
+		return
+	controller = RolloutController.new()
+	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
+
+
 func load_rollout_path(path: String) -> Dictionary:
+	_ensure_controller()
 	var result: Dictionary = controller.load_rollout(path)
 	if result.get("ok", false):
 		_refresh_all()
@@ -212,6 +219,8 @@ func _on_snapshot_refreshed(_snapshot: Dictionary) -> void:
 
 
 func _refresh_all() -> void:
+	if _status == null:
+		return
 	_status.text = controller.build_status_text()
 	_action.text = controller.build_action_text()
 	_metrics.text = controller.build_metrics_text()

@@ -4,7 +4,7 @@ extends SceneTree
 
 
 const ObserverScene := "res://client/scenes/rollout_observer_demo.tscn"
-const SIZE := Vector2i(1920, 1080)
+const SIZE := Vector2i(1080, 720)
 const MODES: Array[String] = ["world", "economy", "military", "neural", "debug"]
 
 var _root: RolloutObserverRoot
@@ -12,18 +12,20 @@ var _subvp: SubViewport
 var _steps: Array[int] = []
 var _step_idx: int = 0
 var _mode_idx: int = 0
-var _frames_left: int = 8
+var _frames_left: int = 6
 var _output_dir: String = ""
-var _phase: String = "warmup"
+var _rollout_path: String = ""
+var _phase: String = "loading"
 var _prev_tick: int = -1
+var _loaded: bool = false
 
 
 func _initialize() -> void:
 	SimBootstrap.load_all()
-	var rollout_path: String = _parse_arg("rollout-path", "")
+	_rollout_path = _parse_arg("rollout-path", "")
 	var steps_raw: String = _parse_arg("steps", "0,1,2")
-	if rollout_path == "":
-		rollout_path = "res://sim/tests/fixtures/visual_rollouts/minimal_economy"
+	if _rollout_path == "":
+		_rollout_path = "res://sim/tests/fixtures/visual_rollouts/minimal_economy"
 	for part in steps_raw.split(",", false):
 		_steps.append(int(part.strip_edges()))
 	_output_dir = _parse_arg("output", "")
@@ -46,13 +48,24 @@ func _initialize() -> void:
 	_root.size = SIZE
 	_subvp.add_child(_root)
 	root.add_child(_subvp)
-	var loaded: Dictionary = _root.load_rollout_path(rollout_path)
-	if not loaded.get("ok", false):
-		_fail("load rollout: %s" % str(loaded.get("error", "")))
 
 
 func _process(_delta: float) -> bool:
 	if _root == null:
+		return false
+	if _phase == "loading":
+		if _frames_left > 0:
+			_frames_left -= 1
+			return false
+		var loaded: Dictionary = _root.load_rollout_path(_rollout_path)
+		if not loaded.get("ok", false):
+			_fail("load rollout: %s" % str(loaded.get("error", "")))
+			return false
+		_loaded = true
+		_phase = "warmup"
+		_frames_left = 6
+		return false
+	if not _loaded:
 		return false
 	if _phase == "warmup":
 		if _frames_left > 0:
@@ -60,16 +73,14 @@ func _process(_delta: float) -> bool:
 			return false
 		_phase = "capture"
 		_seek_step(_steps[_step_idx])
-		_frames_left = 4
+		_frames_left = 3
 		return false
 	if _phase == "capture":
 		if _frames_left > 0:
 			_frames_left -= 1
 			return false
-		var step: int = _steps[_step_idx]
-		var mode: String = MODES[_mode_idx]
-		_root.controller.set_interface_mode(mode)
-		_frames_left = 4
+		_root.controller.set_interface_mode(MODES[_mode_idx])
+		_frames_left = 3
 		_phase = "shot"
 		return false
 	if _phase == "shot":
@@ -116,6 +127,9 @@ func _seek_step(target: int) -> void:
 		if not _root.controller.step_back():
 			break
 	_root._refresh_all()
+	if _root._map != null:
+		_root._map.fit_to_content()
+		_root._map.queue_redraw()
 
 
 func _parse_arg(key: String, default_value: String) -> String:
