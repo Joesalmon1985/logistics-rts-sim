@@ -79,12 +79,12 @@ RUN_05 verification runs on two tracks; both are required and must not be collap
 ## Pass Criteria for RUN_05
 
 Track 1 (headless):
-- [ ] Economy viewer loads curated demo snapshot (VIS-SNAP-001)
-- [ ] Military viewer loads curated demo snapshot (VIS-SNAP-001)
-- [ ] Command availability bridge sources commands from the sim provider (VIS-AVAIL-001)
-- [ ] Command round-trip for at least one command type each, with snapshot refresh (VIS-CMD-001)
-- [ ] `available_commands[]` excluded from replay-hashed state; no hashes re-pinned for it
-- [ ] GOD-SMOKE-001, GOD-SMOKE-002 pass
+- [x] Economy viewer loads curated demo snapshot (VIS-SNAP-001)
+- [x] Military viewer loads curated demo snapshot (VIS-SNAP-001)
+- [x] Command availability bridge sources commands from the sim provider (VIS-AVAIL-001)
+- [x] Command round-trip for at least one command type each, with snapshot refresh (VIS-CMD-001)
+- [x] `available_commands[]` excluded from replay-hashed state; no hashes re-pinned for it
+- [x] GOD-SMOKE-001, GOD-SMOKE-002 pass
 
 Track 2 (windowed visual review, per `docs/verification/local_verification.md`):
 - [ ] Economy and military demos are readable at 1920x1080 (map/panels/text do not overlap)

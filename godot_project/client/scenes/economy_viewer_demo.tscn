@@ -1,0 +1,115 @@
+[gd_scene load_steps=3 format=3 uid="uid://run05economyviewer"]
+
+[ext_resource type="Script" path="res://client/scenes/economy_viewer_demo.gd" id="1"]
+[ext_resource type="Script" path="res://client/ui/map_viewport.gd" id="2"]
+
+[node name="EconomyViewerDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="RootHBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MapArea" type="PanelContainer" parent="RootHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+
+[node name="MapViewport" type="Control" parent="RootHBox/MapArea"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2")
+
+[node name="RightPanel" type="VBoxContainer" parent="RootHBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(420, 0)
+size_flags_horizontal = 3
+
+[node name="StatusLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Status"
+
+[node name="DebugLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Debug"
+
+[node name="Legend" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 100)
+fit_content = true
+
+[node name="CommandList" type="ItemList" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ResultLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Last result:"
+
+[node name="ButtonRow" type="HBoxContainer" parent="RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="ResetBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Reset"
+
+[node name="StepBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Step"
+
+[node name="SubmitBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Submit"
+
+[node name="InvalidBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Invalid"
+
+[node name="GridBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Grid"
+
+[node name="RoadsBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Roads"
+
+[node name="ShotBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+layout_mode = 2
+text = "Screenshot"
+
+[node name="Inspector" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 160)
+scroll_active = true
+
+[node name="EventLog" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+scroll_active = true
+
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/ResetBtn" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/StepBtn" to="." method="_on_step_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/SubmitBtn" to="." method="_on_submit_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/InvalidBtn" to="." method="_on_invalid_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/GridBtn" to="." method="_on_toggle_grid_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/RoadsBtn" to="." method="_on_toggle_roads_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/ShotBtn" to="." method="_on_screenshot_pressed"]

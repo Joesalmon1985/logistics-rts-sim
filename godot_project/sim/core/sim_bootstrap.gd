@@ -27,6 +27,8 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/core/command_validator.gd",
 	"res://sim/core/game_state.gd",
 	"res://sim/core/snapshot_exporter.gd",
+	"res://sim/core/command_availability_dto.gd",
+	"res://sim/core/command_availability_provider.gd",
 	"res://sim/core/config_loader.gd",
 	"res://sim/economy/economy_constants.gd",
 	"res://sim/economy/economy_config.gd",
@@ -44,6 +46,7 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/economy/economy_init.gd",
 	"res://sim/economy/economy_tick.gd",
 	"res://sim/economy/economy_command_registry.gd",
+	"res://sim/economy/economy_command_availability.gd",
 	"res://sim/military/military_constants.gd",
 	"res://sim/military/military_config.gd",
 	"res://sim/military/military_state.gd",
@@ -84,6 +87,7 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/military/commands/disable_military_building_command.gd",
 	"res://sim/military/commands/harvest_resource_command.gd",
 	"res://sim/military/military_command_registry.gd",
+	"res://sim/military/military_command_availability.gd",
 	"res://sim/core/variant_module.gd",
 	"res://sim/variants/variant_stub_base.gd",
 	"res://sim/variants/economy_trial/economy_trial_variant.gd",
@@ -96,6 +100,13 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/bot/heuristic_economy_bot.gd",
 	"res://sim/bot/heuristic_military_bot.gd",
 	"res://sim/economy/bot/heuristic_economy_builder_bot.gd",
+	"res://client/demo/economy_demo.gd",
+	"res://client/demo/military_demo.gd",
+	"res://client/adapters/snapshot_loader.gd",
+	"res://client/adapters/layer_renderer.gd",
+	"res://client/adapters/command_submitter.gd",
+	"res://client/adapters/command_availability.gd",
+	"res://client/core/viewer_controller.gd",
 ]
 
 

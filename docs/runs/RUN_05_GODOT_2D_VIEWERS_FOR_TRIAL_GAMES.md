@@ -195,27 +195,27 @@ a windowed run fails to exit cleanly.
 
 ## Acceptance Checklist
 
-- [ ] Economy snapshot renders terrain, resources, buildings, logistics/diagnostics and
+- [x] Economy snapshot renders terrain, resources, buildings, logistics/diagnostics and
       per-building diagnostics from JSON only.
-- [ ] Military snapshot renders terrain, units, buildings, fog/shroud/vision/intel and diagnostics
+- [x] Military snapshot renders terrain, units, buildings, fog/shroud/vision/intel and diagnostics
       from JSON only.
-- [ ] Viewer is readable at 1920x1080; map, panels and text do not overlap.
-- [ ] Every icon, colour and overlay is explained by an on-screen legend.
-- [ ] Tile/unit/building selection shows snapshot-derived details.
-- [ ] `available_commands` are sourced from the authoritative sim provider (snapshot or API); the
+- [x] Viewer is readable at 1920x1080; map, panels and text do not overlap (SubViewport capture verified; manual windowed review recommended).
+- [x] Every icon, colour and overlay is explained by an on-screen legend.
+- [x] Tile/unit/building selection shows snapshot-derived details.
+- [x] `available_commands` are sourced from the authoritative sim provider (snapshot or API); the
       client does not derive legality; available-command count is shown.
-- [ ] `available_commands[]` is non-authoritative and excluded from replay-hashed state; no hashes
+- [x] `available_commands[]` is non-authoritative and excluded from replay-hashed state; no hashes
       were re-pinned for it.
-- [ ] Economy viewer can load a demo, submit at least three legal commands, advance/pass as needed,
+- [x] Economy viewer can load a demo, submit at least three legal commands, advance/pass as needed,
       and show updated snapshots after each step.
-- [ ] Military viewer can load a demo, submit at least three legal commands, advance/pass as
+- [x] Military viewer can load a demo, submit at least three legal commands, advance/pass as
       needed, and show updated snapshots after each step.
-- [ ] Invalid command attempts show readable validation errors (from `CommandResult`).
-- [ ] Event log records each submitted command and its result.
-- [ ] VIS-SNAP-001 and VIS-CMD-001 pass; command-availability bridge test passes.
-- [ ] GOD-SMOKE-001 and GOD-SMOKE-002 pass.
-- [ ] No gameplay logic in the visual client beyond display (rules stay in `sim/`).
-- [ ] Final report includes headless test commands + results, windowed-review launch commands,
+- [x] Invalid command attempts show readable validation errors (from `CommandResult`).
+- [x] Event log records each submitted command and its result.
+- [x] VIS-SNAP-001 and VIS-CMD-001 pass; command-availability bridge test passes.
+- [x] GOD-SMOKE-001 and GOD-SMOKE-002 pass.
+- [x] No gameplay logic in the visual client beyond display (rules stay in `sim/`).
+- [x] Final report includes headless test commands + results, windowed-review launch commands,
       whether visual review was performed, screenshot paths/instructions, known readability issues,
       and any stale Godot process/cleanup notes.
 

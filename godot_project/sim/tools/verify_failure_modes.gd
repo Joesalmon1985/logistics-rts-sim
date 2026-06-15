@@ -23,6 +23,7 @@ func _initialize() -> void:
 	failures.append_array(_check_subprocess_military_smoke_invalid())
 	failures.append_array(_check_subprocess_military_scenario_invalid())
 	failures.append_array(_check_subprocess_bot_smoke_invalid())
+	failures.append_array(_check_subprocess_viewer_smoke_invalid())
 	failures.append_array(_check_subprocess_replay_verify_invalid())
 
 	print("—")
@@ -116,6 +117,14 @@ func _check_subprocess_bot_smoke_invalid() -> Array[String]:
 		["--smoke=999"],
 	)
 	return _expect_nonzero_exit(result, "invalid bot smoke id")
+
+
+func _check_subprocess_viewer_smoke_invalid() -> Array[String]:
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_viewer_smoke.gd",
+		["--smoke=999"],
+	)
+	return _expect_nonzero_exit(result, "invalid viewer smoke id")
 
 
 func _check_subprocess_replay_verify_invalid() -> Array[String]:

@@ -153,6 +153,9 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/military/hardening/test_mil_replay_002_skirmish_replay_hash.gd",
 	"res://sim/tests/military/hardening/test_mil_snap_002_fog_layers_in_snapshot.gd",
 	"res://sim/tests/military/hardening/test_mil_smoke_008_win_loss_triggers.gd",
+	"res://sim/tests/viewer/test_vis_snap_001_render_data_from_snapshot.gd",
+	"res://sim/tests/viewer/test_vis_cmd_001_command_roundtrip.gd",
+	"res://sim/tests/viewer/test_vis_avail_001_availability_bridge.gd",
 ]
 
 
@@ -163,7 +166,7 @@ func _initialize() -> void:
 	var failed: int = 0
 	var errored: int = 0
 	var ran: int = 0
-	print("RUN_04 headless test harness — %d tests expected" % expected)
+	print("RUN_05 headless test harness — %d tests expected" % expected)
 
 	for script_path in TEST_SCRIPTS:
 		var script: Script = load(script_path)

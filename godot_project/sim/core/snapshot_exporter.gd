@@ -79,6 +79,12 @@ static func export_snapshot(state: GameState) -> Dictionary:
 	}
 
 
+static func export_debug_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
+	var snapshot: Dictionary = export_snapshot(state)
+	snapshot["available_commands"] = CommandAvailabilityProvider.list_available_commands(state, actor_id)
+	return snapshot
+
+
 static func _build_display_layers(state: GameState) -> Dictionary:
 	var terrain_layer: Array = []
 	var height_layer: Array = []

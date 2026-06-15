@@ -140,7 +140,7 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (148 tests — RUN_01 + RUN_02 + RUN_03 + RUN_04)
+## Headless unit/integration tests (151 tests — RUN_01 through RUN_05)
 
 ```bash
 timeout 400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
@@ -150,7 +150,7 @@ echo "exit=$?"
 Expected output includes:
 
 ```text
-Results: 148/148 ran, 148 passed, 0 failed, 0 errored
+Results: 151/151 ran, 151 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
@@ -331,8 +331,33 @@ $LASTEXITCODE
 "$GODOT" --path godot_project --resolution 1920x1080 res://client/scenes/military_viewer_demo.tscn
 ```
 
-(Exact scene paths are finalized during RUN_05 implementation; use the demo launcher described in
+(Exact scene paths finalized during RUN_05 implementation; use the demo launcher described in
 `docs/runs/RUN_05_GODOT_2D_VIEWERS_FOR_TRIAL_GAMES.md`.)
+
+**Implemented scenes:**
+- `res://client/scenes/economy_viewer_demo.tscn`
+- `res://client/scenes/military_viewer_demo.tscn`
+
+### RUN_05 viewer smokes (Track 1)
+
+```powershell
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd -- --smoke=all
+```
+
+Expected: `GOD-SMOKE-001 PASS`, `GOD-SMOKE-002 PASS`, `VIEWER SMOKE PASS`, exit `0`.
+
+### RUN_05 screenshot capture (SubViewport; non-headless)
+
+Headless dummy renderer cannot capture viewport textures. Use the capture runner **without**
+`--headless`:
+
+```powershell
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=economy
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military
+```
+
+Saves to `user://screenshots/run_05_economy_demo.png` and `run_05_military_demo.png` (under
+`GODOT_USER_DATA_DIR` when set, otherwise OS default app user data).
 
 Confirm visually: map is large/readable; panels do not overlap the map; text is readable at desktop
 scale; legend explains every colour/icon/overlay; layer toggles work; selection inspector is

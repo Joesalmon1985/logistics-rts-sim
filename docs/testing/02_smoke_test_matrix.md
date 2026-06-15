@@ -97,7 +97,10 @@ verified separately via the **windowed visual review** (Track 2) in
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
 | GOD-SMOKE-001 | Load economy + military demo snapshots headlessly | Renderer accepts all snapshot layers/diagnostics from JSON only; no `SCRIPT ERROR`; exit 0 |
-| GOD-SMOKE-002 | Sim-provided command round-trip via viewer adapter | `available_commands` sourced from sim provider; a selected legal command submits through `CommandValidator`; snapshot refreshes; rejected command yields readable `CommandResult` reason; `available_commands[]` excluded from replay-hashed state |
+| GOD-SMOKE-002 | Sim-provided command round-trip via viewer adapter | `available_commands` sourced from sim provider; legal command submits through `CommandValidator`; snapshot refreshes; rejected command yields readable `CommandResult` reason; `available_commands[]` excluded from replay-hashed state |
+
+RUN_05 smoke runner: `sim/tools/run_viewer_smoke.gd` (`--smoke=all`, exit `0`). Unknown smoke id
+must exit non-zero (checked by `verify_failure_modes.gd`).
 
 ## RUN_06 — Neural Training
 
