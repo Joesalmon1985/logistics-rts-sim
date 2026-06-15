@@ -122,3 +122,33 @@ Track 2 (windowed visual review, per `docs/verification/local_verification.md`):
 - [x] Economy and military demos are readable at 1920x1080 (map/panels/text do not overlap)
 - [x] Legend explains every colour/icon/overlay; selection inspector understandable
 - [x] Screenshots captured (capture runner `--assert`) and referenced in [`RUN_05_FINAL_REPORT.md`](../audit/RUN_05_FINAL_REPORT.md)
+
+---
+
+## RUN_02.5 Rollout Observer Tests (VIS-ROLL-*)
+
+Scope: neural rollout artefact loading, timeline playback, alignment rule. See
+`docs/design/14_neural_rollout_observer_design.md` and `docs/testing/06_visual_legibility_review.md`.
+
+| ID | Type | Pass criteria |
+|----|------|---------------|
+| VIS-ROLL-001 | Unit | Rollout schema validation (Python + GDScript) |
+| VIS-ROLL-001b | Unit | `len(snapshots) == len(commands) + 1`; export/loader indexing |
+| VIS-ROLL-002 | Unit | `RolloutLoader` loads metadata + snapshot count |
+| VIS-ROLL-003 | Unit | Step forward/back updates snapshot + both action panels (no off-by-one) |
+| VIS-ROLL-004 | Unit | Missing optional fields tolerated without crash |
+| VIS-ROLL-005 | Smoke | Headless observer loads committed fixture rollout |
+| GOD-ROLL-001 | Capture | Non-headless screenshot non-blank + step diff |
+
+Fixture: `godot_project/sim/tests/fixtures/visual_rollouts/minimal_economy/` (2–3 commands → 3–4 snapshots).
+
+Runners:
+
+```bash
+# Headless rollout smoke
+$GODOT --headless --path godot_project --script res://sim/tools/run_rollout_observer_smoke.gd
+
+# Capture (non-headless)
+$GODOT --path godot_project --script res://sim/tools/run_rollout_review_capture.gd \
+  -- --rollout-path=... --steps=0,10
+```
