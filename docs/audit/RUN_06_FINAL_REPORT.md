@@ -91,7 +91,7 @@ Artefacts / checkpoints:
 - `git ls-files checkpoints/ training_runs/ models/` — empty (nothing tracked).
 - `git check-ignore` — `checkpoints/`, `training_runs/`, `models/`, `.venv` ignored.
 - Stale `training_runs/run06_smoke*` and `checkpoints/run06_smoke*` deleted before closure pytest.
-- Untracked stale IPC session dir `godot_project/run06_session_*` — **not committed**.
+- IPC session dirs `godot_project/run06_session_*/` — gitignored (generated transport artefacts).
 
 Docs changed:
 - `docs/audit/RUN_06_FINAL_REPORT.md` (this closure report)
@@ -111,7 +111,7 @@ Known issues:
 - Phase B evolutionary training **not implemented** (blocked until user authorises).
 
 Uncommitted changes:
-See post-commit `git status --short` (expected: only `godot_project/run06_session_*` untracked).
+none
 
 Merge readiness:
 **Ready for review / possible merge, subject to user approval** — all closure gates passed cleanly on Linux Godot 4.5.2; no merge to `main` performed.
