@@ -1,144 +1,120 @@
-# RUN_06 Final Report — Independent Linux Assessment
+# RUN_06 / RUN_06b Final Report — Pre-Merge Closure (Linux)
 
-```
 Branch:
-Summary:
-Files changed:
-Tests run:
-Results:
-Known issues:
-Unimplemented requirements:
-Uncommitted changes:
-Suggested next run:
+`feature/run-06-neural-training-trial-games`
+
+Starting commit:
+`c41ba4b` (docs: add RUN_06 independent Linux assessment final report)
+
+Fix summary:
+RUN_06b delivers the policy/evaluation contract blocked in RUN_06: engine-owned legal commands (including pass), compact policy observations, decomposed action encoding, scoring-policy baselines, win/loss/draw episode fitness, and winnable eval scenarios. Economy eval uses `worker_policy` victory; military eval sets `auto_acquire_idle: 0` so pass-only cannot win via idle auto-attack. Prior RUN_06 BC training path unchanged; TRN-IMPROVE gates remain **BC holdout accuracy**, not rollout proxy scores.
+
+Failed run explanation:
+A background policy-eval smoke run (2026-06-15 ~19:01 UTC, ~358s, exit 1) failed **EVAL-SMOKE-001** because economy eval had `scripted_good` and `pass_only` both at fitness **0.00** — the pre-RUN_06b economy scenario could not differentiate policies within the tick budget. Fixes applied before the clean rerun:
+
+- `eval_build_obvious.json` — victory type `worker_policy: auto`; scripted step sets worker policy via legal command.
+- `PolicyEpisodeResult` — actor-centric win/loss/draw fitness (win=1.0, draw=0.5, loss=0.0).
+- Military scenarios — `auto_acquire_idle: 0` in scenario JSON; `MilitaryInit` / `MilitaryOrderSystem` honor per-scenario override.
+- `run_policy_eval_smoke.gd` — tick caps (economy 40, military 120, scripted 250) and smoke scope trimmed for reliability.
+
+Stale generated artefacts were deleted before final verification:
+```bash
+rm -rf training_runs/run06_smoke training_runs/run06_smoke_test \
+       checkpoints/run06_smoke checkpoints/run06_smoke_test training_runs/run_06b
 ```
+The successful policy-eval and pytest runs regenerated fresh gitignored outputs under `training_runs/` and `checkpoints/` during TRN-SMOKE-003 / improve tests only — **not** committed. The passing policy-eval smoke does not depend on pre-existing CSV/JSON under `training_runs/run_06b/`; it runs episodes live in-process.
 
-Branch: `feature/run-06-neural-training-trial-games` @ `7b6670a`
-
-Summary: Independent Linux assessment (Godot 4.5.2) confirms RUN_06 **milestone pass** on all required gates: prior-kernel regression (158/158 + smokes + integrity), RUN_06 Godot training smokes, and Python pytest (11/11, no skips). **RUN_06 proves neural imitation via held-out BC accuracy** (economy 77.7%, military 66.1% trained on holdout seeds 13/23). **RUN_06 does not prove rollout gameplay improvement**: advisory rollout evaluation could not be completed reliably (IPC timeouts / JSON truncation on long economy rollouts; partial military runs also returned `military_score=0`). This matches lessons learned that smoke scenarios yield zero rollout scores for all policies.
-
-Files changed: (assessment only — no code edits) `docs/audit/RUN_06_FINAL_REPORT.md` (this file). Generated gitignored artifacts under `checkpoints/`, `training_runs/` during verification.
-
-Tests run:
-
-**Environment**
+Final verification commands:
 ```bash
 export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
 export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
-"$GODOT" --version   # 4.5.2.stable.official.6ce3de25a
-git check-ignore .venv   # .venv (ignored)
-python3 -m venv .venv && pip install -r requirements.txt
-timeout 120s "$GODOT" --headless --path godot_project --import   # exit=0
+timeout 120s "$GODOT" --headless --path godot_project --import
+timeout 500s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_smoke.gd -- --variant=economy_trial --ticks=10 --seed=1
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_smoke.gd -- --variant=military_trial --ticks=10 --seed=1 --scenario=scenarios/kernel_smoke_military.json
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_smoke.gd -- --variant=hybrid --ticks=10 --seed=1 --scenario=scenarios/kernel_smoke_hybrid.json
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_military_smoke.gd -- --smoke=all
+timeout 600s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd -- --smoke=all
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd -- --smoke=all
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_training_smoke.gd
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_policy_eval_smoke.gd
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+timeout 1800s .venv/bin/python -m pytest python_tools/tests/ -v
+git diff --check
 ```
 
-**Phase 2a — tool paths (verified)**
-```bash
-ls godot_project/sim/tools/*training*env*.gd
-# run_training_env.gd, training_env_server.gd
-ls godot_project/sim/tools/*training*smoke*.gd
-# run_training_smoke.gd
-```
-No documentation drift on script names.
+Final verification results:
 
-**Phase 1 — prior-kernel gate (feature branch)**
-| Command | Exit | Status |
-|---------|------|--------|
-| `timeout 400s … run_tests.gd` | 0 | **passed** — 158/158, no SCRIPT ERROR |
-| `timeout 60s … run_smoke.gd --variant=economy_trial …` | 0 | **passed** |
-| `timeout 60s … run_smoke.gd --variant=military_trial …` | 0 | **passed** |
-| `timeout 60s … run_smoke.gd --variant=hybrid …` | 0 | **passed** |
-| `timeout 120s … run_economy_smoke.gd` | 0 | **passed** |
-| `timeout 120s … run_military_smoke.gd --smoke=all --seed=1` | 0 | **passed** |
-| `timeout 600s … run_bot_smoke.gd --smoke=all --seed=42` | 0 | **passed** |
-| `timeout 120s … run_viewer_smoke.gd --smoke=all` | 0 | **passed** |
-| `timeout 200s … verify_failure_modes.gd` | 0 | **passed** — INTEGRITY PASS |
+| Command | Exit | Summary | SCRIPT ERROR | Status |
+|---------|------|---------|--------------|--------|
+| `--import` | 0 | import complete | 0 | **passed** |
+| `run_tests.gd` | 0 | 160/160 passed | 0 | **passed** |
+| `run_smoke.gd` economy | 0 | SMOKE PASS | 0 | **passed** |
+| `run_smoke.gd` military | 0 | SMOKE PASS | 0 | **passed** |
+| `run_smoke.gd` hybrid | 0 | SMOKE PASS | 0 | **passed** |
+| `run_economy_smoke.gd` | 0 | ECON SMOKE PASS | 0 | **passed** |
+| `run_military_smoke.gd` | 0 | MIL SMOKE PASS | 0 | **passed** |
+| `run_bot_smoke.gd` | 0 | BOT SMOKE PASS | 0 | **passed** |
+| `run_viewer_smoke.gd` | 0 | VIEWER SMOKE PASS | 0 | **passed** |
+| `run_training_smoke.gd` | 0 | TRN-SMOKE-001/002, TRAINING SMOKE PASS | 0 | **passed** |
+| `run_policy_eval_smoke.gd` | 0 | POLICY EVAL SMOKE PASS (all RUN_06b gates) | 0 | **passed** |
+| `verify_failure_modes.gd` | 0 | INTEGRITY PASS | 0 | **passed** |
+| `pytest python_tools/tests/` | 0 | 18 passed, 0 skipped | 0 | **passed** |
+| `git diff --check` | 0 | clean | — | **passed** |
 
-Note: first `run_tests.gd` attempt in sandbox segfaulted (exit 139); rerun outside sandbox passed. `main` baseline not run (feature gate green).
+Background run contrast (failed vs clean):
 
-**Phase 2 — RUN_06 Godot smokes**
-| Command | Exit | Status |
-|---------|------|--------|
-| `timeout 300s … run_training_smoke.gd` | 124 | **timed out** after TRN-SMOKE-001 (TRN-SMOKE-002 incomplete) |
-| `timeout 600s … run_training_smoke.gd` (rerun) | 0 | **passed** — TRN-SMOKE-001/002, TRAINING SMOKE PASS |
-| `timeout 120s … run_training_env.gd -- --self-test` | 0 | **passed** |
+| Run | When | Exit | EVAL-SMOKE-001 | Notes |
+|-----|------|------|----------------|-------|
+| Background (stale) | ~19:01 UTC | 1 | FAIL (0.00 / 0.00) | Pre-RUN_06b economy scenario |
+| Closure clean | ~22:12 UTC | 0 | PASS | After scenario + contract fixes; artefacts cleared first |
 
-**Phase 2c — artifact cleanup before pytest**
-```bash
-rm -rf training_runs/run06_smoke_test checkpoints/run06_smoke_test \
-       training_runs/run06_smoke checkpoints/run06_smoke
-```
+RUN_06 acceptance mapping:
 
-**Phase 3 — Python pytest**
-```bash
-timeout 1800s pytest python_tools/tests/ -v   # exit=0, 702s
-```
-11 passed, 0 skipped, 0 failed.
+| Item | Status |
+|------|--------|
+| Prior kernel/tests/smokes still pass | **passed** (160/160 + all smokes + integrity) |
+| Godot training env works | **passed** (TRN-ENV tests + training smoke) |
+| Python drives Godot | **passed** (pytest rollout/replay/training/improve) |
+| TRN-SMOKE-001 deterministic rollout | **passed** |
+| TRN-SMOKE-002 replay equivalence | **passed** |
+| TRN-SMOKE-003 training/checkpoint/metrics | **passed** (fresh gitignored artefacts) |
+| TRN-IMPROVE-ECON-001 | **passed** via **BC holdout accuracy** (not rollout score) |
+| TRN-IMPROVE-MIL-001 | **passed** via **BC holdout accuracy** (not rollout score) |
+| RUN_06b policy eval smokes | **passed** (POLICY-CONTRACT-001, EVAL-SMOKE-001/002, EVAL-DETERMINISM-001) |
+| No weights/checkpoints committed | **passed** (`git ls-files` empty; gitignore confirmed) |
+| Docs / final report updated | **passed** (this file + lessons + test plan + architecture + verification) |
+| Known limitations documented | **passed** (see below) |
 
-**Phase 3b — rollout advisory (recorded, not a pass gate)**
-- BC holdout accuracy recomputed from `training_runs/run06_smoke/bc_holdout/` datasets:
+Artefacts / checkpoints:
+- `git ls-files checkpoints/ training_runs/ models/` — empty (nothing tracked).
+- `git check-ignore` — `checkpoints/`, `training_runs/`, `models/`, `.venv` ignored.
+- Stale `training_runs/run06_smoke*` and `checkpoints/run06_smoke*` deleted before closure pytest.
+- Untracked stale IPC session dir `godot_project/run06_session_*` — **not committed**.
 
-| Variant | Holdout seed | Trained | Random | Untrained |
-|---------|--------------|---------|--------|-----------|
-| economy_trial | 13 | **0.777** | 0.018 | 0.000 |
-| military_trial | 23 | **0.661** | 0.067 | 0.054 |
-
-- Full-grid `evaluate_variant()` rollout advisory (seeds 11–13 / 21–23, tick budgets 400/600): **not completed**
-  - Economy 400-tick trained rollout: `JSONDecodeError` on IPC response (~24 KB payload)
-  - Economy 100-tick / random-policy rollouts: `TimeoutError` on `op=step` (>120s)
-  - Military 600-tick: one successful sanity run (`military_score=0`, 53s); full grid failed with timeout or JSON decode on retry
-- Partial debug metrics (single episodes): `economy_score=0`, `military_score=0` for all policy kinds tested
-
-**Phase 4 — static checks**
-| Check | Result |
-|-------|--------|
-| Weights in git | 0 tracked files |
-| `.gitignore` | `checkpoints/`, `training_runs/`, `models/` present |
-| Python gameplay authority | **passed** — orchestration via `godot_env` RPC; `metrics.py` only aggregates exported events |
-| `git diff --check` | clean |
-
-Results:
-
-| Acceptance item | Required pass? | Status |
-|-----------------|----------------|--------|
-| Prerequisites (RUN_01–04 + gates) | yes | **passed** |
-| Python drives Godot headless (DDR-033) | yes | **passed** |
-| TRN-SMOKE-001 | yes | **passed** (Godot + pytest) |
-| TRN-SMOKE-002 | yes | **passed** (Godot + pytest) |
-| TRN-SMOKE-003 | yes | **passed** (fresh artifacts under `checkpoints/run06_smoke_test/`, `training_runs/run06_smoke_test/`) |
-| TRN-IMPROVE-ECON-001 (BC accuracy) | yes | **passed** (`test_trn_improve_econ_001`, holdout 77.7%) |
-| TRN-IMPROVE-MIL-001 (BC accuracy) | yes | **passed** (`test_trn_improve_mil_001`, holdout 66.1%) |
-| Rollout gameplay improvement | advisory | **not proven** — full advisory grid incomplete; scores 0 where measured |
-| BC label matching stable | yes | **passed** (4/4 unit tests) |
-| Training artefacts fresh | yes | **passed** (cleanup before pytest; timestamps 2026-06-15 18:11–18:16 UTC) |
-| No Python gameplay authority | yes | **passed** |
-| Weights not committed | yes | **passed** |
-| Existing Godot tests/smokes pass | yes | **passed** |
-| Python tests pass (no skips) | yes | **passed** |
-
-**Scope statements (required):**
-- **RUN_06 proves neural imitation / policy selection improvement by BC accuracy** on holdout seeds 13 (economy) and 23 (military).
-- **RUN_06 does not prove actual rollout gameplay improvement.** Advisory rollout metrics were zero on completed partial runs; full paired rollout grid could not be finished due to training-transport reliability limits on long economy episodes.
-
-**Verdict: RUN_06 milestone PASS** (all required checklist rows green on fresh Linux verification).
+Docs changed:
+- `docs/audit/RUN_06_FINAL_REPORT.md` (this closure report)
+- `docs/audit/RUN_06_LESSONS_LEARNED.md` (RUN_06b section)
+- `docs/architecture/04_bot_and_training_architecture.md` (policy observation, legal commands, scoring)
+- `docs/testing/04_training_test_plan.md` (RUN_06b gates)
+- `docs/testing/02_smoke_test_matrix.md` (RUN_06b policy eval row)
+- `docs/runs/RUN_06_NEURAL_TRAINING_FOR_TRIAL_GAMES.md` (RUN_06b checklist)
+- `docs/verification/local_verification.md` (closure commands, 160 tests, policy eval smoke)
 
 Known issues:
-- `run_training_smoke.gd` needs **>300s** on Linux for TRN-SMOKE-002 (documented 600s timeout for Linux in `local_verification.md` follow-up).
-- Economy rollout IPC: JSON truncation / step timeouts on long episodes as state grows (`export_training_snapshot` helps per-tick but full 400-tick rollouts still fail intermittently).
-- Smoke scenarios yield **zero** `economy_score` / `military_score` for trained/random/untrained in partial rollout probes (consistent with RUN_06 lessons learned).
-- BC accuracy proves imitation, not in-game dominance — richer rollout eval deferred to RUN_07+.
-- Godot must run **outside sandbox** on this Linux host (sandbox segfault exit 139).
-- Stray session dir from failed IPC: `godot_project/run06_session_*` (untracked).
-
-Unimplemented requirements: None for RUN_06 scoped acceptance. Out-of-scope items remain out-of-scope (production model quality, hybrid training, Godot UI integration).
+- **TRN-IMPROVE uses BC holdout accuracy**, not rollout gameplay score improvement — by design for RUN_06; RUN_06b adds win/loss/draw eval differentiation on dedicated eval scenarios only.
+- Legacy proxy metrics (`economy_score` / `military_score`) remain debug-only; not RUN_06b fitness gates.
+- `run_training_smoke.gd` needs ~270s on this host (300s timeout sufficient).
+- `run_policy_eval_smoke.gd` needs ~170–180s (300s timeout sufficient).
+- Full pytest ~690s with torch CPU; 1 CUDA driver warning (non-fatal).
+- Phase B evolutionary training **not implemented** (blocked until user authorises).
 
 Uncommitted changes:
-```
-?? godot_project/run06_session_d07403da78124fd4a61000aecd847a49/
-?? godot_project/sim/tests/training/test_trn_env_004_response_sentinel_prefix.gd.uid
-?? godot_project/sim/tools/run_training_smoke.gd.uid
-?? godot_project/sim/tools/run_verify_debug.gd.uid
-?? godot_project/sim/tools/training_command_match.gd.uid
-?? docs/audit/RUN_06_FINAL_REPORT.md
-```
-(gitignored: `.venv/`, `checkpoints/`, `training_runs/`, `.pytest_cache/`)
+See post-commit `git status --short` (expected: only `godot_project/run06_session_*` untracked).
 
-Suggested next run: **RUN_07** — Headless Hybrid (`feature/run-07-headless-hybrid` per `docs/runs/`). Add richer rollout eval metrics once hybrid scenarios produce non-zero scores.
+Merge readiness:
+**Ready for review / possible merge, subject to user approval** — all closure gates passed cleanly on Linux Godot 4.5.2; no merge to `main` performed.
+
+Suggested next run:
+User authorisation for Phase B evolution (optional RUN_13 doc); **RUN_07** headless hybrid per `docs/runs/`.

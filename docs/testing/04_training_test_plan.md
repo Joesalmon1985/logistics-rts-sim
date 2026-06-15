@@ -52,3 +52,41 @@ Scope: RUN_06 — neural training for trial games. Gates in `.cursor/rules/08-ne
 - [x] TRN-SMOKE-001, TRN-SMOKE-002, TRN-SMOKE-003 pass
 - [x] TRN-IMPROVE-ECON-001 / TRN-IMPROVE-MIL-001 pass via held-out BC accuracy (seeds 13 / 23)
 - [x] No training before prerequisites documented in run report
+
+## RUN_06b — Policy / Evaluation Contract
+
+RUN_06b fixes rollout eval blindness and adds the observation + legal-action scoring interface. **BC accuracy is not a RUN_06b success gate** (NO-BC-GATE-001).
+
+### Contract gates
+
+| Gate | Pass criteria |
+|------|---------------|
+| POLICY-CONTRACT-001 | Non-empty legal list including pass at every decision point |
+| POLICY-CONTRACT-002 | Every enumerated command applies without SCRIPT ERROR |
+| POLICY-CONTRACT-003 | Scoring wrapper submits only legal commands (Python unit + eval path) |
+
+### Eval smoke gates
+
+| Gate | Pass criteria |
+|------|---------------|
+| EVAL-SMOKE-001 | Economy: pass loses, scripted-good wins, policies differ |
+| EVAL-SMOKE-002 | Military: scripted-good beats pass-only; policies differ |
+| EVAL-DETERMINISM-001 | Same policy + seed + scenario → identical outcome + command-log hash |
+| EVAL-REPORT-001 | win/loss/draw by policy, scenario, seed in CSV/JSON under `training_runs/run_06b/policy_eval/` |
+
+### Tests
+
+- GDScript: `test_policy_contract_001_legal_pass.gd`, `test_policy_contract_002_episode_result.gd`; smoke runner `run_policy_eval_smoke.gd`
+- Python: `test_policy_contract.py`, `test_eval_smoke.py`; harness `policy_eval.py`
+
+### Verification commands (Linux)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+TEST_FILTER=policy_contract timeout 240s $GODOT --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 180s $GODOT --headless --path godot_project -s res://sim/tools/run_policy_eval_smoke.gd
+pytest python_tools/tests/test_policy_contract.py python_tools/tests/test_eval_smoke.py -v
+```
+
+Grep all Godot output for `SCRIPT ERROR` even on exit 0.

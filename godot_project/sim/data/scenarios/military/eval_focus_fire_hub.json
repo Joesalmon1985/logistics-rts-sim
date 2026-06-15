@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "variant": "military_trial",
+  "seed": 201,
+  "map_file": "maps/military/flat_16.json",
+  "players": ["p1", "p2"],
+  "build_radius": 30,
+  "starting_credits": 1000,
+  "fog_enabled": 0,
+  "auto_acquire_idle": 0,
+  "win_condition": "destroy_all_hubs",
+  "spawns": [
+    {
+      "player_id": "p1",
+      "q": 1,
+      "r": 1,
+      "units": [{"type": "rocket_squad", "q": 9, "r": 12, "count": 5}]
+    },
+    {"player_id": "p2", "q": 12, "r": 12}
+  ],
+  "eval_max_ticks": 300,
+  "eval_script": [
+    {"action": "attack_enemy_hub"}
+  ]
+}

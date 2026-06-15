@@ -55,6 +55,14 @@ func handle_request(req: Dictionary) -> Dictionary:
 			return _op_record_bc_episode(req)
 		"rollout_stub":
 			return _op_rollout_stub(req)
+		"policy_observation":
+			return _op_policy_observation(req)
+		"legal_commands":
+			return _op_legal_commands(req)
+		"play_episode":
+			return _op_play_episode(req)
+		"episode_result":
+			return _op_episode_result(req)
 		"shutdown":
 			return {"ok": true, "op": "shutdown"}
 		_:
@@ -92,6 +100,107 @@ func _op_reset(req: Dictionary) -> Dictionary:
 		"tick": state.tick,
 		"seed": state.seed,
 		"snapshot": SnapshotExporter.export_training_snapshot(state, actor_id),
+		"policy_observation": PolicyObservationExporter.export_policy_observation(state, actor_id),
+		"legal_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
+	}
+
+
+func _op_policy_observation(_req: Dictionary) -> Dictionary:
+	if state == null:
+		return {"ok": false, "error": "not_reset"}
+	return {
+		"ok": true,
+		"op": "policy_observation",
+		"observation": PolicyObservationExporter.export_policy_observation(state, actor_id),
+		"tick": state.tick,
+	}
+
+
+func _op_legal_commands(_req: Dictionary) -> Dictionary:
+	if state == null:
+		return {"ok": false, "error": "not_reset"}
+	return {
+		"ok": true,
+		"op": "legal_commands",
+		"legal_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
+		"tick": state.tick,
+	}
+
+
+func _op_play_episode(req: Dictionary) -> Dictionary:
+	if req.has("scenario_path") or state == null:
+		var reset_result: Dictionary = _op_reset(req)
+		if not reset_result.get("ok", false):
+			return reset_result
+
+	var policy_kind: String = str(req.get("policy_kind", "pass_only"))
+	var max_ticks: int = int(req.get("max_ticks", scenario.get("eval_max_ticks", 500)))
+	var rng_seed: int = int(req.get("policy_seed", int(scenario.get("seed", 1))))
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var command_log: Array = []
+	var script_index: int = 0
+	var heuristic_bot_kind: String = ""
+	if policy_kind == "heuristic":
+		if state.variant_id == "economy_trial":
+			heuristic_bot_kind = "economy"
+		elif state.variant_id == "military_trial":
+			heuristic_bot_kind = "military"
+
+	for _i in range(max_ticks):
+		var legal: Array = CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id)
+		if legal.is_empty():
+			return {"ok": false, "error": "empty_legal_commands", "op": "play_episode"}
+
+		var chosen: Dictionary = {}
+		if heuristic_bot_kind != "":
+			var bot_result: Dictionary = _op_bot_decide({"bot_kind": heuristic_bot_kind})
+			var cmd_dict: Variant = bot_result.get("command")
+			if cmd_dict == null:
+				chosen = PolicyBaselineSelector.select_command(
+					"pass_only", state, actor_id, scenario, legal, rng, script_index,
+				)
+			else:
+				chosen = PolicyEvalRunner._match_legal_dict(cmd_dict as Dictionary, legal, actor_id, state.tick)
+		else:
+			chosen = PolicyBaselineSelector.select_command(
+				policy_kind, state, actor_id, scenario, legal, rng, script_index,
+			)
+
+		if chosen.is_empty():
+			return {"ok": false, "error": "no_command_selected", "op": "play_episode"}
+
+		if PolicyBaselineSelector.should_advance_script(policy_kind, chosen, scenario, script_index):
+			script_index += 1
+
+		var step: Dictionary = _op_step({
+			"include_policy_observation": false,
+			"command": PolicyEvalRunner.entry_to_command(chosen, actor_id, state.tick),
+		})
+		if not step.get("ok", false):
+			return step
+		if step.get("accepted", false) and str(chosen.get("type", "")) != "NoopCommand":
+			var entries: Array = recorder.get_command_entries()
+			if not entries.is_empty():
+				command_log.append(entries[-1])
+
+		if bool(step.get("terminal", {}).get("done", false)):
+			break
+		if PolicyEvalRunner._scenario_victory_reached(state, actor_id, scenario):
+			break
+
+	var episode_result: Dictionary = PolicyEpisodeResult.compute_episode_result(state, actor_id, scenario)
+	return {
+		"ok": true,
+		"op": "play_episode",
+		"policy_kind": policy_kind,
+		"episode_result": episode_result,
+		"command_log": command_log,
+		"hash": ReplayHash.compute_state_hash(state),
+		"tick": state.tick,
+		"legal_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
+		"policy_observation": PolicyObservationExporter.export_policy_observation(state, actor_id),
 	}
 
 
@@ -153,15 +262,31 @@ func _op_step(req: Dictionary) -> Dictionary:
 	if not tick_result.get("ok", false):
 		return tick_result
 
+	var include_policy_obs: bool = bool(req.get("include_policy_observation", true))
 	var snapshot: Dictionary = SnapshotExporter.export_training_snapshot(state, actor_id)
-	return {
+	var response: Dictionary = {
 		"ok": true,
 		"op": "step",
 		"accepted": accepted,
 		"snapshot": snapshot,
+		"legal_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
 		"tick": state.tick,
 		"events": tick_result.get("events", []),
 		"terminal": tick_result.get("terminal", {}),
+	}
+	if include_policy_obs:
+		response["policy_observation"] = PolicyObservationExporter.export_policy_observation(state, actor_id)
+	return response
+
+
+func _op_episode_result(_req: Dictionary) -> Dictionary:
+	if state == null:
+		return {"ok": false, "error": "not_reset"}
+	return {
+		"ok": true,
+		"op": "episode_result",
+		"episode_result": PolicyEpisodeResult.compute_episode_result(state, actor_id, scenario),
+		"tick": state.tick,
 	}
 
 
@@ -398,17 +523,21 @@ func _terminal_flags() -> Dictionary:
 
 	if state.variant_id == "military_trial":
 		var decided: int = int(MilitaryState.get_meta_value(state, "victory_decided", 0))
+		var episode: Dictionary = PolicyEpisodeResult.compute_episode_result(state, actor_id, scenario)
 		return {
 			"done": decided == 1,
 			"reason": "victory" if decided == 1 else "",
 			"victory_decided": decided,
+			"episode_result": episode,
 		}
 
 	if state.variant_id == "economy_trial":
-		var snap: Dictionary = SnapshotExporter.export_snapshot(state)
+		var episode: Dictionary = PolicyEpisodeResult.compute_episode_result(state, actor_id, scenario)
+		var done: bool = str(episode.get("outcome", "")) == "win"
 		return {
-			"done": _economy_bot.is_complete(snap),
-			"reason": "economy_success" if _economy_bot.is_complete(snap) else "",
+			"done": done,
+			"reason": str(episode.get("reason", "")),
+			"episode_result": episode,
 		}
 
 	return {"done": false, "reason": ""}

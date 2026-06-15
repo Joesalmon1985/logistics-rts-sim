@@ -37,10 +37,50 @@ Bot runner:
 - Must be derivable from the **snapshot alone** (no hidden core state, no scene/render state)
 - Document the observation schema in RUN_06
 
+## Policy Observation (RUN_06b)
+
+RUN_06b adds a compact **policy observation** export separate from the full debug snapshot used in BC training.
+
+- **GDScript:** `PolicyObservationExporter.export_policy_observation(state, actor_id)` — training-env op `"policy_observation"`.
+- **Python:** `python_tools/training/observation_encoder.py` encodes the export to a fixed-size float32 vector for scoring/eval (legacy flat `observation.py` remains for BC only).
+- **Schema version:** `schema_version` in the export (currently `1`); increment on breaking layout changes.
+
+### Board tensor (16×16 economy/military trial maps)
+
+Per-hex channels (actor-relative): `terrain_type`, `owner_relation`, `visibility`, `resource_amount`, `road_present`, `has_building`, `building_type`, `building_hp_progress`, `has_unit`, `unit_type`, `unit_hp_count`.
+
+### Player / summary vectors
+
+- **Player state (9):** wood, stone, food, population, idle_workers, building_count, unit_count, victory_points, known_enemy_strength (acting-player perspective, normalised).
+- **Summary (6):** tick, phase, own/enemy unit counts, own/enemy building counts, objective-progress flags.
+
+Unsupported map sizes are rejected with a clear error; eval scenarios use `flat_16` maps.
+
+## Legal commands (RUN_06b)
+
+- **GDScript:** `CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id)` — training-env op `"legal_commands"`.
+- Wraps candidate generation and validation; **always includes an engine-owned `NoopCommand` (pass)** even when no other actions exist.
+- Policies must choose only from this list; the scoring wrapper never invents commands.
+
 ## Actions for Neural Training
 
 - Discrete or parameterized command types allowed by variant
 - Hybrid variant: exclude forbidden direct unit commands from the action space (delegated only)
+
+## Scoring policy architecture (RUN_06b)
+
+Eval and future evolution use a **decomposed action encoding** plus a scoring wrapper — not fixed action indices.
+
+- **Python:** `action_encoder.encode_action(command)` — `action_type`, coords, unit/building types, costs, args (no hash buckets).
+- **Python:** `scoring_policy.py` — `score(obs, action) -> float`, `select_command(obs, legal_commands)` picks the highest-scoring **legal** command only.
+- Candidate paging: max 64 legal commands, page size 8, deterministic sort order.
+- **Baselines (eval):** pass-only, random-legal (seeded), heuristic (`bot_decide`), scripted-good (per-scenario `eval_script`), neural-random-weights (`TinyScoringPolicy`).
+- **Episode fitness:** win=1.0, draw=0.5, loss=0.0 from `PolicyEpisodeResult` (win/loss/draw only — proxy metrics are debug-only).
+- **Index-based `TinyPolicy`** remains for legacy BC warm-start; **not** the RUN_06b eval path.
+
+Batched eval IPC: training-env op `"play_episode"` runs a full baseline episode in one Godot request; neural scoring uses reset/step with compact policy observations.
+
+Eval artefacts: `training_runs/run_06b/policy_eval/` (`report.csv`, `summary.json`, `command_logs/`).
 
 ## Training Loop (Python trainer driving Godot headless)
 

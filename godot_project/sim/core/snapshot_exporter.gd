@@ -81,7 +81,7 @@ static func export_snapshot(state: GameState) -> Dictionary:
 
 static func export_debug_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
 	var snapshot: Dictionary = export_snapshot(state)
-	snapshot["available_commands"] = CommandAvailabilityProvider.list_available_commands(state, actor_id)
+	snapshot["available_commands"] = CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id)
 	return snapshot
 
 
@@ -154,7 +154,7 @@ static func export_training_snapshot(state: GameState, actor_id: String = "") ->
 		"blocked_job_markers": blocked_job_markers,
 		"diagnostics": state.diagnostics.duplicate(true),
 		"players": player_data,
-		"available_commands": CommandAvailabilityProvider.list_available_commands(state, actor_id),
+		"available_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
 	}
 
 

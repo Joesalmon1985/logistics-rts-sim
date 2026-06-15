@@ -24,6 +24,9 @@ static func initialize(state: GameState, scenario: Dictionary, _terrain_config: 
 	MilitaryState.set_meta_value(state, "last_progress_tick", state.tick)
 	MilitaryState.set_meta_value(state, "stall_ticks", 0)
 
+	if scenario.has("auto_acquire_idle"):
+		MilitaryState.set_meta_value(state, "auto_acquire_idle", int(scenario.get("auto_acquire_idle", 1)))
+
 	var default_credits: int = int(scenario.get("starting_credits", cfg.global_int("default_starting_credits", 2000)))
 	for player_id in players:
 		MilitaryState.add_player(state, {

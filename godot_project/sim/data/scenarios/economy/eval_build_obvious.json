@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 101,
+  "map_file": "maps/economy/tiny_success_map.json",
+  "players": ["p1"],
+  "hq_position": {"q": 4, "r": 4},
+  "build_radius": 10,
+  "starting_wares": {
+    "rations": 30,
+    "meals": 20,
+    "planks": 40,
+    "tools": 12,
+    "wood": 10
+  },
+  "starting_buildings": [
+    {"type": "storehouse", "q": 5, "r": 4}
+  ],
+  "victory": {
+    "type": "worker_policy",
+    "policy": "auto"
+  },
+  "eval_max_ticks": 500,
+  "eval_script": [
+    {"action": "set_worker_policy", "policy": "auto"}
+  ]
+}

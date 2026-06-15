@@ -498,4 +498,35 @@ $env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
 & $env:GODOT --headless --path godot_project --script res://sim/tools/run_training_env.gd -- --self-test
 ```
 
-Prior-kernel gate (before RUN_06 edits): `run_tests.gd` (158/158 on RUN_06 branch), economy/military/bot smokes, `verify_failure_modes.gd` — all exit `0` on Windows Godot 4.5.1 console during this run.
+Prior-kernel gate (before RUN_06 edits): `run_tests.gd` (160/160 on feature branch with RUN_06b tests), economy/military/bot smokes, `verify_failure_modes.gd` — all exit `0` on Linux Godot 4.5.2 during closure verification (2026-06-15).
+
+## RUN_06b policy eval smoke (Linux)
+
+After RUN_06b contract work, add to the closure gate:
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_policy_eval_smoke.gd
+```
+
+Expect `POLICY EVAL SMOKE PASS` and exit `0`. Grep output for `SCRIPT ERROR`.
+
+Subset policy-contract tests only (avoid full 160-test suite when iterating):
+
+```bash
+TEST_FILTER=policy_contract timeout 240s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+```
+
+Full closure pytest (18 tests, includes RUN_06b):
+
+```bash
+timeout 1800s .venv/bin/python -m pytest python_tools/tests/ -v
+```
+
+Delete stale RUN_06 smoke artefacts before a clean pytest/improve run:
+
+```bash
+rm -rf training_runs/run06_smoke training_runs/run06_smoke_test \
+       checkpoints/run06_smoke checkpoints/run06_smoke_test
+```

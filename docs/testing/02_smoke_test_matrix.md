@@ -127,6 +127,20 @@ RUN_05 smoke runners:
 
 Godot runner: `sim/tools/run_training_smoke.gd` (TRN-SMOKE-001/002). Python: `pytest python_tools/tests/ -v`.
 
+## RUN_06b — Policy / Evaluation Contract
+
+| ID | Scenario | Pass criteria |
+|----|----------|---------------|
+| POLICY-CONTRACT-001 | Legal commands include pass | Non-empty legal list with engine-owned `NoopCommand` |
+| POLICY-CONTRACT-002 | Legal commands apply cleanly | No SCRIPT ERROR on enumerated commands |
+| POLICY-CONTRACT-003 | Scoring wrapper legality | Python scoring policy selects only legal commands |
+| EVAL-SMOKE-001 | Economy eval differentiation | Scripted-good beats pass-only; policies differ |
+| EVAL-SMOKE-002 | Military eval differentiation | Scripted-good beats pass-only; policies differ |
+| EVAL-DETERMINISM-001 | Deterministic eval episodes | Same policy + seed + scenario → identical outcome/hash |
+| NO-BC-GATE-001 | BC not eval gate | RUN_06b acceptance excludes BC accuracy |
+
+Godot runner: `sim/tools/run_policy_eval_smoke.gd`. Python: `test_policy_contract.py`, `test_eval_smoke.py`, `policy_eval.py`.
+
 ## RUN_07 — Headless Hybrid
 
 | ID | Scenario | Pass criteria |

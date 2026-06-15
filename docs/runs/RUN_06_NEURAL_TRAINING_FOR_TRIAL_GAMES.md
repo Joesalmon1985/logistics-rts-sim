@@ -71,6 +71,8 @@ Per `docs/testing/02_smoke_test_matrix.md` RUN_06 section.
 - [x] Weights not committed to git
 - [x] Existing Godot tests/smokes still pass
 - [x] Python tests pass
+- [x] RUN_06b — policy observation + legal-command scoring contract (`run_policy_eval_smoke.gd` passes)
+- [x] RUN_06b — win/loss/draw eval scenarios differentiate baselines (not BC accuracy gate)
 
 ## Final Report Format
 

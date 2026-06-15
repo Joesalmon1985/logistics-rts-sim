@@ -133,5 +133,5 @@ static func export_training_snapshot(state: GameState, actor_id: String = "") ->
 		"construction_sites": _bucket_list(state, MilitaryConstants.BUCKET_CONSTRUCTION_SITES),
 		"combat_log": _combat_log(state),
 		"diagnostics": state.diagnostics.duplicate(true),
-		"available_commands": CommandAvailabilityProvider.list_available_commands(state, actor_id),
+		"available_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
 	}

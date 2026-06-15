@@ -38,3 +38,27 @@ $env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
 - Held-out BC accuracy proves imitation, not full-game dominance; RUN_07+ should add richer eval metrics once scenarios produce non-zero rollout scores.
 - Random-policy economy rollouts are slow (state growth); keep tick budgets modest or use fresh Godot processes.
 - Checkpoint quality depends on BC dataset freshness after bot/rule changes; delete `bc_datasets/` when command or bot behaviour changes.
+
+## RUN_06b
+
+### Root cause of zero rollout scores (RUN_06)
+
+- Smoke eval scenarios were too hard for pass/random within tick budgets; proxy `economy_score` / `military_score` stayed at zero for all policies.
+- Index-based `TinyPolicy` placed pass/noop outside engine-owned legality.
+- Military idle `auto_acquire_idle` let pass-only policies win without commands, collapsing policy differentiation.
+
+### Contracts delivered
+
+- `PolicyEpisodeResult` — actor-centric win/loss/draw fitness (win=1.0, draw=0.5, loss=0.0).
+- `PolicyObservationExporter` + `observation_encoder.py` — compact fixed-size board tensor + player/summary vectors (`schema_version=1`).
+- `enumerate_legal_commands` — always includes engine-owned `NoopCommand`.
+- `action_encoder.py` + `scoring_policy.py` — decomposed actions; scoring wrapper selects legal commands only.
+- Eval scenarios under `sim/data/scenarios/economy/eval_*.json` and `military/eval_*.json`; military eval sets `auto_acquire_idle: 0` so pass-only cannot win via idle auto-attack.
+- Baselines and smoke: `run_policy_eval_smoke.gd`, `policy_eval.py`; batched `"play_episode"` IPC op.
+
+### Verification notes
+
+- Full `run_tests.gd` (160 tests) is slow; use `TEST_FILTER=policy_contract` for RUN_06b contract tests (~90s).
+- Policy eval smoke takes ~2–3 minutes; economy smoke uses tick cap 40, military 120 (scripted 250).
+- Python `test_eval_smoke.py` uses fresh Godot per episode via `GodotHeadlessEnv`.
+- BC path (`train_loop.py`, index `TinyPolicy`) unchanged; not used for RUN_06b eval acceptance.
