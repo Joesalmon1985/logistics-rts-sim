@@ -330,12 +330,12 @@ This register is the single place where uncertain decisions live. Do not bury un
 
 ## DDR-033 — Python ↔ Godot-headless training transport (development-time)
 
-- **Decision:** Python training drives the authoritative sim by running **Godot headless** and exchanging commands/snapshots/replays. The exact transport (CLI invocation with JSON files, stdin/stdout pipes, local socket, or a Godot headless "env" wrapper) is chosen at RUN_06.
-- **Status:** Needs Human Confirmation *(new — created by the architecture pivot)*
-- **Rationale:** Python is no longer the engine; it must reach the GDScript core for training. This is a development-time/tooling transport only and never ships in the mobile app.
-- **Consequences:** No Python simulation package to import; observations come from exported snapshots; rollouts must be reproducible from seed + command log; the transport must not become an authoritative side-channel.
-- **Documents affected:** `docs/architecture/04_`, `docs/testing/04_`, `docs/runs/RUN_06_`.
-- **Open questions:** Which headless transport for training? Decide at RUN_06; non-blocking for RUN_01–RUN_05.
+- **Decision:** Python training drives the authoritative sim by running **Godot headless** with a **sequenced file-session RPC** (`request_N.json` / `response_N.json`) and responses prefixed by the `@@RUN06_JSON@@` sentinel. Python is the trainer, not the engine; there is no Python simulation package to import.
+- **Status:** Accepted — *Decided at RUN_06 implementation.*
+- **Rationale:** Godot 4.5.1 headless lacks reliable stdin on Windows; file transport avoids stdout pipe deadlocks, supports large BC dataset writes to disk, and keeps the command pipeline authoritative.
+- **Consequences:** `python_tools/training/godot_env.py` implements the client; `sim/tools/run_training_env.gd` + `training_env_server.gd` implement the server; training observations come from exported snapshots only; rollouts are reproducible from seed + command log.
+- **Documents affected:** `docs/architecture/04_`, `docs/testing/04_`, `docs/runs/RUN_06_`, `docs/verification/local_verification.md`.
+- **Open questions:** None.
 
 ---
 
@@ -357,6 +357,6 @@ All RUN_00 architecture decisions are now ratified. The following were flipped t
 
 | ID | Topic | Decide at |
 |----|-------|-----------|
-| DDR-033 | Python↔Godot-headless training transport | RUN_06 |
+| *(none — DDR-033 accepted at RUN_06)* | | |
 
 DDR-032 was resolved at RUN_01: custom lightweight headless runner (see DDR-032 entry above).

@@ -159,19 +159,35 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/viewer/test_vis_avail_001_availability_bridge.gd",
 	"res://sim/tests/viewer/test_vis_econ_chain_001_production_chain_delta.gd",
 	"res://sim/tests/viewer/test_vis_econ_build_001_build_tutorial_flow.gd",
+	"res://sim/tests/training/test_trn_env_001_training_env_reset_snapshot_tick.gd",
+	"res://sim/tests/training/test_trn_env_002_submit_records_replay_entry.gd",
+	"res://sim/tests/training/test_trn_env_003_replay_round_trip.gd",
+	"res://sim/tests/training/test_trn_env_004_response_sentinel_prefix.gd",
+	"res://sim/tests/training/test_policy_contract_001_legal_pass.gd",
+	"res://sim/tests/training/test_policy_contract_002_episode_result.gd",
 ]
 
 
 func _initialize() -> void:
 	BootstrapScript.load_all()
-	var expected: int = TEST_SCRIPTS.size()
+	var scripts_to_run: Array[String] = TEST_SCRIPTS.duplicate()
+	var test_filter: String = OS.get_environment("TEST_FILTER")
+	if test_filter != "":
+		var filtered: Array[String] = []
+		for script_path in TEST_SCRIPTS:
+			if test_filter in script_path:
+				filtered.append(script_path)
+		scripts_to_run = filtered
+		print("TEST_FILTER=%s — running %d of %d tests" % [test_filter, scripts_to_run.size(), TEST_SCRIPTS.size()])
+
+	var expected: int = scripts_to_run.size()
 	var passed: int = 0
 	var failed: int = 0
 	var errored: int = 0
 	var ran: int = 0
 	print("RUN_05 headless test harness — %d tests expected" % expected)
 
-	for script_path in TEST_SCRIPTS:
+	for script_path in scripts_to_run:
 		var script: Script = load(script_path)
 		if script == null:
 			errored += 1

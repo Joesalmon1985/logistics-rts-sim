@@ -41,7 +41,8 @@ static func _resolve_unit(state: GameState, unit: Dictionary, cfg: MilitaryConfi
 static func _resolve_idle(state: GameState, unit: Dictionary, cfg: MilitaryConfig) -> void:
 	unit["state"] = MilitaryConstants.UNIT_IDLE
 	unit["path"] = []
-	if cfg.order_int("auto_acquire_idle", 1) <= 0:
+	var auto_acquire: int = int(MilitaryState.get_meta_value(state, "auto_acquire_idle", cfg.order_int("auto_acquire_idle", 1)))
+	if auto_acquire <= 0:
 		return
 	if str(unit.get("weapon", "")) == "":
 		return

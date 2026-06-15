@@ -110,3 +110,28 @@ static func _tech_layer(state: GameState) -> Dictionary:
 			"research": (research_bucket.get(pid, {}) as Dictionary).duplicate(true),
 		}
 	return result
+
+
+static func export_training_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
+	var units_compact: Array = []
+	for unit in _bucket_list(state, MilitaryConstants.BUCKET_UNITS):
+		if typeof(unit) != TYPE_DICTIONARY:
+			continue
+		units_compact.append({
+			"owner": str(unit.get("owner", unit.get("owner_player_id", ""))),
+			"visibility": str(unit.get("visibility", "visible")),
+		})
+
+	return {
+		"schema_version": SCHEMA_VERSION,
+		"variant": state.variant_id,
+		"tick": state.tick,
+		"seed": state.seed,
+		"actor_id": actor_id,
+		"units": units_compact,
+		"buildings": _bucket_list(state, MilitaryConstants.BUCKET_BUILDINGS),
+		"construction_sites": _bucket_list(state, MilitaryConstants.BUCKET_CONSTRUCTION_SITES),
+		"combat_log": _combat_log(state),
+		"diagnostics": state.diagnostics.duplicate(true),
+		"available_commands": CommandAvailabilityProvider.enumerate_legal_commands(state, actor_id),
+	}
