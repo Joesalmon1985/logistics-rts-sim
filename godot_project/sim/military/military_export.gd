@@ -101,7 +101,29 @@ static func export_metrics_csv(state: GameState, path: String) -> bool:
 	return _write_text(path, "\n".join(rows))
 
 
-static func export_all(state: GameState, output_dir: String) -> Dictionary:
+static func export_bot_decision_csv(decisions: Array, path: String) -> bool:
+	var rows: PackedStringArray = []
+	rows.append("tick,actor_id,legal_actions_count,chosen_command,reason,expected_effect")
+	for row in decisions:
+		rows.append(
+			"%d,%s,%d,%s,%s,%s"
+			% [
+				int(row.get("tick", 0)),
+				str(row.get("actor_id", "")),
+				int(row.get("legal_actions_count", 0)),
+				str(row.get("chosen_command", "")),
+				str(row.get("reason", "")).replace(",", ";"),
+				str(row.get("expected_effect", "")).replace(",", ";"),
+			]
+		)
+	return _write_text(path, "\n".join(rows))
+
+
+static func export_replay_json(replay_data: Dictionary, path: String) -> bool:
+	return _write_text(path, JSON.stringify(replay_data, "\t"))
+
+
+static func export_all(state: GameState, output_dir: String, bot_decisions: Array = []) -> Dictionary:
 	var results := {}
 	results["snapshot"] = export_snapshot_json(state, output_dir + "/military_snapshot.json")
 	results["events"] = export_event_log_jsonl(state, output_dir + "/military_events.jsonl")
@@ -109,6 +131,8 @@ static func export_all(state: GameState, output_dir: String) -> Dictionary:
 	results["units"] = export_unit_status_csv(state, output_dir + "/military_unit_status.csv")
 	results["buildings"] = export_building_status_csv(state, output_dir + "/military_building_status.csv")
 	results["metrics"] = export_metrics_csv(state, output_dir + "/military_metrics.csv")
+	if not bot_decisions.is_empty():
+		results["bot_decision"] = export_bot_decision_csv(bot_decisions, output_dir + "/military_bot_decision.csv")
 	return results
 
 

@@ -73,18 +73,16 @@ skirmish hook `MilitarySkirmish.build_scenario(seed, players, w, h)` used by MIL
 | BOT-SMOKE-002 | Military bot wins skirmish | opponent defeated |
 | REP-SMOKE-001 | Export/import replay | Identical hash |
 
-**RUN_04 per-rule-ID economy test hardening:** Deferred from RUN_02. Add dedicated headless tests
-for each individual ECON-* rule ID listed in `docs/testing/01_rule_contract_test_matrix.md`
-(RUN_02 implemented coverage → Known coverage gap / RUN_04 per-rule-ID subsection) and in
-`docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope. Pass criteria: each rule ID has a
-dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
+**RUN_04 per-rule-ID economy test hardening:** Delivered in RUN_04 — 39 dedicated tests under
+`sim/tests/economy/hardening/`, registered in `run_tests.gd`. Pass criteria met: each rule ID
+has a dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
 
-**RUN_04 per-rule-ID military test hardening:** Deferred from RUN_03 (granularity only — every
-family already has DoD-level coverage). Add dedicated headless tests for each MIL-* rule ID listed
-in `docs/testing/01_rule_contract_test_matrix.md` (Military section / RUN_04 per-rule-ID military
-subsection) and in `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope, excluding the
-speculative `MIL-CAPTURE-*` / `MIL-VET-*` / `MIL-BOT-*` families. Pass criteria: each rule ID has a
-dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
+**RUN_04 per-rule-ID military test hardening:** Delivered in RUN_04 — 38 dedicated tests under
+`sim/tests/military/hardening/`, registered in `run_tests.gd`. Pass criteria met: each rule ID
+has a dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
+
+**RUN_04 bot/replay smokes:** `sim/tools/run_bot_smoke.gd` — BOT-SMOKE-001/002, REP-SMOKE-001
+(smoke id `003`), exit `0`.
 
 **REP-SMOKE-001 note:** export → import → re-run → identical hash, per the replay-file schema in
 `docs/architecture/05_determinism_replay_save_load.md` ("Replay File and Import (RUN_04)").

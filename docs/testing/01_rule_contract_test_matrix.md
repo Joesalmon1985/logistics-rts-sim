@@ -204,12 +204,12 @@ ECON-ROAD-003..006, ECON-PATH-002/003, ECON-PRI-002/003, ECON-CARR-*, ECON-CONS-
 ECON-STALL-001, ECON-EVT-*). Those mechanics are implemented and exercised by family/scenario/smoke
 tests; **per-rule-ID test expansion is explicit RUN_04 scope** (see `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope and Acceptance Checklist).
 
-### RUN_04 per-rule-ID economy test hardening (scheduled)
+### RUN_04 per-rule-ID economy test hardening (delivered)
 
-RUN_04 must add dedicated headless tests for each rule ID listed in the Known coverage gap above.
-Each test must assert state change + event/diagnostic + downstream effect for its rule ID.
-Cross-reference: `docs/audit/RUN_02_LESSONS_LEARNED.md` ("Known remaining caveat") and
-`docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` acceptance checkbox for hardening completion.
+RUN_04 added dedicated headless tests under `sim/tests/economy/hardening/` (39 files) for each
+rule ID listed in the Known coverage gap above. Suite count verified at **148** tests total
+(68 prior + 3 bot/replay + 39 economy hardening + 38 military hardening). Cross-reference:
+`docs/audit/RUN_04_LESSONS_LEARNED.md`.
 
 ## Military (MIL-*)
 
@@ -360,15 +360,12 @@ RUN_04 hardening. **No whole mechanic family is deferred** — each family alrea
 behaviour coverage in RUN_03. Speculative families not yet in scope (engineer capture
 `MIL-CAPTURE-*`, veterancy `MIL-VET-*`, two-bot skirmish `MIL-BOT-*`) remain for their owning runs.
 
-### RUN_04 per-rule-ID military test hardening (scheduled)
+### RUN_04 per-rule-ID military test hardening (delivered)
 
-Symmetric to the economy hardening above, RUN_04 must add dedicated headless tests for each MIL-*
-rule ID enumerated in the Military section tables (excluding the speculative `MIL-CAPTURE-*` /
-`MIL-VET-*` / `MIL-BOT-*` families reserved for their owning runs). Each test must assert state
-change + event/diagnostic + downstream effect for its rule ID. Cross-reference:
-`docs/audit/RUN_03_LESSONS_LEARNED.md` ("Risks for RUN_04") and
-`docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope + Acceptance checkbox for hardening
-completion.
+RUN_04 added dedicated headless tests under `sim/tests/military/hardening/` (38 files) for each
+MIL-* rule ID in the Military section tables (excluding speculative `MIL-CAPTURE-*` /
+`MIL-VET-*` / `MIL-BOT-*`). Each test asserts state change + event/diagnostic + downstream
+effect. Cross-reference: `docs/audit/RUN_04_LESSONS_LEARNED.md`.
 
 ## Hybrid (HYB-*)
 

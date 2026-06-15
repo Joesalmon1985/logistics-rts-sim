@@ -12,6 +12,8 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/core/hex_map.gd",
 	"res://sim/core/canonical_json.gd",
 	"res://sim/core/replay_hash.gd",
+	"res://sim/core/replay_recorder.gd",
+	"res://sim/core/replay_file.gd",
 	"res://sim/core/map_generator.gd",
 	"res://sim/core/player_state.gd",
 	"res://sim/core/event.gd",
@@ -88,6 +90,11 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/variants/hybrid/hybrid_variant.gd",
 	"res://sim/core/variant_registry.gd",
 	"res://sim/core/simulation_tick_runner.gd",
+	"res://sim/bot/bot.gd",
+	"res://sim/bot/bot_runner.gd",
+	"res://sim/bot/heuristic_economy_bot.gd",
+	"res://sim/bot/heuristic_military_bot.gd",
+	"res://sim/economy/bot/heuristic_economy_builder_bot.gd",
 ]
 
 

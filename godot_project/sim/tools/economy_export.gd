@@ -131,6 +131,10 @@ static func export_bot_decision_csv(decisions: Array, path: String) -> bool:
 	return _write_text(path, "\n".join(rows))
 
 
+static func export_replay_json(replay_data: Dictionary, path: String) -> bool:
+	return _write_text(path, JSON.stringify(replay_data, "\t"))
+
+
 static func export_all(state: GameState, output_dir: String, bot_decisions: Array = []) -> Dictionary:
 	var results := {}
 	results["snapshot"] = export_snapshot_json(state, output_dir + "/snapshot.json")

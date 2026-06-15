@@ -1,4 +1,4 @@
-# Local Verification — RUN_01 + RUN_02 + RUN_03
+# Local Verification — RUN_01 + RUN_02 + RUN_03 + RUN_04
 
 Godot version used for verification: **4.5.2.stable.official** (`6ce3de25a`).
 
@@ -60,17 +60,17 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (68 tests — RUN_01 + RUN_02 + RUN_03)
+## Headless unit/integration tests (148 tests — RUN_01 + RUN_02 + RUN_03 + RUN_04)
 
 ```bash
-timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 echo "exit=$?"
 ```
 
 Expected output includes:
 
 ```text
-Results: 68/68 ran, 68 passed, 0 failed, 0 errored
+Results: 148/148 ran, 148 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
@@ -149,13 +149,46 @@ echo "exit=$?"
 
 Expected: `ECON SMOKE PASS`, `EXIT: 0 (pass)`.
 
+Expected: `ECON SMOKE PASS`, `EXIT: 0 (pass)`.
+
+## Bot and replay smoke tests (BOT-SMOKE-001/002, REP-SMOKE-001)
+
+```bash
+timeout 600s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd -- --smoke=all --seed=42
+echo "exit=$?"
+```
+
+Single smoke:
+
+```bash
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd -- --smoke=001 --seed=42
+echo "exit=$?"
+```
+
+Expected: `BOT SMOKE PASS`, `EXIT: 0 (pass)`. BOT-SMOKE-001 completes `tiny_success_map` via
+`HeuristicEconomyBot`; BOT-SMOKE-002 wins `skirmish_1v1` via `HeuristicMilitaryBot`;
+REP-SMOKE-001 (smoke id `003`) export → import → identical hash.
+
+## Replay CLI (export / verify)
+
+```bash
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_replay.gd -- --mode=export-economy-bot --scenario=scenarios/economy/tiny_success_map.json --seed=42 --ticks=200 --export=/tmp/run04_replay.json
+echo "exit=$?"
+
+timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_replay.gd -- --mode=verify --replay=/tmp/run04_replay.json
+echo "exit=$?"
+```
+
+Expected: export exit `0`, verify prints `REPLAY PASS` and exit `0`.
+
 ## Failure-mode integrity checks
 
 Verifies invalid variant, hash mismatch, invalid ticks, invalid economy smoke id,
-**invalid military smoke id**, and **invalid military scenario** all **exit non-zero**:
+**invalid military smoke id**, **invalid military scenario**, **invalid bot smoke id**, and
+**invalid replay verify** all **exit non-zero**:
 
 ```bash
-timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
 echo "exit=$?"
 ```
 
@@ -192,6 +225,7 @@ Gameplay-rule tests use a **lightweight custom Godot headless runner** (`sim/too
 
 The runner distinguishes **passed**, **failed** (assertion), and **errored** (load/instantiate/script error). It exits non-zero if any test failed or errored, or if the run count does not match the expected suite size.
 
-## RUN_02+ pre-flight
+## RUN_04+ pre-flight
 
-Before adding economy mechanics in RUN_02, rerun all commands in this document (tests, smokes, integrity checks) and confirm exit code `0` on each.
+Before adding bot/replay/telemetry mechanics in RUN_04, rerun all commands in this document
+(tests, smokes, integrity checks) and confirm exit code `0` on each.
