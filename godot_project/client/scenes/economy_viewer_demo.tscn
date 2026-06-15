@@ -61,6 +61,12 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Debug"
 
+[node name="SummaryLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = "Summary"
+
 [node name="CommandsHeader" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -91,6 +97,21 @@ text = "Load/Reset Demo"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Step Tick"
+
+[node name="Step10Btn" type="Button" parent="RootHBox/RightPanel/ButtonRow1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Step 10"
+
+[node name="ButtonRow1b" type="HBoxContainer" parent="RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="StepEventBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow1b"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Step Until Event"
 
 [node name="ButtonRow2" type="HBoxContainer" parent="RootHBox/RightPanel"]
 layout_mode = 2
@@ -155,6 +176,8 @@ fit_content = true
 
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/ResetBtn" to="." method="_on_reset_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/StepBtn" to="." method="_on_step_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/Step10Btn" to="." method="_on_step10_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1b/StepEventBtn" to="." method="_on_step_event_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow2/SubmitBtn" to="." method="_on_submit_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow2/InvalidBtn" to="." method="_on_invalid_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/GridBtn" to="." method="_on_toggle_grid_pressed"]

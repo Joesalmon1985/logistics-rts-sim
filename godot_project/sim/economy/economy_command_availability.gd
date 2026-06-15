@@ -24,7 +24,7 @@ static func _try_policy(results: Array, state: GameState, actor_id: String, tick
 		if cmd.validate(state).success:
 			results.append(CommandAvailabilityDto.from_command(
 				cmd,
-				"Set worker policy: %s" % policy,
+				"Workers: Set worker policy %s" % policy,
 				{"policy": policy},
 			))
 
@@ -65,7 +65,7 @@ static func _try_roads(results: Array, state: GameState, actor_id: String, tick:
 			if cmd.validate(state).success:
 				results.append(CommandAvailabilityDto.from_command(
 					cmd,
-					"Place road %d,%d -> %d,%d" % [start.q, start.r, neighbor.q, neighbor.r],
+					"Roads: Place road %d,%d -> %d,%d" % [start.q, start.r, neighbor.q, neighbor.r],
 					{"from_q": start.q, "from_r": start.r, "to_q": neighbor.q, "to_r": neighbor.r},
 				))
 				added += 1
@@ -89,9 +89,10 @@ static func _try_buildings(results: Array, state: GameState, actor_id: String, t
 			}
 			var cmd := PlaceBuildingPlanCommand.new(actor_id, tick, payload)
 			if cmd.validate(state).success:
+				var display_name: String = building_type.replace("_", " ").capitalize()
 				results.append(CommandAvailabilityDto.from_command(
 					cmd,
-					"Build %s at %d,%d" % [building_type, coord.q, coord.r],
+					"Buildings: Place %s Construction Site at %d,%d" % [display_name, coord.q, coord.r],
 					{"q": coord.q, "r": coord.r, "building_type": building_type},
 				))
 				added += 1

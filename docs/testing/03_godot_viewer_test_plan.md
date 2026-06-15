@@ -45,10 +45,17 @@ RUN_05 verification runs on two tracks; both are required and must not be collap
 - Grid off by default on mobile export settings
 - Toggle on shows axial grid aligned with terrain
 
+### Construction / Carrier Render Extraction (VIS-RENDER-001)
+
+- Economy demo exposes `construction_sites` and `carriers` in render data (carriers resolved via `road_nodes` → q/r)
+- Site progress percent computed from delivered/required (economy) or progress/required_ticks (military)
+- Military place-building increases visible construction-site render count
+
 ### Command Round-Trip (VIS-CMD-001)
 
 - Select a sim-provided available command → submit through `CommandValidator` → new snapshot →
   visual update; snapshot refreshes after each command
+- **Before/after delta:** accepted road/build command increases render counts (roads or construction_sites); rejected command leaves render counts unchanged
 - Accepted command appears in the command history / event log with its result
 - Rejected/invalid command shows the readable `CommandResult` reason in UI
 - No visual change on rejected command except the error/result display
@@ -79,12 +86,12 @@ RUN_05 verification runs on two tracks; both are required and must not be collap
 ## Pass Criteria for RUN_05
 
 Track 1 (headless):
-- [x] Economy viewer loads curated demo snapshot (VIS-SNAP-001)
+- [x] Economy viewer loads curated demo snapshot with construction sites + carriers visible (VIS-SNAP-001, VIS-RENDER-001)
 - [x] Military viewer loads curated demo snapshot (VIS-SNAP-001)
 - [x] Command availability bridge sources commands from the sim provider (VIS-AVAIL-001)
-- [x] Command round-trip for at least one command type each, with snapshot refresh (VIS-CMD-001)
+- [x] Command round-trip with before/after render delta (VIS-CMD-001)
 - [x] `available_commands[]` excluded from replay-hashed state; no hashes re-pinned for it
-- [x] GOD-SMOKE-001, GOD-SMOKE-002 pass
+- [x] GOD-SMOKE-001 (progression within 50 ticks), GOD-SMOKE-002 (move + attack combat delta) pass
 
 Track 2 (windowed visual review, per `docs/verification/local_verification.md`):
 - [ ] Economy and military demos are readable at 1920x1080 (map/panels/text do not overlap)

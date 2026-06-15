@@ -16,6 +16,7 @@ var map_title: String = "Map"
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _status: Label = %StatusLabel
 @onready var _debug: Label = %DebugLabel
+@onready var _summary: Label = %SummaryLabel
 @onready var _legend: RichTextLabel = %Legend
 @onready var _result: Label = %ResultLabel
 @onready var _help: RichTextLabel = %HelpPanel
@@ -47,6 +48,10 @@ func _setup_panel_labels() -> void:
 		get_node("%ResetBtn").text = "Load/Reset Demo"
 	if has_node("%StepBtn"):
 		get_node("%StepBtn").text = "Step Tick"
+	if has_node("%Step10Btn"):
+		get_node("%Step10Btn").text = "Step 10"
+	if has_node("%StepEventBtn"):
+		get_node("%StepEventBtn").text = "Step Until Event"
 	if has_node("%SubmitBtn"):
 		get_node("%SubmitBtn").text = "Submit Command"
 	if has_node("%InvalidBtn"):
@@ -69,7 +74,7 @@ func _apply_help_text() -> void:
 			"[b]Quick start[/b]\n"
 			+ "1. Map loads automatically — click a hex to inspect it.\n"
 			+ "2. Pick a command from the list, then press Submit Command.\n"
-			+ "3. Use Step Tick to advance simulation.\n"
+			+ "3. Use Step Tick / Step 10 / Step Until Event to advance.\n"
 			+ "4. Load/Reset Demo restores the starting state."
 		)
 
@@ -86,21 +91,32 @@ func reset_demo() -> void:
 func _show_welcome_inspector() -> void:
 	_inspector.text = (
 		"Welcome!\n\n"
-		+ "Click any hex on the map to inspect terrain, buildings, or units.\n"
-		+ "Legal commands appear in the list below — select one, then Submit Command."
+		+ "Click any hex on the map to inspect terrain, buildings, construction sites, or units.\n"
+		+ "Legal commands appear in the list below — select one, then Submit Command.\n"
+		+ "Building placement creates a construction site (not an instant building)."
 	)
 
 
 func _on_snapshot_refreshed(snapshot: Dictionary) -> void:
 	_map.set_render_data(controller.get_render_data())
+	_update_attack_target_highlight()
 	_refresh_commands()
 	_update_debug(snapshot)
+	_update_summary()
 	var cmd_count: int = ClientCommandAvailability.count(controller.get_available_commands())
 	_commands_header.text = "Legal commands available: %d (select one, then Submit)" % cmd_count
 	_status.text = "Tick %d  |  Active player: %s  |  Phase: debug step-through" % [
 		int(snapshot.get("tick", 0)),
 		controller.actor_id,
 	]
+
+
+func _update_attack_target_highlight() -> void:
+	var target: Dictionary = controller.last_attack_target
+	if target.is_empty():
+		_map.set_attack_target(-1, -1)
+	else:
+		_map.set_attack_target(int(target.get("q", -1)), int(target.get("r", -1)))
 
 
 func _refresh_commands() -> void:
@@ -114,13 +130,20 @@ func _refresh_commands() -> void:
 
 func _update_debug(snapshot: Dictionary) -> void:
 	var counts: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
-	_debug.text = "Snapshot: %s | tick %d | buildings %d | roads %d | units %d" % [
+	_debug.text = "Snapshot: %s | tick %d | bld %d | sites %d | roads %d | units %d | carriers %d" % [
 		str(snapshot.get("variant", "")),
 		int(snapshot.get("tick", 0)),
 		int(counts.get("buildings", 0)),
+		int(counts.get("construction_sites", 0)),
 		int(counts.get("roads", 0)),
 		int(counts.get("units", 0)),
+		int(counts.get("carriers", 0)),
 	]
+
+
+func _update_summary() -> void:
+	if _summary != null:
+		_summary.text = controller.build_summary_text(variant_label)
 
 
 func _on_command_result(result: Dictionary, dto: Dictionary) -> void:
@@ -149,19 +172,19 @@ func _build_legend() -> void:
 	if variant_label == "military":
 		_legend.text = (
 			"[b]Legend — Military[/b]\n"
-			+ "[color=#47]/[/color] Blue border/dot = player p1 (you)\n"
-			+ "[color=#e84848]■[/color] Red border/dot = player p2 (enemy)\n"
-			+ "Gold hex = Command Hub | Orange = Power | Blue-gray = Barracks/Processor\n"
-			+ "Yellow lines = roads | Dark overlay = fog/shroud (if enabled)\n"
-			+ "White coords on each hex | Yellow ring = selected hex"
+			+ "[color=#4791ff]Blue[/color] = p1 | [color=#e84848]Red[/color] = p2 enemy\n"
+			+ "Gold = Command Hub | Orange = Power Generator | Dashed hex + ring = construction site\n"
+			+ "HP bar above units/buildings | Red ring = attack target hex\n"
+			+ "Yellow lines = roads | White coords | Yellow ring = selected hex"
 		)
 	else:
 		_legend.text = (
 			"[b]Legend — Economy[/b]\n"
-			+ "Light green = grass | Dark green = forest | Gold hex = HQ\n"
+			+ "Light green = grass | Dark green = forest | Gold = HQ\n"
+			+ "Dashed hex + green ring = construction site (% progress)\n"
+			+ "Orange/blue dots on roads = carriers (carrying/idle) | W# = workers on building\n"
 			+ "Brown = woodcutter | Tan = sawmill | Yellow lines = roads\n"
-			+ "Orange dot = resource deposit | White coords on each hex\n"
-			+ "Yellow ring = selected hex"
+			+ "White coords | Yellow ring = selected hex"
 		)
 
 
@@ -173,6 +196,30 @@ func _on_step_pressed() -> void:
 	var before: int = controller.state.tick
 	controller.step_tick()
 	_append_event("Step tick: %d -> %d" % [before, controller.state.tick])
+
+
+func _on_step10_pressed() -> void:
+	var before: int = controller.state.tick
+	controller.step_ticks(10)
+	_append_event("Step 10: %d -> %d" % [before, controller.state.tick])
+
+
+func _on_step_event_pressed() -> void:
+	var before: int = controller.state.tick
+	var result: Dictionary = controller.step_until_meaningful_event()
+	var after: int = controller.state.tick
+	if bool(result.get("found", false)):
+		_append_event(
+			"Step Until Event: %d steps (%d->%d), stopped on '%s'" % [
+				int(result.get("steps", 0)), before, after, str(result.get("event", "")),
+			]
+		)
+		_result.text = "Stopped on event: %s after %d steps" % [str(result.get("event", "")), int(result.get("steps", 0))]
+	else:
+		_append_event("Step Until Event: %d steps (%d->%d), no meaningful event (cap %d)" % [
+			int(result.get("steps", 0)), before, after, ViewerController.STEP_UNTIL_EVENT_MAX,
+		])
+		_result.text = "No meaningful event within %d steps" % ViewerController.STEP_UNTIL_EVENT_MAX
 
 
 func _on_submit_pressed() -> void:

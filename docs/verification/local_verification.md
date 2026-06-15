@@ -140,7 +140,7 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (151 tests — RUN_01 through RUN_05)
+## Headless unit/integration tests (152 tests — RUN_01 through RUN_05)
 
 ```bash
 timeout 400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
@@ -150,7 +150,7 @@ echo "exit=$?"
 Expected output includes:
 
 ```text
-Results: 151/151 ran, 151 passed, 0 failed, 0 errored
+Results: 152/152 ran, 152 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
@@ -345,6 +345,20 @@ $LASTEXITCODE
 ```
 
 Expected: `GOD-SMOKE-001 PASS`, `GOD-SMOKE-002 PASS`, `VIEWER SMOKE PASS`, exit `0`.
+
+### RUN_05 interactivity (human debug loop)
+
+Economy viewer — after Load/Reset Demo:
+1. Dashed hex + green progress ring = storehouse construction site (pre-placed at 5,8).
+2. Submit **Roads:** or **Buildings:** command → **Step 10** or **Step Until Event** → watch carriers, delivered counts, or event log change.
+3. Summary panel shows wares, site/carrier/job counts.
+
+Military viewer:
+1. Pre-spawned p1/p2 rifle squads nearby; attack commands appear prebuilt in the list.
+2. Submit **Attack:** command → **Step 10** / **Step Until Event** → HP bars drop, combat/damage events in log.
+3. Red ring highlights attack target hex after submit.
+
+**Step Until Event** stops only on meaningful event substrings (`construction`, `ware`, `carrier`, `production`, `damage`, `combat`, `unit_moved`, `order`), capped at 50 steps.
 
 ### RUN_05 screenshot capture (SubViewport; non-headless)
 

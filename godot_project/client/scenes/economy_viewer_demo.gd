@@ -10,12 +10,12 @@ func _init() -> void:
 	demo_builder = Callable(EconomyDemo, "build_state")
 	help_text = (
 		"[b]How to use this viewer[/b]\n"
-		+ "1. The map shows your settlement: [color=#eab308]HQ[/color] (gold), [color=#a16207]woodcutter[/color], [color=#b8860b]sawmill[/color], and [color=#facc15]yellow roads[/color].\n"
-		+ "2. Click any hex — details appear in the inspector below.\n"
-		+ "3. Pick a command from the list (count shown above it), press [b]Submit Command[/b].\n"
-		+ "4. Press [b]Step Tick[/b] to advance logistics/production.\n"
-		+ "5. [b]Load/Reset Demo[/b] restores the starting layout.\n"
-		+ "[i]Bot Step (optional): runs one bot-chosen legal command.[/i]"
+		+ "1. Map shows HQ, woodcutter, sawmill, [color=#facc15]roads[/color], and a pre-placed storehouse [i]construction site[/i] (dashed hex + % ring).\n"
+		+ "2. Orange/blue dots = carriers on road nodes. W# badge = workers assigned to a building.\n"
+		+ "3. Pick a command (Roads / Buildings / Workers categories), press [b]Submit Command[/b]. Building commands create construction sites.\n"
+		+ "4. [b]Step Tick[/b], [b]Step 10[/b], or [b]Step Until Event[/b] to watch logistics/production progress.\n"
+		+ "5. Summary panel shows wares, site/carrier/job counts. Inspector shows site delivered/required progress.\n"
+		+ "6. [b]Load/Reset Demo[/b] restores the starting layout."
 	)
 
 

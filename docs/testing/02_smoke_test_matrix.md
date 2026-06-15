@@ -96,8 +96,8 @@ verified separately via the **windowed visual review** (Track 2) in
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| GOD-SMOKE-001 | Load economy + military demo snapshots headlessly | Renderer accepts all snapshot layers/diagnostics from JSON only; no `SCRIPT ERROR`; exit 0 |
-| GOD-SMOKE-002 | Sim-provided command round-trip via viewer adapter | `available_commands` sourced from sim provider; legal command submits through `CommandValidator`; snapshot refreshes; rejected command yields readable `CommandResult` reason; `available_commands[]` excluded from replay-hashed state |
+| GOD-SMOKE-001 | Load economy + military demo snapshots headlessly | Economy render data includes construction_sites + carriers; economy demo shows observable progression within 50 ticks; military render data valid; no `SCRIPT ERROR`; exit 0 |
+| GOD-SMOKE-002 | Sim-provided command round-trip via viewer adapter | Economy: road submit + step shows fingerprint delta; military: move changes unit position; attack issues order and reduces target HP or emits combat/damage/order event; build increases construction-site render count; rejected invalid command; `available_commands[]` excluded from replay hash |
 
 RUN_05 smoke runner: `sim/tools/run_viewer_smoke.gd` (`--smoke=all`, exit `0`). Unknown smoke id
 must exit non-zero (checked by `verify_failure_modes.gd`).

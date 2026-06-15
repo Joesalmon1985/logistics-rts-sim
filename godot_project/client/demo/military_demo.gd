@@ -12,10 +12,11 @@ static func build_state() -> GameState:
 	var state: GameState = runner.create_game(scenario)
 	var cfg: MilitaryConfig = MilitaryState.get_config(state)
 	var p1_hub: HexCoord = _hub_coord(state, "p1")
-	MilitaryConstructionSystem.spawn_building(state, "power_plant", p1_hub.q + 2, p1_hub.r, "p1", cfg)
+	MilitaryConstructionSystem.spawn_building(state, "power_generator", p1_hub.q + 2, p1_hub.r, "p1", cfg)
 	MilitaryConstructionSystem.spawn_building(state, "resource_processor", p1_hub.q + 1, p1_hub.r + 1, "p1", cfg)
 	MilitaryConstructionSystem.spawn_building(state, "barracks", p1_hub.q, p1_hub.r + 2, "p1", cfg)
-	MilitaryProductionSystem.create_unit(state, "infantry", p1_hub.q + 1, p1_hub.r, "p1", cfg)
+	MilitaryProductionSystem.create_unit(state, "rifle_squad", p1_hub.q + 1, p1_hub.r, "p1", cfg)
+	MilitaryProductionSystem.create_unit(state, "rifle_squad", p1_hub.q + 3, p1_hub.r, "p2", cfg)
 	return state
 
 

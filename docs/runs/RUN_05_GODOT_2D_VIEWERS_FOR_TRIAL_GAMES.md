@@ -46,7 +46,7 @@ console exe; check `$LASTEXITCODE`; set `GODOT_USER_DATA_DIR`. If anything fails
 - Curated economy and military demo scenarios/snapshots.
 - Run-forward / step-through controls.
 - Placeholder art (coloured rectangles / simple icons).
-- Tests: VIS-SNAP-001, VIS-CMD-001, command-availability bridge test; smokes GOD-SMOKE-001/002.
+- Tests: VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001, command-availability bridge test; smokes GOD-SMOKE-001/002.
 - Documented windowed visual-review path + screenshots.
 
 **RUN_02 carryover:** Economy display layers and per-building diagnostics (`ECON-SNAP-002`,
@@ -126,7 +126,8 @@ tutorial UX). Required controls:
 - Load / reset demo snapshot.
 - Submit selected legal command (from `available_commands`).
 - Pass / advance turn or priority where the sim supports it.
-- Step forward one tick / turn / action.
+- Step forward one tick / turn / action; **Step 10** and **Step Until Event** (meaningful events only, capped).
+- Summary panel (economy: wares + site/carrier/job counts; military: credits + power + entity counts).
 - Refresh snapshot after every command.
 - Show command success/failure clearly.
 - Show command history / event log.
@@ -212,7 +213,10 @@ a windowed run fails to exit cleanly.
       needed, and show updated snapshots after each step.
 - [x] Invalid command attempts show readable validation errors (from `CommandResult`).
 - [x] Event log records each submitted command and its result.
-- [x] VIS-SNAP-001 and VIS-CMD-001 pass; command-availability bridge test passes.
+- [x] Economy viewer renders construction sites (progress ring), carriers (via `road_nodes`), worker badges, and stepping shows observable progression within 50 ticks (automated smoke).
+- [x] Military viewer enumerates prebuilt attack/attack-move commands; nearby enemy target for combat testing; HP bars and attack-target highlight after submit.
+- [x] Building placement labels say "Construction Site"; inspector shows delivered/required progress.
+- [x] VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001 pass; command-availability bridge test passes.
 - [x] GOD-SMOKE-001 and GOD-SMOKE-002 pass.
 - [x] No gameplay logic in the visual client beyond display (rules stay in `sim/`).
 - [x] Final report includes headless test commands + results, windowed-review launch commands,

@@ -13,25 +13,60 @@ static func build_state() -> GameState:
 		"players": ["p1"],
 		"hq_position": {"q": 5, "r": 5},
 		"build_radius": 8,
-		"starting_wares": {"planks": 20, "tools": 5},
+		"starting_wares": {"planks": 20, "stone": 10, "tools": 5},
 	}
 	var runner := SimulationTickRunner.new()
 	var state: GameState = runner.create_game(scenario)
 	_flatten_grass(state, 0, 0, 11, 11)
-	# Forest patch east of HQ — woodcutter target
 	state.map.set_tile(HexCoord.new(8, 5), _forest_tile())
 	state.map.set_tile(HexCoord.new(9, 5), _forest_tile())
-	# Road chain HQ (5,5) -> (6,5) -> (7,5) -> woodcutter site
 	_connect_roads(state, 5, 5, 8, 5)
 	EconomyInit._spawn_completed_building(
 		state, "woodcutter", 8, 5, "p1", EconomyState.get_config(state),
 	)
-	# Sawmill south of HQ (visible second building)
 	EconomyInit._spawn_completed_building(
 		state, "sawmill", 5, 7, "p1", EconomyState.get_config(state),
 	)
 	_connect_roads(state, 5, 5, 5, 7)
+	_connect_roads(state, 5, 7, 5, 8)
+	var site_result: Dictionary = EconomyConstructionSystem.create_site(state, "storehouse", 5, 8, "p1")
+	if site_result.get("ok", false):
+		var site_id: int = int(site_result.get("site_id", 0))
+		EconomyConstructionSystem.deliver_to_site(state, site_id, "planks", 1)
 	return state
+
+
+static func verify_progression_within_ticks(max_ticks: int = 50) -> Dictionary:
+	var runner := SimulationTickRunner.new()
+	var state: GameState = build_state()
+	var baseline: Dictionary = _progress_fingerprint(state)
+	for _i in range(max_ticks):
+		state = runner.tick(state)
+		var current: Dictionary = _progress_fingerprint(state)
+		if current.hash() != baseline.hash():
+			return {"ok": true, "ticks": _i + 1, "fingerprint": current}
+	return {"ok": false, "ticks": max_ticks, "fingerprint": baseline}
+
+
+static func _progress_fingerprint(state: GameState) -> Dictionary:
+	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
+	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
+	var delivered_total: int = 0
+	for site in snapshot.get("construction_sites", []):
+		for ware_type in site.get("delivered", {}):
+			delivered_total += int(site.get("delivered", {}).get(ware_type, 0))
+	var carrier_moving: int = 0
+	for carrier in snapshot.get("carrier_markers", []):
+		if str(carrier.get("state", "")) != EconomyConstants.CARRIER_IDLE:
+			carrier_moving += 1
+	return {
+		"tick": state.tick,
+		"event_count": state.event_log.events.size(),
+		"delivered_total": delivered_total,
+		"carrier_moving": carrier_moving,
+		"construction_sites": render.get("construction_sites", []).size(),
+		"carriers": render.get("carriers", []).size(),
+	}
 
 
 static func _flatten_grass(state: GameState, q0: int, r0: int, q1: int, r1: int) -> void:

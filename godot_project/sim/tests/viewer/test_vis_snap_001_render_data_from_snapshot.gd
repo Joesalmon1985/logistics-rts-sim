@@ -23,6 +23,8 @@ func _test_economy_snapshot() -> void:
 	assert_true(render.get("buildings", []).size() > 0, "economy buildings layer")
 	var counts: Dictionary = LayerRenderer.count_entities(render)
 	assert_true(int(counts.get("buildings", 0)) > 0, "economy building count")
+	assert_true(int(counts.get("construction_sites", 0)) >= 1, "economy construction site count")
+	assert_true(int(counts.get("carriers", 0)) >= 1, "economy carrier count")
 
 
 func _test_military_snapshot() -> void:
