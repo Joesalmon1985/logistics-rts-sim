@@ -1,5 +1,9 @@
 # RUN_05 — Godot 2D Trial Game Debug Viewers
 
+**Status: complete** — merged to `main` at `cce553f`. Formal closure report:
+[`docs/audit/RUN_05_FINAL_REPORT.md`](../audit/RUN_05_FINAL_REPORT.md). Authoritative handoff:
+[`docs/audit/RUN_05_LESSONS_LEARNED.md`](../audit/RUN_05_LESSONS_LEARNED.md).
+
 ## Purpose
 
 Build **human-readable, step-through Godot 2D visual debugging clients** (`godot_project/client/`)
@@ -161,15 +165,28 @@ Adapters under `client/adapters/`: `snapshot_loader.gd`, `layer_renderer.gd`,
 `command_submitter.gd`, `command_availability.gd` (calls the sim provider; never derives legality).
 Separate economy/military viewer scenes may share adapter/renderer code.
 
-## Verification — Two Tracks
+## Verification — Three Tracks
+
+Report **headless**, **pixel**, and **human** statuses separately — never collapse them.
 
 ### Track 1 — Automated headless verification (CI/smoke confidence)
 
 Covers snapshot loading, renderer data acceptance, command-availability bridge, command
-submission, no client-side rule derivation, and basic scene/script load where possible:
-VIS-SNAP-001, VIS-CMD-001, command-availability test, GOD-SMOKE-001, GOD-SMOKE-002. This track
-does **not** prove visual readability. Per `docs/testing/03_godot_viewer_test_plan.md` and the
-RUN_05 row of `docs/testing/02_smoke_test_matrix.md`.
+submission, no client-side rule derivation, and logistics render deltas:
+VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001, VIS-AVAIL-001, VIS-ECON-CHAIN-001, VIS-ECON-BUILD-001,
+GOD-SMOKE-001, GOD-SMOKE-002, GOD-SMOKE-003. This track does **not** prove the viewport shows a
+map. Per `docs/testing/03_godot_viewer_test_plan.md` and the RUN_05 row of
+`docs/testing/02_smoke_test_matrix.md`.
+
+### Track 1.5 — Viewport pixel observability (non-headless, mandatory)
+
+Proves the **2D SubViewport** renders hex terrain and visible changes on step/command — not only
+render dictionaries. Run **without** `--headless`:
+
+- VIS-LAYOUT-001, VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001 via `run_viewer_pixel_smoke.gd` (GOD-SMOKE-004)
+- GOD-CAPTURE-001 via `run_viewer_capture.gd --assert`
+
+See `docs/verification/local_verification.md` ("RUN_05 viewport pixel smokes").
 
 ### Track 2 — Windowed visual review (human readability at 1920x1080)
 
@@ -178,7 +195,8 @@ each demo scene in a real Godot window at 1920x1080 and confirm: map large/reada
 overlap the map; text readable at desktop scale; legend explains colours/icons/overlays; layer
 toggles visible; selection inspector understandable; command panel shows sim-provided commands;
 command result/errors visible; event log shows recent history; turn/tick/player/phase/priority
-visible; economy and military demos are immediately understandable.
+visible; economy and military demos are immediately understandable. **Complete** — user confirmed
+satisfied at 1920×1080 during closure audit.
 
 ### Screenshots
 
@@ -217,10 +235,11 @@ a windowed run fails to exit cleanly.
 - [x] Military viewer enumerates prebuilt attack/attack-move commands; nearby enemy target for combat testing; HP bars and attack-target highlight after submit.
 - [x] Building placement labels say "Construction Site"; inspector shows delivered/required progress.
 - [x] VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001 pass; command-availability bridge test passes.
-- [x] GOD-SMOKE-001 and GOD-SMOKE-002 pass.
-- [ ] **Track 1.5 — viewport pixel observability (non-headless):** VIS-LAYOUT-001, GOD-CAPTURE-001, VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001, GOD-SMOKE-004 pass.
-- [ ] Opening economy viewer shows hex terrain on first open without manual resize (VIS-LAYOUT-001).
-- [ ] Stepping production demo and placing storehouse produce visible viewport pixel changes (VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001).
+- [x] GOD-SMOKE-001, GOD-SMOKE-002, and GOD-SMOKE-003 pass.
+- [x] **Track 1.5 — viewport pixel observability (non-headless):** VIS-LAYOUT-001, GOD-CAPTURE-001, VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001, GOD-SMOKE-004 pass (closure audit 2026-06-15, exit 0).
+- [x] Opening economy viewer shows hex terrain on first open without manual resize (VIS-LAYOUT-001).
+- [x] Stepping production demo and placing storehouse produce visible viewport pixel changes (VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001).
+- [x] **Track 2 — human windowed review** complete at 1920×1080 (user confirmed during closure audit).
 - [x] No gameplay logic in the visual client beyond display (rules stay in `sim/`).
 - [x] Final report includes headless test commands + results, windowed-review launch commands,
       whether visual review was performed, screenshot paths/instructions, known readability issues,
@@ -251,7 +270,8 @@ a windowed run fails to exit cleanly.
 8. Refresh snapshot after command.
 9. Event/status/history panels.
 10. Headless viewer tests/smokes (Track 1).
-11. Windowed 1920x1080 review and screenshots (Track 2).
+11. Viewport pixel smokes and capture assert (Track 1.5).
+12. Windowed 1920x1080 review and screenshots (Track 2).
 
 ## Final Report Format
 

@@ -41,6 +41,8 @@ Final state: **148/148** headless tests pass; all kernel/economy/military/bot sm
 - Bot decision CSV and replay JSON are ready for viewer/debug tooling; render from snapshot/diagnostics only.
 - Replay files embed full scenario objects — viewers must not mutate on import.
 
+**RUN_05 outcome (resolved):** Economy and military debug viewers merged at `cce553f` with three-track verification (headless / pixel / human). Blank-viewport regression caught by GOD-SMOKE-004 after headless dict tests passed; see `docs/audit/RUN_05_LESSONS_LEARNED.md` ("Avoiding a non-working visual product").
+
 ## Risks for RUN_06 (Neural training)
 
 - `BotRunner` + `ReplayRecorder` provide the command-log pattern Python training will need.

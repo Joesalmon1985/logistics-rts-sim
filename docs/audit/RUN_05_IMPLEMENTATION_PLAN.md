@@ -1,5 +1,11 @@
 # RUN_05 Implementation Plan
 
+> **ARCHIVED** — historical pre-flight record from RUN_05 implementation start.
+> Do not use for current verification counts or acceptance status.
+> Authoritative handoff: [`RUN_05_LESSONS_LEARNED.md`](RUN_05_LESSONS_LEARNED.md).
+> Formal closure: [`RUN_05_FINAL_REPORT.md`](RUN_05_FINAL_REPORT.md).
+> Code merged to `main` at `cce553f`.
+
 ## 1. Branch and starting commit
 
 - Branch: `feature/run-05-godot-2d-viewers-trial-games`

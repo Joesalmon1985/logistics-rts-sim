@@ -15,6 +15,16 @@ Training pipeline for trial games using the bot API and snapshots. **Python is t
 - `.cursor/rules/08-neural-training-gates.mdc`
 - `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` (complete)
 
+## Pre-RUN_06 entry checklist
+
+Before starting `feature/run-06-neural-training-trial-games`:
+
+- [ ] Re-run RUN_01–04 verification on `main` (per `.cursor/rules/10-run-verification-and-logging.mdc` and `docs/verification/local_verification.md`)
+- [ ] RUN_05 closure report exists and all three tracks green — [`docs/audit/RUN_05_FINAL_REPORT.md`](../audit/RUN_05_FINAL_REPORT.md)
+- [ ] Read `docs/architecture/04_bot_and_training_architecture.md` and `docs/testing/04_training_test_plan.md`
+- [ ] Confirm: training observations from **snapshots**, not viewport pixels (RUN_05 pixel tests are viewer gates only)
+- [ ] No ML dependencies added until RUN_06 scope approved
+
 ## In-Scope Work
 
 - Python↔Godot-headless training transport (DDR-033): launch/control the core headlessly and exchange commands/snapshots/replays

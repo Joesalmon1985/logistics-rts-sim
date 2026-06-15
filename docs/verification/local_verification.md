@@ -307,12 +307,14 @@ The runner distinguishes **passed**, **failed** (assertion), and **errored** (lo
 
 ## RUN_05 windowed visual review (Track 2 — human readability)
 
-RUN_05 viewers need **two tracks** of verification (see `docs/testing/03_godot_viewer_test_plan.md`):
+RUN_05 viewers need **three tracks** of verification (see `docs/testing/03_godot_viewer_test_plan.md`):
 
 - **Track 1 — headless contract smokes** (GOD-SMOKE-001/002/003): run with `--headless`, exit `0`, no
-  `SCRIPT ERROR`. These prove the snapshot/availability/command contracts, **not** readability.
+  `SCRIPT ERROR`. These prove the snapshot/availability/command contracts, **not** that the viewport shows a map.
+- **Track 1.5 — viewport pixel smokes** (GOD-SMOKE-004, GOD-CAPTURE-001): run **without** `--headless`;
+  requires display. Proves SubViewport terrain and step/command pixel changes.
 - **Track 2 — windowed visual review**: launch each demo scene in a real Godot **window** at
-  1920x1080 and confirm the layout is human-readable. This is a manual review, not a headless smoke.
+  1920x1080 and confirm the layout is human-readable. Manual review checklist below.
 
 Launch the demo scenes in a window (do **not** pass `--headless`):
 
@@ -356,9 +358,46 @@ Proves the **2D view** renders hex terrain and visible changes on step/command. 
 & $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military --assert
 ```
 
+```powershell
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=economy --assert
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military --assert
+```
+
+Without `--assert`, the runner saves screenshots only (no automated color check).
+
 Expected: `VIS-LAYOUT-001 PASS`, `GOD-CAPTURE-001 PASS`, `VIS-PIX-CHAIN-001 PASS`, `VIS-PIX-BUILD-001 PASS`, `GOD-SMOKE-004 PASS`, exit `0`.
 
 Final report must state **three statuses separately**: headless pass/fail, pixel smoke pass/fail, human windowed review pending/done.
+
+### RUN_05 closure verification (full ordered sequence)
+
+Run on `main` after RUN_05 merge. Record exact commands, exit codes, and three-track statuses in
+[`docs/audit/RUN_05_FINAL_REPORT.md`](../audit/RUN_05_FINAL_REPORT.md).
+
+**Track 1 — headless (PowerShell example):**
+
+```powershell
+$env:GODOT = "<full path to Godot console executable>"
+$env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_tests.gd
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_military_smoke.gd
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd -- --smoke=all
+& $env:GODOT --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+```
+
+Expected: **154/154** tests; all smokes pass; GOD-SMOKE-001/002/003; INTEGRITY PASS; exit `0` each.
+
+**Track 1.5 — pixel (no `--headless`):**
+
+```powershell
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_pixel_smoke.gd
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=economy --assert
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military --assert
+```
+
+**Track 2 — human:** windowed demo launch at 1920×1080 + checklist below; screenshots from capture run.
 
 ### Economy logistics visual review checklist (~5 min)
 
@@ -400,9 +439,11 @@ Headless dummy renderer cannot capture viewport textures. Use the capture runner
 `--headless`:
 
 ```powershell
-& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=economy
-& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=economy --assert
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military --assert
 ```
+
+Omit `--assert` to save screenshots without automated color verification.
 
 Saves to `user://screenshots/run_05_economy_demo.png` and `run_05_military_demo.png` (under
 `GODOT_USER_DATA_DIR` when set, otherwise OS default app user data).

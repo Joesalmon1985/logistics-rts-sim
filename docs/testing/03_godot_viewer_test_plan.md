@@ -2,17 +2,20 @@
 
 Scope: RUN_05 (trial viewers), RUN_09 (hybrid observer), RUN_10 (human play polish).
 
-## Two-Track Verification (RUN_05)
+## Three-Track Verification (RUN_05)
 
-RUN_05 verification runs on two tracks; both are required and must not be collapsed:
+RUN_05 verification runs on **three tracks**; all are required and must not be collapsed:
 
 - **Track 1 — Automated headless tests/smokes.** Prove the snapshot/command/availability
   *contracts*: snapshot loads, renderer accepts snapshot data, sim-provided `available_commands`
   flow to the viewer, commands round-trip through the validator, and the client derives no rules.
-  These do **not** prove visual readability.
+  These do **not** prove the viewport shows a map.
+- **Track 1.5 — Viewport pixel observability (non-headless).** Proves the SubViewport renders
+  hex terrain and visible changes on step/command via pixel probes and capture assert
+  (GOD-SMOKE-004, GOD-CAPTURE-001). Requires display; do not pass `--headless`.
 - **Track 2 — Windowed visual review.** A human launches each demo at 1920x1080 and confirms
   readability/legibility per `docs/verification/local_verification.md` ("RUN_05 windowed visual
-  review"). Screenshots are captured (in-viewer button/hotkey or manual).
+  review"). Screenshots are captured (capture runner with `--assert` or manual).
 
 ## Test Categories
 
@@ -109,13 +112,13 @@ Track 1 (headless):
 - [x] GOD-SMOKE-001 (progression within 50 ticks), GOD-SMOKE-002 (move + attack combat delta), GOD-SMOKE-003 (economy logistics visibility) pass
 
 Track 1.5 (viewport pixels — non-headless, mandatory for RUN_05 closure):
-- [ ] VIS-LAYOUT-001: hex map visible on first open (MapViewport sized, non-blank pixels)
-- [ ] GOD-CAPTURE-001: capture asserts grass/forest (economy) or entity colors (military)
-- [ ] VIS-PIX-CHAIN-001: stepping production demo changes viewport pixels
-- [ ] VIS-PIX-BUILD-001: placing storehouse shows construction site in viewport
-- [ ] GOD-SMOKE-004 passes (`run_viewer_pixel_smoke.gd`, exit 0)
+- [x] VIS-LAYOUT-001: hex map visible on first open (MapViewport sized, non-blank pixels)
+- [x] GOD-CAPTURE-001: capture asserts grass/forest (economy) or entity colors (military)
+- [x] VIS-PIX-CHAIN-001: stepping production demo changes viewport pixels
+- [x] VIS-PIX-BUILD-001: placing storehouse shows construction site in viewport
+- [x] GOD-SMOKE-004 passes (`run_viewer_pixel_smoke.gd`, exit 0)
 
 Track 2 (windowed visual review, per `docs/verification/local_verification.md`):
-- [ ] Economy and military demos are readable at 1920x1080 (map/panels/text do not overlap)
-- [ ] Legend explains every colour/icon/overlay; selection inspector understandable
-- [ ] Screenshots captured (in-viewer or manual) and referenced in the final report
+- [x] Economy and military demos are readable at 1920x1080 (map/panels/text do not overlap)
+- [x] Legend explains every colour/icon/overlay; selection inspector understandable
+- [x] Screenshots captured (capture runner `--assert`) and referenced in [`RUN_05_FINAL_REPORT.md`](../audit/RUN_05_FINAL_REPORT.md)

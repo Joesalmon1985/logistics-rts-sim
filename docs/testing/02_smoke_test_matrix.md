@@ -89,9 +89,16 @@ has a dedicated test asserting state change + event/diagnostic + downstream effe
 
 ## RUN_05 — Godot Trial Viewers
 
-These are **headless contract smokes** (Track 1). They verify snapshot render-data, the
-command-availability bridge, and command round-trip — not visual readability. Human readability is
-verified separately via the **windowed visual review** (Track 2) in
+RUN_05 uses **two smoke runners** on **three verification tracks**:
+
+| Runner | Track | Headless? |
+|--------|-------|-----------|
+| `sim/tools/run_viewer_smoke.gd` | 1 — contract smokes | Yes (`--headless`) |
+| `sim/tools/run_viewer_pixel_smoke.gd` | 1.5 — viewport pixels | No (requires display) |
+
+Track 1 verifies snapshot render-data, the command-availability bridge, and command round-trip —
+not visual readability. Track 1.5 proves the SubViewport shows terrain and step/command pixel
+changes. Human readability is verified separately via **windowed visual review** (Track 2) in
 `docs/verification/local_verification.md`; that review is not a headless smoke.
 
 | ID | Scenario | Pass criteria |
@@ -101,8 +108,12 @@ verified separately via the **windowed visual review** (Track 2) in
 | GOD-SMOKE-003 | Economy logistics visibility | Production demo: 30-tick chain delta (forest density, stores, routes); build tutorial: site placement, road connect or pre-connected, progress or completion within 120 ticks; exit 0 |
 | GOD-SMOKE-004 | Viewport pixel observability (non-headless) | VIS-LAYOUT-001 map size + non-blank pixels; GOD-CAPTURE-001 grass/forest visible; VIS-PIX-CHAIN-001 step delta; VIS-PIX-BUILD-001 site visible after place; military entity colors; exit 0 via `run_viewer_pixel_smoke.gd` |
 
-RUN_05 smoke runner: `sim/tools/run_viewer_smoke.gd` (`--smoke=all`, exit `0`). Unknown smoke id
-must exit non-zero (checked by `verify_failure_modes.gd`).
+RUN_05 smoke runners:
+
+- **Track 1:** `sim/tools/run_viewer_smoke.gd` (`--smoke=all`, exit `0`, headless). Unknown smoke id
+  must exit non-zero (checked by `verify_failure_modes.gd`).
+- **Track 1.5:** `sim/tools/run_viewer_pixel_smoke.gd` (exit `0`, non-headless). Optional standalone
+  GOD-CAPTURE-001 assert via `run_viewer_capture.gd --assert`.
 
 ## RUN_06 — Neural Training
 
