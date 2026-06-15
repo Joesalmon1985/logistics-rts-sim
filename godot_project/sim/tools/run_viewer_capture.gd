@@ -1,18 +1,13 @@
 extends SceneTree
 
-## Headless viewer screenshot capture for RUN_05 (1920x1080 SubViewport render).
+## Viewer screenshot capture for RUN_05 (1920x1080 SubViewport; non-headless).
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
-const SIZE := Vector2i(1920, 1080)
 
-const SCENES: Dictionary = {
-	"economy": "res://client/scenes/economy_viewer_demo.tscn",
-	"military": "res://client/scenes/military_viewer_demo.tscn",
-}
-
-var _viewport: SubViewport
+var _ctx: Dictionary = {}
 var _variant: String = "economy"
-var _frames_left: int = 4
+var _assert_pixels: bool = false
+var _ready: bool = false
 
 
 func _initialize() -> void:
@@ -21,52 +16,51 @@ func _initialize() -> void:
 	for arg in args:
 		if arg.begins_with("--variant="):
 			_variant = arg.substr("--variant=".length())
+		elif arg == "--assert":
+			_assert_pixels = true
 	call_deferred("_setup_capture")
 
 
 func _setup_capture() -> void:
-	if not SCENES.has(_variant):
-		print("CAPTURE FAIL: unknown variant %s" % _variant)
+	_ctx = ViewerTestHarness.mount(root, _variant)
+	if not bool(_ctx.get("ok", false)):
+		print("CAPTURE FAIL: mount %s — %s" % [_variant, str(_ctx.get("reason", "?"))])
 		quit(1)
-		return
-
-	var packed: PackedScene = load(str(SCENES[_variant]))
-	if packed == null:
-		print("CAPTURE FAIL: could not load scene")
-		quit(1)
-		return
-
-	var scene: Control = packed.instantiate()
-	_viewport = SubViewport.new()
-	_viewport.size = SIZE
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	scene.custom_minimum_size = SIZE
-	scene.size = SIZE
-	_viewport.add_child(scene)
-	root.add_child(_viewport)
-	call_deferred("_tick_capture")
 
 
-func _tick_capture() -> void:
-	_frames_left -= 1
-	if _frames_left > 0:
-		call_deferred("_tick_capture")
-		return
-	_finish_capture()
+func _process(_delta: float) -> bool:
+	if _ctx.is_empty():
+		return false
+	if not _ready:
+		if ViewerTestHarness.tick_frames(_ctx):
+			_ready = true
+			call_deferred("_finish_capture")
+		return false
+	return false
 
 
 func _finish_capture() -> void:
-	var tex: ViewportTexture = _viewport.get_texture()
+	var img: Image = ViewerTestHarness.capture(_ctx)
 	var ok: bool = false
-	if tex != null:
-		var img: Image = tex.get_image()
-		if img != null and not img.is_empty():
-			var dir: String = ProjectSettings.globalize_path("user://screenshots")
-			DirAccess.make_dir_recursive_absolute(dir)
-			var path: String = dir.path_join("run_05_%s_demo.png" % _variant)
-			ok = img.save_png(path) == OK
-			if ok:
-				print("Saved screenshot: %s" % path)
+	if img != null and not img.is_empty():
+		var dir: String = ProjectSettings.globalize_path("user://screenshots")
+		DirAccess.make_dir_recursive_absolute(dir)
+		var path: String = dir.path_join("run_05_%s_demo.png" % _variant)
+		ok = img.save_png(path) == OK
+		if ok:
+			print("Saved screenshot: %s" % path)
+	if ok and _assert_pixels:
+		var check: Dictionary
+		if _variant == "economy":
+			check = ViewerPixelProbe.assert_economy_terrain_visible(img)
+		else:
+			check = ViewerPixelProbe.assert_military_entities_visible(img)
+		if not bool(check.get("ok", false)):
+			print("GOD-CAPTURE-001 FAIL: %s" % str(check.get("reason", "?")))
+			ok = false
+		else:
+			print("GOD-CAPTURE-001 PASS: %s" % _variant)
+	ViewerTestHarness.teardown(_ctx)
 	if ok:
 		print("CAPTURE PASS: %s" % _variant)
 		print("EXIT: 0 (pass)")

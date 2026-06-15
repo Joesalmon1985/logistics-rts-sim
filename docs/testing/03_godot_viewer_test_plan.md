@@ -34,6 +34,20 @@ RUN_05 verification runs on two tracks; both are required and must not be collap
 - `available_commands[]` is non-authoritative: confirm it is excluded from replay-hashed state (or
   uses a separate client/debug export path) and that no replay hash changed because of it
 
+### Viewport Pixel Observability (VIS-LAYOUT-001, VIS-PIX-*, GOD-CAPTURE-001)
+
+Non-headless SubViewport tests prove the **2D view** shows terrain and changes on step/command — not only render dictionaries.
+
+| ID | Scenario | Pass criteria |
+|----|----------|---------------|
+| VIS-LAYOUT-001 | Economy scene boot in SubViewport | MapViewport size ≥ 400×300; terrain count > 0; ≥5% map-panel pixels non-background |
+| GOD-CAPTURE-001 | Static screenshot assert | Grass + forest (economy) or unit/building colors (military) in left map region |
+| VIS-PIX-CHAIN-001 | Production demo step 30 | Viewport image diff, forest hex diff, or amber route pixels |
+| VIS-PIX-BUILD-001 | Build tutorial place site | Construction site pixels at placed hex; progress diff after 30 ticks |
+| GOD-SMOKE-004 | Combined pixel runner | All above pass via `run_viewer_pixel_smoke.gd` |
+
+Runner: `sim/tools/run_viewer_pixel_smoke.gd` (no `--headless`). Capture assert: `run_viewer_capture.gd -- --variant=economy --assert`.
+
 ### Layer Visibility (VIS-LAYER-001)
 
 - Toggle terrain, roads, buildings independently
@@ -86,12 +100,20 @@ RUN_05 verification runs on two tracks; both are required and must not be collap
 ## Pass Criteria for RUN_05
 
 Track 1 (headless):
-- [x] Economy viewer loads curated demo snapshot with construction sites + carriers visible (VIS-SNAP-001, VIS-RENDER-001)
+- [x] Economy viewer loads curated demo snapshot with carriers, tree density, and logistics layers (VIS-SNAP-001, VIS-RENDER-001, VIS-ECON-CHAIN-001)
+- [x] Build tutorial flow: place site → road → deliver → complete (VIS-ECON-BUILD-001)
 - [x] Military viewer loads curated demo snapshot (VIS-SNAP-001)
 - [x] Command availability bridge sources commands from the sim provider (VIS-AVAIL-001)
 - [x] Command round-trip with before/after render delta (VIS-CMD-001)
 - [x] `available_commands[]` excluded from replay-hashed state; no hashes re-pinned for it
-- [x] GOD-SMOKE-001 (progression within 50 ticks), GOD-SMOKE-002 (move + attack combat delta) pass
+- [x] GOD-SMOKE-001 (progression within 50 ticks), GOD-SMOKE-002 (move + attack combat delta), GOD-SMOKE-003 (economy logistics visibility) pass
+
+Track 1.5 (viewport pixels — non-headless, mandatory for RUN_05 closure):
+- [ ] VIS-LAYOUT-001: hex map visible on first open (MapViewport sized, non-blank pixels)
+- [ ] GOD-CAPTURE-001: capture asserts grass/forest (economy) or entity colors (military)
+- [ ] VIS-PIX-CHAIN-001: stepping production demo changes viewport pixels
+- [ ] VIS-PIX-BUILD-001: placing storehouse shows construction site in viewport
+- [ ] GOD-SMOKE-004 passes (`run_viewer_pixel_smoke.gd`, exit 0)
 
 Track 2 (windowed visual review, per `docs/verification/local_verification.md`):
 - [ ] Economy and military demos are readable at 1920x1080 (map/panels/text do not overlap)

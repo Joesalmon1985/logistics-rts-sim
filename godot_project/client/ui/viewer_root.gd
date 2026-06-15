@@ -5,6 +5,7 @@ const SCREEN_SIZE := Vector2i(1920, 1080)
 
 var controller: ViewerController
 var demo_builder: Callable
+var build_tutorial_builder: Callable
 var variant_label: String = "viewer"
 var viewer_title: String = "Debug Viewer"
 var help_text: String = ""
@@ -22,10 +23,14 @@ var map_title: String = "Map"
 @onready var _help: RichTextLabel = %HelpPanel
 @onready var _commands_header: Label = %CommandsHeader
 @onready var _title: Label = %TitleLabel
+@onready var _checklist: Label = get_node_or_null("%ChecklistLabel")
+@onready var _logistics_filter_btn: Button = get_node_or_null("%LogisticsFilterBtn")
+
+var _logistics_event_filter: bool = false
 
 
 func _ready() -> void:
-	size = SCREEN_SIZE
+	set_deferred("size", SCREEN_SIZE)
 	if controller == null:
 		controller = ViewerController.new()
 	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
@@ -40,12 +45,25 @@ func _ready() -> void:
 	if demo_builder.is_valid():
 		reset_demo()
 	_show_welcome_inspector()
+	call_deferred("_deferred_map_refresh")
+
+
+func _deferred_map_refresh() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_refresh_map_layers()
 
 
 func _setup_panel_labels() -> void:
 	_title.text = viewer_title
 	if has_node("%ResetBtn"):
-		get_node("%ResetBtn").text = "Load/Reset Demo"
+		get_node("%ResetBtn").text = "Load Production Demo"
+	if has_node("%BuildTutorialBtn"):
+		get_node("%BuildTutorialBtn").text = "Load Build Tutorial"
+	if has_node("%LogisticsBtn"):
+		get_node("%LogisticsBtn").text = "Toggle Logistics"
+	if has_node("%ForestBtn"):
+		get_node("%ForestBtn").text = "Toggle Forest D"
 	if has_node("%StepBtn"):
 		get_node("%StepBtn").text = "Step Tick"
 	if has_node("%Step10Btn"):
@@ -80,12 +98,24 @@ func _apply_help_text() -> void:
 
 
 func reset_demo() -> void:
+	_load_demo_from_builder(demo_builder, "production demo")
+
+
+func load_build_tutorial() -> void:
+	if build_tutorial_builder.is_valid():
+		_load_demo_from_builder(build_tutorial_builder, "build tutorial")
+	elif demo_builder.is_valid():
+		_load_demo_from_builder(demo_builder, "demo")
+
+
+func _load_demo_from_builder(builder: Callable, label: String) -> void:
 	if controller == null:
 		controller = ViewerController.new()
-	if demo_builder.is_valid():
-		controller.load_demo_state(demo_builder.call(), "p1")
-	_append_event("Demo loaded (%s)" % variant_label)
+	if builder.is_valid():
+		controller.load_demo_state(builder.call(), "p1")
+	_append_event("Demo loaded (%s — %s)" % [variant_label, label])
 	_show_welcome_inspector()
+	_refresh_map_layers()
 
 
 func _show_welcome_inspector() -> void:
@@ -98,17 +128,35 @@ func _show_welcome_inspector() -> void:
 
 
 func _on_snapshot_refreshed(snapshot: Dictionary) -> void:
-	_map.set_render_data(controller.get_render_data())
+	_refresh_map_layers()
 	_update_attack_target_highlight()
 	_refresh_commands()
 	_update_debug(snapshot)
 	_update_summary()
+	_update_checklist()
 	var cmd_count: int = ClientCommandAvailability.count(controller.get_available_commands())
 	_commands_header.text = "Legal commands available: %d (select one, then Submit)" % cmd_count
 	_status.text = "Tick %d  |  Active player: %s  |  Phase: debug step-through" % [
 		int(snapshot.get("tick", 0)),
 		controller.actor_id,
 	]
+
+
+func _refresh_map_layers() -> void:
+	_map.show_forest_density = controller.layer_visibility.get("forest_density", true)
+	_map.show_logistics = controller.layer_visibility.get("logistics", true)
+	_map.production_pulse_ids = controller.production_pulse_ids.duplicate()
+	_map.set_render_data(controller.get_render_data())
+
+
+func _update_checklist() -> void:
+	if _checklist == null:
+		return
+	if variant_label != "economy":
+		_checklist.text = ""
+		return
+	var text: String = controller.build_checklist_text()
+	_checklist.text = text if text != "" else "(Place a construction site to see build checklist)"
 
 
 func _update_attack_target_highlight() -> void:
@@ -151,6 +199,12 @@ func _on_command_result(result: Dictionary, dto: Dictionary) -> void:
 	var msg: String
 	if bool(result.get("success", false)):
 		msg = "ACCEPTED: %s" % label
+		if str(dto.get("type", "")) == "PlaceBuildingPlanCommand" and variant_label == "economy":
+			var site: Dictionary = controller.last_placed_site
+			if not site.is_empty():
+				_map.set_selection(int(site.get("q", -1)), int(site.get("r", -1)))
+				var sel: Dictionary = controller.get_selection_at(int(site.get("q", -1)), int(site.get("r", -1)))
+				_inspector.text = SelectionFormatter.format(sel, controller.snapshot)
 	else:
 		msg = "REJECTED: %s — %s" % [label, str(result.get("reason", result.get("error_code", "?")))]
 	_result.text = msg
@@ -180,11 +234,11 @@ func _build_legend() -> void:
 	else:
 		_legend.text = (
 			"[b]Legend — Economy[/b]\n"
-			+ "Light green = grass | Dark green = forest | Gold = HQ\n"
+			+ "Light green = grass | Dark green = forest | [color=#75ff75]D:n[/color] = tree density\n"
 			+ "Dashed hex + green ring = construction site (% progress)\n"
-			+ "Orange/blue dots on roads = carriers (carrying/idle) | W# = workers on building\n"
-			+ "Brown = woodcutter | Tan = sawmill | Yellow lines = roads\n"
-			+ "White coords | Yellow ring = selected hex"
+			+ "[color=#f2a826]Dashed amber[/color] = carrier route | Orange dot = carrier (ware label)\n"
+			+ "Store chips: T:timber P:planks | W# = workers | P# = production progress\n"
+			+ "Brown = woodcutter | Tan = sawmill | Yellow lines = roads"
 		)
 
 
@@ -246,8 +300,33 @@ func _on_toggle_grid_pressed() -> void:
 func _on_toggle_roads_pressed() -> void:
 	var vis: bool = not controller.layer_visibility.get("roads", true)
 	controller.set_layer_visible("roads", vis)
-	_map.set_render_data(controller.get_render_data())
+	_refresh_map_layers()
 	_append_event("Road layer: %s" % ("ON" if vis else "OFF"))
+
+
+func _on_toggle_logistics_pressed() -> void:
+	var vis: bool = not controller.layer_visibility.get("logistics", true)
+	controller.set_layer_visible("logistics", vis)
+	_refresh_map_layers()
+	_append_event("Logistics layer: %s" % ("ON" if vis else "OFF"))
+
+
+func _on_toggle_forest_pressed() -> void:
+	var vis: bool = not controller.layer_visibility.get("forest_density", true)
+	controller.set_layer_visible("forest_density", vis)
+	_refresh_map_layers()
+	_append_event("Forest density layer: %s" % ("ON" if vis else "OFF"))
+
+
+func _on_build_tutorial_pressed() -> void:
+	load_build_tutorial()
+
+
+func _on_logistics_filter_pressed() -> void:
+	_logistics_event_filter = not _logistics_event_filter
+	if _logistics_filter_btn != null:
+		_logistics_filter_btn.text = "Logistics Events: %s" % ("ON" if _logistics_event_filter else "OFF")
+	_append_event("Logistics event filter: %s" % ("ON" if _logistics_event_filter else "OFF"))
 
 
 func _on_bot_pressed() -> void:

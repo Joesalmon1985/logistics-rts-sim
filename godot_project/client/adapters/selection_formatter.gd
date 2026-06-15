@@ -15,18 +15,22 @@ static func format(selection: Dictionary, snapshot: Dictionary = {}) -> String:
 
 	match kind:
 		"building":
-			return _format_building(data, q, r)
+			return _format_building(data, q, r, snapshot)
 		"unit":
 			return _format_unit(data, q, r, snapshot)
 		"construction_site":
 			return _format_construction_site(data, q, r)
+		"carrier":
+			return _format_carrier(data, q, r)
+		"forest":
+			return _format_forest(data, q, r)
 		"tile":
 			return _format_tile(data, q, r, snapshot)
 		_:
 			return "Empty hex (%d, %d)\nClick a coloured hex to inspect terrain, buildings, or units." % [q, r]
 
 
-static func _format_building(data: Dictionary, q: int, r: int) -> String:
+static func _format_building(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
 	var lines: PackedStringArray = PackedStringArray([
 		"BUILDING",
 		"Type: %s" % str(data.get("building_type", "?")),
@@ -34,11 +38,57 @@ static func _format_building(data: Dictionary, q: int, r: int) -> String:
 		"Position: (%d, %d)" % [q, r],
 		"State: %s" % str(data.get("state", "?")),
 	])
+	var workers: Array = data.get("assigned_workers", [])
+	if workers.size() > 0:
+		lines.append("Workers assigned: %d" % workers.size())
+	var progress: int = int(data.get("production_progress", 0))
+	if progress > 0:
+		lines.append("Production progress: %d" % progress)
+	var paused: String = str(data.get("paused_reason", ""))
+	if paused != "":
+		lines.append("Paused: %s" % paused)
+	lines.append(_store_line_for_building(int(data.get("id", 0)), snapshot))
 	var max_hp: int = int(data.get("max_hp", 0))
 	if max_hp > 0:
 		lines.append("HP: %d / %d" % [int(data.get("hp", 0)), max_hp])
 	lines.append("ID: %s" % str(data.get("id", "?")))
 	return "\n".join(lines)
+
+
+static func _store_line_for_building(building_id: int, snapshot: Dictionary) -> String:
+	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
+	for store in render.get("building_stores", []):
+		if int(store.get("building_id", -1)) == building_id:
+			return "Store: %s" % str(store.get("label", ""))
+	return "Store: (empty)"
+
+
+static func _format_carrier(data: Dictionary, q: int, r: int) -> String:
+	var lines: PackedStringArray = PackedStringArray([
+		"CARRIER",
+		"Position: (%d, %d)" % [q, r],
+		"State: %s" % str(data.get("state", "?")),
+	])
+	var ware: String = str(data.get("ware_type", ""))
+	if ware != "":
+		lines.append("Carrying: %s x%d" % [ware, int(data.get("ware_amount", 0))])
+	var route: Array = data.get("route_points", [])
+	if route.size() >= 2:
+		var parts: PackedStringArray = PackedStringArray()
+		for pt in route:
+			parts.append("%d,%d" % [int(pt.get("q", 0)), int(pt.get("r", 0))])
+		lines.append("Route: %s" % " -> ".join(parts))
+	lines.append("ID: %s" % str(data.get("id", "?")))
+	return "\n".join(lines)
+
+
+static func _format_forest(data: Dictionary, q: int, r: int) -> String:
+	return "\n".join(PackedStringArray([
+		"FOREST HEX",
+		"Position: (%d, %d)" % [q, r],
+		"Tree density: %d" % int(data.get("tree_density", 0)),
+		"(Density drops as woodcutter produces timber)",
+	]))
 
 
 static func _format_unit(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:

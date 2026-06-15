@@ -7,15 +7,16 @@ func _init() -> void:
 	variant_label = "economy"
 	viewer_title = "Economy Trial Debug Viewer"
 	map_title = "Economy map"
-	demo_builder = Callable(EconomyDemo, "build_state")
+	demo_builder = Callable(EconomyDemo, "build_production_chain")
+	build_tutorial_builder = Callable(EconomyDemo, "build_build_tutorial")
 	help_text = (
-		"[b]How to use this viewer[/b]\n"
-		+ "1. Map shows HQ, woodcutter, sawmill, [color=#facc15]roads[/color], and a pre-placed storehouse [i]construction site[/i] (dashed hex + % ring).\n"
-		+ "2. Orange/blue dots = carriers on road nodes. W# badge = workers assigned to a building.\n"
-		+ "3. Pick a command (Roads / Buildings / Workers categories), press [b]Submit Command[/b]. Building commands create construction sites.\n"
-		+ "4. [b]Step Tick[/b], [b]Step 10[/b], or [b]Step Until Event[/b] to watch logistics/production progress.\n"
-		+ "5. Summary panel shows wares, site/carrier/job counts. Inspector shows site delivered/required progress.\n"
-		+ "6. [b]Load/Reset Demo[/b] restores the starting layout."
+		"[b]Production chain demo[/b] (default)\n"
+		+ "HQ + woodcutter on forest + sawmill on roads. Step to watch [color=#75ff75]D:n[/color] forest density drop, "
+		+ "[color=#f2a826]carrier routes[/color], store chips (T:/P:), and production events.\n\n"
+		+ "[b]Build tutorial[/b] — Load Build Tutorial\n"
+		+ "Road stub toward hex 6,2. Place a road-adjacent storehouse site, connect roads, step until completion.\n\n"
+		+ "1. Pick a command → Submit Command. 2. Step Tick / Step 10 / Step Until Event.\n"
+		+ "3. Toggle Logistics / Forest D layers. 4. Checklist tracks site → road → deliver → complete."
 	)
 
 

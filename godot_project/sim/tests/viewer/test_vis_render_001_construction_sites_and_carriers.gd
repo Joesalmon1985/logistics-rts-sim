@@ -17,11 +17,15 @@ func _test_economy_sites_and_carriers() -> void:
 	var state: GameState = EconomyDemo.build_state()
 	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
 	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
-	assert_true(render.get("construction_sites", []).size() >= 1, "economy demo exposes construction sites in render data")
 	assert_true(render.get("carriers", []).size() >= 1, "economy demo exposes carriers in render data")
+	assert_true(render.get("tree_density", []).size() >= 1, "economy demo exposes forest density layer")
 	for carrier in render.get("carriers", []):
-		assert_true(int(carrier.get("q", -1)) >= 0, "carrier q resolved from road_nodes")
-		assert_true(int(carrier.get("r", -1)) >= 0, "carrier r resolved from road_nodes")
+		assert_true(float(carrier.get("q", -1)) >= 0, "carrier q resolved from road_nodes")
+		assert_true(float(carrier.get("r", -1)) >= 0, "carrier r resolved from road_nodes")
+
+	var tutorial: GameState = EconomyDemo.build_build_tutorial()
+	var tutorial_render: Dictionary = LayerRenderer.build_render_data(SnapshotExporter.export_snapshot(tutorial))
+	assert_eq(int(LayerRenderer.count_entities(tutorial_render).get("construction_sites", 0)), 0, "build tutorial has no pre-placed site")
 
 
 func _test_economy_site_progress() -> void:

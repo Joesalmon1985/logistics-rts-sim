@@ -157,6 +157,8 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/viewer/test_vis_render_001_construction_sites_and_carriers.gd",
 	"res://sim/tests/viewer/test_vis_cmd_001_command_roundtrip.gd",
 	"res://sim/tests/viewer/test_vis_avail_001_availability_bridge.gd",
+	"res://sim/tests/viewer/test_vis_econ_chain_001_production_chain_delta.gd",
+	"res://sim/tests/viewer/test_vis_econ_build_001_build_tutorial_flow.gd",
 ]
 
 

@@ -96,8 +96,10 @@ verified separately via the **windowed visual review** (Track 2) in
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| GOD-SMOKE-001 | Load economy + military demo snapshots headlessly | Economy render data includes construction_sites + carriers; economy demo shows observable progression within 50 ticks; military render data valid; no `SCRIPT ERROR`; exit 0 |
+| GOD-SMOKE-001 | Load economy + military demo snapshots headlessly | Economy render data includes carriers + tree_density; economy demo shows observable progression within 50 ticks; military render data valid; no `SCRIPT ERROR`; exit 0 |
 | GOD-SMOKE-002 | Sim-provided command round-trip via viewer adapter | Economy: road submit + step shows fingerprint delta; military: move changes unit position; attack issues order and reduces target HP or emits combat/damage/order event; build increases construction-site render count; rejected invalid command; `available_commands[]` excluded from replay hash |
+| GOD-SMOKE-003 | Economy logistics visibility | Production demo: 30-tick chain delta (forest density, stores, routes); build tutorial: site placement, road connect or pre-connected, progress or completion within 120 ticks; exit 0 |
+| GOD-SMOKE-004 | Viewport pixel observability (non-headless) | VIS-LAYOUT-001 map size + non-blank pixels; GOD-CAPTURE-001 grass/forest visible; VIS-PIX-CHAIN-001 step delta; VIS-PIX-BUILD-001 site visible after place; military entity colors; exit 0 via `run_viewer_pixel_smoke.gd` |
 
 RUN_05 smoke runner: `sim/tools/run_viewer_smoke.gd` (`--smoke=all`, exit `0`). Unknown smoke id
 must exit non-zero (checked by `verify_failure_modes.gd`).

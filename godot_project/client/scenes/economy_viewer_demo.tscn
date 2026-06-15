@@ -27,6 +27,7 @@ size_flags_stretch_ratio = 2.8
 
 [node name="MapViewport" type="Control" parent="RootHBox/MapArea"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 480)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -91,7 +92,13 @@ layout_mode = 2
 [node name="ResetBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow1"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Load/Reset Demo"
+text = "Load Production Demo"
+
+[node name="BuildTutorialBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Load Build Tutorial"
 
 [node name="StepBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow1"]
 layout_mode = 2
@@ -137,6 +144,16 @@ text = "Toggle Coords"
 layout_mode = 2
 text = "Toggle Roads"
 
+[node name="LogisticsBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Toggle Logistics"
+
+[node name="ForestBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Toggle Forest D"
+
 [node name="ShotBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
 layout_mode = 2
 text = "Screenshot"
@@ -146,6 +163,21 @@ unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Run one bot-chosen legal command (optional debug aid)"
 text = "Bot Step"
+
+[node name="ButtonRow3b" type="HBoxContainer" parent="RootHBox/RightPanel"]
+layout_mode = 2
+
+[node name="LogisticsFilterBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3b"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Logistics Events: OFF"
+
+[node name="ChecklistLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = "Build checklist: (place a site to begin)"
 
 [node name="InspectorHeader" type="Label" parent="RootHBox/RightPanel"]
 layout_mode = 2
@@ -175,6 +207,7 @@ custom_minimum_size = Vector2(0, 90)
 fit_content = true
 
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/ResetBtn" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/BuildTutorialBtn" to="." method="_on_build_tutorial_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/StepBtn" to="." method="_on_step_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/Step10Btn" to="." method="_on_step10_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1b/StepEventBtn" to="." method="_on_step_event_pressed"]
@@ -182,5 +215,8 @@ fit_content = true
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow2/InvalidBtn" to="." method="_on_invalid_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/GridBtn" to="." method="_on_toggle_grid_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/RoadsBtn" to="." method="_on_toggle_roads_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/LogisticsBtn" to="." method="_on_toggle_logistics_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/ForestBtn" to="." method="_on_toggle_forest_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/ShotBtn" to="." method="_on_screenshot_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3b/LogisticsFilterBtn" to="." method="_on_logistics_filter_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/BotBtn" to="." method="_on_bot_pressed"]

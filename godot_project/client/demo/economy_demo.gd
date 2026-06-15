@@ -1,10 +1,36 @@
 class_name EconomyDemo
 extends RefCounted
 
-## Curated economy trial demo state for RUN_05 viewer — compact, readable layout.
+## Curated economy trial demo layouts for RUN_05 viewer.
+
+
+static func build_production_chain() -> GameState:
+	return _build_base_layout(false)
+
+
+static func build_build_tutorial() -> GameState:
+	var state: GameState = _build_base_layout(true)
+	_connect_roads(state, 5, 5, 6, 2)
+	return state
 
 
 static func build_state() -> GameState:
+	return build_production_chain()
+
+
+static func verify_progression_within_ticks(max_ticks: int = 50) -> Dictionary:
+	var runner := SimulationTickRunner.new()
+	var state: GameState = build_production_chain()
+	var baseline: Dictionary = _chain_fingerprint(state)
+	for _i in range(max_ticks):
+		state = runner.tick(state)
+		var current: Dictionary = _chain_fingerprint(state)
+		if _chain_changed(baseline, current):
+			return {"ok": true, "ticks": _i + 1, "fingerprint": current}
+	return {"ok": false, "ticks": max_ticks, "fingerprint": baseline}
+
+
+static func _build_base_layout(tutorial_mode: bool) -> GameState:
 	var scenario: Dictionary = {
 		"variant": "economy_trial",
 		"seed": 42,
@@ -13,7 +39,7 @@ static func build_state() -> GameState:
 		"players": ["p1"],
 		"hq_position": {"q": 5, "r": 5},
 		"build_radius": 8,
-		"starting_wares": {"planks": 20, "stone": 10, "tools": 5},
+		"starting_wares": {"tools": 5} if not tutorial_mode else {"planks": 10, "stone": 8, "tools": 5},
 	}
 	var runner := SimulationTickRunner.new()
 	var state: GameState = runner.create_game(scenario)
@@ -28,45 +54,29 @@ static func build_state() -> GameState:
 		state, "sawmill", 5, 7, "p1", EconomyState.get_config(state),
 	)
 	_connect_roads(state, 5, 5, 5, 7)
-	_connect_roads(state, 5, 7, 5, 8)
-	var site_result: Dictionary = EconomyConstructionSystem.create_site(state, "storehouse", 5, 8, "p1")
-	if site_result.get("ok", false):
-		var site_id: int = int(site_result.get("site_id", 0))
-		EconomyConstructionSystem.deliver_to_site(state, site_id, "planks", 1)
+	var policy := SetWorkerPolicyCommand.new("p1", state.tick, {"policy": "auto", "player_id": "p1"})
+	if policy.validate(state).success:
+		policy.apply(state)
 	return state
 
 
-static func verify_progression_within_ticks(max_ticks: int = 50) -> Dictionary:
-	var runner := SimulationTickRunner.new()
-	var state: GameState = build_state()
-	var baseline: Dictionary = _progress_fingerprint(state)
-	for _i in range(max_ticks):
-		state = runner.tick(state)
-		var current: Dictionary = _progress_fingerprint(state)
-		if current.hash() != baseline.hash():
-			return {"ok": true, "ticks": _i + 1, "fingerprint": current}
-	return {"ok": false, "ticks": max_ticks, "fingerprint": baseline}
-
-
-static func _progress_fingerprint(state: GameState) -> Dictionary:
+static func _chain_fingerprint(state: GameState) -> Dictionary:
 	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
 	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
-	var delivered_total: int = 0
-	for site in snapshot.get("construction_sites", []):
-		for ware_type in site.get("delivered", {}):
-			delivered_total += int(site.get("delivered", {}).get(ware_type, 0))
-	var carrier_moving: int = 0
-	for carrier in snapshot.get("carrier_markers", []):
-		if str(carrier.get("state", "")) != EconomyConstants.CARRIER_IDLE:
-			carrier_moving += 1
-	return {
-		"tick": state.tick,
-		"event_count": state.event_log.events.size(),
-		"delivered_total": delivered_total,
-		"carrier_moving": carrier_moving,
-		"construction_sites": render.get("construction_sites", []).size(),
-		"carriers": render.get("carriers", []).size(),
-	}
+	var fp: Dictionary = LayerRenderer.chain_fingerprint(render)
+	fp["event_count"] = state.event_log.events.size()
+	fp["buildings"] = render.get("buildings", []).size()
+	fp["construction_sites"] = render.get("construction_sites", []).size()
+	return fp
+
+
+static func _chain_changed(a: Dictionary, b: Dictionary) -> bool:
+	for key in ["forest_density", "woodcutter_timber", "sawmill_timber", "sawmill_planks", "carrier_moving", "ware_routes", "event_count"]:
+		if int(a.get(key, 0)) != int(b.get(key, 0)):
+			return true
+	if str(a.get("carrier_ware", "")) != str(b.get("carrier_ware", "")):
+		return true
+	return false
 
 
 static func _flatten_grass(state: GameState, q0: int, r0: int, q1: int, r1: int) -> void:

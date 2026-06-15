@@ -12,11 +12,18 @@ var attack_target_q: int = -1
 var attack_target_r: int = -1
 var pan_offset: Vector2 = Vector2.ZERO
 var zoom: float = 1.0
+var show_forest_density: bool = true
+var show_logistics: bool = true
+var production_pulse_ids: Array = []
 var map_title: String = "Map"
 
+## Palette constants shared with viewport pixel probes (read-only display).
+const COLOR_GRASS := Color(0.38, 0.72, 0.32)
+const COLOR_FOREST := Color(0.12, 0.42, 0.18)
+const COLOR_MAP_BG := Color(0.12, 0.14, 0.16)
 var _terrain_colors: Dictionary = {
-	"grass": Color(0.38, 0.72, 0.32),
-	"forest": Color(0.12, 0.42, 0.18),
+	"grass": COLOR_GRASS,
+	"forest": COLOR_FOREST,
 	"water": Color(0.22, 0.48, 0.82),
 	"mountain": Color(0.48, 0.44, 0.40),
 	"desert": Color(0.78, 0.68, 0.38),
@@ -88,6 +95,23 @@ func fit_to_content() -> void:
 	pan_offset = -center * zoom
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		if not render_data.is_empty() and size.x >= 10 and size.y >= 10:
+			fit_to_content()
+			queue_redraw()
+
+
+func hex_center_local(q: int, r: int) -> Vector2:
+	var origin: Vector2 = size * 0.5 + pan_offset
+	return _hex_center(origin, q, r)
+
+
+func map_panel_rect_in_viewport(viewport_size: Vector2i) -> Rect2i:
+	var global_pos: Vector2 = get_global_position()
+	return Rect2i(int(global_pos.x), int(global_pos.y), int(size.x), int(size.y))
+
+
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.12, 0.14, 0.16))
 	if render_data.is_empty():
@@ -103,18 +127,27 @@ func _draw() -> void:
 		var terrain_type: String = str(tile.get("terrain_type", "grass"))
 		var color: Color = _terrain_colors.get(terrain_type, Color(0.45, 0.45, 0.45))
 		_draw_hex(origin, q, r, color)
+	if show_forest_density:
+		for td in render_data.get("tree_density", []):
+			_draw_tree_density(origin, td)
 	for res in render_data.get("resources", []):
 		_draw_resource(origin, res)
 	for road in render_data.get("roads", []):
 		var a: Vector2 = _hex_center(origin, int(road.get("from_q", 0)), int(road.get("from_r", 0)))
 		var b: Vector2 = _hex_center(origin, int(road.get("to_q", 0)), int(road.get("to_r", 0)))
 		draw_line(a, b, Color(0.95, 0.82, 0.25), 4.0 * zoom)
+	if show_logistics:
+		for route in render_data.get("ware_routes", []):
+			_draw_ware_route(origin, route)
+		for job in render_data.get("delivery_jobs", []):
+			_draw_delivery_job(origin, job)
 	for site in render_data.get("construction_sites", []):
 		_draw_construction_site(origin, site)
 	for building in render_data.get("buildings", []):
 		_draw_building(origin, building)
-	for carrier in render_data.get("carriers", []):
-		_draw_carrier(origin, carrier)
+	if show_logistics:
+		for carrier in render_data.get("carriers", []):
+			_draw_carrier(origin, carrier)
 	for unit in render_data.get("units", []):
 		_draw_unit(origin, unit)
 	if attack_target_q >= 0 and attack_target_r >= 0:
@@ -137,13 +170,13 @@ func _draw() -> void:
 func _draw_title_bar() -> void:
 	var counts: Dictionary = LayerRenderer.count_entities(render_data)
 	draw_rect(Rect2(8, 8, size.x - 16, 28), Color(0, 0, 0, 0.55))
-	draw_string(_default_font(), Vector2(16, 28), "%s — bld:%d sites:%d roads:%d units:%d carriers:%d (click hex)" % [
+	draw_string(_default_font(), Vector2(16, 28), "%s — bld:%d sites:%d roads:%d carriers:%d routes:%d (click hex)" % [
 		map_title,
 		int(counts.get("buildings", 0)),
 		int(counts.get("construction_sites", 0)),
 		int(counts.get("roads", 0)),
-		int(counts.get("units", 0)),
 		int(counts.get("carriers", 0)),
+		int(counts.get("ware_routes", 0)),
 	], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.95, 0.95, 0.95))
 
 
@@ -159,6 +192,14 @@ func _draw_building(origin: Vector2, building: Dictionary) -> void:
 	draw_arc(center, HEX_SIZE * zoom * 0.82, 0, TAU, 24, border, 2.5)
 	var label: String = str(_building_short_labels.get(btype, btype.substr(0, 4).to_upper()))
 	draw_string(_default_font(), center + Vector2(-16, 5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1))
+	var store_label: String = _store_label_for_building(building.get("id", 0))
+	if store_label != "":
+		draw_string(_default_font(), center + Vector2(-18, 18), store_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.85, 1.0, 0.85))
+	var prod: Dictionary = _production_for_building(building.get("id", 0))
+	if int(prod.get("production_progress", 0)) > 0:
+		draw_string(_default_font(), center + Vector2(-10, -16 * zoom), "P%d" % int(prod.get("production_progress", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.9, 0.5))
+	if int(building.get("id", 0)) in production_pulse_ids:
+		draw_arc(center, HEX_SIZE * zoom * 0.95, 0, TAU, 32, Color(0.4, 1.0, 0.5, 0.85), 3.0)
 	var worker_badges: Dictionary = render_data.get("worker_badges", {})
 	var badge_count: int = int(worker_badges.get(str(building.get("id", 0)), 0))
 	if badge_count > 0:
@@ -187,16 +228,63 @@ func _draw_construction_site(origin: Vector2, site: Dictionary) -> void:
 
 
 func _draw_carrier(origin: Vector2, carrier: Dictionary) -> void:
-	var q: int = int(carrier.get("q", -1))
-	var r: int = int(carrier.get("r", -1))
-	if q < 0 or r < 0:
+	var qf: float = float(carrier.get("q", -1))
+	var rf: float = float(carrier.get("r", -1))
+	if qf < 0 or rf < 0:
 		return
-	var center: Vector2 = _hex_center(origin, q, r)
+	var center: Vector2 = _hex_center_float(origin, qf, rf)
 	var carrying: bool = str(carrier.get("ware_type", "")) != ""
 	var dot_color: Color = Color(0.95, 0.55, 0.15) if carrying else Color(0.55, 0.75, 0.95)
-	draw_circle(center + Vector2(10 * zoom, 10 * zoom), 6.0 * zoom, dot_color)
+	draw_circle(center + Vector2(0, 0), 7.0 * zoom, dot_color)
+	draw_circle(center + Vector2(0, 0), 7.0 * zoom, Color(1, 1, 1, 0.35), false, 1.5)
 	if carrying:
-		draw_string(_default_font(), center + Vector2(14 * zoom, 14 * zoom), str(carrier.get("ware_type", "")).substr(0, 3), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.9, 0.6))
+		draw_string(_default_font(), center + Vector2(8 * zoom, -4 * zoom), str(carrier.get("ware_type", "")).substr(0, 3), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.95, 0.7))
+
+
+func _draw_tree_density(origin: Vector2, td: Dictionary) -> void:
+	var q: int = int(td.get("q", 0))
+	var r: int = int(td.get("r", 0))
+	var density: int = int(td.get("tree_density", 0))
+	var center: Vector2 = _hex_center(origin, q, r)
+	draw_string(_default_font(), center + Vector2(-10, -14 * zoom), "D:%d" % density, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 1.0, 0.75))
+
+
+func _draw_ware_route(origin: Vector2, route: Dictionary) -> void:
+	var points: Array = route.get("points", [])
+	for i in range(points.size() - 1):
+		var a: Dictionary = points[i]
+		var b: Dictionary = points[i + 1]
+		var pa: Vector2 = _hex_center(origin, int(a.get("q", 0)), int(a.get("r", 0)))
+		var pb: Vector2 = _hex_center(origin, int(b.get("q", 0)), int(b.get("r", 0)))
+		draw_dashed_line(pa, pb, Color(0.95, 0.65, 0.15, 0.85), 2.5 * zoom, 6.0 * zoom)
+
+
+func _draw_delivery_job(origin: Vector2, job: Dictionary) -> void:
+	var fq: int = int(job.get("from_q", -1))
+	var fr: int = int(job.get("from_r", -1))
+	var tq: int = int(job.get("to_q", -1))
+	var tr: int = int(job.get("to_r", -1))
+	if fq < 0 or tq < 0:
+		return
+	var a: Vector2 = _hex_center(origin, fq, fr)
+	var b: Vector2 = _hex_center(origin, tq, tr)
+	draw_line(a, b, Color(0.55, 0.85, 1.0, 0.45), 2.0 * zoom)
+	var mid: Vector2 = (a + b) * 0.5
+	draw_string(_default_font(), mid + Vector2(-8, -4), str(job.get("ware_type", "")).substr(0, 3), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.8, 0.95, 1.0))
+
+
+func _store_label_for_building(building_id: int) -> String:
+	for store in render_data.get("building_stores", []):
+		if int(store.get("building_id", -1)) == building_id:
+			return str(store.get("label", ""))
+	return ""
+
+
+func _production_for_building(building_id: int) -> Dictionary:
+	for prod in render_data.get("production_activity", []):
+		if int(prod.get("building_id", -1)) == building_id:
+			return prod
+	return {}
 
 
 func _draw_unit(origin: Vector2, unit: Dictionary) -> void:
@@ -296,6 +384,12 @@ func _hex_offset(q: int, r: int) -> Vector2:
 
 func _hex_center(origin: Vector2, q: int, r: int) -> Vector2:
 	return origin + _hex_offset(q, r) * zoom
+
+
+func _hex_center_float(origin: Vector2, q: float, r: float) -> Vector2:
+	var x: float = HEX_SIZE * sqrt(3.0) * (q + r * 0.5)
+	var y: float = HEX_SIZE * 1.5 * r
+	return origin + Vector2(x, y) * zoom
 
 
 func _draw_hex(origin: Vector2, q: int, r: int, color: Color, scale: float = 1.0, outline_only: bool = false) -> void:

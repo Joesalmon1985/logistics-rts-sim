@@ -140,7 +140,7 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (152 tests — RUN_01 through RUN_05)
+## Headless unit/integration tests (154 tests — RUN_01 through RUN_05)
 
 ```bash
 timeout 400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
@@ -150,7 +150,7 @@ echo "exit=$?"
 Expected output includes:
 
 ```text
-Results: 152/152 ran, 152 passed, 0 failed, 0 errored
+Results: 154/154 ran, 154 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
@@ -309,7 +309,7 @@ The runner distinguishes **passed**, **failed** (assertion), and **errored** (lo
 
 RUN_05 viewers need **two tracks** of verification (see `docs/testing/03_godot_viewer_test_plan.md`):
 
-- **Track 1 — headless contract smokes** (GOD-SMOKE-001/002): run with `--headless`, exit `0`, no
+- **Track 1 — headless contract smokes** (GOD-SMOKE-001/002/003): run with `--headless`, exit `0`, no
   `SCRIPT ERROR`. These prove the snapshot/availability/command contracts, **not** readability.
 - **Track 2 — windowed visual review**: launch each demo scene in a real Godot **window** at
   1920x1080 and confirm the layout is human-readable. This is a manual review, not a headless smoke.
@@ -344,14 +344,48 @@ $LASTEXITCODE
 & $env:GODOT --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd -- --smoke=all
 ```
 
-Expected: `GOD-SMOKE-001 PASS`, `GOD-SMOKE-002 PASS`, `VIEWER SMOKE PASS`, exit `0`.
+Expected: `GOD-SMOKE-001 PASS`, `GOD-SMOKE-002 PASS`, `GOD-SMOKE-003 PASS`, `VIEWER SMOKE PASS`, exit `0`.
+
+### RUN_05 viewport pixel smokes (Track 1.5 — non-headless)
+
+Proves the **2D view** renders hex terrain and visible changes on step/command. Requires display (do **not** pass `--headless`).
+
+```powershell
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_pixel_smoke.gd
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=economy --assert
+& $env:GODOT --path godot_project --script res://sim/tools/run_viewer_capture.gd -- --variant=military --assert
+```
+
+Expected: `VIS-LAYOUT-001 PASS`, `GOD-CAPTURE-001 PASS`, `VIS-PIX-CHAIN-001 PASS`, `VIS-PIX-BUILD-001 PASS`, `GOD-SMOKE-004 PASS`, exit `0`.
+
+Final report must state **three statuses separately**: headless pass/fail, pixel smoke pass/fail, human windowed review pending/done.
+
+### Economy logistics visual review checklist (~5 min)
+
+**Production chain (Load Production Demo)**
+
+1. Load Production Demo → woodcutter on dark-green forest (D:80), sawmill on road network.
+2. Step 10 → forest hex density drops OR woodcutter shows `T:n` store chip.
+3. Step Until Event → dashed amber carrier route + moving dot; event log shows `production_completed` / `ware_moved` / `ware_delivered`.
+4. Step more → sawmill shows timber input then `P:n` planks; summary wares update.
+
+**Build tutorial (Load Build Tutorial)**
+
+1. Load Build Tutorial → no pre-built site; command list includes road-adjacent storehouse placement.
+2. Submit placement → dashed site hex appears; checklist step 1 ✓; site auto-selected in inspector.
+3. Submit road segment(s) toward HQ if needed → yellow road extends; checklist step 2 ✓.
+4. Step 10 / Until Event → site progress ring fills, carriers deliver, checklist step 3 ✓.
+5. Site disappears, STORE building appears; checklist step 4 ✓.
+
+Toggle **Logistics** / **Forest D** layers and **Logistics Events** filter to confirm overlays and log filtering.
 
 ### RUN_05 interactivity (human debug loop)
 
-Economy viewer — after Load/Reset Demo:
-1. Dashed hex + green progress ring = storehouse construction site (pre-placed at 5,8).
-2. Submit **Roads:** or **Buildings:** command → **Step 10** or **Step Until Event** → watch carriers, delivered counts, or event log change.
-3. Summary panel shows wares, site/carrier/job counts.
+Economy viewer — after Load Production Demo:
+1. Dashed hex + green progress ring = construction site (user-placed via Build Tutorial).
+2. `D:n` on forest hexes, store chips (`T:`/`P:`), dashed amber carrier routes when Logistics layer on.
+3. Submit **Roads:** or **Buildings:** command → **Step 10** or **Step Until Event** → watch carriers, delivered counts, or event log change.
+4. Summary panel shows wares, forest density, route counts, site/job counts.
 
 Military viewer:
 1. Pre-spawned p1/p2 rifle squads nearby; attack commands appear prebuilt in the list.

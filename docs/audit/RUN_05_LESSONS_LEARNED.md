@@ -6,8 +6,8 @@
 - `SnapshotExporter.export_debug_snapshot()` adds `available_commands[]`; base `export_snapshot()` unchanged; replay hash path unchanged (`state.to_hash_dict()`).
 - `godot_project/client/` debug viewers: adapters, `ViewerController`, `ViewerRoot` + `MapViewport`, economy/military demo scenes at 1920×1080 layout.
 - Curated demos: `EconomyDemo`, `MilitaryDemo`.
-- Tests: VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001, VIS-AVAIL-001 (**152** total in harness).
-- Smokes: GOD-SMOKE-001/002 via `run_viewer_smoke.gd`; invalid smoke id in failure-mode integrity.
+- Tests: VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001, VIS-AVAIL-001, VIS-ECON-CHAIN-001, VIS-ECON-BUILD-001 (**154** total in harness).
+- Smokes: GOD-SMOKE-001/002/003 via `run_viewer_smoke.gd`; invalid smoke id in failure-mode integrity.
 
 ## Interactive / observable-state closure pass
 
@@ -34,7 +34,9 @@ Fixes:
 | VIS-CMD-001 | `run_tests.gd` (before/after render delta) |
 | VIS-RENDER-001 | `run_tests.gd` |
 | VIS-AVAIL-001 | `run_tests.gd` |
-| GOD-SMOKE-001/002 | `run_viewer_smoke.gd` (progression + combat delta) |
+| VIS-ECON-CHAIN-001 | `run_tests.gd` (30-tick production chain render delta) |
+| VIS-ECON-BUILD-001 | `run_tests.gd` (build tutorial place → road → deliver) |
+| GOD-SMOKE-001/002/003 | `run_viewer_smoke.gd` (progression + combat delta + logistics) |
 
 ## Viewer launch commands
 
@@ -66,7 +68,7 @@ Screenshot capture (SubViewport, **non-headless** — headless dummy renderer re
 
 ## Known limitations
 
-- Carrier position snaps to `current_node_id` via `road_nodes` (mid-edge travel not interpolated).
+- Carrier position uses `edge_progress` interpolation between road nodes when in transit.
 - Workers shown as per-building W# badge, not free movement on map.
 - Attack/combat resolves over several ticks (range in `tick_combat`); use Step Until Event.
 - Headless SubViewport screenshot capture fails (`texture_2d_get` null); use non-headless capture runner.
@@ -78,6 +80,27 @@ Screenshot capture (SubViewport, **non-headless** — headless dummy renderer re
 - `Theme.default_font` removed in 4.5; use `ThemeDB.fallback_font`.
 - Economy construction site placement must avoid HQ/building footprints; demo site at 5,8 with road from sawmill.
 - Windowed Godot launches may leave processes; inspect with `Get-Process *Godot*` before re-run.
+
+## 2D observability closure (Track 1.5)
+
+Headless render-data tests can pass while the hex map is blank in the actual viewport. Fixes and gates:
+
+- **Layout fix:** `MapViewport` `NOTIFICATION_RESIZED` + deferred `_refresh_map_layers()` in `ViewerRoot`; `map_title` declared; min size 640×480 on map panel.
+- **Pixel harness:** `client/tools/viewer_pixel_probe.gd`, `client/tools/viewer_test_harness.gd`.
+- **Runners:** `run_viewer_pixel_smoke.gd` (GOD-SMOKE-004); `run_viewer_capture.gd --assert` (GOD-CAPTURE-001).
+- **Tests:** VIS-LAYOUT-001, VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001 (viewport pixels, not dictionaries only).
+
+Report three statuses: headless / pixel smoke / human windowed review.
+
+## Economy logistics visibility pass
+
+Workers are **not** free-moving on the map — they are assigned to buildings in sim. Honest visualization uses snapshot-only layers: `tree_density`, `building_stores`, `ware_routes` (with `edge_progress` interpolation), `delivery_jobs`, `production_activity` pulse.
+
+- **Production chain demo** (default): HQ + woodcutter + sawmill; no pre-placed site; tools-only starting wares; auto worker policy.
+- **Build tutorial demo**: road stub to 6,2; user places storehouse; checklist panel tracks site → road → deliver → complete.
+- Road command enumeration expanded: road_nodes + construction_sites + HQ fallback; storehouse candidates labeled road-adjacent.
+- Tests: VIS-ECON-CHAIN-001, VIS-ECON-BUILD-001 (**154** total in harness).
+- Smokes: GOD-SMOKE-003 (logistics chain delta + build tutorial mini-sequence).
 
 ## Deferred
 

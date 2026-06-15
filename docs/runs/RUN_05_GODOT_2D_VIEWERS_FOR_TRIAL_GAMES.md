@@ -218,6 +218,9 @@ a windowed run fails to exit cleanly.
 - [x] Building placement labels say "Construction Site"; inspector shows delivered/required progress.
 - [x] VIS-SNAP-001, VIS-CMD-001, VIS-RENDER-001 pass; command-availability bridge test passes.
 - [x] GOD-SMOKE-001 and GOD-SMOKE-002 pass.
+- [ ] **Track 1.5 — viewport pixel observability (non-headless):** VIS-LAYOUT-001, GOD-CAPTURE-001, VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001, GOD-SMOKE-004 pass.
+- [ ] Opening economy viewer shows hex terrain on first open without manual resize (VIS-LAYOUT-001).
+- [ ] Stepping production demo and placing storehouse produce visible viewport pixel changes (VIS-PIX-CHAIN-001, VIS-PIX-BUILD-001).
 - [x] No gameplay logic in the visual client beyond display (rules stay in `sim/`).
 - [x] Final report includes headless test commands + results, windowed-review launch commands,
       whether visual review was performed, screenshot paths/instructions, known readability issues,

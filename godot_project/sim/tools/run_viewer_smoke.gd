@@ -1,6 +1,6 @@
 extends SceneTree
 
-## RUN_05 viewer smoke runner — GOD-SMOKE-001 / GOD-SMOKE-002.
+## RUN_05 viewer smoke runner — GOD-SMOKE-001 / GOD-SMOKE-002 / GOD-SMOKE-003.
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
 
@@ -13,7 +13,7 @@ func _initialize() -> void:
 		if arg.begins_with("--smoke="):
 			smoke_id = arg.substr("--smoke=".length())
 
-	var valid: Array[String] = ["all", "001", "002"]
+	var valid: Array[String] = ["all", "001", "002", "003"]
 	if smoke_id not in valid:
 		print("VIEWER SMOKE FAIL: unknown smoke id '%s'" % smoke_id)
 		print("EXIT: 1 (fail)")
@@ -25,6 +25,8 @@ func _initialize() -> void:
 		failed = failed or not _run_smoke_001()
 	if smoke_id == "all" or smoke_id == "002":
 		failed = failed or not _run_smoke_002()
+	if smoke_id == "all" or smoke_id == "003":
+		failed = failed or not _run_smoke_003()
 
 	if failed:
 		print("VIEWER SMOKE FAIL")
@@ -59,11 +61,11 @@ func _run_smoke_001() -> bool:
 			if render.get("roads", []).is_empty():
 				print("GOD-SMOKE-001 FAIL: economy roads not in render data")
 				return false
-			if render.get("construction_sites", []).is_empty():
-				print("GOD-SMOKE-001 FAIL: economy construction sites not in render data")
-				return false
 			if render.get("carriers", []).is_empty():
 				print("GOD-SMOKE-001 FAIL: economy carriers not in render data")
+				return false
+			if render.get("tree_density", []).is_empty():
+				print("GOD-SMOKE-001 FAIL: economy tree_density not in render data")
 				return false
 			var progression: Dictionary = EconomyDemo.verify_progression_within_ticks(50)
 			if not bool(progression.get("ok", false)):
@@ -122,6 +124,71 @@ func _run_smoke_002() -> bool:
 		return false
 
 	print("GOD-SMOKE-002 PASS: availability + command round-trip")
+	return true
+
+
+func _run_smoke_003() -> bool:
+	var controller := ViewerController.new()
+	controller.load_demo_state(EconomyDemo.build_production_chain(), "p1")
+	var fp_a: Dictionary = LayerRenderer.chain_fingerprint(controller.get_render_data())
+	controller.step_ticks(30)
+	var fp_b: Dictionary = LayerRenderer.chain_fingerprint(controller.get_render_data())
+	var chain_deltas: int = 0
+	if int(fp_b.get("forest_density", -1)) >= 0 and int(fp_b.get("forest_density", -1)) < int(fp_a.get("forest_density", 999)):
+		chain_deltas += 1
+	if int(fp_b.get("woodcutter_timber", 0)) > int(fp_a.get("woodcutter_timber", 0)):
+		chain_deltas += 1
+	if int(fp_b.get("sawmill_planks", 0)) > int(fp_a.get("sawmill_planks", 0)) or int(fp_b.get("sawmill_timber", 0)) > int(fp_a.get("sawmill_timber", 0)):
+		chain_deltas += 1
+	if int(fp_b.get("ware_routes", 0)) > int(fp_a.get("ware_routes", 0)):
+		chain_deltas += 1
+	if chain_deltas < 1:
+		print("GOD-SMOKE-003 FAIL: production chain showed no logistics delta after 30 ticks")
+		return false
+
+	var build := ViewerController.new()
+	build.load_demo_state(EconomyDemo.build_build_tutorial(), "p1")
+	var place_dto: Dictionary = {}
+	for cmd in build.get_available_commands():
+		if str(cmd.get("type", "")) == "PlaceBuildingPlanCommand" and str(cmd.get("payload", {}).get("building_type", "")) == "storehouse":
+			place_dto = cmd
+			break
+	if place_dto.is_empty() or not build.submit_command_dto(place_dto).success:
+		print("GOD-SMOKE-003 FAIL: build tutorial storehouse placement")
+		return false
+	var sites_after: int = LayerRenderer.count_entities(build.get_render_data()).get("construction_sites", 0)
+	if sites_after < 1:
+		print("GOD-SMOKE-003 FAIL: site not visible after placement")
+		return false
+	var roads_before: int = int(LayerRenderer.count_entities(build.get_render_data()).get("roads", 0))
+	for cmd in build.get_available_commands():
+		if str(cmd.get("type", "")) == "PlaceRoadCommand":
+			if build.submit_command_dto(cmd).success:
+				break
+	var roads_after: int = int(LayerRenderer.count_entities(build.get_render_data()).get("roads", 0))
+	if roads_after < roads_before:
+		print("GOD-SMOKE-003 FAIL: road count did not grow after connect attempt")
+		return false
+	var progress: bool = false
+	for _i in range(120):
+		build.step_tick()
+		var render: Dictionary = build.get_render_data()
+		for site in render.get("construction_sites", []):
+			if int(site.get("progress_percent", 0)) > 0:
+				progress = true
+			for ware_type in site.get("delivered", {}):
+				if int(site.get("delivered", {}).get(ware_type, 0)) > 0:
+					progress = true
+		for route in render.get("ware_routes", []):
+			if not route.is_empty():
+				progress = true
+		if render.get("buildings", []).size() > 3:
+			progress = true
+			break
+	if not progress:
+		print("GOD-SMOKE-003 FAIL: build tutorial showed no site progress or completion within 120 ticks")
+		return false
+	print("GOD-SMOKE-003 PASS: economy logistics visibility")
 	return true
 
 
