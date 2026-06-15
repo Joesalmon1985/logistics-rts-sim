@@ -26,6 +26,8 @@ Bots use delegated commands only; must respect fog/intel.
 
 **RUN_02 carryover:** Hybrid bot rollouts inherit economy delivery-job churn — monitor stall diagnostics under bot load and keep timeout wrappers generous for logistics-heavy scenarios (see `docs/audit/RUN_02_LESSONS_LEARNED.md`).
 
+**RUN_03 carryover:** Hybrid bot rollouts inherit RUN_03 determinism/export lessons — every value a bot pushes into replay-hashed state must stay integer / fixed-point (float creep breaks deterministic rollouts and replay hashes), and telemetry should reuse `MilitaryExporter` (`sim/military/military_export.gd`) rather than fork snapshot logic (see `docs/audit/RUN_03_LESSONS_LEARNED.md`).
+
 ## Out-of-Scope Work
 
 - Godot visual client / UI (RUN_09)

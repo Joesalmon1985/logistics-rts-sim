@@ -25,6 +25,8 @@ Godot **visual client** viewers (`godot_project/client/`) for economy and milita
 
 **RUN_02 carryover:** Economy snapshot display layers and per-building diagnostics exported by RUN_02 (`ECON-SNAP-002`, `ECON-DIAG-001`) must render from snapshot JSON only — do not re-derive logistics rules in `client/`.
 
+**RUN_03 carryover:** Likewise, military snapshot layers (fog/shroud/vision, units, buildings, diagnostics) emitted by RUN_03's `MilitaryExporter`/snapshot must render from snapshot JSON only — the viewer must not recompute fog, vision, combat, or pathfinding in `client/` (see `docs/audit/RUN_03_LESSONS_LEARNED.md`).
+
 ## Out-of-Scope Work
 
 - Authoritative GDScript gameplay rules

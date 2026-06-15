@@ -79,6 +79,16 @@ for each individual ECON-* rule ID listed in `docs/testing/01_rule_contract_test
 `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope. Pass criteria: each rule ID has a
 dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
 
+**RUN_04 per-rule-ID military test hardening:** Deferred from RUN_03 (granularity only — every
+family already has DoD-level coverage). Add dedicated headless tests for each MIL-* rule ID listed
+in `docs/testing/01_rule_contract_test_matrix.md` (Military section / RUN_04 per-rule-ID military
+subsection) and in `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope, excluding the
+speculative `MIL-CAPTURE-*` / `MIL-VET-*` / `MIL-BOT-*` families. Pass criteria: each rule ID has a
+dedicated test asserting state change + event/diagnostic + downstream effect; suite exit 0.
+
+**REP-SMOKE-001 note:** export → import → re-run → identical hash, per the replay-file schema in
+`docs/architecture/05_determinism_replay_save_load.md` ("Replay File and Import (RUN_04)").
+
 ## RUN_05 — Godot Trial Viewers
 
 | ID | Scenario | Pass criteria |

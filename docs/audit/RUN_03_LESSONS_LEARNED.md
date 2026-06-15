@@ -108,3 +108,18 @@ exit 0; `git diff --check` clean.
   requiring an explicit, justified subsystem order before implementation.
 - Calling out "DoD-level family coverage now, per-rule-ID granularity deferred" explicitly in
   the plan kept scope honest and avoided either over-building or false completion claims.
+
+## Propagation (pre-RUN_04 housekeeping)
+
+This subsection records where RUN_03 lessons were threaded into downstream planning docs
+(2026-06-15), mirroring the RUN_02 propagation pattern.
+
+| Document | Change | Why |
+|----------|--------|-----|
+| `docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` | Added `RUN_03_LESSONS_LEARNED.md` to prerequisites + pre-flight step 1; added "Carryover from RUN_03"; added per-rule-ID **military** hardening In-Scope item + Acceptance checkbox; clarified single-bot military scope; added replay-file schema reference + DDR-028 sizing note | RUN_04 agents read RUN_03 lessons; the MIL per-rule-ID deferral now has an explicit home (was ECON-only) |
+| `docs/testing/01_rule_contract_test_matrix.md` | Added "RUN_04 per-rule-ID military test hardening (scheduled)" subsection cross-linking RUN_04 | Matrix and RUN_04 run doc agree on MIL hardening ownership, symmetric to ECON |
+| `docs/testing/02_smoke_test_matrix.md` | Added RUN_04 per-rule-ID military hardening pass criteria + REP-SMOKE-001 replay-file note | Smoke matrix cross-links RUN_04 military hardening + replay import |
+| `docs/architecture/05_determinism_replay_save_load.md` | Added "Replay File and Import (RUN_04)" schema + rules | REP-SMOKE-001 (export → import → identical hash) now has a concrete spec to implement against |
+| `docs/runs/RUN_05_GODOT_2D_VIEWERS_FOR_TRIAL_GAMES.md` | RUN_03 carryover note: military snapshot/diagnostics layers render from snapshot only | Mirrors RUN_02 viewer guidance for MIL-* display layers |
+| `docs/runs/RUN_08_HYBRID_BOTS_TELEMETRY_BALANCE.md` | RUN_03 carryover note: float-free military bot rollouts; reuse `MilitaryExporter` | Hybrid bot rollouts inherit RUN_03 determinism/export lessons |
+| `docs/runs/RUN_07_HEADLESS_HYBRID_GAME.md` | **No edit** | Already reads RUN_03 lessons and has RUN_03 carryover/risks coverage |

@@ -360,6 +360,16 @@ RUN_04 hardening. **No whole mechanic family is deferred** — each family alrea
 behaviour coverage in RUN_03. Speculative families not yet in scope (engineer capture
 `MIL-CAPTURE-*`, veterancy `MIL-VET-*`, two-bot skirmish `MIL-BOT-*`) remain for their owning runs.
 
+### RUN_04 per-rule-ID military test hardening (scheduled)
+
+Symmetric to the economy hardening above, RUN_04 must add dedicated headless tests for each MIL-*
+rule ID enumerated in the Military section tables (excluding the speculative `MIL-CAPTURE-*` /
+`MIL-VET-*` / `MIL-BOT-*` families reserved for their owning runs). Each test must assert state
+change + event/diagnostic + downstream effect for its rule ID. Cross-reference:
+`docs/audit/RUN_03_LESSONS_LEARNED.md` ("Risks for RUN_04") and
+`docs/runs/RUN_04_TRIAL_BOTS_REPLAYS_TELEMETRY.md` In-Scope + Acceptance checkbox for hardening
+completion.
+
 ## Hybrid (HYB-*)
 
 | Rule ID | Test type | Example test name |
