@@ -76,13 +76,17 @@ RUN_04 combines bot framework, replay export/import, telemetry, and per-rule-ID 
 
 ## Acceptance Checklist
 
-- [ ] Economy bot completes tutorial scenario (builds on RUN_02 ECON-SMOKE-005 heuristic)
-- [ ] Military bot wins skirmish scenario
-- [ ] Replay export/import hash identical
-- [ ] Diagnostics visible in snapshot JSON
-- [ ] Deterministic bot rollouts
-- [ ] Per-rule-ID economy test hardening complete for all rule IDs listed in In-Scope and in `docs/testing/01_rule_contract_test_matrix.md` (RUN_02 Known coverage gap subsection)
-- [ ] Per-rule-ID military test hardening complete for all MIL-* rule IDs listed in In-Scope and in `docs/testing/01_rule_contract_test_matrix.md` (Military section), excluding the speculative `MIL-CAPTURE-*` / `MIL-VET-*` / `MIL-BOT-*` families reserved for their owning runs
+- [x] Economy bot completes tutorial scenario (builds on RUN_02 ECON-SMOKE-005 heuristic)
+- [x] Military bot wins skirmish scenario
+- [x] Replay export/import hash identical
+- [x] Diagnostics visible in snapshot JSON
+- [x] Deterministic bot rollouts
+- [x] Per-rule-ID economy test hardening complete for all rule IDs listed in In-Scope and in `docs/testing/01_rule_contract_test_matrix.md` (RUN_02 Known coverage gap subsection)
+- [x] Per-rule-ID military test hardening complete for all MIL-* rule IDs listed in In-Scope and in `docs/testing/01_rule_contract_test_matrix.md` (Military section), excluding the speculative `MIL-CAPTURE-*` / `MIL-VET-*` / `MIL-BOT-*` families reserved for their owning runs
+
+Delivery confirmed by the RUN_04 implementation commit, `docs/testing/02_smoke_test_matrix.md`, `docs/testing/01_rule_contract_test_matrix.md`, and `docs/audit/RUN_04_LESSONS_LEARNED.md` (148/148 headless tests; all kernel/economy/military/bot smokes and failure-mode integrity exit 0 on the Linux/Godot reference machine).
+
+> Runtime verification remains required on the Linux/Godot machine before merging to main. These boxes record delivery status; they do not represent any Windows runtime verification.
 
 ## Final Report Format
 

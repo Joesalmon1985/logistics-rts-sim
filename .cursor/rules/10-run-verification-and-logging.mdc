@@ -7,6 +7,10 @@ alwaysApply: true
 
 This rule encodes the RUN_01 operational lessons (`docs/audit/RUN_01_LESSONS_LEARNED.md`). It applies to every run that executes Godot tests, smokes, or integrity checks. It does not change settled design decisions.
 
+## Platform note (Linux vs Windows)
+
+Full runtime verification is run on the **Linux/Godot 4.5.2** machine. **Windows** is review/docs-only by default (reading docs, reviewing branches, git status, acceptance checklists, doc cleanup) and may run Godot verification **only** when a compatible Windows Godot 4.5.x executable is present. Windows must **never** claim Linux verification has passed; if Godot is absent on Windows, report that runtime verification was not run and Linux/Godot verification is still required before merge. Linux `timeout`/`pgrep`/`pkill`/`export` do not translate to PowerShell — use `$env:GODOT`, `& $env:GODOT ...`, and check `$LASTEXITCODE`. A branch must not be merged to main on the basis of Windows docs review alone. See `docs/verification/local_verification.md` ("Verification environments").
+
 ## Verify before adding new mechanics
 
 Before starting a new major run (RUN_02, RUN_03, RUN_07, and later), rerun the **prior** kernel verification first:

@@ -11,6 +11,67 @@ export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
 
 If `godot` is on `PATH`, substitute `godot` for `$GODOT`.
 
+## Verification environments (Linux vs Windows)
+
+This project may be worked on from two kinds of machine. Know which one you are on
+before claiming any result.
+
+### Linux/Godot verification environment (authoritative full suite)
+
+The usual full runtime verification environment is **Linux with Godot 4.5.2**, configured like:
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+```
+
+Linux verification uses the documented `timeout`-wrapped commands in this file and can run the
+**full** suite: `run_tests.gd`, kernel smokes, economy smokes, military smokes, bot/replay smokes,
+and failure-mode integrity checks. This is the only environment that may report a full-suite pass.
+
+### Windows review environment (review / docs only by default)
+
+Windows may be used for: reading docs, reviewing branches, checking git status, checking
+acceptance checklists, markdown/documentation cleanup, and running verification **only** if a
+compatible Windows Godot 4.5.x executable is available.
+
+**Windows must never claim Linux verification has passed.** If Godot is not available on Windows,
+report exactly:
+
+```text
+Full Godot runtime verification was not run on Windows because Godot 4.5.x was not available. This branch still needs Linux/Godot verification before merge.
+```
+
+### Windows command differences
+
+Linux commands such as `timeout 120s ...`, `pgrep`, `pkill`, and `export GODOT=...` do **not**
+directly translate to standard PowerShell. Where Windows verification is possible (a Godot 4.5.x
+exe is present), use PowerShell-style environment variables and invocation, and check
+`$LASTEXITCODE` after every command:
+
+```powershell
+$env:GODOT = "<full path to Godot executable>"
+$env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
+& $env:GODOT --version
+& $env:GODOT --headless --path godot_project --import
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_tests.gd
+$LASTEXITCODE
+```
+
+Notes:
+
+- No shell-level GNU `timeout` wrapper exists in standard PowerShell; rely on the command
+  runner's timeout and report that explicitly. A command that could not run on Windows is
+  **not** a pass.
+- For stale processes on Windows, inspect with `Get-Process | Where-Object { $_.ProcessName -like "*Godot*" }`;
+  never broad-kill. Stop a process only if it is clearly stale and clearly belongs to this work.
+
+### Merge policy
+
+A branch should not be merged to main on the basis of Windows documentation review alone. If full
+runtime verification was not run successfully on Windows, rerun the full Godot verification on the
+Linux/Godot machine before merging.
+
 ## Exit codes and timeout policy
 
 | Exit code | Meaning |

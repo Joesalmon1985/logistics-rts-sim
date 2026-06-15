@@ -63,3 +63,12 @@ Key requirement contracts:
 7. Commit, push feature branch, deliver final report.
 
 Do not merge to `main` unless explicitly instructed.
+
+## Verification environments
+
+| Environment | Use |
+|-------------|-----|
+| **Linux + Godot 4.5.2** | Authoritative full runtime verification: `run_tests.gd`, kernel/economy/military/bot/replay smokes, failure-mode integrity. The only environment that may report a full-suite pass. |
+| **Windows** | Review/docs only by default (reading docs, reviewing branches, git status, acceptance checklists, doc cleanup). Run Godot verification only if a compatible Windows Godot 4.5.x exe is present. Windows must never claim Linux verification has passed. |
+
+A branch must not be merged to `main` on the basis of Windows documentation review alone. If full runtime verification was not run successfully on Windows, rerun the full Godot verification on the Linux/Godot machine before merging. See `docs/verification/local_verification.md` ("Verification environments").

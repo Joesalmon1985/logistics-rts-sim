@@ -57,3 +57,15 @@ Final state: **148/148** headless tests pass; all kernel/economy/military/bot sm
 - Avoid naming methods `load` in GDScript modules (built-in collision).
 - For snapshot-based bots, verify field names against exporter output (`anchor_q` not `q`).
 - Per-rule-ID hardening: use subagents or batch generation; fix compile errors before full suite run.
+
+## Windows review pass (pre-merge docs closure)
+
+- A pre-merge closure pass was performed on a **Windows** PC. Godot 4.5.x was **not** available
+  on that machine (checked PATH, Downloads, Documents, Program Files, LocalAppData, scoop,
+  Desktop), so **no runtime verification was run on Windows**.
+- The RUN_04 acceptance checklist boxes were ticked to reflect delivery already evidenced by the
+  implementation commit and the smoke/test matrices; they do **not** represent Windows runtime
+  verification.
+- Linux/Godot verification (full suite, exit 0) is **still required before merging to main**.
+  See `docs/verification/local_verification.md` ("Verification environments") for the Linux vs
+  Windows split and Windows command differences.
