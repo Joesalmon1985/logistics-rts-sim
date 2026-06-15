@@ -112,9 +112,13 @@ static func verify(path: String) -> Dictionary:
 
 
 static func _write_json(path: String, payload: Dictionary) -> bool:
+	if not SimPaths.ensure_parent_dir(path):
+		push_error("ReplayFile: cannot create parent dir for %s" % path)
+		return false
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("ReplayFile: cannot write %s" % path)
 		return false
 	file.store_string(JSON.stringify(payload, "\t"))
+	file.close()
 	return true

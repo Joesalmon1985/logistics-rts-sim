@@ -29,14 +29,27 @@ Linux verification uses the documented `timeout`-wrapped commands in this file a
 **full** suite: `run_tests.gd`, kernel smokes, economy smokes, military smokes, bot/replay smokes,
 and failure-mode integrity checks. This is the only environment that may report a full-suite pass.
 
-### Windows review environment (review / docs only by default)
+### Windows review environment (Godot 4.5.x console)
 
 Windows may be used for: reading docs, reviewing branches, checking git status, checking
-acceptance checklists, markdown/documentation cleanup, and running verification **only** if a
-compatible Windows Godot 4.5.x executable is available.
+acceptance checklists, markdown/documentation cleanup, and running verification when a
+compatible Windows Godot 4.5.x **console** executable is available (use the `_console.exe`
+variant for correct stdout and exit codes in PowerShell).
 
-**Windows must never claim Linux verification has passed.** If Godot is not available on Windows,
-report exactly:
+**Verified on Windows (Godot 4.5.1 console, RUN_04 portability closure):** full suite passes —
+148/148 tests, kernel/economy/military/bot smokes, and failure-mode integrity (subprocess checks
+exit `1`, not vacuous `127`). No `SCRIPT ERROR` lines. Example console path:
+
+```powershell
+$env:GODOT = "C:\Users\joesa\Downloads\Godot_v4.5.1-stable_win64.exe\Godot_v4.5.1-stable_win64_console.exe"
+$env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
+```
+
+**Linux Godot 4.5.2 remains the reference environment.** Windows 4.5.1 verification does not
+claim Linux verification has passed, but a clean Windows pass with no blocking discrepancy is
+merge-supporting.
+
+If Godot is not available on Windows, report exactly:
 
 ```text
 Full Godot runtime verification was not run on Windows because Godot 4.5.x was not available. This branch still needs Linux/Godot verification before merge.
@@ -65,6 +78,12 @@ Notes:
   **not** a pass.
 - For stale processes on Windows, inspect with `Get-Process | Where-Object { $_.ProcessName -like "*Godot*" }`;
   never broad-kill. Stop a process only if it is clearly stale and clearly belongs to this work.
+- **No `SCRIPT ERROR` lines** are allowed even when exit code is `0`. Grep captured output
+  (`2>&1 | Select-String "SCRIPT ERROR"`).
+- **Cross-platform export paths:** tests and tools use `SimPaths` (`sim/core/sim_paths.gd`) —
+  `OS.get_cache_dir()/wide_rts_export/`. Do not hardcode `/tmp/...`.
+- **`verify_failure_modes.gd`** spawns Godot directly via `OS.execute` (no `bash`). Negative
+  subprocess checks must exit `1` (intended failure), not `127` (executable not found / vacuous).
 
 ### Merge policy
 

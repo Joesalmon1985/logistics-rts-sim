@@ -68,7 +68,7 @@ Do not merge to `main` unless explicitly instructed.
 
 | Environment | Use |
 |-------------|-----|
-| **Linux + Godot 4.5.2** | Authoritative full runtime verification: `run_tests.gd`, kernel/economy/military/bot/replay smokes, failure-mode integrity. The only environment that may report a full-suite pass. |
-| **Windows** | Review/docs only by default (reading docs, reviewing branches, git status, acceptance checklists, doc cleanup). Run Godot verification only if a compatible Windows Godot 4.5.x exe is present. Windows must never claim Linux verification has passed. |
+| **Linux + Godot 4.5.2** | Reference runtime verification environment: `run_tests.gd`, kernel/economy/military/bot/replay smokes, failure-mode integrity. |
+| **Windows + Godot 4.5.x console** | Full verification possible with the `_console.exe` variant. RUN_04 verified on Windows Godot 4.5.1 (148/148, all smokes, genuine integrity checks, no `SCRIPT ERROR`). Linux 4.5.2 remains the reference environment; Windows must not claim Linux verification has passed. |
 
-A branch must not be merged to `main` on the basis of Windows documentation review alone. If full runtime verification was not run successfully on Windows, rerun the full Godot verification on the Linux/Godot machine before merging. See `docs/verification/local_verification.md` ("Verification environments").
+Cross-platform tooling: `SimPaths` for export paths; `verify_failure_modes.gd` spawns Godot directly (no `bash`). See `docs/verification/local_verification.md` ("Verification environments").

@@ -102,6 +102,8 @@ static func _build_display_layers(state: GameState) -> Dictionary:
 			if not state.map.in_bounds(coord):
 				continue
 			var tile: HexTile = state.map.get_tile(coord)
+			if tile == null:
+				continue
 			terrain_layer.append({
 				"q": q, "r": r,
 				"terrain_type": tile.terrain_type,

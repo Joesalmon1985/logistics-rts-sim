@@ -14,6 +14,7 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/core/replay_hash.gd",
 	"res://sim/core/replay_recorder.gd",
 	"res://sim/core/replay_file.gd",
+	"res://sim/core/sim_paths.gd",
 	"res://sim/core/map_generator.gd",
 	"res://sim/core/player_state.gd",
 	"res://sim/core/event.gd",

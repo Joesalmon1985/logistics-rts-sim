@@ -12,7 +12,7 @@ func _initialize() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var smoke_id: String = "all"
 	var seed_value: int = 42
-	var export_dir: String = "/tmp/run04_bot_export"
+	var export_dir: String = ""
 	for arg in args:
 		if arg.begins_with("--smoke="):
 			smoke_id = arg.substr("--smoke=".length())
@@ -22,6 +22,9 @@ func _initialize() -> void:
 			export_dir = arg.substr("--export-dir=".length())
 
 	smoke_id = smoke_id.replace("BOT-SMOKE-", "").replace("REP-SMOKE-", "00")
+
+	if export_dir == "":
+		export_dir = SimPaths.default_export_dir()
 
 	if smoke_id not in VALID_SMOKES:
 		print("BOT SMOKE FAIL: unknown smoke id '%s'" % smoke_id)
@@ -116,9 +119,8 @@ func _run_smoke_003(seed_value: int, export_dir: String) -> bool:
 	var bot := HeuristicEconomyBot.new()
 	state = bot_runner.run_until_complete(state, bot)
 
-	var replay_path: String = export_dir + "/replay.json" if export_dir != "" else "/tmp/run04_replay_smoke.json"
-	if export_dir != "":
-		DirAccess.make_dir_recursive_absolute(export_dir)
+	var replay_path: String = export_dir.path_join("replay.json")
+	DirAccess.make_dir_recursive_absolute(export_dir)
 
 	if not ReplayFile.save_from_run(state, bot_runner.get_recorder(), scenario, replay_path):
 		print("REP-SMOKE-001 FAIL: export failed")

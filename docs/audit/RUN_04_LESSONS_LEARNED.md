@@ -60,12 +60,9 @@ Final state: **148/148** headless tests pass; all kernel/economy/military/bot sm
 
 ## Windows review pass (pre-merge docs closure)
 
-- A pre-merge closure pass was performed on a **Windows** PC. Godot 4.5.x was **not** available
-  on that machine (checked PATH, Downloads, Documents, Program Files, LocalAppData, scoop,
-  Desktop), so **no runtime verification was run on Windows**.
-- The RUN_04 acceptance checklist boxes were ticked to reflect delivery already evidenced by the
-  implementation commit and the smoke/test matrices; they do **not** represent Windows runtime
-  verification.
-- Linux/Godot verification (full suite, exit 0) is **still required before merging to main**.
-  See `docs/verification/local_verification.md` ("Verification environments") for the Linux vs
-  Windows split and Windows command differences.
+- Initial Windows pass: Godot was unavailable; docs-only closure only.
+- **Windows portability closure (Godot 4.5.1 console):** fixed hardcoded `/tmp` paths
+  (`SimPaths`), cross-platform `verify_failure_modes.gd` subprocess spawning, and
+  `snapshot_exporter.gd` null-tile guard for sparse map files. Full suite verified on Windows:
+  148/148 tests, all smokes, genuine failure-mode integrity (subprocess exit `1`), zero
+  `SCRIPT ERROR` lines. Linux Godot 4.5.2 remains the reference environment.

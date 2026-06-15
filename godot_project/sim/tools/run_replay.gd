@@ -79,7 +79,7 @@ func _export_economy_bot_run(scenario_path: String, seed_value: int, ticks: int,
 	state = bot_runner.run_until_complete(state, bot)
 
 	if export_path == "":
-		export_path = "/tmp/run04_replay.json"
+		export_path = SimPaths.default_export_file("run04_replay.json")
 	var ok: bool = ReplayFile.save_from_run(state, bot_runner.get_recorder(), scenario, export_path)
 	if ok:
 		print("Exported replay to %s" % export_path)

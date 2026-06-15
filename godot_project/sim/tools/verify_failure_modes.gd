@@ -8,7 +8,6 @@ const DELIBERATE_FAIL_SCRIPT := preload(
 )
 
 const DEFAULT_GODOT := "/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64"
-const TIMEOUT_SECONDS := 60
 
 
 func _initialize() -> void:
@@ -53,128 +52,109 @@ func _check_deliberate_test_fails_in_process() -> Array[String]:
 
 
 func _check_subprocess_invalid_variant() -> Array[String]:
-	var result: Dictionary = _run_smoke_subprocess(
-		["--variant=not_a_variant", "--ticks=10", "--seed=1"]
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_smoke.gd",
+		["--variant=not_a_variant", "--ticks=10", "--seed=1"],
 	)
 	return _expect_nonzero_exit(result, "invalid variant smoke")
 
 
 func _check_subprocess_hash_mismatch() -> Array[String]:
-	var result: Dictionary = _run_smoke_subprocess(
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_smoke.gd",
 		[
 			"--variant=economy_trial",
 			"--ticks=10",
 			"--seed=1",
 			"--expected-hash=sha256:definitely_wrong_hash_value",
-		]
+		],
 	)
 	return _expect_nonzero_exit(result, "hash mismatch smoke")
 
 
 func _check_subprocess_invalid_ticks() -> Array[String]:
-	var result: Dictionary = _run_smoke_subprocess(
-		["--variant=economy_trial", "--ticks=0", "--seed=1", "--no-hash-check"]
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_smoke.gd",
+		["--variant=economy_trial", "--ticks=0", "--seed=1", "--no-hash-check"],
 	)
 	return _expect_nonzero_exit(result, "invalid ticks smoke")
 
 
 func _check_subprocess_economy_smoke_invalid() -> Array[String]:
-	var result: Dictionary = _run_economy_smoke_subprocess(["--smoke=999"])
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_economy_smoke.gd",
+		["--smoke=999"],
+	)
 	return _expect_nonzero_exit(result, "invalid economy smoke id")
 
 
 func _check_subprocess_military_smoke_invalid() -> Array[String]:
-	var result: Dictionary = _run_military_smoke_subprocess(["--smoke=999"])
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_military_smoke.gd",
+		["--smoke=999"],
+	)
 	return _expect_nonzero_exit(result, "invalid military smoke id")
 
 
 func _check_subprocess_military_scenario_invalid() -> Array[String]:
-	# A missing military scenario must fail the smoke runner, not silently pass.
-	var result: Dictionary = _run_smoke_subprocess(
-		["--variant=military_trial", "--scenario=scenarios/military/does_not_exist.json", "--ticks=10", "--seed=1", "--no-hash-check"]
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_smoke.gd",
+		[
+			"--variant=military_trial",
+			"--scenario=scenarios/military/does_not_exist.json",
+			"--ticks=10",
+			"--seed=1",
+			"--no-hash-check",
+		],
 	)
 	return _expect_nonzero_exit(result, "invalid military scenario")
 
 
 func _check_subprocess_bot_smoke_invalid() -> Array[String]:
-	var result: Dictionary = _run_bot_smoke_subprocess(["--smoke=999"])
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_bot_smoke.gd",
+		["--smoke=999"],
+	)
 	return _expect_nonzero_exit(result, "invalid bot smoke id")
 
 
 func _check_subprocess_replay_verify_invalid() -> Array[String]:
-	var result: Dictionary = _run_replay_subprocess(["--mode=verify", "--replay=/tmp/run04_nonexistent_replay.json"])
+	var missing_replay: String = SimPaths.default_export_file("run04_nonexistent_replay.json")
+	var result: Dictionary = _run_godot_script(
+		"res://sim/tools/run_replay.gd",
+		["--mode=verify", "--replay=%s" % missing_replay],
+	)
 	return _expect_nonzero_exit(result, "invalid replay verify")
 
 
-func _run_bot_smoke_subprocess(smoke_args: Array) -> Dictionary:
+func _resolve_godot_binary() -> String:
 	var godot_bin: String = OS.get_environment("GODOT")
 	if godot_bin.is_empty():
-		godot_bin = DEFAULT_GODOT
-	var project_dir: String = ProjectSettings.globalize_path("res://")
-	var user_data: String = project_dir.path_join(".godot_user")
-	var args_tail: String = " ".join(smoke_args)
-	var shell_cmd: String = (
-		"export GODOT_USER_DATA_DIR=\"%s\"; timeout %d \"%s\" --headless --path \"%s\" "
-		% [user_data, TIMEOUT_SECONDS, godot_bin, project_dir]
-		+ "--script res://sim/tools/run_bot_smoke.gd -- "
-		+ args_tail
-	)
-	var output: Array = []
-	var exit_code: int = OS.execute("bash", ["-c", shell_cmd], output, true, false)
-	return {"exit_code": exit_code, "output": "\n".join(output)}
-
-
-func _run_replay_subprocess(replay_args: Array) -> Dictionary:
-	var godot_bin: String = OS.get_environment("GODOT")
+		godot_bin = OS.get_executable_path()
 	if godot_bin.is_empty():
 		godot_bin = DEFAULT_GODOT
-	var project_dir: String = ProjectSettings.globalize_path("res://")
-	var user_data: String = project_dir.path_join(".godot_user")
-	var args_tail: String = " ".join(replay_args)
-	var shell_cmd: String = (
-		"export GODOT_USER_DATA_DIR=\"%s\"; timeout %d \"%s\" --headless --path \"%s\" "
-		% [user_data, TIMEOUT_SECONDS, godot_bin, project_dir]
-		+ "--script res://sim/tools/run_replay.gd -- "
-		+ args_tail
-	)
-	var output: Array = []
-	var exit_code: int = OS.execute("bash", ["-c", shell_cmd], output, true, false)
-	return {"exit_code": exit_code, "output": "\n".join(output)}
+	return godot_bin
 
 
-func _run_military_smoke_subprocess(smoke_args: Array) -> Dictionary:
-	var godot_bin: String = OS.get_environment("GODOT")
+func _run_godot_script(script_res: String, user_args: Array) -> Dictionary:
+	var godot_bin: String = _resolve_godot_binary()
 	if godot_bin.is_empty():
-		godot_bin = DEFAULT_GODOT
-	var project_dir: String = ProjectSettings.globalize_path("res://")
-	var user_data: String = project_dir.path_join(".godot_user")
-	var args_tail: String = " ".join(smoke_args)
-	var shell_cmd: String = (
-		"export GODOT_USER_DATA_DIR=\"%s\"; timeout %d \"%s\" --headless --path \"%s\" "
-		% [user_data, TIMEOUT_SECONDS, godot_bin, project_dir]
-		+ "--script res://sim/tools/run_military_smoke.gd -- "
-		+ args_tail
-	)
-	var output: Array = []
-	var exit_code: int = OS.execute("bash", ["-c", shell_cmd], output, true, false)
-	return {"exit_code": exit_code, "output": "\n".join(output)}
+		return {"exit_code": 125, "output": "Godot binary path is empty"}
+	if not FileAccess.file_exists(godot_bin):
+		return {"exit_code": 125, "output": "Godot binary not found: %s" % godot_bin}
 
-
-func _run_economy_smoke_subprocess(smoke_args: Array) -> Dictionary:
-	var godot_bin: String = OS.get_environment("GODOT")
-	if godot_bin.is_empty():
-		godot_bin = DEFAULT_GODOT
 	var project_dir: String = ProjectSettings.globalize_path("res://")
-	var user_data: String = project_dir.path_join(".godot_user")
-	var args_tail: String = " ".join(smoke_args)
-	var shell_cmd: String = (
-		"export GODOT_USER_DATA_DIR=\"%s\"; timeout %d \"%s\" --headless --path \"%s\" "
-		% [user_data, TIMEOUT_SECONDS, godot_bin, project_dir]
-		+ "--script res://sim/tools/run_economy_smoke.gd -- "
-		+ args_tail
-	)
+	var args: PackedStringArray = PackedStringArray([
+		"--headless",
+		"--path", project_dir,
+		"--script", script_res,
+		"--",
+	])
+	for arg in user_args:
+		args.append(str(arg))
+
 	var output: Array = []
-	var exit_code: int = OS.execute("bash", ["-c", shell_cmd], output, true, false)
+	var exit_code: int = OS.execute(godot_bin, args, output, true, false)
 	return {"exit_code": exit_code, "output": "\n".join(output)}
 
 
@@ -187,26 +167,10 @@ func _expect_nonzero_exit(result: Dictionary, label: String) -> Array[String]:
 		return ["subprocess %s timed out (exit 124) — failure path not verified" % label]
 	if exit_code == 125:
 		return ["subprocess %s could not run command (exit 125). output tail: %s" % [label, _tail(output)]]
+	if exit_code == 127:
+		return ["subprocess %s could not run (exit 127) — executable not found. output tail: %s" % [label, _tail(output)]]
 	print("INTEGRITY OK: subprocess %s exited %d" % [label, exit_code])
 	return []
-
-
-func _run_smoke_subprocess(smoke_args: Array) -> Dictionary:
-	var godot_bin: String = OS.get_environment("GODOT")
-	if godot_bin.is_empty():
-		godot_bin = DEFAULT_GODOT
-	var project_dir: String = ProjectSettings.globalize_path("res://")
-	var user_data: String = project_dir.path_join(".godot_user")
-	var args_tail: String = " ".join(smoke_args)
-	var shell_cmd: String = (
-		"export GODOT_USER_DATA_DIR=\"%s\"; timeout %d \"%s\" --headless --path \"%s\" "
-		% [user_data, TIMEOUT_SECONDS, godot_bin, project_dir]
-		+ "--script res://sim/tools/run_smoke.gd -- "
-		+ args_tail
-	)
-	var output: Array = []
-	var exit_code: int = OS.execute("bash", ["-c", shell_cmd], output, true, false)
-	return {"exit_code": exit_code, "output": "\n".join(output)}
 
 
 func _tail(text: String, max_lines: int = 8) -> String:

@@ -32,7 +32,7 @@ func _run_body() -> void:
 		recorder.record(state.tick, cmd, result)
 		state = runner.tick(state)
 
-	var replay_path: String = "/tmp/run04_test_replay.json"
+	var replay_path: String = SimPaths.default_export_file("run04_test_replay.json")
 	assert_true(ReplayFile.save_from_run(state, recorder, scenario, replay_path), "export replay")
 
 	var verify: Dictionary = ReplayFile.load_and_run(replay_path)
@@ -42,10 +42,7 @@ func _run_body() -> void:
 	# Tamper detection
 	var tampered: Dictionary = ReplayFile.load_from_path(replay_path)
 	tampered["expected_hash"] = "sha256:definitely_wrong"
-	var tamper_path: String = "/tmp/run04_test_replay_tampered.json"
-	var tamper_file := FileAccess.open(tamper_path, FileAccess.WRITE)
-	assert_not_null(tamper_file, "open tamper path")
-	tamper_file.store_string(JSON.stringify(tampered, "\t"))
-	tamper_file.close()
+	var tamper_path: String = SimPaths.default_export_file("run04_test_replay_tampered.json")
+	assert_true(SimPaths.write_text_file(tamper_path, JSON.stringify(tampered, "\t")), "write tamper path")
 	var tamper_result: Dictionary = ReplayFile.load_and_run(tamper_path)
 	assert_false(bool(tamper_result.get("success", true)), "tampered hash must fail")

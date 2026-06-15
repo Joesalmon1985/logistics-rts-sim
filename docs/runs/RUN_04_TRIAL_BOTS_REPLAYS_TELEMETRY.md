@@ -86,7 +86,9 @@ RUN_04 combines bot framework, replay export/import, telemetry, and per-rule-ID 
 
 Delivery confirmed by the RUN_04 implementation commit, `docs/testing/02_smoke_test_matrix.md`, `docs/testing/01_rule_contract_test_matrix.md`, and `docs/audit/RUN_04_LESSONS_LEARNED.md` (148/148 headless tests; all kernel/economy/military/bot smokes and failure-mode integrity exit 0 on the Linux/Godot reference machine).
 
-> Runtime verification remains required on the Linux/Godot machine before merging to main. These boxes record delivery status; they do not represent any Windows runtime verification.
+Windows Godot 4.5.1 console verification also passes after the cross-platform portability fixes (`SimPaths`, `verify_failure_modes.gd` direct spawn, `snapshot_exporter` null-tile guard). Linux Godot 4.5.2 remains the reference environment.
+
+> Runtime verification on Linux/Godot 4.5.2 is still recommended before merging to main when work was done primarily on Windows.
 
 ## Final Report Format
 
