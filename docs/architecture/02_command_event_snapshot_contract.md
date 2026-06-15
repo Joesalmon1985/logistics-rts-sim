@@ -80,6 +80,45 @@ See requirement docs:
 
 The Godot visual client reads snapshots only; it never writes back except via new commands.
 
+## Available Commands (optional, non-authoritative — RUN_05)
+
+A snapshot **may** carry an optional `available_commands` array so that a debug/visual client can
+present legal actions to a human without deriving legality itself. This is provided by the
+**sim-owned command availability provider** (see `03_godot_adapter_contract.md`); the client only
+displays/submits.
+
+```json
+{
+  "available_commands": [
+    {
+      "id": "build_lumber_yard_3_4",
+      "label": "Build Lumber Yard at 3,4",
+      "type": "build",
+      "actor_id": "p1",
+      "target": {"q": 3, "r": 4},
+      "payload": {},
+      "enabled": true,
+      "disabled_reason": null,
+      "source": "sim"
+    }
+  ]
+}
+```
+
+Field notes:
+- Minimum requirement: list **legal** commands only. `enabled: false` + `disabled_reason` for
+  explainable-but-invalid commands is optional.
+- `source` documents where the entry came from (`sim`).
+
+### Non-authoritative guardrail (must-have)
+
+`available_commands[]` is a **client/debug/export affordance, not authoritative state.** It must
+**not** be included in replay-hashed state unless deliberately and explicitly approved. If
+`SnapshotExporter` output feeds `ReplayHash`, either exclude `available_commands[]` from the hashed
+snapshot or expose it via a separate client/debug export path. **Do not re-pin replay hashes**
+merely because command availability was added to a viewer-facing snapshot. It also does not affect
+`schema_version` for hashing purposes when kept out of hashed state.
+
 ## Replay Format
 
 ```json

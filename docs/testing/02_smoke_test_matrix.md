@@ -89,10 +89,15 @@ has a dedicated test asserting state change + event/diagnostic + downstream effe
 
 ## RUN_05 — Godot Trial Viewers
 
+These are **headless contract smokes** (Track 1). They verify snapshot render-data, the
+command-availability bridge, and command round-trip — not visual readability. Human readability is
+verified separately via the **windowed visual review** (Track 2) in
+`docs/verification/local_verification.md`; that review is not a headless smoke.
+
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| GOD-SMOKE-001 | Load economy snapshot | Layers render |
-| GOD-SMOKE-002 | Submit place road via Godot | Snapshot updates |
+| GOD-SMOKE-001 | Load economy + military demo snapshots headlessly | Renderer accepts all snapshot layers/diagnostics from JSON only; no `SCRIPT ERROR`; exit 0 |
+| GOD-SMOKE-002 | Sim-provided command round-trip via viewer adapter | `available_commands` sourced from sim provider; a selected legal command submits through `CommandValidator`; snapshot refreshes; rejected command yields readable `CommandResult` reason; `available_commands[]` excluded from replay-hashed state |
 
 ## RUN_06 — Neural Training
 

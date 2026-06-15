@@ -305,7 +305,68 @@ Gameplay-rule tests use a **lightweight custom Godot headless runner** (`sim/too
 
 The runner distinguishes **passed**, **failed** (assertion), and **errored** (load/instantiate/script error). It exits non-zero if any test failed or errored, or if the run count does not match the expected suite size.
 
+## RUN_05 windowed visual review (Track 2 — human readability)
+
+RUN_05 viewers need **two tracks** of verification (see `docs/testing/03_godot_viewer_test_plan.md`):
+
+- **Track 1 — headless contract smokes** (GOD-SMOKE-001/002): run with `--headless`, exit `0`, no
+  `SCRIPT ERROR`. These prove the snapshot/availability/command contracts, **not** readability.
+- **Track 2 — windowed visual review**: launch each demo scene in a real Godot **window** at
+  1920x1080 and confirm the layout is human-readable. This is a manual review, not a headless smoke.
+
+Launch the demo scenes in a window (do **not** pass `--headless`):
+
+```powershell
+# Windows (Godot 4.5.x console exe)
+$env:GODOT = "<full path to Godot console executable>"
+$env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
+& $env:GODOT --path godot_project --resolution 1920x1080 res://client/scenes/economy_viewer_demo.tscn
+& $env:GODOT --path godot_project --resolution 1920x1080 res://client/scenes/military_viewer_demo.tscn
+$LASTEXITCODE
+```
+
+```bash
+# Linux (Godot 4.5.2 reference)
+"$GODOT" --path godot_project --resolution 1920x1080 res://client/scenes/economy_viewer_demo.tscn
+"$GODOT" --path godot_project --resolution 1920x1080 res://client/scenes/military_viewer_demo.tscn
+```
+
+(Exact scene paths are finalized during RUN_05 implementation; use the demo launcher described in
+`docs/runs/RUN_05_GODOT_2D_VIEWERS_FOR_TRIAL_GAMES.md`.)
+
+Confirm visually: map is large/readable; panels do not overlap the map; text is readable at desktop
+scale; legend explains every colour/icon/overlay; layer toggles work; selection inspector is
+understandable; command panel lists sim-provided commands and shows results/errors; event log shows
+recent history; turn/tick/active player/phase/priority are visible; economy and military demos are
+immediately understandable.
+
+### Screenshots
+
+Capture a screenshot of each demo. Preferred: an in-viewer screenshot button or debug hotkey
+saving to:
+
+- `user://screenshots/run_05_economy_demo.png`
+- `user://screenshots/run_05_military_demo.png`
+
+If the in-viewer capture is not implemented, take manual OS screenshots and record their paths. The
+final report must state whether screenshots were automatic or manual and reference the paths.
+
+### Process safety for windowed runs
+
+Windowed Godot runs can leave stale/orphaned processes. Before launching, inspect:
+
+```powershell
+Get-Process | Where-Object { $_.ProcessName -like "*Godot*" }
+```
+
+Close the window normally when done. If a windowed run does not exit cleanly, stop only the clearly
+stale Godot process for this project (confirm the PID first) and record the cleanup in the report.
+Never broad-kill unrelated Godot processes.
+
 ## RUN_04+ pre-flight
 
 Before adding bot/replay/telemetry mechanics in RUN_04, rerun all commands in this document
 (tests, smokes, integrity checks) and confirm exit code `0` on each.
+
+For RUN_05, rerun the RUN_01–04 tests, smokes, and failure-mode integrity checks (all exit `0`, no
+`SCRIPT ERROR`) before writing viewer code, per `.cursor/rules/10-run-verification-and-logging.mdc`.

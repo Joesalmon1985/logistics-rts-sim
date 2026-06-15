@@ -19,9 +19,31 @@ godot_project/
       snapshot_loader.gd
       command_submitter.gd
       layer_renderer.gd
+      command_availability.gd   # calls the sim-owned provider; never derives legality
 ```
 
+Proposed RUN_05 UI components under `client/ui/`: `ViewerRoot`, `MapViewport`, `LayerTogglePanel`,
+`LegendPanel`, `SelectionInspectorPanel`, `CommandPanel`, `EventLogPanel`, `SnapshotDebugPanel`.
+
 Separate viewer scenes for economy trial, military trial, and hybrid may share adapter/renderer code.
+
+## Command Availability (RUN_05)
+
+Available/legal commands are **sim-owned**. The client must obtain them from the authoritative
+core, never derive them. Source order:
+
+1. Snapshot `available_commands[]` (see `02_command_event_snapshot_contract.md`).
+2. A sim-owned API such as `list_available_commands(state, actor_id)`.
+3. If neither exists, RUN_05 adds a **minimal sim-side provider** under `sim/` for the economy and
+   military demos.
+
+The provider may inspect authoritative state, but it lives under `sim/`, not `client/`. The DTO is
+defined in `02_command_event_snapshot_contract.md`. The client may format, group, sort, filter and
+count these entries; it must not decide legality.
+
+`available_commands[]` is non-authoritative and must stay out of replay-hashed state (or use a
+separate client/debug export path) — see the guardrail in
+`02_command_event_snapshot_contract.md`.
 
 ## Snapshot Access
 
@@ -55,6 +77,7 @@ Implement layers per `06_mobile_2d_visual_design.md`. The layer renderer reads s
 - Local ware/production counters that diverge from snapshots
 - `randf()` / any RNG for gameplay outcomes
 - Treating animation/presentation floats as authoritative state
+- Deciding command legality (must come from the sim-owned availability provider / validator)
 
 ## Testing
 

@@ -2,6 +2,12 @@
 
 The Godot visual client renders simulation state from snapshots produced by the authoritative GDScript simulation core. The visual client does not compute gameplay.
 
+> **RUN_05 scope note:** RUN_05 builds a **1920x1080 desktop debug/review client** for the economy
+> and military trials (including a command-availability panel sourced from the sim) — not the final
+> mobile UX. The mobile layout described here remains the future target; RUN_05 must not compromise
+> desktop readability for mobile concerns. See
+> `docs/runs/RUN_05_GODOT_2D_VIEWERS_FOR_TRIAL_GAMES.md`.
+
 ---
 
 ## Rendering Model
