@@ -12,6 +12,9 @@ static func build_render_data(snapshot: Dictionary, layer_visibility: Dictionary
 	var units: Array = _build_unit_markers(snapshot, layer_visibility)
 	var roads: Array = _build_road_markers(snapshot, layer_visibility)
 	var resources: Array = _filter_layer(layers.get("resources", []), layer_visibility, "resources", true)
+	for field in snapshot.get("resource_fields", []):
+		if typeof(field) == TYPE_DICTIONARY:
+			resources.append(field.duplicate(true))
 	var fog: Dictionary = snapshot.get("vision", {})
 	return {
 		"variant": variant,
@@ -95,9 +98,9 @@ static func _build_road_markers(snapshot: Dictionary, visibility: Dictionary) ->
 			continue
 		var r: Dictionary = road
 		markers.append({
-			"from_q": int(r.get("from_q", 0)),
-			"from_r": int(r.get("from_r", 0)),
-			"to_q": int(r.get("to_q", 0)),
-			"to_r": int(r.get("to_r", 0)),
+			"from_q": int(r.get("hex_a_q", r.get("from_q", 0))),
+			"from_r": int(r.get("hex_a_r", r.get("from_r", 0))),
+			"to_q": int(r.get("hex_b_q", r.get("to_q", 0))),
+			"to_r": int(r.get("hex_b_r", r.get("to_r", 0))),
 		})
 	return markers

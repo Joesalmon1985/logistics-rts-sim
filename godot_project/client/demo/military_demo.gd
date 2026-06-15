@@ -1,11 +1,11 @@
 class_name MilitaryDemo
 extends RefCounted
 
-## Curated military trial demo state for RUN_05 viewer.
+## Curated military trial demo — both bases visible, fog off for debug clarity.
 
 
 static func build_state() -> GameState:
-	var scenario: Dictionary = MilitarySkirmish.build_scenario(7, 2, 20, 20)
+	var scenario: Dictionary = MilitarySkirmish.build_scenario(7, 2, 16, 16)
 	scenario["starting_credits"] = 5000
 	scenario["fog_enabled"] = 0
 	var runner := SimulationTickRunner.new()

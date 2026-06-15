@@ -55,6 +55,9 @@ func _run_smoke_001() -> bool:
 		if render.get("buildings", []).is_empty():
 			print("GOD-SMOKE-001 FAIL: %s empty buildings" % label_variant)
 			return false
+		if label_variant == "economy" and render.get("roads", []).is_empty():
+			print("GOD-SMOKE-001 FAIL: economy roads not in render data")
+			return false
 	print("GOD-SMOKE-001 PASS: economy+military render data from snapshot")
 	return true
 

@@ -6,6 +6,9 @@ const SCREEN_SIZE := Vector2i(1920, 1080)
 var controller: ViewerController
 var demo_builder: Callable
 var variant_label: String = "viewer"
+var viewer_title: String = "Debug Viewer"
+var help_text: String = ""
+var map_title: String = "Map"
 
 @onready var _map: MapViewport = %MapViewport
 @onready var _command_list: ItemList = %CommandList
@@ -15,6 +18,9 @@ var variant_label: String = "viewer"
 @onready var _debug: Label = %DebugLabel
 @onready var _legend: RichTextLabel = %Legend
 @onready var _result: Label = %ResultLabel
+@onready var _help: RichTextLabel = %HelpPanel
+@onready var _commands_header: Label = %CommandsHeader
+@onready var _title: Label = %TitleLabel
 
 
 func _ready() -> void:
@@ -24,9 +30,48 @@ func _ready() -> void:
 	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
 	controller.command_result.connect(_on_command_result)
 	_map.selection_clicked.connect(_on_map_selection)
+	_map.show_grid = true
+	_map.show_coord_labels = true
+	_map.map_title = map_title
+	_setup_panel_labels()
 	_build_legend()
+	_apply_help_text()
 	if demo_builder.is_valid():
 		reset_demo()
+	_show_welcome_inspector()
+
+
+func _setup_panel_labels() -> void:
+	_title.text = viewer_title
+	if has_node("%ResetBtn"):
+		get_node("%ResetBtn").text = "Load/Reset Demo"
+	if has_node("%StepBtn"):
+		get_node("%StepBtn").text = "Step Tick"
+	if has_node("%SubmitBtn"):
+		get_node("%SubmitBtn").text = "Submit Command"
+	if has_node("%InvalidBtn"):
+		get_node("%InvalidBtn").text = "Test Invalid"
+	if has_node("%GridBtn"):
+		get_node("%GridBtn").text = "Toggle Coords"
+	if has_node("%RoadsBtn"):
+		get_node("%RoadsBtn").text = "Toggle Roads"
+	if has_node("%ShotBtn"):
+		get_node("%ShotBtn").text = "Screenshot"
+	if has_node("%BotBtn"):
+		get_node("%BotBtn").visible = variant_label in ["economy", "military"]
+
+
+func _apply_help_text() -> void:
+	if help_text != "":
+		_help.text = help_text
+	else:
+		_help.text = (
+			"[b]Quick start[/b]\n"
+			+ "1. Map loads automatically — click a hex to inspect it.\n"
+			+ "2. Pick a command from the list, then press Submit Command.\n"
+			+ "3. Use Step Tick to advance simulation.\n"
+			+ "4. Load/Reset Demo restores the starting state."
+		)
 
 
 func reset_demo() -> void:
@@ -34,60 +79,90 @@ func reset_demo() -> void:
 		controller = ViewerController.new()
 	if demo_builder.is_valid():
 		controller.load_demo_state(demo_builder.call(), "p1")
-	_append_event("Demo reset (%s)" % variant_label)
+	_append_event("Demo loaded (%s)" % variant_label)
+	_show_welcome_inspector()
+
+
+func _show_welcome_inspector() -> void:
+	_inspector.text = (
+		"Welcome!\n\n"
+		+ "Click any hex on the map to inspect terrain, buildings, or units.\n"
+		+ "Legal commands appear in the list below — select one, then Submit Command."
+	)
 
 
 func _on_snapshot_refreshed(snapshot: Dictionary) -> void:
 	_map.set_render_data(controller.get_render_data())
 	_refresh_commands()
 	_update_debug(snapshot)
-	_status.text = "Tick %d | Player %s | Commands %d" % [
+	var cmd_count: int = ClientCommandAvailability.count(controller.get_available_commands())
+	_commands_header.text = "Legal commands available: %d (select one, then Submit)" % cmd_count
+	_status.text = "Tick %d  |  Active player: %s  |  Phase: debug step-through" % [
 		int(snapshot.get("tick", 0)),
 		controller.actor_id,
-		ClientCommandAvailability.count(controller.get_available_commands()),
 	]
 
 
 func _refresh_commands() -> void:
 	_command_list.clear()
-	for cmd in controller.get_available_commands():
-		_command_list.add_item("%s" % str(cmd.get("label", cmd.get("type", "?"))))
+	var commands: Array = controller.get_available_commands()
+	for cmd in commands:
+		_command_list.add_item(str(cmd.get("label", cmd.get("type", "?"))))
+	if not commands.is_empty():
+		_command_list.select(0)
 
 
 func _update_debug(snapshot: Dictionary) -> void:
 	var counts: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
-	_debug.text = "Variant: %s | Source: in-process | Tick: %d | Avail: %d | Bld: %d | Units: %d" % [
+	_debug.text = "Snapshot: %s | tick %d | buildings %d | roads %d | units %d" % [
 		str(snapshot.get("variant", "")),
 		int(snapshot.get("tick", 0)),
-		ClientCommandAvailability.count(controller.get_available_commands()),
 		int(counts.get("buildings", 0)),
+		int(counts.get("roads", 0)),
 		int(counts.get("units", 0)),
 	]
 
 
-func _on_command_result(result: Dictionary, _dto: Dictionary) -> void:
-	var msg: String = "OK" if bool(result.get("success", false)) else str(result.get("reason", result.get("error_code", "?")))
-	_result.text = "Last result: %s" % msg
-	_append_event("Command: %s" % msg)
+func _on_command_result(result: Dictionary, dto: Dictionary) -> void:
+	var label: String = str(dto.get("label", dto.get("type", "command")))
+	var msg: String
+	if bool(result.get("success", false)):
+		msg = "ACCEPTED: %s" % label
+	else:
+		msg = "REJECTED: %s — %s" % [label, str(result.get("reason", result.get("error_code", "?")))]
+	_result.text = msg
+	_append_event(msg)
 
 
 func _on_map_selection(q: int, r: int) -> void:
+	_map.set_selection(q, r)
 	var sel: Dictionary = controller.get_selection_at(q, r)
-	_inspector.text = "[b]Selection %d,%d[/b]\n%s" % [q, r, JSON.stringify(sel.get("data", {}), "\t")]
+	_inspector.text = SelectionFormatter.format(sel, controller.snapshot)
 
 
 func _append_event(text: String) -> void:
-	_event_log.text = text + "\n" + _event_log.text
+	var stamp: String = "[tick %d] " % controller.state.tick if controller.state != null else ""
+	_event_log.text = stamp + text + "\n" + _event_log.text
 
 
 func _build_legend() -> void:
-	_legend.text = (
-		"[b]Legend[/b]\n"
-		+ "Green = grass | Dark green = forest | Blue = water\n"
-		+ "Gold hex = HQ/hub | Brown = woodcutter | Orange = power\n"
-		+ "Blue-gray = barracks/processor | Red dot = unit\n"
-		+ "Yellow lines = roads | White outline = selection"
-	)
+	if variant_label == "military":
+		_legend.text = (
+			"[b]Legend — Military[/b]\n"
+			+ "[color=#47]/[/color] Blue border/dot = player p1 (you)\n"
+			+ "[color=#e84848]■[/color] Red border/dot = player p2 (enemy)\n"
+			+ "Gold hex = Command Hub | Orange = Power | Blue-gray = Barracks/Processor\n"
+			+ "Yellow lines = roads | Dark overlay = fog/shroud (if enabled)\n"
+			+ "White coords on each hex | Yellow ring = selected hex"
+		)
+	else:
+		_legend.text = (
+			"[b]Legend — Economy[/b]\n"
+			+ "Light green = grass | Dark green = forest | Gold hex = HQ\n"
+			+ "Brown = woodcutter | Tan = sawmill | Yellow lines = roads\n"
+			+ "Orange dot = resource deposit | White coords on each hex\n"
+			+ "Yellow ring = selected hex"
+		)
 
 
 func _on_reset_pressed() -> void:
@@ -95,14 +170,15 @@ func _on_reset_pressed() -> void:
 
 
 func _on_step_pressed() -> void:
+	var before: int = controller.state.tick
 	controller.step_tick()
-	_append_event("Step tick -> %d" % controller.state.tick)
+	_append_event("Step tick: %d -> %d" % [before, controller.state.tick])
 
 
 func _on_submit_pressed() -> void:
 	var idx: Array = _command_list.get_selected_items()
 	if idx.is_empty():
-		_result.text = "Select a command first"
+		_result.text = "Select a command from the list first, then press Submit Command."
 		return
 	var commands: Array = controller.get_available_commands()
 	if int(idx[0]) >= commands.size():
@@ -115,14 +191,49 @@ func _on_invalid_pressed() -> void:
 
 
 func _on_toggle_grid_pressed() -> void:
-	_map.show_grid = not _map.show_grid
+	_map.show_coord_labels = not _map.show_coord_labels
 	_map.queue_redraw()
+	_append_event("Coordinate labels: %s" % ("ON" if _map.show_coord_labels else "OFF"))
 
 
 func _on_toggle_roads_pressed() -> void:
 	var vis: bool = not controller.layer_visibility.get("roads", true)
 	controller.set_layer_visible("roads", vis)
 	_map.set_render_data(controller.get_render_data())
+	_append_event("Road layer: %s" % ("ON" if vis else "OFF"))
+
+
+func _on_bot_pressed() -> void:
+	_run_one_bot_action()
+
+
+func _run_one_bot_action() -> void:
+	if controller.state == null:
+		return
+	var bot: Bot = null
+	if variant_label == "economy":
+		bot = HeuristicEconomyBot.new()
+	elif variant_label == "military":
+		bot = HeuristicMilitaryBot.new()
+	if bot == null:
+		_result.text = "Bot step not available for this variant"
+		return
+	bot.reset(controller.actor_id)
+	bot.observe(SnapshotExporter.export_snapshot(controller.state), controller.actor_id)
+	var cmd: SimCommand = bot.decide(controller.state.tick)
+	if cmd == null:
+		_result.text = "Bot: no action this turn"
+		_append_event("Bot: no action")
+		return
+	var dto: Dictionary = {
+		"type": cmd.type,
+		"label": "Bot: %s" % cmd.type,
+		"actor_id": cmd.player_id,
+		"payload": cmd.payload.duplicate(true),
+	}
+	dto["payload"]["player_id"] = cmd.player_id
+	dto["payload"]["tick"] = controller.state.tick
+	controller.submit_command_dto(dto)
 
 
 func _on_screenshot_pressed() -> void:

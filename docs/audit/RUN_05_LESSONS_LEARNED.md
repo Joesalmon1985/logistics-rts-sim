@@ -55,8 +55,16 @@ Screenshot capture (SubViewport, non-headless):
 ## Limitations
 
 - Debug UI is functional, not polished (no animation, minimal zoom/pan).
-- Layer toggles implemented for roads/grid; full layer panel is minimal.
+- Layer toggles cover roads/coords; full layer panel is minimal.
 - Automated SubViewport capture substitutes for agent-environment windowed review; human windowed pass still recommended on Linux reference machine.
+
+## Usability closure pass (post-review)
+
+- Fixed road rendering (`hex_a_q`/`hex_b_q` field names were wrong — roads were invisible).
+- Map auto-fits to content; coordinate labels on by default; building labels (HQ, WOOD, etc.).
+- Help panel with step-by-step instructions at launch; clearer button names.
+- Human-readable inspector (not raw JSON); command count header; player colour coding (p1 blue, p2 red).
+- Optional **Bot Step** button (nice-to-have, uses RUN_04 bots — not a RUN_05 blocker).
 
 ## Deferred
 

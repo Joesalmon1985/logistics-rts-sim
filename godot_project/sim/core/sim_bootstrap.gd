@@ -106,6 +106,7 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://client/adapters/layer_renderer.gd",
 	"res://client/adapters/command_submitter.gd",
 	"res://client/adapters/command_availability.gd",
+	"res://client/adapters/selection_formatter.gd",
 	"res://client/core/viewer_controller.gd",
 ]
 

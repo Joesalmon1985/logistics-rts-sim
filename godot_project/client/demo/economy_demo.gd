@@ -1,29 +1,36 @@
 class_name EconomyDemo
 extends RefCounted
 
-## Curated economy trial demo state for RUN_05 viewer.
+## Curated economy trial demo state for RUN_05 viewer — compact, readable layout.
 
 
 static func build_state() -> GameState:
 	var scenario: Dictionary = {
 		"variant": "economy_trial",
 		"seed": 42,
-		"map_width": 16,
-		"map_height": 16,
+		"map_width": 12,
+		"map_height": 12,
 		"players": ["p1"],
-		"hq_position": {"q": 4, "r": 4},
-		"build_radius": 10,
+		"hq_position": {"q": 5, "r": 5},
+		"build_radius": 8,
 		"starting_wares": {"planks": 20, "tools": 5},
 	}
 	var runner := SimulationTickRunner.new()
 	var state: GameState = runner.create_game(scenario)
-	_flatten_grass(state, 0, 0, 15, 15)
-	state.map.set_tile(HexCoord.new(8, 4), _forest_tile())
+	_flatten_grass(state, 0, 0, 11, 11)
+	# Forest patch east of HQ — woodcutter target
+	state.map.set_tile(HexCoord.new(8, 5), _forest_tile())
 	state.map.set_tile(HexCoord.new(9, 5), _forest_tile())
-	_connect_roads(state, 4, 4, 6, 4)
+	# Road chain HQ (5,5) -> (6,5) -> (7,5) -> woodcutter site
+	_connect_roads(state, 5, 5, 8, 5)
 	EconomyInit._spawn_completed_building(
-		state, "woodcutter", 8, 4, "p1", EconomyState.get_config(state),
+		state, "woodcutter", 8, 5, "p1", EconomyState.get_config(state),
 	)
+	# Sawmill south of HQ (visible second building)
+	EconomyInit._spawn_completed_building(
+		state, "sawmill", 5, 7, "p1", EconomyState.get_config(state),
+	)
+	_connect_roads(state, 5, 5, 5, 7)
 	return state
 
 

@@ -23,7 +23,7 @@ grow_vertical = 2
 [node name="MapArea" type="PanelContainer" parent="RootHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 3.0
+size_flags_stretch_ratio = 2.8
 
 [node name="MapViewport" type="Control" parent="RootHBox/MapArea"]
 unique_name_in_owner = true
@@ -34,8 +34,22 @@ script = ExtResource("2")
 
 [node name="RightPanel" type="VBoxContainer" parent="RootHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(420, 0)
+custom_minimum_size = Vector2(480, 0)
 size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Military Trial Debug Viewer"
+
+[node name="HelpPanel" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 110)
+fit_content = true
+scroll_active = true
 
 [node name="StatusLabel" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
@@ -47,69 +61,103 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Debug"
 
-[node name="Legend" type="RichTextLabel" parent="RootHBox/RightPanel"]
+[node name="CommandsHeader" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 100)
-fit_content = true
+theme_override_font_sizes/font_size = 16
+text = "Legal commands available: 0"
 
 [node name="CommandList" type="ItemList" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(0, 140)
 size_flags_vertical = 3
 
 [node name="ResultLabel" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Last result:"
+autowrap_mode = 3
+text = "Last result: (none yet)"
 
-[node name="ButtonRow" type="HBoxContainer" parent="RootHBox/RightPanel"]
+[node name="ButtonRow1" type="HBoxContainer" parent="RootHBox/RightPanel"]
 layout_mode = 2
 
-[node name="ResetBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="ResetBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow1"]
 layout_mode = 2
-text = "Reset"
+size_flags_horizontal = 3
+text = "Load/Reset Demo"
 
-[node name="StepBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="StepBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow1"]
 layout_mode = 2
-text = "Step"
+size_flags_horizontal = 3
+text = "Step Tick"
 
-[node name="SubmitBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="ButtonRow2" type="HBoxContainer" parent="RootHBox/RightPanel"]
 layout_mode = 2
-text = "Submit"
 
-[node name="InvalidBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="SubmitBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow2"]
 layout_mode = 2
-text = "Invalid"
+size_flags_horizontal = 3
+text = "Submit Command"
 
-[node name="GridBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="InvalidBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow2"]
 layout_mode = 2
-text = "Grid"
+size_flags_horizontal = 3
+text = "Test Invalid"
 
-[node name="RoadsBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="ButtonRow3" type="HBoxContainer" parent="RootHBox/RightPanel"]
 layout_mode = 2
-text = "Roads"
 
-[node name="ShotBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow"]
+[node name="GridBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+layout_mode = 2
+text = "Toggle Coords"
+
+[node name="RoadsBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+layout_mode = 2
+text = "Toggle Roads"
+
+[node name="ShotBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
 layout_mode = 2
 text = "Screenshot"
+
+[node name="BotBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Run one bot-chosen legal command (optional debug aid)"
+text = "Bot Step"
+
+[node name="InspectorHeader" type="Label" parent="RootHBox/RightPanel"]
+layout_mode = 2
+text = "Selection inspector (click map hex)"
 
 [node name="Inspector" type="RichTextLabel" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 160)
+custom_minimum_size = Vector2(0, 140)
 scroll_active = true
+
+[node name="EventHeader" type="Label" parent="RootHBox/RightPanel"]
+layout_mode = 2
+text = "Event log"
 
 [node name="EventLog" type="RichTextLabel" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(0, 100)
 size_flags_vertical = 3
 scroll_active = true
 
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/ResetBtn" to="." method="_on_reset_pressed"]
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/StepBtn" to="." method="_on_step_pressed"]
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/SubmitBtn" to="." method="_on_submit_pressed"]
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/InvalidBtn" to="." method="_on_invalid_pressed"]
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/GridBtn" to="." method="_on_toggle_grid_pressed"]
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/RoadsBtn" to="." method="_on_toggle_roads_pressed"]
-[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow/ShotBtn" to="." method="_on_screenshot_pressed"]
+[node name="Legend" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+fit_content = true
+
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/ResetBtn" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/StepBtn" to="." method="_on_step_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow2/SubmitBtn" to="." method="_on_submit_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow2/InvalidBtn" to="." method="_on_invalid_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/GridBtn" to="." method="_on_toggle_grid_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/RoadsBtn" to="." method="_on_toggle_roads_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/ShotBtn" to="." method="_on_screenshot_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/BotBtn" to="." method="_on_bot_pressed"]
