@@ -18,14 +18,13 @@ func _run_body() -> void:
 	var state: GameState = runner.create_game(scenario)
 	state = runner.run_ticks(state, TICKS)
 
-	var validator := CommandValidator.new(CommandRegistry.create_default())
 	var cmd := PlaceBuildingPlanCommand.new("p1", 0, {
 		"building_type": "quarry",
 		"q": 5,
 		"r": 5,
 		"player_id": "p1",
 	})
-	var result: CommandResult = validator.validate(state, cmd)
+	var result: CommandResult = cmd.validate(state)
 	assert_false(result.success, "quarry must reject placement without a matching deposit")
 
 	var hash_a: String = ReplayHash.compute_state_hash(state)

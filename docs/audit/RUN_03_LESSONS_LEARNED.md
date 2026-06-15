@@ -61,9 +61,11 @@ exit 0; `git diff --check` clean.
 - Use the **registered variant id** (`hybrid`, not `hybrid_trial`) when running the hybrid
   kernel smoke; a wrong id yields `unknown variant` (exit 1) that looks like a regression but
   isn't. `local_verification.md` already lists the correct command.
-- A pre-existing RUN_02 test (`test_scenario_missing_resource_map.gd`) prints a benign
-  `SCRIPT ERROR` about `CommandValidator.validate`; it does not error the suite. Don't chase it
-  as a RUN_03 issue (documented in `local_verification.md`).
+- **Closure pass (post-RUN_03):** `test_scenario_missing_resource_map.gd` called the removed
+  `CommandValidator.validate()` API and printed a `SCRIPT ERROR` while the suite still reported
+  green — because GDScript aborts `_run_body()` on error but the old `TestCase.run()` always
+  set `_run_completed = true`. Fixed by using `cmd.validate(state)` (same pattern as
+  `test_econ_mine_001`) and by marking tests incomplete when `_run_body()` aborts before return.
 - Re-pin hashes only with **triple-run** identical-hash evidence, and only for the smoke whose
   behaviour legitimately changed.
 

@@ -74,12 +74,10 @@ Results: 68/68 ran, 68 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
 
-Exit code must be `0`.
+Exit code must be `0`. A clean run must print **no** `SCRIPT ERROR` lines in stdout/stderr.
 
-> Note: `test_scenario_missing_resource_map.gd` (an existing RUN_02 economy test) prints a
-> benign `SCRIPT ERROR: ... Nonexistent function 'validate' in base ... CommandValidator`
-> while exercising a rejection path. It is **pre-existing**, does not error the suite
-> (`0 errored`), and is unrelated to RUN_03.
+The test harness (`sim/tests/test_case.gd`) marks a test as incomplete when `_run_body()` aborts
+before returning (e.g. a script error mid-test). Such tests report as **errored**, not passed.
 
 ## Headless smoke tests (KERN-SMOKE-001–004)
 
