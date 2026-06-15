@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "scenario_name": "tiny_success_map",
+  "scenario_path": "scenarios/economy/tiny_success_map.json",
+  "game_type": "economy",
+  "policy_type": "random",
+  "checkpoint_path": null,
+  "checkpoint_id": null,
+  "trained_available": true,
+  "trained_absence_reason": null,
+  "seed": 11,
+  "start_tick": 0,
+  "max_steps": 3,
+  "created_timestamp": "2026-06-15T21:56:26Z",
+  "code_commit": "8990e00",
+  "observation_encoder_version": null,
+  "variant": "economy_trial"
+}
