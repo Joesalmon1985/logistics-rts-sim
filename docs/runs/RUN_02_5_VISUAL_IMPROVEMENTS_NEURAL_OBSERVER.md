@@ -1,6 +1,6 @@
 # RUN_02.5 — Visual Improvements and Neural Rollout Observer
 
-**Status:** in progress — branch `feature/run-02-5-visual-improvements-neural-observer`
+**Status:** complete — branch `feature/run-02-5-visual-improvements-neural-observer`
 
 ## Purpose
 
@@ -117,29 +117,29 @@ rollout schema fields, missing snapshot fields, v1 cut-line, deferred items.
 
 ## Acceptance Checklist
 
-- [ ] Branch created from current main
-- [ ] Existing docs reviewed
-- [ ] RUN_02.5 run doc created
-- [ ] Visual identity document created
-- [ ] Interface modes document created
-- [ ] Neural rollout observer design document created
-- [ ] Visual legibility review document created
-- [ ] Widelands-style influence documented as inspiration only
-- [ ] Colour language and legend requirements documented
-- [ ] Rollout artefact format documented
-- [ ] Rollout artefacts generated from existing neural evaluation/test scenarios
-- [ ] Godot observer can load a rollout folder
-- [ ] Observer can play/pause/step through snapshots
-- [ ] Observer shows current policy/scenario/seed/step/tick
-- [ ] Observer shows selected action/command/result (previous vs current/next labelled)
-- [ ] Observer shows event log and basic metrics
-- [ ] Observer supports view modes or overlay toggles
-- [ ] Screenshot capture works for rollout review
-- [ ] Screenshot/state JSON review report generated
-- [ ] Existing viewer tests still pass
-- [ ] Existing training tests still pass
-- [ ] Generated artefacts, screenshots, checkpoints, and model weights are not committed
-- [ ] Final report written
+- [x] Branch created from current main
+- [x] Existing docs reviewed
+- [x] RUN_02.5 run doc created
+- [x] Visual identity document created
+- [x] Interface modes document created
+- [x] Neural rollout observer design document created
+- [x] Visual legibility review document created
+- [x] Widelands-style influence documented as inspiration only
+- [x] Colour language and legend requirements documented
+- [x] Rollout artefact format documented
+- [x] Rollout artefacts generated from existing neural evaluation/test scenarios
+- [x] Godot observer can load a rollout folder
+- [x] Observer can play/pause/step through snapshots
+- [x] Observer shows current policy/scenario/seed/step/tick
+- [x] Observer shows selected action/command/result (previous vs current/next labelled)
+- [x] Observer shows event log and basic metrics
+- [x] Observer supports view modes or overlay toggles
+- [x] Screenshot capture works for rollout review
+- [x] Screenshot/state JSON review report generated
+- [x] Existing viewer tests still pass
+- [x] Existing training tests still pass
+- [x] Generated artefacts, screenshots, checkpoints, and model weights are not committed
+- [x] Final report written
 
 ## Rollback / Stop Conditions
 
