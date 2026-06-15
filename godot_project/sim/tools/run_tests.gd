@@ -159,6 +159,10 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/viewer/test_vis_avail_001_availability_bridge.gd",
 	"res://sim/tests/viewer/test_vis_econ_chain_001_production_chain_delta.gd",
 	"res://sim/tests/viewer/test_vis_econ_build_001_build_tutorial_flow.gd",
+	"res://sim/tests/training/test_trn_env_001_training_env_reset_snapshot_tick.gd",
+	"res://sim/tests/training/test_trn_env_002_submit_records_replay_entry.gd",
+	"res://sim/tests/training/test_trn_env_003_replay_round_trip.gd",
+	"res://sim/tests/training/test_trn_env_004_response_sentinel_prefix.gd",
 ]
 
 

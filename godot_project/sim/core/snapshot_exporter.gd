@@ -85,6 +85,79 @@ static func export_debug_snapshot(state: GameState, actor_id: String = "") -> Di
 	return snapshot
 
 
+static func export_training_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
+	if state.variant_id == "military_trial":
+		var military_exporter: GDScript = load("res://sim/military/military_snapshot_exporter.gd")
+		return military_exporter.export_training_snapshot(state, actor_id)
+
+	var player_data: Array = []
+	for player in players_to_array(state):
+		player_data.append(player.to_dict())
+
+	var roads: Array = []
+	var buildings: Array = []
+	var construction_sites: Array = []
+	var carrier_markers: Array = []
+	var blocked_job_markers: Array = []
+
+	if state.entities.has(EconomyConstants.BUCKET_ROADS):
+		for key in state.entities[EconomyConstants.BUCKET_ROADS]:
+			roads.append(state.entities[EconomyConstants.BUCKET_ROADS][key])
+	if state.entities.has(EconomyConstants.BUCKET_BUILDINGS):
+		for key in state.entities[EconomyConstants.BUCKET_BUILDINGS]:
+			buildings.append(state.entities[EconomyConstants.BUCKET_BUILDINGS][key])
+	if state.entities.has(EconomyConstants.BUCKET_CONSTRUCTION_SITES):
+		for key in state.entities[EconomyConstants.BUCKET_CONSTRUCTION_SITES]:
+			construction_sites.append(state.entities[EconomyConstants.BUCKET_CONSTRUCTION_SITES][key])
+	if state.entities.has(EconomyConstants.BUCKET_CARRIERS):
+		for key in state.entities[EconomyConstants.BUCKET_CARRIERS]:
+			carrier_markers.append(state.entities[EconomyConstants.BUCKET_CARRIERS][key])
+	if state.entities.has(EconomyConstants.BUCKET_DELIVERY_JOBS):
+		for key in state.entities[EconomyConstants.BUCKET_DELIVERY_JOBS]:
+			var job: Dictionary = state.entities[EconomyConstants.BUCKET_DELIVERY_JOBS][key]
+			if str(job.get("status", "")) in [
+				EconomyConstants.JOB_BLOCKED,
+				EconomyConstants.JOB_WAITING_ROUTE,
+				EconomyConstants.JOB_FAILED,
+			]:
+				blocked_job_markers.append(job)
+
+	var tree_density_cells: int = 0
+	var resource_cells: int = 0
+	if state.map != null:
+		for q in range(state.map.width):
+			for r in range(state.map.height):
+				var coord := HexCoord.new(q, r)
+				if not state.map.in_bounds(coord):
+					continue
+				var tile: HexTile = state.map.get_tile(coord)
+				if tile == null:
+					continue
+				if tile.tree_density > 0:
+					tree_density_cells += 1
+				if tile.deposit_type != "":
+					resource_cells += 1
+
+	return {
+		"schema_version": SCHEMA_VERSION,
+		"variant": state.variant_id,
+		"tick": state.tick,
+		"seed": state.seed,
+		"display_layer_counts": {
+			"tree_density": tree_density_cells,
+			"resources": resource_cells,
+		},
+		"roads": roads,
+		"buildings": buildings,
+		"construction_sites": construction_sites,
+		"carrier_markers": carrier_markers,
+		"blocked_job_markers": blocked_job_markers,
+		"diagnostics": state.diagnostics.duplicate(true),
+		"players": player_data,
+		"available_commands": CommandAvailabilityProvider.list_available_commands(state, actor_id),
+	}
+
+
 static func _build_display_layers(state: GameState) -> Dictionary:
 	var terrain_layer: Array = []
 	var height_layer: Array = []

@@ -99,6 +99,8 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://sim/bot/bot_runner.gd",
 	"res://sim/bot/heuristic_economy_bot.gd",
 	"res://sim/bot/heuristic_military_bot.gd",
+	"res://sim/tools/training_command_match.gd",
+	"res://sim/tools/training_env_server.gd",
 	"res://sim/economy/bot/heuristic_economy_builder_bot.gd",
 	"res://client/demo/economy_demo.gd",
 	"res://client/demo/military_demo.gd",

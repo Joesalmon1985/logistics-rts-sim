@@ -484,3 +484,18 @@ Before adding bot/replay/telemetry mechanics in RUN_04, rerun all commands in th
 
 For RUN_05, rerun the RUN_01–04 tests, smokes, and failure-mode integrity checks (all exit `0`, no
 `SCRIPT ERROR`) before writing viewer code, per `.cursor/rules/10-run-verification-and-logging.mdc`.
+
+## RUN_06 neural training (Windows example)
+
+Prerequisites: Python 3.13 venv with `torch`, `pytest`, `numpy` (`requirements.txt`); Godot 4.5.x
+console; checkpoints under `checkpoints/run06_smoke/` (gitignored).
+
+```powershell
+$env:GODOT = "C:\path\to\Godot_v4.5.1-stable_win64_console.exe"
+$env:GODOT_USER_DATA_DIR = "$(Resolve-Path .\godot_project)\.godot_user"
+.\.venv313\Scripts\pytest python_tools/tests/ -v
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_training_smoke.gd
+& $env:GODOT --headless --path godot_project --script res://sim/tools/run_training_env.gd -- --self-test
+```
+
+Prior-kernel gate (before RUN_06 edits): `run_tests.gd` (158/158 on RUN_06 branch), economy/military/bot smokes, `verify_failure_modes.gd` — all exit `0` on Windows Godot 4.5.1 console during this run.

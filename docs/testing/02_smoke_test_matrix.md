@@ -119,8 +119,13 @@ RUN_05 smoke runners:
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| TRN-SMOKE-001 | 10 deterministic rollouts | Identical command logs |
-| TRN-SMOKE-002 | Replay after rollout | Hash match |
+| TRN-SMOKE-001 | Deterministic rollout protocol | 10 episodes × 100 ticks, stub policy, identical command logs |
+| TRN-SMOKE-002 | Replay hash equivalence | Live rollout hash == `verify_replay` hash |
+| TRN-SMOKE-003 | Training loop completes | BC train economy + military; checkpoints + `metrics.json` + `evaluation.csv`; no weights in git (**alone insufficient for RUN_06 complete**) |
+| TRN-IMPROVE-ECON-001 | Economy improvement | Paired eval: trained mean primary metric > random and > untrained over frozen seeds |
+| TRN-IMPROVE-MIL-001 | Military improvement | Paired eval: trained mean primary metric > random and > untrained over frozen seeds |
+
+Godot runner: `sim/tools/run_training_smoke.gd` (TRN-SMOKE-001/002). Python: `pytest python_tools/tests/ -v`.
 
 ## RUN_07 — Headless Hybrid
 

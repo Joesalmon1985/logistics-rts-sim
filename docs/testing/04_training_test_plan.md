@@ -49,5 +49,6 @@ Scope: RUN_06 — neural training for trial games. Gates in `.cursor/rules/08-ne
 
 ## Pass Criteria
 
-- [ ] TRN-SMOKE-001, TRN-SMOKE-002 pass
-- [ ] No training before prerequisites documented in run report
+- [x] TRN-SMOKE-001, TRN-SMOKE-002, TRN-SMOKE-003 pass
+- [x] TRN-IMPROVE-ECON-001 / TRN-IMPROVE-MIL-001 pass via held-out BC accuracy (seeds 13 / 23)
+- [x] No training before prerequisites documented in run report
