@@ -27,6 +27,8 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/bot/test_econ_bot_c001_road_connects_target.gd",
 	"res://sim/tests/bot/test_econ_bot_d001_site_receives_delivery.gd",
 	"res://sim/tests/bot/test_econ_bot_e001_completes_woodcutter.gd",
+	"res://sim/tests/bot/test_econ_bot_f001_dual_symmetry_minimal.gd",
+	"res://sim/tests/bot/test_econ_bot_g001_road_cap.gd",
 	"res://sim/tests/replay/test_rep_smoke_001_export_import_identical_hash.gd",
 	"res://sim/tests/economy/test_econ_map_001_axial_neighbors_reuse.gd",
 	"res://sim/tests/economy/test_econ_terr_001_water_not_buildable.gd",
