@@ -122,3 +122,56 @@ def action_from_policy(
 ) -> dict | None:
     index = policy.select_action(snapshot, available_commands, deterministic=deterministic)
     return command_match.index_to_command(index, available_commands, tick, actor_id, variant=getattr(policy, "variant", "economy_trial"))
+
+
+def policy_selection_details(
+    policy: Policy,
+    snapshot: dict,
+    available_commands: list,
+    *,
+    deterministic: bool,
+    checkpoint_id: str | None = None,
+    observation_encoder_version: str | None = None,
+) -> tuple[int, dict[str, Any]]:
+    variant = getattr(policy, "variant", "economy_trial")
+    noop = action_space.noop_index(variant)
+    legal = min(len(available_commands), noop)
+    valid_action_count = legal + 1
+    index = policy.select_action(snapshot, available_commands, deterministic=deterministic)
+
+    details: dict[str, Any] = {
+        "selected_action_index": index,
+        "valid_action_count": valid_action_count,
+        "policy_type": type(policy).__name__,
+        "checkpoint_id": checkpoint_id,
+        "observation_encoder_version": observation_encoder_version,
+    }
+
+    if isinstance(policy, TinyPolicy):
+        obs = observation.encode_snapshot(snapshot)
+        logits = policy.forward(torch.from_numpy(obs).float().unsqueeze(0)).squeeze(0)
+        limit = action_space.max_actions(variant)
+        mask = torch.full((limit,), float("-inf"))
+        for action_index in range(legal):
+            mask[action_index] = 0.0
+        mask[noop] = 0.0
+        masked = logits[:limit] + mask
+        probs = torch.softmax(masked, dim=0)
+        sorted_indices = torch.argsort(probs, descending=True)
+        rank = int((sorted_indices == index).nonzero(as_tuple=False)[0].item()) + 1
+        details["selected_action_rank"] = rank
+        details["policy_confidence"] = float(probs[index].item())
+        details["selected_logit"] = float(logits[index].item())
+    elif isinstance(policy, RandomPolicy):
+        details["policy_confidence"] = None
+        details["policy_confidence_unavailable_reason"] = "random policy does not expose probabilities"
+        details["selected_action_rank"] = None
+    elif isinstance(policy, SeededStubPolicy):
+        details["policy_confidence"] = None
+        details["policy_confidence_unavailable_reason"] = "stub policy does not expose probabilities"
+        details["selected_action_rank"] = None
+    else:
+        details["policy_confidence"] = None
+        details["policy_confidence_unavailable_reason"] = "policy does not expose probabilities"
+
+    return index, details

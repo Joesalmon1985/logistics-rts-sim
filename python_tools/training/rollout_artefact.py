@@ -90,9 +90,11 @@ def command_row_from_entry(
     result_message: str,
     reward_delta: float | None = None,
     policy_confidence: float | None = None,
+    policy_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    diagnostics = dict(policy_diagnostics or {})
     if entry is None:
-        return {
+        row = {
             "step_index": step_index,
             "tick": tick,
             "actor_id": actor_id,
@@ -105,8 +107,10 @@ def command_row_from_entry(
             "result_message": result_message,
             "reward_delta": reward_delta,
         }
+        row.update(diagnostics)
+        return row
     target = entry.get("target")
-    return {
+    row = {
         "step_index": step_index,
         "tick": tick,
         "actor_id": actor_id,
@@ -119,6 +123,8 @@ def command_row_from_entry(
         "result_message": result_message,
         "reward_delta": reward_delta,
     }
+    row.update(diagnostics)
+    return row
 
 
 def find_matching_entry(

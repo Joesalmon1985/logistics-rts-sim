@@ -10,7 +10,7 @@ from typing import Any
 from python_tools.training import eval_config, metrics
 from python_tools.training.command_match import find_index, index_to_command
 from python_tools.training.godot_env import GodotHeadlessEnv, repo_root
-from python_tools.training.policy import RandomPolicy, SeededStubPolicy, action_from_policy, build_policy
+from python_tools.training.policy import RandomPolicy, SeededStubPolicy, build_policy, policy_selection_details
 from python_tools.training import rollout_artefact as artefact
 
 try:
@@ -147,6 +147,7 @@ def export_visual_rollout(
             tick = int(debug_snap.get("tick", 0))
             command: dict[str, Any] | None = None
             selected_entry: dict[str, Any] | None = None
+            policy_diag: dict[str, Any] = {}
 
             if policy_type == "heuristic":
                 bot_resp = env.request({"op": "bot_decide", "bot_kind": _bot_kind_from_variant(variant)})
@@ -164,14 +165,25 @@ def export_visual_rollout(
                     selected_entry = artefact.find_matching_entry(command, available)
                 else:
                     selected_entry = None
+                policy_diag = {
+                    "policy_confidence": None,
+                    "policy_confidence_unavailable_reason": "heuristic bot policy does not expose probabilities",
+                }
             elif policy is not None:
-                command = action_from_policy(
+                action_index, policy_diag = policy_selection_details(
                     policy,
                     debug_snap,
                     available,
-                    tick,
                     deterministic=deterministic,
-                    actor_id=actor_id,
+                    checkpoint_id=Path(checkpoint_path).stem if checkpoint_path else None,
+                    observation_encoder_version="run06_v1",
+                )
+                command = index_to_command(
+                    action_index,
+                    available,
+                    tick,
+                    actor_id,
+                    variant=variant,
                 )
                 if command is None:
                     selected_entry = None
@@ -203,6 +215,12 @@ def export_visual_rollout(
                 entry=selected_entry,
                 was_accepted=accepted or command is None,
                 result_message=result_message,
+                policy_confidence=policy_diag.get("policy_confidence"),
+                policy_diagnostics={
+                    key: value
+                    for key, value in policy_diag.items()
+                    if key != "policy_confidence"
+                },
             )
             artefact.write_jsonl_row(output_dir / artefact.COMMANDS_FILE, cmd_row)
 
@@ -253,7 +271,7 @@ def export_visual_rollout(
         "max_steps": max_steps,
         "created_timestamp": artefact.utc_timestamp(),
         "code_commit": artefact.git_commit_short(),
-        "observation_encoder_version": None,
+        "observation_encoder_version": "run06_v1",
         "variant": variant,
     }
     artefact.write_metadata(output_dir, metadata)

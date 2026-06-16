@@ -16,6 +16,9 @@ var show_forest_density: bool = true
 var show_logistics: bool = true
 var production_pulse_ids: Array = []
 var map_title: String = "Map"
+var command_overlays: Array = []
+var economy_badges: Array = []
+var show_military_hud: bool = false
 
 ## Palette constants shared with viewport pixel probes (read-only display).
 const COLOR_GRASS := Color(0.38, 0.72, 0.32)
@@ -70,6 +73,52 @@ func set_attack_target(q: int, r: int) -> void:
 	attack_target_q = q
 	attack_target_r = r
 	queue_redraw()
+
+
+func set_command_overlays(overlays: Array) -> void:
+	command_overlays = overlays
+	queue_redraw()
+
+
+func set_economy_badges(badges: Array) -> void:
+	economy_badges = badges
+	queue_redraw()
+
+
+func set_military_hud(enabled: bool) -> void:
+	show_military_hud = enabled
+	queue_redraw()
+
+
+func fit_to_hexes(hexes: Array) -> void:
+	if hexes.is_empty():
+		fit_to_content()
+		return
+	var min_p := Vector2(INF, INF)
+	var max_p := Vector2(-INF, -INF)
+	for hex in hexes:
+		if typeof(hex) != TYPE_DICTIONARY:
+			continue
+		var q: int = int(hex.get("q", -1))
+		var r: int = int(hex.get("r", -1))
+		if q < 0:
+			continue
+		var p: Vector2 = _hex_offset(q, r)
+		min_p.x = minf(min_p.x, p.x)
+		min_p.y = minf(min_p.y, p.y)
+		max_p.x = maxf(max_p.x, p.x)
+		max_p.y = maxf(max_p.y, p.y)
+	if min_p.x == INF:
+		fit_to_content()
+		return
+	var pad: float = HEX_SIZE * 3.5
+	var content_size: Vector2 = max_p - min_p + Vector2(pad * 2.0, pad * 2.0)
+	var avail: Vector2 = size - Vector2(48, 48)
+	if content_size.x > 0 and content_size.y > 0:
+		zoom = minf(avail.x / content_size.x, avail.y / content_size.y)
+		zoom = clampf(zoom, 0.8, 3.5)
+	var center: Vector2 = (min_p + max_p) * 0.5
+	pan_offset = -center * zoom
 
 
 func fit_to_content() -> void:
@@ -150,6 +199,8 @@ func _draw() -> void:
 			_draw_carrier(origin, carrier)
 	for unit in render_data.get("units", []):
 		_draw_unit(origin, unit)
+	_draw_command_overlays(origin)
+	_draw_economy_badges(origin)
 	if attack_target_q >= 0 and attack_target_r >= 0:
 		_draw_hex(origin, attack_target_q, attack_target_r, Color(1, 0.2, 0.2, 0.15), 1.0, true)
 		var atk_center: Vector2 = _hex_center(origin, attack_target_q, attack_target_r)
@@ -287,12 +338,57 @@ func _production_for_building(building_id: int) -> Dictionary:
 	return {}
 
 
+func _draw_command_overlays(origin: Vector2) -> void:
+	for overlay in command_overlays:
+		if typeof(overlay) != TYPE_DICTIONARY:
+			continue
+		var kind: String = str(overlay.get("kind", ""))
+		var color: Color = overlay.get("color", Color.WHITE)
+		if kind == "line":
+			var a: Vector2 = _hex_center(origin, int(overlay.get("from_q", 0)), int(overlay.get("from_r", 0)))
+			var b: Vector2 = _hex_center(origin, int(overlay.get("to_q", 0)), int(overlay.get("to_r", 0)))
+			var width: float = 5.0 * zoom if str(overlay.get("role", "")) == "current" else 3.5 * zoom
+			draw_line(a, b, color, width)
+			var mid: Vector2 = (a + b) * 0.5
+			var label: String = str(overlay.get("label", ""))
+			if label != "":
+				draw_string(_default_font(), mid + Vector2(-16, -6), label.substr(0, 8), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, color)
+		elif kind == "ring":
+			var q: int = int(overlay.get("q", -1))
+			var r: int = int(overlay.get("r", -1))
+			if q < 0:
+				continue
+			var center: Vector2 = _hex_center(origin, q, r)
+			var radius: float = HEX_SIZE * zoom * (0.95 if str(overlay.get("role", "")) == "current" else 0.82)
+			draw_arc(center, radius, 0, TAU, 32, color, 3.0 if str(overlay.get("role", "")) == "current" else 2.0)
+			var tag: String = str(overlay.get("label", ""))
+			if tag != "":
+				draw_string(_default_font(), center + Vector2(-14, 5), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, color)
+
+
+func _draw_economy_badges(origin: Vector2) -> void:
+	for badge in economy_badges:
+		if typeof(badge) != TYPE_DICTIONARY:
+			continue
+		var q: int = int(badge.get("q", -1))
+		var r: int = int(badge.get("r", -1))
+		if q < 0:
+			continue
+		var center: Vector2 = _hex_center(origin, q, r)
+		var text: String = str(badge.get("text", ""))
+		var color: Color = badge.get("color", Color(1, 0.4, 0.4))
+		draw_rect(Rect2(center + Vector2(-22 * zoom, -24 * zoom), Vector2(44 * zoom, 16 * zoom)), Color(0, 0, 0, 0.72))
+		draw_string(_default_font(), center + Vector2(-18 * zoom, -10 * zoom), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, color)
+
+
 func _draw_unit(origin: Vector2, unit: Dictionary) -> void:
 	var q2: int = int(unit.get("q", 0))
 	var r2: int = int(unit.get("r", 0))
 	var center2: Vector2 = _hex_center(origin, q2, r2)
 	var player_id: String = str(unit.get("player_id", ""))
 	var color: Color = _player_color(player_id)
+	if show_military_hud and player_id == "p2":
+		draw_arc(center2, HEX_SIZE * zoom * 0.55, 0, TAU, 24, Color(0.95, 0.35, 0.35, 0.85), 2.5)
 	draw_circle(center2, 10.0 * zoom, color)
 	var unit_label: String = str(unit.get("unit_type", "unit")).substr(0, 4)
 	draw_string(_default_font(), center2 + Vector2(-14, 5), unit_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1))

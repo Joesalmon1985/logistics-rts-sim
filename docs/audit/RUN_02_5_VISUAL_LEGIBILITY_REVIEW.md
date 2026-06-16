@@ -50,7 +50,13 @@ Per-step review stubs: `{step}_review.md` beside captures (via `visual_legibilit
 
 - Debug JSON panel sufficient for exporter gap identification
 - Construction mode deferred — construction visible under Economy preset
-- Capture at 1080×720 for CI speed; human review at 1920×1080 recommended for final polish
+- Capture standardized at **1920×1080** full observer root (RUN_02.5b)
+- BBCode enabled on panel RichTextLabels; command overlays in Neural/Debug modes
+- Batch capture via `python_tools/training/visual_review_batch.py`
+
+### Issue 10 — `eval_build_obvious` worker-policy wins
+
+**Classification:** (a) intended scenario design + (d) misleading scenario name. Scenario JSON declares `victory.type = worker_policy`; win after `SetWorkerPolicyCommand` is correct per `PolicyEpisodeResult`. Rename or add a true build-completion eval is a RUN_06b/RUN_07 follow-up.
 
 ## Commands
 

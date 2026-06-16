@@ -5,6 +5,8 @@
 .godot/
 godot_project/.godot/
 godot_project/.godot_user/
+godot_project/.godot_user_data/
+godot_project/.capture_test/
 godot_project/run06_session_*/
 godot_project/.run06_sessions/
 *.import

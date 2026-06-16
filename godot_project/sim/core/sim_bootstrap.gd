@@ -115,6 +115,7 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://client/adapters/selection_formatter.gd",
 	"res://client/adapters/rollout_loader.gd",
 	"res://client/adapters/interface_mode_presets.gd",
+	"res://client/adapters/rollout_command_overlay.gd",
 	"res://client/core/viewer_controller.gd",
 	"res://client/core/rollout_controller.gd",
 	"res://client/ui/rollout_observer_root.gd",

@@ -2,6 +2,8 @@ class_name RolloutObserverRoot
 extends Control
 
 const SCREEN_SIZE := Vector2i(1920, 1080)
+const PANEL_FONT := 16
+const TITLE_FONT := 18
 
 var controller: RolloutController
 var _play_timer: Timer
@@ -11,8 +13,10 @@ var _map: MapViewport
 var _status: Label
 var _action: RichTextLabel
 var _metrics: Label
+var _delta: RichTextLabel
 var _event_log: RichTextLabel
 var _legend: RichTextLabel
+var _mode_summary: RichTextLabel
 var _inspector: RichTextLabel
 var _debug: Label
 var _debug_json: RichTextLabel
@@ -51,7 +55,7 @@ func _deferred_map_refresh() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	if _map != null:
-		_map.fit_to_content()
+		_map.fit_to_hexes(controller.get_focus_hexes())
 		_map.queue_redraw()
 
 
@@ -67,7 +71,7 @@ func _build_ui() -> void:
 	root.add_child(map_panel)
 	_map = MapViewport.new()
 	_map.name = "MapViewport"
-	_map.custom_minimum_size = Vector2(640, 480)
+	_map.custom_minimum_size = Vector2(1240, 1040)
 	_map.show_grid = true
 	_map.show_coord_labels = false
 	_map.map_title = "Rollout map"
@@ -80,44 +84,41 @@ func _build_ui() -> void:
 	root.add_child(side)
 
 	_status = _make_label("Status")
+	_apply_label_style(_status, TITLE_FONT)
 	side.add_child(_status)
 
 	side.add_child(_make_timeline_row())
 	side.add_child(_make_mode_row())
 
-	_action = RichTextLabel.new()
-	_action.custom_minimum_size = Vector2(0, 100)
-	_action.scroll_active = true
-	_action.text = "Action panel"
+	_action = _make_rich_label("Action panel", 120)
 	side.add_child(_action)
 
 	_metrics = _make_label("Metrics")
+	_apply_label_style(_metrics, PANEL_FONT)
 	side.add_child(_metrics)
 
-	_event_log = RichTextLabel.new()
-	_event_log.custom_minimum_size = Vector2(0, 120)
-	_event_log.scroll_active = true
+	_delta = _make_rich_label("Delta panel", 90)
+	side.add_child(_delta)
+
+	_event_log = _make_rich_label("Events", 130)
 	side.add_child(_event_log)
 
-	_legend = RichTextLabel.new()
-	_legend.custom_minimum_size = Vector2(0, 100)
-	_legend.text = "[b]Legend[/b] — see mode"
+	_mode_summary = _make_rich_label("Mode summary", 110)
+	side.add_child(_mode_summary)
+
+	_legend = _make_rich_label("Legend", 90)
 	side.add_child(_legend)
 
-	_inspector = RichTextLabel.new()
-	_inspector.custom_minimum_size = Vector2(0, 120)
-	_inspector.scroll_active = true
-	_inspector.text = "Click map to inspect."
+	_inspector = _make_rich_label("Inspector", 120)
 	side.add_child(_inspector)
 
 	_debug = _make_label("Debug")
+	_apply_label_style(_debug, PANEL_FONT)
 	side.add_child(_debug)
 
 	_debug_panel = PanelContainer.new()
 	_debug_panel.visible = false
-	_debug_json = RichTextLabel.new()
-	_debug_json.custom_minimum_size = Vector2(0, 160)
-	_debug_json.scroll_active = true
+	_debug_json = _make_rich_label("Debug JSON", 160)
 	_debug_panel.add_child(_debug_json)
 	side.add_child(_debug_panel)
 
@@ -127,6 +128,20 @@ func _make_label(text: String) -> Label:
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
+
+
+func _make_rich_label(text: String, min_height: int) -> RichTextLabel:
+	var label := RichTextLabel.new()
+	label.custom_minimum_size = Vector2(0, min_height)
+	label.scroll_active = true
+	label.bbcode_enabled = true
+	label.text = text
+	label.add_theme_font_size_override("normal_font_size", PANEL_FONT)
+	return label
+
+
+func _apply_label_style(label: Label, font_size: int) -> void:
+	label.add_theme_font_size_override("font_size", font_size)
 
 
 func _make_timeline_row() -> HBoxContainer:
@@ -169,7 +184,7 @@ func _make_mode_row() -> HBoxContainer:
 
 func _on_mode_pressed(mode: String) -> void:
 	controller.set_interface_mode(mode)
-	_refresh_map()
+	_refresh_all()
 
 
 func _on_jump_start() -> void:
@@ -215,7 +230,7 @@ func _stop_play() -> void:
 
 
 func _on_snapshot_refreshed(_snapshot: Dictionary) -> void:
-	_refresh_map()
+	_refresh_all()
 
 
 func _refresh_all() -> void:
@@ -224,34 +239,43 @@ func _refresh_all() -> void:
 	_status.text = controller.build_status_text()
 	_action.text = controller.build_action_text()
 	_metrics.text = controller.build_metrics_text()
+	_delta.text = controller.build_delta_summary_text()
 	_debug.text = controller.build_debug_text()
 	_debug_json.text = controller.build_debug_json_preview()
-	_event_log.text = _format_events()
+	_event_log.text = controller.build_event_text()
 	_legend.text = _build_legend()
+	_mode_summary.text = _build_mode_summary()
+	_debug_panel.visible = bool(controller.ui_flags.get("show_debug_json_panel", false)) or _debug_panel.visible
 	_refresh_map()
 
 
-func _format_events() -> String:
-	var lines: PackedStringArray = PackedStringArray()
-	for event in controller.get_events_for_step():
-		lines.append(
-			"- %s (tick %s)" % [str(event.get("event_type", "?")), str(event.get("tick", "?"))]
-		)
-	if lines.is_empty():
-		return "Event log — (no events this step)"
-	return "Event log — step %d\n" % controller.step_index + "\n".join(lines)
+func _build_mode_summary() -> String:
+	match controller.interface_mode:
+		"economy":
+			return controller.build_economy_summary_text()
+		"military":
+			return controller.build_military_summary_text()
+		"neural":
+			return controller.build_neural_panel_text()
+		"debug":
+			return "[b]Debug[/b] — raw events and JSON enabled"
+		_:
+			var reason: String = str(controller.ui_flags.get("mode_unavailable_reason", ""))
+			if reason != "":
+				return "[b]World[/b] — %s" % reason
+			return "[b]World[/b] — terrain, buildings, units, roads"
 
 
 func _build_legend() -> String:
 	match controller.interface_mode:
 		"military":
-			return "[b]Military[/b] Blue=p1 Red=p2 | HP bars | Fog from snapshot"
+			return "[b]Military[/b] Blue=p1 Red=p2 | HP bars | combat lines | enemy hub emphasis"
 		"economy":
-			return "[b]Economy[/b] Routes=amber | Forest D | Construction sites"
+			return "[b]Economy[/b] Routes=amber | badges=blocked/no-route/progress | logistics emphasis"
 		"neural":
-			return "[b]Neural[/b] Magenta target = current decision target"
+			return "[b]Neural[/b] Cyan=previous command | Magenta=current decision | lines/rings on map"
 		"debug":
-			return "[b]Debug[/b] All layers + JSON panel"
+			return "[b]Debug[/b] All layers + raw events + JSON panel"
 		_:
 			return "[b]World[/b] Terrain, buildings, units, roads, ownership"
 
@@ -259,12 +283,17 @@ func _build_legend() -> String:
 func _refresh_map() -> void:
 	_map.show_forest_density = controller.layer_visibility.get("forest_density", true)
 	_map.show_logistics = controller.layer_visibility.get("logistics", true)
+	_map.show_coord_labels = bool(controller.ui_flags.get("show_coord_labels", false))
+	_map.set_command_overlays(controller.get_command_overlays())
+	_map.set_economy_badges(controller.get_economy_badges())
+	_map.set_military_hud(bool(controller.ui_flags.get("show_military_combat_overlay", false)))
 	var target: Dictionary = controller.command_target
 	if target.is_empty():
 		_map.set_attack_target(-1, -1)
 	else:
 		_map.set_attack_target(int(target.get("q", -1)), int(target.get("r", -1)))
 	_map.set_render_data(controller.get_render_data())
+	_map.fit_to_hexes(controller.get_focus_hexes())
 
 
 func _on_map_selection(q: int, r: int) -> void:
