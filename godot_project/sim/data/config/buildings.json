@@ -10,7 +10,8 @@
       "recipe_id": "",
       "required_deposit": "",
       "required_terrain": "grass",
-      "food_tier": 0
+      "food_tier": 0,
+      "ports": [[0, 0], [1, 2]]
     },
     "storehouse": {
       "display_name": "Storehouse",

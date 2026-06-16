@@ -213,7 +213,7 @@ Expected: `MIL SMOKE PASS`, `EXIT: 0 (pass)`. The whole suite runs in well under
 reference machine. MIL-SMOKE-009 asserts a deterministic replay hash (two runs from the
 same seed/scenario must match) and writes snapshot/events/metrics/unit/building exports.
 
-## Economy smoke tests (ECON-SMOKE-001–005)
+## Economy smoke tests (ECON-SMOKE-001–006)
 
 ```bash
 timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd

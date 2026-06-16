@@ -163,6 +163,8 @@ static func _shortage_diagnostics(state: GameState) -> Dictionary:
 			food_missing += 1
 		elif reason == "missing_worker":
 			worker_missing += 1
+		elif reason == "tool_missing":
+			tool_missing += 1
 	return {
 		"food": food_missing,
 		"tools": tool_missing,

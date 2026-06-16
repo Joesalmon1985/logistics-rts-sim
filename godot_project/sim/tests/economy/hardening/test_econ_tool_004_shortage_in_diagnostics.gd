@@ -52,6 +52,9 @@ func _run_body() -> void:
 			break
 	assert_true(saw_blocked, "production diagnostics must show building stalled without tools")
 
+	var shortages: Dictionary = state.diagnostics.get("shortages", {})
+	assert_true(int(shortages.get("tools", 0)) >= 1, "tool shortage counter must increment")
+
 
 func _set_forest_tile(state: GameState, q: int, r: int, density: int) -> void:
 	var tile := HexTile.new("forest", 0, 1, 1)

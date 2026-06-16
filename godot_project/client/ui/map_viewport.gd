@@ -186,6 +186,10 @@ func _draw() -> void:
 		var b: Vector2 = _hex_center(origin, int(road.get("to_q", 0)), int(road.get("to_r", 0)))
 		draw_line(a, b, Color(0.95, 0.82, 0.25), 4.0 * zoom)
 	if show_logistics:
+		for node in render_data.get("road_node_markers", []):
+			_draw_road_node(origin, node)
+		for port in render_data.get("building_ports", []):
+			_draw_building_port(origin, port)
 		for route in render_data.get("ware_routes", []):
 			_draw_ware_route(origin, route)
 		for job in render_data.get("delivery_jobs", []):
@@ -300,6 +304,26 @@ func _draw_tree_density(origin: Vector2, td: Dictionary) -> void:
 	draw_string(_default_font(), center + Vector2(-10, -14 * zoom), "D:%d" % density, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 1.0, 0.75))
 
 
+func _draw_road_node(origin: Vector2, node: Dictionary) -> void:
+	var center: Vector2 = _hex_center(origin, int(node.get("q", 0)), int(node.get("r", 0)))
+	draw_circle(center, 5.0 * zoom, Color(0.35, 0.75, 0.95, 0.9))
+	draw_arc(center, 7.0 * zoom, 0, TAU, 16, Color(0.2, 0.45, 0.65, 0.9), 1.5)
+
+
+func _draw_building_port(origin: Vector2, port: Dictionary) -> void:
+	var center: Vector2 = _hex_center(origin, int(port.get("q", 0)), int(port.get("r", 0)))
+	var half: float = 5.0 * zoom
+	draw_colored_polygon(
+		PackedVector2Array([
+			center + Vector2(0, -half),
+			center + Vector2(half, 0),
+			center + Vector2(0, half),
+			center + Vector2(-half, 0),
+		]),
+		Color(0.95, 0.55, 0.2, 0.85),
+	)
+
+
 func _draw_ware_route(origin: Vector2, route: Dictionary) -> void:
 	var points: Array = route.get("points", [])
 	for i in range(points.size() - 1):
@@ -319,9 +343,13 @@ func _draw_delivery_job(origin: Vector2, job: Dictionary) -> void:
 		return
 	var a: Vector2 = _hex_center(origin, fq, fr)
 	var b: Vector2 = _hex_center(origin, tq, tr)
-	draw_line(a, b, Color(0.55, 0.85, 1.0, 0.45), 2.0 * zoom)
+	var line_color: Color = Color(0.55, 0.85, 1.0, 0.45)
+	if bool(job.get("blocked", false)):
+		line_color = Color(1.0, 0.35, 0.35, 0.75)
+	draw_line(a, b, line_color, 2.0 * zoom)
 	var mid: Vector2 = (a + b) * 0.5
-	draw_string(_default_font(), mid + Vector2(-8, -4), str(job.get("ware_type", "")).substr(0, 3), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.8, 0.95, 1.0))
+	var label: String = str(job.get("label", job.get("ware_type", "")))
+	draw_string(_default_font(), mid + Vector2(-8, -4), label.substr(0, mini(24, label.length())), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, line_color)
 
 
 func _store_label_for_building(building_id: int) -> String:

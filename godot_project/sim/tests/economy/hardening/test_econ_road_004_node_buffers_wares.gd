@@ -1,6 +1,9 @@
 extends "res://sim/tests/test_case.gd"
 
 
+## Node buffer inventory schema test (DDR-LOG-006: reserved schema; live logistics uses carrier-held transit only).
+
+
 func get_name() -> String:
 	return "test_ECON_ROAD_004_node_buffers_wares"
 

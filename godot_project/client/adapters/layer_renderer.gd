@@ -29,6 +29,8 @@ static func build_render_data(snapshot: Dictionary, layer_visibility: Dictionary
 	var production_activity: Array = _build_production_activity(snapshot, layer_visibility)
 	var ware_routes: Array = _build_ware_routes(snapshot, layer_visibility, node_lookup)
 	var delivery_jobs: Array = _build_delivery_jobs(snapshot, layer_visibility, node_lookup)
+	var road_node_markers: Array = _build_road_node_markers(snapshot, layer_visibility)
+	var building_ports: Array = _build_building_ports(snapshot, layer_visibility)
 	var resources: Array = _filter_layer(layers.get("resources", []), layer_visibility, "resources", true)
 	for field in snapshot.get("resource_fields", []):
 		if typeof(field) == TYPE_DICTIONARY:
@@ -48,6 +50,8 @@ static func build_render_data(snapshot: Dictionary, layer_visibility: Dictionary
 		"production_activity": production_activity,
 		"ware_routes": ware_routes,
 		"delivery_jobs": delivery_jobs,
+		"road_node_markers": road_node_markers,
+		"building_ports": building_ports,
 		"resources": resources,
 		"fog": fog if _layer_visible(layer_visibility, "fog", true) else {},
 		"map_width": int(snapshot.get("map", {}).get("width", 0)),
@@ -68,6 +72,8 @@ static func count_entities(render_data: Dictionary) -> Dictionary:
 		"building_stores": render_data.get("building_stores", []).size(),
 		"ware_routes": render_data.get("ware_routes", []).size(),
 		"delivery_jobs": render_data.get("delivery_jobs", []).size(),
+		"road_node_markers": render_data.get("road_node_markers", []).size(),
+		"building_ports": render_data.get("building_ports", []).size(),
 	}
 
 
@@ -437,38 +443,96 @@ static func _build_delivery_jobs(snapshot: Dictionary, visibility: Dictionary, n
 	for job in snapshot.get("ware_movement_markers", []):
 		if typeof(job) != TYPE_DICTIONARY:
 			continue
-		var dest_id: int = int(job.get("dest_entity_id", 0))
-		var dest_type: String = str(job.get("dest_entity_type", ""))
-		var dest: Vector2i = _entity_coords(snapshot, dest_id, dest_type)
-		var source_store_id: int = int(job.get("source_store_id", 0))
-		var source_building: Dictionary = building_by_store.get(source_store_id, {})
-		var from_q: int = -1
-		var from_r: int = -1
-		if not source_building.is_empty():
-			from_q = int(source_building.get("anchor_q", source_building.get("q", -1)))
-			from_r = int(source_building.get("anchor_r", source_building.get("r", -1)))
-		var ware_type: String = str(job.get("ware_type", ""))
-		var amount: int = int(job.get("amount", 0))
-		var dest_label: String = dest_type
-		if dest_type == "building":
-			for b in snapshot.get("buildings", []):
-				if int(b.get("id", -1)) == dest_id:
-					dest_label = str(b.get("building_type", "building"))
-					break
-		elif dest_type == "construction_site":
-			for s in snapshot.get("construction_sites", []):
-				if int(s.get("id", -1)) == dest_id:
-					dest_label = "%s site" % str(s.get("building_type", "building"))
-					break
+		markers.append(_delivery_job_marker(snapshot, job, building_by_store, false))
+	for job in snapshot.get("blocked_job_markers", []):
+		if typeof(job) != TYPE_DICTIONARY:
+			continue
+		markers.append(_delivery_job_marker(snapshot, job, building_by_store, true))
+	return markers
+
+
+static func _delivery_job_marker(
+	snapshot: Dictionary,
+	job: Dictionary,
+	building_by_store: Dictionary,
+	blocked: bool,
+) -> Dictionary:
+	var dest_id: int = int(job.get("dest_entity_id", 0))
+	var dest_type: String = str(job.get("dest_entity_type", ""))
+	var dest: Vector2i = _entity_coords(snapshot, dest_id, dest_type)
+	var source_store_id: int = int(job.get("source_store_id", 0))
+	var source_building: Dictionary = building_by_store.get(source_store_id, {})
+	var from_q: int = -1
+	var from_r: int = -1
+	if not source_building.is_empty():
+		from_q = int(source_building.get("anchor_q", source_building.get("q", -1)))
+		from_r = int(source_building.get("anchor_r", source_building.get("r", -1)))
+	var ware_type: String = str(job.get("ware_type", ""))
+	var amount: int = int(job.get("amount", 0))
+	var dest_label: String = dest_type
+	if dest_type == "building":
+		for b in snapshot.get("buildings", []):
+			if int(b.get("id", -1)) == dest_id:
+				dest_label = str(b.get("building_type", "building"))
+				break
+	elif dest_type == "construction_site":
+		for s in snapshot.get("construction_sites", []):
+			if int(s.get("id", -1)) == dest_id:
+				dest_label = "%s site" % str(s.get("building_type", "building"))
+				break
+	var status: String = str(job.get("status", ""))
+	var block_reason: String = str(job.get("block_reason", ""))
+	var label: String = "%s x%d -> %s" % [ware_type, amount, dest_label]
+	if blocked and block_reason != "":
+		label = "%s (%s)" % [label, block_reason]
+	return {
+		"job_id": int(job.get("id", 0)),
+		"ware_type": ware_type,
+		"amount": amount,
+		"from_q": from_q,
+		"from_r": from_r,
+		"to_q": dest.x,
+		"to_r": dest.y,
+		"label": label,
+		"status": status,
+		"block_reason": block_reason,
+		"blocked": blocked,
+	}
+
+
+static func _build_road_node_markers(snapshot: Dictionary, visibility: Dictionary) -> Array:
+	if not _layer_visible(visibility, "logistics", true):
+		return []
+	var markers: Array = []
+	for node in snapshot.get("road_nodes", []):
+		if typeof(node) != TYPE_DICTIONARY:
+			continue
 		markers.append({
-			"job_id": int(job.get("id", 0)),
-			"ware_type": ware_type,
-			"amount": amount,
-			"from_q": from_q,
-			"from_r": from_r,
-			"to_q": dest.x,
-			"to_r": dest.y,
-			"label": "%s x%d -> %s" % [ware_type, amount, dest_label],
-			"status": str(job.get("status", "")),
+			"id": int(node.get("id", 0)),
+			"q": int(node.get("q", 0)),
+			"r": int(node.get("r", 0)),
+			"building_id": int(node.get("building_id", 0)),
 		})
+	return markers
+
+
+static func _build_building_ports(snapshot: Dictionary, visibility: Dictionary) -> Array:
+	if not _layer_visible(visibility, "logistics", true):
+		return []
+	var markers: Array = []
+	for building in snapshot.get("buildings", []):
+		if typeof(building) != TYPE_DICTIONARY:
+			continue
+		for port in building.get("port_node_ids", []):
+			if typeof(port) != TYPE_DICTIONARY:
+				continue
+			markers.append({
+				"building_id": int(building.get("id", 0)),
+				"building_type": str(building.get("building_type", "")),
+				"q": int(port.get("q", 0)),
+				"r": int(port.get("r", 0)),
+				"dq": int(port.get("dq", 0)),
+				"dr": int(port.get("dr", 0)),
+				"node_id": int(port.get("node_id", 0)),
+			})
 	return markers

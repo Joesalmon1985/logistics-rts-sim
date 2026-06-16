@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Headless economy smoke runner — ECON-SMOKE-001 through ECON-SMOKE-005.
+## Headless economy smoke runner — ECON-SMOKE-001 through ECON-SMOKE-006.
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
 const ExportScript := preload("res://sim/tools/economy_export.gd")
@@ -8,6 +8,9 @@ const ExportScript := preload("res://sim/tools/economy_export.gd")
 const DEFAULT_SEED: int = 42
 const BOT_MAX_TICKS: int = 20000
 const REPLAY_TICKS: int = 500
+const SMOKE_006_SEED: int = 607
+const SMOKE_006_TICKS: int = 500
+const SMOKE_006_EXPECTED_HASH: String = "sha256:1273aa90b79c6436518b27680ac827cb0658332902b944ff35aed51acbf4accf"
 
 
 func _initialize() -> void:
@@ -35,7 +38,7 @@ func _initialize() -> void:
 		elif arg.begins_with("--export-dir="):
 			export_dir = arg.substr("--export-dir=".length())
 
-	var valid_smokes: Array[String] = ["all", "001", "002", "003", "004", "005"]
+	var valid_smokes: Array[String] = ["all", "001", "002", "003", "004", "005", "006"]
 	if smoke_id not in valid_smokes:
 		print("ECON SMOKE FAIL: unknown smoke id '%s'" % smoke_id)
 		print("EXIT: 1 (fail)")
@@ -53,6 +56,8 @@ func _initialize() -> void:
 		failed = failed or not _run_smoke_004(seed_value, check_hash, expected_hash_override)
 	if smoke_id == "all" or smoke_id == "005":
 		failed = failed or not _run_smoke_005(scenario_path, seed_value, export_dir)
+	if smoke_id == "all" or smoke_id == "006":
+		failed = failed or not _run_smoke_006(seed_value, check_hash, expected_hash_override)
 
 	if failed:
 		print("ECON SMOKE FAIL")
@@ -251,6 +256,100 @@ func _run_smoke_005(scenario_path: String, seed_value: int, export_dir: String) 
 		ExportScript.export_all(state, export_dir, bot.get_decisions())
 
 	print("ECON-SMOKE-005 PASS: heuristic bot built workshop via logistics")
+	return true
+
+
+func _run_smoke_006(seed_value: int, check_hash: bool, expected_override: String) -> bool:
+	var scenario: Dictionary = {
+		"variant": "economy_trial",
+		"seed": SMOKE_006_SEED if seed_value == DEFAULT_SEED else seed_value,
+		"map_width": 10,
+		"map_height": 10,
+		"players": ["p1"],
+		"hq_position": {"q": 2, "r": 2},
+		"build_radius": 12,
+	}
+	var runner := SimulationTickRunner.new()
+	var validator := CommandValidator.new(CommandRegistry.create_default())
+	var state: GameState = runner.create_game(scenario)
+	_flatten_grass(state, 0, 0, 9, 9)
+	_connect_roads(state, 2, 2, 6, 3)
+	var cmd := PlaceBuildingPlanCommand.new("p1", 0, {
+		"building_type": "storehouse",
+		"q": 6,
+		"r": 3,
+		"player_id": "p1",
+	})
+	validator.validate_and_apply(state, cmd)
+
+	var site_id: int = 0
+	for site in EconomyState.all_construction_sites(state):
+		if str(site.get("building_type", "")) == "storehouse":
+			site_id = int(site.get("id", 0))
+			break
+	if site_id <= 0:
+		print("ECON-SMOKE-006 FAIL: no storehouse construction site")
+		return false
+
+	var saw_job: bool = false
+	var saw_carrier: bool = false
+	for _pre in range(5):
+		state = runner.tick(state)
+		for job in EconomyState.all_delivery_jobs(state):
+			saw_job = true
+		for carrier in EconomyState.all_carriers(state):
+			if str(carrier.get("state", "")) != EconomyConstants.CARRIER_IDLE:
+				saw_carrier = true
+
+	state = runner.run_ticks(state, SMOKE_006_TICKS)
+
+	var completed: bool = false
+	for building in EconomyState.all_buildings(state):
+		if str(building.get("building_type", "")) == "storehouse":
+			if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
+				completed = true
+	if not completed:
+		print("ECON-SMOKE-006 FAIL: storehouse not completed")
+		return false
+
+	var delivered_event: bool = false
+	var builder_progress: bool = false
+	for event in state.event_log.events:
+		if event.type == "ware_delivered":
+			delivered_event = true
+		if event.type == "construction_progressed":
+			builder_progress = true
+	if not delivered_event:
+		print("ECON-SMOKE-006 FAIL: no ware_delivered event")
+		return false
+	if not builder_progress:
+		print("ECON-SMOKE-006 FAIL: builder_work did not progress")
+		return false
+
+	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
+	if snapshot.get("roads", []).is_empty() or snapshot.get("road_nodes", []).is_empty():
+		print("ECON-SMOKE-006 FAIL: snapshot missing roads/nodes")
+		return false
+	if snapshot.get("delivery_jobs", []).is_empty() and not saw_job:
+		print("ECON-SMOKE-006 FAIL: no delivery job evidence")
+		return false
+	var hq_ports: bool = false
+	for building in snapshot.get("buildings", []):
+		if str(building.get("building_type", "")) == "headquarters":
+			hq_ports = building.get("port_node_ids", []).size() > 0
+	if not hq_ports:
+		print("ECON-SMOKE-006 FAIL: HQ ports not exported")
+		return false
+
+	var hash_value: String = ReplayHash.compute_state_hash(state)
+	print("ECON-SMOKE-006 replay hash: %s" % hash_value)
+	if check_hash:
+		var expected: String = expected_override if expected_override != "" else SMOKE_006_EXPECTED_HASH
+		if not ReplayHash.matches(expected, hash_value):
+			print("ECON-SMOKE-006 FAIL: replay hash mismatch %s vs %s" % [hash_value, expected])
+			return false
+
+	print("ECON-SMOKE-006 PASS: HQ to site logistics with carrier delivery and builder_work")
 	return true
 
 

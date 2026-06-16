@@ -85,6 +85,40 @@ static func create_building_road_node(
 	return _ensure_node_at_hex(state, HexCoord.new(q, r), player_id, building_id)
 
 
+## Creates one road node per configured building port (DDR-LOG-002). Returns primary entrance node id.
+static func create_building_port_nodes(
+	state: GameState,
+	building_id: int,
+	anchor_q: int,
+	anchor_r: int,
+	player_id: String,
+	cfg: EconomyConfig,
+	building_type: String,
+) -> Dictionary:
+	var bdef: Dictionary = cfg.get_building_def(building_type)
+	var ports: Array = cfg.get_building_ports(bdef)
+	var port_node_ids: Array = []
+	var primary_node_id: int = 0
+	for port in ports:
+		if typeof(port) != TYPE_ARRAY or port.size() < 2:
+			continue
+		var dq: int = int(port[0])
+		var dr: int = int(port[1])
+		var pq: int = anchor_q + dq
+		var pr: int = anchor_r + dr
+		var node_id: int = create_building_road_node(state, building_id, pq, pr, player_id)
+		port_node_ids.append({"dq": dq, "dr": dr, "q": pq, "r": pr, "node_id": node_id})
+		if dq == 0 and dr == 0:
+			primary_node_id = node_id
+	if primary_node_id <= 0 and not port_node_ids.is_empty():
+		primary_node_id = int(port_node_ids[0].get("node_id", 0))
+	return {
+		"road_node_id": primary_node_id,
+		"ports": ports,
+		"port_node_ids": port_node_ids,
+	}
+
+
 static func _ensure_node_at_hex(
 	state: GameState,
 	coord: HexCoord,

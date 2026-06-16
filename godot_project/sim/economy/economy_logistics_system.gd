@@ -125,11 +125,14 @@ static func _advance_job(state: GameState, job: Dictionary) -> void:
 			_update_job(state, job)
 		if not EconomyState.inventory_has(source_store, ware_type, amount):
 			job["status"] = EconomyConstants.JOB_WAITING_WARE
+			job["block_reason"] = "waiting_ware"
 			_update_job(state, job)
 			return
 
-	var source_node_id: int = _store_node_id(state, source_store_id)
-	var dest_node_id: int = _dest_node_id(state, job)
+	var source_node_id: int = _store_node_id(state, source_store_id, _dest_node_id(state, job))
+	var dest_node_id: int = _dest_node_id(state, job, source_node_id)
+	if source_node_id > 0 and dest_node_id > 0:
+		source_node_id = _store_node_id(state, source_store_id, dest_node_id)
 	if source_node_id <= 0 or dest_node_id <= 0:
 		job["status"] = EconomyConstants.JOB_BLOCKED
 		job["block_reason"] = "missing_node"
@@ -148,12 +151,13 @@ static func _advance_job(state: GameState, job: Dictionary) -> void:
 	var carrier: Dictionary = _take_idle_carrier(state, str(job.get("player_id", "p1")))
 	if carrier.is_empty():
 		job["status"] = EconomyConstants.JOB_WAITING_CARRIER
+		job["block_reason"] = "no_carrier"
 		_update_job(state, job)
 		return
 
 	if not EconomyState.inventory_reserve(source_store, ware_type, amount):
 		job["status"] = EconomyConstants.JOB_WAITING_WARE
-		_update_job(state, job)
+		job["block_reason"] = "waiting_ware"
 		return
 	EconomyState.set_ware_store(state, source_store_id, source_store)
 	EconomyState.emit_event(state, "ware_reserved", {
@@ -339,7 +343,7 @@ static func _find_source_store_for_ware(
 			continue
 		if dest_node_id <= 0:
 			return store_id
-		var source_node: int = _store_node_id(state, store_id)
+		var source_node: int = _store_node_id(state, store_id, dest_node_id)
 		if source_node <= 0:
 			continue
 		if not EconomyPathfinder.find_route(state, source_node, dest_node_id).is_empty():
@@ -354,7 +358,8 @@ static func _dest_node_id_for_coords(
 	player_id: String,
 ) -> int:
 	if dest_entity_type == "building":
-		return int(EconomyState.get_building(state, dest_entity_id).get("road_node_id", 0))
+		var building: Dictionary = EconomyState.get_building(state, dest_entity_id)
+		return _select_entrance_node(state, building, 0, false)
 	if dest_entity_type == "construction_site":
 		var site: Dictionary = EconomyState.get_construction_site(state, dest_entity_id)
 		return EconomyRoadSystem.create_building_road_node(
@@ -375,18 +380,52 @@ static func _dest_store_id(state: GameState, dest_entity_id: int, dest_entity_ty
 	return 0
 
 
-static func _store_node_id(state: GameState, store_id: int) -> int:
+static func _select_entrance_node(
+	state: GameState,
+	building: Dictionary,
+	peer_node_id: int,
+	as_source: bool,
+) -> int:
+	var port_nodes: Array = building.get("port_node_ids", [])
+	var fallback: int = int(building.get("road_node_id", 0))
+	if port_nodes.is_empty():
+		return fallback
+	if peer_node_id <= 0:
+		return fallback
+	var best_id: int = 0
+	var best_len: int = 999999
+	for port in port_nodes:
+		if typeof(port) != TYPE_DICTIONARY:
+			continue
+		var node_id: int = int(port.get("node_id", 0))
+		if node_id <= 0:
+			continue
+		var route: Array = []
+		if as_source:
+			route = EconomyPathfinder.find_route(state, node_id, peer_node_id)
+		else:
+			route = EconomyPathfinder.find_route(state, peer_node_id, node_id)
+		if not route.is_empty() and route.size() < best_len:
+			best_len = route.size()
+			best_id = node_id
+	if best_id > 0:
+		return best_id
+	return fallback
+
+
+static func _store_node_id(state: GameState, store_id: int, toward_node_id: int = 0) -> int:
 	for building in EconomyState.all_buildings(state):
 		if int(building.get("store_id", 0)) == store_id:
-			return int(building.get("road_node_id", 0))
+			return _select_entrance_node(state, building, toward_node_id, true)
 	return 0
 
 
-static func _dest_node_id(state: GameState, job: Dictionary) -> int:
+static func _dest_node_id(state: GameState, job: Dictionary, source_node_hint: int = 0) -> int:
 	var dest_type: String = str(job.get("dest_entity_type", ""))
 	var dest_id: int = int(job.get("dest_entity_id", 0))
 	if dest_type == "building":
-		return int(EconomyState.get_building(state, dest_id).get("road_node_id", 0))
+		var building: Dictionary = EconomyState.get_building(state, dest_id)
+		return _select_entrance_node(state, building, source_node_hint, false)
 	if dest_type == "construction_site":
 		var site: Dictionary = EconomyState.get_construction_site(state, dest_id)
 		return EconomyRoadSystem.create_building_road_node(

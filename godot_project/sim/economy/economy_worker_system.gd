@@ -36,7 +36,10 @@ static func _fulfill_worker_requests(state: GameState) -> void:
 		while assigned.size() < slots:
 			var worker: Dictionary = _take_idle_worker(state, worker_type, building)
 			if worker.is_empty():
-				building["paused_reason"] = "missing_worker"
+				if _idle_workers_blocked_by_tools(state, worker_type, building):
+					building["paused_reason"] = "tool_missing"
+				else:
+					building["paused_reason"] = "missing_worker"
 				EconomyState.emit_event(state, "worker_unavailable", {
 					"building_id": int(building.get("id", 0)),
 					"worker_type": worker_type,
@@ -107,6 +110,33 @@ static func _consume_tool_for_worker(
 	EconomyState.inventory_remove(store, tool_ware, tool_amount)
 	EconomyState.set_ware_store(state, store_id, store)
 	return true
+
+
+static func _idle_workers_blocked_by_tools(
+	state: GameState,
+	worker_type: String,
+	building: Dictionary,
+) -> bool:
+	var cfg: EconomyConfig = EconomyState.get_config(state)
+	var tool_req: Dictionary = cfg.get_tool_requirement(worker_type)
+	var tool_ware: String = str(tool_req.get("ware", "tools"))
+	var tool_amount: int = int(tool_req.get("amount", 0))
+	if tool_amount <= 0:
+		return false
+	var saw_reachable_idle: bool = false
+	for worker in EconomyState.all_workers(state):
+		if str(worker.get("worker_type", "")) != worker_type:
+			continue
+		if str(worker.get("state", "")) != EconomyConstants.WORKER_IDLE:
+			continue
+		if not _worker_reachable_from_building(state, worker, building):
+			continue
+		saw_reachable_idle = true
+		var store_id: int = int(worker.get("home_store_id", 0))
+		var store: Dictionary = EconomyState.get_ware_store(state, store_id)
+		if EconomyState.inventory_has(store, tool_ware, tool_amount):
+			return false
+	return saw_reachable_idle
 
 
 static func _release_building_workers(state: GameState, building: Dictionary) -> void:

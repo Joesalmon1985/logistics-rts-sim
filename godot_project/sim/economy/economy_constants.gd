@@ -20,6 +20,7 @@ const BLD_ACTIVE: String = "active"
 const BLD_PAUSED_MISSING_INPUT: String = "paused_missing_input"
 const BLD_PAUSED_MISSING_WORKER: String = "paused_missing_worker"
 const BLD_PAUSED_NO_OUTPUT: String = "paused_no_output_space"
+## Reserved; v1 routing blocks appear on delivery jobs (block_reason), not building pause.
 const BLD_PAUSED_NO_ROUTE: String = "paused_no_route"
 const BLD_DISABLED: String = "disabled"
 const BLD_COMPLETED: String = "completed"

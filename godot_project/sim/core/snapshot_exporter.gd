@@ -42,14 +42,19 @@ static func export_snapshot(state: GameState) -> Dictionary:
 	if state.entities.has(EconomyConstants.BUCKET_CARRIERS):
 		for key in state.entities[EconomyConstants.BUCKET_CARRIERS]:
 			carrier_markers.append(state.entities[EconomyConstants.BUCKET_CARRIERS][key])
+	var delivery_jobs: Array = []
 	if state.entities.has(EconomyConstants.BUCKET_DELIVERY_JOBS):
 		for key in state.entities[EconomyConstants.BUCKET_DELIVERY_JOBS]:
 			var job: Dictionary = state.entities[EconomyConstants.BUCKET_DELIVERY_JOBS][key]
-			if str(job.get("status", "")) == EconomyConstants.JOB_IN_TRANSIT:
+			delivery_jobs.append(job)
+			var status: String = str(job.get("status", ""))
+			if status == EconomyConstants.JOB_IN_TRANSIT:
 				ware_movement_markers.append(job)
-			elif str(job.get("status", "")) in [
+			elif status in [
 				EconomyConstants.JOB_BLOCKED,
 				EconomyConstants.JOB_WAITING_ROUTE,
+				EconomyConstants.JOB_WAITING_CARRIER,
+				EconomyConstants.JOB_WAITING_WARE,
 				EconomyConstants.JOB_FAILED,
 			]:
 				blocked_job_markers.append(job)
@@ -73,6 +78,7 @@ static func export_snapshot(state: GameState) -> Dictionary:
 		"carrier_markers": carrier_markers,
 		"ware_movement_markers": ware_movement_markers,
 		"blocked_job_markers": blocked_job_markers,
+		"delivery_jobs": delivery_jobs,
 		"entities": state.entities.duplicate(true),
 		"diagnostics": state.diagnostics.duplicate(true),
 		"players": player_data,
@@ -118,6 +124,8 @@ static func export_training_snapshot(state: GameState, actor_id: String = "") ->
 			if str(job.get("status", "")) in [
 				EconomyConstants.JOB_BLOCKED,
 				EconomyConstants.JOB_WAITING_ROUTE,
+				EconomyConstants.JOB_WAITING_CARRIER,
+				EconomyConstants.JOB_WAITING_WARE,
 				EconomyConstants.JOB_FAILED,
 			]:
 				blocked_job_markers.append(job)

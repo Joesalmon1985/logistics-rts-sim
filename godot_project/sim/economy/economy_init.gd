@@ -69,7 +69,9 @@ static func _create_hq(
 		EconomyState.inventory_add(store, "tools", starting_tools)
 	EconomyState.set_ware_store(state, store_id, store)
 
-	var node_id: int = EconomyRoadSystem.create_building_road_node(state, building_id, hq_q, hq_r, player_id)
+	var port_data: Dictionary = EconomyRoadSystem.create_building_port_nodes(
+		state, building_id, hq_q, hq_r, player_id, cfg, "headquarters",
+	)
 	var building := {
 		"id": building_id,
 		"building_type": "headquarters",
@@ -78,7 +80,9 @@ static func _create_hq(
 		"player_id": player_id,
 		"state": EconomyConstants.BLD_ACTIVE,
 		"store_id": store_id,
-		"road_node_id": node_id,
+		"road_node_id": int(port_data.get("road_node_id", 0)),
+		"ports": port_data.get("ports", [[0, 0]]),
+		"port_node_ids": port_data.get("port_node_ids", []),
 		"enabled": 1,
 		"priority": 0,
 		"worker_type": "",
@@ -159,7 +163,9 @@ static func _spawn_completed_building(
 		var cap: int = int(bdef.get("storage_capacity", cfg.int_val("building_input_capacity", 20)))
 		EconomyState.set_ware_store(state, store_id, EconomyState.create_empty_inventory(cap))
 
-	var node_id: int = EconomyRoadSystem.create_building_road_node(state, building_id, anchor_q, anchor_r, player_id)
+	var port_data: Dictionary = EconomyRoadSystem.create_building_port_nodes(
+		state, building_id, anchor_q, anchor_r, player_id, cfg, building_type,
+	)
 	var building := {
 		"id": building_id,
 		"building_type": building_type,
@@ -168,7 +174,9 @@ static func _spawn_completed_building(
 		"player_id": player_id,
 		"state": EconomyConstants.BLD_ACTIVE,
 		"store_id": store_id,
-		"road_node_id": node_id,
+		"road_node_id": int(port_data.get("road_node_id", 0)),
+		"ports": port_data.get("ports", [[0, 0]]),
+		"port_node_ids": port_data.get("port_node_ids", []),
 		"enabled": 1,
 		"priority": 0,
 		"worker_type": str(bdef.get("worker_type", "")),

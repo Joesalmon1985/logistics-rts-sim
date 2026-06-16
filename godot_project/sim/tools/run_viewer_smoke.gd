@@ -145,6 +145,13 @@ func _run_smoke_003() -> bool:
 	if chain_deltas < 1:
 		print("GOD-SMOKE-003 FAIL: production chain showed no logistics delta after 30 ticks")
 		return false
+	var chain_counts: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
+	if chain_counts.get("road_node_markers", 0) < 1:
+		print("GOD-SMOKE-003 FAIL: road_node_markers missing from render data")
+		return false
+	if chain_counts.get("building_ports", 0) < 1:
+		print("GOD-SMOKE-003 FAIL: building_ports missing from render data")
+		return false
 
 	var build := ViewerController.new()
 	build.load_demo_state(EconomyDemo.build_build_tutorial(), "p1")

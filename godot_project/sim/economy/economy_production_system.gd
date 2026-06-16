@@ -68,7 +68,8 @@ static func _tick_building(state: GameState, building: Dictionary) -> void:
 		var slots: int = int(bdef.get("worker_slots", 0))
 		if building.get("assigned_workers", []).size() < slots:
 			building["state"] = EconomyConstants.BLD_PAUSED_MISSING_WORKER
-			building["paused_reason"] = "missing_worker"
+			if str(building.get("paused_reason", "")) != "tool_missing":
+				building["paused_reason"] = "missing_worker"
 			EconomyState.add_building(state, building)
 			return
 
