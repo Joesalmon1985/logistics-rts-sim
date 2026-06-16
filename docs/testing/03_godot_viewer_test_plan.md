@@ -1,6 +1,8 @@
 # Godot Viewer Test Plan
 
-Scope: RUN_05 (trial viewers), RUN_09 (hybrid observer), RUN_10 (human play polish).
+Scope: RUN_05 (trial viewers), RUN_02.7 (economy logistics viewer observability), RUN_09 (hybrid observer), RUN_10 (human play polish).
+
+> **RUN_02.7:** Functional viewer observability of logistics mechanics (road nodes, ports, carriers, jobs, diagnostics) is in scope — driven by snapshot/export only, not polish. See [`docs/runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) Phase 9.
 
 ## Three-Track Verification (RUN_05)
 

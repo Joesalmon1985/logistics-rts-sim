@@ -119,7 +119,7 @@
 |---|---|
 | **Status** | **Approved** |
 | **Final decision** | Defer: wages, housing, commuting, morale, strikes, disease, civic buildings, power, ports/ships, **hybrid military wiring** (RUN_07), neural training changes, viewer visual polish. **Snapshot/export readiness remains in scope for RUN_02.7** — economy foundation is prepared for later hybrid and viewer work (see DDR-LOG-010). |
-| **Consequence for RUN_02.7** | Scope guard: no civic systems, hybrid implementation, or viewer polish in RUN_02.7; implement snapshot/export logistics fields and tests as part of foundation hardening. |
+| **Consequence for RUN_02.7** | Scope guard: no civic systems, hybrid implementation, viewer **polish**, or UI redesign in RUN_02.7; viewer **observability** and snapshot/export logistics fields/tests are in scope (see [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) Phase 9). |
 | **Deferred** | Hybrid **implementation** (not hybrid-prep snapshot/export work); civic, wages, labour simulation, viewer polish, node-buffer staging, specialist-worker pathing. |
 
 ---
@@ -177,10 +177,10 @@ Stages unchanged from audit draft; all stages now governed by ratified DDR-LOG d
 | 6 | Diagnostics fixes (tool shortage, stall strings) |
 | 7 | Deterministic logistics smoke (HQ → site via network) |
 | 8 | Full/debug snapshot logistics assertions (DDR-LOG-010) |
-| 9 | Regression tests (MAP-002, NODE-001, JOB-001/002, SNAP logistics) |
-| 10 | Visual display run — **separate** after RUN_02.7 |
+| 9 | Viewer observability — functional visibility in economy viewer (Phase 9 of [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md)); **not** aesthetic polish |
+| 10 | Regression and final verification (Phase 10 of run doc) |
 
-Detail per stage: see audit draft backlog sections (files, tests, acceptance) — implement per ratified decisions only.
+Detail per stage: see [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) — implement per ratified decisions only.
 
 ---
 
@@ -194,8 +194,9 @@ Detail per stage: see audit draft backlog sections (files, tests, acceptance) �
 - [ ] `builder_work` only after materials delivered (DDR-LOG-005).
 - [ ] Config-only new ware/recipe/building chain test (DDR-LOG-007).
 - [ ] Full/debug snapshots expose logistics per DDR-LOG-010.
-- [ ] ECON-SMOKE-001–005 + new logistics smoke + replay hash pass.
+- [ ] ECON-SMOKE-001–006 + replay hash pass.
 - [ ] Full test suite green; existing scenarios compatible (DDR-LOG-011).
+- [ ] Viewer observability acceptance met (road nodes, ports, carriers, jobs, diagnostics visible from snapshot/export; no viewer-fabricated state).
 
 ---
 
@@ -220,7 +221,8 @@ Detail per stage: see audit draft backlog sections (files, tests, acceptance) �
 
 ## Related documents
 
-- Run plan: [`RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md`](../runs/RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md)
+- **Implementation run:** [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md)
+- Audit run plan: [`RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md`](../runs/RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md)
 - Gap register: [`RUN_02_6_ECONOMY_FOUNDATION_GAP_REGISTER.md`](../../audit/RUN_02_6_ECONOMY_FOUNDATION_GAP_REGISTER.md)
 - Glossary: [`10_glossary.md`](10_glossary.md)
 - Requirements: [`02_trial_economy_game_requirements.md`](02_trial_economy_game_requirements.md)

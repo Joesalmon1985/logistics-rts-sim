@@ -39,11 +39,11 @@ Key ratified points:
 - Abstract specialist workers and abstract `builder_work` after material delivery
 - Config validation + config-only ware chain proof in RUN_02.7
 - Full/debug snapshot logistics contract; training snapshot omissions documented
-- Deferred: civic/hybrid **wiring**/viewer polish; snapshot/export readiness **in scope for RUN_02.7**
+- Deferred: civic/hybrid **wiring**, viewer **polish**, and UI redesign; viewer **observability** and snapshot/export readiness **in scope for RUN_02.7**
 - RUN_07 hybrid integration blocked until RUN_02.7 minimum v1 model passes
 
-Implementation remains deferred to **RUN_02.7** (see expanded scope in `RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md` §Next implementation run).
+Implementation is **RUN_02.7** — see [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) (phases 0–10: simulation refactor, snapshot/export, ECON-SMOKE-006, viewer observability, regression). RUN_02.6 closure: [`RUN_02_6_FINAL_REPORT.md`](RUN_02_6_FINAL_REPORT.md).
 
 ## Prompt improvement
 
-- RUN_02.7 prompt should reference ratified doc directly; decisions are no longer open.
+- RUN_02.7 prompt should reference [`15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md) and [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) directly; decisions are no longer open.

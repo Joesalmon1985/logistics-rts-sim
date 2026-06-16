@@ -110,6 +110,8 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 
 ### RUN_02.7 planned tests (ratified backlog)
 
+See [`docs/runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) for full phase plan and viewer observability acceptance.
+
 | Area | Planned test / rule ID | Notes |
 |------|------------------------|-------|
 | Building ports | ECON-NODE-001 | `test_ECON_NODE_001_node_adjacent_to_building_port` — configurable `ports[]`, routing to entrance |
@@ -120,7 +122,8 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 | Modularity | ECON-CHAIN-brick (new) | Config-only brick chain without code enum changes |
 | Snapshot | ECON-SNAP-003 | Full/debug snapshot logistics keys populated |
 | Map bounds | ECON-MAP-002 | `test_ECON_MAP_002_out_of_bounds_rejected` |
-| Regression | ECON-SMOKE-001–005, ECON-DET-002 | Must remain green after RUN_02.7 |
+| Regression | ECON-SMOKE-001–006, ECON-DET-002 | Must remain green after RUN_02.7 |
+| Viewer observability | GOD-SMOKE-003 extend or new | Logistics visible from snapshot/export; no viewer-fabricated state |
 | ECON-DET-002 | scenario | test_ECON_DET_002_replay_hash_stable |
 | ECON-STALL-001 | integration | test_ECON_STALL_001_stall_emits_diagnostic |
 

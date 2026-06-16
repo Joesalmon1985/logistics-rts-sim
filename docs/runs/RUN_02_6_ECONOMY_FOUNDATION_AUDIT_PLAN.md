@@ -124,22 +124,26 @@ Optional: [`docs/audit/RUN_02_6_LESSONS_LEARNED.md`](../../audit/RUN_02_6_LESSON
 
 [`docs/design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md)
 
-The decision draft file remains as a redirect stub. **Next implementation target: RUN_02.7** — economy logistics foundation hardening per ratified backlog. No simulation changes in ratification doc run.
+The decision draft file remains as a redirect stub. **Next implementation target: RUN_02.7** — see [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md). No simulation changes in ratification doc run.
 
 ## Next implementation run
 
-**RUN_02.7 — Economy Logistics Foundation Implementation**
+**RUN_02.7 — Economy Logistics Foundation Refactor and Viewer Observability**
+
+Authoritative run plan: [`RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md)
 
 Implement the ratified backlog from [`15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md):
 
-- Configurable `ports[]` with anchor fallback `[[0, 0]]`
-- Diagnostics fixes (tool shortage counts, job/block reasons)
-- Config-only brick chain proof + lightweight config validation
+- Economy logistics simulation refactor (config validation, `ports[]`, jobs, carriers, `builder_work`, diagnostics)
+- Config-only brick chain proof (smallest useful config-driven proof — not a full content pack)
 - Full/debug snapshot logistics assertions
 - ECON-SMOKE-006 deterministic logistics scenario (HQ → road network → construction site)
+- Viewer observability of new mechanics (functional visibility, not polish)
 - Regression protection for existing economy/kernel smokes and replay checks
 
-**Out of scope for RUN_02.7:** viewer polish, hybrid military wiring, civic systems, wages/labour simulation, node-buffer staging, and specialist-worker pathing.
+**Out of scope for RUN_02.7:** viewer polish and UI redesign, hybrid military wiring, civic systems, wages/labour simulation, node-buffer staging, specialist-worker pathing, ports/ships, disease/pandemic, power systems.
+
+Final report: [`RUN_02_6_FINAL_REPORT.md`](../../audit/RUN_02_6_FINAL_REPORT.md)
 
 ## Closure note (documentation phases)
 
@@ -156,7 +160,7 @@ Implement the ratified backlog from [`15_worker_carrier_road_node_logistics_foun
 - [x] Gap register with severity and categories
 - [x] Decision draft with backlog and future acceptance criteria
 - [x] No simulation/viewer/exporter/command/test code changes
-- [x] Final report with decision control table
+- [x] Final report with decision control table — [`RUN_02_6_FINAL_REPORT.md`](../../audit/RUN_02_6_FINAL_REPORT.md)
 - [x] DDR-LOG-001–012 ratified in design docs (post-audit documentation run)
 
 ## Final report format
