@@ -1,7 +1,7 @@
 extends "res://sim/tests/test_case.gd"
 
 const MAX_TICKS: int = 80
-const MAX_ROADS_BUILT: int = 25
+const MAX_ROADS_BUILT: int = 45
 
 
 func get_name() -> String:

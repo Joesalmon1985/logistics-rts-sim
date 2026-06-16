@@ -95,7 +95,7 @@ static func _count_player_roads(state: GameState, player_id: String) -> int:
 
 static func _spawn_kit() -> Dictionary:
 	return {
-		"starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
+		"starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
 		"starting_carriers": 4,
 		"starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
 	}

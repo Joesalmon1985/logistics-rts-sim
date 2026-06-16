@@ -70,14 +70,42 @@ func hq_position() -> Vector2i:
 	return Vector2i(0, 0)
 
 
+func has_completed_building_type(building_type: String) -> bool:
+	for building in own_buildings():
+		if str(building.get("building_type", "")) != building_type:
+			continue
+		var state_name: String = str(building.get("state", ""))
+		if state_name in [
+			EconomyConstants.BLD_PLANNED,
+			EconomyConstants.BLD_UNDER_CONSTRUCTION,
+			EconomyConstants.BLD_DISABLED,
+			EconomyConstants.BLD_BLOCKED,
+		]:
+			continue
+		return true
+	return false
+
+
 func has_building_type(building_type: String) -> bool:
 	for building in own_buildings():
-		if str(building.get("building_type", "")) == building_type:
-			if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
-				return true
+		if str(building.get("building_type", "")) != building_type:
+			continue
+		var state_name: String = str(building.get("state", ""))
+		if state_name in [
+			EconomyConstants.BLD_PLANNED,
+			EconomyConstants.BLD_UNDER_CONSTRUCTION,
+			EconomyConstants.BLD_DISABLED,
+			EconomyConstants.BLD_BLOCKED,
+		]:
+			continue
+		return true
 	for site in own_construction_sites():
-		if str(site.get("building_type", "")) == building_type:
-			return true
+		if str(site.get("building_type", "")) != building_type:
+			continue
+		var site_state: String = str(site.get("state", ""))
+		if site_state in [EconomyConstants.CONS_COMPLETED, EconomyConstants.CONS_CANCELLED]:
+			continue
+		return true
 	return false
 
 
