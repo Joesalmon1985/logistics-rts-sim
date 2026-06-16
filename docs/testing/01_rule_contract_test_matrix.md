@@ -127,6 +127,22 @@ See [`docs/runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECON
 | ECON-DET-002 | scenario | test_ECON_DET_002_replay_hash_stable |
 | ECON-STALL-001 | integration | test_ECON_STALL_001_stall_emits_diagnostic |
 
+### RUN_02.8 planned tests (ratified backlog)
+
+See [`docs/runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md`](../runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md) for full phase plan and minimum-match acceptance.
+
+| Area | Planned test / rule ID | Notes |
+|------|------------------------|-------|
+| Two-player bootstrap | ECON-MP-001 | `test_econ_mp_001_two_player_init` — dual HQ, starters, ownership |
+| Player-scoped safety | ECON-MP-002 | NOT_OWNER, no cross-player routing, worker isolation |
+| Economy score | ECON-SCORE-001 | Per-player `economy_scores` components |
+| Dual-bot expansion | ECON-BOT-002 | Minimum successful match numeric gates |
+| Dual-bot replay hash | ECON-BOT-003 | Export → import → identical hash (pinned) |
+| Bot observation boundary | ECON-BOT-004 | Snapshot/legal commands only; no raw `GameState` reads |
+| Viewer ownership overlay | VIS-BVB-001 (planned) | Render-data ownership tint for p1/p2 entities |
+| Viewer scoreboard | VIS-BVB-002 (planned) | `diagnostics.economy_scores` in render/summary |
+| Regression | ECON-SMOKE-001–006, ECON-DET-002 | Must remain green after RUN_02.8 |
+
 ### Commands and events
 
 | Rule ID | Test type | Example test name |

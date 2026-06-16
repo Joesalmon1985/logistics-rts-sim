@@ -70,10 +70,9 @@ static func hex_distance(a_q: int, a_r: int, b_q: int, b_r: int) -> int:
 
 
 static func within_build_radius(state: GameState, q: int, r: int, player_id: String) -> bool:
-	var hq_q: int = int(EconomyState.get_meta_value(state, "hq_position_q", 0))
-	var hq_r: int = int(EconomyState.get_meta_value(state, "hq_position_r", 0))
+	var hq_pos: Vector2i = EconomyState.get_hq_position(state, player_id)
 	var radius: int = int(EconomyState.get_meta_value(state, "build_radius", 8))
-	return hex_distance(q, r, hq_q, hq_r) <= radius
+	return hex_distance(q, r, hq_pos.x, hq_pos.y) <= radius
 
 
 static func deposit_satisfied(tile: HexTile, required_deposit: String, cfg: EconomyConfig) -> bool:
@@ -145,6 +144,7 @@ static func can_place_road(
 	hex_a: HexCoord,
 	hex_b: HexCoord,
 	player_id: String,
+	edge_keys: Dictionary = {},
 ) -> Dictionary:
 	if hex_a.distance(hex_b) != 1:
 		return {"ok": false, "reason": "NOT_ADJACENT"}
@@ -165,8 +165,24 @@ static func can_place_road(
 		if int(tdef.get("road_legal", 0)) <= 0:
 			return {"ok": false, "reason": "TERRAIN_BLOCKED"}
 
-	if EconomyRoadSystem.has_road_between(state, hex_a, hex_b):
+	var edge_key: String = EconomyRoadSystem.road_key(hex_a, hex_b)
+	if not edge_keys.is_empty():
+		if edge_keys.has(edge_key):
+			return {"ok": false, "reason": "ROAD_EXISTS"}
+	elif EconomyRoadSystem.has_road_between(state, hex_a, hex_b):
 		return {"ok": false, "reason": "ROAD_EXISTS"}
+
+	for coord in [hex_a, hex_b]:
+		var tile: HexTile = state.map.get_tile(coord)
+		if tile != null and tile.owner_player_id != "" and tile.owner_player_id != player_id:
+			return {"ok": false, "reason": "NOT_OWNER"}
+
+	for coord in [hex_a, hex_b]:
+		var existing_node_id: int = EconomyRoadSystem._find_node_at(state, coord.q, coord.r)
+		if existing_node_id > 0:
+			var existing_node: Dictionary = EconomyState.get_road_node(state, existing_node_id)
+			if str(existing_node.get("player_id", "")) != player_id:
+				return {"ok": false, "reason": "NOT_OWNER"}
 
 	return {"ok": true, "reason": ""}
 

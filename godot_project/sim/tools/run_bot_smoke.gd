@@ -4,7 +4,7 @@ extends SceneTree
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
 
-const VALID_SMOKES: Array[String] = ["all", "001", "002", "003", "BOT-SMOKE-001", "BOT-SMOKE-002", "REP-SMOKE-001"]
+const VALID_SMOKES: Array[String] = ["all", "001", "002", "003", "004", "BOT-SMOKE-001", "BOT-SMOKE-002", "BOT-SMOKE-004", "REP-SMOKE-001"]
 
 
 func _initialize() -> void:
@@ -39,6 +39,8 @@ func _initialize() -> void:
 		failed = failed or not _run_smoke_002(seed_value, export_dir)
 	if smoke_id == "all" or smoke_id == "003":
 		failed = failed or not _run_smoke_003(seed_value, export_dir)
+	if smoke_id == "all" or smoke_id == "004":
+		failed = failed or not _run_smoke_004(seed_value, export_dir)
 
 	if failed:
 		print("BOT SMOKE FAIL")
@@ -140,4 +142,47 @@ func _run_smoke_003(seed_value: int, export_dir: String) -> bool:
 		return false
 
 	print("REP-SMOKE-001 PASS: export/import identical hash")
+	return true
+
+
+func _run_smoke_004(seed_value: int, export_dir: String) -> bool:
+	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
+	if seed_value != 42:
+		scenario["seed"] = seed_value
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
+	var dual := DualBotRunner.new(runner)
+	state = dual.run_match(state, scenario)
+	var hash_a: String = ReplayHash.compute_state_hash(state)
+
+	for player_id in ["p1", "p2"]:
+		if DualBotRunner.count_player_buildings_built(state, player_id) < 5:
+			print("BOT-SMOKE-004 FAIL: %s bot-built buildings below minimum" % player_id)
+			return false
+		if DualBotRunner.count_player_roads_built(state, player_id) < 10:
+			print("BOT-SMOKE-004 FAIL: %s bot-built roads below minimum" % player_id)
+			return false
+		if DualBotRunner.count_player_deliveries_built(state, player_id) < 10:
+			print("BOT-SMOKE-004 FAIL: %s bot-built deliveries below minimum" % player_id)
+			return false
+
+	var runner_b := SimulationTickRunner.new()
+	var scenario_b: Dictionary = scenario.duplicate(true)
+	var state_b: GameState = runner_b.create_game(scenario_b)
+	EconomyBvbSetup.prepare_expansion_duel_map(state_b, scenario_b)
+	var dual_b := DualBotRunner.new(runner_b)
+	state_b = dual_b.run_match(state_b, scenario_b)
+	var hash_b: String = ReplayHash.compute_state_hash(state_b)
+	if hash_a != hash_b:
+		print("BOT-SMOKE-004 FAIL: replay hash mismatch")
+		print("  first:  %s" % hash_a)
+		print("  second: %s" % hash_b)
+		return false
+
+	if export_dir != "":
+		DirAccess.make_dir_recursive_absolute(export_dir)
+		EconomyExporter.export_all(state, export_dir, dual.get_recorder().get_command_entries())
+
+	print("BOT-SMOKE-004 PASS: dual-bot economy expansion hash=%s" % hash_a)
 	return true

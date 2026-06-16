@@ -1,6 +1,6 @@
 extends SceneTree
 
-## RUN_05 viewer smoke runner — GOD-SMOKE-001 / GOD-SMOKE-002 / GOD-SMOKE-003.
+## RUN_05 viewer smoke runner — GOD-SMOKE-001 … GOD-SMOKE-005.
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
 
@@ -13,7 +13,7 @@ func _initialize() -> void:
 		if arg.begins_with("--smoke="):
 			smoke_id = arg.substr("--smoke=".length())
 
-	var valid: Array[String] = ["all", "001", "002", "003"]
+	var valid: Array[String] = ["all", "001", "002", "003", "005"]
 	if smoke_id not in valid:
 		print("VIEWER SMOKE FAIL: unknown smoke id '%s'" % smoke_id)
 		print("EXIT: 1 (fail)")
@@ -27,6 +27,8 @@ func _initialize() -> void:
 		failed = failed or not _run_smoke_002()
 	if smoke_id == "all" or smoke_id == "003":
 		failed = failed or not _run_smoke_003()
+	if smoke_id == "all" or smoke_id == "005":
+		failed = failed or not _run_smoke_005()
 
 	if failed:
 		print("VIEWER SMOKE FAIL")
@@ -196,6 +198,48 @@ func _run_smoke_003() -> bool:
 		print("GOD-SMOKE-003 FAIL: build tutorial showed no site progress or completion within 120 ticks")
 		return false
 	print("GOD-SMOKE-003 PASS: economy logistics visibility")
+	return true
+
+
+func _run_smoke_005() -> bool:
+	var runner := SimulationTickRunner.new()
+	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
+	scenario["max_ticks"] = 30
+	var state: GameState = runner.create_game(scenario)
+	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
+	var dual := DualBotRunner.new(runner)
+	state = dual.run_match(state, scenario)
+	EconomyDiagnosticsSystem.tick(state)
+	var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
+	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
+
+	if render.get("ownership", []).is_empty():
+		print("GOD-SMOKE-005 FAIL: ownership layer empty")
+		return false
+
+	for road in render.get("roads", []):
+		if not road.has("player_id"):
+			print("GOD-SMOKE-005 FAIL: road missing player_id")
+			return false
+
+	for node in render.get("road_node_markers", []):
+		if not node.has("player_id"):
+			print("GOD-SMOKE-005 FAIL: road node missing player_id")
+			return false
+
+	var scores: Dictionary = snapshot.get("diagnostics", {}).get("economy_scores", {})
+	if not scores.has("p1") or not scores.has("p2"):
+		print("GOD-SMOKE-005 FAIL: dual economy_scores missing")
+		return false
+
+	var controller := ViewerController.new()
+	controller.load_demo_state(state, "p1")
+	var summary: String = controller.build_summary_text("economy")
+	if "p1=" not in summary or "p2=" not in summary:
+		print("GOD-SMOKE-005 FAIL: scoreboard missing dual scores in summary")
+		return false
+
+	print("GOD-SMOKE-005 PASS: dual-player ownership overlay and scoreboard")
 	return true
 
 

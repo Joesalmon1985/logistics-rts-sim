@@ -101,6 +101,7 @@ static func _tick_building(state: GameState, building: Dictionary) -> void:
 
 	if progress < ticks_needed:
 		building["production_progress"] = progress
+		building["last_production_tick"] = state.tick
 		EconomyState.add_building(state, building)
 		return
 
@@ -210,6 +211,8 @@ static func _complete_production_cycle(
 		_reveal_deposits_adjacent(state, building)
 
 	EconomyState.emit_event(state, "production_started", {"building_id": int(building.get("id", 0))})
+	building["last_production_tick"] = state.tick
+	EconomyState.add_building(state, building)
 	_increment_progress_score(state, 1)
 
 

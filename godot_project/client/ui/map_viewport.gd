@@ -181,10 +181,14 @@ func _draw() -> void:
 			_draw_tree_density(origin, td)
 	for res in render_data.get("resources", []):
 		_draw_resource(origin, res)
+	for own in render_data.get("ownership", []):
+		_draw_ownership(origin, own)
 	for road in render_data.get("roads", []):
 		var a: Vector2 = _hex_center(origin, int(road.get("from_q", 0)), int(road.get("from_r", 0)))
 		var b: Vector2 = _hex_center(origin, int(road.get("to_q", 0)), int(road.get("to_r", 0)))
-		draw_line(a, b, Color(0.95, 0.82, 0.25), 4.0 * zoom)
+		var road_color: Color = _player_color(str(road.get("player_id", "p1")))
+		road_color.a = 0.85
+		draw_line(a, b, road_color, 4.0 * zoom)
 	if show_logistics:
 		for node in render_data.get("road_node_markers", []):
 			_draw_road_node(origin, node)
@@ -306,8 +310,19 @@ func _draw_tree_density(origin: Vector2, td: Dictionary) -> void:
 
 func _draw_road_node(origin: Vector2, node: Dictionary) -> void:
 	var center: Vector2 = _hex_center(origin, int(node.get("q", 0)), int(node.get("r", 0)))
-	draw_circle(center, 5.0 * zoom, Color(0.35, 0.75, 0.95, 0.9))
-	draw_arc(center, 7.0 * zoom, 0, TAU, 16, Color(0.2, 0.45, 0.65, 0.9), 1.5)
+	var node_color: Color = _player_color(str(node.get("player_id", "p1")))
+	node_color.a = 0.9
+	draw_circle(center, 5.0 * zoom, node_color)
+	draw_arc(center, 7.0 * zoom, 0, TAU, 16, node_color.darkened(0.25), 1.5)
+
+
+func _draw_ownership(origin: Vector2, own: Dictionary) -> void:
+	var pid: String = str(own.get("owner_player_id", ""))
+	if pid == "":
+		return
+	var color: Color = _player_color(pid)
+	color.a = 0.08
+	_draw_hex(origin, int(own.get("q", 0)), int(own.get("r", 0)), color)
 
 
 func _draw_building_port(origin: Vector2, port: Dictionary) -> void:

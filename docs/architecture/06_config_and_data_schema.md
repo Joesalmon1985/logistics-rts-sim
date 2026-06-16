@@ -101,6 +101,23 @@ variants:
 
 `expected_hash` filled after first verified run.
 
+### Economy two-player `spawns[]` (RUN_02.8)
+
+When `spawns` is non-empty, each entry bootstraps one player (mirrors military `spawns[]`):
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `player_id` | string | e.g. `"p1"`, `"p2"` |
+| `q`, `r` | int | HQ anchor hex |
+| `starting_wares` | object | HQ store inventory |
+| `starting_workers` | object | worker type → count |
+| `starting_carriers` | int | carrier count at HQ road node |
+| `starting_buildings` | array | dict `{type,q,r}` or string building type (resolved post map-prep for BvB maps) |
+
+If `spawns` is empty, legacy single-player `hq_position` + `players[0]` init applies unchanged.
+
+Per-player meta written to economy state: `hq_positions`, `hq_building_ids` (see `EconomyState.get_hq_position`).
+
 ## Map Files
 
 - Axial hex grid JSON: terrain, height, deposits per hex

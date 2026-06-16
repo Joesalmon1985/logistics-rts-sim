@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "variant": "economy_trial",
+  "seed": 42001,
+  "map_file": "maps/economy/tiny_success_map.json",
+  "players": ["p1", "p2"],
+  "build_radius": 8,
+  "spawns": [
+    {
+      "player_id": "p1",
+      "q": 4,
+      "r": 4,
+      "starting_wares": {
+        "tools": 8,
+        "planks": 10,
+        "rations": 10
+      }
+    },
+    {
+      "player_id": "p2",
+      "q": 11,
+      "r": 11,
+      "starting_wares": {
+        "tools": 8,
+        "planks": 10,
+        "rations": 10
+      }
+    }
+  ]
+}

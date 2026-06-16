@@ -140,7 +140,12 @@ static func _advance_job(state: GameState, job: Dictionary) -> void:
 		EconomyState.emit_event(state, "delivery_job_blocked", {"job_id": job_id, "reason": "missing_node"})
 		return
 
-	var route: Array = EconomyPathfinder.find_route(state, source_node_id, dest_node_id)
+	var route: Array = EconomyPathfinder.find_route(
+		state,
+		source_node_id,
+		dest_node_id,
+		str(job.get("player_id", "p1")),
+	)
 	if route.is_empty():
 		job["status"] = EconomyConstants.JOB_WAITING_ROUTE
 		job["block_reason"] = "no_route"
@@ -243,6 +248,11 @@ static func _deliver_carrier_load(state: GameState, carrier: Dictionary) -> void
 	var delivered: bool = _apply_delivery(state, job, ware_type, amount)
 	if delivered:
 		job["status"] = EconomyConstants.JOB_DELIVERED
+		EconomyState.increment_player_stat(
+			state,
+			str(job.get("player_id", "p1")),
+			"completed_deliveries_count",
+		)
 		EconomyState.emit_event(state, "ware_delivered", {
 			"job_id": job_id,
 			"ware": ware_type,
@@ -313,10 +323,10 @@ static func _take_idle_carrier(state: GameState, player_id: String) -> Dictionar
 	return {}
 
 
-static func _hq_store_id(state: GameState) -> int:
-	var hq_id: int = int(EconomyState.get_meta_value(state, "hq_building_id", 0))
-	var hq: Dictionary = EconomyState.get_building(state, hq_id)
-	return int(hq.get("store_id", 0))
+static func _hq_store_id(state: GameState, player_id: String = "") -> int:
+	if player_id == "":
+		player_id = str(EconomyState.get_meta_value(state, "primary_player_id", "p1"))
+	return EconomyState.get_hq_store_id(state, player_id)
 
 
 static func _find_source_store_for_ware(
@@ -326,7 +336,7 @@ static func _find_source_store_for_ware(
 	dest_node_id: int,
 ) -> int:
 	var candidates: Array = []
-	var hq_store: int = _hq_store_id(state)
+	var hq_store: int = _hq_store_id(state, player_id)
 	if hq_store > 0:
 		candidates.append(hq_store)
 	for building in EconomyState.all_buildings(state):
@@ -346,7 +356,7 @@ static func _find_source_store_for_ware(
 		var source_node: int = _store_node_id(state, store_id, dest_node_id)
 		if source_node <= 0:
 			continue
-		if not EconomyPathfinder.find_route(state, source_node, dest_node_id).is_empty():
+		if not EconomyPathfinder.find_route(state, source_node, dest_node_id, player_id).is_empty():
 			return store_id
 	return 0
 
@@ -401,10 +411,11 @@ static func _select_entrance_node(
 		if node_id <= 0:
 			continue
 		var route: Array = []
+		var route_player: String = str(building.get("player_id", "p1"))
 		if as_source:
-			route = EconomyPathfinder.find_route(state, node_id, peer_node_id)
+			route = EconomyPathfinder.find_route(state, node_id, peer_node_id, route_player)
 		else:
-			route = EconomyPathfinder.find_route(state, peer_node_id, node_id)
+			route = EconomyPathfinder.find_route(state, peer_node_id, node_id, route_player)
 		if not route.is_empty() and route.size() < best_len:
 			best_len = route.size()
 			best_id = node_id
@@ -449,8 +460,9 @@ static func _update_carrier(state: GameState, carrier: Dictionary) -> void:
 
 
 static func _forward_surplus_outputs(state: GameState) -> void:
-	var hq_id: int = int(EconomyState.get_meta_value(state, "hq_building_id", 0))
 	for building in EconomyState.all_buildings(state):
+		var player_id: String = str(building.get("player_id", "p1"))
+		var hq_id: int = EconomyState.get_hq_building_id(state, player_id)
 		var building_id: int = int(building.get("id", 0))
 		if building_id == hq_id:
 			continue

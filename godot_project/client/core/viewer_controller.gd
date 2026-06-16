@@ -64,6 +64,19 @@ func load_demo_state(demo_state: GameState, p_actor_id: String = "p1") -> void:
 	refresh_snapshot()
 
 
+func load_snapshot_view(snap: Dictionary, p_actor_id: String = "p1") -> void:
+	state = null
+	actor_id = p_actor_id
+	command_history.clear()
+	last_attack_target = {}
+	last_placed_site = {}
+	_last_production_progress.clear()
+	production_pulse_ids.clear()
+	var parsed: Dictionary = SnapshotLoader.parse(snap)
+	snapshot = parsed.get("snapshot", snap.duplicate(true)) if parsed.get("ok", false) else snap.duplicate(true)
+	snapshot_refreshed.emit(snapshot)
+
+
 func refresh_snapshot() -> Dictionary:
 	if state == null:
 		snapshot = {}
@@ -248,6 +261,13 @@ func _economy_summary() -> String:
 	var render: Dictionary = get_render_data()
 	var fp: Dictionary = LayerRenderer.chain_fingerprint(render)
 	var diag: Dictionary = snapshot.get("diagnostics", {})
+	var scores: Dictionary = diag.get("economy_scores", {})
+	var score_line: String = ""
+	if not scores.is_empty():
+		var parts: PackedStringArray = PackedStringArray()
+		for player_id in scores.keys():
+			parts.append("%s=%d" % [str(player_id), int(scores[player_id])])
+		score_line = "Scores [%s] | " % ", ".join(parts)
 	var ware_totals: Dictionary = diag.get("ware_totals", {}).get("by_type", {})
 	var ware_parts: PackedStringArray = PackedStringArray()
 	for ware_type in ["planks", "timber", "stone", "tools"]:
@@ -257,8 +277,9 @@ func _economy_summary() -> String:
 	var jobs: int = snapshot.get("ware_movement_markers", []).size()
 	var ware_text: String = ", ".join(ware_parts) if not ware_parts.is_empty() else "(none yet)"
 	return (
-		"Summary — wares [%s] | forest D:%d | WOOD T:%d SAW T:%d P:%d | routes:%d | sites:%d jobs:%d"
+		"%sSummary — wares [%s] | forest D:%d | WOOD T:%d SAW T:%d P:%d | routes:%d | sites:%d jobs:%d"
 		% [
+			score_line,
 			ware_text,
 			int(fp.get("forest_density", -1)),
 			int(fp.get("woodcutter_timber", 0)),

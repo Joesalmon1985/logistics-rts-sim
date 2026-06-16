@@ -48,6 +48,17 @@ Bundled scenario maps each have a **dedicated** scenario test under `sim/tests/e
 scenario, asserts scenario-specific state/diagnostics, and asserts per-scenario replay-hash
 determinism: `tiny_success_map`, `blocked_route_map`, `missing_resource_map`, `priority_test_map`, `storage_full_map`, `pathfinding_test_map`, `forest_depletion_regrowth_map`, `mine_food_support_map`, `tool_shortage_worker_block_map`, `building_upgrade_map`.
 
+### RUN_02.8 planned smoke (ratified)
+
+See [`docs/runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md`](../runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md).
+
+| ID | Scenario | Pass criteria |
+|----|----------|---------------|
+| ECON-SMOKE-007 | Deterministic bot-vs-bot economy expansion match | Two `EconomyExpansionBot` players on symmetric `expansion_duel_2p` scenario; strict alternation; minimum successful match criteria; pinned replay hash; exit `0` via `run_economy_smoke.gd` |
+| BOT-SMOKE-004 | Bot-vs-bot economy expansion (companion) | Same match via `run_bot_smoke.gd`; both bots expand; replay round-trip hash match |
+
+RUN_02.8 also requires **viewer observability**: ownership overlay, dual scoreboard, contact sheet (start / early / mid / late / final + logistics overlay). See `03_godot_viewer_test_plan.md` §RUN_02.8.
+
 ## RUN_03 — Trial Military Game
 
 | ID | Scenario | Pass criteria |

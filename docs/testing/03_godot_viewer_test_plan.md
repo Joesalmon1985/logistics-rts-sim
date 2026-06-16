@@ -1,8 +1,10 @@
 # Godot Viewer Test Plan
 
-Scope: RUN_05 (trial viewers), RUN_02.7 (economy logistics viewer observability), RUN_09 (hybrid observer), RUN_10 (human play polish).
+Scope: RUN_05 (trial viewers), RUN_02.7 (economy logistics viewer observability), RUN_02.8 (bot-vs-bot economy viewer), RUN_09 (hybrid observer), RUN_10 (human play polish).
 
 > **RUN_02.7:** Functional viewer observability of logistics mechanics (road nodes, ports, carriers, jobs, diagnostics) is in scope — driven by snapshot/export only, not polish. See [`docs/runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md`](../runs/RUN_02_7_ECONOMY_LOGISTICS_FOUNDATION.md) Phase 9.
+
+> **RUN_02.8:** Bot-vs-bot economy match observability — ownership overlay, dual scoreboard, both players' logistics entities visible, deterministic contact sheet. See [`docs/runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md`](../runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md) Phase 7.
 
 ## Three-Track Verification (RUN_05)
 
@@ -154,3 +156,47 @@ $GODOT --headless --path godot_project --script res://sim/tools/run_rollout_obse
 $GODOT --path godot_project --script res://sim/tools/run_rollout_review_capture.gd \
   -- --rollout-path=... --steps=0,10
 ```
+
+---
+
+## RUN_02.8 Bot-vs-Bot Economy Viewer Review (planned)
+
+Scope: deterministic two-player economy expansion match — functional observability only, not polish.
+Authority: [`docs/runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md`](../runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md).
+
+### Required viewer capabilities
+
+| Capability | Pass criteria |
+|------------|---------------|
+| Ownership overlay | Human can tell p1 vs p2 for buildings, roads, road nodes, carriers, construction sites without reading JSON |
+| Dual scoreboard | Side panel shows `diagnostics.economy_scores` for p1 and p2 from snapshot/export |
+| Both economies visible | Both players' buildings, roads, nodes, carriers, construction sites render with distinct ownership |
+| Logistics overlay | RUN_02.7 baseline: nodes, ports, jobs, carriers, blocked jobs (logistics layer) |
+| Contact sheet | Deterministic panels: **start / early / mid / late / final** + logistics overlay; `contact_sheet.html` + PNG manifest |
+
+**Viewer anti-cheat:** Ownership overlay and scoreboard must use snapshot/export fields only — no client-fabricated player state.
+
+### Planned tests
+
+| ID | Type | Pass criteria |
+|----|------|---------------|
+| VIS-BVB-001 | Unit / render-data | Ownership overlay layer includes p1/p2 tint on roads, nodes, carriers, sites |
+| VIS-BVB-002 | Unit / render-data | Scoreboard render-data or summary text includes both `economy_scores` |
+| GOD-SMOKE-005 | Smoke (planned) | Headless render-data smoke for ownership + scoreboard fields from bot-vs-bot snapshot |
+| GOD-BVB-CAPTURE-001 | Capture (non-headless) | Contact sheet panels generated; manifest JSON lists expected panel ids |
+
+### Visual review runner (planned)
+
+```bash
+$GODOT --path godot_project --script res://sim/tools/run_economy_bvb_visual_review.gd
+```
+
+Expect PNG panels + `capture_manifest.json` + `contact_sheet.html` under project-local export path (see `local_verification.md` §RUN_02.8).
+
+### Pass criteria for RUN_02.8 viewer closure
+
+- [ ] Ownership overlay acceptance met
+- [ ] Dual scoreboard from `diagnostics.economy_scores`
+- [ ] Contact sheet with all required panels + logistics overlay
+- [ ] GOD-SMOKE-005 or equivalent headless smoke passes (when implemented)
+- [ ] Visual review bundle referenced in RUN_02.8 final report

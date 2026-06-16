@@ -8,7 +8,12 @@ static func hex_distance(q_a: int, r_a: int, q_b: int, r_b: int) -> int:
 	return HexCoord.new(q_a, r_a).distance(HexCoord.new(q_b, r_b))
 
 
-static func find_route(state: GameState, from_node_id: int, to_node_id: int) -> Array:
+static func find_route(
+	state: GameState,
+	from_node_id: int,
+	to_node_id: int,
+	player_id: String = "",
+) -> Array:
 	if from_node_id == to_node_id:
 		return [from_node_id]
 	if from_node_id <= 0 or to_node_id <= 0:
@@ -20,6 +25,12 @@ static func find_route(state: GameState, from_node_id: int, to_node_id: int) -> 
 	if from_node.is_empty() or to_node.is_empty():
 		_store_failure(state, from_node_id, to_node_id, "NODE_NOT_FOUND")
 		return []
+
+	var route_player: String = player_id
+	if route_player != "":
+		if str(from_node.get("player_id", "")) != route_player or str(to_node.get("player_id", "")) != route_player:
+			_store_failure(state, from_node_id, to_node_id, "PLAYER_MISMATCH")
+			return []
 
 	var dist: Dictionary = {str(from_node_id): 0}
 	var prev: Dictionary = {}
@@ -37,7 +48,7 @@ static func find_route(state: GameState, from_node_id: int, to_node_id: int) -> 
 			break
 
 		var current_node: Dictionary = EconomyState.get_road_node(state, current_id)
-		for neighbour_id in _neighbour_node_ids(state, current_node):
+		for neighbour_id in _neighbour_node_ids(state, current_node, route_player):
 			var edge_cost: int = _edge_cost(state, current_id, neighbour_id)
 			if edge_cost >= 99:
 				continue
@@ -71,12 +82,14 @@ static func find_route(state: GameState, from_node_id: int, to_node_id: int) -> 
 	return route
 
 
-static func _neighbour_node_ids(state: GameState, node: Dictionary) -> Array:
+static func _neighbour_node_ids(state: GameState, node: Dictionary, player_id: String = "") -> Array:
 	var result: Array = []
 	var coord := HexCoord.new(int(node.get("q", 0)), int(node.get("r", 0)))
 	for segment_id in node.get("segment_ids", []):
 		var road: Dictionary = EconomyState.get_road(state, int(segment_id))
 		if road.is_empty():
+			continue
+		if player_id != "" and str(road.get("player_id", "")) != player_id:
 			continue
 		var other_coord: HexCoord
 		var hex_a := HexCoord.new(int(road.get("hex_a_q", 0)), int(road.get("hex_a_r", 0)))
@@ -86,8 +99,13 @@ static func _neighbour_node_ids(state: GameState, node: Dictionary) -> Array:
 		else:
 			other_coord = hex_a
 		var other_id: int = EconomyRoadSystem._find_node_at(state, other_coord.q, other_coord.r)
-		if other_id > 0 and not result.has(other_id):
-			result.append(other_id)
+		if other_id > 0:
+			if player_id != "":
+				var other_node: Dictionary = EconomyState.get_road_node(state, other_id)
+				if str(other_node.get("player_id", "")) != player_id:
+					continue
+			if not result.has(other_id):
+				result.append(other_id)
 	result.sort()
 	return result
 

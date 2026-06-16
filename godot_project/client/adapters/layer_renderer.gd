@@ -36,6 +36,7 @@ static func build_render_data(snapshot: Dictionary, layer_visibility: Dictionary
 		if typeof(field) == TYPE_DICTIONARY:
 			resources.append(field.duplicate(true))
 	var fog: Dictionary = snapshot.get("vision", {})
+	var ownership: Array = _filter_layer(layers.get("ownership", []), layer_visibility, "ownership", true)
 	return {
 		"variant": variant,
 		"terrain": terrain,
@@ -53,6 +54,7 @@ static func build_render_data(snapshot: Dictionary, layer_visibility: Dictionary
 		"road_node_markers": road_node_markers,
 		"building_ports": building_ports,
 		"resources": resources,
+		"ownership": ownership,
 		"fog": fog if _layer_visible(layer_visibility, "fog", true) else {},
 		"map_width": int(snapshot.get("map", {}).get("width", 0)),
 		"map_height": int(snapshot.get("map", {}).get("height", 0)),
@@ -238,6 +240,7 @@ static func _build_road_markers(snapshot: Dictionary, visibility: Dictionary) ->
 			"from_r": int(r.get("hex_a_r", r.get("from_r", 0))),
 			"to_q": int(r.get("hex_b_q", r.get("to_q", 0))),
 			"to_r": int(r.get("hex_b_r", r.get("to_r", 0))),
+			"player_id": str(r.get("player_id", "")),
 		})
 	return markers
 
@@ -497,6 +500,7 @@ static func _delivery_job_marker(
 		"status": status,
 		"block_reason": block_reason,
 		"blocked": blocked,
+		"player_id": str(job.get("player_id", "")),
 	}
 
 
@@ -512,6 +516,7 @@ static func _build_road_node_markers(snapshot: Dictionary, visibility: Dictionar
 			"q": int(node.get("q", 0)),
 			"r": int(node.get("r", 0)),
 			"building_id": int(node.get("building_id", 0)),
+			"player_id": str(node.get("player_id", "")),
 		})
 	return markers
 

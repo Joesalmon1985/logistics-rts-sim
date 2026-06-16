@@ -166,6 +166,102 @@ static func export_training_snapshot(state: GameState, actor_id: String = "") ->
 	}
 
 
+static func export_bot_observation_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
+	if state.variant_id != "economy_trial":
+		return export_snapshot(state)
+
+	var player_data: Array = []
+	for player in players_to_array(state):
+		player_data.append(player.to_dict())
+
+	var roads: Array = []
+	var road_nodes: Array = []
+	var buildings: Array = []
+	var construction_sites: Array = []
+	var carrier_markers: Array = []
+	var delivery_jobs: Array = []
+	var blocked_job_markers: Array = []
+
+	if state.entities.has(EconomyConstants.BUCKET_ROADS):
+		for key in state.entities[EconomyConstants.BUCKET_ROADS]:
+			roads.append(state.entities[EconomyConstants.BUCKET_ROADS][key])
+	if state.entities.has(EconomyConstants.BUCKET_ROAD_NODES):
+		for key in state.entities[EconomyConstants.BUCKET_ROAD_NODES]:
+			road_nodes.append(state.entities[EconomyConstants.BUCKET_ROAD_NODES][key])
+	if state.entities.has(EconomyConstants.BUCKET_BUILDINGS):
+		for key in state.entities[EconomyConstants.BUCKET_BUILDINGS]:
+			buildings.append(state.entities[EconomyConstants.BUCKET_BUILDINGS][key])
+	if state.entities.has(EconomyConstants.BUCKET_CONSTRUCTION_SITES):
+		for key in state.entities[EconomyConstants.BUCKET_CONSTRUCTION_SITES]:
+			construction_sites.append(state.entities[EconomyConstants.BUCKET_CONSTRUCTION_SITES][key])
+	if state.entities.has(EconomyConstants.BUCKET_CARRIERS):
+		for key in state.entities[EconomyConstants.BUCKET_CARRIERS]:
+			carrier_markers.append(state.entities[EconomyConstants.BUCKET_CARRIERS][key])
+	if state.entities.has(EconomyConstants.BUCKET_DELIVERY_JOBS):
+		for key in state.entities[EconomyConstants.BUCKET_DELIVERY_JOBS]:
+			var job: Dictionary = state.entities[EconomyConstants.BUCKET_DELIVERY_JOBS][key]
+			delivery_jobs.append(job)
+			if str(job.get("status", "")) in [
+				EconomyConstants.JOB_BLOCKED,
+				EconomyConstants.JOB_WAITING_ROUTE,
+				EconomyConstants.JOB_WAITING_CARRIER,
+				EconomyConstants.JOB_WAITING_WARE,
+				EconomyConstants.JOB_FAILED,
+			]:
+				blocked_job_markers.append(job)
+
+	var resolved_actor: String = actor_id if actor_id != "" else "p1"
+	return {
+		"schema_version": SCHEMA_VERSION,
+		"variant": state.variant_id,
+		"tick": state.tick,
+		"seed": state.seed,
+		"display_layers": _build_bot_display_layers(state, resolved_actor),
+		"roads": roads,
+		"road_nodes": road_nodes,
+		"buildings": buildings,
+		"construction_sites": construction_sites,
+		"carrier_markers": carrier_markers,
+		"blocked_job_markers": blocked_job_markers,
+		"delivery_jobs": delivery_jobs,
+		"diagnostics": state.diagnostics.duplicate(false),
+		"players": player_data,
+	}
+
+
+static func _build_bot_display_layers(state: GameState, player_id: String) -> Dictionary:
+	var tree_density_layer: Array = []
+	var ownership_layer: Array = []
+	if state.map == null:
+		return {"tree_density": tree_density_layer, "ownership": ownership_layer}
+
+	var build_radius: int = int(EconomyState.get_meta_value(state, "build_radius", 8))
+	var hq: Vector2i = EconomyState.get_hq_position(state, player_id)
+	for dq in range(-build_radius, build_radius + 1):
+		for dr in range(-build_radius, build_radius + 1):
+			if abs(dq + dr) > build_radius:
+				continue
+			var coord := HexCoord.new(hq.x + dq, hq.y + dr)
+			if not state.map.in_bounds(coord):
+				continue
+			var tile: HexTile = state.map.get_tile(coord)
+			if tile == null:
+				continue
+			if tile.tree_density > 0:
+				tree_density_layer.append({"q": coord.q, "r": coord.r, "tree_density": tile.tree_density})
+			if tile.owner_player_id != "":
+				ownership_layer.append({
+					"q": coord.q,
+					"r": coord.r,
+					"owner_player_id": tile.owner_player_id,
+				})
+
+	return {
+		"tree_density": tree_density_layer,
+		"ownership": ownership_layer,
+	}
+
+
 static func _build_display_layers(state: GameState) -> Dictionary:
 	var terrain_layer: Array = []
 	var height_layer: Array = []

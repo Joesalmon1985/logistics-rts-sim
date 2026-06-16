@@ -235,3 +235,65 @@ static func all_workers(state: GameState) -> Array:
 	for key in get_bucket(state, EconomyConstants.BUCKET_WORKERS):
 		result.append(get_bucket(state, EconomyConstants.BUCKET_WORKERS)[key])
 	return result
+
+
+static func get_hq_positions(state: GameState) -> Dictionary:
+	var positions: Variant = get_meta_value(state, "hq_positions", {})
+	return positions if typeof(positions) == TYPE_DICTIONARY else {}
+
+
+static func get_hq_position(state: GameState, player_id: String) -> Vector2i:
+	var positions: Dictionary = get_hq_positions(state)
+	if positions.has(player_id):
+		var pos: Dictionary = positions[player_id]
+		return Vector2i(int(pos.get("q", 0)), int(pos.get("r", 0)))
+	return Vector2i(
+		int(get_meta_value(state, "hq_position_q", 0)),
+		int(get_meta_value(state, "hq_position_r", 0)),
+	)
+
+
+static func get_hq_building_id(state: GameState, player_id: String) -> int:
+	var ids: Variant = get_meta_value(state, "hq_building_ids", {})
+	if typeof(ids) == TYPE_DICTIONARY and ids.has(player_id):
+		return int(ids[player_id])
+	return int(get_meta_value(state, "hq_building_id", 0))
+
+
+static func get_hq_store_id(state: GameState, player_id: String) -> int:
+	var hq_id: int = get_hq_building_id(state, player_id)
+	var hq: Dictionary = get_building(state, hq_id)
+	return int(hq.get("store_id", 0))
+
+
+static func all_roads(state: GameState) -> Array:
+	var result: Array = []
+	for key in get_bucket(state, EconomyConstants.BUCKET_ROADS):
+		result.append(get_bucket(state, EconomyConstants.BUCKET_ROADS)[key])
+	return result
+
+
+static func all_road_nodes(state: GameState) -> Array:
+	var result: Array = []
+	for key in get_bucket(state, EconomyConstants.BUCKET_ROAD_NODES):
+		result.append(get_bucket(state, EconomyConstants.BUCKET_ROAD_NODES)[key])
+	return result
+
+
+static func increment_player_stat(state: GameState, player_id: String, stat_key: String, delta: int = 1) -> void:
+	var stats: Variant = get_meta_value(state, "player_economy_stats", {})
+	if typeof(stats) != TYPE_DICTIONARY:
+		stats = {}
+	if not stats.has(player_id):
+		stats[player_id] = {}
+	stats[player_id][stat_key] = int(stats[player_id].get(stat_key, 0)) + delta
+	set_meta_value(state, "player_economy_stats", stats)
+
+
+static func get_player_stat(state: GameState, player_id: String, stat_key: String) -> int:
+	var stats: Variant = get_meta_value(state, "player_economy_stats", {})
+	if typeof(stats) != TYPE_DICTIONARY:
+		return 0
+	if not stats.has(player_id):
+		return 0
+	return int(stats[player_id].get(stat_key, 0))

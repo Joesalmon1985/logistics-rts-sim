@@ -530,3 +530,60 @@ Delete stale RUN_06 smoke artefacts before a clean pytest/improve run:
 rm -rf training_runs/run06_smoke training_runs/run06_smoke_test \
        checkpoints/run06_smoke checkpoints/run06_smoke_test
 ```
+
+## RUN_02.8 bot-vs-bot economy (Linux verified 2026-06-16 on `feature/run-02-8-bot-vs-bot-economy`)
+
+Authority: [`docs/runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md`](../runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md).
+
+**Pre-flight:** Rerun full RUN_02.7 baseline before RUN_02.8 gameplay edits (Phase 0 recorded pass on branch).
+
+### Headless closure gate
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user_data"
+
+timeout 580s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd
+timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+```
+
+Expect:
+
+- Full test suite: **182/182 pass** (includes ECON-MP-001/002, ECON-SCORE-001, ECON-BOT-002/003/004, VIS-BVB-001/002)
+- ECON-SMOKE-001–007 exit `0`
+- BOT-SMOKE-001–004 exit `0`
+- GOD-SMOKE-001–005 exit `0`
+- INTEGRITY PASS
+- No `SCRIPT ERROR` in captured output
+
+**Pinned ECON-SMOKE-007 / BOT-SMOKE-004 replay hash** (seed 28001, 30 ticks, `expansion_duel_2p`):
+
+`sha256:628c0c82af0448747634376303a4a90ec4b009c25d6106560d586b2069cd3d9d`
+
+Subset bot-vs-bot economy smoke:
+
+```bash
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd -- --smoke=007
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd -- --smoke=004
+timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd -- --smoke=005
+```
+
+### Non-headless visual review (Track 2)
+
+```bash
+"$GODOT" --path godot_project --script res://sim/tools/run_economy_bvb_visual_review.gd
+```
+
+**Contact sheet checklist (~5 min):**
+
+1. **Start** — both HQs visible; ownership overlay distinguishes p1 (blue) vs p2 (red) on buildings, roads, nodes, carriers, sites.
+2. **Early / mid / late / final** — both economies expanding; scoreboard shows rising `economy_scores`.
+3. **Logistics overlay** — road nodes, ports, carriers, delivery jobs for both players.
+4. Confirm `contact_sheet.html` and `capture_manifest.json` list panels: start, early, mid, late, final, logistics.
+
+Output directory (planned): `training_runs/visual_review/run_02_8_economy_bvb/` (or path recorded in manifest).
+
+Grep output for `SCRIPT ERROR`. Windowed runs: inspect stale Godot processes before/after (see RUN_05 process safety).

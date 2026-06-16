@@ -11,6 +11,8 @@ const REPLAY_TICKS: int = 500
 const SMOKE_006_SEED: int = 607
 const SMOKE_006_TICKS: int = 500
 const SMOKE_006_EXPECTED_HASH: String = "sha256:1273aa90b79c6436518b27680ac827cb0658332902b944ff35aed51acbf4accf"
+const SMOKE_007_SEED: int = 28001
+const SMOKE_007_EXPECTED_HASH: String = ""
 
 
 func _initialize() -> void:
@@ -38,7 +40,7 @@ func _initialize() -> void:
 		elif arg.begins_with("--export-dir="):
 			export_dir = arg.substr("--export-dir=".length())
 
-	var valid_smokes: Array[String] = ["all", "001", "002", "003", "004", "005", "006"]
+	var valid_smokes: Array[String] = ["all", "001", "002", "003", "004", "005", "006", "007"]
 	if smoke_id not in valid_smokes:
 		print("ECON SMOKE FAIL: unknown smoke id '%s'" % smoke_id)
 		print("EXIT: 1 (fail)")
@@ -58,6 +60,8 @@ func _initialize() -> void:
 		failed = failed or not _run_smoke_005(scenario_path, seed_value, export_dir)
 	if smoke_id == "all" or smoke_id == "006":
 		failed = failed or not _run_smoke_006(seed_value, check_hash, expected_hash_override)
+	if smoke_id == "all" or smoke_id == "007":
+		failed = failed or not _run_smoke_007(seed_value, check_hash, expected_hash_override)
 
 	if failed:
 		print("ECON SMOKE FAIL")
@@ -350,6 +354,40 @@ func _run_smoke_006(seed_value: int, check_hash: bool, expected_override: String
 			return false
 
 	print("ECON-SMOKE-006 PASS: HQ to site logistics with carrier delivery and builder_work")
+	return true
+
+
+func _run_smoke_007(seed_value: int, check_hash: bool, expected_hash_override: String) -> bool:
+	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
+	scenario["seed"] = seed_value if seed_value != DEFAULT_SEED else SMOKE_007_SEED
+	var runner := SimulationTickRunner.new()
+	var state: GameState = runner.create_game(scenario)
+	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
+	var dual := DualBotRunner.new(runner)
+	state = dual.run_match(state, scenario)
+	var final_hash: String = ReplayHash.compute_state_hash(state)
+
+	for player_id in ["p1", "p2"]:
+		if DualBotRunner.count_player_buildings_built(state, player_id) < 5:
+			print("ECON-SMOKE-007 FAIL: %s bot-built buildings below minimum" % player_id)
+			return false
+		if DualBotRunner.count_player_roads_built(state, player_id) < 10:
+			print("ECON-SMOKE-007 FAIL: %s bot-built roads below minimum" % player_id)
+			return false
+		if DualBotRunner.count_player_deliveries_built(state, player_id) < 10:
+			print("ECON-SMOKE-007 FAIL: %s bot-built deliveries below minimum" % player_id)
+			return false
+
+	if check_hash:
+		var expected: String = expected_hash_override if expected_hash_override != "" else SMOKE_007_EXPECTED_HASH
+		if expected != "" and final_hash != expected:
+			print("ECON-SMOKE-007 FAIL: hash mismatch")
+			print("  expected: %s" % expected)
+			print("  actual:   %s" % final_hash)
+			return false
+
+	print("ECON-SMOKE-007 replay hash: %s" % final_hash)
+	print("ECON-SMOKE-007 PASS: bot-vs-bot economy expansion")
 	return true
 
 

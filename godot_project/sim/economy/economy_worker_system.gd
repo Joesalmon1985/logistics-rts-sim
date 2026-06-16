@@ -69,6 +69,8 @@ static func _take_idle_worker(state: GameState, worker_type: String, building: D
 			continue
 		if str(worker.get("state", "")) != EconomyConstants.WORKER_IDLE:
 			continue
+		if str(worker.get("player_id", "")) != str(building.get("player_id", "")):
+			continue
 		if not _worker_reachable_from_building(state, worker, building):
 			continue
 		if tool_amount > 0:
@@ -94,7 +96,12 @@ static func _worker_reachable_from_building(state: GameState, worker: Dictionary
 	var building_node_id: int = int(building.get("road_node_id", 0))
 	if home_node_id <= 0 or building_node_id <= 0:
 		return true
-	return not EconomyPathfinder.find_route(state, home_node_id, building_node_id).is_empty()
+	return not EconomyPathfinder.find_route(
+		state,
+		home_node_id,
+		building_node_id,
+		str(worker.get("player_id", "")),
+	).is_empty()
 
 
 static func _consume_tool_for_worker(
