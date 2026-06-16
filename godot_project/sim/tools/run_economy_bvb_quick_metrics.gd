@@ -5,8 +5,13 @@ const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
 
 func _initialize() -> void:
 	BootstrapScript.load_all()
+	var max_ticks: int = 500
+	var args: PackedStringArray = OS.get_cmdline_user_args()
+	for arg in args:
+		if arg.begins_with("--max-ticks="):
+			max_ticks = int(arg.substr("--max-ticks=".length()))
 	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
-	scenario["max_ticks"] = 500
+	scenario["max_ticks"] = max_ticks
 	var runner := SimulationTickRunner.new()
 	var state: GameState = runner.create_game(scenario)
 	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)

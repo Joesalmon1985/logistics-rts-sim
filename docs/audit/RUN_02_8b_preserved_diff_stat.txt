@@ -1,0 +1,8 @@
+ godot_project/sim/bot/dual_bot_runner.gd           |  11 +-
+ godot_project/sim/bot/economy_bot_observation.gd   |  38 ++-
+ godot_project/sim/bot/economy_expansion_bot.gd     | 311 +++++++++++++--------
+ .../data/scenarios/economy/expansion_duel_2p.json  |   4 +-
+ godot_project/sim/economy/economy_bvb_setup.gd     |   2 +-
+ ...test_econ_bot_002_dual_bot_expansion_metrics.gd |   2 +-
+ .../sim/tools/run_economy_bvb_quick_metrics.gd     |   2 +-
+ 7 files changed, 234 insertions(+), 136 deletions(-)

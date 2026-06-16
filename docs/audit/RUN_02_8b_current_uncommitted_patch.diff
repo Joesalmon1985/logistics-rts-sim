@@ -1,0 +1,1194 @@
+diff --git a/godot_project/sim/bot/dual_bot_runner.gd b/godot_project/sim/bot/dual_bot_runner.gd
+index 08f6c5a..7e22bd9 100644
+--- a/godot_project/sim/bot/dual_bot_runner.gd
++++ b/godot_project/sim/bot/dual_bot_runner.gd
+@@ -195,8 +195,15 @@ static func _count_player_buildings(state: GameState, player_id: String) -> int:
+ 			continue
+ 		if int(building.get("id", 0)) == hq_id:
+ 			continue
+-		if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
+-			count += 1
++		var state_name: String = str(building.get("state", ""))
++		if state_name in [
++			EconomyConstants.BLD_PLANNED,
++			EconomyConstants.BLD_UNDER_CONSTRUCTION,
++			EconomyConstants.BLD_DISABLED,
++			EconomyConstants.BLD_BLOCKED,
++		]:
++			continue
++		count += 1
+ 	return maxi(0, count)
+ 
+ 
+diff --git a/godot_project/sim/bot/economy_bot_observation.gd b/godot_project/sim/bot/economy_bot_observation.gd
+index 2e0f7c9..4962ef4 100644
+--- a/godot_project/sim/bot/economy_bot_observation.gd
++++ b/godot_project/sim/bot/economy_bot_observation.gd
+@@ -70,14 +70,42 @@ func hq_position() -> Vector2i:
+ 	return Vector2i(0, 0)
+ 
+ 
++func has_completed_building_type(building_type: String) -> bool:
++	for building in own_buildings():
++		if str(building.get("building_type", "")) != building_type:
++			continue
++		var state_name: String = str(building.get("state", ""))
++		if state_name in [
++			EconomyConstants.BLD_PLANNED,
++			EconomyConstants.BLD_UNDER_CONSTRUCTION,
++			EconomyConstants.BLD_DISABLED,
++			EconomyConstants.BLD_BLOCKED,
++		]:
++			continue
++		return true
++	return false
++
++
+ func has_building_type(building_type: String) -> bool:
+ 	for building in own_buildings():
+-		if str(building.get("building_type", "")) == building_type:
+-			if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
+-				return true
++		if str(building.get("building_type", "")) != building_type:
++			continue
++		var state_name: String = str(building.get("state", ""))
++		if state_name in [
++			EconomyConstants.BLD_PLANNED,
++			EconomyConstants.BLD_UNDER_CONSTRUCTION,
++			EconomyConstants.BLD_DISABLED,
++			EconomyConstants.BLD_BLOCKED,
++		]:
++			continue
++		return true
+ 	for site in own_construction_sites():
+-		if str(site.get("building_type", "")) == building_type:
+-			return true
++		if str(site.get("building_type", "")) != building_type:
++			continue
++		var site_state: String = str(site.get("state", ""))
++		if site_state in [EconomyConstants.CONS_COMPLETED, EconomyConstants.CONS_CANCELLED]:
++			continue
++		return true
+ 	return false
+ 
+ 
+diff --git a/godot_project/sim/bot/economy_expansion_bot.gd b/godot_project/sim/bot/economy_expansion_bot.gd
+index b761bf8..c7488ca 100644
+--- a/godot_project/sim/bot/economy_expansion_bot.gd
++++ b/godot_project/sim/bot/economy_expansion_bot.gd
+@@ -1,15 +1,17 @@
+ class_name EconomyExpansionBot
+ extends Bot
+ 
+-## Rule-based economy expansion bot using snapshot + legal commands only (RUN_02.8).
++## Rule-based economy expansion bot using snapshot + legal-command shortlist only (RUN_02.8).
+ 
+ const ACTOR_PREFIX: String = "economy_expansion_bot"
++const MAX_BOOTSTRAP_ROADS: int = 12
++const MAX_TOTAL_ROAD_SEGMENTS: int = 40
++const CHAIN_TYPES: Array[String] = ["woodcutter", "forester", "sawmill", "storehouse", "workshop"]
+ 
+ var _observation: EconomyBotObservation = null
+ var _decision_log: Array = []
+-var _reject_streak: int = 0
+-var _candidate_index: int = 0
+-var _sorted_candidates: Array = []
++var _road_queue: Array = []
++var _chain_index: int = 0
+ 
+ 
+ func _init(p_player_id: String = "p1") -> void:
+@@ -21,9 +23,8 @@ func reset(p_player_id: String = "p1") -> void:
+ 	super.reset(p_player_id)
+ 	actor_id = "%s_%s" % [ACTOR_PREFIX, p_player_id]
+ 	_decision_log.clear()
+-	_reject_streak = 0
+-	_candidate_index = 0
+-	_sorted_candidates.clear()
++	_road_queue.clear()
++	_chain_index = 0
+ 
+ 
+ func get_decisions() -> Array:
+@@ -33,6 +34,7 @@ func get_decisions() -> Array:
+ func observe(snapshot: Dictionary, p_player_id: String) -> void:
+ 	super.observe(snapshot, p_player_id)
+ 	_observation = EconomyBotObservation.from_snapshot(snapshot, player_id)
++	_advance_chain_index()
+ 
+ 
+ func is_complete(_snapshot: Dictionary) -> bool:
+@@ -43,101 +45,113 @@ func decide(_tick: int) -> SimCommand:
+ 	if _observation == null:
+ 		return null
+ 
+-	if str(_observation.diagnostics().get("stall", {}).get("primary_reason", "")) != "":
+-		pass
++	var road_cmds: Array = _commands_of_type("PlaceRoadCommand")
++	var building_cmds: Array = _commands_of_type("PlaceBuildingPlanCommand")
+ 
+-	_refresh_candidates()
+-	if _sorted_candidates.is_empty():
++	if not _road_queue.is_empty():
++		var queued: SimCommand = _next_queued_road(road_cmds)
++		if queued != null:
++			_log_decision(queued.type, "queued road segment")
++			return queued
++
++	if _has_active_construction():
++		var connect: Array = _roads_connecting_sites(road_cmds)
++		if not connect.is_empty():
++			return _command_from_entry(connect[0])
++		if _sites_have_delivery_progress():
++			return _noop_command()
++		if _road_segments() < MAX_TOTAL_ROAD_SEGMENTS:
++			var toward_site: Array = _roads_toward_active_sites(road_cmds)
++			if not toward_site.is_empty():
++				return _command_from_entry(toward_site[0])
++			if not road_cmds.is_empty():
++				return _command_from_entry(road_cmds[0])
++		return _noop_command()
++
++	if _chain_index >= CHAIN_TYPES.size():
++		return _noop_command()
++
++	var building_type: String = CHAIN_TYPES[_chain_index]
++	var target: Vector2i = _target_for_type(building_type)
++	if target.x < 0:
++		return _noop_command()
++
++	if not _hex_has_road_adjacency(target):
++		if _road_segments() >= MAX_TOTAL_ROAD_SEGMENTS:
++			return _noop_command()
++		if _road_queue.is_empty():
++			_queue_roads_to(target.x, target.y)
++		var bootstrap: SimCommand = _next_queued_road(road_cmds)
++		if bootstrap != null:
++			_log_decision(bootstrap.type, "bootstrap road toward %s" % building_type)
++			return bootstrap
++		if not road_cmds.is_empty():
++			return _command_from_entry(_roads_toward_hex(road_cmds, target)[0] if not _roads_toward_hex(road_cmds, target).is_empty() else road_cmds[0])
+ 		return _noop_command()
+ 
+-	var attempts: int = mini(_sorted_candidates.size(), 12)
+-	for _i in range(attempts):
+-		if _candidate_index >= _sorted_candidates.size():
+-			_candidate_index = 0
+-		var entry: Dictionary = _sorted_candidates[_candidate_index]
+-		_candidate_index += 1
+-		var cmd: SimCommand = _command_from_entry(entry)
+-		if cmd != null:
+-			_log_decision(cmd.type, str(entry.get("label", "")))
+-			return cmd
++	var build_cmd: SimCommand = _pick_building_at(building_cmds, building_type, target.x, target.y)
++	if build_cmd == null:
++		build_cmd = _pick_building_at(building_cmds, building_type, -1, -1)
++	if build_cmd != null:
++		_log_decision(build_cmd.type, "place %s" % building_type)
++		return build_cmd
+ 
++	if _road_segments() < MAX_TOTAL_ROAD_SEGMENTS and not road_cmds.is_empty():
++		return _command_from_entry(road_cmds[0])
+ 	return _noop_command()
+ 
+ 
+ func on_command_applied(command: SimCommand, result: CommandResult) -> void:
+-	if result.success:
+-		_reject_streak = 0
+-	else:
+-		_reject_streak += 1
++	if command == null:
++		return
++	if command.type == "PlaceRoadCommand" and not _road_queue.is_empty():
++		if result.success or str(result.error_code) == "ROAD_EXISTS":
++			_road_queue.pop_front()
++
+ 
++func _advance_chain_index() -> void:
++	while _chain_index < CHAIN_TYPES.size():
++		if not _observation.has_completed_building_type(CHAIN_TYPES[_chain_index]):
++			return
++		_chain_index += 1
+ 
+-func _refresh_candidates() -> void:
+-	_sorted_candidates.clear()
+-	var road_cmds: Array = []
+-	var building_cmds: Array = []
+-	var other_cmds: Array = []
+ 
++func _target_for_type(building_type: String) -> Vector2i:
++	var forests: Array = _observation.forest_hexes()
++	var hq: Vector2i = _observation.hq_position()
++	match building_type:
++		"woodcutter":
++			return forests[0] if not forests.is_empty() else Vector2i(-1, -1)
++		"forester":
++			return forests[mini(1, forests.size() - 1)] if not forests.is_empty() else Vector2i(-1, -1)
++		"storehouse":
++			return Vector2i(hq.x + 1, hq.y + 2)
++		"sawmill":
++			return Vector2i(hq.x + 2, hq.y)
++		"workshop":
++			return Vector2i(hq.x + 3, hq.y + 1)
++	return Vector2i(hq.x + 2, hq.y)
++
++
++func _commands_of_type(cmd_type: String) -> Array:
++	var result: Array = []
+ 	for entry in _observation.legal_commands:
+ 		if typeof(entry) != TYPE_DICTIONARY:
+ 			continue
+-		var cmd_type: String = str(entry.get("type", entry.get("command_type", "")))
+-		if cmd_type == "SetWorkerPolicyCommand":
+-			continue
+-		if cmd_type == "NoopCommand":
+-			other_cmds.append(entry)
+-			continue
+-		match cmd_type:
+-			"PlaceRoadCommand":
+-				road_cmds.append(entry)
+-			"PlaceBuildingPlanCommand":
+-				building_cmds.append(entry)
+-			_:
+-				other_cmds.append(entry)
+-
+-	_sort_entries(road_cmds)
+-	_sort_entries(building_cmds)
+-	_sort_entries(other_cmds)
+-
+-	var pending_sites: int = _observation.own_construction_sites().size()
+-	var connect_roads: Array = _roads_connecting_sites(road_cmds)
+-	var network_size: int = _observation.own_roads().size() + _observation.own_road_nodes().size()
+-
+-	if pending_sites > 0:
+-		if _sites_have_delivery_progress():
+-			_sorted_candidates = _noop_entries(other_cmds)
+-			return
+-		if not connect_roads.is_empty():
+-			_sorted_candidates = connect_roads
+-		elif network_size > 40:
+-			_sorted_candidates = _noop_entries(other_cmds)
+-		else:
+-			var road_push: Array = _road_toward_forests(road_cmds)
+-			road_push.append_array(road_cmds.slice(0, mini(road_cmds.size(), 6)))
+-			_sorted_candidates = road_push
+-		return
+-
+-	if network_size < 8:
+-		var road_first: Array = _road_toward_forests(road_cmds)
+-		road_first.append_array(road_cmds)
+-		_sorted_candidates = road_first
+-		return
+-
+-	if pending_sites >= 1:
+-		return
++		if str(entry.get("type", entry.get("command_type", ""))) == cmd_type:
++			result.append(entry)
++	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
++		return _entry_sort_key(a) < _entry_sort_key(b)
++	)
++	return result
+ 
+-	if not _observation.has_building_type("woodcutter") and not _has_pending_type("woodcutter"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "woodcutter"))
+-	if not _observation.has_building_type("sawmill") and not _has_pending_type("sawmill"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "sawmill"))
+-	if not _observation.has_building_type("storehouse") and not _has_pending_type("storehouse"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "storehouse"))
+-	if not _observation.has_building_type("workshop") and not _has_pending_type("workshop"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "workshop"))
+ 
+-	_sorted_candidates.append_array(building_cmds)
+-	if _sorted_candidates.is_empty() and not road_cmds.is_empty():
+-		_sorted_candidates = _road_toward_forests(road_cmds).slice(0, mini(road_cmds.size(), 6))
+-	_sorted_candidates.append_array(_noop_entries(other_cmds))
++func _has_active_construction() -> bool:
++	for site in _observation.own_construction_sites():
++		var site_state: String = str(site.get("state", ""))
++		if site_state in [EconomyConstants.CONS_ACTIVE, EconomyConstants.CONS_BLOCKED]:
++			return true
++	return false
+ 
+ 
+ func _sites_have_delivery_progress() -> bool:
+@@ -145,7 +159,7 @@ func _sites_have_delivery_progress() -> bool:
+ 		for ware_type in site.get("delivered", {}):
+ 			if int(site.get("delivered", {}).get(ware_type, 0)) > 0:
+ 				return true
+-		if int(site.get("progress_percent", 0)) > 0:
++		if int(site.get("builder_work_remaining", 0)) < int(site.get("required", {}).get("builder_work", 99)):
+ 			return true
+ 	return false
+ 
+@@ -153,24 +167,45 @@ func _sites_have_delivery_progress() -> bool:
+ func _roads_connecting_sites(road_cmds: Array) -> Array:
+ 	var result: Array = []
+ 	for entry in road_cmds:
+-		var label: String = str(entry.get("label", ""))
+-		if "Connect site" in label:
++		if "Connect site" in str(entry.get("label", "")):
+ 			result.append(entry)
+ 	return result
+ 
+ 
+-func _noop_entries(other_cmds: Array) -> Array:
+-	for entry in other_cmds:
+-		if str(entry.get("type", entry.get("command_type", ""))) == "NoopCommand":
+-			return [entry]
++func _road_segments() -> int:
++	return _observation.own_roads().size() + _observation.own_road_nodes().size()
++
++
++func _hex_has_road_adjacency(hex: Vector2i) -> bool:
++	if hex.x < 0:
++		return false
++	for road in _observation.own_roads():
++		for end in [
++			Vector2i(int(road.get("hex_a_q", road.get("from_q", -99))), int(road.get("hex_a_r", road.get("from_r", -99)))),
++			Vector2i(int(road.get("hex_b_q", road.get("to_q", -99))), int(road.get("hex_b_r", road.get("to_r", -99)))),
++		]:
++			if HexCoord.new(hex.x, hex.y).distance(HexCoord.new(end.x, end.y)) <= 1:
++				return true
++	for node in _observation.own_road_nodes():
++		if HexCoord.new(hex.x, hex.y).distance(HexCoord.new(int(node.get("q", -99)), int(node.get("r", -99)))) <= 1:
++			return true
++	return false
++
++
++func _roads_toward_active_sites(road_cmds: Array) -> Array:
++	for site in _observation.own_construction_sites():
++		var q: int = int(site.get("anchor_q", site.get("q", -1)))
++		var r: int = int(site.get("anchor_r", site.get("r", -1)))
++		if q >= 0:
++			var scored: Array = _roads_toward_hex(road_cmds, Vector2i(q, r))
++			if not scored.is_empty():
++				return scored
+ 	return []
+ 
+ 
+-func _road_toward_forests(road_cmds: Array) -> Array:
+-	var forests: Array = _observation.forest_hexes()
+-	if forests.is_empty():
++func _roads_toward_hex(road_cmds: Array, target: Vector2i) -> Array:
++	if target.x < 0:
+ 		return []
+-	var target: Vector2i = forests[0]
+ 	var scored: Array = []
+ 	for entry in road_cmds:
+ 		var params: Dictionary = entry.get("params", entry.get("payload", {}))
+@@ -189,34 +224,54 @@ func _road_toward_forests(road_cmds: Array) -> Array:
+ 	return result
+ 
+ 
+-func _filter_building_entries(entries: Array, building_type: String) -> Array:
+-	var result: Array = []
+-	for entry in entries:
++func _queue_roads_to(target_q: int, target_r: int) -> void:
++	if not _road_queue.is_empty():
++		return
++	var hq: Vector2i = _observation.hq_position()
++	var current := HexCoord.new(hq.x, hq.y)
++	var target := HexCoord.new(target_q, target_r)
++	var guard: int = 0
++	while (current.q != target.q or current.r != target.r) and guard < MAX_BOOTSTRAP_ROADS:
++		guard += 1
++		var best_neighbor: HexCoord = current
++		var best_dist: int = current.distance(target)
++		for neighbour in current.neighbors():
++			var dist: int = neighbour.distance(target)
++			if dist < best_dist:
++				best_dist = dist
++				best_neighbor = neighbour
++		if best_neighbor.q == current.q and best_neighbor.r == current.r:
++			break
++		_road_queue.append({
++			"from_q": current.q, "from_r": current.r,
++			"to_q": best_neighbor.q, "to_r": best_neighbor.r,
++		})
++		current = best_neighbor
++
++
++func _next_queued_road(road_cmds: Array) -> SimCommand:
++	if _road_queue.is_empty():
++		return null
++	var segment: Dictionary = _road_queue[0]
++	for entry in road_cmds:
+ 		var params: Dictionary = entry.get("params", entry.get("payload", {}))
+-		if str(params.get("building_type", "")) == building_type:
+-			result.append(entry)
+-	return result
+-
+-
+-func _has_pending_type(building_type: String) -> bool:
+-	for site in _observation.own_construction_sites():
+-		if str(site.get("building_type", "")) == building_type:
+-			return true
+-	return false
+-
+-
+-func _sort_entries(entries: Array) -> void:
+-	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+-		return _entry_sort_key(a) < _entry_sort_key(b)
+-	)
++		if int(params.get("from_q", -1)) == int(segment.get("from_q", -2)) \
++				and int(params.get("from_r", -1)) == int(segment.get("from_r", -2)) \
++				and int(params.get("to_q", -1)) == int(segment.get("to_q", -2)) \
++				and int(params.get("to_r", -1)) == int(segment.get("to_r", -2)):
++			return _command_from_entry(entry)
++	return PlaceRoadCommand.new(player_id, _observation.tick, segment)
+ 
+ 
+-func _entry_sort_key(entry: Dictionary) -> String:
+-	var params: Dictionary = entry.get("params", entry.get("payload", {}))
+-	var q: int = int(params.get("q", params.get("to_q", 0)))
+-	var r: int = int(params.get("r", params.get("to_r", 0)))
+-	var cmd_type: String = str(entry.get("command_type", entry.get("type", "")))
+-	return "%s,%03d,%03d,%s" % [cmd_type, q, r, str(params.get("building_type", ""))]
++func _pick_building_at(building_cmds: Array, building_type: String, q: int, r: int) -> SimCommand:
++	for entry in building_cmds:
++		var params: Dictionary = entry.get("params", entry.get("payload", {}))
++		if str(params.get("building_type", "")) != building_type:
++			continue
++		if q >= 0 and (int(params.get("q", -1)) != q or int(params.get("r", -1)) != r):
++			continue
++		return _command_from_entry(entry)
++	return null
+ 
+ 
+ func _command_from_entry(entry: Dictionary) -> SimCommand:
+@@ -228,8 +283,6 @@ func _command_from_entry(entry: Dictionary) -> SimCommand:
+ 			return PlaceRoadCommand.new(player_id, _observation.tick, params)
+ 		"PlaceBuildingPlanCommand":
+ 			return PlaceBuildingPlanCommand.new(player_id, _observation.tick, params)
+-		"SetWorkerPolicyCommand":
+-			return SetWorkerPolicyCommand.new(player_id, _observation.tick, params)
+ 		"NoopCommand":
+ 			return NoopCommand.new(player_id, _observation.tick)
+ 	return null
+@@ -239,6 +292,16 @@ func _noop_command() -> SimCommand:
+ 	return NoopCommand.new(player_id, _observation.tick)
+ 
+ 
++func _entry_sort_key(entry: Dictionary) -> String:
++	var params: Dictionary = entry.get("params", entry.get("payload", {}))
++	return "%s,%03d,%03d,%s" % [
++		str(entry.get("command_type", entry.get("type", ""))),
++		int(params.get("q", params.get("to_q", 0))),
++		int(params.get("r", params.get("to_r", 0))),
++		str(params.get("building_type", "")),
++	]
++
++
+ func _log_decision(command_type: String, reason: String) -> void:
+ 	_decision_log.append({
+ 		"tick": _observation.tick,
+diff --git a/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json b/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json
+index 343a75a..5027e87 100644
+--- a/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json
++++ b/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json
+@@ -16,7 +16,7 @@
+       "player_id": "p1",
+       "q": 4,
+       "r": 4,
+-      "starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
++      "starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
+       "starting_carriers": 4,
+       "starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
+       "starting_buildings": []
+@@ -25,7 +25,7 @@
+       "player_id": "p2",
+       "q": 19,
+       "r": 19,
+-      "starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
++      "starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
+       "starting_carriers": 4,
+       "starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
+       "starting_buildings": []
+diff --git a/godot_project/sim/economy/economy_bvb_setup.gd b/godot_project/sim/economy/economy_bvb_setup.gd
+index 8c4c2c1..74407e2 100644
+--- a/godot_project/sim/economy/economy_bvb_setup.gd
++++ b/godot_project/sim/economy/economy_bvb_setup.gd
+@@ -95,7 +95,7 @@ static func _count_player_roads(state: GameState, player_id: String) -> int:
+ 
+ static func _spawn_kit() -> Dictionary:
+ 	return {
+-		"starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
++		"starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
+ 		"starting_carriers": 4,
+ 		"starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
+ 	}
+diff --git a/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd b/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd
+index 0ca5720..4077699 100644
+--- a/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd
++++ b/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd
+@@ -1,6 +1,6 @@
+ extends "res://sim/tests/test_case.gd"
+ 
+-const MIN_BOT_BUILDINGS: int = 5
++	const MIN_BOT_BUILDINGS: int = 5
+ const MIN_BOT_ROADS: int = 10
+ const MIN_BOT_DELIVERIES: int = 10
+ 
+diff --git a/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd b/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd
+index eadbe51..b9d2b17 100644
+--- a/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd
++++ b/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd
+@@ -6,7 +6,7 @@ const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
+ func _initialize() -> void:
+ 	BootstrapScript.load_all()
+ 	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
+-	scenario["max_ticks"] = 500
++	scenario["max_ticks"] = 800
+ 	var runner := SimulationTickRunner.new()
+ 	var state: GameState = runner.create_game(scenario)
+ 	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
+diff --git a/godot_project/client/demo/economy_bvb_review.gd.uid b/godot_project/client/demo/economy_bvb_review.gd.uid
+new file mode 100644
+index 0000000..0eef80e
+--- /dev/null
++++ b/godot_project/client/demo/economy_bvb_review.gd.uid
+@@ -0,0 +1 @@
++uid://c6c1av5ghyi4y
+diff --git a/godot_project/sim/bot/dual_bot_runner.gd b/godot_project/sim/bot/dual_bot_runner.gd
+index 08f6c5a..7e22bd9 100644
+--- a/godot_project/sim/bot/dual_bot_runner.gd
++++ b/godot_project/sim/bot/dual_bot_runner.gd
+@@ -195,8 +195,15 @@ static func _count_player_buildings(state: GameState, player_id: String) -> int:
+ 			continue
+ 		if int(building.get("id", 0)) == hq_id:
+ 			continue
+-		if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
+-			count += 1
++		var state_name: String = str(building.get("state", ""))
++		if state_name in [
++			EconomyConstants.BLD_PLANNED,
++			EconomyConstants.BLD_UNDER_CONSTRUCTION,
++			EconomyConstants.BLD_DISABLED,
++			EconomyConstants.BLD_BLOCKED,
++		]:
++			continue
++		count += 1
+ 	return maxi(0, count)
+ 
+ 
+diff --git a/godot_project/sim/bot/economy_bot_observation.gd b/godot_project/sim/bot/economy_bot_observation.gd
+index 2e0f7c9..4962ef4 100644
+--- a/godot_project/sim/bot/economy_bot_observation.gd
++++ b/godot_project/sim/bot/economy_bot_observation.gd
+@@ -70,14 +70,42 @@ func hq_position() -> Vector2i:
+ 	return Vector2i(0, 0)
+ 
+ 
++func has_completed_building_type(building_type: String) -> bool:
++	for building in own_buildings():
++		if str(building.get("building_type", "")) != building_type:
++			continue
++		var state_name: String = str(building.get("state", ""))
++		if state_name in [
++			EconomyConstants.BLD_PLANNED,
++			EconomyConstants.BLD_UNDER_CONSTRUCTION,
++			EconomyConstants.BLD_DISABLED,
++			EconomyConstants.BLD_BLOCKED,
++		]:
++			continue
++		return true
++	return false
++
++
+ func has_building_type(building_type: String) -> bool:
+ 	for building in own_buildings():
+-		if str(building.get("building_type", "")) == building_type:
+-			if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
+-				return true
++		if str(building.get("building_type", "")) != building_type:
++			continue
++		var state_name: String = str(building.get("state", ""))
++		if state_name in [
++			EconomyConstants.BLD_PLANNED,
++			EconomyConstants.BLD_UNDER_CONSTRUCTION,
++			EconomyConstants.BLD_DISABLED,
++			EconomyConstants.BLD_BLOCKED,
++		]:
++			continue
++		return true
+ 	for site in own_construction_sites():
+-		if str(site.get("building_type", "")) == building_type:
+-			return true
++		if str(site.get("building_type", "")) != building_type:
++			continue
++		var site_state: String = str(site.get("state", ""))
++		if site_state in [EconomyConstants.CONS_COMPLETED, EconomyConstants.CONS_CANCELLED]:
++			continue
++		return true
+ 	return false
+ 
+ 
+diff --git a/godot_project/sim/bot/economy_expansion_bot.gd b/godot_project/sim/bot/economy_expansion_bot.gd
+index b761bf8..c7488ca 100644
+--- a/godot_project/sim/bot/economy_expansion_bot.gd
++++ b/godot_project/sim/bot/economy_expansion_bot.gd
+@@ -1,15 +1,17 @@
+ class_name EconomyExpansionBot
+ extends Bot
+ 
+-## Rule-based economy expansion bot using snapshot + legal commands only (RUN_02.8).
++## Rule-based economy expansion bot using snapshot + legal-command shortlist only (RUN_02.8).
+ 
+ const ACTOR_PREFIX: String = "economy_expansion_bot"
++const MAX_BOOTSTRAP_ROADS: int = 12
++const MAX_TOTAL_ROAD_SEGMENTS: int = 40
++const CHAIN_TYPES: Array[String] = ["woodcutter", "forester", "sawmill", "storehouse", "workshop"]
+ 
+ var _observation: EconomyBotObservation = null
+ var _decision_log: Array = []
+-var _reject_streak: int = 0
+-var _candidate_index: int = 0
+-var _sorted_candidates: Array = []
++var _road_queue: Array = []
++var _chain_index: int = 0
+ 
+ 
+ func _init(p_player_id: String = "p1") -> void:
+@@ -21,9 +23,8 @@ func reset(p_player_id: String = "p1") -> void:
+ 	super.reset(p_player_id)
+ 	actor_id = "%s_%s" % [ACTOR_PREFIX, p_player_id]
+ 	_decision_log.clear()
+-	_reject_streak = 0
+-	_candidate_index = 0
+-	_sorted_candidates.clear()
++	_road_queue.clear()
++	_chain_index = 0
+ 
+ 
+ func get_decisions() -> Array:
+@@ -33,6 +34,7 @@ func get_decisions() -> Array:
+ func observe(snapshot: Dictionary, p_player_id: String) -> void:
+ 	super.observe(snapshot, p_player_id)
+ 	_observation = EconomyBotObservation.from_snapshot(snapshot, player_id)
++	_advance_chain_index()
+ 
+ 
+ func is_complete(_snapshot: Dictionary) -> bool:
+@@ -43,101 +45,113 @@ func decide(_tick: int) -> SimCommand:
+ 	if _observation == null:
+ 		return null
+ 
+-	if str(_observation.diagnostics().get("stall", {}).get("primary_reason", "")) != "":
+-		pass
++	var road_cmds: Array = _commands_of_type("PlaceRoadCommand")
++	var building_cmds: Array = _commands_of_type("PlaceBuildingPlanCommand")
+ 
+-	_refresh_candidates()
+-	if _sorted_candidates.is_empty():
++	if not _road_queue.is_empty():
++		var queued: SimCommand = _next_queued_road(road_cmds)
++		if queued != null:
++			_log_decision(queued.type, "queued road segment")
++			return queued
++
++	if _has_active_construction():
++		var connect: Array = _roads_connecting_sites(road_cmds)
++		if not connect.is_empty():
++			return _command_from_entry(connect[0])
++		if _sites_have_delivery_progress():
++			return _noop_command()
++		if _road_segments() < MAX_TOTAL_ROAD_SEGMENTS:
++			var toward_site: Array = _roads_toward_active_sites(road_cmds)
++			if not toward_site.is_empty():
++				return _command_from_entry(toward_site[0])
++			if not road_cmds.is_empty():
++				return _command_from_entry(road_cmds[0])
++		return _noop_command()
++
++	if _chain_index >= CHAIN_TYPES.size():
++		return _noop_command()
++
++	var building_type: String = CHAIN_TYPES[_chain_index]
++	var target: Vector2i = _target_for_type(building_type)
++	if target.x < 0:
++		return _noop_command()
++
++	if not _hex_has_road_adjacency(target):
++		if _road_segments() >= MAX_TOTAL_ROAD_SEGMENTS:
++			return _noop_command()
++		if _road_queue.is_empty():
++			_queue_roads_to(target.x, target.y)
++		var bootstrap: SimCommand = _next_queued_road(road_cmds)
++		if bootstrap != null:
++			_log_decision(bootstrap.type, "bootstrap road toward %s" % building_type)
++			return bootstrap
++		if not road_cmds.is_empty():
++			return _command_from_entry(_roads_toward_hex(road_cmds, target)[0] if not _roads_toward_hex(road_cmds, target).is_empty() else road_cmds[0])
+ 		return _noop_command()
+ 
+-	var attempts: int = mini(_sorted_candidates.size(), 12)
+-	for _i in range(attempts):
+-		if _candidate_index >= _sorted_candidates.size():
+-			_candidate_index = 0
+-		var entry: Dictionary = _sorted_candidates[_candidate_index]
+-		_candidate_index += 1
+-		var cmd: SimCommand = _command_from_entry(entry)
+-		if cmd != null:
+-			_log_decision(cmd.type, str(entry.get("label", "")))
+-			return cmd
++	var build_cmd: SimCommand = _pick_building_at(building_cmds, building_type, target.x, target.y)
++	if build_cmd == null:
++		build_cmd = _pick_building_at(building_cmds, building_type, -1, -1)
++	if build_cmd != null:
++		_log_decision(build_cmd.type, "place %s" % building_type)
++		return build_cmd
+ 
++	if _road_segments() < MAX_TOTAL_ROAD_SEGMENTS and not road_cmds.is_empty():
++		return _command_from_entry(road_cmds[0])
+ 	return _noop_command()
+ 
+ 
+ func on_command_applied(command: SimCommand, result: CommandResult) -> void:
+-	if result.success:
+-		_reject_streak = 0
+-	else:
+-		_reject_streak += 1
++	if command == null:
++		return
++	if command.type == "PlaceRoadCommand" and not _road_queue.is_empty():
++		if result.success or str(result.error_code) == "ROAD_EXISTS":
++			_road_queue.pop_front()
++
+ 
++func _advance_chain_index() -> void:
++	while _chain_index < CHAIN_TYPES.size():
++		if not _observation.has_completed_building_type(CHAIN_TYPES[_chain_index]):
++			return
++		_chain_index += 1
+ 
+-func _refresh_candidates() -> void:
+-	_sorted_candidates.clear()
+-	var road_cmds: Array = []
+-	var building_cmds: Array = []
+-	var other_cmds: Array = []
+ 
++func _target_for_type(building_type: String) -> Vector2i:
++	var forests: Array = _observation.forest_hexes()
++	var hq: Vector2i = _observation.hq_position()
++	match building_type:
++		"woodcutter":
++			return forests[0] if not forests.is_empty() else Vector2i(-1, -1)
++		"forester":
++			return forests[mini(1, forests.size() - 1)] if not forests.is_empty() else Vector2i(-1, -1)
++		"storehouse":
++			return Vector2i(hq.x + 1, hq.y + 2)
++		"sawmill":
++			return Vector2i(hq.x + 2, hq.y)
++		"workshop":
++			return Vector2i(hq.x + 3, hq.y + 1)
++	return Vector2i(hq.x + 2, hq.y)
++
++
++func _commands_of_type(cmd_type: String) -> Array:
++	var result: Array = []
+ 	for entry in _observation.legal_commands:
+ 		if typeof(entry) != TYPE_DICTIONARY:
+ 			continue
+-		var cmd_type: String = str(entry.get("type", entry.get("command_type", "")))
+-		if cmd_type == "SetWorkerPolicyCommand":
+-			continue
+-		if cmd_type == "NoopCommand":
+-			other_cmds.append(entry)
+-			continue
+-		match cmd_type:
+-			"PlaceRoadCommand":
+-				road_cmds.append(entry)
+-			"PlaceBuildingPlanCommand":
+-				building_cmds.append(entry)
+-			_:
+-				other_cmds.append(entry)
+-
+-	_sort_entries(road_cmds)
+-	_sort_entries(building_cmds)
+-	_sort_entries(other_cmds)
+-
+-	var pending_sites: int = _observation.own_construction_sites().size()
+-	var connect_roads: Array = _roads_connecting_sites(road_cmds)
+-	var network_size: int = _observation.own_roads().size() + _observation.own_road_nodes().size()
+-
+-	if pending_sites > 0:
+-		if _sites_have_delivery_progress():
+-			_sorted_candidates = _noop_entries(other_cmds)
+-			return
+-		if not connect_roads.is_empty():
+-			_sorted_candidates = connect_roads
+-		elif network_size > 40:
+-			_sorted_candidates = _noop_entries(other_cmds)
+-		else:
+-			var road_push: Array = _road_toward_forests(road_cmds)
+-			road_push.append_array(road_cmds.slice(0, mini(road_cmds.size(), 6)))
+-			_sorted_candidates = road_push
+-		return
+-
+-	if network_size < 8:
+-		var road_first: Array = _road_toward_forests(road_cmds)
+-		road_first.append_array(road_cmds)
+-		_sorted_candidates = road_first
+-		return
+-
+-	if pending_sites >= 1:
+-		return
++		if str(entry.get("type", entry.get("command_type", ""))) == cmd_type:
++			result.append(entry)
++	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
++		return _entry_sort_key(a) < _entry_sort_key(b)
++	)
++	return result
+ 
+-	if not _observation.has_building_type("woodcutter") and not _has_pending_type("woodcutter"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "woodcutter"))
+-	if not _observation.has_building_type("sawmill") and not _has_pending_type("sawmill"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "sawmill"))
+-	if not _observation.has_building_type("storehouse") and not _has_pending_type("storehouse"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "storehouse"))
+-	if not _observation.has_building_type("workshop") and not _has_pending_type("workshop"):
+-		_sorted_candidates.append_array(_filter_building_entries(building_cmds, "workshop"))
+ 
+-	_sorted_candidates.append_array(building_cmds)
+-	if _sorted_candidates.is_empty() and not road_cmds.is_empty():
+-		_sorted_candidates = _road_toward_forests(road_cmds).slice(0, mini(road_cmds.size(), 6))
+-	_sorted_candidates.append_array(_noop_entries(other_cmds))
++func _has_active_construction() -> bool:
++	for site in _observation.own_construction_sites():
++		var site_state: String = str(site.get("state", ""))
++		if site_state in [EconomyConstants.CONS_ACTIVE, EconomyConstants.CONS_BLOCKED]:
++			return true
++	return false
+ 
+ 
+ func _sites_have_delivery_progress() -> bool:
+@@ -145,7 +159,7 @@ func _sites_have_delivery_progress() -> bool:
+ 		for ware_type in site.get("delivered", {}):
+ 			if int(site.get("delivered", {}).get(ware_type, 0)) > 0:
+ 				return true
+-		if int(site.get("progress_percent", 0)) > 0:
++		if int(site.get("builder_work_remaining", 0)) < int(site.get("required", {}).get("builder_work", 99)):
+ 			return true
+ 	return false
+ 
+@@ -153,24 +167,45 @@ func _sites_have_delivery_progress() -> bool:
+ func _roads_connecting_sites(road_cmds: Array) -> Array:
+ 	var result: Array = []
+ 	for entry in road_cmds:
+-		var label: String = str(entry.get("label", ""))
+-		if "Connect site" in label:
++		if "Connect site" in str(entry.get("label", "")):
+ 			result.append(entry)
+ 	return result
+ 
+ 
+-func _noop_entries(other_cmds: Array) -> Array:
+-	for entry in other_cmds:
+-		if str(entry.get("type", entry.get("command_type", ""))) == "NoopCommand":
+-			return [entry]
++func _road_segments() -> int:
++	return _observation.own_roads().size() + _observation.own_road_nodes().size()
++
++
++func _hex_has_road_adjacency(hex: Vector2i) -> bool:
++	if hex.x < 0:
++		return false
++	for road in _observation.own_roads():
++		for end in [
++			Vector2i(int(road.get("hex_a_q", road.get("from_q", -99))), int(road.get("hex_a_r", road.get("from_r", -99)))),
++			Vector2i(int(road.get("hex_b_q", road.get("to_q", -99))), int(road.get("hex_b_r", road.get("to_r", -99)))),
++		]:
++			if HexCoord.new(hex.x, hex.y).distance(HexCoord.new(end.x, end.y)) <= 1:
++				return true
++	for node in _observation.own_road_nodes():
++		if HexCoord.new(hex.x, hex.y).distance(HexCoord.new(int(node.get("q", -99)), int(node.get("r", -99)))) <= 1:
++			return true
++	return false
++
++
++func _roads_toward_active_sites(road_cmds: Array) -> Array:
++	for site in _observation.own_construction_sites():
++		var q: int = int(site.get("anchor_q", site.get("q", -1)))
++		var r: int = int(site.get("anchor_r", site.get("r", -1)))
++		if q >= 0:
++			var scored: Array = _roads_toward_hex(road_cmds, Vector2i(q, r))
++			if not scored.is_empty():
++				return scored
+ 	return []
+ 
+ 
+-func _road_toward_forests(road_cmds: Array) -> Array:
+-	var forests: Array = _observation.forest_hexes()
+-	if forests.is_empty():
++func _roads_toward_hex(road_cmds: Array, target: Vector2i) -> Array:
++	if target.x < 0:
+ 		return []
+-	var target: Vector2i = forests[0]
+ 	var scored: Array = []
+ 	for entry in road_cmds:
+ 		var params: Dictionary = entry.get("params", entry.get("payload", {}))
+@@ -189,34 +224,54 @@ func _road_toward_forests(road_cmds: Array) -> Array:
+ 	return result
+ 
+ 
+-func _filter_building_entries(entries: Array, building_type: String) -> Array:
+-	var result: Array = []
+-	for entry in entries:
++func _queue_roads_to(target_q: int, target_r: int) -> void:
++	if not _road_queue.is_empty():
++		return
++	var hq: Vector2i = _observation.hq_position()
++	var current := HexCoord.new(hq.x, hq.y)
++	var target := HexCoord.new(target_q, target_r)
++	var guard: int = 0
++	while (current.q != target.q or current.r != target.r) and guard < MAX_BOOTSTRAP_ROADS:
++		guard += 1
++		var best_neighbor: HexCoord = current
++		var best_dist: int = current.distance(target)
++		for neighbour in current.neighbors():
++			var dist: int = neighbour.distance(target)
++			if dist < best_dist:
++				best_dist = dist
++				best_neighbor = neighbour
++		if best_neighbor.q == current.q and best_neighbor.r == current.r:
++			break
++		_road_queue.append({
++			"from_q": current.q, "from_r": current.r,
++			"to_q": best_neighbor.q, "to_r": best_neighbor.r,
++		})
++		current = best_neighbor
++
++
++func _next_queued_road(road_cmds: Array) -> SimCommand:
++	if _road_queue.is_empty():
++		return null
++	var segment: Dictionary = _road_queue[0]
++	for entry in road_cmds:
+ 		var params: Dictionary = entry.get("params", entry.get("payload", {}))
+-		if str(params.get("building_type", "")) == building_type:
+-			result.append(entry)
+-	return result
+-
+-
+-func _has_pending_type(building_type: String) -> bool:
+-	for site in _observation.own_construction_sites():
+-		if str(site.get("building_type", "")) == building_type:
+-			return true
+-	return false
+-
+-
+-func _sort_entries(entries: Array) -> void:
+-	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+-		return _entry_sort_key(a) < _entry_sort_key(b)
+-	)
++		if int(params.get("from_q", -1)) == int(segment.get("from_q", -2)) \
++				and int(params.get("from_r", -1)) == int(segment.get("from_r", -2)) \
++				and int(params.get("to_q", -1)) == int(segment.get("to_q", -2)) \
++				and int(params.get("to_r", -1)) == int(segment.get("to_r", -2)):
++			return _command_from_entry(entry)
++	return PlaceRoadCommand.new(player_id, _observation.tick, segment)
+ 
+ 
+-func _entry_sort_key(entry: Dictionary) -> String:
+-	var params: Dictionary = entry.get("params", entry.get("payload", {}))
+-	var q: int = int(params.get("q", params.get("to_q", 0)))
+-	var r: int = int(params.get("r", params.get("to_r", 0)))
+-	var cmd_type: String = str(entry.get("command_type", entry.get("type", "")))
+-	return "%s,%03d,%03d,%s" % [cmd_type, q, r, str(params.get("building_type", ""))]
++func _pick_building_at(building_cmds: Array, building_type: String, q: int, r: int) -> SimCommand:
++	for entry in building_cmds:
++		var params: Dictionary = entry.get("params", entry.get("payload", {}))
++		if str(params.get("building_type", "")) != building_type:
++			continue
++		if q >= 0 and (int(params.get("q", -1)) != q or int(params.get("r", -1)) != r):
++			continue
++		return _command_from_entry(entry)
++	return null
+ 
+ 
+ func _command_from_entry(entry: Dictionary) -> SimCommand:
+@@ -228,8 +283,6 @@ func _command_from_entry(entry: Dictionary) -> SimCommand:
+ 			return PlaceRoadCommand.new(player_id, _observation.tick, params)
+ 		"PlaceBuildingPlanCommand":
+ 			return PlaceBuildingPlanCommand.new(player_id, _observation.tick, params)
+-		"SetWorkerPolicyCommand":
+-			return SetWorkerPolicyCommand.new(player_id, _observation.tick, params)
+ 		"NoopCommand":
+ 			return NoopCommand.new(player_id, _observation.tick)
+ 	return null
+@@ -239,6 +292,16 @@ func _noop_command() -> SimCommand:
+ 	return NoopCommand.new(player_id, _observation.tick)
+ 
+ 
++func _entry_sort_key(entry: Dictionary) -> String:
++	var params: Dictionary = entry.get("params", entry.get("payload", {}))
++	return "%s,%03d,%03d,%s" % [
++		str(entry.get("command_type", entry.get("type", ""))),
++		int(params.get("q", params.get("to_q", 0))),
++		int(params.get("r", params.get("to_r", 0))),
++		str(params.get("building_type", "")),
++	]
++
++
+ func _log_decision(command_type: String, reason: String) -> void:
+ 	_decision_log.append({
+ 		"tick": _observation.tick,
+diff --git a/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json b/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json
+index 343a75a..5027e87 100644
+--- a/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json
++++ b/godot_project/sim/data/scenarios/economy/expansion_duel_2p.json
+@@ -16,7 +16,7 @@
+       "player_id": "p1",
+       "q": 4,
+       "r": 4,
+-      "starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
++      "starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
+       "starting_carriers": 4,
+       "starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
+       "starting_buildings": []
+@@ -25,7 +25,7 @@
+       "player_id": "p2",
+       "q": 19,
+       "r": 19,
+-      "starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
++      "starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
+       "starting_carriers": 4,
+       "starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
+       "starting_buildings": []
+diff --git a/godot_project/sim/economy/economy_bvb_setup.gd b/godot_project/sim/economy/economy_bvb_setup.gd
+index 8c4c2c1..74407e2 100644
+--- a/godot_project/sim/economy/economy_bvb_setup.gd
++++ b/godot_project/sim/economy/economy_bvb_setup.gd
+@@ -95,7 +95,7 @@ static func _count_player_roads(state: GameState, player_id: String) -> int:
+ 
+ static func _spawn_kit() -> Dictionary:
+ 	return {
+-		"starting_wares": {"tools": 12, "planks": 15, "rations": 20, "meals": 10},
++		"starting_wares": {"tools": 12, "planks": 15, "stone": 12, "rations": 20, "meals": 10},
+ 		"starting_carriers": 4,
+ 		"starting_workers": {"carrier": 2, "builder": 2, "woodcutter": 1, "carpenter": 1},
+ 	}
+diff --git a/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd b/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd
+index 0ca5720..4077699 100644
+--- a/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd
++++ b/godot_project/sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd
+@@ -1,6 +1,6 @@
+ extends "res://sim/tests/test_case.gd"
+ 
+-const MIN_BOT_BUILDINGS: int = 5
++	const MIN_BOT_BUILDINGS: int = 5
+ const MIN_BOT_ROADS: int = 10
+ const MIN_BOT_DELIVERIES: int = 10
+ 
+diff --git a/godot_project/sim/tests/viewer/test_vis_bvb_001_ownership_overlay.gd.uid b/godot_project/sim/tests/viewer/test_vis_bvb_001_ownership_overlay.gd.uid
+new file mode 100644
+index 0000000..4d4992e
+--- /dev/null
++++ b/godot_project/sim/tests/viewer/test_vis_bvb_001_ownership_overlay.gd.uid
+@@ -0,0 +1 @@
++uid://cbc4h2ihu2kb2
+diff --git a/godot_project/sim/tests/viewer/test_vis_bvb_002_scoreboard.gd.uid b/godot_project/sim/tests/viewer/test_vis_bvb_002_scoreboard.gd.uid
+new file mode 100644
+index 0000000..195683a
+--- /dev/null
++++ b/godot_project/sim/tests/viewer/test_vis_bvb_002_scoreboard.gd.uid
+@@ -0,0 +1 @@
++uid://b0meq8kuo3l7s
+diff --git a/godot_project/sim/tools/run_economy_bvb_checkpoint_export.gd.uid b/godot_project/sim/tools/run_economy_bvb_checkpoint_export.gd.uid
+new file mode 100644
+index 0000000..531ea38
+--- /dev/null
++++ b/godot_project/sim/tools/run_economy_bvb_checkpoint_export.gd.uid
+@@ -0,0 +1 @@
++uid://bk4fuv0cvquso
+diff --git a/godot_project/sim/tools/run_economy_bvb_perf_baseline.gd.uid b/godot_project/sim/tools/run_economy_bvb_perf_baseline.gd.uid
+new file mode 100644
+index 0000000..cebf696
+--- /dev/null
++++ b/godot_project/sim/tools/run_economy_bvb_perf_baseline.gd.uid
+@@ -0,0 +1 @@
++uid://uedgh5m7w3sg
+diff --git a/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd b/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd
+index eadbe51..b9d2b17 100644
+--- a/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd
++++ b/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd
+@@ -6,7 +6,7 @@ const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
+ func _initialize() -> void:
+ 	BootstrapScript.load_all()
+ 	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
+-	scenario["max_ticks"] = 500
++	scenario["max_ticks"] = 800
+ 	var runner := SimulationTickRunner.new()
+ 	var state: GameState = runner.create_game(scenario)
+ 	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
+diff --git a/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd.uid b/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd.uid
+new file mode 100644
+index 0000000..e13fe20
+--- /dev/null
++++ b/godot_project/sim/tools/run_economy_bvb_quick_metrics.gd.uid
+@@ -0,0 +1 @@
++uid://dgy6uubpxsewi
+diff --git a/godot_project/sim/tools/run_economy_bvb_site_debug.gd b/godot_project/sim/tools/run_economy_bvb_site_debug.gd
+new file mode 100644
+index 0000000..5d886e7
+--- /dev/null
++++ b/godot_project/sim/tools/run_economy_bvb_site_debug.gd
+@@ -0,0 +1,44 @@
++extends SceneTree
++
++const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
++
++
++func _initialize() -> void:
++	BootstrapScript.load_all()
++	var scenario: Dictionary = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_PROOF)
++	scenario["max_ticks"] = 601
++	var runner := SimulationTickRunner.new()
++	var state: GameState = runner.create_game(scenario)
++	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
++	var dual := DualBotRunner.new(runner)
++	state = dual.run_match(state, scenario)
++	for pid in ["p1", "p2"]:
++		print("=== %s tick=%d ===" % [pid, state.tick])
++		for site in EconomyState.all_construction_sites(state):
++			if str(site.get("player_id", "")) != pid:
++				continue
++			print("site id=%s type=%s state=%s delivered=%s required=%s builder_work=%s" % [
++				site.get("id", 0),
++				site.get("building_type", ""),
++				site.get("state", ""),
++				str(site.get("delivered", {})),
++				str(site.get("required", {})),
++				site.get("builder_work_remaining", 0),
++			])
++		for building in EconomyState.all_buildings(state):
++			if str(building.get("player_id", "")) != pid:
++				continue
++			if str(building.get("building_type", "")) == "headquarters":
++				continue
++			print("building id=%s type=%s state=%s" % [
++				building.get("id", 0),
++				building.get("building_type", ""),
++				building.get("state", ""),
++			])
++		print("buildings_built=%d roads=%d deliveries=%d" % [
++			DualBotRunner.count_player_buildings_built(state, pid),
++			DualBotRunner.count_player_roads_built(state, pid),
++			DualBotRunner.count_player_deliveries_built(state, pid),
++		])
++	print("EXIT: 0 (pass)")
++	quit(0)
+diff --git a/godot_project/sim/tools/run_economy_bvb_site_debug.gd.uid b/godot_project/sim/tools/run_economy_bvb_site_debug.gd.uid
+new file mode 100644
+index 0000000..94e0830
+--- /dev/null
++++ b/godot_project/sim/tools/run_economy_bvb_site_debug.gd.uid
+@@ -0,0 +1 @@
++uid://cusxc0ubi76ar
+diff --git a/godot_project/sim/tools/run_economy_bvb_visual_review.gd.uid b/godot_project/sim/tools/run_economy_bvb_visual_review.gd.uid
+new file mode 100644
+index 0000000..c79d441
+--- /dev/null
++++ b/godot_project/sim/tools/run_economy_bvb_visual_review.gd.uid
+@@ -0,0 +1 @@
++uid://dyhod268csows
