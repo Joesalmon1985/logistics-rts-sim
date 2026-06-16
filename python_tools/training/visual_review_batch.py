@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
 
-from python_tools.training.godot_env import repo_root
+from python_tools.training.godot_env import godot_binary, repo_root
 
 
 DEFAULT_ROLLOUTS: list[dict[str, Any]] = [
@@ -49,12 +50,6 @@ DEFAULT_ROLLOUTS: list[dict[str, Any]] = [
         "policy": "trained",
     },
 ]
-
-
-def godot_binary() -> str:
-    import os
-
-    return os.environ.get("GODOT", "godot")
 
 
 def rollout_root(base: Path) -> Path:
@@ -134,6 +129,10 @@ def write_contact_sheet_html(capture_dir: Path, output_path: Path, title: str) -
         rows.append(
             f'<div><img src="{png.name}" width="480" /><div>{png.stem}</div></div>'
         )
+    write_contact_sheet_html_rows(output_path, title, rows)
+
+
+def write_contact_sheet_html_rows(output_path: Path, title: str, rows: list[str]) -> None:
     html = f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>{title}</title>
 <style>body{{font-family:sans-serif;background:#111;color:#eee}}
@@ -141,6 +140,23 @@ def write_contact_sheet_html(capture_dir: Path, output_path: Path, title: str) -
 div{{background:#222;padding:8px;border-radius:6px}}</style></head>
 <body><h1>{title}</h1><div class="grid">{''.join(rows)}</div></body></html>"""
     output_path.write_text(html, encoding="utf-8")
+
+
+def write_overall_contact_sheet(overall_dir: Path, base: Path) -> None:
+    rows: list[str] = []
+    for spec in DEFAULT_ROLLOUTS:
+        capture_dir = rollout_root(base) / spec["id"] / "screenshots"
+        for step in (0, 10):
+            png = capture_dir / f"{step:03d}_world.png"
+            if not png.is_file():
+                continue
+            href = Path(os.path.relpath(png, overall_dir)).as_posix()
+            rows.append(
+                f'<div><img src="{href}" width="480" /><div>{spec["id"]} step {step}</div></div>'
+            )
+    if rows:
+        overall_dir.mkdir(parents=True, exist_ok=True)
+        write_contact_sheet_html_rows(overall_dir / "overall_contact_sheet.html", "Overall review", rows)
 
 
 def run_capture(rollout_dir: Path, steps: list[int], godot: str) -> subprocess.CompletedProcess[str]:
@@ -252,21 +268,7 @@ def batch_review(
         "issues": summary["issues"],
     }
     (overall_dir / "overall_manifest.json").write_text(json.dumps(overall_manifest, indent=2), encoding="utf-8")
-
-    # Overall contact sheet from latest mode=world captures
-    links: list[str] = []
-    for spec in DEFAULT_ROLLOUTS:
-        capture_dir = rollout_root(root) / spec["id"] / "screenshots"
-        for step in (0, 10):
-            png = capture_dir / f"{step:03d}_world.png"
-            if png.is_file():
-                rel = png.relative_to(overall_dir)
-                links.append(f'<div><img src="../{rel.as_posix()}" width="480"/><div>{spec["id"]} step {step}</div></div>')
-    if links:
-        write_contact_sheet_html(overall_dir, overall_dir / "overall_contact_sheet.html", "Overall review")
-        html = (overall_dir / "overall_contact_sheet.html").read_text(encoding="utf-8")
-        html = html.replace("</div></body>", f"{''.join(links)}</div></body>")
-        (overall_dir / "overall_contact_sheet.html").write_text(html, encoding="utf-8")
+    write_overall_contact_sheet(overall_dir, root)
 
     return summary
 

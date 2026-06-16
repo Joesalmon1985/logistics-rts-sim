@@ -93,3 +93,17 @@ def test_manifest_panel_metadata_requires_neural_overlay():
         Path("."),
     )
     assert any("neural" in issue for issue in issues)
+
+
+def test_overall_contact_sheet_uses_relpath(tmp_path):
+    from python_tools.training.visual_review_batch import write_overall_contact_sheet
+
+    rollouts = tmp_path / "training_runs" / "visual_rollouts"
+    review = rollouts / "_review"
+    shots = rollouts / "economy_random_s11" / "screenshots"
+    shots.mkdir(parents=True)
+    png = shots / "000_world.png"
+    png.write_bytes(b"png")
+    write_overall_contact_sheet(review, tmp_path)
+    html = (review / "overall_contact_sheet.html").read_text(encoding="utf-8")
+    assert "../economy_random_s11/screenshots/000_world.png" in html
