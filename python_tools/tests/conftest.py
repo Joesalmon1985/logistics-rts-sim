@@ -29,3 +29,19 @@ def _configure_godot_env() -> None:
 def require_godot() -> None:
     if not os.environ.get("GODOT"):
         pytest.skip("GODOT environment variable is not set")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _godot_training_env_hygiene() -> None:
+    """Ensure headless Godot training env subprocesses exit after pytest."""
+    yield
+    from python_tools.training.godot_env import cleanup_stale_training_env_processes
+
+    remaining = cleanup_stale_training_env_processes()
+    if remaining:
+        pytest.fail(
+            "Stale Godot training-env process(es) remain after pytest: "
+            + ", ".join(str(pid) for pid in remaining)
+            + ". Run: python3 -c \"from python_tools.training.godot_env import "
+            "cleanup_stale_training_env_processes; print(cleanup_stale_training_env_processes())\""
+        )

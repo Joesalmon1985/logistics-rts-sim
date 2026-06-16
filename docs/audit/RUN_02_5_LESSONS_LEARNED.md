@@ -13,6 +13,7 @@
 - Export must create empty `events.jsonl` when no events occur
 - Visual capture is slow (~40s per step×mode batch at 1080×720); use reduced step sets in CI
 - Python export requires full permissions (Godot subprocess + session dir outside sandbox)
+- **Fixed:** `GodotHeadlessEnv` session dirs now live under `godot_project/.run06_sessions/` (gitignored); pytest session fixture calls `cleanup_stale_training_env_processes()`; process groups terminated via `start_new_session` + `killpg`
 
 ## Verification
 
