@@ -128,7 +128,25 @@ The decision draft file remains as a redirect stub. **Next implementation target
 
 ## Next implementation run
 
-**RUN_02.7** — economy logistics foundation implementation per **ratified** DDR-LOG decisions and backlog in `15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`.
+**RUN_02.7 — Economy Logistics Foundation Implementation**
+
+Implement the ratified backlog from [`15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md):
+
+- Configurable `ports[]` with anchor fallback `[[0, 0]]`
+- Diagnostics fixes (tool shortage counts, job/block reasons)
+- Config-only brick chain proof + lightweight config validation
+- Full/debug snapshot logistics assertions
+- ECON-SMOKE-006 deterministic logistics scenario (HQ → road network → construction site)
+- Regression protection for existing economy/kernel smokes and replay checks
+
+**Out of scope for RUN_02.7:** viewer polish, hybrid military wiring, civic systems, wages/labour simulation, node-buffer staging, and specialist-worker pathing.
+
+## Closure note (documentation phases)
+
+| Phase | Verification |
+|-------|----------------|
+| RUN_02.6 audit | Godot test suite + smokes run; results in current-state doc |
+| RUN_02.6 ratification | **Verification run: none** — documentation-only change; no code paths altered |
 
 ## Acceptance checklist (RUN_02.6)
 

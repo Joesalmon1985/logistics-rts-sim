@@ -8,18 +8,24 @@ Brief handoff after economy foundation audit/planning run.
 - Baseline verification (167 tests, all smokes) gives RUN_02.7 a trustworthy regression floor.
 - Separating RUN_02.6 (audit) from RUN_02.7 (implementation) keeps scope clear.
 
-## What broke / gaps found
+## What broke / gaps found (audit — resolved at ratification)
 
-- ECON-ROAD-004 (node buffers) vs carrier-only transit — needs DDR-LOG-006 decision.
-- Building `ports` documented but not in config — blocks confident large-footprint routing.
-- `diagnostics.shortages.tools` never populated despite tool_missing events.
-- Several matrix rule IDs still lack dedicated test files (MAP-002, NODE-001, JOB-001, SNAP-001 logistics).
+- ECON-ROAD-004 vs carrier-only transit — **ratified** as carrier-held transit (DDR-LOG-006)
+- Building `ports` — **ratified** for RUN_02.7 implementation (DDR-LOG-002)
+- `diagnostics.shortages.tools` — fix planned RUN_02.7
+- Matrix gaps (MAP-002, NODE-001, JOB-001, SNAP logistics) — planned RUN_02.7 tests
 
 ## Verification notes
+
+### Audit phase (RUN_02.6 exploration)
 
 - Godot 4.5.2; full suite ~2.5 min; economy smokes ~25s.
 - Working tree stayed clean; only `godot_project/.godot_user/` touched (gitignored).
 - No stale Godot processes after verification.
+
+### Ratification phase (documentation-only)
+
+- **Verification run: none** — documentation-only change; no code paths altered.
 
 ## Post-audit design ratification (2026-06-16)
 
@@ -33,9 +39,10 @@ Key ratified points:
 - Abstract specialist workers and abstract `builder_work` after material delivery
 - Config validation + config-only ware chain proof in RUN_02.7
 - Full/debug snapshot logistics contract; training snapshot omissions documented
-- RUN_07 hybrid blocked until RUN_02.7 minimum v1 model passes
+- Deferred: civic/hybrid **wiring**/viewer polish; snapshot/export readiness **in scope for RUN_02.7**
+- RUN_07 hybrid integration blocked until RUN_02.7 minimum v1 model passes
 
-Implementation remains deferred to **RUN_02.7**.
+Implementation remains deferred to **RUN_02.7** (see expanded scope in `RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md` §Next implementation run).
 
 ## Prompt improvement
 

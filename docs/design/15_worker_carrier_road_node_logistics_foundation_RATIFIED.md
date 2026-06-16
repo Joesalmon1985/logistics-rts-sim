@@ -118,9 +118,9 @@
 | | |
 |---|---|
 | **Status** | **Approved** |
-| **Final decision** | Defer: wages, housing, commuting, morale, strikes, disease, civic buildings, power, ports/ships, hybrid military wiring, neural training changes, viewer visual polish. **Do not defer** snapshot/export readiness needed for later viewer work (see DDR-LOG-010). |
-| **Consequence for RUN_02.7** | Scope guard; no civic/hybrid/viewer feature creep. |
-| **Deferred** | All items in final decision list except snapshot/export readiness. |
+| **Final decision** | Defer: wages, housing, commuting, morale, strikes, disease, civic buildings, power, ports/ships, **hybrid military wiring** (RUN_07), neural training changes, viewer visual polish. **Snapshot/export readiness remains in scope for RUN_02.7** — economy foundation is prepared for later hybrid and viewer work (see DDR-LOG-010). |
+| **Consequence for RUN_02.7** | Scope guard: no civic systems, hybrid implementation, or viewer polish in RUN_02.7; implement snapshot/export logistics fields and tests as part of foundation hardening. |
+| **Deferred** | Hybrid **implementation** (not hybrid-prep snapshot/export work); civic, wages, labour simulation, viewer polish, node-buffer staging, specialist-worker pathing. |
 
 ---
 
