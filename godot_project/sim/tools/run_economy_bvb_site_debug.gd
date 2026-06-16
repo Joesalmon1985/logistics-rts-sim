@@ -39,4 +39,30 @@ func _initialize() -> void:
 		print("dest_node=%d hq_node=%d route_len=%d" % [dest_node, hq_node, route.size()])
 	var hq := EconomyState.get_building(state, EconomyState.get_hq_building_id(state, "p1"))
 	print("hq_store=%s" % str(EconomyState.get_ware_store(state, int(hq.get("store_id", 0)))))
+	var building_count: int = 0
+	for building in EconomyState.all_buildings(state):
+		building_count += 1
+		if str(building.get("player_id", "")) == "p1":
+			print("building=%s/%s @ %s,%s" % [
+				building.get("building_type"),
+				building.get("state"),
+				building.get("anchor_q"),
+				building.get("anchor_r"),
+			])
+	print("total_buildings=%d buildings_built=%d" % [
+		building_count,
+		DualBotRunner.count_player_buildings_built(state, "p1"),
+	])
 	quit(0)
+
+
+func _has_active_woodcutter(state: GameState, player_id: String) -> bool:
+	var hq_id: int = EconomyState.get_hq_building_id(state, player_id)
+	for building in EconomyState.all_buildings(state):
+		if str(building.get("player_id", "")) != player_id:
+			continue
+		if int(building.get("id", 0)) == hq_id:
+			continue
+		if str(building.get("building_type", "")) == "woodcutter" and str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
+			return true
+	return false

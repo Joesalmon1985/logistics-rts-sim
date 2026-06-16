@@ -195,8 +195,15 @@ static func _count_player_buildings(state: GameState, player_id: String) -> int:
 			continue
 		if int(building.get("id", 0)) == hq_id:
 			continue
-		if str(building.get("state", "")) == EconomyConstants.BLD_ACTIVE:
-			count += 1
+		var state_name: String = str(building.get("state", ""))
+		if state_name in [
+			EconomyConstants.BLD_PLANNED,
+			EconomyConstants.BLD_UNDER_CONSTRUCTION,
+			EconomyConstants.BLD_DISABLED,
+			EconomyConstants.BLD_BLOCKED,
+		]:
+			continue
+		count += 1
 	return maxi(0, count)
 
 
