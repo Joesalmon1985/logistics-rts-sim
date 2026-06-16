@@ -106,14 +106,17 @@ func _refresh_candidates() -> void:
 		if _sites_have_delivery_progress():
 			_sorted_candidates = _noop_entries(other_cmds)
 			return
+		if _all_sites_road_adjacent():
+			_sorted_candidates = _noop_entries(other_cmds)
+			return
 		if not connect_roads.is_empty():
 			_sorted_candidates = connect_roads
-		elif network_size > 40:
-			_sorted_candidates = _noop_entries(other_cmds)
 		else:
-			var road_push: Array = _road_toward_forests(road_cmds)
-			road_push.append_array(road_cmds.slice(0, mini(road_cmds.size(), 6)))
-			_sorted_candidates = road_push
+			var toward_site: Array = _roads_toward_active_sites(road_cmds)
+			if not toward_site.is_empty():
+				_sorted_candidates = toward_site
+			else:
+				_sorted_candidates = _noop_entries(other_cmds)
 		return
 
 	if network_size < 8:
@@ -159,18 +162,46 @@ func _roads_connecting_sites(road_cmds: Array) -> Array:
 	return result
 
 
-func _noop_entries(other_cmds: Array) -> Array:
-	for entry in other_cmds:
-		if str(entry.get("type", entry.get("command_type", ""))) == "NoopCommand":
-			return [entry]
+func _all_sites_road_adjacent() -> bool:
+	for site in _observation.own_construction_sites():
+		if not _site_hex_road_adjacent(site):
+			return false
+	return true
+
+
+func _site_hex_road_adjacent(site: Dictionary) -> bool:
+	var q: int = int(site.get("anchor_q", site.get("q", -1)))
+	var r: int = int(site.get("anchor_r", site.get("r", -1)))
+	if q < 0:
+		return false
+	var site_coord := HexCoord.new(q, r)
+	for road in _observation.own_roads():
+		for end in [
+			Vector2i(int(road.get("hex_a_q", road.get("from_q", -99))), int(road.get("hex_a_r", road.get("from_r", -99)))),
+			Vector2i(int(road.get("hex_b_q", road.get("to_q", -99))), int(road.get("hex_b_r", road.get("to_r", -99)))),
+		]:
+			if site_coord.distance(HexCoord.new(end.x, end.y)) <= 1:
+				return true
+	for node in _observation.own_road_nodes():
+		if site_coord.distance(HexCoord.new(int(node.get("q", 0)), int(node.get("r", 0)))) <= 1:
+			return true
+	return false
+
+
+func _roads_toward_active_sites(road_cmds: Array) -> Array:
+	for site in _observation.own_construction_sites():
+		var q: int = int(site.get("anchor_q", site.get("q", -1)))
+		var r: int = int(site.get("anchor_r", site.get("r", -1)))
+		if q >= 0:
+			var scored: Array = _roads_toward_hex(road_cmds, Vector2i(q, r))
+			if not scored.is_empty():
+				return scored
 	return []
 
 
-func _road_toward_forests(road_cmds: Array) -> Array:
-	var forests: Array = _observation.forest_hexes()
-	if forests.is_empty():
+func _roads_toward_hex(road_cmds: Array, target: Vector2i) -> Array:
+	if target.x < 0:
 		return []
-	var target: Vector2i = forests[0]
 	var scored: Array = []
 	for entry in road_cmds:
 		var params: Dictionary = entry.get("params", entry.get("payload", {}))
@@ -187,6 +218,20 @@ func _road_toward_forests(road_cmds: Array) -> Array:
 	for item in scored:
 		result.append(item.get("entry", {}))
 	return result
+
+
+func _noop_entries(other_cmds: Array) -> Array:
+	for entry in other_cmds:
+		if str(entry.get("type", entry.get("command_type", ""))) == "NoopCommand":
+			return [entry]
+	return []
+
+
+func _road_toward_forests(road_cmds: Array) -> Array:
+	var forests: Array = _observation.forest_hexes()
+	if forests.is_empty():
+		return []
+	return _roads_toward_hex(road_cmds, forests[0])
 
 
 func _filter_building_entries(entries: Array, building_type: String) -> Array:
