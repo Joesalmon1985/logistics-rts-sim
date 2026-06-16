@@ -18,7 +18,9 @@ This engine must be **deeper than a small logistics demo**. It is the complete a
 
 > **Widelands-like mechanic coverage, not Widelands feature parity.**
 
-The Trial Economy Game must include **all major settlement-logistics economy mechanic families** in simplified, original, testable form — the same *kind* of systems Widelands uses for economy (roads, flags, carriers, chains, workers, mines, food support, forest management, upgrades), but:
+The Trial Economy Game must include **all major settlement-logistics economy mechanic families** in simplified, original, testable form — the same *kind* of systems Widelands uses for economy (roads, road nodes / player-facing “flags”, carriers, chains, workers, mines, food support, forest management, upgrades), but:
+
+> **Logistics foundation (ratified DDR-LOG-001–012):** Road **nodes** are authoritative simulation entities; **flags** are player-facing aliases, not separate entities. Building access uses configurable **`ports[]`** (default `[[0, 0]]`). Carriers are assigned **per delivery job**. Specialist workers are **abstract slots** in v1. Construction: **material delivery then abstract `builder_work`**. Ware transit is **carrier-held** in v1; road-node buffer staging is reserved/future. See `15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`.
 
 - Original placeholder names, data, and balance
 - No copied Widelands tribes, campaigns, maps, UI, art, or identity
@@ -143,7 +145,7 @@ RUN_02 is headless, but snapshots must export enough display state for RUN_05 to
 | Tree-density overlay | tree_density per forest hex |
 | Ownership / build-radius overlay | player ownership, buildable territory |
 | Road layer | road segments, quality if applicable |
-| Road node / flag layer | node positions, buffer ware counts |
+| Road node layer | node positions; optional inventory capacity (reserved schema; active staging not v1) |
 | Building layer | completed buildings |
 | Construction site layer | plans, progress, missing wares |
 | Worker / carrier markers | positions, assignments, load |
@@ -171,7 +173,7 @@ See `06_mobile_2d_visual_design.md` for rendering order.
 ## 15. Resources and Wares
 
 - **ECON-WARE-001:** Wares are typed, countable, and transportable
-- **ECON-WARE-002:** Wares exist in storage, at road nodes, in transit on carriers, or consumed by production/construction
+- **ECON-WARE-002:** Wares exist in building/site storage, **in transit on carriers** (v1 authoritative transit), or consumed by production/construction. Road-node inventory capacity may exist as **reserved schema**; active ware staging in node buffers is **not** v1 behaviour (DDR-LOG-006)
 
 **Minimum ware set (Run 02):**
 
@@ -212,11 +214,13 @@ See `06_mobile_2d_visual_design.md` for rendering order.
 
 Each chain must be testable in isolation and as an integrated scenario.
 
+**Modularity (DDR-LOG-007):** Wares, buildings, and recipes are config-driven. RUN_02.7 must prove at least one **config-only** new ware/recipe/building chain (e.g. bricks) without simulation-code ware enum changes.
+
 ---
 
 ## 17. Buildings
 
-- **ECON-BLD-001:** Buildings have footprints, input/output ports (road node links), worker slots, enable/disable state, and optional upgrade targets
+- **ECON-BLD-001:** Buildings have footprints, configurable **`ports[]`** entrance offsets (road node links at each port; default `[[0, 0]]` when omitted), worker slots, enable/disable state, and optional upgrade targets. RUN_02.7 implements full `ports[]` routing
 - **ECON-BLD-002:** Building types match catalogue in `05_units_resources_buildings_catalogue.md`
 
 **Minimum building set includes:** Headquarters, Storehouse, Woodcutter, Forester, Sawmill, Quarry, Farm, Well, Bakery, Rations kitchen, Meal hall, Coal mine, Iron mine, Deep coal mine, Deep iron mine, Smelter, Workshop, Storage yard.
@@ -315,16 +319,20 @@ Roads are not a thin connected/not-connected graph only.
 - **ECON-ROAD-001:** Roads connect adjacent legal hexes over hex paths/edges
 - **ECON-ROAD-002:** Terrain affects road legality
 - **ECON-ROAD-003:** Slope affects road legality or movement cost
-- **ECON-ROAD-004:** Road nodes act as transfer/buffer points (ware staging)
-- **ECON-ROAD-005:** Carriers transport wares along road network edges
+- **ECON-ROAD-004:** Road nodes expose inventory **capacity schema** for future junction staging; **v1 logistics does not actively stage wares in node buffers** — transit is carrier-held (DDR-LOG-006). Tests may verify capacity API separately from live logistics staging
+- **ECON-ROAD-005:** Carriers transport wares along road network edges node-by-node on assigned routes
 - **ECON-ROAD-006:** Road capacity or congestion is represented (at minimum in diagnostics; may limit concurrent carriers per segment)
 - **ECON-ROAD-007:** Blocked routes appear in diagnostics with reason
 
 `RemoveRoadCommand` remains valid where no blocking constraints exist.
 
-Road nodes (**ECON-NODE-001**): at least one node adjacent to each building port; network must be connected for delivery.
+Road nodes (**ECON-NODE-001**): at least one road node at each configured building **port** (entrance); network must be connected for delivery. Large footprints use `ports[]` offsets from anchor (DDR-LOG-002).
 
-Pathfinding (**ECON-PATH-001**–**003**): carriers pathfind on road graph; slope may affect cost; blocked paths emit events.
+Pathfinding (**ECON-PATH-001**–**003**): carriers pathfind on road-node graph; specialist workers use reachability only (no physical pathing in v1); slope may affect cost; blocked paths emit events.
+
+Carriers (**ECON-CARR-001**–**002**, DDR-LOG-003): assigned **per delivery job** in v1; one ware type per carrier; configurable edge speed.
+
+Delivery jobs (**ECON-JOB-001**–**003**): explicit entities with source, destination, ware, quantity, status, `block_reason`.
 
 ---
 
@@ -352,7 +360,7 @@ Pathfinding (**ECON-PATH-001**–**003**): carriers pathfind on road graph; slop
 
 ## 29. Construction Sites
 
-- **ECON-CONS-001:** Construction consumes delivered wares and builder work over ticks
+- **ECON-CONS-001:** Construction requires **delivered wares first**; then abstract **builder work** ticks until complete (DDR-LOG-005). No site-assigned builder worker entities in v1
 - **ECON-CONS-002:** Progress events emitted each tick while active
 - **ECON-CONS-003:** Completion spawns functional building entity
 

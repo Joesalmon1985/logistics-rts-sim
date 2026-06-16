@@ -21,12 +21,22 @@ Brief handoff after economy foundation audit/planning run.
 - Working tree stayed clean; only `godot_project/.godot_user/` touched (gitignored).
 - No stale Godot processes after verification.
 
-## Risks for RUN_02.7
+## Post-audit design ratification (2026-06-16)
 
-- Replay hash re-pin likely if logistics timing or entrance placement changes.
-- Hybrid (RUN_07) should wait until DDR-LOG-002 and minimum v1 model accepted.
+Human review completed. **DDR-LOG-001–012 approved** and recorded in [`15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md).
+
+Key ratified points:
+
+- Road nodes authoritative; flags are player-facing aliases only
+- `ports[]` building entrances with default `[[0, 0]]`
+- Carriers per delivery job; carrier-held ware transit (no active node-buffer staging in v1)
+- Abstract specialist workers and abstract `builder_work` after material delivery
+- Config validation + config-only ware chain proof in RUN_02.7
+- Full/debug snapshot logistics contract; training snapshot omissions documented
+- RUN_07 hybrid blocked until RUN_02.7 minimum v1 model passes
+
+Implementation remains deferred to **RUN_02.7**.
 
 ## Prompt improvement
 
-- Start RUN_02.7 prompt with decision control table answers from user.
-- Explicitly list which DDR-LOG options were chosen before coding.
+- RUN_02.7 prompt should reference ratified doc directly; decisions are no longer open.

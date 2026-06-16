@@ -31,6 +31,12 @@ Verification must use timeout-wrapped Godot commands; exit code `0` required. Se
 | ECON-SMOKE-004 | 500-tick replay | Hash match |
 | ECON-SMOKE-005 | Heuristic bot → Workshop | Full logistics chain via bot; see `02_` §38 |
 
+### RUN_02.7 planned smoke (ratified)
+
+| ID | Scenario | Pass criteria |
+|----|----------|---------------|
+| ECON-SMOKE-006 | HQ/storehouse → road network → construction site | Delivery job created; route through road nodes; carrier assigned per job; material delivered; `builder_work` progresses after delivery; diagnostics correct; full snapshot contains logistics state; replay hash pinned |
+
 RUN_02 smoke runner: `sim/tools/run_economy_smoke.gd` (all five smokes, exit `0`). ECON-SMOKE-005
 completes the workshop in **~5s wall clock**, well under its `BOT_MAX_TICKS` budget — the earlier
 "~450s" runtime note was a debugging-era figure and is obsolete after the bot/placement/logistics fixes.

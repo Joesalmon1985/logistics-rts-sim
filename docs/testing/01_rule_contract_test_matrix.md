@@ -21,7 +21,7 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 | ECON-ROAD-001 | unit | test_ECON_ROAD_001_roads_connect_adjacent_hexes |
 | ECON-ROAD-002 | unit | test_ECON_ROAD_002_terrain_blocks_road_on_water |
 | ECON-ROAD-003 | unit | test_ECON_ROAD_003_slope_affects_road_legality |
-| ECON-ROAD-004 | integration | test_ECON_ROAD_004_node_buffers_wares |
+| ECON-ROAD-004 | integration | test_ECON_ROAD_004_node_buffer_capacity_schema (capacity API; not active v1 staging) |
 | ECON-ROAD-005 | integration | test_ECON_ROAD_005_carrier_moves_along_road |
 | ECON-ROAD-006 | integration | test_ECON_ROAD_006_congestion_in_diagnostics |
 | ECON-ROAD-007 | integration | test_ECON_ROAD_007_blocked_route_in_diagnostics |
@@ -106,6 +106,21 @@ Maps mechanic families and rule IDs to required test types. RUN_02+ implements t
 | ECON-DIAG-001 | integration | test_ECON_DIAG_001_per_building_status |
 | ECON-DIAG-004 | integration | test_ECON_DIAG_004_csv_exports_generated |
 | ECON-SNAP-002 | integration | test_ECON_SNAP_002_all_display_layers_present |
+| ECON-SNAP-003 | integration | test_ECON_SNAP_003_logistics_arrays_present (planned RUN_02.7) |
+
+### RUN_02.7 planned tests (ratified backlog)
+
+| Area | Planned test / rule ID | Notes |
+|------|------------------------|-------|
+| Building ports | ECON-NODE-001 | `test_ECON_NODE_001_node_adjacent_to_building_port` — configurable `ports[]`, routing to entrance |
+| Delivery jobs | ECON-JOB-001, ECON-JOB-002 | Job created on missing input; carrier assignment by priority |
+| Diagnostics | ECON-TOOL-004 (extend) | `shortages.tools`; no-route, no-carrier, missing-worker |
+| Ware transit | ECON-CARR-001 (extend) | Carrier-held transit; not node-buffer staging (DDR-LOG-006) |
+| Construction | ECON-CONS-001 (extend) | `builder_work` only after materials delivered |
+| Modularity | ECON-CHAIN-brick (new) | Config-only brick chain without code enum changes |
+| Snapshot | ECON-SNAP-003 | Full/debug snapshot logistics keys populated |
+| Map bounds | ECON-MAP-002 | `test_ECON_MAP_002_out_of_bounds_rejected` |
+| Regression | ECON-SMOKE-001–005, ECON-DET-002 | Must remain green after RUN_02.7 |
 | ECON-DET-002 | scenario | test_ECON_DET_002_replay_hash_stable |
 | ECON-STALL-001 | integration | test_ECON_STALL_001_stall_emits_diagnostic |
 

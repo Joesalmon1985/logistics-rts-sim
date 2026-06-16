@@ -30,9 +30,31 @@ buildings:
   sawmill:
     footprint: [[0,0], [1,0]]
     worker_slots: 2
-    ports: [road_node_south]
+    ports: [[0,0], [1,0]]   # [dq, dr] offsets from anchor; default [[0,0]] if omitted
     enable_on_complete: true
 ```
+
+### Building `ports[]` (ratified — RUN_02.7 implementation)
+
+| Field | Semantics |
+|-------|-----------|
+| `ports` | List of `[dq, dr]` axial offsets from building anchor (`anchor_q`, `anchor_r`). Each port defines a valid **building entrance** hex where a **road node** connects the footprint to the logistics network. |
+| Default | If `ports` is omitted, treat as **`[[0, 0]]`** (anchor port only). Existing configs without `ports` remain valid (DDR-LOG-011). |
+| Implementation | Planned/expected in **RUN_02.7** if not already present in loader/sim. |
+
+### Road node inventory / buffer (ratified — DDR-LOG-006)
+
+| Topic | Semantics |
+|-------|-----------|
+| v1 behaviour | **No active ware staging** in road-node buffers during logistics ticks. Wares in transit are **carrier-held**. |
+| Schema | Road nodes may expose `inventory` with `capacity` from `road_node_buffer_capacity` — **reserved** for future junction staging. |
+| Tests | ECON-ROAD-004 may verify capacity API separately from live logistics staging. |
+
+### Config validation (RUN_02.7 — DDR-LOG-007)
+
+- Lightweight validation on load: required fields, ware/recipe references resolve, `ports` offset format.
+- Invalid config fails at startup, not mid-tick.
+- Prove modularity with at least one config-only ware/recipe/building chain test (e.g. bricks).
 
 ## recipes.yaml
 
@@ -92,6 +114,7 @@ variants:
 ## Validation
 
 - GDScript config loader validates schema on load in RUN_01 (typed parse + range/required checks)
+- **RUN_02.7:** extend validation per DDR-LOG-007 (ware/recipe cross-refs, `ports[]` shape)
 - Invalid config fails at startup, not mid-tick
 - All numeric authoritative fields are integers or fixed-point (no floats; DDR-027)
 

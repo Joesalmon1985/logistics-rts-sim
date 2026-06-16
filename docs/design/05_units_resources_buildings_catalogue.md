@@ -2,6 +2,10 @@
 
 Original placeholder names. Names may change; do not use protected reference-game names.
 
+**Logistics terminology (ratified):** Simulation entity is **road node**. **Flag** is a player-facing label only. Buildings connect to the road network via **`ports[]`** offsets from anchor (default `[[0, 0]]` when omitted). See `15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`.
+
+**Config IDs vs catalogue names:** Runtime config may use different display IDs (e.g. config `canteen` vs catalogue “Meal hall”). Implementation and tests use **config IDs** under `godot_project/sim/data/config/`.
+
 ---
 
 ## Wares (Economy)
@@ -20,7 +24,17 @@ Original placeholder names. Names may change; do not use protected reference-gam
 | iron_ore | Iron ore | Iron mine |
 | iron_ingots | Iron ingots | Smelter |
 | tools | Tools | Workshop (generic Run 02; schema supports tool categories later) |
-| builder_work | Builder work | Abstract construction labour |
+| builder_work | Builder work | Abstract construction progress (after material delivery); not a site-assigned worker in v1 |
+
+### Config-present wares not yet fully tested in economy suite
+
+| Ware ID | Notes |
+|---------|--------|
+| bricks | Defined in `wares.json`; `brick_kiln` + `bricks_from_stone` in config — **RUN_02.7** should prove config-only chain |
+
+### Future expansion (config-driven, not necessarily implemented)
+
+New harvestables (clay, sheep, etc.) and chains should be addable via `wares.json`, `recipes.json`, `buildings.json`, and `construction_costs.json` without simulation enum changes (DDR-LOG-007). Do not document as implemented until tests exist.
 
 ### Future tool categories (schema hook, not required Run 02)
 
@@ -31,6 +45,8 @@ Run 02 may map all specialist needs to `tools` until categories are added.
 ---
 
 ## Economy Buildings
+
+Buildings connect to the logistics network at **ports** — `[dq, dr]` offsets from `anchor_q`/`anchor_r` (see `06_config_and_data_schema.md`). One road node per port when RUN_02.7 entrance model is implemented.
 
 | ID | Name | Footprint | Inputs | Outputs | Notes |
 |----|------|-----------|--------|---------|-------|
@@ -68,7 +84,9 @@ Construction cost for generic building: planks + stone + tools + builder_work (a
 | miner | coal_mine, iron_mine, deep_* | tools |
 | farmer | farm | tools |
 | carrier_operator | (implicit on carriers) | — |
-| builder | construction sites | tools |
+| builder | production buildings (e.g. brick kiln) | tools |
+
+> **Construction sites (v1):** Do not assign **builder** workers to sites. Sites use material delivery + abstract **builder_work** ware (DDR-LOG-005).
 
 Workers are provisioned from Headquarters or Storehouses (see ECON-WORKER-*).
 

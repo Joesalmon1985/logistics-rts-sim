@@ -18,6 +18,8 @@ Hybrid Game = Trial Economy Game + Trial Military Game + Hybrid Integration Rule
 
 Inherited rules apply unless explicitly overridden below.
 
+> **RUN_07 dependency (DDR-LOG-008):** Hybrid military/economy integration (**RUN_07**) must not proceed until **RUN_02.7** economy logistics foundation hardening is complete and acceptance criteria in `15_worker_carrier_road_node_logistics_foundation_RATIFIED.md` are met. Hybrid buildings use the same economy construction and logistics foundation: building `ports[]` / entrances, delivery jobs, carriers per job, diagnostics, and config-driven wares/recipes where appropriate.
+
 ---
 
 ## 2. Purpose
@@ -58,6 +60,8 @@ All `ECON-*` rules from `02_` apply unless overridden:
 
 **HYB-ECON-001:** Economy engine is not duplicated; hybrid extends variant registry.
 
+**HYB-ECON-004:** Hybrid military construction, production, and repair use economy **delivery jobs**, **carriers assigned per job**, and building **port/entrance** road nodes — same foundation as trial economy (DDR-LOG-002, DDR-LOG-003). No hybrid-specific logistics duplicate.
+
 **HYB-ECON-002:** There is **no credit loop** in hybrid. Military buildings/units are paid for entirely in wares via the economy. Where the trial military used a collector→processor→credits loop, hybrid uses economy deposit extraction and ware logistics instead; trial collector micro is not exposed to the player.
 
 **HYB-ECON-003:** No credits as a build, production, repair, or research resource anywhere in the hybrid variant (DDR-031).
@@ -88,7 +92,7 @@ All `MIL-*` rules from `03_` apply except:
 
 - **HYB-LOGCON-001:** Military buildings use economy construction site flow
 - **HYB-LOGCON-002:** Footprints and ware requirements defined in hybrid config data
-- **HYB-LOGCON-003:** Carriers deliver construction wares to military site road nodes
+- **HYB-LOGCON-003:** Carriers deliver construction wares to military site road nodes at configured **ports/entrances**
 
 ---
 

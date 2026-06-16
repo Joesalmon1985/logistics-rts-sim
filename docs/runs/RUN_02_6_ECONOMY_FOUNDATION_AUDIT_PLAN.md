@@ -114,13 +114,21 @@ Store in [`RUN_02_6_ECONOMY_FOUNDATION_CURRENT_STATE.md`](../../audit/RUN_02_6_E
 | 1 | This file | Run orchestration |
 | 2 | [`docs/audit/RUN_02_6_ECONOMY_FOUNDATION_CURRENT_STATE.md`](../../audit/RUN_02_6_ECONOMY_FOUNDATION_CURRENT_STATE.md) | Stage 1 |
 | 3 | [`docs/audit/RUN_02_6_ECONOMY_FOUNDATION_GAP_REGISTER.md`](../../audit/RUN_02_6_ECONOMY_FOUNDATION_GAP_REGISTER.md) | Stage 2 |
-| 4 | [`docs/design/15_worker_carrier_flag_logistics_foundation_DECISION_DRAFT.md`](../../design/15_worker_carrier_flag_logistics_foundation_DECISION_DRAFT.md) | Stage 3 |
+| 4 | [`docs/design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md) | Ratified decisions (supersedes decision draft) |
 
 Optional: [`docs/audit/RUN_02_6_LESSONS_LEARNED.md`](../../audit/RUN_02_6_LESSONS_LEARNED.md)
 
+## Post-audit ratification (2026-06-16)
+
+**DDR-LOG-001–012** are **ratified** by project owner. Authoritative design basis for implementation:
+
+[`docs/design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md)
+
+The decision draft file remains as a redirect stub. **Next implementation target: RUN_02.7** — economy logistics foundation hardening per ratified backlog. No simulation changes in ratification doc run.
+
 ## Next implementation run
 
-**RUN_02.7** — economy logistics foundation hardening per decision draft backlog. **Do not start until user confirms DDR-LOG decisions.**
+**RUN_02.7** — economy logistics foundation implementation per **ratified** DDR-LOG decisions and backlog in `15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`.
 
 ## Acceptance checklist (RUN_02.6)
 
@@ -131,6 +139,7 @@ Optional: [`docs/audit/RUN_02_6_LESSONS_LEARNED.md`](../../audit/RUN_02_6_LESSON
 - [x] Decision draft with backlog and future acceptance criteria
 - [x] No simulation/viewer/exporter/command/test code changes
 - [x] Final report with decision control table
+- [x] DDR-LOG-001–012 ratified in design docs (post-audit documentation run)
 
 ## Final report format
 

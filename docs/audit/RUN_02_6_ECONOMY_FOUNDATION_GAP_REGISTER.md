@@ -207,4 +207,4 @@ Structured gaps for the Trial Economy Game logistics foundation. Each entry cros
 ## Related documents
 
 - Current state: [`RUN_02_6_ECONOMY_FOUNDATION_CURRENT_STATE.md`](RUN_02_6_ECONOMY_FOUNDATION_CURRENT_STATE.md)
-- Decision draft: [`15_worker_carrier_flag_logistics_foundation_DECISION_DRAFT.md`](../design/15_worker_carrier_flag_logistics_foundation_DECISION_DRAFT.md)
+- Decision draft: [`15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md)

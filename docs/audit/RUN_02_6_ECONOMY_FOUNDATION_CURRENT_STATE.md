@@ -312,5 +312,5 @@ ECON-SMOKE-001–005 via `run_economy_smoke.gd` — all passed at audit baseline
 ## Related documents
 
 - Gap register: [`RUN_02_6_ECONOMY_FOUNDATION_GAP_REGISTER.md`](RUN_02_6_ECONOMY_FOUNDATION_GAP_REGISTER.md)
-- Decision draft: [`15_worker_carrier_flag_logistics_foundation_DECISION_DRAFT.md`](../design/15_worker_carrier_flag_logistics_foundation_DECISION_DRAFT.md)
+- Decision draft: [`15_worker_carrier_road_node_logistics_foundation_RATIFIED.md`](../design/15_worker_carrier_road_node_logistics_foundation_RATIFIED.md) (ratified; draft file is redirect stub)
 - Run plan: [`RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md`](../runs/RUN_02_6_ECONOMY_FOUNDATION_AUDIT_PLAN.md)

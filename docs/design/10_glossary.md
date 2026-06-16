@@ -66,16 +66,19 @@ Test naming: `test_{PREFIX}_{SUBSYSTEM}_{NNN}_{short_description}` — e.g. `tes
 | **Worker** | A typed labour unit (woodcutter, miner, etc.) provisioned from HQ/Storehouse to buildings. Not freely created without supply. |
 | **Tool** | Ware (generic `tools` in Run 02) required before some workers can be assigned. Schema supports tool categories later. |
 | **Rations / meals** | Food support tiers for mines. Rations = basic; meals = upgraded/deep mines. |
-| **Carrier** | An entity that transports wares along roads between road nodes, storage, and buildings. |
-| **Road** | A built connection on hex edges or hexes enabling carrier pathfinding. |
-| **Road node** | A junction point on the road network where carriers pick up, drop off, or change direction. Also called **flag** in some docs — prefer **road node**. |
+| **Carrier** | An explicit logistics entity that transports wares along the road network. In v1, assigned **per delivery job** (not per road segment). |
+| **Road** | A built connection on hex edges enabling carrier pathfinding between road nodes. |
+| **Road node** | **Authoritative simulation entity** — a junction or building access point on the road network where carriers pick up, drop off, or change direction. |
+| **Flag** | **Player-facing / Widelands-style alias** for a road node — not a separate simulation entity or graph type. Use **road node** in technical docs and architecture. |
+| **Building port / entrance** | A configured access point (`ports[]` offset from building anchor) connecting a building footprint to the road/logistics network. Default port when omitted: anchor `[[0, 0]]`. |
 | **Storage** | A building or site that holds wares with capacity limits. |
 | **Production recipe** | Inputs, outputs, and duration for transforming wares at a building. |
 | **Production chain** | Ordered recipes linking deposits → buildings → wares (see economy requirements). |
-| **Construction site** | An in-progress building consuming wares and builder work until complete. |
-| **Builder work** | Abstract labour ware consumed during construction (not a separate entity type). |
+| **Construction site** | An in-progress building consuming delivered wares, then abstract builder work, until complete. |
+| **Builder work** | Abstract construction progress ware (`builder_work`) consumed **after** required materials are delivered — not a worker entity assigned to the site in v1. |
+| **Builder (worker type)** | A worker type in config (e.g. for production buildings). Distinct from **builder work** ware. Not assigned to construction sites in v1. |
 | **Priority** | Player-set ordering for construction, production, or ware routing. |
-| **Delivery job** | A task assigning a carrier to move wares from source to destination. |
+| **Delivery job** | Explicit simulation entity: movement request with source, destination, ware type, quantity, status, and optional `block_reason` (e.g. `no_route`, `missing_node`). |
 | **Economy stalled** | Diagnostic state when production/construction cannot progress (missing input, blocked output, no path). |
 
 ---

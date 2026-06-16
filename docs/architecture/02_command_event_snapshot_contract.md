@@ -72,6 +72,11 @@ See requirement docs:
   "roads": [],
   "road_nodes": [],
   "buildings": [],
+  "construction_sites": [],
+  "carrier_markers": [],
+  "ware_movement_markers": [],
+  "blocked_job_markers": [],
+  "worker_markers": [],
   "entities": [],
   "diagnostics": {},
   "players": []
@@ -79,6 +84,22 @@ See requirement docs:
 ```
 
 The Godot visual client reads snapshots only; it never writes back except via new commands.
+
+## Economy logistics snapshot fields (ratified DDR-LOG-010)
+
+**Full / debug snapshots** (`export_snapshot`, `export_debug_snapshot`) should expose logistics state for viewer and audit:
+
+| Area | Fields / notes |
+|------|----------------|
+| Roads | `roads[]` — segments, congestion |
+| Road nodes | `road_nodes[]` — position, `building_id`, optional `inventory` (reserved schema) |
+| Building entrances | `buildings[]` with `road_node_id` / future `ports[]` export when RUN_02.7 implements |
+| Carriers | `carrier_markers[]` — state, route, ware on carrier |
+| Delivery jobs | `ware_movement_markers[]`, `blocked_job_markers[]`, `entities.delivery_jobs` |
+| Construction | `construction_sites[]` — `required`, `delivered`, `builder_work_remaining` |
+| Diagnostics | `diagnostics` — delivery, construction, shortages, routing, stall |
+
+**Training snapshots** (`export_training_snapshot`) intentionally omit some fields (e.g. `road_nodes`, `worker_markers`, `ware_movement_markers` at audit baseline). Omissions must remain documented here when changed. Training observations must not rely on fields omitted without explicit encoder support.
 
 ## Available Commands (optional, non-authoritative — RUN_05)
 
