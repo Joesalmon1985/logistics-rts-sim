@@ -23,6 +23,7 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/bot/test_econ_bot_002_dual_bot_expansion_metrics.gd",
 	"res://sim/tests/bot/test_econ_bot_003_dual_replay_hash.gd",
 	"res://sim/tests/bot/test_econ_bot_004_observation_boundary.gd",
+	"res://sim/tests/bot/test_econ_bot_b001_single_building_plan.gd",
 	"res://sim/tests/replay/test_rep_smoke_001_export_import_identical_hash.gd",
 	"res://sim/tests/economy/test_econ_map_001_axial_neighbors_reuse.gd",
 	"res://sim/tests/economy/test_econ_terr_001_water_not_buildable.gd",

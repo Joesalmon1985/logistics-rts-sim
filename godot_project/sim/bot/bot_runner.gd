@@ -28,7 +28,8 @@ func run_until_complete(state: GameState, p_bot: Bot) -> GameState:
 	bot.reset(bot.player_id)
 
 	for _i in range(max_ticks):
-		var snapshot: Dictionary = SnapshotExporter.export_snapshot(state)
+		EconomyDiagnosticsSystem.tick(state, "bot")
+		var snapshot: Dictionary = _snapshot_for_bot(state, bot)
 		if bot.is_complete(snapshot):
 			break
 
@@ -56,6 +57,13 @@ func get_recorder() -> ReplayRecorder:
 
 func get_decisions() -> Array:
 	return decisions
+
+
+func _snapshot_for_bot(state: GameState, p_bot: Bot) -> Dictionary:
+	var snapshot: Dictionary = SnapshotExporter.export_bot_observation_snapshot(state, p_bot.player_id)
+	var candidates: Array = EconomyCommandAvailability.list_bot_candidate_commands(state, p_bot.player_id)
+	snapshot["available_commands"] = {p_bot.player_id: candidates}
+	return snapshot
 
 
 func _record_decision(state: GameState, command: SimCommand, result: CommandResult) -> void:
