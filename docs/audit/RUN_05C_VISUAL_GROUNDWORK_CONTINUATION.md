@@ -176,3 +176,19 @@ This is **review readiness for visual groundwork**, not project closure. Known-r
 - RUN_02.8b bot expansion closure (`ECON_BOT_002`, smokes, checkpoints)
 - Resume from Phase 3 scene/panel verification, then Phase 4–8 on rebased branch
 - Dual-bot spectator as manual proof viewer once stable
+
+## Verification record (2026-06-17)
+
+Focused Linux/Godot 4.5.2 runs on `feature/run-05c-economy-spectator-visual-identity`:
+
+| Command | Exit | Status |
+|---------|------|--------|
+| `TEST_FILTER=vis_spectator run_tests.gd` | 0 | 4/4 passed |
+| `run_economy_spectator_smoke.gd` | 0 | `meaningful_count=5`, `non_sprite=4`, `events_delta=127` |
+| `run_economy_spectator_capture.gd -- --assert` | 0 | `pixel_delta=397`; PNGs under `run_05c_economy_spectator/` |
+| `run_viewer_smoke.gd` | 0 | pass |
+| `verify_failure_modes.gd` | 0 | pass |
+
+0 `SCRIPT ERROR` lines in focused runs. `ECON_BOT_002` not run or fixed.
+
+**Review readiness (visual groundwork): Ready**

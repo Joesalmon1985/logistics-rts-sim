@@ -200,3 +200,24 @@ Expect PNG panels + `capture_manifest.json` + `contact_sheet.html` under project
 - [ ] Contact sheet with all required panels + logistics overlay
 - [ ] GOD-SMOKE-005 or equivalent headless smoke passes (when implemented)
 - [ ] Visual review bundle referenced in RUN_02.8 final report
+
+## RUN_05C — Economy Spectator Visual Groundwork (VIS-SPECTATOR-*)
+
+Scope: placeholder sprites, render-data bridge, activity panels, start→end delta verification. **Production-chain demo only** for automated gates; dual-bot is manual diagnostic.
+
+| ID | Type | Pass criteria |
+|----|------|---------------|
+| VIS-SPECTATOR-001 | Unit | Production chain, 30 ticks, `meaningful_count >= 2` start→end deltas (not static sprites) |
+| VIS-SPECTATOR-002 | Unit | No carrier/construction sprites without matching render markers; stepping changes sprite set or chain fingerprint |
+| VIS-SPECTATOR-003 | Unit | Mock atlas loads ≥15 named animations |
+| VIS-SPECTATOR-004 | Unit | `measure_activity_after_steps(30)` passes smoke gate with non-sprite delta |
+| GOD-SMOKE-ECON-SPECTATOR-001 | Smoke | `run_economy_spectator_smoke.gd` — same gate as 001 |
+| GOD-CAPTURE-ECON-SPECTATOR | Capture (non-headless) | `run_economy_spectator_capture.gd -- --assert` — tick 0/30 PNGs, `image_pixel_delta > 5` |
+
+Runner filter:
+
+```bash
+TEST_FILTER=vis_spectator timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+```
+
+**Not in scope:** `ECON_BOT_002`, `BOT-SMOKE-004`, `ECON-SMOKE-007`. See `docs/audit/RUN_05C_VISUAL_GROUNDWORK_CONTINUATION.md`.

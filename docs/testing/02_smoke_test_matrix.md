@@ -182,6 +182,17 @@ Godot runner: `sim/tools/run_policy_eval_smoke.gd`. Python: `test_policy_contrac
 | HYB-BOT-002 | Hybrid bot skirmish | Two bots complete with win/loss; fog-respecting |
 | BAL-SMOKE-001 | Balance scenario | Both players viable path |
 
+## RUN_05C — Economy Spectator Visual Groundwork
+
+| ID | Scenario | Pass criteria |
+|----|----------|---------------|
+| GOD-SMOKE-ECON-SPECTATOR-001 | Production chain spectator 30 ticks | `meaningful_count >= 2` start→end deltas; `non_sprite_delta_count >= 1`; production-chain mode only |
+| GOD-CAPTURE-ECON-SPECTATOR | Spectator tick 0 vs tick 30 capture | PNGs under `run_05c_economy_spectator/`; not blank; multi-color; panel lit; `image_pixel_delta > 5` |
+
+Runner: `sim/tools/run_economy_spectator_smoke.gd` (headless). Capture: `sim/tools/run_economy_spectator_capture.gd -- --assert` (non-headless).
+
+**Not claimed:** dual-bot expansion proof; `ECON_BOT_002` remains unresolved separately.
+
 ## RUN_09 — Godot Hybrid Observer
 
 | ID | Scenario | Pass criteria |

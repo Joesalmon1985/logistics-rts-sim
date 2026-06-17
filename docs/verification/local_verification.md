@@ -426,6 +426,24 @@ $LASTEXITCODE
 **Implemented scenes:**
 - `res://client/scenes/economy_viewer_demo.tscn`
 - `res://client/scenes/military_viewer_demo.tscn`
+- `res://client/scenes/economy_spectator_bot_demo.tscn` (RUN_05C visual groundwork)
+
+### RUN_05C economy spectator (visual groundwork — focused)
+
+Production-chain demo only for automated gates. Dual-bot is manual UI diagnostic. `ECON_BOT_002` / `BOT-SMOKE-004` / `ECON-SMOKE-007` are **not** RUN_05C blockers.
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+
+TEST_FILTER=vis_spectator timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_spectator_smoke.gd
+timeout 180s "$GODOT" --path godot_project --script res://sim/tools/run_economy_spectator_capture.gd -- --assert
+```
+
+Expected: VIS-SPECTATOR-001..004 pass; `GOD-SMOKE-ECON-SPECTATOR-001 PASS`; capture saves `spectator_tick0.png` and `spectator_tick30.png` under project-local export `run_05c_economy_spectator/` with `pixel_delta > 5`. Grep for `SCRIPT ERROR` — must be zero.
+
+See `docs/audit/RUN_05C_VISUAL_GROUNDWORK_CONTINUATION.md` for `meaningful_count` rules.
 
 ### RUN_05 viewer smokes (Track 1)
 
