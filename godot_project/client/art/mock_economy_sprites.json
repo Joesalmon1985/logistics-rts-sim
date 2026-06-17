@@ -37,6 +37,16 @@
 			],
 			"loop": true
 		},
+		"carrier_carrying_loop": {
+			"fps": 8,
+			"frames": [
+				"carrier_carrying_loop_0",
+				"carrier_carrying_loop_1",
+				"carrier_carrying_loop_2",
+				"carrier_carrying_loop_3"
+			],
+			"loop": true
+		},
 		"carrier_idle": {
 			"fps": 8,
 			"frames": [
@@ -69,6 +79,30 @@
 			"frames": [
 				"construction_idle_0",
 				"construction_idle_1"
+			],
+			"loop": true
+		},
+		"construction_progress_25": {
+			"fps": 8,
+			"frames": [
+				"construction_progress_25_0",
+				"construction_progress_25_1"
+			],
+			"loop": true
+		},
+		"construction_progress_50": {
+			"fps": 8,
+			"frames": [
+				"construction_progress_50_0",
+				"construction_progress_50_1"
+			],
+			"loop": true
+		},
+		"construction_progress_75": {
+			"fps": 8,
+			"frames": [
+				"construction_progress_75_0",
+				"construction_progress_75_1"
 			],
 			"loop": true
 		},
@@ -129,6 +163,26 @@
 			],
 			"loop": true
 		},
+		"ware_plank_move_loop": {
+			"fps": 8,
+			"frames": [
+				"ware_plank_move_loop_0",
+				"ware_plank_move_loop_1",
+				"ware_plank_move_loop_2",
+				"ware_plank_move_loop_3"
+			],
+			"loop": true
+		},
+		"ware_stone_move_loop": {
+			"fps": 8,
+			"frames": [
+				"ware_stone_move_loop_0",
+				"ware_stone_move_loop_1",
+				"ware_stone_move_loop_2",
+				"ware_stone_move_loop_3"
+			],
+			"loop": true
+		},
 		"warning_blocked_loop": {
 			"fps": 8,
 			"frames": [
@@ -141,303 +195,411 @@
 		}
 	},
 	"frame_size": [
-		16,
-		16
+		32,
+		32
 	],
 	"frames": {
 		"building_activity_pulse_0": {
-			"h": 16,
-			"w": 16,
-			"x": 64,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 160
 		},
 		"building_activity_pulse_1": {
-			"h": 16,
-			"w": 16,
-			"x": 80,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 160
 		},
 		"building_activity_pulse_2": {
-			"h": 16,
-			"w": 16,
-			"x": 96,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 160
 		},
 		"building_blocked_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 0,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 128
 		},
 		"building_blocked_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 16,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 128
 		},
 		"building_blocked_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 32,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 128
 		},
 		"building_blocked_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 48,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 128
 		},
 		"building_idle_0": {
-			"h": 16,
-			"w": 16,
-			"x": 32,
-			"y": 32
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 96
 		},
 		"building_idle_1": {
-			"h": 16,
-			"w": 16,
-			"x": 48,
-			"y": 32
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 96
 		},
 		"building_working_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 64,
-			"y": 32
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 128
 		},
 		"building_working_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 80,
-			"y": 32
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 128
 		},
 		"building_working_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 96,
-			"y": 32
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 128
 		},
 		"building_working_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 112,
+			"h": 32,
+			"w": 32,
+			"x": 96,
+			"y": 128
+		},
+		"carrier_carrying_loop_0": {
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 0
+		},
+		"carrier_carrying_loop_1": {
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 0
+		},
+		"carrier_carrying_loop_2": {
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 32
+		},
+		"carrier_carrying_loop_3": {
+			"h": 32,
+			"w": 32,
+			"x": 32,
 			"y": 32
 		},
 		"carrier_idle_0": {
-			"h": 16,
-			"w": 16,
+			"h": 32,
+			"w": 32,
 			"x": 0,
 			"y": 0
 		},
 		"carrier_idle_1": {
-			"h": 16,
-			"w": 16,
-			"x": 16,
+			"h": 32,
+			"w": 32,
+			"x": 32,
 			"y": 0
 		},
 		"carrier_move_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 32,
+			"h": 32,
+			"w": 32,
+			"x": 64,
 			"y": 0
 		},
 		"carrier_move_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 48,
+			"h": 32,
+			"w": 32,
+			"x": 96,
 			"y": 0
 		},
 		"carrier_move_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 64,
+			"h": 32,
+			"w": 32,
+			"x": 128,
 			"y": 0
 		},
 		"carrier_move_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 80,
+			"h": 32,
+			"w": 32,
+			"x": 160,
 			"y": 0
 		},
 		"construction_complete_pulse_0": {
-			"h": 16,
-			"w": 16,
-			"x": 80,
-			"y": 64
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 192
 		},
 		"construction_complete_pulse_1": {
-			"h": 16,
-			"w": 16,
-			"x": 96,
-			"y": 64
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 224
 		},
 		"construction_complete_pulse_2": {
-			"h": 16,
-			"w": 16,
-			"x": 112,
-			"y": 64
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 224
 		},
 		"construction_idle_0": {
-			"h": 16,
-			"w": 16,
-			"x": 112,
-			"y": 48
+			"h": 32,
+			"w": 32,
+			"x": 96,
+			"y": 160
 		},
 		"construction_idle_1": {
-			"h": 16,
-			"w": 16,
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 160
+		},
+		"construction_progress_25_0": {
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 160
+		},
+		"construction_progress_25_1": {
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 160
+		},
+		"construction_progress_50_0": {
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 160
+		},
+		"construction_progress_50_1": {
+			"h": 32,
+			"w": 32,
 			"x": 0,
-			"y": 64
+			"y": 192
+		},
+		"construction_progress_75_0": {
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 192
+		},
+		"construction_progress_75_1": {
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 192
 		},
 		"construction_progress_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 16,
-			"y": 64
+			"h": 32,
+			"w": 32,
+			"x": 96,
+			"y": 192
 		},
 		"construction_progress_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 32,
-			"y": 64
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 192
 		},
 		"construction_progress_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 48,
-			"y": 64
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 192
 		},
 		"construction_progress_loop_3": {
-			"h": 16,
-			"w": 16,
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 192
+		},
+		"road_flow_loop_0": {
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 96
+		},
+		"road_flow_loop_1": {
+			"h": 32,
+			"w": 32,
+			"x": 96,
+			"y": 96
+		},
+		"road_flow_loop_2": {
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 96
+		},
+		"road_flow_loop_3": {
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 96
+		},
+		"storage_activity_pulse_0": {
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 224
+		},
+		"storage_activity_pulse_1": {
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 224
+		},
+		"storage_activity_pulse_2": {
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 224
+		},
+		"storage_idle_0": {
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 224
+		},
+		"storage_idle_1": {
+			"h": 32,
+			"w": 32,
+			"x": 96,
+			"y": 224
+		},
+		"ware_generic_move_loop_0": {
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 64
+		},
+		"ware_generic_move_loop_1": {
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 64
+		},
+		"ware_generic_move_loop_2": {
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 96
+		},
+		"ware_generic_move_loop_3": {
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 96
+		},
+		"ware_log_move_loop_0": {
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 32
+		},
+		"ware_log_move_loop_1": {
+			"h": 32,
+			"w": 32,
+			"x": 96,
+			"y": 32
+		},
+		"ware_log_move_loop_2": {
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 32
+		},
+		"ware_log_move_loop_3": {
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 32
+		},
+		"ware_plank_move_loop_0": {
+			"h": 32,
+			"w": 32,
+			"x": 192,
+			"y": 32
+		},
+		"ware_plank_move_loop_1": {
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 32
+		},
+		"ware_plank_move_loop_2": {
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 64
+		},
+		"ware_plank_move_loop_3": {
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 64
+		},
+		"ware_stone_move_loop_0": {
+			"h": 32,
+			"w": 32,
 			"x": 64,
 			"y": 64
 		},
-		"road_flow_loop_0": {
-			"h": 16,
-			"w": 16,
+		"ware_stone_move_loop_1": {
+			"h": 32,
+			"w": 32,
 			"x": 96,
-			"y": 16
+			"y": 64
 		},
-		"road_flow_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 112,
-			"y": 16
+		"ware_stone_move_loop_2": {
+			"h": 32,
+			"w": 32,
+			"x": 128,
+			"y": 64
 		},
-		"road_flow_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 0,
-			"y": 32
-		},
-		"road_flow_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 16,
-			"y": 32
-		},
-		"storage_activity_pulse_0": {
-			"h": 16,
-			"w": 16,
-			"x": 32,
-			"y": 80
-		},
-		"storage_activity_pulse_1": {
-			"h": 16,
-			"w": 16,
-			"x": 48,
-			"y": 80
-		},
-		"storage_activity_pulse_2": {
-			"h": 16,
-			"w": 16,
-			"x": 64,
-			"y": 80
-		},
-		"storage_idle_0": {
-			"h": 16,
-			"w": 16,
-			"x": 0,
-			"y": 80
-		},
-		"storage_idle_1": {
-			"h": 16,
-			"w": 16,
-			"x": 16,
-			"y": 80
-		},
-		"ware_generic_move_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 32,
-			"y": 16
-		},
-		"ware_generic_move_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 48,
-			"y": 16
-		},
-		"ware_generic_move_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 64,
-			"y": 16
-		},
-		"ware_generic_move_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 80,
-			"y": 16
-		},
-		"ware_log_move_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 96,
-			"y": 0
-		},
-		"ware_log_move_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 112,
-			"y": 0
-		},
-		"ware_log_move_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 0,
-			"y": 16
-		},
-		"ware_log_move_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 16,
-			"y": 16
+		"ware_stone_move_loop_3": {
+			"h": 32,
+			"w": 32,
+			"x": 160,
+			"y": 64
 		},
 		"warning_blocked_loop_0": {
-			"h": 16,
-			"w": 16,
-			"x": 80,
-			"y": 80
+			"h": 32,
+			"w": 32,
+			"x": 224,
+			"y": 224
 		},
 		"warning_blocked_loop_1": {
-			"h": 16,
-			"w": 16,
-			"x": 96,
-			"y": 80
+			"h": 32,
+			"w": 32,
+			"x": 0,
+			"y": 256
 		},
 		"warning_blocked_loop_2": {
-			"h": 16,
-			"w": 16,
-			"x": 112,
-			"y": 80
+			"h": 32,
+			"w": 32,
+			"x": 32,
+			"y": 256
 		},
 		"warning_blocked_loop_3": {
-			"h": 16,
-			"w": 16,
-			"x": 0,
-			"y": 96
+			"h": 32,
+			"w": 32,
+			"x": 64,
+			"y": 256
 		}
 	},
 	"texture": "mock_economy_sprites.png"
