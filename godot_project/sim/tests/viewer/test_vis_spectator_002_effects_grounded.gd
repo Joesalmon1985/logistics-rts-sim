@@ -9,7 +9,7 @@ func get_name() -> String:
 
 func _run_body() -> void:
 	var controller := EconomySpectatorController.new()
-	controller.reset_demo()
+	controller.reset_demo(EconomySpectatorController.DEMO_PRODUCTION_CHAIN)
 	var render: Dictionary = controller.get_render_data()
 	var states: Dictionary = EconomySpriteStateSelector.select_states(
 		render,
@@ -22,16 +22,28 @@ func _run_body() -> void:
 		assert_false(anim == "carrier_move_loop" and render.get("carriers", []).is_empty(), "carrier_move_loop without carriers")
 		assert_false(anim == "construction_progress_loop" and render.get("construction_sites", []).is_empty(), "construction progress without sites")
 
-	var counts_before: Dictionary = LayerRenderer.count_entities(render)
-	var frozen_states: Dictionary = controller.get_sprite_states()
+	var sprite_before: Dictionary = controller.get_sprite_states().duplicate(true)
 	for _i in range(20):
-		controller.bot_step_once()
-	var after_states: Dictionary = controller.get_sprite_states()
-	var render_after: Dictionary = controller.get_render_data()
-	if int(LayerRenderer.count_entities(render_after).get("roads", 0)) > int(counts_before.get("roads", 0)):
-		assert_true(after_states.size() >= 1, "expected sprite states when roads grow")
+		controller.step_tick()
+	var sprite_after: Dictionary = controller.get_sprite_states().duplicate(true)
+	var activity: Dictionary = EconomySpectatorMetrics.measure_activity(
+		LayerRenderer.count_entities(render),
+		LayerRenderer.count_entities(controller.get_render_data()),
+		EconomySpectatorMetrics.chain_fingerprint(render),
+		EconomySpectatorMetrics.chain_fingerprint(controller.get_render_data()),
+		sprite_before,
+		sprite_after,
+		controller.snapshot,
+		controller.snapshot,
+		0,
+		controller.state.event_log.events.size() if controller.state != null else 0,
+	)
+	assert_true(
+		bool(activity.get("signals", {}).get("sprite_state_set_changed", false))
+		or bool(activity.get("signals", {}).get("chain_fingerprint_changed", false)),
+		"stepping should change sprite set or chain fingerprint",
+	)
 
-	# Production chain demo has known logistics activity.
 	var chain_controller := ViewerController.new()
 	chain_controller.load_demo_state(EconomyDemo.build_production_chain(), "p1")
 	var chain_render: Dictionary = chain_controller.get_render_data()

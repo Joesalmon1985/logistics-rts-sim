@@ -3,6 +3,7 @@ extends SceneTree
 ## RUN_05C economy spectator pixel capture smoke.
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
+const STEP_COUNT: int = 30
 
 var _ctx: Dictionary = {}
 var _controller: EconomySpectatorController
@@ -12,6 +13,10 @@ var _wait_frames: int = 0
 var _step_index: int = 0
 var _do_assert: bool = false
 var _img_start: Image
+var _capture_ok: bool = true
+var _pixel_delta: int = 0
+var _path_start: String = ""
+var _path_active: String = ""
 
 
 func _initialize() -> void:
@@ -32,7 +37,7 @@ func _initialize() -> void:
 		ViewerTestHarness.teardown(_ctx)
 		quit(1)
 		return
-	_controller.reset_demo()
+	_controller.reset_demo(EconomySpectatorController.DEMO_PRODUCTION_CHAIN)
 	_phase = "wait_start"
 	_wait_frames = 8
 
@@ -48,8 +53,8 @@ func _process(_delta: float) -> bool:
 			_step_index = 0
 			return false
 		"step":
-			if _step_index < 80:
-				_controller.bot_step_once()
+			if _step_index < STEP_COUNT:
+				_controller.step_tick()
 				if _scene != null and _scene.has_method("_refresh_map"):
 					_scene._refresh_map()
 				_step_index += 1
@@ -62,6 +67,20 @@ func _process(_delta: float) -> bool:
 				_wait_frames -= 1
 				return false
 			_finish_capture()
+			_wait_frames = 30
+			_phase = "teardown_wait"
+			return false
+		"teardown_wait":
+			if _wait_frames > 0:
+				_wait_frames -= 1
+				return false
+			ViewerTestHarness.teardown(_ctx)
+			if not _capture_ok:
+				print("ECON SPECTATOR CAPTURE FAIL: pixel assertions delta=%d" % _pixel_delta)
+				quit(1)
+				return true
+			print("ECON SPECTATOR CAPTURE PASS: %s %s pixel_delta=%d" % [_path_start, _path_active, _pixel_delta])
+			quit(0)
 			return true
 	return false
 
@@ -70,24 +89,19 @@ func _finish_capture() -> void:
 	var img_active: Image = ViewerTestHarness.capture(_ctx)
 	var out_dir: String = SimPaths.default_export_dir().path_join("run_05c_economy_spectator")
 	DirAccess.make_dir_recursive_absolute(out_dir)
-	var path_start: String = out_dir.path_join("spectator_tick0.png")
-	var path_active: String = out_dir.path_join("spectator_tick80.png")
-	_img_start.save_png(path_start)
-	img_active.save_png(path_active)
+	_path_start = out_dir.path_join("spectator_tick0.png")
+	_path_active = out_dir.path_join("spectator_tick30.png")
+	_img_start.save_png(_path_start)
+	img_active.save_png(_path_active)
 
-	var ok: bool = true
+	_pixel_delta = EconomySpectatorMetrics.image_pixel_delta(_img_start, img_active)
+	_capture_ok = true
 	if _do_assert:
-		ok = ok and _image_not_blank(_img_start)
-		ok = ok and _image_not_blank(img_active)
-		ok = ok and _image_has_multiple_colors(img_active)
-		ok = ok and _panel_region_nonempty(img_active)
-	ViewerTestHarness.teardown(_ctx)
-	if not ok:
-		print("ECON SPECTATOR CAPTURE FAIL: pixel assertions")
-		quit(1)
-		return
-	print("ECON SPECTATOR CAPTURE PASS: %s %s" % [path_start, path_active])
-	quit(0)
+		_capture_ok = _capture_ok and _image_not_blank(_img_start)
+		_capture_ok = _capture_ok and _image_not_blank(img_active)
+		_capture_ok = _capture_ok and _image_has_multiple_colors(img_active)
+		_capture_ok = _capture_ok and _panel_region_nonempty(img_active)
+		_capture_ok = _capture_ok and _pixel_delta > 5
 
 
 static func _image_not_blank(img: Image) -> bool:

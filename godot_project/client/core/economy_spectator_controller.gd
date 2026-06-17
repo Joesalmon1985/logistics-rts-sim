@@ -1,10 +1,13 @@
 class_name EconomySpectatorController
 extends RefCounted
 
-## Dual-bot spectator transport: live DualBotRunner stepping for RUN_05C.
+## Spectator transport for RUN_05C — production-chain demo (default) or optional dual-bot view.
 
 signal snapshot_refreshed(snapshot: Dictionary)
 signal bot_action_applied(player_id: String, command_type: String, success: bool, message: String)
+
+const DEMO_PRODUCTION_CHAIN: String = "production_chain"
+const DEMO_DUAL_BOT: String = "dual_bot"
 
 const MEANINGFUL_EVENT_SUBSTRINGS: Array[String] = [
 	"construction",
@@ -13,8 +16,10 @@ const MEANINGFUL_EVENT_SUBSTRINGS: Array[String] = [
 	"production",
 	"delivery",
 	"road_placed",
+	"tree_density",
 ]
 const STEP_UNTIL_EVENT_MAX: int = 50
+const PRODUCTION_CHAIN_TICKS_RECOMMENDED: int = 30
 
 var state: GameState
 var runner: SimulationTickRunner
@@ -22,6 +27,8 @@ var dual: DualBotRunner
 var scenario: Dictionary = {}
 var snapshot: Dictionary = {}
 var render_bridge: EconomySpectatorRenderBridge = EconomySpectatorRenderBridge.new()
+var demo_mode: String = DEMO_PRODUCTION_CHAIN
+var demo_label: String = "Production chain (seed 42)"
 var layer_visibility: Dictionary = {
 	"terrain": true,
 	"buildings": true,
@@ -34,22 +41,44 @@ var layer_visibility: Dictionary = {
 	"forest_density": true,
 	"ownership": true,
 }
-var last_bot_status: Dictionary = {"p1": {}, "p2": {}}
+var last_bot_status: Dictionary = {"p1": {}}
 var event_log_lines: PackedStringArray = PackedStringArray()
 var autoplay_enabled: bool = false
 var speed_multiplier: float = 1.0
 
 
-func reset_demo() -> void:
-	scenario = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_VISUAL)
+func reset_demo(mode: String = DEMO_PRODUCTION_CHAIN) -> void:
+	demo_mode = mode
+	dual = null
 	runner = SimulationTickRunner.new()
+	event_log_lines = PackedStringArray()
+	render_bridge.reset()
+	last_bot_status = {"p1": {}}
+	if demo_mode == DEMO_DUAL_BOT:
+		_reset_dual_bot()
+	else:
+		_reset_production_chain()
+	_refresh("Demo reset — %s" % demo_label)
+
+
+func _reset_production_chain() -> void:
+	demo_label = "Production chain (seed 42)"
+	state = EconomyDemo.build_production_chain()
+	last_bot_status["p1"] = {
+		"decision": "auto logistics (sim tick)",
+		"command_type": "(sim tick)",
+		"success": true,
+		"message": "HQ woodcutter → sawmill chain",
+	}
+
+
+func _reset_dual_bot() -> void:
+	demo_label = "Dual-bot view (manual diagnostic — not expansion proof)"
+	scenario = EconomyBvbSetup.expansion_duel_scenario(EconomyBvbSetup.PROFILE_VISUAL)
 	dual = DualBotRunner.new(runner)
 	state = runner.create_game(scenario)
 	EconomyBvbSetup.prepare_expansion_duel_map(state, scenario)
-	event_log_lines = PackedStringArray()
-	render_bridge.reset()
 	last_bot_status = {"p1": {}, "p2": {}}
-	_refresh("Demo reset — dual-bot expansion duel loaded")
 
 
 func get_render_data() -> Dictionary:
@@ -60,8 +89,18 @@ func get_sprite_states() -> Dictionary:
 	return render_bridge.sprite_states
 
 
+func autoplay_step() -> void:
+	if demo_mode == DEMO_DUAL_BOT:
+		bot_step_once()
+	else:
+		step_tick()
+
+
 func bot_step_once() -> void:
 	if state == null:
+		return
+	if demo_mode != DEMO_DUAL_BOT:
+		step_tick()
 		return
 	EconomyDiagnosticsSystem.tick(state, "bot")
 	_apply_bot_turn("p1")
@@ -74,12 +113,12 @@ func step_tick() -> void:
 	if state == null:
 		return
 	state = runner.tick(state)
-	_refresh("Step tick")
+	_refresh("Sim tick" if demo_mode == DEMO_PRODUCTION_CHAIN else "Step tick")
 
 
 func step_ticks(count: int) -> void:
 	for _i in range(maxi(0, count)):
-		step_tick()
+		autoplay_step()
 
 
 func step50() -> void:
@@ -92,7 +131,7 @@ func step_until_event() -> Dictionary:
 	var steps: int = 0
 	while steps < STEP_UNTIL_EVENT_MAX:
 		var event_count_before: int = state.event_log.events.size()
-		bot_step_once()
+		autoplay_step()
 		steps += 1
 		for i in range(event_count_before, state.event_log.events.size()):
 			var evt: SimEvent = state.event_log.events[i]
@@ -101,6 +140,34 @@ func step_until_event() -> Dictionary:
 				if substring in event_type:
 					return {"steps": steps, "event": str(evt.type), "found": true}
 	return {"steps": steps, "event": "", "found": false}
+
+
+func measure_activity_after_steps(step_count: int, mode: String = DEMO_PRODUCTION_CHAIN) -> Dictionary:
+	reset_demo(mode)
+	var counts_before: Dictionary = LayerRenderer.count_entities(get_render_data())
+	var fp_before: Dictionary = EconomySpectatorMetrics.chain_fingerprint(get_render_data())
+	var sprite_before: Dictionary = get_sprite_states().duplicate(true)
+	var snapshot_before: Dictionary = snapshot.duplicate(true)
+	var events_before: int = state.event_log.events.size() if state != null else 0
+	for _i in range(step_count):
+		autoplay_step()
+	var counts_after: Dictionary = LayerRenderer.count_entities(get_render_data())
+	var fp_after: Dictionary = EconomySpectatorMetrics.chain_fingerprint(get_render_data())
+	var sprite_after: Dictionary = get_sprite_states().duplicate(true)
+	var snapshot_after: Dictionary = snapshot.duplicate(true)
+	var events_after: int = state.event_log.events.size() if state != null else 0
+	return EconomySpectatorMetrics.measure_activity(
+		counts_before,
+		counts_after,
+		fp_before,
+		fp_after,
+		sprite_before,
+		sprite_after,
+		snapshot_before,
+		snapshot_after,
+		events_before,
+		events_after,
+	)
 
 
 func set_layer_visible(layer_name: String, visible: bool) -> void:
@@ -115,18 +182,15 @@ func build_summary_text() -> String:
 	var render: Dictionary = get_render_data()
 	var fp: Dictionary = LayerRenderer.chain_fingerprint(render)
 	var diag: Dictionary = snapshot.get("diagnostics", {})
-	var scores: Dictionary = diag.get("economy_scores", {})
-	var score_line: String = ""
-	if not scores.is_empty():
-		var parts: PackedStringArray = PackedStringArray()
-		for player_id in scores.keys():
-			parts.append("%s=%d" % [str(player_id), int(scores[player_id])])
-		score_line = "Scores [%s] | " % ", ".join(parts)
 	var counts: Dictionary = LayerRenderer.count_entities(render)
+	var stalls: Dictionary = diag.get("player_stalls", {})
+	var stall_line: String = ""
+	if not stalls.is_empty():
+		stall_line = " | stalls %s" % str(stalls)
 	return (
-		"%sTick %d | roads %d | sites %d | carriers %d | jobs %d | sprites %d | forest D:%s"
+		"Demo: %s | tick %d | roads %d | sites %d | carriers %d | jobs %d | sprites %d | forest D:%s%s"
 		% [
-			score_line,
+			demo_label,
 			int(snapshot.get("tick", 0)),
 			int(counts.get("roads", 0)),
 			int(counts.get("construction_sites", 0)),
@@ -134,28 +198,53 @@ func build_summary_text() -> String:
 			int(counts.get("delivery_jobs", 0)),
 			render_bridge.sprite_states.size(),
 			str(fp.get("forest_density", "?")),
+			stall_line,
 		]
 	)
 
 
 func build_bot_status_text() -> String:
 	var lines: PackedStringArray = PackedStringArray()
-	lines.append("Bot mode: %s | speed %.1fx" % [
+	lines.append("Mode: %s | transport %s | speed %.1fx" % [
+		demo_label,
 		"AUTOPLAY" if autoplay_enabled else "MANUAL",
 		speed_multiplier,
 	])
-	for player_id in ["p1", "p2"]:
-		var status: Dictionary = last_bot_status.get(player_id, {})
+	if demo_mode == DEMO_DUAL_BOT:
+		for player_id in ["p1", "p2"]:
+			var status: Dictionary = last_bot_status.get(player_id, {})
+			lines.append(
+				"%s last: %s | cmd: %s | ok=%s"
+				% [
+					player_id,
+					str(status.get("decision", "(none)")),
+					str(status.get("command_type", "(none)")),
+					str(status.get("success", "?")),
+				]
+			)
+	else:
+		var status: Dictionary = last_bot_status.get("p1", {})
 		lines.append(
-			"%s last: %s | cmd: %s | ok=%s"
-			% [
-				player_id,
-				str(status.get("decision", "(none)")),
-				str(status.get("command_type", "(none)")),
-				str(status.get("success", "?")),
-			]
+			"Activity: %s | %s"
+			% [str(status.get("decision", "?")), str(status.get("message", ""))]
 		)
 	return "\n".join(lines)
+
+
+func build_activity_hint() -> String:
+	var fp: Dictionary = LayerRenderer.chain_fingerprint(get_render_data())
+	var hints: PackedStringArray = PackedStringArray()
+	if int(fp.get("forest_density", -1)) >= 0:
+		hints.append("Forest D:%s" % str(fp.get("forest_density", "?")))
+	if int(fp.get("carrier_moving", 0)) > 0:
+		hints.append("carriers moving")
+	if int(fp.get("ware_routes", 0)) > 0:
+		hints.append("ware routes active")
+	if snapshot.get("construction_sites", []).size() > 0:
+		hints.append("construction sites open")
+	if hints.is_empty():
+		return "Activity: (idle — step ticks to observe chain)"
+	return "Activity: " + ", ".join(hints)
 
 
 func build_event_log_text() -> String:
@@ -163,6 +252,8 @@ func build_event_log_text() -> String:
 
 
 func _apply_bot_turn(player_id: String) -> void:
+	if dual == null:
+		return
 	var bot: EconomyExpansionBot = dual.bot_p1 if player_id == "p1" else dual.bot_p2
 	if bot == null:
 		return
@@ -210,7 +301,7 @@ func _refresh(note: String = "") -> void:
 func _collect_recent_sim_events() -> void:
 	if state == null:
 		return
-	var start: int = maxi(0, state.event_log.events.size() - 6)
+	var start: int = maxi(0, state.event_log.events.size() - 8)
 	for i in range(start, state.event_log.events.size()):
 		var evt: SimEvent = state.event_log.events[i]
 		var line: String = "[tick %d] %s" % [state.tick, str(evt.type)]

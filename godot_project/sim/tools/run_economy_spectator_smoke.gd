@@ -3,6 +3,7 @@ extends SceneTree
 ## RUN_05C economy spectator smoke — GOD-SMOKE-ECON-SPECTATOR-001.
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
+const STEP_COUNT: int = 30
 
 
 func _initialize() -> void:
@@ -31,30 +32,21 @@ func _initialize() -> void:
 
 func _run_smoke_001() -> bool:
 	var controller := EconomySpectatorController.new()
-	controller.reset_demo()
-	var counts_a: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
-	var tick_before: int = controller.state.tick if controller.state != null else 0
-
-	for _i in range(80):
-		controller.bot_step_once()
-
-	var counts_b: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
-	var tick_after: int = controller.state.tick if controller.state != null else 0
-	var sprite_after: int = controller.get_sprite_states().size()
-	if counts_b.is_empty():
-		print("GOD-SMOKE-ECON-SPECTATOR-001 FAIL: empty render data")
+	var activity: Dictionary = controller.measure_activity_after_steps(
+		STEP_COUNT,
+		EconomySpectatorController.DEMO_PRODUCTION_CHAIN,
+	)
+	if not EconomySpectatorMetrics.passes_smoke_gate(activity, 2):
+		print("GOD-SMOKE-ECON-SPECTATOR-001 FAIL: meaningful_count=%d non_sprite=%d"
+			% [int(activity.get("meaningful_count", 0)), int(activity.get("non_sprite_delta_count", 0))])
+		var signals: Dictionary = activity.get("signals", {})
+		for key in signals.keys():
+			print("  signal %s=%s" % [str(key), str(signals[key])])
 		return false
-	var changed: int = 0
-	for key in counts_b.keys():
-		if int(counts_b.get(key, 0)) != int(counts_a.get(key, 0)):
-			changed += 1
-	if tick_after < tick_before + 50:
-		print("GOD-SMOKE-ECON-SPECTATOR-001 FAIL: tick did not advance (%d -> %d)" % [tick_before, tick_after])
-		return false
-	if changed < 1 and sprite_after <= 0:
-		print("GOD-SMOKE-ECON-SPECTATOR-001 FAIL: insufficient activity (deltas=%d sprites=%d)" % [changed, sprite_after])
-		return false
-	print("GOD-SMOKE-ECON-SPECTATOR-001 PASS: render deltas=%d sprites=%d tick=%d" % [
-		changed, sprite_after, tick_after,
-	])
+	print("GOD-SMOKE-ECON-SPECTATOR-001 PASS: meaningful_count=%d non_sprite=%d events_delta=%d"
+		% [
+			int(activity.get("meaningful_count", 0)),
+			int(activity.get("non_sprite_delta_count", 0)),
+			int(activity.get("events_delta", 0)),
+		])
 	return true
