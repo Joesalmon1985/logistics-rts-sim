@@ -3,7 +3,7 @@ extends SceneTree
 ## RUN_05C.2 economy spectator capture + contact sheet (pixel sanity checks only).
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
-const OUTPUT_SUBDIR: String = "training_runs/visual_review/run_05c_economy_spectator"
+const OUTPUT_SUBDIR: String = EconomySpectatorMetrics.CAPTURE_REVIEW_SUBDIR
 const MILESTONE_TICKS: Array[int] = [0, 10, 30, 60]
 
 var _ctx: Dictionary = {}
@@ -94,13 +94,25 @@ func _capture_milestone() -> void:
 		_controller.snapshot,
 		states,
 	)
+	var activity_score: int = EconomySpectatorMetrics.activity_score(
+		render,
+		_controller.snapshot,
+		states,
+	)
+	var pixel_delta_0: int = 0
+	if tick > 0 and _images.has(0) and img != null:
+		pixel_delta_0 = EconomySpectatorMetrics.image_pixel_delta(_images.get(0), img)
 	_manifest.append({
 		"tick": tick,
 		"png": png_name,
 		"png_saved": saved,
 		"sprite_count": states.size(),
+		"activity_score": activity_score,
+		"meaningful_count": _meaningful_count_at_tick(tick),
+		"pixel_delta_from_tick0": pixel_delta_0,
 		"exposable_families": family_eval.get("exposable_families", {}),
 		"active_families": family_eval.get("active_families", {}),
+		"family_passes": bool(family_eval.get("passes", false)),
 	})
 	_milestone_index += 1
 
@@ -110,8 +122,9 @@ func _finish() -> void:
 		_run_assertions()
 	var manifest_path: String = _output_dir.path_join("capture_manifest.json")
 	var html_path: String = _output_dir.path_join("contact_sheet.html")
-	_write_json(manifest_path, {"panels": _manifest, "output_dir": _output_dir})
+	_write_json(manifest_path, {"panels": _manifest, "output_dir": _output_dir, "manifest_path": manifest_path})
 	_write_text(html_path, _build_contact_sheet_html())
+	_write_text(_output_dir.path_join("REVIEW_NOTES.md"), _build_review_notes())
 	ViewerTestHarness.teardown(_ctx)
 	if not _capture_ok:
 		print("ECON SPECTATOR CAPTURE FAIL: %s" % _fail_reason)
@@ -156,24 +169,96 @@ func _run_assertions() -> void:
 					_manifest[i]["note"] = "production chain plateau after tick 30"
 
 
+func _meaningful_count_at_tick(tick: int) -> int:
+	if tick <= 0:
+		return 0
+	var probe := EconomySpectatorController.new()
+	probe.reset_demo(EconomySpectatorController.DEMO_PRODUCTION_CHAIN)
+	var before_render: Dictionary = probe.get_render_data()
+	var before_sprites: Dictionary = probe.get_sprite_states()
+	var before_snap: Dictionary = probe.snapshot.duplicate(true)
+	var events_before: int = probe.state.event_log.events.size() if probe.state != null else 0
+	for _i in range(tick):
+		probe.step_tick()
+	var activity: Dictionary = EconomySpectatorMetrics.measure_activity(
+		LayerRenderer.count_entities(before_render),
+		LayerRenderer.count_entities(probe.get_render_data()),
+		EconomySpectatorMetrics.chain_fingerprint(before_render),
+		EconomySpectatorMetrics.chain_fingerprint(probe.get_render_data()),
+		before_sprites,
+		probe.get_sprite_states(),
+		before_snap,
+		probe.snapshot,
+		events_before,
+		probe.state.event_log.events.size() if probe.state != null else 0,
+	)
+	return int(activity.get("meaningful_count", 0))
+
+
 func _resolve_output_dir() -> String:
-	var repo_root: String = ProjectSettings.globalize_path("res://").path_join("..")
-	return repo_root.path_join(OUTPUT_SUBDIR)
+	return EconomySpectatorMetrics.capture_review_dir()
 
 
 func _build_contact_sheet_html() -> String:
+	var manifest_name: String = "capture_manifest.json"
 	var parts: PackedStringArray = PackedStringArray()
-	parts.append("<html><head><title>RUN_05C Economy Spectator</title></head><body>")
-	parts.append("<h1>RUN_05C Economy Spectator Contact Sheet</h1>")
-	parts.append("<p>Authoritative metrics in capture_manifest.json; pixels are sanity checks only.</p>")
-	parts.append("<table border='1' cellpadding='6'>")
+	parts.append("<html><head><title>RUN_05C.3 Economy Spectator</title>")
+	parts.append("<style>body{font-family:sans-serif;background:#1a1a1a;color:#eee}table{border-collapse:collapse}td,th{border:1px solid #444;padding:8px;vertical-align:top}th{background:#333}a{color:#8cf}</style></head><body>")
+	parts.append("<h1>RUN_05C.3 Economy Spectator Contact Sheet</h1>")
+	parts.append("<p>Authoritative metrics in <a href='%s'>%s</a>; pixels are sanity checks only.</p>" % [manifest_name, manifest_name])
+	parts.append("<table><tr><th>Tick</th><th>Frame</th><th>sprites</th><th>activity</th><th>meaningful</th><th>Δpx@0</th><th>families</th></tr>")
 	for entry in _manifest:
 		var tick: int = int(entry.get("tick", 0))
 		var png: String = str(entry.get("png", ""))
-		parts.append("<tr><td>Tick %d</td><td><img src='%s' width='480'/></td><td>sprites=%d</td></tr>"
-			% [tick, png, int(entry.get("sprite_count", 0))])
+		var active: Dictionary = entry.get("active_families", {})
+		var family_keys: Array = active.keys()
+		family_keys.sort()
+		var family_text: String = ", ".join(family_keys)
+		parts.append(
+			"<tr><td>%d</td><td><img src='%s' width='480'/></td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>"
+			% [
+				tick,
+				png,
+				int(entry.get("sprite_count", 0)),
+				int(entry.get("activity_score", 0)),
+				int(entry.get("meaningful_count", 0)),
+				int(entry.get("pixel_delta_from_tick0", 0)),
+				family_text,
+			]
+		)
 	parts.append("</table></body></html>")
 	return "\n".join(parts)
+
+
+func _build_review_notes() -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("# RUN_05C.3 Economy Spectator Review Notes")
+	lines.append("")
+	lines.append("Generated by `run_economy_spectator_capture.gd -- --assert`.")
+	lines.append("Visual polish only — production-chain demo, not bot proof.")
+	lines.append("")
+	lines.append("| Tick | sprites | activity | meaningful | Δpx@0 | families |")
+	lines.append("|------|---------|----------|------------|-------|----------|")
+	for entry in _manifest:
+		var active: Dictionary = entry.get("active_families", {})
+		var family_keys: Array = active.keys()
+		family_keys.sort()
+		lines.append(
+			"| %d | %d | %d | %d | %d | %s |"
+			% [
+				int(entry.get("tick", 0)),
+				int(entry.get("sprite_count", 0)),
+				int(entry.get("activity_score", 0)),
+				int(entry.get("meaningful_count", 0)),
+				int(entry.get("pixel_delta_from_tick0", 0)),
+				", ".join(family_keys),
+			]
+		)
+	var delta_0_30: int = EconomySpectatorMetrics.image_pixel_delta(_images.get(0), _images.get(30))
+	lines.append("")
+	lines.append("Pixel delta tick0→tick30 (sanity): %d" % delta_0_30)
+	lines.append("Manifest: capture_manifest.json")
+	return "\n".join(lines)
 
 
 static func _write_json(path: String, data: Dictionary) -> void:

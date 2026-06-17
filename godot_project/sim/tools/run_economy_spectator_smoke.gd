@@ -56,12 +56,13 @@ func _run_smoke_001() -> bool:
 			print("  missing: %s" % str(line))
 		return false
 
-	print("GOD-SMOKE-ECON-SPECTATOR-001 PASS: meaningful_count=%d non_sprite=%d events_delta=%d families=%d/%d"
+	print("GOD-SMOKE-ECON-SPECTATOR-001 PASS: meaningful_count=%d non_sprite=%d events_delta=%d families=%d/%d sprites=%d"
 		% [
 			int(activity.get("meaningful_count", 0)),
 			int(activity.get("non_sprite_delta_count", 0)),
 			int(activity.get("events_delta", 0)),
 			int(family_eval.get("active_count", 0)),
 			int(family_eval.get("exposable_count", 0)),
+			controller.get_sprite_states().size(),
 		])
 	return true
