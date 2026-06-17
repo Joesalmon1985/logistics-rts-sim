@@ -428,6 +428,21 @@ $LASTEXITCODE
 - `res://client/scenes/military_viewer_demo.tscn`
 - `res://client/scenes/economy_spectator_bot_demo.tscn` (RUN_05C visual groundwork)
 
+### RUN_05C.2 economy spectator polish (focused)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+
+TEST_FILTER=vis_spectator timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_spectator_smoke.gd
+timeout 240s "$GODOT" --path godot_project --script res://sim/tools/run_economy_spectator_capture.gd -- --assert
+```
+
+Expected: VIS-SPECTATOR-001..005 pass; smoke `families=3/3`; capture under `training_runs/visual_review/run_05c_economy_spectator/`. Pixel delta is sanity only — authoritative gates are render/sprite deltas and grounding.
+
+See `docs/audit/RUN_05C_2_VISUAL_POLISH_REPORT.md`.
+
 ### RUN_05C economy spectator (visual groundwork — focused)
 
 Production-chain demo only for automated gates. Dual-bot is manual UI diagnostic. `ECON_BOT_002` / `BOT-SMOKE-004` / `ECON-SMOKE-007` are **not** RUN_05C blockers.

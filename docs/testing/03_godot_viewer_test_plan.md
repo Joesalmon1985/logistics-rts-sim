@@ -211,8 +211,9 @@ Scope: placeholder sprites, render-data bridge, activity panels, start→end del
 | VIS-SPECTATOR-002 | Unit | No carrier/construction sprites without matching render markers; stepping changes sprite set or chain fingerprint |
 | VIS-SPECTATOR-003 | Unit | Mock atlas loads ≥15 named animations |
 | VIS-SPECTATOR-004 | Unit | `measure_activity_after_steps(30)` passes smoke gate with non-sprite delta |
-| GOD-SMOKE-ECON-SPECTATOR-001 | Smoke | `run_economy_spectator_smoke.gd` — same gate as 001 |
-| GOD-CAPTURE-ECON-SPECTATOR | Capture (non-headless) | `run_economy_spectator_capture.gd -- --assert` — tick 0/30 PNGs, `image_pixel_delta > 5` |
+| VIS-SPECTATOR-005 | Unit | Synthetic fixtures prove resolver grounding contract (21 animations) |
+| GOD-SMOKE-ECON-SPECTATOR-001 | Smoke | `meaningful_count >= 2`, flexible visual-family gate, production-chain only |
+| GOD-CAPTURE-ECON-SPECTATOR | Capture (non-headless) | tick 0/10/30/60, contact sheet, pixel sanity only |
 
 Runner filter:
 

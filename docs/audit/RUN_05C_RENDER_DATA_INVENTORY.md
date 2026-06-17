@@ -32,9 +32,14 @@ GameState → SnapshotExporter → EconomySpectatorRenderBridge → LayerRendere
 |-------|--------------|
 | `buildings[].production_progress` | `building_working_loop` vs idle |
 | `buildings[].production_activity` | Activity pulse |
-| `construction_sites[]` | Progress %, materials delivered |
-| `event_log` / events | Event log panel, `events_grew` metric |
-| `tick` | Status label |
+| `construction_sites[]` | Progress % → `construction_progress_25/50/75` |
+| `carriers[].ware_type` / `ware_amount` | `carrier_carrying_loop` |
+| `ware_routes[].ware_type` | log/plank/stone/generic ware loops |
+| `event_log` / events | Event log panel, pulses |
+| `blocked_job_markers` | `warning_blocked_loop` |
+| `diagnostics.ware_totals` delta | `storage_activity_pulse` |
+
+Each sprite state includes `grounding` metadata (RUN_05C.2).
 
 ## Chain fingerprint (activity metrics)
 

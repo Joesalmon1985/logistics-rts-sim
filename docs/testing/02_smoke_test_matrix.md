@@ -186,8 +186,8 @@ Godot runner: `sim/tools/run_policy_eval_smoke.gd`. Python: `test_policy_contrac
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| GOD-SMOKE-ECON-SPECTATOR-001 | Production chain spectator 30 ticks | `meaningful_count >= 2` start→end deltas; `non_sprite_delta_count >= 1`; production-chain mode only |
-| GOD-CAPTURE-ECON-SPECTATOR | Spectator tick 0 vs tick 30 capture | PNGs under `run_05c_economy_spectator/`; not blank; multi-color; panel lit; `image_pixel_delta > 5` |
+| GOD-SMOKE-ECON-SPECTATOR-001 | Production chain spectator 30 ticks | `meaningful_count >= 2`; flexible visual-family gate; production-chain only |
+| GOD-CAPTURE-ECON-SPECTATOR | Spectator tick 0/10/30/60 + contact sheet | PNGs under `training_runs/visual_review/run_05c_economy_spectator/`; pixel delta sanity only |
 
 Runner: `sim/tools/run_economy_spectator_smoke.gd` (headless). Capture: `sim/tools/run_economy_spectator_capture.gd -- --assert` (non-headless).
 
