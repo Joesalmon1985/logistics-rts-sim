@@ -16,6 +16,7 @@ var show_forest_density: bool = true
 var show_logistics: bool = true
 var show_route_flow: bool = true
 var production_pulse_ids: Array = []
+var destination_pulse_ids: Array = []
 var map_title: String = "Map"
 var command_overlays: Array = []
 var economy_badges: Array = []
@@ -178,8 +179,9 @@ func _draw() -> void:
 		var color: Color = _terrain_colors.get(terrain_type, Color(0.45, 0.45, 0.45))
 		_draw_hex(origin, q, r, color)
 	if show_forest_density:
+		var source_hex: Dictionary = _forest_source_hex()
 		for td in render_data.get("tree_density", []):
-			_draw_tree_density(origin, td)
+			_draw_tree_density(origin, td, td == source_hex)
 	for res in render_data.get("resources", []):
 		_draw_resource(origin, res)
 	for own in render_data.get("ownership", []):
@@ -199,13 +201,14 @@ func _draw() -> void:
 			_draw_ware_route(origin, route)
 		for job in render_data.get("delivery_jobs", []):
 			_draw_delivery_job(origin, job)
+			_draw_delivery_trail(origin, job)
 	for site in render_data.get("construction_sites", []):
 		_draw_construction_site(origin, site)
 	for building in render_data.get("buildings", []):
 		_draw_building(origin, building)
 	if show_logistics:
 		for carrier in render_data.get("carriers", []):
-			_draw_carrier(origin, carrier)
+			_draw_carrier(origin, carrier, true)
 	for unit in render_data.get("units", []):
 		_draw_unit(origin, unit)
 	_draw_command_overlays(origin)
@@ -260,6 +263,8 @@ func _draw_building(origin: Vector2, building: Dictionary) -> void:
 		draw_string(_default_font(), center + Vector2(-10, -16 * zoom), "P%d" % int(prod.get("production_progress", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.9, 0.5))
 	if int(building.get("id", 0)) in production_pulse_ids:
 		draw_arc(center, HEX_SIZE * zoom * 0.95, 0, TAU, 32, Color(0.4, 1.0, 0.5, 0.85), 3.0)
+	if int(building.get("id", 0)) in destination_pulse_ids:
+		draw_arc(center, HEX_SIZE * zoom * 1.05, 0, TAU, 32, Color(0.95, 0.75, 0.2, 0.9), 3.5)
 	var worker_badges: Dictionary = render_data.get("worker_badges", {})
 	var badge_count: int = int(worker_badges.get(str(building.get("id", 0)), 0))
 	if badge_count > 0:
@@ -287,28 +292,51 @@ func _draw_construction_site(origin: Vector2, site: Dictionary) -> void:
 	draw_string(_default_font(), center + Vector2(-14, 12), "%d%%" % progress, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.75, 1.0, 0.75))
 
 
-func _draw_carrier(origin: Vector2, carrier: Dictionary) -> void:
+func _draw_carrier(origin: Vector2, carrier: Dictionary, on_map_layer: bool = false) -> void:
 	var qf: float = float(carrier.get("q", -1))
 	var rf: float = float(carrier.get("r", -1))
 	if qf < 0 or rf < 0:
 		return
 	var center: Vector2 = _hex_center_float(origin, qf, rf)
 	var carrying: bool = str(carrier.get("ware_type", "")) != ""
+	var carrier_state: String = str(carrier.get("state", "")).to_lower()
+	var moving: bool = carrier_state in ["moving", "transit", "en_route", "assigned"]
 	var dot_color: Color = Color(0.95, 0.55, 0.15) if carrying else Color(0.55, 0.75, 0.95)
-	draw_circle(center + Vector2(0, 0), 7.0 * zoom, dot_color)
-	draw_circle(center + Vector2(0, 0), 7.0 * zoom, Color(1, 1, 1, 0.35), false, 1.5)
+	var radius: float = 9.0 * zoom if moving else 6.0 * zoom
+	draw_circle(center + Vector2(0, 0), radius, dot_color)
+	draw_circle(center + Vector2(0, 0), radius, Color(1, 1, 1, 0.35), false, 1.5)
+	if moving and on_map_layer:
+		draw_arc(center, radius + 3.0 * zoom, 0, TAU, 16, Color(1.0, 0.9, 0.4, 0.75), 2.0)
 	if carrying:
 		draw_string(_default_font(), center + Vector2(8 * zoom, -4 * zoom), str(carrier.get("ware_type", "")).substr(0, 3), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.95, 0.7))
 
 
-func _draw_tree_density(origin: Vector2, td: Dictionary) -> void:
+func _forest_source_hex() -> Dictionary:
+	var best: Dictionary = {}
+	var best_density: int = -1
+	for td in render_data.get("tree_density", []):
+		if typeof(td) != TYPE_DICTIONARY:
+			continue
+		var density: int = int(td.get("tree_density", 0))
+		if density > best_density:
+			best_density = density
+			best = td
+	return best
+
+
+func _draw_tree_density(origin: Vector2, td: Dictionary, is_source: bool = false) -> void:
 	var q: int = int(td.get("q", 0))
 	var r: int = int(td.get("r", 0))
 	var density: int = int(td.get("tree_density", 0))
 	var center: Vector2 = _hex_center(origin, q, r)
 	var tint: Color = Color(0.2, 0.55, 0.2, 0.15 + float(mini(density, 10)) * 0.04)
+	if is_source:
+		tint = Color(0.15, 0.72, 0.25, 0.35)
+		draw_arc(center, HEX_SIZE * zoom * 0.9, 0, TAU, 24, Color(0.4, 0.95, 0.45, 0.85), 2.5)
 	_draw_hex(origin, q, r, tint, 0.8, false)
-	draw_string(_default_font(), center + Vector2(-10, -14 * zoom), "D:%d" % density, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.55, 0.95, 0.55))
+	var label_color: Color = Color(0.75, 1.0, 0.65) if is_source else Color(0.55, 0.95, 0.55)
+	var prefix: String = "SRC D:" if is_source else "D:"
+	draw_string(_default_font(), center + Vector2(-14, -14 * zoom), "%s%d" % [prefix, density], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, label_color)
 
 
 func _draw_road_node(origin: Vector2, node: Dictionary) -> void:
@@ -344,16 +372,45 @@ func _draw_building_port(origin: Vector2, port: Dictionary) -> void:
 
 func _draw_ware_route(origin: Vector2, route: Dictionary) -> void:
 	var points: Array = route.get("points", [])
+	var ware: String = str(route.get("ware_type", ""))
 	for i in range(points.size() - 1):
 		var a: Dictionary = points[i]
 		var b: Dictionary = points[i + 1]
 		var pa: Vector2 = _hex_center(origin, int(a.get("q", 0)), int(a.get("r", 0)))
 		var pb: Vector2 = _hex_center(origin, int(b.get("q", 0)), int(b.get("r", 0)))
-		draw_dashed_line(pa, pb, Color(0.95, 0.65, 0.15, 0.85), 2.5 * zoom, 6.0 * zoom)
+		draw_line(pa, pb, Color(0.95, 0.65, 0.15, 0.25), 4.0 * zoom)
+		draw_dashed_line(pa, pb, Color(0.95, 0.65, 0.15, 0.9), 2.5 * zoom, 6.0 * zoom)
 		var mid: Vector2 = (pa + pb) * 0.5
 		var dir: Vector2 = (pb - pa).normalized()
-		var chevron: Vector2 = mid + dir.rotated(PI * 0.5) * 4.0 * zoom
-		draw_line(mid - dir * 4.0 * zoom, chevron, Color(0.95, 0.75, 0.2, 0.9), 2.0 * zoom)
+		if dir.length_squared() > 0.01:
+			var tip: Vector2 = mid + dir * 8.0 * zoom
+			var wing_a: Vector2 = tip - dir * 10.0 * zoom + dir.rotated(PI * 0.5) * 6.0 * zoom
+			var wing_b: Vector2 = tip - dir * 10.0 * zoom + dir.rotated(-PI * 0.5) * 6.0 * zoom
+			draw_colored_polygon(PackedVector2Array([tip, wing_a, wing_b]), Color(0.95, 0.75, 0.2, 0.95))
+	if points.size() >= 2 and ware != "":
+		var first: Dictionary = points[0]
+		var last: Dictionary = points[points.size() - 1]
+		var p0: Vector2 = _hex_center(origin, int(first.get("q", 0)), int(first.get("r", 0)))
+		var p1: Vector2 = _hex_center(origin, int(last.get("q", 0)), int(last.get("r", 0)))
+		draw_string(_default_font(), p0 + Vector2(-8, -12 * zoom), "src", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.85, 1.0, 0.7))
+		draw_string(_default_font(), p1 + Vector2(-8, -12 * zoom), "dst", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1.0, 0.85, 0.55))
+
+
+func _draw_delivery_trail(origin: Vector2, job: Dictionary) -> void:
+	var fq: int = int(job.get("from_q", -1))
+	var fr: int = int(job.get("from_r", -1))
+	var tq: int = int(job.get("to_q", -1))
+	var tr: int = int(job.get("to_r", -1))
+	if fq < 0 or tq < 0:
+		return
+	var a: Vector2 = _hex_center(origin, fq, fr)
+	var b: Vector2 = _hex_center(origin, tq, tr)
+	var mid: Vector2 = (a + b) * 0.5
+	var dir: Vector2 = (b - a).normalized()
+	if dir.length_squared() < 0.01:
+		return
+	var tip: Vector2 = mid + dir * 6.0 * zoom
+	draw_line(mid - dir * 6.0 * zoom, tip, Color(0.55, 0.85, 1.0, 0.65), 2.0 * zoom)
 
 
 func _draw_delivery_job(origin: Vector2, job: Dictionary) -> void:
