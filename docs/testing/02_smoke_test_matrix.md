@@ -182,16 +182,16 @@ Godot runner: `sim/tools/run_policy_eval_smoke.gd`. Python: `test_policy_contrac
 | HYB-BOT-002 | Hybrid bot skirmish | Two bots complete with win/loss; fog-respecting |
 | BAL-SMOKE-001 | Balance scenario | Both players viable path |
 
-## RUN_05C — Economy Spectator Visual Groundwork
+## RUN_05C — Economy Spectator Visual Groundwork / Polish
 
 | ID | Scenario | Pass criteria |
 |----|----------|---------------|
-| GOD-SMOKE-ECON-SPECTATOR-001 | Production chain spectator 30 ticks | `meaningful_count >= 2`; flexible visual-family gate; production-chain only |
-| GOD-CAPTURE-ECON-SPECTATOR | Spectator tick 0/10/30/60 + contact sheet | PNGs under `training_runs/visual_review/run_05c_economy_spectator/`; pixel delta sanity only |
+| GOD-SMOKE-ECON-SPECTATOR-001 | Production chain spectator 30 ticks | `meaningful_count >= 2`; flexible visual-family gate; reports sprite count |
+| GOD-CAPTURE-ECON-SPECTATOR | Spectator tick 0/10/30/60 + contact sheet | PNGs + `REVIEW_NOTES.md` under `training_runs/visual_review/run_05c_economy_spectator/`; not committed |
 
 Runner: `sim/tools/run_economy_spectator_smoke.gd` (headless). Capture: `sim/tools/run_economy_spectator_capture.gd -- --assert` (non-headless).
 
-**Not claimed:** dual-bot expansion proof; `ECON_BOT_002` remains unresolved separately.
+**RUN_05C.3:** visual review/polish only. **Not claimed:** dual-bot expansion proof; `ECON_BOT_002` remains unresolved separately.
 
 ## RUN_09 — Godot Hybrid Observer
 

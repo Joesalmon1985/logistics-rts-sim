@@ -212,8 +212,9 @@ Scope: placeholder sprites, render-data bridge, activity panels, start→end del
 | VIS-SPECTATOR-003 | Unit | Mock atlas loads ≥15 named animations |
 | VIS-SPECTATOR-004 | Unit | `measure_activity_after_steps(30)` passes smoke gate with non-sprite delta |
 | VIS-SPECTATOR-005 | Unit | Synthetic fixtures prove resolver grounding contract (21 animations) |
-| GOD-SMOKE-ECON-SPECTATOR-001 | Smoke | `meaningful_count >= 2`, flexible visual-family gate, production-chain only |
-| GOD-CAPTURE-ECON-SPECTATOR | Capture (non-headless) | tick 0/10/30/60, contact sheet, pixel sanity only |
+| VIS-SPECTATOR-006 | Unit | Overlay toggles viewer-only; replay hash unchanged; sprite budget ≤ 48 |
+| GOD-SMOKE-ECON-SPECTATOR-001 | Smoke | `meaningful_count >= 2`, flexible visual-family gate, sprite count reported |
+| GOD-CAPTURE-ECON-SPECTATOR | Capture (non-headless) | tick 0/10/30/60, contact sheet + REVIEW_NOTES.md; pixel sanity only |
 
 Runner filter:
 
@@ -221,4 +222,4 @@ Runner filter:
 TEST_FILTER=vis_spectator timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 ```
 
-**Not in scope:** `ECON_BOT_002`, `BOT-SMOKE-004`, `ECON-SMOKE-007`. See `docs/audit/RUN_05C_VISUAL_GROUNDWORK_CONTINUATION.md`.
+**Not in scope:** `ECON_BOT_002`, `BOT-SMOKE-004`, `ECON-SMOKE-007`. RUN_05C.3 is visual review/polish only. See `docs/audit/RUN_05C_3_VISUAL_POLISH_REPORT.md`.

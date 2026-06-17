@@ -60,3 +60,15 @@ Used for `chain_fingerprint_changed` start→end delta.
 - Godot `Node2D` positions (presentation only)
 - Wall-clock / `_process` delta
 - Bot decision heuristics (dual-bot manual view only; not automated path)
+
+## RUN_05C.3 viewer additions (non-authoritative)
+
+| Consumer | Render/event source |
+|----------|---------------------|
+| Active chain trace panel | `chain_fingerprint`, `buildings`, `building_stores`, `carriers`, `ware_routes`, `delivery_jobs` |
+| Forest source highlight | `tree_density[]` — highest density hex |
+| Route src/dst hints | `ware_routes[].points`, `delivery_jobs` endpoints |
+| Destination building pulse | `effect_events` from `ware_delivered` / delivery payload `building_id` |
+| Activity score | Grounded composite of fingerprint + sprite count (viewer metric only) |
+
+Generated capture outputs: `training_runs/visual_review/run_05c_economy_spectator/` — not committed unless repo policy changes.

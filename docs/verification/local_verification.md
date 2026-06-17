@@ -428,6 +428,23 @@ $LASTEXITCODE
 - `res://client/scenes/military_viewer_demo.tscn`
 - `res://client/scenes/economy_spectator_bot_demo.tscn` (RUN_05C visual groundwork)
 
+### RUN_05C.3 economy spectator review polish (focused)
+
+```bash
+export GODOT=/path/to/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+
+TEST_FILTER=vis_spectator timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_spectator_smoke.gd
+timeout 240s "$GODOT" --path godot_project --script res://sim/tools/run_economy_spectator_capture.gd -- --assert
+timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+```
+
+Expected: VIS-SPECTATOR-001..006 pass; smoke `families=3/3` + sprite count; capture under `training_runs/visual_review/run_05c_economy_spectator/` with `contact_sheet.html`, `capture_manifest.json`, `REVIEW_NOTES.md`. Generated PNGs/HTML are **not committed**. Pixel delta is sanity only.
+
+See `docs/audit/RUN_05C_3_VISUAL_POLISH_REPORT.md`.
+
 ### RUN_05C.2 economy spectator polish (focused)
 
 ```bash

@@ -1,12 +1,12 @@
 # RUN_05C — Economy Spectator Visual Identity
 
-Date: 2026-06-17 (updated RUN_05C.2)  
+Date: 2026-06-17 (updated RUN_05C.3)  
 Branch: `feature/run-05c-economy-spectator-visual-identity`  
 WIP ancestor: `214bcd3`
 
 ## Scope
 
-Visual groundwork (RUN_05C.1) and polish (RUN_05C.2) for the economy spectator — placeholder sprites, render-data bridge, activity panels, grounding reasons, and start→end delta verification. **Not** bot expansion proof or RUN_02.8b closure.
+Visual groundwork (RUN_05C.1), polish (RUN_05C.2), and review-led UX polish (RUN_05C.3) for the economy spectator — placeholder sprites, render-data bridge, activity panels, grounding reasons, chain trace, and start→end delta verification. **Not** bot expansion proof or RUN_02.8b closure.
 
 | Topic | Status |
 |-------|--------|
@@ -35,11 +35,15 @@ Visual groundwork (RUN_05C.1) and polish (RUN_05C.2) for the economy spectator �
 | Production chain (default) | `DEMO_PRODUCTION_CHAIN` | Yes — all tests/smokes |
 | Dual-bot diagnostic | `DEMO_DUAL_BOT` | No — manual button only |
 
-### Panels (RUN_05C.2)
+### Panels (RUN_05C.3)
 
-- Title / help — production-chain wording
-- Status, debug counts, summary, demo status, **activity hint with recent changes**
-- Event log, **21-animation family legend**
+- Title + **top status banner** (visual demo, not bot proof)
+- **Transport bar** — tick | play state | speed | activity score
+- Economy summary, demo status, map activity hint
+- **Active chain trace** panel (render-data derived)
+- **What changed recently?** panel (grounded deltas)
+- Event log, grouped family legend
+- Capture review path label
 - Toggles: sprites, routes/flow, logistics, roads, ownership
 - Optional **Dual-Bot View** button (diagnostic)
 
@@ -62,8 +66,9 @@ See [`RUN_05C_2_VISUAL_POLISH_REPORT.md`](RUN_05C_2_VISUAL_POLISH_REPORT.md).
 | VIS-SPECTATOR-003 | `run_tests.gd` | All 21 mock atlas animations load |
 | VIS-SPECTATOR-004 | `run_tests.gd` | `measure_activity_after_steps(30)` passes gate |
 | VIS-SPECTATOR-005 | `run_tests.gd` | Synthetic fixtures prove resolver contract |
-| GOD-SMOKE-ECON-SPECTATOR-001 | `run_economy_spectator_smoke.gd` | Delta + visual-family gate |
-| GOD-CAPTURE-ECON-SPECTATOR | `run_economy_spectator_capture.gd -- --assert` | tick 0/10/30/60 + contact sheet |
+| VIS-SPECTATOR-006 | `run_tests.gd` | Overlay toggles viewer-only; sprite budget ≤ 48 |
+| GOD-SMOKE-ECON-SPECTATOR-001 | `run_economy_spectator_smoke.gd` | Delta + visual-family gate + sprite count |
+| GOD-CAPTURE-ECON-SPECTATOR | `run_economy_spectator_capture.gd -- --assert` | tick 0/10/30/60 + contact sheet + REVIEW_NOTES.md |
 
 ## Launch
 
@@ -73,4 +78,4 @@ $GODOT --path godot_project res://client/scenes/economy_spectator_bot_demo.tscn
 
 ## Review readiness
 
-**Visual groundwork only.** See [`RUN_05C_2_VISUAL_POLISH_REPORT.md`](RUN_05C_2_VISUAL_POLISH_REPORT.md).
+**Visual groundwork only.** See [`RUN_05C_3_VISUAL_POLISH_REPORT.md`](RUN_05C_3_VISUAL_POLISH_REPORT.md).
