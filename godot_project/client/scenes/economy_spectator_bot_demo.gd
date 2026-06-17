@@ -1,6 +1,6 @@
 extends Control
 
-## RUN_05C economy bot spectator — dual-bot autoplay with placeholder sprite overlays.
+## RUN_05C.1 economy spectator — production-chain visual groundwork with placeholder sprites.
 
 const SCREEN_SIZE := Vector2i(1920, 1080)
 const AUTOPLAY_BASE_SEC: float = 0.35
@@ -13,6 +13,7 @@ var controller: EconomySpectatorController = EconomySpectatorController.new()
 @onready var _debug: Label = %DebugLabel
 @onready var _summary: Label = %SummaryLabel
 @onready var _bot_status: Label = %BotStatusLabel
+@onready var _activity: Label = %ActivityLabel
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _legend: RichTextLabel = %Legend
 @onready var _help: RichTextLabel = %HelpPanel
@@ -24,7 +25,7 @@ var _autoplay_timer: Timer
 
 
 func _ready() -> void:
-	set_deferred("size", SCREEN_SIZE)
+	size = SCREEN_SIZE
 	SimBootstrap.load_all()
 	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
 	controller.bot_action_applied.connect(_on_bot_action)
@@ -36,25 +37,19 @@ func _ready() -> void:
 	_setup_labels()
 	_build_legend()
 	_setup_autoplay_timer()
-	controller.reset_demo()
-	call_deferred("_deferred_refresh")
-
-
-func _deferred_refresh() -> void:
-	await get_tree().process_frame
-	await get_tree().process_frame
+	controller.reset_demo(EconomySpectatorController.DEMO_PRODUCTION_CHAIN)
 	_refresh_map()
 
 
 func _setup_labels() -> void:
-	_title.text = "Economy Bot Spectator (RUN_05C)"
+	_title.text = "Economy Spectator — Visual Groundwork (RUN_05C.1)"
 	_help.text = (
-		"[b]Spectator mode[/b] — watch dual [i]EconomyExpansionBot[/i] players expand.\n"
-		+ "[color=#ffaa00]Amber sprites[/color] = logistics/roads | "
-		+ "[color=#9a6b3a]Brown[/color] = wood/ware | "
-		+ "[color=#aaaaaa]Grey[/color] = construction stages.\n"
-		+ "Load/Reset → Play/Pause autoplay → Bot Step for one p1+p2+tick cycle.\n"
-		+ "All motion comes from real snapshot carriers, sites, and events."
+		"[b]Production chain spectator[/b] — seed 42, HQ → woodcutter → sawmill.\n"
+		+ "[color=#ffaa00]Amber sprites[/color] = logistics | "
+		+ "[color=#9a6b3a]Brown[/color] = timber/ware | "
+		+ "[color=#55cc66]Green[/color] = working buildings.\n"
+		+ "Play/Pause steps sim ticks. All visuals derive from real snapshot state.\n"
+		+ "[i]Dual-bot view[/i] is manual diagnostic only — not used for smoke/tests."
 	)
 
 
@@ -81,7 +76,7 @@ func _build_legend() -> void:
 		+ "[color=#888888]▣[/color] construction_progress\n"
 		+ "[color=#55cc66]▣[/color] building_working | "
 		+ "[color=#cc4444]![/color] blocked/warning | "
-		+ "[color=#4488cc]tint[/color]=p1 [color=#cc4444]tint[/color]=p2 ownership"
+		+ "Idle/stall states remain visible when chain pauses"
 	)
 
 
@@ -101,8 +96,9 @@ func _refresh_map() -> void:
 
 func _update_panels() -> void:
 	var snap: Dictionary = controller.snapshot
-	_status.text = "Tick %d | Spectator | %s" % [
+	_status.text = "Tick %d | %s | %s" % [
 		int(snap.get("tick", 0)),
+		controller.demo_label,
 		"AUTOPLAY" if controller.autoplay_enabled else "PAUSED",
 	]
 	var counts: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
@@ -118,6 +114,7 @@ func _update_panels() -> void:
 	)
 	_summary.text = controller.build_summary_text()
 	_bot_status.text = controller.build_bot_status_text()
+	_activity.text = controller.build_activity_hint()
 	_event_log.text = controller.build_event_log_text()
 	_speed_label.text = "Speed: %.1fx" % controller.speed_multiplier
 
@@ -127,8 +124,13 @@ func _on_bot_action(player_id: String, command_type: String, success: bool, _mes
 
 
 func _on_reset_pressed() -> void:
-	controller.reset_demo()
-	_result.text = "Demo reset"
+	controller.reset_demo(EconomySpectatorController.DEMO_PRODUCTION_CHAIN)
+	_result.text = "Production chain demo reset"
+
+
+func _on_dual_bot_pressed() -> void:
+	controller.reset_demo(EconomySpectatorController.DEMO_DUAL_BOT)
+	_result.text = "Switched to dual-bot diagnostic view (manual only)"
 
 
 func _on_play_pause_pressed() -> void:
@@ -142,8 +144,8 @@ func _on_play_pause_pressed() -> void:
 
 
 func _on_bot_step_pressed() -> void:
-	controller.bot_step_once()
-	_result.text = "Bot step complete"
+	controller.autoplay_step()
+	_result.text = "Step complete"
 
 
 func _on_step_tick_pressed() -> void:
@@ -210,4 +212,4 @@ func _on_screenshot_pressed() -> void:
 
 func _on_autoplay_tick() -> void:
 	if controller.autoplay_enabled:
-		controller.bot_step_once()
+		controller.autoplay_step()

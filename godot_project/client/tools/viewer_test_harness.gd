@@ -31,8 +31,10 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	var subvp := SubViewport.new()
 	subvp.size = SIZE
 	subvp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	scene.set_deferred("custom_minimum_size", SIZE)
-	scene.set_deferred("size", SIZE)
+	if scene is Control:
+		var control_scene: Control = scene as Control
+		control_scene.custom_minimum_size = SIZE
+		control_scene.size = SIZE
 	subvp.add_child(scene)
 	host.add_child(subvp)
 	var map: MapViewport = scene.get_node_or_null("%MapViewport") as MapViewport
@@ -73,6 +75,11 @@ static func capture(ctx: Dictionary) -> Image:
 
 
 static func teardown(ctx: Dictionary) -> void:
+	var scene: Node = ctx.get("scene")
+	if scene != null and is_instance_valid(scene):
+		var sprite_layer: EconomySpriteLayer = scene.get_node_or_null("%SpriteLayer") as EconomySpriteLayer
+		if sprite_layer != null:
+			sprite_layer.clear_all()
 	var subvp: SubViewport = ctx.get("viewport")
 	if subvp != null and is_instance_valid(subvp):
 		subvp.queue_free()

@@ -63,14 +63,19 @@ func apply_sprite_states(states: Dictionary) -> void:
 
 
 func _schedule_pulse_hide(key: String, sprite: AnimatedSprite2D, duration: float) -> void:
+	if not is_inside_tree():
+		return
 	var timer := get_tree().create_timer(duration)
-	timer.timeout.connect(func() -> void:
-		if is_instance_valid(sprite):
-			sprite.visible = false
-		_sprites.erase(key)
-		if is_instance_valid(sprite):
-			sprite.queue_free()
-	, CONNECT_ONE_SHOT)
+	timer.timeout.connect(_on_pulse_hide_timeout.bind(key, sprite), CONNECT_ONE_SHOT)
+
+
+func _on_pulse_hide_timeout(key: String, sprite: AnimatedSprite2D) -> void:
+	if not is_instance_valid(self):
+		return
+	if is_instance_valid(sprite):
+		sprite.visible = false
+		sprite.queue_free()
+	_sprites.erase(key)
 
 
 func clear_all() -> void:
