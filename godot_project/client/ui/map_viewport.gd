@@ -515,6 +515,18 @@ func _gui_input(event: InputEvent) -> void:
 signal selection_clicked(q: int, r: int)
 
 
+func get_map_origin() -> Vector2:
+	return size * 0.5 + pan_offset
+
+
+func hex_center_pixel(q: int, r: int) -> Vector2:
+	return _hex_center(get_map_origin(), q, r)
+
+
+func hex_center_pixel_float(q: float, r: float) -> Vector2:
+	return _hex_center_float(get_map_origin(), q, r)
+
+
 func _hex_offset(q: int, r: int) -> Vector2:
 	var x: float = HEX_SIZE * sqrt(3.0) * (float(q) + float(r) * 0.5)
 	var y: float = HEX_SIZE * 1.5 * float(r)

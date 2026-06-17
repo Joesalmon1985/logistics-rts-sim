@@ -9,6 +9,7 @@ const DEFAULT_FRAMES := 6
 const SCENE_PATHS: Dictionary = {
 	"economy": "res://client/scenes/economy_viewer_demo.tscn",
 	"military": "res://client/scenes/military_viewer_demo.tscn",
+	"spectator": "res://client/scenes/economy_spectator_bot_demo.tscn",
 }
 
 
@@ -18,9 +19,15 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	var packed: PackedScene = load(str(SCENE_PATHS[variant]))
 	if packed == null:
 		return {"ok": false, "reason": "failed to load scene"}
-	var scene: ViewerRoot = packed.instantiate() as ViewerRoot
-	if scene == null:
-		return {"ok": false, "reason": "scene is not ViewerRoot"}
+	var scene: Node = packed.instantiate()
+	if variant == "spectator":
+		if scene == null:
+			return {"ok": false, "reason": "failed to instantiate spectator scene"}
+	else:
+		var viewer_scene: ViewerRoot = scene as ViewerRoot
+		if viewer_scene == null:
+			return {"ok": false, "reason": "scene is not ViewerRoot"}
+		scene = viewer_scene
 	var subvp := SubViewport.new()
 	subvp.size = SIZE
 	subvp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
