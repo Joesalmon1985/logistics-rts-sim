@@ -18,9 +18,24 @@ func _run_body() -> void:
 		[],
 	)
 	for key in states.keys():
-		var anim: String = str(states[key].get("animation", ""))
+		var entry: Dictionary = states[key]
+		var anim: String = str(entry.get("animation", ""))
+		var grounding: Dictionary = entry.get("grounding", {})
+		assert_false(str(grounding.get("reason", "")) == "", "missing grounding on %s" % key)
 		assert_false(anim == "carrier_move_loop" and render.get("carriers", []).is_empty(), "carrier_move_loop without carriers")
-		assert_false(anim == "construction_progress_loop" and render.get("construction_sites", []).is_empty(), "construction progress without sites")
+		assert_false(anim == "carrier_carrying_loop" and render.get("carriers", []).is_empty(), "carrier_carrying without carriers")
+		assert_false(anim.begins_with("construction_") and anim != "construction_complete_pulse" and render.get("construction_sites", []).is_empty(), "construction without sites")
+
+	var empty_states: Dictionary = EconomySpriteStateSelector.select_states(
+		{"carriers": [], "ware_routes": [], "delivery_jobs": [], "construction_sites": [], "buildings": [], "roads": [], "building_stores": [], "diagnostics": {}},
+		{},
+		{},
+		[],
+	)
+	for key in empty_states.keys():
+		var anim: String = str(empty_states[key].get("animation", ""))
+		assert_false(anim.begins_with("carrier_"), "carrier anim on empty render")
+		assert_false(anim.begins_with("ware_"), "ware anim on empty render")
 
 	var sprite_before: Dictionary = controller.get_sprite_states().duplicate(true)
 	for _i in range(20):
@@ -56,6 +71,6 @@ func _run_body() -> void:
 	var has_logistics_sprite: bool = false
 	for key in chain_states.keys():
 		var anim: String = str(chain_states[key].get("animation", ""))
-		if anim in ["carrier_move_loop", "carrier_idle", "ware_log_move_loop", "ware_generic_move_loop", "road_flow_loop"]:
+		if anim in ["carrier_move_loop", "carrier_carrying_loop", "carrier_idle", "ware_log_move_loop", "ware_plank_move_loop", "ware_generic_move_loop", "road_flow_loop"]:
 			has_logistics_sprite = true
 	assert_true(has_logistics_sprite or not chain_render.get("carriers", []).is_empty(), "production chain should ground logistics sprites or expose carriers")

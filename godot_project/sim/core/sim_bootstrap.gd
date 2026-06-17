@@ -118,6 +118,12 @@ const CORE_SCRIPTS: Array[String] = [
 	"res://client/adapters/rollout_command_overlay.gd",
 	"res://client/core/viewer_controller.gd",
 	"res://client/core/rollout_controller.gd",
+	"res://client/adapters/economy_sprite_state_selector.gd",
+	"res://client/adapters/economy_spectator_metrics.gd",
+	"res://client/adapters/economy_spectator_render_bridge.gd",
+	"res://client/adapters/mock_economy_atlas.gd",
+	"res://client/core/economy_spectator_controller.gd",
+	"res://client/ui/economy_sprite_layer.gd",
 	"res://client/ui/rollout_observer_root.gd",
 ]
 
