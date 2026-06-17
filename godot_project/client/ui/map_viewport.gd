@@ -14,6 +14,7 @@ var pan_offset: Vector2 = Vector2.ZERO
 var zoom: float = 1.0
 var show_forest_density: bool = true
 var show_logistics: bool = true
+var show_route_flow: bool = true
 var production_pulse_ids: Array = []
 var map_title: String = "Map"
 var command_overlays: Array = []
@@ -189,7 +190,7 @@ func _draw() -> void:
 		var road_color: Color = _player_color(str(road.get("player_id", "p1")))
 		road_color.a = 0.85
 		draw_line(a, b, road_color, 4.0 * zoom)
-	if show_logistics:
+	if show_logistics and show_route_flow:
 		for node in render_data.get("road_node_markers", []):
 			_draw_road_node(origin, node)
 		for port in render_data.get("building_ports", []):
@@ -305,7 +306,9 @@ func _draw_tree_density(origin: Vector2, td: Dictionary) -> void:
 	var r: int = int(td.get("r", 0))
 	var density: int = int(td.get("tree_density", 0))
 	var center: Vector2 = _hex_center(origin, q, r)
-	draw_string(_default_font(), center + Vector2(-10, -14 * zoom), "D:%d" % density, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 1.0, 0.75))
+	var tint: Color = Color(0.2, 0.55, 0.2, 0.15 + float(mini(density, 10)) * 0.04)
+	_draw_hex(origin, q, r, tint, 0.8, false)
+	draw_string(_default_font(), center + Vector2(-10, -14 * zoom), "D:%d" % density, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.55, 0.95, 0.55))
 
 
 func _draw_road_node(origin: Vector2, node: Dictionary) -> void:
@@ -347,6 +350,10 @@ func _draw_ware_route(origin: Vector2, route: Dictionary) -> void:
 		var pa: Vector2 = _hex_center(origin, int(a.get("q", 0)), int(a.get("r", 0)))
 		var pb: Vector2 = _hex_center(origin, int(b.get("q", 0)), int(b.get("r", 0)))
 		draw_dashed_line(pa, pb, Color(0.95, 0.65, 0.15, 0.85), 2.5 * zoom, 6.0 * zoom)
+		var mid: Vector2 = (pa + pb) * 0.5
+		var dir: Vector2 = (pb - pa).normalized()
+		var chevron: Vector2 = mid + dir.rotated(PI * 0.5) * 4.0 * zoom
+		draw_line(mid - dir * 4.0 * zoom, chevron, Color(0.95, 0.75, 0.2, 0.9), 2.0 * zoom)
 
 
 func _draw_delivery_job(origin: Vector2, job: Dictionary) -> void:

@@ -1,6 +1,6 @@
 extends Control
 
-## RUN_05C.1 economy spectator — production-chain visual groundwork with placeholder sprites.
+## RUN_05C.2 economy spectator — production-chain visual polish with placeholder sprites.
 
 const SCREEN_SIZE := Vector2i(1920, 1080)
 const AUTOPLAY_BASE_SEC: float = 0.35
@@ -42,14 +42,11 @@ func _ready() -> void:
 
 
 func _setup_labels() -> void:
-	_title.text = "Economy Spectator — Visual Groundwork (RUN_05C.1)"
+	_title.text = "Economy Spectator — Visual Polish (RUN_05C.2)"
 	_help.text = (
 		"[b]Production chain spectator[/b] — seed 42, HQ → woodcutter → sawmill.\n"
-		+ "[color=#ffaa00]Amber sprites[/color] = logistics | "
-		+ "[color=#9a6b3a]Brown[/color] = timber/ware | "
-		+ "[color=#55cc66]Green[/color] = working buildings.\n"
-		+ "Play/Pause steps sim ticks. All visuals derive from real snapshot state.\n"
-		+ "[i]Dual-bot view[/i] is manual diagnostic only — not used for smoke/tests."
+		+ "Sprites and routes derive from real snapshot state only.\n"
+		+ "[i]Dual-bot view[/i] is manual diagnostic only."
 	)
 
 
@@ -70,13 +67,13 @@ func _update_autoplay_timer() -> void:
 
 func _build_legend() -> void:
 	_legend.text = (
-		"[b]Sprite legend[/b]\n"
-		+ "[color=#ffaa00]●[/color] carrier_move / road_flow | "
-		+ "[color=#9a6b3a]■[/color] ware_log | "
-		+ "[color=#888888]▣[/color] construction_progress\n"
-		+ "[color=#55cc66]▣[/color] building_working | "
-		+ "[color=#cc4444]![/color] blocked/warning | "
-		+ "Idle/stall states remain visible when chain pauses"
+		"[b]Animation families[/b]\n"
+		+ "[color=#ffaa00]Logistics:[/color] carrier_idle, carrier_move_loop, carrier_carrying_loop, road_flow_loop\n"
+		+ "[color=#9a6b3a]Wares:[/color] ware_log/plank/stone/generic_move_loop\n"
+		+ "[color=#55cc66]Buildings:[/color] building_idle, building_working_loop, building_blocked_loop\n"
+		+ "[color=#888888]Construction:[/color] construction_idle, progress_25/50/75, progress_loop\n"
+		+ "[color=#8888cc]Storage:[/color] storage_idle, storage_activity_pulse\n"
+		+ "[color=#cc4444]Warning:[/color] warning_blocked_loop"
 	)
 
 
@@ -90,6 +87,8 @@ func _refresh_map() -> void:
 		return
 	_map.show_forest_density = controller.layer_visibility.get("forest_density", true)
 	_map.show_logistics = controller.layer_visibility.get("logistics", true)
+	_map.show_route_flow = controller.layer_visibility.get("routes", true)
+	_sprite_layer.show_sprites = controller.layer_visibility.get("sprites", true)
 	_map.set_render_data(controller.get_render_data())
 	_sprite_layer.apply_sprite_states(controller.get_sprite_states())
 
@@ -198,6 +197,18 @@ func _on_toggle_roads_pressed() -> void:
 func _on_toggle_ownership_pressed() -> void:
 	var vis: bool = not controller.layer_visibility.get("ownership", true)
 	controller.set_layer_visible("ownership", vis)
+	_refresh_map()
+
+
+func _on_toggle_sprites_pressed() -> void:
+	var vis: bool = not controller.layer_visibility.get("sprites", true)
+	controller.set_layer_visible("sprites", vis)
+	_refresh_map()
+
+
+func _on_toggle_routes_pressed() -> void:
+	var vis: bool = not controller.layer_visibility.get("routes", true)
+	controller.set_layer_visible("routes", vis)
 	_refresh_map()
 
 

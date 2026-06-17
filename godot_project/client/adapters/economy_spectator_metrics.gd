@@ -152,3 +152,86 @@ static func image_pixel_delta(img_a: Image, img_b: Image, sample_step: int = 16)
 			if ca.a > 0.05 or cb.a > 0.05:
 				diff += 1
 	return diff
+
+
+static func animation_family(animation: String) -> String:
+	var anim: String = animation.to_lower()
+	if anim.begins_with("carrier_") or anim.begins_with("ware_") or anim == "road_flow_loop":
+		return "logistics"
+	if anim.begins_with("building_"):
+		return "building"
+	if anim.begins_with("construction_"):
+		return "construction"
+	if anim.begins_with("storage_"):
+		return "storage"
+	if anim.begins_with("warning_"):
+		return "warning"
+	return "other"
+
+
+static func detect_exposable_families(render_data: Dictionary, snapshot: Dictionary) -> Dictionary:
+	var families: Dictionary = {}
+	if not render_data.get("carriers", []).is_empty() or not render_data.get("ware_routes", []).is_empty() or not render_data.get("delivery_jobs", []).is_empty():
+		families["logistics"] = "carriers/routes/jobs present"
+	var has_building_activity: bool = false
+	for building in snapshot.get("buildings", []):
+		if typeof(building) == TYPE_DICTIONARY and int(building.get("production_progress", 0)) > 0:
+			has_building_activity = true
+			break
+	if not has_building_activity:
+		for activity in render_data.get("production_activity", []):
+			if typeof(activity) == TYPE_DICTIONARY:
+				has_building_activity = true
+				break
+	if has_building_activity or not render_data.get("buildings", []).is_empty():
+		families["building"] = "buildings present"
+	if not render_data.get("construction_sites", []).is_empty():
+		families["construction"] = "construction_sites present"
+	if not render_data.get("building_stores", []).is_empty():
+		families["storage"] = "building_stores present"
+	if not snapshot.get("blocked_job_markers", []).is_empty():
+		families["warning"] = "blocked_job_markers present"
+	for building in render_data.get("buildings", []):
+		if typeof(building) == TYPE_DICTIONARY and (bool(building.get("blocked", false)) or str(building.get("blocked", "")) == "true"):
+			families["warning"] = "blocked building present"
+	return families
+
+
+static func count_active_families(sprite_states: Dictionary) -> Dictionary:
+	var active: Dictionary = {}
+	for key in sprite_states.keys():
+		var entry: Dictionary = sprite_states[key] if typeof(sprite_states[key]) == TYPE_DICTIONARY else {}
+		var anim: String = str(entry.get("animation", ""))
+		var family: String = animation_family(anim)
+		if family != "other":
+			active[family] = true
+	return active
+
+
+static func evaluate_visual_families(render_data: Dictionary, snapshot: Dictionary, sprite_states: Dictionary) -> Dictionary:
+	var exposable: Dictionary = detect_exposable_families(render_data, snapshot)
+	var active: Dictionary = count_active_families(sprite_states)
+	var missing: PackedStringArray = PackedStringArray()
+	for family in exposable.keys():
+		if not active.has(family):
+			missing.append("%s: %s" % [family, str(exposable[family])])
+	var exposable_count: int = exposable.size()
+	var active_count: int = active.size()
+	var passes: bool = true
+	if exposable_count >= 3:
+		passes = active_count >= 3
+	else:
+		passes = missing.is_empty()
+	return {
+		"exposable_families": exposable,
+		"active_families": active,
+		"exposable_count": exposable_count,
+		"active_count": active_count,
+		"missing_families": missing,
+		"passes": passes,
+	}
+
+
+static func passes_visual_family_gate(render_data: Dictionary, snapshot: Dictionary, sprite_states: Dictionary) -> bool:
+	return bool(evaluate_visual_families(render_data, snapshot, sprite_states).get("passes", false))
+

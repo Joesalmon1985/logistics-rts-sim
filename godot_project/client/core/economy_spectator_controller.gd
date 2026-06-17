@@ -40,9 +40,14 @@ var layer_visibility: Dictionary = {
 	"logistics": true,
 	"forest_density": true,
 	"ownership": true,
+	"sprites": true,
+	"routes": true,
 }
 var last_bot_status: Dictionary = {"p1": {}}
 var event_log_lines: PackedStringArray = PackedStringArray()
+var recent_change_lines: PackedStringArray = PackedStringArray()
+var _prev_fp: Dictionary = {}
+var _prev_sprite_sig: String = ""
 var autoplay_enabled: bool = false
 var speed_multiplier: float = 1.0
 
@@ -52,6 +57,9 @@ func reset_demo(mode: String = DEMO_PRODUCTION_CHAIN) -> void:
 	dual = null
 	runner = SimulationTickRunner.new()
 	event_log_lines = PackedStringArray()
+	recent_change_lines = PackedStringArray()
+	_prev_fp = {}
+	_prev_sprite_sig = ""
 	render_bridge.reset()
 	last_bot_status = {"p1": {}}
 	if demo_mode == DEMO_DUAL_BOT:
@@ -232,6 +240,8 @@ func build_bot_status_text() -> String:
 
 
 func build_activity_hint() -> String:
+	var lines: PackedStringArray = PackedStringArray()
+	lines.append("Current visual mode: production-chain demo")
 	var fp: Dictionary = LayerRenderer.chain_fingerprint(get_render_data())
 	var hints: PackedStringArray = PackedStringArray()
 	if int(fp.get("forest_density", -1)) >= 0:
@@ -243,8 +253,48 @@ func build_activity_hint() -> String:
 	if snapshot.get("construction_sites", []).size() > 0:
 		hints.append("construction sites open")
 	if hints.is_empty():
-		return "Activity: (idle — step ticks to observe chain)"
-	return "Activity: " + ", ".join(hints)
+		lines.append("Now: (idle — step ticks to observe chain)")
+	else:
+		lines.append("Now: " + ", ".join(hints))
+	var blocked: PackedStringArray = PackedStringArray()
+	for job in snapshot.get("blocked_job_markers", []):
+		if typeof(job) == TYPE_DICTIONARY:
+			blocked.append(str(job.get("reason", "blocked")))
+	if not blocked.is_empty():
+		lines.append("Warning: " + ", ".join(blocked))
+	lines.append("Recent changes:")
+	var recent: String = build_recent_changes_text()
+	lines.append(recent if recent != "" else "(none yet — step ticks)")
+	return "\n".join(lines)
+
+
+func build_recent_changes_text() -> String:
+	if recent_change_lines.is_empty():
+		return ""
+	return "\n".join(recent_change_lines)
+
+
+func _record_recent_changes() -> void:
+	var fp: Dictionary = EconomySpectatorMetrics.chain_fingerprint(get_render_data())
+	var sig: String = EconomySpectatorMetrics.sprite_state_signature(get_sprite_states())
+	if not _prev_fp.is_empty():
+		if int(fp.get("forest_density", 0)) != int(_prev_fp.get("forest_density", 0)):
+			_push_recent_change("Forest D %s -> %s" % [str(_prev_fp.get("forest_density", "?")), str(fp.get("forest_density", "?"))])
+		if int(fp.get("carrier_moving", 0)) != int(_prev_fp.get("carrier_moving", 0)):
+			_push_recent_change("Carriers moving %d -> %d" % [int(_prev_fp.get("carrier_moving", 0)), int(fp.get("carrier_moving", 0))])
+		if int(fp.get("ware_routes", 0)) != int(_prev_fp.get("ware_routes", 0)):
+			_push_recent_change("Ware routes %d -> %d" % [int(_prev_fp.get("ware_routes", 0)), int(fp.get("ware_routes", 0))])
+	if _prev_sprite_sig != "" and sig != _prev_sprite_sig:
+		_push_recent_change("Sprite states updated")
+	_prev_fp = fp.duplicate(true)
+	_prev_sprite_sig = sig
+
+
+func _push_recent_change(text: String) -> void:
+	var line: String = "[tick %d] %s" % [int(snapshot.get("tick", 0)), text]
+	recent_change_lines.insert(0, line)
+	while recent_change_lines.size() > 12:
+		recent_change_lines.remove_at(recent_change_lines.size() - 1)
 
 
 func build_event_log_text() -> String:
@@ -292,6 +342,7 @@ func _refresh(note: String = "") -> void:
 		return
 	snapshot = SnapshotExporter.export_debug_snapshot(state, "p1")
 	render_bridge.update(state, snapshot, layer_visibility)
+	_record_recent_changes()
 	if note != "":
 		_append_event(note)
 	_collect_recent_sim_events()

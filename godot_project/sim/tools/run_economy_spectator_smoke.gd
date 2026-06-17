@@ -43,10 +43,25 @@ func _run_smoke_001() -> bool:
 		for key in signals.keys():
 			print("  signal %s=%s" % [str(key), str(signals[key])])
 		return false
-	print("GOD-SMOKE-ECON-SPECTATOR-001 PASS: meaningful_count=%d non_sprite=%d events_delta=%d"
+
+	var family_eval: Dictionary = EconomySpectatorMetrics.evaluate_visual_families(
+		controller.get_render_data(),
+		controller.snapshot,
+		controller.get_sprite_states(),
+	)
+	if not bool(family_eval.get("passes", false)):
+		print("GOD-SMOKE-ECON-SPECTATOR-001 FAIL: visual families exposable=%d active=%d"
+			% [int(family_eval.get("exposable_count", 0)), int(family_eval.get("active_count", 0))])
+		for line in family_eval.get("missing_families", []):
+			print("  missing: %s" % str(line))
+		return false
+
+	print("GOD-SMOKE-ECON-SPECTATOR-001 PASS: meaningful_count=%d non_sprite=%d events_delta=%d families=%d/%d"
 		% [
 			int(activity.get("meaningful_count", 0)),
 			int(activity.get("non_sprite_delta_count", 0)),
 			int(activity.get("events_delta", 0)),
+			int(family_eval.get("active_count", 0)),
+			int(family_eval.get("exposable_count", 0)),
 		])
 	return true

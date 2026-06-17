@@ -163,6 +163,14 @@ text = "Toggle Roads"
 layout_mode = 2
 text = "Toggle Ownership"
 
+[node name="SpritesBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+layout_mode = 2
+text = "Toggle Sprites"
+
+[node name="RoutesBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
+layout_mode = 2
+text = "Toggle Routes"
+
 [node name="ShotBtn" type="Button" parent="RootHBox/RightPanel/ButtonRow3"]
 layout_mode = 2
 text = "Screenshot"
@@ -196,4 +204,6 @@ fit_content = true
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/LogisticsBtn" to="." method="_on_toggle_logistics_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/RoadsBtn" to="." method="_on_toggle_roads_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/OwnershipBtn" to="." method="_on_toggle_ownership_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/SpritesBtn" to="." method="_on_toggle_sprites_pressed"]
+[connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/RoutesBtn" to="." method="_on_toggle_routes_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow3/ShotBtn" to="." method="_on_screenshot_pressed"]
