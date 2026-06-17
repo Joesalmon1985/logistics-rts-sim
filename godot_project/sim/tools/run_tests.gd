@@ -3,6 +3,7 @@ extends SceneTree
 ## RUN_01+02 headless test harness for the authoritative simulation core (DDR-032).
 
 const BootstrapScript := preload("res://sim/core/sim_bootstrap.gd")
+const TestRunnerSupportScript := preload("res://sim/tools/test_runner_support.gd")
 
 const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/kernel/test_run01_kernel_001_create_game_state.gd",
@@ -198,45 +199,100 @@ const TEST_SCRIPTS: Array[String] = [
 
 func _initialize() -> void:
 	BootstrapScript.load_all()
-	var scripts_to_run: Array[String] = TEST_SCRIPTS.duplicate()
-	var test_filter: String = OS.get_environment("TEST_FILTER")
-	if test_filter != "":
-		var filtered: Array[String] = []
-		for script_path in TEST_SCRIPTS:
-			if test_filter in script_path:
-				filtered.append(script_path)
-		scripts_to_run = filtered
-		print("TEST_FILTER=%s — running %d of %d tests" % [test_filter, scripts_to_run.size(), TEST_SCRIPTS.size()])
+	var cfg: Dictionary = TestRunnerSupportScript.parse_config(OS.get_cmdline_user_args())
+	var resolved: Dictionary = TestRunnerSupportScript.resolve_scripts(TEST_SCRIPTS, cfg)
+
+	if not resolved.get("ok", false):
+		var mode: String = str(resolved.get("mode", ""))
+		if mode == "manifest_fail":
+			TestRunnerSupportScript.print_manifest_result(resolved.get("manifest_result", {}))
+		elif mode == "exact_paths_invalid":
+			print("ERROR: exact path list contains entries not in manifest:")
+			for path in resolved.get("invalid_paths", []):
+				print("  %s" % path)
+		print("EXIT: 1 (fail)")
+		call_deferred("quit", 1)
+		return
+
+	if bool(cfg.get("manifest_check_only", false)):
+		TestRunnerSupportScript.print_manifest_result(resolved.get("manifest_result", {}))
+		print("EXIT: 0 (pass)")
+		call_deferred("quit", 0)
+		return
+
+	if bool(cfg.get("list_only", false)):
+		TestRunnerSupportScript.print_test_list(resolved.get("scripts", []))
+		print("EXIT: 0 (pass)")
+		call_deferred("quit", 0)
+		return
+
+	var scripts_to_run: Array = resolved.get("scripts", [])
+	var selection_mode: String = str(resolved.get("mode", "full"))
+	var filter_was_supplied: bool = bool(resolved.get("filter_was_supplied", false))
+
+	if filter_was_supplied and scripts_to_run.is_empty():
+		print("ERROR: zero tests selected (mode=%s)" % selection_mode)
+		if str(cfg.get("category", "")) != "" and not TestRunnerSupportScript.CATEGORY_DIRS.has(str(cfg["category"])):
+			print("ERROR: unknown TEST_CATEGORY '%s'" % str(cfg["category"]))
+		print("EXIT: 1 (fail)")
+		call_deferred("quit", 1)
+		return
+
+	if selection_mode == "filter":
+		print("TEST_FILTER=%s — running %d of %d tests" % [str(cfg.get("filter", "")), scripts_to_run.size(), TEST_SCRIPTS.size()])
+	elif selection_mode == "filters":
+		print("TEST_FILTERS=%s — running %d of %d tests" % [str(cfg.get("filters_csv", "")), scripts_to_run.size(), TEST_SCRIPTS.size()])
+	elif selection_mode == "category":
+		print("TEST_CATEGORY=%s — running %d of %d tests" % [str(cfg.get("category", "")), scripts_to_run.size(), TEST_SCRIPTS.size()])
+	elif selection_mode == "exact_paths":
+		print("EXACT PATHS — running %d of %d tests" % [scripts_to_run.size(), TEST_SCRIPTS.size()])
 
 	var expected: int = scripts_to_run.size()
 	var passed: int = 0
 	var failed: int = 0
 	var errored: int = 0
 	var ran: int = 0
-	print("RUN_05 headless test harness — %d tests expected" % expected)
+	var timing_records: Array = []
+	var total_us: int = 0
+	var run_start_us: int = Time.get_ticks_usec()
+
+	print("RUN_02.8c headless test harness — %d tests expected" % expected)
 
 	for script_path in scripts_to_run:
-		var script: Script = load(script_path)
+		var path_str: String = str(script_path)
+		var test_start_us: int = Time.get_ticks_usec()
+		var status: String = "passed"
+		var test_name: String = path_str.get_file()
+
+		var script: Script = load(path_str)
 		if script == null:
 			errored += 1
 			ran += 1
-			print("ERROR %s (could not load script)" % script_path)
+			status = "errored"
+			print("ERROR %s (could not load script)" % path_str)
+			_record_timing(timing_records, path_str, test_name, test_start_us, status)
+			total_us += Time.get_ticks_usec() - test_start_us
 			continue
 
 		if not script.can_instantiate():
 			errored += 1
 			ran += 1
-			print("ERROR %s (script cannot instantiate)" % script_path)
+			status = "errored"
+			print("ERROR %s (script cannot instantiate)" % path_str)
+			_record_timing(timing_records, path_str, test_name, test_start_us, status)
+			total_us += Time.get_ticks_usec() - test_start_us
 			continue
 
 		var test_instance: Object = script.new()
 		if test_instance == null:
 			errored += 1
 			ran += 1
-			print("ERROR %s (could not instantiate)" % script_path)
+			status = "errored"
+			print("ERROR %s (could not instantiate)" % path_str)
+			_record_timing(timing_records, path_str, test_name, test_start_us, status)
+			total_us += Time.get_ticks_usec() - test_start_us
 			continue
 
-		var test_name: String = script_path.get_file()
 		if test_instance.has_method("get_name"):
 			test_name = str(test_instance.call("get_name"))
 
@@ -249,7 +305,10 @@ func _initialize() -> void:
 
 		if not completed:
 			errored += 1
+			status = "errored"
 			print("ERROR %s — run did not complete (possible script error)" % test_name)
+			_record_timing(timing_records, path_str, test_name, test_start_us, status)
+			total_us += Time.get_ticks_usec() - test_start_us
 			continue
 
 		var ok: bool = bool(test_instance.call("passed"))
@@ -258,7 +317,31 @@ func _initialize() -> void:
 			print("PASS %s" % test_name)
 		else:
 			failed += 1
+			status = "failed"
 			print("FAIL %s — %s" % [test_name, str(test_instance.call("failure_message"))])
+
+		_record_timing(timing_records, path_str, test_name, test_start_us, status)
+		total_us += Time.get_ticks_usec() - test_start_us
+
+	var wall_us: int = Time.get_ticks_usec() - run_start_us
+	TestRunnerSupportScript.print_timing_summary(timing_records, wall_us)
+
+	var timing_json_path: String = str(cfg.get("timing_json_path", ""))
+	if timing_json_path != "":
+		var summary := {
+			"total_s": float(wall_us) / 1_000_000.0,
+			"ran": ran,
+			"passed": passed,
+			"failed": failed,
+			"errored": errored,
+			"expected": expected,
+			"selection_mode": selection_mode,
+			"manifest_count": TEST_SCRIPTS.size(),
+		}
+		if TestRunnerSupportScript.write_timing_json(timing_json_path, timing_records, summary):
+			print("TIMING: wrote %s" % timing_json_path)
+		else:
+			print("TIMING: failed to write %s" % timing_json_path)
 
 	var exit_code: int = 0
 	if failed > 0 or errored > 0 or ran != expected:
@@ -276,3 +359,19 @@ func _initialize() -> void:
 	else:
 		print("EXIT: 1 (fail)")
 	call_deferred("quit", exit_code)
+
+
+func _record_timing(
+	records: Array,
+	path: String,
+	name: String,
+	start_us: int,
+	status: String,
+) -> void:
+	records.append({
+		"path": path,
+		"name": name,
+		"duration_us": Time.get_ticks_usec() - start_us,
+		"status": status,
+		"category": TestRunnerSupportScript.category_for_path(path),
+	})

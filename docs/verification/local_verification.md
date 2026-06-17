@@ -140,24 +140,113 @@ timeout 120s "$GODOT" --headless --path godot_project --import
 
 Import registers `class_name` types. Without import, test scripts may fail to parse.
 
-## Headless unit/integration tests (154 tests — RUN_01 through RUN_05)
+## Headless unit/integration tests (188 tests — current suite)
 
 ```bash
-timeout 400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 echo "exit=$?"
 ```
 
-Expected output includes:
+Expected output includes timing summary, then:
 
 ```text
-Results: 154/154 ran, 154 passed, 0 failed, 0 errored
+Results: 188/188 ran, 188 passed, 0 failed, 0 errored
 EXIT: 0 (pass)
 ```
+
+The 580s timeout in older run docs may be insufficient on the reference machine; use **900s** for full closure unless timing data shows headroom.
 
 Exit code must be `0`. A clean run must print **no** `SCRIPT ERROR` lines in stdout/stderr.
 
 The test harness (`sim/tests/test_case.gd`) marks a test as incomplete when `_run_body()` aborts
 before returning (e.g. a script error mid-test). Such tests report as **errored**, not passed.
+
+### Test runner selection and timing (RUN_02.8c)
+
+CLI flags are passed **after `--`** (Godot user args). Env vars remain supported for existing workflows.
+
+```bash
+# List all manifest tests (no execution)
+"$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd -- --list
+
+# Manifest integrity preflight (no execution)
+timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd -- --manifest-check
+echo "exit=$?"   # expect 0 on clean tree
+
+# Single substring filter (must exit non-zero when zero tests match)
+TEST_FILTER=econ_bot_b001 timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+
+# Multiple filters (OR)
+TEST_FILTERS=econ_bot_b001,econ_bot_c001 timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+
+# Category slice: kernel, economy, military, bot, viewer, training, replay
+TEST_CATEGORY=bot timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+
+# Timing export (creates parent dirs)
+mkdir -p training_runs/test_timings
+"$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd -- \
+  --timing-json=training_runs/test_timings/serial_timing.json
+
+# Zero-match filter must fail
+TEST_FILTER=definitely_no_such_test timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+echo "exit=$?"   # expect non-zero
+```
+
+Output includes `TIMING: total=…s`, per-test slowest 20, and exact `Results:` counts.
+
+## Tiered verification workflows (RUN_02.8c)
+
+Use three tiers; only **Tier 2** is the authoritative merge closure gate.
+
+### Tier 1 — Fast headless regression (iteration)
+
+Targeted filters while editing a subsystem. Examples:
+
+```bash
+TEST_FILTERS=econ_bot_b001,econ_bot_c001,econ_bot_d001,econ_bot_e001 timeout 180s \
+  "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+
+TEST_CATEGORY=viewer timeout 130s \
+  "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+```
+
+Filtered passes are **not** full closure.
+
+### Tier 2 — Full headless closure gate (merge authority)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+
+timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd
+timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd
+timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+```
+
+All commands must complete with exit `0` and no `SCRIPT ERROR`.
+
+### Tier 2b — Experimental parallel full suite (opt-in, not merge authority)
+
+After serial runner changes are stable. Does **not** replace Tier 2.
+
+```bash
+mkdir -p training_runs/test_timings
+python3 python_tools/testing/parallel_godot_tests.py \
+  --godot "$GODOT" \
+  --project godot_project \
+  --parallel 2 \
+  --timeout-per-worker 900 \
+  --timing-json training_runs/test_timings/parallel_timing.json
+echo "exit=$?"
+```
+
+Each worker uses a unique `godot_project/.godot_user_parallel/worker_XX` directory. Rerun Tier 2 serial closure after parallel experiments.
+
+### Tier 3 — Visual/manual checks
+
+See RUN_05 viewer demo launch, viewport pixel smokes, and RUN_02.8 bot-vs-bot visual review sections below. Non-headless; inspect Godot processes before/after; never broad-kill.
 
 ## Headless smoke tests (KERN-SMOKE-001–004)
 
@@ -245,9 +334,7 @@ timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/r
 echo "exit=$?"
 ```
 
-Expected: `BOT SMOKE PASS`, `EXIT: 0 (pass)`. BOT-SMOKE-001 completes `tiny_success_map` via
-`HeuristicEconomyBot`; BOT-SMOKE-002 wins `skirmish_1v1` via `HeuristicMilitaryBot`;
-REP-SMOKE-001 (smoke id `003`) export → import → identical hash.
+Expected: `BOT SMOKE PASS`, `EXIT: 0 (pass)`. Default invocation does **not** export artefacts; pass `--export-dir=<path>` or `--artifacts` to opt in. BOT-SMOKE-001 completes `tiny_success_map` via `HeuristicEconomyBot`; BOT-SMOKE-002 wins `skirmish_1v1` via `HeuristicMilitaryBot`; REP-SMOKE-001 (smoke id `003`) export → import → identical hash (uses internal temp dir when no export flag is set).
 
 ## Replay CLI (export / verify)
 
@@ -541,9 +628,9 @@ Authority: [`docs/runs/RUN_02_8_BOT_VS_BOT_ECONOMY_VISUALISATION.md`](../runs/RU
 
 ```bash
 export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
-export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user_data"
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
 
-timeout 580s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_economy_smoke.gd
 timeout 200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_smoke.gd
 timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_viewer_smoke.gd
@@ -552,7 +639,7 @@ timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/v
 
 Expect:
 
-- Full test suite: **182/182 pass** (includes ECON-MP-001/002, ECON-SCORE-001, ECON-BOT-002/003/004, VIS-BVB-001/002)
+- Full test suite: **188/188 pass**
 - ECON-SMOKE-001–007 exit `0`
 - BOT-SMOKE-001–004 exit `0`
 - GOD-SMOKE-001–005 exit `0`

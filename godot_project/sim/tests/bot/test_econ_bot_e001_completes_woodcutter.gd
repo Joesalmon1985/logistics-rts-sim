@@ -15,29 +15,20 @@ func _run_body() -> void:
 
 	var bot := EconomyExpansionBot.new("p1")
 	var bot_runner := BotRunner.new(runner)
-	bot_runner.max_ticks = MAX_TICKS
-	state = bot_runner.run_until_complete(state, bot)
+	var result: Dictionary = SimTestLoop.run_bot_until(
+		state,
+		bot_runner,
+		bot,
+		MAX_TICKS,
+		func(current: GameState, _runner_ref: BotRunner) -> bool:
+			return SimTestLoop.has_completed_building_type(current, "p1", "woodcutter"),
+	)
+	state = result["state"]
 
 	assert_true(
 		DualBotRunner.count_player_buildings_built(state, "p1") >= 1,
 		"p1 completed at least one bot-built building",
 	)
 
-	var hq_id: int = EconomyState.get_hq_building_id(state, "p1")
-	var found_woodcutter: bool = false
-	for building in EconomyState.all_buildings(state):
-		if str(building.get("player_id", "")) != "p1":
-			continue
-		if int(building.get("id", 0)) == hq_id:
-			continue
-		if str(building.get("building_type", "")) != "woodcutter":
-			continue
-		var state_name: String = str(building.get("state", ""))
-		if state_name in [
-			EconomyConstants.BLD_PLANNED,
-			EconomyConstants.BLD_UNDER_CONSTRUCTION,
-		]:
-			continue
-		found_woodcutter = true
-		break
+	var found_woodcutter: bool = SimTestLoop.has_completed_building_type(state, "p1", "woodcutter")
 	assert_true(found_woodcutter, "completed bot-built woodcutter exists")

@@ -15,8 +15,15 @@ func _run_body() -> void:
 
 	var bot := EconomyExpansionBot.new("p1")
 	var bot_runner := BotRunner.new(runner)
-	bot_runner.max_ticks = MAX_TICKS
-	state = bot_runner.run_until_complete(state, bot)
+	var result: Dictionary = SimTestLoop.run_bot_until(
+		state,
+		bot_runner,
+		bot,
+		MAX_TICKS,
+		func(current: GameState, runner_ref: BotRunner) -> bool:
+			return SimTestLoop.has_accepted_command_type(runner_ref, "PlaceBuildingPlanCommand"),
+	)
+	state = result["state"]
 
 	var site_count: int = 0
 	for site in state.entities.get(EconomyConstants.BUCKET_CONSTRUCTION_SITES, {}).values():
@@ -24,12 +31,5 @@ func _run_body() -> void:
 			site_count += 1
 	assert_true(site_count >= 1, "p1 has construction site within tick budget")
 
-	var found_plan: bool = false
-	for entry in bot_runner.get_recorder().get_command_entries():
-		if not bool(entry.get("accepted", false)):
-			continue
-		var cmd: Dictionary = entry.get("command", {})
-		if str(cmd.get("type", "")) == "PlaceBuildingPlanCommand":
-			found_plan = true
-			break
+	var found_plan: bool = SimTestLoop.has_accepted_command_type(bot_runner, "PlaceBuildingPlanCommand")
 	assert_true(found_plan, "recorder shows accepted PlaceBuildingPlanCommand")

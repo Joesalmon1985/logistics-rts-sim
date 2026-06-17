@@ -16,8 +16,20 @@ func _run_body() -> void:
 
 	var bot := EconomyExpansionBot.new("p1")
 	var bot_runner := BotRunner.new(runner)
-	bot_runner.max_ticks = MAX_TICKS
-	state = bot_runner.run_until_complete(state, bot)
+	var result: Dictionary = SimTestLoop.run_bot_until(
+		state,
+		bot_runner,
+		bot,
+		MAX_TICKS,
+		func(current: GameState, _runner_ref: BotRunner) -> bool:
+			for site in current.entities.get(EconomyConstants.BUCKET_CONSTRUCTION_SITES, {}).values():
+				if str(site.get("player_id", "")) != "p1":
+					continue
+				if SimTestLoop.site_road_adjacent(current, site, "p1"):
+					return true
+			return false,
+	)
+	state = result["state"]
 
 	var sites: Array = []
 	for site in state.entities.get(EconomyConstants.BUCKET_CONSTRUCTION_SITES, {}).values():
@@ -27,38 +39,10 @@ func _run_body() -> void:
 
 	var connected: bool = false
 	for site in sites:
-		if _site_is_road_adjacent(state, site, "p1"):
+		if SimTestLoop.site_road_adjacent(state, site, "p1"):
 			connected = true
 			break
 	assert_true(connected, "construction site hex is road-adjacent")
 
 	var roads_built: int = DualBotRunner.count_player_roads_built(state, "p1")
 	assert_true(roads_built <= MAX_ROADS_BUILT, "roads built within connect budget")
-
-
-func _site_is_road_adjacent(state: GameState, site: Dictionary, player_id: String) -> bool:
-	var q: int = int(site.get("anchor_q", site.get("q", -1)))
-	var r: int = int(site.get("anchor_r", site.get("r", -1)))
-	if q < 0:
-		return false
-	var site_coord := HexCoord.new(q, r)
-	for neighbor in site_coord.neighbors():
-		if _hex_has_player_road(state, neighbor, player_id):
-			return true
-	return false
-
-
-func _hex_has_player_road(state: GameState, coord: HexCoord, player_id: String) -> bool:
-	for road in EconomyState.all_roads(state):
-		if str(road.get("player_id", "")) != player_id:
-			continue
-		var a := HexCoord.new(int(road.get("hex_a_q", road.get("from_q", -99))), int(road.get("hex_a_r", road.get("from_r", -99))))
-		var b := HexCoord.new(int(road.get("hex_b_q", road.get("to_q", -99))), int(road.get("hex_b_r", road.get("to_r", -99))))
-		if coord.distance(a) == 0 or coord.distance(b) == 0:
-			return true
-	for node in EconomyState.all_road_nodes(state):
-		if str(node.get("player_id", "")) != player_id:
-			continue
-		if coord.distance(HexCoord.new(int(node.get("q", 0)), int(node.get("r", 0)))) == 0:
-			return true
-	return false
