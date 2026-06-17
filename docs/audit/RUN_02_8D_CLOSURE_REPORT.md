@@ -2,7 +2,7 @@
 
 Date: 2026-06-17  
 Branch: `feature/run-02-8c-test-runtime-efficiency`  
-Base: `7a063eb` (02.8c infrastructure)
+**Status: NOT MERGE-READY** — Tier 2 gate red
 
 Environment:
 
@@ -15,70 +15,48 @@ export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
 
 | Gate | Status | Exit | Notes |
 |------|--------|------|-------|
-| ECON_BOT_002 | pending | — | |
-| ECON-SMOKE-006 | pending | — | |
-| REP-SMOKE-001 | pending | — | |
-| Full suite 188/188 | pending | — | |
-| Tier 2 closure | pending | — | |
+| ECON_BOT_002 | **FAIL** | 1 | p1/p2 buildings b=2 (need ≥5); deliveries/roads OK |
+| ECON-SMOKE-006 | **FAIL** | 1 | hash only — actual `sha256:27d91679…` stable |
+| REP-SMOKE-001 | **FAIL** | 1 | import hash_mismatch (pre-existing on ae78996) |
+| B–E/F/G regression | **PASS** | 0 | 6/6 |
+| Full suite 188/188 | not run | — | blocked on 002 |
+| Tier 2 closure | **FAIL** | — | |
 
-## Phase A — Main vs branch verification (`ae78996`)
+## Phase A — Main vs branch (`ae78996`)
 
-### ECON_BOT_002 on main
+| Check | ae78996 | Branch | Deterministic |
+|-------|---------|--------|---------------|
+| quick_metrics @800 b/r/d p1 | 1/38/381 | 2/42/388 | yes |
+| ECON-SMOKE-006 hash | `27d91679…` | `27d91679…` | yes (2 runs) |
+| REP-SMOKE-003 | hash_mismatch | hash_mismatch | yes |
 
-- Command: (pending)
-- Exit: (pending)
-- Assertion: (pending)
-- Deterministic (2 runs): (pending)
-
-### ECON_BOT_002 on recovery branch
-
-- Run 1 exit: (pending)
-- Run 2 exit: (pending)
-
-### ECON-SMOKE-006
-
-- Main exit: (pending)
-- Branch run 1 hash: (pending)
-- Branch run 2 hash: (pending)
-
-### REP-SMOKE-001 (`--smoke=003`)
-
-- Main exit: (pending)
-- Branch run 1: (pending)
-- Branch run 2: (pending)
-
-### Quick metrics @ 800 ticks
-
-```
-(pending)
-```
+Failures pre-existing on `ae78996` except partial building progress from forester shortlist fix.
 
 ## Phase B — Diagnosis
 
-- Failing gate(s): (pending)
-- Hypothesis: (pending)
+- **Failing gate:** buildings (both players); threshold ≥5 delta buildings.
+- **Root cause:** bot chain stalled at forester — not in command shortlist; after fix, road budget exhausted (~42–45 segments) before forester `PlaceBuildingPlan` fires.
+- **Not the issue:** deliveries (d≥380), roads (r≥41), symmetry at b=2, nondeterminism.
 
-## Phase C — Functional fix
+## Phase C — Changes (partial)
 
-- Files changed: (pending)
-- Regression guards: (pending)
+| File | Change |
+|------|--------|
+| `economy_command_availability.gd` | Add `forester` to forest shortlist; network-aware storehouse/sawmill/workshop candidates |
+| `economy_expansion_bot.gd` | Chain reorder; queue clear on advance; connected-site picks; no synthetic roads |
+| `economy_bvb_setup.gd` | HQ road spine for proof profile |
 
-## Phase D — Smoke / hash
+**002 exit after changes:** 1 (not ready for Phase D hash commits per plan gate).
 
-- ECON-SMOKE-006: (pending)
-- REP-SMOKE-001: (pending)
+## Phase D — Smoke (blocked)
 
-## Phase F — Tier 2 closure
+Deferred until `ECON_BOT_002` exits 0 twice. Observed stable hash for ECON-SMOKE-006; REP-SMOKE-001 needs replay path fix.
 
-| Command | Exit | Notes |
-|---------|------|-------|
-| `run_tests.gd` (900s) | pending | |
-| `run_economy_smoke.gd` | pending | |
-| `run_bot_smoke.gd` | pending | |
-| `run_viewer_smoke.gd` | pending | |
-| `verify_failure_modes.gd` | pending | |
+## Phase F — Tier 2
+
+Not run (blocked).
 
 ## PR status
 
-- Merge-ready: (pending)
-- PR URL: (pending)
+- Merge-ready: **no**
+- Draft PR to be opened with this report as body
