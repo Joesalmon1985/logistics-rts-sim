@@ -674,3 +674,25 @@ timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/r
 Output directory (planned): `training_runs/visual_review/run_02_8_economy_bvb/` (or path recorded in manifest).
 
 Grep output for `SCRIPT ERROR`. Windowed runs: inspect stale Godot processes before/after (see RUN_05 process safety).
+
+## RUN_02.8e human proof harness (Linux)
+
+Authority: [`docs/runs/RUN_02_8E_HUMAN_PROOF_SCENARIO_VIABILITY.md`](../runs/RUN_02_8E_HUMAN_PROOF_SCENARIO_VIABILITY.md).
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+
+timeout 120s "$GODOT" --headless --path godot_project \
+  --script res://sim/tools/run_economy_human_proof_oracle.gd -- \
+  --plan=res://sim/tests/fixtures/human_proof/oracle_one_building_p1.json
+
+TEST_FILTER=econ_human_proof timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+
+timeout 60s "$GODOT" --headless --path godot_project \
+  --script res://sim/tools/run_economy_human_proof_smoke.gd -- --smoke=all
+```
+
+Interactive scene: `godot_project/client/scenes/economy_human_proof_demo.tscn`
+
+Expect: oracle `ORACLE PASS`, human_proof tests **4/4 pass**, smoke `HUMAN PROOF SMOKE PASS`, no `SCRIPT ERROR`. `ECON_BOT_002` may remain red (document only).
