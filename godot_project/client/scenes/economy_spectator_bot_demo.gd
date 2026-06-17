@@ -18,6 +18,10 @@ var controller: EconomySpectatorController = EconomySpectatorController.new()
 @onready var _legend: RichTextLabel = %Legend
 @onready var _help: RichTextLabel = %HelpPanel
 @onready var _title: Label = %TitleLabel
+@onready var _top_status: Label = %TopStatusLabel
+@onready var _chain_trace: RichTextLabel = %ChainTracePanel
+@onready var _recent_changes: RichTextLabel = %RecentChangesPanel
+@onready var _capture_path: Label = %CapturePathLabel
 @onready var _result: Label = %ResultLabel
 @onready var _speed_label: Label = %SpeedLabel
 
@@ -42,12 +46,14 @@ func _ready() -> void:
 
 
 func _setup_labels() -> void:
-	_title.text = "Economy Spectator — Visual Polish (RUN_05C.2)"
+	_title.text = "Economy Spectator — Visual Review (RUN_05C.3)"
+	_top_status.text = "Production-chain spectator — visual demo, not bot proof"
 	_help.text = (
-		"[b]Production chain spectator[/b] — seed 42, HQ → woodcutter → sawmill.\n"
-		+ "Sprites and routes derive from real snapshot state only.\n"
-		+ "[i]Dual-bot view[/i] is manual diagnostic only."
+		"Seed 42 production chain: HQ → woodcutter → sawmill.\n"
+		+ "Sprites, routes, and pulses derive from real snapshot state only.\n"
+		+ "[i]Dual-bot view[/i] is manual diagnostic only — not an automated gate."
 	)
+	_capture_path.text = "Review captures: %s" % EconomySpectatorMetrics.capture_review_dir()
 
 
 func _setup_autoplay_timer() -> void:
@@ -67,13 +73,13 @@ func _update_autoplay_timer() -> void:
 
 func _build_legend() -> void:
 	_legend.text = (
-		"[b]Animation families[/b]\n"
-		+ "[color=#ffaa00]Logistics:[/color] carrier_idle, carrier_move_loop, carrier_carrying_loop, road_flow_loop\n"
-		+ "[color=#9a6b3a]Wares:[/color] ware_log/plank/stone/generic_move_loop\n"
-		+ "[color=#55cc66]Buildings:[/color] building_idle, building_working_loop, building_blocked_loop\n"
-		+ "[color=#888888]Construction:[/color] construction_idle, progress_25/50/75, progress_loop\n"
-		+ "[color=#8888cc]Storage:[/color] storage_idle, storage_activity_pulse\n"
-		+ "[color=#cc4444]Warning:[/color] warning_blocked_loop"
+		"[b]Legend[/b] (grouped by family)\n"
+		+ "[color=#ffaa00][b]Logistics[/b][/color] carrier idle/move/carrying, road flow\n"
+		+ "[color=#9a6b3a][b]Wares[/b][/color] log/plank/stone/generic move loops\n"
+		+ "[color=#55cc66][b]Buildings[/b][/color] idle, working, blocked\n"
+		+ "[color=#888888][b]Construction[/b][/color] idle, progress stages, complete pulse\n"
+		+ "[color=#8888cc][b]Storage[/b][/color] idle, activity pulse on real stock delta\n"
+		+ "[color=#cc4444][b]Warnings[/b][/color] blocked job loop"
 	)
 
 
@@ -89,33 +95,31 @@ func _refresh_map() -> void:
 	_map.show_logistics = controller.layer_visibility.get("logistics", true)
 	_map.show_route_flow = controller.layer_visibility.get("routes", true)
 	_sprite_layer.show_sprites = controller.layer_visibility.get("sprites", true)
+	_map.destination_pulse_ids = controller.get_destination_pulse_building_ids()
 	_map.set_render_data(controller.get_render_data())
 	_sprite_layer.apply_sprite_states(controller.get_sprite_states())
 
 
 func _update_panels() -> void:
-	var snap: Dictionary = controller.snapshot
-	_status.text = "Tick %d | %s | %s" % [
-		int(snap.get("tick", 0)),
-		controller.demo_label,
-		"AUTOPLAY" if controller.autoplay_enabled else "PAUSED",
-	]
-	var counts: Dictionary = LayerRenderer.count_entities(controller.get_render_data())
+	_status.text = controller.build_transport_bar_text()
 	_debug.text = (
-		"roads %d | sites %d | carriers %d | sprites %d | events %d"
+		"events %d | exposable families %d"
 		% [
-			int(counts.get("roads", 0)),
-			int(counts.get("construction_sites", 0)),
-			int(counts.get("carriers", 0)),
-			_sprite_layer.active_count,
 			controller.event_log_lines.size(),
+			int(EconomySpectatorMetrics.evaluate_visual_families(
+				controller.get_render_data(),
+				controller.snapshot,
+				controller.get_sprite_states(),
+			).get("exposable_count", 0)),
 		]
 	)
 	_summary.text = controller.build_summary_text()
-	_bot_status.text = controller.build_bot_status_text()
+	_bot_status.text = controller.build_demo_status_text()
 	_activity.text = controller.build_activity_hint()
+	_chain_trace.text = controller.build_chain_trace_text()
+	_recent_changes.text = controller.build_recent_changes_panel_text()
 	_event_log.text = controller.build_event_log_text()
-	_speed_label.text = "Speed: %.1fx" % controller.speed_multiplier
+	_speed_label.text = "Speed cycle: %.1fx" % controller.speed_multiplier
 
 
 func _on_bot_action(player_id: String, command_type: String, success: bool, _message: String) -> void:

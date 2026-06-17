@@ -3,6 +3,9 @@ extends RefCounted
 
 ## Start→end activity delta counters for RUN_05C spectator tests and smokes.
 
+const SPRITE_BUDGET_CAP: int = 48
+const CAPTURE_REVIEW_SUBDIR: String = "training_runs/visual_review/run_05c_economy_spectator"
+
 
 static func entity_categories_changed(before: Dictionary, after: Dictionary) -> int:
 	var changed: int = 0
@@ -234,4 +237,28 @@ static func evaluate_visual_families(render_data: Dictionary, snapshot: Dictiona
 
 static func passes_visual_family_gate(render_data: Dictionary, snapshot: Dictionary, sprite_states: Dictionary) -> bool:
 	return bool(evaluate_visual_families(render_data, snapshot, sprite_states).get("passes", false))
+
+
+static func activity_score(render_data: Dictionary, snapshot: Dictionary, sprite_states: Dictionary) -> int:
+	var score: int = 0
+	var fp: Dictionary = chain_fingerprint(render_data)
+	if int(fp.get("carrier_moving", 0)) > 0:
+		score += 2
+	if int(fp.get("ware_routes", 0)) > 0:
+		score += 2
+	if int(fp.get("delivery_jobs", 0)) > 0:
+		score += 1
+	if int(fp.get("forest_density", -1)) >= 0 and int(fp.get("forest_density", 0)) < 80:
+		score += 1
+	for building in snapshot.get("buildings", []):
+		if typeof(building) == TYPE_DICTIONARY and int(building.get("production_progress", 0)) > 0:
+			score += 2
+			break
+	score += mini(sprite_states.size(), 6)
+	return score
+
+
+static func capture_review_dir() -> String:
+	var repo_root: String = ProjectSettings.globalize_path("res://").path_join("..")
+	return repo_root.path_join(CAPTURE_REVIEW_SUBDIR)
 

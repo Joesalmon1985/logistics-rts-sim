@@ -48,7 +48,14 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "Economy Bot Spectator"
+text = "Economy Spectator"
+
+[node name="TopStatusLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.35, 1)
+theme_override_font_sizes/font_size = 14
+text = "Production-chain spectator — visual demo, not bot proof"
 
 [node name="HelpPanel" type="RichTextLabel" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
@@ -60,18 +67,14 @@ scroll_active = true
 [node name="StatusLabel" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Status"
-
-[node name="DebugLabel" type="Label" parent="RootHBox/RightPanel"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Debug"
+theme_override_font_sizes/font_size = 15
+text = "Tick 0 | PAUSED | 1.0x | activity 0"
 
 [node name="SummaryLabel" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
-text = "Summary"
+text = "Economy summary"
 
 [node name="BotStatusLabel" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
@@ -83,7 +86,41 @@ text = "Demo status"
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
-text = "Activity hint"
+text = "Map activity"
+
+[node name="ChainTracePanel" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 72)
+fit_content = true
+bbcode_enabled = true
+text = "Active chain:"
+
+[node name="RecentChangesHeader" type="Label" parent="RootHBox/RightPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "What changed recently?"
+
+[node name="RecentChangesPanel" type="RichTextLabel" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 64)
+fit_content = true
+bbcode_enabled = true
+text = "(none yet)"
+
+[node name="CapturePathLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "Review captures path"
+
+[node name="DebugLabel" type="Label" parent="RootHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Debug"
 
 [node name="ResultLabel" type="Label" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
@@ -177,20 +214,21 @@ text = "Screenshot"
 
 [node name="EventHeader" type="Label" parent="RootHBox/RightPanel"]
 layout_mode = 2
-text = "Event log / recent completions"
+text = "Event log (grounded sim events)"
 
 [node name="EventLog" type="RichTextLabel" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 96)
 size_flags_vertical = 3
 scroll_active = true
 
 [node name="Legend" type="RichTextLabel" parent="RootHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 90)
+custom_minimum_size = Vector2(0, 72)
 fit_content = true
+bbcode_enabled = true
 
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/ResetBtn" to="." method="_on_reset_pressed"]
 [connection signal="pressed" from="RootHBox/RightPanel/ButtonRow1/PlayPauseBtn" to="." method="_on_play_pause_pressed"]

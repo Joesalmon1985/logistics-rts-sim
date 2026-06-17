@@ -186,9 +186,8 @@ func set_layer_visible(layer_name: String, visible: bool) -> void:
 
 func build_summary_text() -> String:
 	if snapshot.is_empty():
-		return "Summary: (no snapshot)"
+		return "Economy summary: (no snapshot)"
 	var render: Dictionary = get_render_data()
-	var fp: Dictionary = LayerRenderer.chain_fingerprint(render)
 	var diag: Dictionary = snapshot.get("diagnostics", {})
 	var counts: Dictionary = LayerRenderer.count_entities(render)
 	var stalls: Dictionary = diag.get("player_stalls", {})
@@ -196,19 +195,106 @@ func build_summary_text() -> String:
 	if not stalls.is_empty():
 		stall_line = " | stalls %s" % str(stalls)
 	return (
-		"Demo: %s | tick %d | roads %d | sites %d | carriers %d | jobs %d | sprites %d | forest D:%s%s"
+		"roads %d | carriers %d | jobs %d | routes %d | sprites %d%s"
 		% [
-			demo_label,
-			int(snapshot.get("tick", 0)),
 			int(counts.get("roads", 0)),
-			int(counts.get("construction_sites", 0)),
 			int(counts.get("carriers", 0)),
 			int(counts.get("delivery_jobs", 0)),
+			int(counts.get("ware_routes", 0)),
 			render_bridge.sprite_states.size(),
-			str(fp.get("forest_density", "?")),
 			stall_line,
 		]
 	)
+
+
+func build_transport_bar_text() -> String:
+	if snapshot.is_empty():
+		return "Tick — | PAUSED | activity 0"
+	var score: int = EconomySpectatorMetrics.activity_score(
+		get_render_data(),
+		snapshot,
+		get_sprite_states(),
+	)
+	return "Tick %d | %s | %s | activity %d" % [
+		int(snapshot.get("tick", 0)),
+		"AUTOPLAY" if autoplay_enabled else "PAUSED",
+		"%.1fx" % speed_multiplier,
+		score,
+	]
+
+
+func build_demo_status_text() -> String:
+	return "Demo: %s\nTransport: %s" % [
+		demo_label,
+		"AUTOPLAY" if autoplay_enabled else "MANUAL",
+	]
+
+
+func build_chain_trace_text() -> String:
+	var render: Dictionary = get_render_data()
+	var fp: Dictionary = EconomySpectatorMetrics.chain_fingerprint(render)
+	var parts: PackedStringArray = PackedStringArray()
+	# Source
+	if int(fp.get("forest_density", -1)) >= 0:
+		parts.append("Forest/source (D:%s)" % str(fp.get("forest_density", "?")))
+	else:
+		parts.append("Forest/source: not currently active")
+	# Transport
+	var transport_bits: PackedStringArray = PackedStringArray()
+	if int(fp.get("carrier_moving", 0)) > 0:
+		transport_bits.append("%d carrier(s) moving" % int(fp.get("carrier_moving", 0)))
+	if int(fp.get("ware_routes", 0)) > 0:
+		transport_bits.append("%d ware route(s)" % int(fp.get("ware_routes", 0)))
+	if int(fp.get("delivery_jobs", 0)) > 0:
+		transport_bits.append("%d delivery job(s)" % int(fp.get("delivery_jobs", 0)))
+	if transport_bits.is_empty():
+		parts.append("carrier/route: not currently active")
+	else:
+		parts.append("carrier/route: " + ", ".join(transport_bits))
+	# Processing / storage
+	var proc_bits: PackedStringArray = PackedStringArray()
+	for building in snapshot.get("buildings", []):
+		if typeof(building) != TYPE_DICTIONARY:
+			continue
+		var btype: String = str(building.get("building_type", ""))
+		var progress: int = int(building.get("production_progress", 0))
+		if btype in ["woodcutter", "sawmill", "headquarters", "command_hub"] and progress > 0:
+			proc_bits.append("%s P:%d" % [btype, progress])
+	for store in render.get("building_stores", []):
+		if typeof(store) == TYPE_DICTIONARY:
+			proc_bits.append("store bld:%d" % int(store.get("building_id", 0)))
+	if proc_bits.is_empty():
+		parts.append("HQ/store/sawmill: idle")
+	else:
+		parts.append("HQ/store/sawmill: " + ", ".join(proc_bits))
+	var lines: PackedStringArray = PackedStringArray()
+	for p in parts:
+		lines.append("→ " + p)
+	return "Active chain:\n" + "\n".join(lines)
+
+
+func get_destination_pulse_building_ids() -> Array:
+	var ids: Array = []
+	for evt in render_bridge.effect_events:
+		if typeof(evt) != TYPE_DICTIONARY:
+			continue
+		var event_type: String = str(evt.get("type", "")).to_lower()
+		if not ("ware_delivered" in event_type or "delivery" in event_type):
+			continue
+		var payload: Dictionary = evt.get("payload", {}) if typeof(evt.get("payload", {})) == TYPE_DICTIONARY else {}
+		var bid: int = int(payload.get("building_id", payload.get("to_building_id", 0)))
+		if bid > 0 and not ids.has(bid):
+			ids.append(bid)
+	return ids
+
+
+func build_recent_changes_panel_text() -> String:
+	if recent_change_lines.is_empty():
+		return "[i]No grounded changes yet — step ticks to observe chain.[/i]"
+	var lines: PackedStringArray = PackedStringArray()
+	for line in recent_change_lines:
+		lines.append("[b]%s[/b]" % line)
+	return "\n".join(lines)
 
 
 func build_bot_status_text() -> String:
@@ -240,8 +326,6 @@ func build_bot_status_text() -> String:
 
 
 func build_activity_hint() -> String:
-	var lines: PackedStringArray = PackedStringArray()
-	lines.append("Current visual mode: production-chain demo")
 	var fp: Dictionary = LayerRenderer.chain_fingerprint(get_render_data())
 	var hints: PackedStringArray = PackedStringArray()
 	if int(fp.get("forest_density", -1)) >= 0:
@@ -250,22 +334,13 @@ func build_activity_hint() -> String:
 		hints.append("carriers moving")
 	if int(fp.get("ware_routes", 0)) > 0:
 		hints.append("ware routes active")
+	if int(fp.get("delivery_jobs", 0)) > 0:
+		hints.append("delivery jobs queued")
 	if snapshot.get("construction_sites", []).size() > 0:
 		hints.append("construction sites open")
 	if hints.is_empty():
-		lines.append("Now: (idle — step ticks to observe chain)")
-	else:
-		lines.append("Now: " + ", ".join(hints))
-	var blocked: PackedStringArray = PackedStringArray()
-	for job in snapshot.get("blocked_job_markers", []):
-		if typeof(job) == TYPE_DICTIONARY:
-			blocked.append(str(job.get("reason", "blocked")))
-	if not blocked.is_empty():
-		lines.append("Warning: " + ", ".join(blocked))
-	lines.append("Recent changes:")
-	var recent: String = build_recent_changes_text()
-	lines.append(recent if recent != "" else "(none yet — step ticks)")
-	return "\n".join(lines)
+		return "Map activity: idle — step ticks to observe chain"
+	return "Map activity: " + ", ".join(hints)
 
 
 func build_recent_changes_text() -> String:
