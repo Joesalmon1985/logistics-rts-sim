@@ -32,6 +32,12 @@ static func prepare_expansion_duel_map(state: GameState, scenario: Dictionary = 
 	_seed_player_pocket(state, width - 5, height - 5, 8)
 
 	if not scenario.is_empty():
+		if str(scenario.get("bvb_profile", "")) == PROFILE_PROOF:
+			for spawn in scenario.get("spawns", []):
+				if typeof(spawn) != TYPE_DICTIONARY:
+					continue
+				_connect_hq_spine(state, str(spawn.get("player_id", "p1")))
+			EconomyWorkerSystem.tick(state)
 		if bool(scenario.get("apply_starting_buildings", false)):
 			_apply_spawn_starting_buildings(state, scenario)
 		if bool(scenario.get("connect_spawn_network", false)):
@@ -208,6 +214,25 @@ static func _find_spawn_building_hex(
 		if EconomyMapRules.can_place_building(state, building_type, coord.q, coord.r, player_id).get("ok", false):
 			return Vector2i(coord.q, coord.r)
 	return Vector2i(-1, -1)
+
+
+static func _connect_hq_spine(state: GameState, player_id: String) -> void:
+	var hq_pos: Vector2i = EconomyState.get_hq_position(state, player_id)
+	var current := HexCoord.new(hq_pos.x, hq_pos.y)
+	for _step in range(3):
+		var best: HexCoord = current
+		for neighbor in current.neighbors():
+			if not state.map.in_bounds(neighbor):
+				continue
+			if best.q == current.q and best.r == current.r:
+				best = neighbor
+				continue
+			if neighbor.q < best.q or (neighbor.q == best.q and neighbor.r < best.r):
+				best = neighbor
+		if best.q == current.q and best.r == current.r:
+			break
+		EconomyRoadSystem.place_road(state, current, best, player_id)
+		current = best
 
 
 static func _connect_spawn_network(state: GameState, player_id: String) -> void:

@@ -5,8 +5,8 @@ extends Bot
 
 const ACTOR_PREFIX: String = "economy_expansion_bot"
 const MAX_BOOTSTRAP_ROADS: int = 12
-const MAX_TOTAL_ROAD_SEGMENTS: int = 40
-const CHAIN_TYPES: Array[String] = ["woodcutter", "forester", "sawmill", "storehouse", "workshop"]
+const MAX_TOTAL_ROAD_SEGMENTS: int = 45
+const CHAIN_TYPES: Array[String] = ["woodcutter", "storehouse", "forester", "sawmill", "workshop"]
 
 var _observation: EconomyBotObservation = null
 var _decision_log: Array = []
@@ -48,6 +48,18 @@ func decide(_tick: int) -> SimCommand:
 	var road_cmds: Array = _commands_of_type("PlaceRoadCommand")
 	var building_cmds: Array = _commands_of_type("PlaceBuildingPlanCommand")
 
+	if not _has_active_construction() and _chain_index < CHAIN_TYPES.size():
+		var chain_type: String = CHAIN_TYPES[_chain_index]
+		var chain_target: Vector2i = _target_for_type(chain_type)
+		if chain_target.x >= 0 and _hex_has_road_adjacency(chain_target):
+			var chain_build: SimCommand = _pick_building_at(
+				building_cmds, chain_type, chain_target.x, chain_target.y
+			)
+			if chain_build != null:
+				_road_queue.clear()
+				_log_decision(chain_build.type, "place %s" % chain_type)
+				return chain_build
+
 	if not _road_queue.is_empty():
 		var queued: SimCommand = _next_queued_road(road_cmds)
 		if queued != null:
@@ -77,7 +89,19 @@ func decide(_tick: int) -> SimCommand:
 		return _noop_command()
 
 	if not _hex_has_road_adjacency(target):
+		if building_type in ["storehouse", "sawmill", "workshop"]:
+			var connected_build: SimCommand = _pick_building_at(building_cmds, building_type, -1, -1)
+			if connected_build != null:
+				_road_queue.clear()
+				_log_decision(connected_build.type, "place %s at connected site" % building_type)
+				return connected_build
 		if _road_segments() >= MAX_TOTAL_ROAD_SEGMENTS:
+			if building_type != "woodcutter":
+				var cap_build: SimCommand = _pick_building_at(building_cmds, building_type, -1, -1)
+				if cap_build != null:
+					_road_queue.clear()
+					_log_decision(cap_build.type, "place %s at cap" % building_type)
+					return cap_build
 			return _noop_command()
 		if _road_queue.is_empty():
 			_queue_roads_to(target.x, target.y)
@@ -85,8 +109,11 @@ func decide(_tick: int) -> SimCommand:
 		if bootstrap != null:
 			_log_decision(bootstrap.type, "bootstrap road toward %s" % building_type)
 			return bootstrap
+		var toward: Array = _roads_toward_hex(road_cmds, target)
+		if not toward.is_empty():
+			return _command_from_entry(toward[0])
 		if not road_cmds.is_empty():
-			return _command_from_entry(_roads_toward_hex(road_cmds, target)[0] if not _roads_toward_hex(road_cmds, target).is_empty() else road_cmds[0])
+			return _command_from_entry(road_cmds[0])
 		return _noop_command()
 
 	var build_cmd: SimCommand = _pick_building_at(building_cmds, building_type, target.x, target.y)
@@ -110,10 +137,13 @@ func on_command_applied(command: SimCommand, result: CommandResult) -> void:
 
 
 func _advance_chain_index() -> void:
+	var previous_index: int = _chain_index
 	while _chain_index < CHAIN_TYPES.size():
 		if not _observation.has_completed_building_type(CHAIN_TYPES[_chain_index]):
-			return
+			break
 		_chain_index += 1
+	if _chain_index != previous_index:
+		_road_queue.clear()
 
 
 func _target_for_type(building_type: String) -> Vector2i:
@@ -121,16 +151,43 @@ func _target_for_type(building_type: String) -> Vector2i:
 	var hq: Vector2i = _observation.hq_position()
 	match building_type:
 		"woodcutter":
-			return forests[0] if not forests.is_empty() else Vector2i(-1, -1)
+			return _pick_forest_hex(forests, 0)
 		"forester":
-			return forests[mini(1, forests.size() - 1)] if not forests.is_empty() else Vector2i(-1, -1)
+			return _pick_forest_hex(forests, 1)
 		"storehouse":
-			return Vector2i(hq.x + 1, hq.y + 2)
+			return Vector2i(hq.x + 1, hq.y)
 		"sawmill":
 			return Vector2i(hq.x + 2, hq.y)
 		"workshop":
 			return Vector2i(hq.x + 3, hq.y + 1)
 	return Vector2i(hq.x + 2, hq.y)
+
+
+func _pick_forest_hex(forests: Array, preferred_index: int) -> Vector2i:
+	if forests.is_empty():
+		return Vector2i(-1, -1)
+	if preferred_index >= 0 and preferred_index < forests.size():
+		var preferred: Vector2i = forests[preferred_index]
+		if not _hex_has_structure(preferred):
+			return preferred
+	for hex in forests:
+		if not _hex_has_structure(hex):
+			return hex
+	return Vector2i(-1, -1)
+
+
+func _hex_has_structure(hex: Vector2i) -> bool:
+	if hex.x < 0:
+		return false
+	for building in _observation.own_buildings():
+		if int(building.get("anchor_q", building.get("q", -99))) == hex.x \
+				and int(building.get("anchor_r", building.get("r", -99))) == hex.y:
+			return true
+	for site in _observation.own_construction_sites():
+		if int(site.get("anchor_q", site.get("q", -99))) == hex.x \
+				and int(site.get("anchor_r", site.get("r", -99))) == hex.y:
+			return true
+	return false
 
 
 func _commands_of_type(cmd_type: String) -> Array:
@@ -260,7 +317,9 @@ func _next_queued_road(road_cmds: Array) -> SimCommand:
 				and int(params.get("to_q", -1)) == int(segment.get("to_q", -2)) \
 				and int(params.get("to_r", -1)) == int(segment.get("to_r", -2)):
 			return _command_from_entry(entry)
-	return PlaceRoadCommand.new(player_id, _observation.tick, segment)
+	if not road_cmds.is_empty():
+		_road_queue.pop_front()
+	return null
 
 
 func _pick_building_at(building_cmds: Array, building_type: String, q: int, r: int) -> SimCommand:

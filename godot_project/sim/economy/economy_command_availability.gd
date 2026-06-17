@@ -11,6 +11,7 @@ const BOT_FOREST_SEARCH_RADIUS: int = 8
 const BOT_MAX_ROAD_START_HEXES: int = 12
 
 const BUILDING_TYPES: Array[String] = ["storehouse", "woodcutter", "sawmill", "workshop"]
+const FOREST_BUILDING_TYPES: Array[String] = ["woodcutter", "forester"]
 
 
 ## Deterministic bot action shortlist (not the complete legal command universe).
@@ -32,7 +33,7 @@ static func list_bot_candidates(state: GameState, actor_id: String) -> Array:
 	# Worker policy is not useful for expansion duel — skip to save validate budget.
 	_try_roads(results, state, actor_id, tick, true, edge_keys)
 	_try_buildings(results, state, actor_id, tick, BOT_MAX_BUILDING_CANDIDATES, true, node_keys)
-	_try_forest_buildings(results, state, actor_id, tick, 6, true)
+	_try_forest_buildings(results, state, actor_id, tick, 10, true)
 	return results
 
 
@@ -212,10 +213,15 @@ static func _try_buildings(
 	var added: int = 0
 	var keys: Dictionary = node_keys if not node_keys.is_empty() else _player_road_node_keys(state, actor_id)
 	var edge_keys: Dictionary = _player_road_edge_keys(state, actor_id)
-	var road_adjacent: Array[HexCoord] = _road_adjacent_build_hexes(state, actor_id, search_radius, keys, edge_keys)
 
 	for building_type in BUILDING_TYPES:
-		var coords: Array[HexCoord] = road_adjacent if building_type == "storehouse" else _hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius)
+		var coords: Array[HexCoord] = []
+		if building_type == "storehouse":
+			coords = _storehouse_candidate_hexes(state, actor_id, search_radius, keys, edge_keys)
+		elif building_type in ["sawmill", "workshop"]:
+			coords = _road_network_build_hexes(state, actor_id, search_radius, keys, edge_keys)
+		else:
+			coords = _hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius)
 		for coord in coords:
 			if added >= max_candidates:
 				break
@@ -236,6 +242,49 @@ static func _try_buildings(
 				{"q": coord.q, "r": coord.r, "building_type": building_type},
 			))
 			added += 1
+
+
+static func _storehouse_candidate_hexes(
+	state: GameState,
+	actor_id: String,
+	search_radius: int,
+	node_keys: Dictionary,
+	edge_keys: Dictionary,
+) -> Array[HexCoord]:
+	var coords: Array[HexCoord] = _road_adjacent_build_hexes(state, actor_id, search_radius, node_keys, edge_keys)
+	var seen: Dictionary = {}
+	for coord in coords:
+		seen["%d,%d" % [coord.q, coord.r]] = true
+	for node in EconomyState.get_bucket(state, EconomyConstants.BUCKET_ROAD_NODES).values():
+		if typeof(node) != TYPE_DICTIONARY:
+			continue
+		if str(node.get("player_id", "")) != actor_id:
+			continue
+		var node_coord := HexCoord.new(int(node.get("q", 0)), int(node.get("r", 0)))
+		for candidate in _hexes_near(state, node_coord, 1):
+			var key: String = "%d,%d" % [candidate.q, candidate.r]
+			if seen.has(key):
+				continue
+			if not _is_road_adjacent(state, candidate, actor_id, node_keys, edge_keys):
+				continue
+			seen[key] = true
+			coords.append(candidate)
+	coords.sort_custom(func(a: HexCoord, b: HexCoord) -> bool:
+		if a.q != b.q:
+			return a.q < b.q
+		return a.r < b.r
+	)
+	return coords
+
+
+static func _road_network_build_hexes(
+	state: GameState,
+	actor_id: String,
+	search_radius: int,
+	node_keys: Dictionary,
+	edge_keys: Dictionary,
+) -> Array[HexCoord]:
+	return _storehouse_candidate_hexes(state, actor_id, search_radius, node_keys, edge_keys)
 
 
 static func _road_adjacent_build_hexes(
@@ -331,31 +380,32 @@ static func _try_forest_buildings(
 	var build_radius: int = int(EconomyState.get_meta_value(state, "build_radius", 8))
 	var search_radius: int = BOT_FOREST_SEARCH_RADIUS if bot_mode else build_radius
 	var added: int = 0
-	for coord in _hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius):
-		if added >= max_forest:
-			break
-		var tile: HexTile = state.map.get_tile(coord)
-		if tile == null:
-			continue
-		if tile.owner_player_id != "" and tile.owner_player_id != actor_id:
-			continue
-		if tile.tree_density < 20:
-			continue
-		if not _building_legal(state, "woodcutter", coord.q, coord.r, actor_id):
-			continue
-		var payload: Dictionary = {
-			"building_type": "woodcutter",
-			"q": coord.q,
-			"r": coord.r,
-			"player_id": actor_id,
-		}
-		var cmd := PlaceBuildingPlanCommand.new(actor_id, tick, payload)
-		results.append(CommandAvailabilityDto.from_command(
-			cmd,
-			"Buildings: Place woodcutter on forest at %d,%d" % [coord.q, coord.r],
-			{"q": coord.q, "r": coord.r, "building_type": "woodcutter"},
-		))
-		added += 1
+	for building_type in FOREST_BUILDING_TYPES:
+		for coord in _hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius):
+			if added >= max_forest:
+				break
+			var tile: HexTile = state.map.get_tile(coord)
+			if tile == null:
+				continue
+			if tile.owner_player_id != "" and tile.owner_player_id != actor_id:
+				continue
+			if tile.tree_density < 20:
+				continue
+			if not _building_legal(state, building_type, coord.q, coord.r, actor_id):
+				continue
+			var payload: Dictionary = {
+				"building_type": building_type,
+				"q": coord.q,
+				"r": coord.r,
+				"player_id": actor_id,
+			}
+			var cmd := PlaceBuildingPlanCommand.new(actor_id, tick, payload)
+			results.append(CommandAvailabilityDto.from_command(
+				cmd,
+				"Buildings: Place %s on forest at %d,%d" % [building_type, coord.q, coord.r],
+				{"q": coord.q, "r": coord.r, "building_type": building_type},
+			))
+			added += 1
 
 
 static func _road_legal(
