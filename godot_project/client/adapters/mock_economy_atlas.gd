@@ -45,7 +45,8 @@ static func get_sprite_frames() -> SpriteFrames:
 		var anim_id: StringName = StringName(str(anim_name))
 		if not sprite_frames.has_animation(anim_id):
 			sprite_frames.add_animation(anim_id)
-		sprite_frames.set_animation_speed(anim_id, float(anim.get("fps", 8)))
+		var fps: float = float(_animation_fps_override(str(anim_name), float(anim.get("fps", 8))))
+		sprite_frames.set_animation_speed(anim_id, fps)
 		sprite_frames.set_animation_loop(anim_id, bool(anim.get("loop", true)))
 		for frame_id in anim.get("frames", []):
 			var rect: Dictionary = frames.get(str(frame_id), {})
@@ -93,3 +94,21 @@ static func _load_texture() -> Texture2D:
 		return ImageTexture.create_from_image(image)
 	var imported: Texture2D = load(PNG_PATH) as Texture2D
 	return imported
+
+
+static func _animation_fps_override(anim_name: String, default_fps: float) -> float:
+	match anim_name:
+		"road_flow_loop":
+			return 6.0
+		"carrier_move_loop", "carrier_carrying_loop":
+			return 10.0
+		"ware_log_move_loop", "ware_plank_move_loop", "ware_stone_move_loop", "ware_generic_move_loop":
+			return 9.0
+		"building_working_loop":
+			return 7.0
+		"construction_complete_pulse", "storage_activity_pulse", "building_activity_pulse":
+			return 12.0
+		"warning_blocked_loop":
+			return 5.0
+		_:
+			return default_fps

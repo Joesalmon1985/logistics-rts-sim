@@ -3,14 +3,16 @@ extends Node2D
 
 ## Pools AnimatedSprite2D nodes driven by spectator sprite_states (viewer-only).
 
-const PULSE_ANIMATIONS: Array[String] = [
-	"construction_complete_pulse",
-	"storage_activity_pulse",
-	"building_activity_pulse",
-]
+const PULSE_ANIMATIONS: Dictionary = {
+	"construction_complete_pulse": 0.55,
+	"storage_activity_pulse": 0.5,
+	"building_activity_pulse": 0.45,
+}
+const PULSE_HIDE_DEFAULT: float = 0.45
 
 var _sprites: Dictionary = {}
 var _labels: Dictionary = {}
+var _pulse_timers: Dictionary = {}
 var _sprite_frames: SpriteFrames = null
 var _map_viewport: MapViewport = null
 var active_count: int = 0
@@ -33,9 +35,11 @@ func apply_sprite_states(states: Dictionary) -> void:
 			var sprite: AnimatedSprite2D = _sprites[key] as AnimatedSprite2D
 			if sprite != null:
 				sprite.visible = false
+		active_count = 0
 		return
-	for key in states.keys():
-		var entry: Dictionary = states[key]
+	var capped_states: Dictionary = _cap_sprite_states(states)
+	for key in capped_states.keys():
+		var entry: Dictionary = capped_states[key]
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var animation: String = str(entry.get("animation", ""))
@@ -59,8 +63,8 @@ func apply_sprite_states(states: Dictionary) -> void:
 		used_keys[key] = true
 		active_count += 1
 		_update_ware_label(key, entry, pos)
-		if animation in PULSE_ANIMATIONS:
-			_schedule_pulse_hide(key, 0.45)
+		if PULSE_ANIMATIONS.has(animation):
+			_schedule_pulse_hide(key, float(PULSE_ANIMATIONS[animation]))
 	for key in _sprites.keys():
 		if not used_keys.has(key):
 			var sprite: AnimatedSprite2D = _sprites[key] as AnimatedSprite2D
@@ -108,9 +112,24 @@ func _update_ware_label(key: String, entry: Dictionary, pos: Vector2) -> void:
 	label.visible = true
 
 
+func _cap_sprite_states(states: Dictionary) -> Dictionary:
+	if states.size() <= EconomySpectatorMetrics.SPRITE_BUDGET_CAP:
+		return states
+	var keys: Array = states.keys()
+	keys.sort()
+	var capped: Dictionary = {}
+	for i in range(mini(keys.size(), EconomySpectatorMetrics.SPRITE_BUDGET_CAP)):
+		var key: String = str(keys[i])
+		capped[key] = states[key]
+	return capped
+
+
 func _schedule_pulse_hide(key: String, duration: float) -> void:
 	if not is_inside_tree():
 		return
+	if _pulse_timers.has(key):
+		return
+	_pulse_timers[key] = true
 	var timer := get_tree().create_timer(duration)
 	timer.timeout.connect(_on_pulse_hide_timeout.bind(key), CONNECT_ONE_SHOT)
 
@@ -123,6 +142,7 @@ func _on_pulse_hide_timeout(key: String) -> void:
 		sprite.visible = false
 		sprite.queue_free()
 	_sprites.erase(key)
+	_pulse_timers.erase(key)
 	var label: Label = _labels.get(key) as Label
 	if is_instance_valid(label):
 		label.queue_free()
@@ -140,4 +160,5 @@ func clear_all() -> void:
 			label.queue_free()
 	_sprites.clear()
 	_labels.clear()
+	_pulse_timers.clear()
 	active_count = 0
