@@ -131,6 +131,7 @@ static func _ensure_node_at_hex(
 			var node: Dictionary = EconomyState.get_road_node(state, existing_id)
 			node["building_id"] = building_id
 			EconomyState.add_road_node(state, node)
+		_sync_node_adjacent_segments(state, existing_id)
 		return existing_id
 
 	var cfg: EconomyConfig = EconomyState.get_config(state)
@@ -145,7 +146,30 @@ static func _ensure_node_at_hex(
 		"inventory": EconomyState.create_empty_inventory(cfg.int_val("road_node_buffer_capacity", 5)),
 	}
 	EconomyState.add_road_node(state, node)
+	_sync_node_adjacent_segments(state, node_id)
 	return node_id
+
+
+static func _sync_node_adjacent_segments(state: GameState, node_id: int) -> void:
+	var node: Dictionary = EconomyState.get_road_node(state, node_id)
+	if node.is_empty():
+		return
+	var coord := HexCoord.new(int(node.get("q", 0)), int(node.get("r", 0)))
+	var segment_ids: Array = node.get("segment_ids", [])
+	var changed: bool = false
+	for neighbor in coord.neighbors():
+		if not state.map.in_bounds(neighbor):
+			continue
+		var road: Dictionary = get_road_between(state, coord, neighbor)
+		if road.is_empty():
+			continue
+		var road_id: int = int(road.get("id", 0))
+		if road_id > 0 and not segment_ids.has(road_id):
+			segment_ids.append(road_id)
+			changed = true
+	if changed:
+		node["segment_ids"] = segment_ids
+		EconomyState.add_road_node(state, node)
 
 
 static func _find_node_at(state: GameState, q: int, r: int) -> int:

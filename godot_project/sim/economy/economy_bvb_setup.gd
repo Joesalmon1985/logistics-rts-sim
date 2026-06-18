@@ -5,8 +5,59 @@ extends RefCounted
 
 const PROFILE_PROOF: String = "proof"
 const PROFILE_VISUAL: String = "visual"
+const PROFILE_DIAG_FREE_EVERYTHING: String = "diag_free_everything"
+const PROFILE_DIAG_PREBUILT_ROADS: String = "diag_prebuilt_roads"
+const PROFILE_DIAG_REAL_COSTS_ABUNDANT: String = "diag_real_costs_abundant"
+const PROFILE_DIAG_REAL_COSTS_EXACT: String = "diag_real_costs_exact"
+
+const CHAIN_BUILDING_TYPES: Array[String] = ["woodcutter", "storehouse", "forester", "sawmill", "workshop"]
+const LADDER_MIN_BUILDINGS: int = 5
 
 const CHECKPOINT_TICKS: Array = [0, 200, 800, 1800, 3000, 5000]
+
+
+static func ladder_profile_order() -> Array[String]:
+	return [
+		PROFILE_DIAG_FREE_EVERYTHING,
+		PROFILE_DIAG_PREBUILT_ROADS,
+		PROFILE_DIAG_REAL_COSTS_ABUNDANT,
+		PROFILE_DIAG_REAL_COSTS_EXACT,
+		PROFILE_PROOF,
+	]
+
+
+static func is_diagnostic_profile(profile: String) -> bool:
+	return profile in [
+		PROFILE_DIAG_FREE_EVERYTHING,
+		PROFILE_DIAG_PREBUILT_ROADS,
+		PROFILE_DIAG_REAL_COSTS_ABUNDANT,
+		PROFILE_DIAG_REAL_COSTS_EXACT,
+	]
+
+
+static func exact_chain_ware_totals() -> Dictionary:
+	return {"planks": 15, "stone": 10, "tools": 6}
+
+
+static func proof_spawn_kit() -> Dictionary:
+	return _spawn_kit()
+
+
+static func attach_scenario_config(state: GameState, scenario: Dictionary) -> void:
+	if not bool(scenario.get("diag_mode", false)):
+		return
+	var profile: String = str(scenario.get("bvb_profile", ""))
+	if not is_diagnostic_profile(profile):
+		return
+	var cfg: EconomyConfig = EconomyState.get_config(state).duplicate_config()
+	if profile in [PROFILE_DIAG_FREE_EVERYTHING, PROFILE_DIAG_PREBUILT_ROADS]:
+		cfg.apply_diag_free_construction(1)
+	EconomyState.set_config_override(state, cfg)
+
+
+static func get_proof_construction_cost(building_type: String) -> Dictionary:
+	var cfg: EconomyConfig = EconomyConfig.load_all()
+	return cfg.get_construction_cost(building_type)
 
 
 static func prepare_expansion_duel_map(state: GameState, scenario: Dictionary = {}) -> void:
@@ -32,11 +83,18 @@ static func prepare_expansion_duel_map(state: GameState, scenario: Dictionary = 
 	_seed_player_pocket(state, width - 5, height - 5, 8)
 
 	if not scenario.is_empty():
-		if str(scenario.get("bvb_profile", "")) == PROFILE_PROOF:
+		var profile: String = str(scenario.get("bvb_profile", ""))
+		if _uses_hq_spine_prep(profile):
 			for spawn in scenario.get("spawns", []):
 				if typeof(spawn) != TYPE_DICTIONARY:
 					continue
 				_connect_hq_spine(state, str(spawn.get("player_id", "p1")))
+			EconomyWorkerSystem.tick(state)
+		if profile == PROFILE_DIAG_PREBUILT_ROADS:
+			for spawn in scenario.get("spawns", []):
+				if typeof(spawn) != TYPE_DICTIONARY:
+					continue
+				_prebuild_chain_road_network(state, str(spawn.get("player_id", "p1")))
 			EconomyWorkerSystem.tick(state)
 		if bool(scenario.get("apply_starting_buildings", false)):
 			_apply_spawn_starting_buildings(state, scenario)
@@ -107,9 +165,55 @@ static func _spawn_kit() -> Dictionary:
 	}
 
 
+static func _abundant_starting_wares() -> Dictionary:
+	return {"tools": 999, "planks": 999, "stone": 999, "rations": 999, "meals": 999}
+
+
+static func _exact_chain_starting_wares() -> Dictionary:
+	var kit: Dictionary = _spawn_kit()
+	var exact: Dictionary = exact_chain_ware_totals()
+	return {
+		"tools": int(exact.get("tools", 6)),
+		"planks": int(exact.get("planks", 15)),
+		"stone": int(exact.get("stone", 10)),
+		"rations": int(kit["starting_wares"].get("rations", 20)),
+		"meals": int(kit["starting_wares"].get("meals", 10)),
+	}
+
+
+static func _uses_hq_spine_prep(profile: String) -> bool:
+	return profile == PROFILE_PROOF or is_diagnostic_profile(profile)
+
+
+static func _prebuild_chain_road_network(state: GameState, player_id: String) -> void:
+	var hq_pos: Vector2i = EconomyState.get_hq_position(state, player_id)
+	var hq_coord := HexCoord.new(hq_pos.x, hq_pos.y)
+	var seen_targets: Dictionary = {}
+	for building_type in CHAIN_BUILDING_TYPES:
+		var target: Vector2i = _find_spawn_building_hex(state, player_id, building_type, hq_pos)
+		if target.x < 0:
+			continue
+		var key: String = "%d,%d" % [target.x, target.y]
+		if seen_targets.has(key):
+			continue
+		seen_targets[key] = true
+		_connect_hex_path(state, hq_coord, HexCoord.new(target.x, target.y), player_id)
+
+
 static func expansion_duel_scenario(profile: String = PROFILE_PROOF) -> Dictionary:
 	var kit: Dictionary = _spawn_kit()
-	var max_ticks: int = 800 if profile == PROFILE_PROOF else 3000
+	var starting_wares: Dictionary = kit["starting_wares"].duplicate(true)
+	var diag_mode: bool = false
+	match profile:
+		PROFILE_DIAG_FREE_EVERYTHING, PROFILE_DIAG_PREBUILT_ROADS, PROFILE_DIAG_REAL_COSTS_ABUNDANT:
+			diag_mode = true
+			starting_wares = _abundant_starting_wares()
+		PROFILE_DIAG_REAL_COSTS_EXACT:
+			diag_mode = true
+			starting_wares = _exact_chain_starting_wares()
+		_:
+			pass
+	var max_ticks: int = 800 if profile == PROFILE_PROOF or is_diagnostic_profile(profile) else 3000
 	var scenario := {
 		"schema_version": 1,
 		"variant": "economy_trial",
@@ -121,6 +225,7 @@ static func expansion_duel_scenario(profile: String = PROFILE_PROOF) -> Dictiona
 		"max_ticks": max_ticks,
 		"stall_ticks_threshold": 600,
 		"bvb_profile": profile,
+		"diag_mode": diag_mode,
 		"apply_starting_buildings": false,
 		"connect_spawn_network": false,
 		"spawns": [
@@ -128,7 +233,7 @@ static func expansion_duel_scenario(profile: String = PROFILE_PROOF) -> Dictiona
 				"player_id": "p1",
 				"q": 4,
 				"r": 4,
-				"starting_wares": kit["starting_wares"],
+				"starting_wares": starting_wares.duplicate(true),
 				"starting_carriers": kit["starting_carriers"],
 				"starting_workers": kit["starting_workers"],
 				"starting_buildings": [],
@@ -137,7 +242,7 @@ static func expansion_duel_scenario(profile: String = PROFILE_PROOF) -> Dictiona
 				"player_id": "p2",
 				"q": 19,
 				"r": 19,
-				"starting_wares": kit["starting_wares"],
+				"starting_wares": starting_wares.duplicate(true),
 				"starting_carriers": kit["starting_carriers"],
 				"starting_workers": kit["starting_workers"],
 				"starting_buildings": [],
@@ -184,6 +289,15 @@ static func _apply_spawn_starting_buildings(state: GameState, scenario: Dictiona
 				q = found.x
 				r = found.y
 			EconomyInit.spawn_completed_building(state, building_type, q, r, player_id, cfg)
+
+
+static func find_chain_building_hex(
+	state: GameState,
+	player_id: String,
+	building_type: String,
+) -> Vector2i:
+	var hq: Vector2i = EconomyState.get_hq_position(state, player_id)
+	return _find_spawn_building_hex(state, player_id, building_type, hq)
 
 
 static func _find_spawn_building_hex(

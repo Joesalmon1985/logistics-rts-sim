@@ -113,6 +113,29 @@ func get_construction_cost(building_type: String) -> Dictionary:
 	return construction_costs.get("default_cost", {})
 
 
+func duplicate_config() -> EconomyConfig:
+	var copy := EconomyConfig.new()
+	copy.economy = economy.duplicate(true)
+	copy.wares = wares.duplicate(true)
+	copy.buildings = buildings.duplicate(true)
+	copy.recipes = recipes.duplicate(true)
+	copy.workers = workers.duplicate(true)
+	copy.tools = tools.duplicate(true)
+	copy.upgrades = upgrades.duplicate(true)
+	copy.construction_costs = construction_costs.duplicate(true)
+	copy.terrain = terrain.duplicate(true)
+	return copy
+
+
+func apply_diag_free_construction(builder_work: int = 1) -> void:
+	var zero_cost: Dictionary = {"planks": 0, "stone": 0, "tools": 0, "builder_work": maxi(1, builder_work)}
+	var building_costs: Dictionary = construction_costs.get("building_costs", {}).duplicate(true)
+	for building_type in building_costs.keys():
+		building_costs[building_type] = zero_cost.duplicate(true)
+	construction_costs["building_costs"] = building_costs
+	construction_costs["default_cost"] = zero_cost.duplicate(true)
+
+
 func get_upgrade_def(source_type: String) -> Dictionary:
 	return upgrades.get(source_type, {})
 

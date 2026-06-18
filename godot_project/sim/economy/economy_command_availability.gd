@@ -4,7 +4,7 @@ extends RefCounted
 const MAX_ROAD_CANDIDATES: int = 64
 const MAX_BUILDING_CANDIDATES: int = 32
 const BOT_MAX_ROAD_CANDIDATES: int = 24
-const BOT_MAX_BUILDING_CANDIDATES: int = 16
+const BOT_MAX_BUILDING_CANDIDATES: int = 24
 const BOT_FRONTIER_NODE_THRESHOLD: int = 6
 const BOT_BUILD_SEARCH_RADIUS: int = 6
 const BOT_FOREST_SEARCH_RADIUS: int = 8
@@ -33,7 +33,7 @@ static func list_bot_candidates(state: GameState, actor_id: String) -> Array:
 	# Worker policy is not useful for expansion duel — skip to save validate budget.
 	_try_roads(results, state, actor_id, tick, true, edge_keys)
 	_try_buildings(results, state, actor_id, tick, BOT_MAX_BUILDING_CANDIDATES, true, node_keys)
-	_try_forest_buildings(results, state, actor_id, tick, 10, true)
+	_try_forest_buildings(results, state, actor_id, tick, 12, true)
 	return results
 
 
@@ -84,6 +84,8 @@ static func _try_roads(
 	var max_roads: int = BOT_MAX_ROAD_CANDIDATES if bot_mode else MAX_ROAD_CANDIDATES
 	var edges: Dictionary = edge_keys if not edge_keys.is_empty() else _player_road_edge_keys(state, actor_id)
 	var start_hexes: Array[HexCoord] = _road_start_hexes(state, actor_id, bot_mode, edges)
+	if bot_mode:
+		start_hexes = _prioritize_construction_site_starts(state, actor_id, start_hexes)
 	for start in start_hexes:
 		if added >= max_roads:
 			break
@@ -116,6 +118,34 @@ static func _try_roads(
 					{"from_q": start.q, "from_r": start.r, "to_q": neighbor.q, "to_r": neighbor.r},
 				))
 				added += 1
+
+
+static func _prioritize_construction_site_starts(
+	state: GameState,
+	actor_id: String,
+	start_hexes: Array[HexCoord],
+) -> Array[HexCoord]:
+	var site_starts: Array[HexCoord] = []
+	var other_starts: Array[HexCoord] = []
+	var site_keys: Dictionary = {}
+	for site in EconomyState.all_construction_sites(state):
+		if str(site.get("player_id", "")) != actor_id:
+			continue
+		var sq: int = int(site.get("anchor_q", site.get("q", -1)))
+		var sr: int = int(site.get("anchor_r", site.get("r", -1)))
+		if sq < 0:
+			continue
+		site_keys["%d,%d" % [sq, sr]] = true
+	for start in start_hexes:
+		var key: String = "%d,%d" % [start.q, start.r]
+		if site_keys.has(key):
+			site_starts.append(start)
+		else:
+			other_starts.append(start)
+	var ordered: Array[HexCoord] = []
+	ordered.append_array(site_starts)
+	ordered.append_array(other_starts)
+	return ordered
 
 
 static func _road_start_hexes(
@@ -209,21 +239,28 @@ static func _try_buildings(
 ) -> void:
 	var hq_pos: Vector2i = _actor_hq(state, actor_id)
 	var build_radius: int = int(EconomyState.get_meta_value(state, "build_radius", 8))
-	var search_radius: int = BOT_BUILD_SEARCH_RADIUS if bot_mode else build_radius
+	var search_radius: int = build_radius if bot_mode else build_radius
 	var added: int = 0
 	var keys: Dictionary = node_keys if not node_keys.is_empty() else _player_road_node_keys(state, actor_id)
 	var edge_keys: Dictionary = _player_road_edge_keys(state, actor_id)
 
 	for building_type in BUILDING_TYPES:
 		var coords: Array[HexCoord] = []
+		var type_cap: int = 6 if bot_mode else max_candidates
+		var type_added: int = 0
 		if building_type == "storehouse":
 			coords = _storehouse_candidate_hexes(state, actor_id, search_radius, keys, edge_keys)
 		elif building_type in ["sawmill", "workshop"]:
 			coords = _road_network_build_hexes(state, actor_id, search_radius, keys, edge_keys)
 		else:
 			coords = _hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius)
+		if bot_mode and building_type in ["storehouse", "sawmill", "workshop"]:
+			coords = _merge_unique_hex_coords(
+				coords,
+				_hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius),
+			)
 		for coord in coords:
-			if added >= max_candidates:
+			if type_added >= type_cap or added >= max_candidates:
 				break
 			if not _building_legal(state, building_type, coord.q, coord.r, actor_id):
 				continue
@@ -241,7 +278,26 @@ static func _try_buildings(
 				"Buildings: Place %s Construction Site at %d,%d%s" % [display_name, coord.q, coord.r, suffix],
 				{"q": coord.q, "r": coord.r, "building_type": building_type},
 			))
+			type_added += 1
 			added += 1
+
+
+static func _merge_unique_hex_coords(primary: Array[HexCoord], extra: Array[HexCoord]) -> Array[HexCoord]:
+	var seen: Dictionary = {}
+	var merged: Array[HexCoord] = []
+	for coord in primary:
+		var key: String = "%d,%d" % [coord.q, coord.r]
+		if seen.has(key):
+			continue
+		seen[key] = true
+		merged.append(coord)
+	for coord in extra:
+		var key2: String = "%d,%d" % [coord.q, coord.r]
+		if seen.has(key2):
+			continue
+		seen[key2] = true
+		merged.append(coord)
+	return merged
 
 
 static func _storehouse_candidate_hexes(
@@ -378,11 +434,12 @@ static func _try_forest_buildings(
 ) -> void:
 	var hq_pos: Vector2i = _actor_hq(state, actor_id)
 	var build_radius: int = int(EconomyState.get_meta_value(state, "build_radius", 8))
-	var search_radius: int = BOT_FOREST_SEARCH_RADIUS if bot_mode else build_radius
+	var search_radius: int = build_radius if bot_mode else build_radius
 	var added: int = 0
 	for building_type in FOREST_BUILDING_TYPES:
+		var type_added: int = 0
 		for coord in _hexes_near(state, HexCoord.new(hq_pos.x, hq_pos.y), search_radius):
-			if added >= max_forest:
+			if type_added >= 6 or added >= max_forest:
 				break
 			var tile: HexTile = state.map.get_tile(coord)
 			if tile == null:
@@ -405,6 +462,7 @@ static func _try_forest_buildings(
 				"Buildings: Place %s on forest at %d,%d" % [building_type, coord.q, coord.r],
 				{"q": coord.q, "r": coord.r, "building_type": building_type},
 			))
+			type_added += 1
 			added += 1
 
 

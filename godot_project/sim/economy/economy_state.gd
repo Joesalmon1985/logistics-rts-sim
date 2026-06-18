@@ -43,10 +43,28 @@ static func get_meta_value(state: GameState, key: String, default_value: Variant
 static var _shared_config: EconomyConfig = null
 
 
-static func get_config(_state: GameState) -> EconomyConfig:
+static func get_config(state: GameState) -> EconomyConfig:
+	if state != null:
+		ensure_buckets(state)
+		var override: Variant = get_meta_value(state, "economy_config_override", null)
+		if override is EconomyConfig:
+			return override as EconomyConfig
 	if _shared_config == null:
 		_shared_config = EconomyConfig.load_all()
 	return _shared_config
+
+
+static func set_config_override(state: GameState, cfg: EconomyConfig) -> void:
+	ensure_buckets(state)
+	set_meta_value(state, "economy_config_override", cfg)
+
+
+static func clear_config_override(state: GameState) -> void:
+	set_meta_value(state, "economy_config_override", null)
+
+
+static func has_config_override(state: GameState) -> bool:
+	return get_meta_value(state, "economy_config_override", null) is EconomyConfig
 
 
 static func reset_config_cache() -> void:
