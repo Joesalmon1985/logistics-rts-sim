@@ -4,7 +4,7 @@ extends RefCounted
 ## Formats snapshot selection data for human-readable inspector display.
 
 
-static func format(selection: Dictionary, snapshot: Dictionary = {}) -> String:
+static func format(selection: Dictionary, snapshot: Dictionary = {}, mode_context: Dictionary = {}) -> String:
 	var kind: String = str(selection.get("kind", "empty"))
 	var data: Dictionary = selection.get("data", {})
 	var q: int = int(data.get("q", data.get("anchor_q", -1)))
@@ -19,164 +19,293 @@ static func format(selection: Dictionary, snapshot: Dictionary = {}) -> String:
 		"unit":
 			return _format_unit(data, q, r, snapshot)
 		"construction_site":
-			return _format_construction_site(data, q, r)
+			return _format_construction_site(data, q, r, snapshot)
 		"carrier":
 			return _format_carrier(data, q, r)
 		"forest":
-			return _format_forest(data, q, r)
+			return _format_forest(data, q, r, snapshot)
 		"tile":
 			return _format_tile(data, q, r, snapshot)
+		"road_node":
+			return _format_road_node(data, q, r, snapshot, mode_context)
+		"road":
+			return _format_road(data, q, r, snapshot, mode_context)
 		_:
-			return "Empty hex (%d, %d)\nClick a coloured hex to inspect terrain, buildings, or units." % [q, r]
+			return _format_empty(q, r, mode_context)
 
 
 static func _format_building(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
+	var btype: String = str(data.get("building_type", "?"))
+	var name: String = BuildingCatalog.display_name(btype)
 	var lines: PackedStringArray = PackedStringArray([
-		"BUILDING",
-		"Type: %s" % str(data.get("building_type", "?")),
-		"Player: %s" % str(data.get("player_id", "?")),
+		name,
+		BuildingCatalog.role_text(btype),
+		"",
+		"Status: %s" % _human_status(data),
 		"Position: (%d, %d)" % [q, r],
-		"State: %s" % str(data.get("state", "?")),
 	])
-	var workers: Array = data.get("assigned_workers", [])
-	if workers.size() > 0:
-		lines.append("Workers assigned: %d" % workers.size())
-	var progress: int = int(data.get("production_progress", 0))
-	if progress > 0:
-		lines.append("Production progress: %d" % progress)
+	if btype in ["headquarters", "command_hub"]:
+		lines.append(_hq_stock_summary(snapshot))
+		lines.append(_road_connection_line(q, r, snapshot))
+		lines.append("Objective: connect production buildings and store 10 planks + 10 stone at HQ.")
+	else:
+		lines.append(_store_line_for_building(int(data.get("id", 0)), snapshot))
+		lines.append(_recipe_line(btype))
+		lines.append(_road_connection_line(q, r, snapshot))
 	var paused: String = str(data.get("paused_reason", ""))
 	if paused != "":
-		lines.append("Paused: %s" % paused)
-	lines.append(_store_line_for_building(int(data.get("id", 0)), snapshot))
-	var max_hp: int = int(data.get("max_hp", 0))
-	if max_hp > 0:
-		lines.append("HP: %d / %d" % [int(data.get("hp", 0)), max_hp])
-	lines.append("ID: %s" % str(data.get("id", "?")))
+		lines.append("Waiting: %s" % SettlerMvpController.human_reason(paused))
+	_append_blocked_from_diagnostics(lines, btype, snapshot)
+	var tip: String = BuildingCatalog.tip_text(btype)
+	if tip != "":
+		lines.append("Tip: %s" % tip)
 	return "\n".join(lines)
 
 
-static func _store_line_for_building(building_id: int, snapshot: Dictionary) -> String:
-	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
-	for store in render.get("building_stores", []):
-		if int(store.get("building_id", -1)) == building_id:
-			return "Store: %s" % str(store.get("label", ""))
-	return "Store: (empty)"
+static func _format_construction_site(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
+	var btype: String = str(data.get("building_type", "?"))
+	var name: String = BuildingCatalog.display_name(btype)
+	var progress: int = LayerRenderer.site_progress_percent(data)
+	var lines: PackedStringArray = PackedStringArray([
+		"Construction Site: %s" % name,
+		BuildingCatalog.role_text(btype),
+		"",
+		"Status: %s" % _site_status(data, progress),
+		"Position: (%d, %d)" % [q, r],
+	])
+	var delivered: Dictionary = data.get("delivered", {})
+	var required: Dictionary = data.get("required", {})
+	if not required.is_empty():
+		lines.append("Materials:")
+		for ware_type in required:
+			lines.append("- %s: %d / %d" % [ware_type, int(delivered.get(ware_type, 0)), int(required[ware_type])])
+	lines.append(_road_connection_line(q, r, snapshot))
+	lines.append("Tip: Press Play to let carriers deliver materials.")
+	return "\n".join(lines)
+
+
+static func _format_tile(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
+	var terrain: String = str(data.get("terrain_type", "grass"))
+	var lines: PackedStringArray = PackedStringArray([
+		"Terrain: %s" % terrain.capitalize(),
+		"Hex: (%d, %d)" % [q, r],
+		"Buildable: %s" % ("yes" if _is_buildable_terrain(terrain) else "no"),
+	])
+	var density: int = _tree_density_at(q, r, snapshot)
+	if density > 0:
+		lines.append("Tree density: %d" % density)
+	var deposit: String = _deposit_at(q, r, snapshot)
+	if deposit != "":
+		lines.append("Deposit: %s" % deposit)
+	var on_hex: String = _occupant_summary(q, r, snapshot)
+	if on_hex != "":
+		lines.append(on_hex)
+	if terrain == "forest":
+		lines.append("Tip: Good area for a Woodcutter or Forester nearby.")
+	elif deposit == "rock" or terrain == "mountain":
+		lines.append("Tip: Quarry needs rock or quarryable terrain nearby.")
+	return "\n".join(lines)
+
+
+static func _format_forest(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
+	var density: int = int(data.get("tree_density", 0))
+	var lines: PackedStringArray = PackedStringArray([
+		"Terrain: Forest",
+		"Hex: (%d, %d)" % [q, r],
+		"Tree density: %d" % density,
+		"Buildable: yes (forest buildings only)",
+	])
+	lines.append(_occupant_summary(q, r, snapshot))
+	lines.append("Tip: Woodcutters harvest here; Foresters renew trees.")
+	return "\n".join(lines)
 
 
 static func _format_carrier(data: Dictionary, q: int, r: int) -> String:
 	var lines: PackedStringArray = PackedStringArray([
-		"CARRIER",
+		"Carrier",
+		"Transports goods along roads between buildings.",
+		"",
 		"Position: (%d, %d)" % [q, r],
-		"State: %s" % str(data.get("state", "?")),
+		"Status: %s" % str(data.get("state", "idle")).capitalize(),
 	])
 	var ware: String = str(data.get("ware_type", ""))
 	if ware != "":
 		lines.append("Carrying: %s x%d" % [ware, int(data.get("ware_amount", 0))])
 	var route: Array = data.get("route_points", [])
 	if route.size() >= 2:
-		var parts: PackedStringArray = PackedStringArray()
-		for pt in route:
-			parts.append("%d,%d" % [int(pt.get("q", 0)), int(pt.get("r", 0))])
-		lines.append("Route: %s" % " -> ".join(parts))
-	lines.append("ID: %s" % str(data.get("id", "?")))
+		var start: Dictionary = route[0]
+		var end: Dictionary = route[route.size() - 1]
+		lines.append("Route: (%d,%d) -> (%d,%d)" % [
+			int(start.get("q", 0)), int(start.get("r", 0)),
+			int(end.get("q", 0)), int(end.get("r", 0)),
+		])
 	return "\n".join(lines)
-
-
-static func _format_forest(data: Dictionary, q: int, r: int) -> String:
-	return "\n".join(PackedStringArray([
-		"FOREST HEX",
-		"Position: (%d, %d)" % [q, r],
-		"Tree density: %d" % int(data.get("tree_density", 0)),
-		"(Density drops as woodcutter produces timber)",
-	]))
 
 
 static func _format_unit(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
+	var utype: String = str(data.get("unit_type", "worker"))
 	var lines: PackedStringArray = PackedStringArray([
-		"UNIT",
-		"Type: %s" % str(data.get("unit_type", "?")),
-		"Player: %s" % str(data.get("player_id", "?")),
+		"Worker: %s" % utype.capitalize(),
 		"Position: (%d, %d)" % [q, r],
-		"State: %s" % str(data.get("state", "?")),
+		"Status: %s" % str(data.get("state", "?")).capitalize(),
 	])
-	var max_hp: int = int(data.get("max_hp", 0))
-	if max_hp > 0:
-		lines.append("HP: %d / %d" % [int(data.get("hp", data.get("health", 0))), max_hp])
-	elif data.has("hp") or data.has("health"):
-		lines.append("HP: %s" % str(data.get("hp", data.get("health", "?"))))
-	var weapon: String = str(data.get("weapon", ""))
-	if weapon != "":
-		lines.append("Weapon: %s" % weapon)
 	var order: String = str(data.get("order", ""))
 	if order != "":
-		lines.append("Order: %s" % order)
-	var target_id: int = int(data.get("engage_target_id", 0))
-	if target_id > 0:
-		var target: Dictionary = _find_entity(snapshot, target_id)
-		if not target.is_empty():
-			var tq: int = int(target.get("q", target.get("anchor_q", -1)))
-			var tr: int = int(target.get("r", target.get("anchor_r", -1)))
-			var ttype: String = str(target.get("unit_type", target.get("building_type", "target")))
-			lines.append("Target: %s (id %d) at (%d, %d)" % [ttype, target_id, tq, tr])
-			var tmax: int = int(target.get("max_hp", 0))
-			if tmax > 0:
-				lines.append("Target HP: %d / %d" % [int(target.get("hp", 0)), tmax])
-	lines.append("ID: %s" % str(data.get("id", "?")))
+		lines.append("Task: %s" % order.replace("_", " "))
 	return "\n".join(lines)
 
 
-static func _format_construction_site(data: Dictionary, q: int, r: int) -> String:
-	var btype: String = str(data.get("building_type", "?"))
-	var progress: int = LayerRenderer.site_progress_percent(data)
+static func _format_road_node(data: Dictionary, q: int, r: int, snapshot: Dictionary, mode_context: Dictionary) -> String:
 	var lines: PackedStringArray = PackedStringArray([
-		"CONSTRUCTION SITE",
-		"Type: %s construction site" % btype,
-		"Position: (%d, %d)" % [q, r],
-		"State: %s" % str(data.get("state", "?")),
-		"Progress: %d%%" % progress,
+		"Road flag / node",
+		"Hex: (%d, %d)" % [q, r],
+		"Connected to HQ network: %s" % ("yes" if _road_connected_to_hq(q, r, snapshot) else "unknown"),
 	])
-	if data.has("required_ticks") and int(data.get("required_ticks", 0)) > 0:
-		lines.append("Build progress: %d / %d ticks" % [int(data.get("progress", 0)), int(data.get("required_ticks", 0))])
+	if bool(mode_context.get("road_mode", false)):
+		lines.append("Road mode: click another networked hex as destination.")
+	return "\n".join(lines)
+
+
+static func _format_road(data: Dictionary, q: int, r: int, snapshot: Dictionary, mode_context: Dictionary) -> String:
+	var lines: PackedStringArray = PackedStringArray([
+		"Road segment",
+		"Near hex: (%d, %d)" % [q, r],
+		"Player: %s" % str(data.get("player_id", "?")),
+	])
+	if bool(mode_context.get("road_mode", false)):
+		lines.append("Road mode: click start on network, then destination.")
+	return "\n".join(lines)
+
+
+static func _format_empty(q: int, r: int, mode_context: Dictionary) -> String:
+	if q < 0:
+		return "Click the map to inspect terrain, buildings, roads, or carriers."
+	var lines: PackedStringArray = PackedStringArray(["Empty hex (%d, %d)" % [q, r]])
+	if bool(mode_context.get("build_mode", false)):
+		lines.append("Placement mode: move over the map and click a valid hex.")
+	elif bool(mode_context.get("road_mode", false)):
+		lines.append("Road mode: select start, then destination.")
 	else:
-		var delivered: Dictionary = data.get("delivered", {})
-		var required: Dictionary = data.get("required", {})
-		if not required.is_empty():
-			var parts: PackedStringArray = PackedStringArray()
-			for ware_type in required:
-				parts.append("%s: %d/%d" % [
-					str(ware_type),
-					int(delivered.get(ware_type, 0)),
-					int(required[ware_type]),
-				])
-			lines.append("Delivered: %s" % ", ".join(parts))
-	lines.append("ID: %s" % str(data.get("id", "?")))
+		lines.append("Click buildings, sites, roads, or terrain to inspect.")
 	return "\n".join(lines)
 
 
-static func _format_tile(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
-	var lines: PackedStringArray = PackedStringArray([
-		"TERRAIN HEX",
-		"Position: (%d, %d)" % [q, r],
-		"Terrain: %s" % str(data.get("terrain_type", "?")),
-	])
-	var layers: Dictionary = snapshot.get("display_layers", {})
-	for res in layers.get("resources", []):
+static func _human_status(data: Dictionary) -> String:
+	var state: String = str(data.get("state", "working")).to_lower()
+	var paused: String = str(data.get("paused_reason", ""))
+	if paused != "":
+		return "Waiting — %s" % SettlerMvpController.human_reason(paused)
+	match state:
+		"working", "active":
+			return "Working"
+		"idle":
+			return "Idle"
+		"blocked":
+			return "Blocked"
+		_:
+			return state.capitalize()
+
+
+static func _site_status(data: Dictionary, progress: int) -> String:
+	if progress >= 100:
+		return "Complete"
+	var delivered: Dictionary = data.get("delivered", {})
+	var required: Dictionary = data.get("required", {})
+	for ware_type in required:
+		if int(delivered.get(ware_type, 0)) < int(required[ware_type]):
+			return "Waiting for materials"
+	return "Under construction (%d%%)" % progress
+
+
+static func _store_line_for_building(building_id: int, snapshot: Dictionary) -> String:
+	var render: Dictionary = LayerRenderer.build_render_data(snapshot)
+	for store in render.get("building_stores", []):
+		if int(store.get("building_id", -1)) == building_id:
+			var label: String = str(store.get("label", ""))
+			if label == "" or label == "(empty)":
+				return "Local storage: empty"
+			return "Local storage: %s" % label
+	return "Local storage: empty"
+
+
+static func _hq_stock_summary(snapshot: Dictionary) -> String:
+	var totals: Dictionary = snapshot.get("diagnostics", {}).get("ware_totals", {}).get("by_type", {})
+	var parts: PackedStringArray = PackedStringArray()
+	for ware in ["timber", "planks", "stone", "builder_work"]:
+		if totals.has(ware):
+			parts.append("%s: %d" % [ware, int(totals[ware])])
+	if parts.is_empty():
+		return "Stored goods: (none yet)"
+	return "Stored goods: %s" % ", ".join(parts)
+
+
+static func _recipe_line(btype: String) -> String:
+	match btype:
+		"woodcutter":
+			return "Output: timber (from forest)"
+		"forester":
+			return "Renews forest tree density"
+		"sawmill":
+			return "Inputs: timber — Output: planks"
+		"quarry":
+			return "Output: stone (from rock)"
+		_:
+			return ""
+
+
+static func _road_connection_line(q: int, r: int, snapshot: Dictionary) -> String:
+	var connected: String = "yes" if _hex_has_road_network(q, r, snapshot) else "no — build roads to HQ"
+	return "Road connection: %s" % connected
+
+
+static func _append_blocked_from_diagnostics(lines: PackedStringArray, btype: String, snapshot: Dictionary) -> void:
+	for prod in snapshot.get("diagnostics", {}).get("production", []):
+		if str(prod.get("building_type", "")) == btype:
+			var reason: String = str(prod.get("paused_reason", ""))
+			if reason != "":
+				lines.append("Blocked: %s" % SettlerMvpController.human_reason(reason))
+
+
+static func _is_buildable_terrain(terrain: String) -> bool:
+	return terrain in ["grass", "forest", "desert"]
+
+
+static func _tree_density_at(q: int, r: int, snapshot: Dictionary) -> int:
+	for td in snapshot.get("display_layers", {}).get("tree_density", []):
+		if int(td.get("q", -1)) == q and int(td.get("r", -1)) == r:
+			return int(td.get("tree_density", 0))
+	return 0
+
+
+static func _deposit_at(q: int, r: int, snapshot: Dictionary) -> String:
+	for res in snapshot.get("display_layers", {}).get("resources", []):
 		if int(res.get("q", -1)) == q and int(res.get("r", -1)) == r:
-			lines.append("Resource: %s (amount %s)" % [
-				str(res.get("deposit_type", "?")),
-				str(res.get("deposit_amount", "?")),
-			])
-	for res2 in snapshot.get("resource_fields", []):
-		if int(res2.get("q", -1)) == q and int(res2.get("r", -1)) == r:
-			lines.append("Resource field: %s" % str(res2.get("field_type", "?")))
-	return "\n".join(lines)
+			return str(res.get("deposit_type", ""))
+	return ""
 
 
-static func _find_entity(snapshot: Dictionary, entity_id: int) -> Dictionary:
-	for unit in snapshot.get("units", []):
-		if int(unit.get("id", -1)) == entity_id:
-			return unit
+static func _occupant_summary(q: int, r: int, snapshot: Dictionary) -> String:
+	for site in snapshot.get("construction_sites", []):
+		if int(site.get("anchor_q", site.get("q", -1))) == q and int(site.get("anchor_r", site.get("r", -1))) == r:
+			return "Construction site: %s" % BuildingCatalog.display_name(str(site.get("building_type", "")))
 	for building in snapshot.get("buildings", []):
-		if int(building.get("id", -1)) == entity_id:
-			return building
-	return {}
+		if int(building.get("anchor_q", building.get("q", -1))) == q and int(building.get("anchor_r", building.get("r", -1))) == r:
+			return "Building: %s" % BuildingCatalog.display_name(str(building.get("building_type", "")))
+	return ""
+
+
+static func _hex_has_road_network(q: int, r: int, snapshot: Dictionary) -> bool:
+	for node in snapshot.get("road_nodes", []):
+		if int(node.get("q", -1)) == q and int(node.get("r", -1)) == r:
+			return true
+	for road in snapshot.get("roads", []):
+		if (int(road.get("from_q", -1)) == q and int(road.get("from_r", -1)) == r) or (int(road.get("to_q", -1)) == q and int(road.get("to_r", -1)) == r):
+			return true
+	return false
+
+
+static func _road_connected_to_hq(_q: int, _r: int, snapshot: Dictionary) -> bool:
+	for building in snapshot.get("buildings", []):
+		if str(building.get("building_type", "")) in ["headquarters", "command_hub"]:
+			return true
+	return not snapshot.get("roads", []).is_empty()

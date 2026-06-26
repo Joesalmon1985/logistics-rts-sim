@@ -6,6 +6,9 @@ extends RefCounted
 
 static func mount_settler(host: Node) -> Dictionary:
 	SimBootstrap.load_all()
+	if not host.is_inside_tree():
+		if host.get_parent() == null:
+			Engine.get_main_loop().root.add_child(host)
 	var ctx: Dictionary = ViewerTestHarness.mount(host, "settler_mvp")
 	_force_layout(ctx)
 	var scene: Node = ctx.get("scene")
@@ -109,8 +112,12 @@ static func is_help_visible(scene: Node) -> bool:
 	return true
 
 
+static func get_map(scene: Node) -> MapViewport:
+	return scene.find_child("MapViewport", true, false) as MapViewport
+
+
 static func get_selected_hex(scene: Node) -> Vector2i:
-	var map: MapViewport = scene.find_child("MapViewport", true, false) as MapViewport
+	var map: MapViewport = get_map(scene)
 	if map == null:
 		return Vector2i(-1, -1)
 	return Vector2i(map.selected_q, map.selected_r)
@@ -136,18 +143,26 @@ static func simulate_map_click_at_hex(scene: Node, q: int, r: int) -> void:
 	var inspector: RichTextLabel = scene.find_child("Inspector", true, false) as RichTextLabel
 	if inspector != null and "controller" in scene:
 		var selection: Dictionary = scene.controller.get_selection_at(q, r)
-		inspector.text = SelectionFormatter.format(selection, scene.controller.get_snapshot())
+		inspector.text = SelectionFormatter.format(
+			selection,
+			scene.controller.get_snapshot(),
+			scene.controller.get_mode_context() if scene.controller.has_method("get_mode_context") else {},
+		)
 
 
-static func _force_layout(ctx: Dictionary) -> void:
+static func _force_layout(ctx: Dictionary, fill_viewport: bool = false) -> void:
 	var subvp: SubViewport = ctx.get("viewport")
 	var scene: Node = ctx.get("scene")
 	if subvp != null:
 		subvp.size = ViewerTestHarness.SIZE
 	if scene is Control:
 		var control_scene: Control = scene as Control
-		control_scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		if fill_viewport:
+			control_scene.set_anchors_preset(Control.PRESET_FULL_RECT)
+		else:
+			control_scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		control_scene.position = Vector2.ZERO
+		control_scene.custom_minimum_size = ViewerTestHarness.SIZE
 		control_scene.size = ViewerTestHarness.SIZE
 
 

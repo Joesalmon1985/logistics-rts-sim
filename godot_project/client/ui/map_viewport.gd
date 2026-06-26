@@ -28,6 +28,9 @@ var auto_fit_on_data_change: bool = true
 var placement_ghost: Dictionary = {}
 var road_preview_hexes: Array = []
 var road_preview_valid: bool = true
+var road_start_q: int = -1
+var road_start_r: int = -1
+var use_settler_sprites: bool = false
 var hover_q: int = -1
 var hover_r: int = -1
 var _dragging: bool = false
@@ -641,9 +644,11 @@ func set_placement_ghost(ghost: Dictionary) -> void:
 	queue_redraw()
 
 
-func set_road_preview(hexes: Array, valid: bool) -> void:
+func set_road_preview(hexes: Array, valid: bool, start_q: int = -1, start_r: int = -1) -> void:
 	road_preview_hexes = hexes
 	road_preview_valid = valid
+	road_start_q = start_q
+	road_start_r = start_r
 	queue_redraw()
 
 
@@ -660,12 +665,24 @@ func _draw_placement_ghost(origin: Vector2) -> void:
 	var center: Vector2 = _hex_center(origin, q, r)
 	var ring: Color = Color(0.35, 1.0, 0.45) if valid else Color(1.0, 0.35, 0.35)
 	draw_arc(center, HEX_SIZE * zoom * 0.95, 0, TAU, 32, ring, 3.0)
+	if use_settler_sprites:
+		var ui_key: String = "placement_valid" if valid else "placement_invalid"
+		var tex: Texture2D = SettlerAssetRegistry.get_ui_texture(ui_key)
+		if tex != null:
+			var sz: Vector2 = tex.get_size() * 0.55 * zoom
+			draw_texture_rect(tex, Rect2(center - sz * 0.5, sz), false, Color(1, 1, 1, 0.75))
 
 
 func _draw_road_preview(origin: Vector2) -> void:
-	if road_preview_hexes.size() < 2:
+	if road_preview_hexes.size() < 1 and road_start_q < 0:
 		return
 	var line_color: Color = Color(0.35, 0.95, 0.45, 0.9) if road_preview_valid else Color(0.95, 0.35, 0.35, 0.9)
+	if road_start_q >= 0 and road_start_r >= 0:
+		var sc: Vector2 = _hex_center(origin, road_start_q, road_start_r)
+		draw_circle(sc, 8.0 * zoom, Color(1.0, 0.85, 0.2, 0.95))
+		draw_arc(sc, 10.0 * zoom, 0, TAU, 20, Color(1.0, 0.95, 0.5), 2.5)
+	if road_preview_hexes.size() < 2:
+		return
 	for i in range(road_preview_hexes.size() - 1):
 		var a: Dictionary = road_preview_hexes[i]
 		var b: Dictionary = road_preview_hexes[i + 1]

@@ -1,0 +1,42 @@
+{
+  "buildings": {
+    "headquarters": "res://client/assets/settler_mvp/generated/building_headquarters.png",
+    "woodcutter": "res://client/assets/settler_mvp/generated/building_woodcutter.png",
+    "forester": "res://client/assets/settler_mvp/generated/building_forester.png",
+    "sawmill": "res://client/assets/settler_mvp/generated/building_sawmill.png",
+    "quarry": "res://client/assets/settler_mvp/generated/building_quarry.png",
+    "construction_site": "res://client/assets/settler_mvp/generated/building_construction_site.png"
+  },
+  "logistics": {
+    "road": "res://client/assets/settler_mvp/generated/logistics_road.png",
+    "road_node": "res://client/assets/settler_mvp/generated/logistics_road_node.png",
+    "carrier": "res://client/assets/settler_mvp/generated/logistics_carrier.png",
+    "builder": "res://client/assets/settler_mvp/generated/logistics_builder.png"
+  },
+  "wares": {
+    "timber": "res://client/assets/settler_mvp/generated/ware_timber.png",
+    "planks": "res://client/assets/settler_mvp/generated/ware_planks.png",
+    "stone": "res://client/assets/settler_mvp/generated/ware_stone.png",
+    "builder_work": "res://client/assets/settler_mvp/generated/ware_builder_work.png"
+  },
+  "terrain": {
+    "grass": "res://client/assets/settler_mvp/generated/terrain_grass.png",
+    "forest": "res://client/assets/settler_mvp/generated/terrain_forest.png",
+    "rock": "res://client/assets/settler_mvp/generated/terrain_rock.png",
+    "water": "res://client/assets/settler_mvp/generated/terrain_water.png"
+  },
+  "ui": {
+    "selection_highlight": "res://client/assets/settler_mvp/generated/ui_selection_highlight.png",
+    "placement_valid": "res://client/assets/settler_mvp/generated/ui_placement_valid.png",
+    "placement_invalid": "res://client/assets/settler_mvp/generated/ui_placement_invalid.png"
+  },
+  "icons": {
+    "headquarters": "res://client/assets/settler_mvp/generated/icon_headquarters.png",
+    "woodcutter": "res://client/assets/settler_mvp/generated/icon_woodcutter.png",
+    "forester": "res://client/assets/settler_mvp/generated/icon_forester.png",
+    "sawmill": "res://client/assets/settler_mvp/generated/icon_sawmill.png",
+    "quarry": "res://client/assets/settler_mvp/generated/icon_quarry.png",
+    "road": "res://client/assets/settler_mvp/generated/icon_road.png",
+    "cancel": "res://client/assets/settler_mvp/generated/icon_cancel.png"
+  }
+}

@@ -113,7 +113,7 @@ static func _collect_input_blockers(scene: Node, map: MapViewport, review: Dicti
 		if _rect_covers(rect, map_rect):
 			review["possible_fullscreen_input_blockers"].append({
 				"name": node.name,
-				"path": str(node.get_path()),
+				"path": node.name if not node.is_inside_tree() else str(node.get_path()),
 				"rect": _rect_dict(rect),
 			})
 	)

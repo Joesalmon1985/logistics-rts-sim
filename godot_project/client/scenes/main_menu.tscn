@@ -34,15 +34,20 @@ layout_mode = 2
 text = "Settlement logistics trial"
 horizontal_alignment = 1
 
-[node name="NewSettlerBtn" type="Button" parent="Center/VBox"]
+[node name="TutorialBtn" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "New Settler MVP Game"
+text = "Tutorial"
+
+[node name="FreePlayBtn" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Free Play / Settler MVP"
 
 [node name="DebugViewersBtn" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Open Debug Viewers"
+text = "Debug Viewers"
 
 [node name="QuitBtn" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true

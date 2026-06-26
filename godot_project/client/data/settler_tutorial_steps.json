@@ -1,0 +1,70 @@
+{
+  "steps": [
+    {
+      "id": "welcome",
+      "title": "Welcome",
+      "instruction": "This is a road-and-carrier settlement game. Build Woodcutter, Forester, Sawmill and Quarry, connect them to Headquarters by roads, then store 10 planks and 10 stone.",
+      "completion": "manual_next"
+    },
+    {
+      "id": "camera",
+      "title": "Move the map",
+      "instruction": "Pan with WASD or right-drag, and zoom with +/- or the mouse wheel.",
+      "completion": "camera_moved"
+    },
+    {
+      "id": "inspect_hq",
+      "title": "Inspect Headquarters",
+      "instruction": "Click your Headquarters (gold building at the center) to see details in the inspector panel.",
+      "completion": "hq_selected"
+    },
+    {
+      "id": "play_time",
+      "title": "Start time",
+      "instruction": "Press Play or Space to run the simulation. Watch the tick counter increase, then pause when ready.",
+      "completion": "tick_advanced"
+    },
+    {
+      "id": "road_basics",
+      "title": "Road mode",
+      "instruction": "Click Road (or press R). Click a hex on your road network, then click a destination to extend roads toward forest and rock.",
+      "completion": "road_placed"
+    },
+    {
+      "id": "build_woodcutter",
+      "title": "Build Woodcutter",
+      "instruction": "Select Woodcutter, move over forest near a road, and click a valid hex to place a construction site.",
+      "completion": "woodcutter_placed"
+    },
+    {
+      "id": "build_forester",
+      "title": "Build Forester",
+      "instruction": "Foresters renew forest. Place a Forester Camp on forest terrain connected by roads.",
+      "completion": "forester_placed"
+    },
+    {
+      "id": "build_sawmill",
+      "title": "Build Sawmill",
+      "instruction": "Sawmills turn timber into planks. Place a Sawmill on grass with road access.",
+      "completion": "sawmill_placed"
+    },
+    {
+      "id": "build_quarry",
+      "title": "Build Quarry",
+      "instruction": "Quarries produce stone from rock. Place a Quarry on quarryable terrain near roads.",
+      "completion": "quarry_placed"
+    },
+    {
+      "id": "watch_economy",
+      "title": "Watch the economy",
+      "instruction": "Press Play and watch carriers deliver materials. Check the inspector and warnings if a building is waiting.",
+      "completion": "economy_watched"
+    },
+    {
+      "id": "complete",
+      "title": "Objective complete",
+      "instruction": "When all four buildings are built, connected, and you store 10 planks and 10 stone, you win!",
+      "completion": "objective_complete"
+    }
+  ]
+}

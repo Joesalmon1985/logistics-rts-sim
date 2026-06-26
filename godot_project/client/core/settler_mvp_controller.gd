@@ -74,6 +74,28 @@ func get_render_data() -> Dictionary:
 
 
 func get_selection_at(q: int, r: int) -> Dictionary:
+	# Settler MVP priority: carrier/unit > building > site > road node > road > terrain
+	var render: Dictionary = get_render_data()
+	for carrier in render.get("carriers", []):
+		if int(round(float(carrier.get("q", -1)))) == q and int(round(float(carrier.get("r", -1)))) == r:
+			return {"kind": "carrier", "data": carrier}
+	for unit in viewer.snapshot.get("units", []):
+		if int(unit.get("q", -1)) == q and int(unit.get("r", -1)) == r:
+			return {"kind": "unit", "data": unit}
+	for building in viewer.snapshot.get("buildings", []):
+		if BuildingCatalog.occupies_hex(building, q, r):
+			return {"kind": "building", "data": building}
+	for site in viewer.snapshot.get("construction_sites", []):
+		var sq: int = int(site.get("anchor_q", site.get("q", -1)))
+		var sr: int = int(site.get("anchor_r", site.get("r", -1)))
+		if sq == q and sr == r:
+			return {"kind": "construction_site", "data": site}
+	for node in viewer.snapshot.get("road_nodes", []):
+		if int(node.get("q", -1)) == q and int(node.get("r", -1)) == r:
+			return {"kind": "road_node", "data": node}
+	for road in viewer.snapshot.get("roads", []):
+		if (int(road.get("from_q", -1)) == q and int(road.get("from_r", -1)) == r) or (int(road.get("to_q", -1)) == q and int(road.get("to_r", -1)) == r):
+			return {"kind": "road", "data": road}
 	return viewer.get_selection_at(q, r)
 
 
@@ -317,6 +339,34 @@ func build_warnings_text() -> String:
 	if lines.is_empty():
 		return "No warnings."
 	return "\n".join(lines)
+
+
+func get_mode_banner_text() -> Dictionary:
+	if placement_building_type != "":
+		var label: String = str(BUILD_LABELS.get(placement_building_type, placement_building_type))
+		return {
+			"title": "Placing %s" % label,
+			"instruction": "Move over the map, then click a valid hex. Esc cancels.",
+		}
+	if road_mode_active:
+		if road_start_hex.x < 0:
+			return {
+				"title": "Road mode",
+				"instruction": "Click a start point on your road network.",
+			}
+		return {
+			"title": "Road mode",
+			"instruction": "Click destination hex to extend the road.",
+		}
+	return {"title": "", "instruction": ""}
+
+
+func get_mode_context() -> Dictionary:
+	return {
+		"build_mode": placement_building_type != "",
+		"road_mode": road_mode_active,
+		"building_type": placement_building_type,
+	}
 
 
 func build_help_text() -> String:

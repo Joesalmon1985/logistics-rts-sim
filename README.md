@@ -15,16 +15,30 @@ Original mobile Godot strategy game combining settlement logistics, RTS military
 
 All randomness uses a seeded RNG in simulation state. Authoritative hashed state uses integers/fixed-point (no floats). See `docs/architecture/00_system_architecture.md` and the ratified decisions in `docs/design/11_design_decision_register.md`.
 
-## Play Settler MVP
+## Play Settler MVP (human-playable)
 
-Launch the Godot project (main scene: **Settler MVP** menu) or run:
+Launch from the repo root:
+
+```bash
+./scripts/run_game.sh
+```
+
+Tutorial mode:
+
+```bash
+./scripts/run_tutorial.sh
+```
+
+The main menu offers **Tutorial**, **Free Play / Settler MVP**, **Debug Viewers**, and **Quit**. See [human-playable play guide](docs/audit/RUN_HUMAN_PLAYABLE_SETTLER_PLAY_GUIDE.md) and [run doc](docs/runs/RUN_HUMAN_PLAYABLE_SETTLER_MVP.md).
+
+Legacy direct scene launch (optional):
 
 ```bash
 export GODOT=/path/to/Godot_v4.5.2-stable_linux.x86_64
 "$GODOT" --path godot_project --resolution 1920x1080 res://client/scenes/settler_mvp_game.tscn
 ```
 
-See [play guide](docs/audit/RUN_PLAYABLE_SETTLER_MVP_PLAY_GUIDE.md) and [run doc](docs/runs/RUN_PLAYABLE_SETTLER_MVP.md).
+See also [playable settler baseline guide](docs/audit/RUN_PLAYABLE_SETTLER_MVP_PLAY_GUIDE.md).
 
 ## Run Sequence
 

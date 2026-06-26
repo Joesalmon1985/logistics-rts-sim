@@ -73,7 +73,7 @@
 	"possible_fullscreen_input_blockers": [
 		{
 			"name": "SettlerMvpGame",
-			"path": "",
+			"path": "SettlerMvpGame",
 			"rect": {
 				"h": 1080.0,
 				"w": 1920.0,

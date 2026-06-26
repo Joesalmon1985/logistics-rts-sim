@@ -1,3 +1,4 @@
+class_name SettlerMvpGame
 extends Control
 
 ## Settler MVP — human-playable settlement logistics mode.
@@ -14,7 +15,11 @@ const BUILD_KEY_MAP: Dictionary = {
 	KEY_4: "quarry",
 }
 
+@export var tutorial_enabled: bool = false
+static var pending_tutorial: bool = false
+
 var controller: SettlerMvpController = SettlerMvpController.new()
+var tutorial: SettlerTutorialController = SettlerTutorialController.new()
 
 @onready var _map: MapViewport = %MapViewport
 @onready var _status: Label = %StatusLabel
@@ -28,39 +33,39 @@ var controller: SettlerMvpController = SettlerMvpController.new()
 @onready var _victory: Label = %VictoryLabel
 @onready var _play_btn: Button = %PlayBtn
 @onready var _map_area: PanelContainer = %MapArea
+@onready var _build_palette: BuildPalette = %BuildPalette
+@onready var _mode_banner: PanelContainer = %ModeBanner
+@onready var _mode_title: Label = %ModeTitle
+@onready var _mode_instruction: Label = %ModeInstruction
+@onready var _tutorial_panel: PanelContainer = %TutorialPanel
+@onready var _tutorial_title: Label = %TutorialTitle
+@onready var _tutorial_instruction: RichTextLabel = %TutorialInstruction
+@onready var _tutorial_next: Button = %TutorialNextBtn
+@onready var _tutorial_skip: Button = %TutorialSkipBtn
+
+var _sprite_layer: SettlerSpriteLayer
 
 var _tick_timer: Timer
 var _event_lines: PackedStringArray = PackedStringArray()
 var _map_fitted: bool = false
 var _help_visible: bool = true
 var _initialized: bool = false
+var _last_selection: Dictionary = {}
+
+
+func enable_tutorial_for_tests() -> void:
+	tutorial_enabled = true
+	tutorial.enabled = true
+	if _tutorial_panel != null:
+		_tutorial_panel.visible = true
+	tutorial.start(controller.get_snapshot(), _map)
+	_refresh_tutorial_ui()
 
 
 func initialize_for_tests() -> void:
 	if _initialized:
 		return
-	_bind_ui_nodes()
-	SimBootstrap.load_all()
-	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
-	controller.message_logged.connect(_on_message_logged)
-	controller.victory_achieved.connect(_on_victory)
-	_map.selection_clicked.connect(_on_map_click)
-	_map.hover_changed.connect(_on_map_hover)
-	_map.enable_camera_control = true
-	_map.enable_hover = true
-	_map.auto_fit_on_data_change = not _map_fitted
-	_map.show_grid = false
-	_map.show_coord_labels = false
-	_map.show_logistics = true
-	_map.show_forest_density = true
-	_map.show_internal_title_bar = false
-	_map.mouse_filter = Control.MOUSE_FILTER_STOP
-	_configure_input_filters()
-	_setup_tick_timer()
-	_help.text = controller.build_help_text()
-	_wire_build_buttons()
-	_start_game()
-	_initialized = true
+	_setup_scene()
 
 
 func _bind_ui_nodes() -> void:
@@ -76,6 +81,16 @@ func _bind_ui_nodes() -> void:
 	_victory = find_child("VictoryLabel", true, false) as Label
 	_play_btn = find_child("PlayBtn", true, false) as Button
 	_map_area = find_child("MapArea", true, false) as PanelContainer
+	_build_palette = find_child("BuildPalette", true, false) as BuildPalette
+	_mode_banner = find_child("ModeBanner", true, false) as PanelContainer
+	_mode_title = find_child("ModeTitle", true, false) as Label
+	_mode_instruction = find_child("ModeInstruction", true, false) as Label
+	_tutorial_panel = find_child("TutorialPanel", true, false) as PanelContainer
+	_tutorial_title = find_child("TutorialTitle", true, false) as Label
+	_tutorial_instruction = find_child("TutorialInstruction", true, false) as RichTextLabel
+	_tutorial_next = find_child("TutorialNextBtn", true, false) as Button
+	_tutorial_skip = find_child("TutorialSkipBtn", true, false) as Button
+	_sprite_layer = find_child("SettlerSpriteLayer", true, false) as SettlerSpriteLayer
 
 
 func _ready() -> void:
@@ -84,14 +99,37 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(1280, 720)
 	if not (get_parent() is SubViewport):
 		set_deferred("size", SCREEN_SIZE)
+	_setup_scene()
+	call_deferred("_focus_play_on_start")
+
+
+func _setup_scene() -> void:
 	_bind_ui_nodes()
+	if _map == null:
+		push_error("SettlerMvpGame: MapViewport not found")
+		return
+	if pending_tutorial:
+		tutorial_enabled = true
+		pending_tutorial = false
 	SimBootstrap.load_all()
+	SettlerAssetRegistry.load_registry()
 	controller.snapshot_refreshed.connect(_on_snapshot_refreshed)
 	controller.message_logged.connect(_on_message_logged)
 	controller.victory_achieved.connect(_on_victory)
 	_map.selection_clicked.connect(_on_map_click)
 	_map.hover_changed.connect(_on_map_hover)
-	_map.enable_camera_control = true
+	if _sprite_layer == null and _map != null:
+		_sprite_layer = SettlerSpriteLayer.new()
+		_sprite_layer.name = "SettlerSpriteLayer"
+		_sprite_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_sprite_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_map.add_child(_sprite_layer)
+	if _sprite_layer != null:
+		_sprite_layer.setup(_map)
+	_map.hover_changed.connect(func(_q, _r):
+		if _sprite_layer != null:
+			_sprite_layer.queue_redraw()
+	)
 	_map.enable_hover = true
 	_map.auto_fit_on_data_change = not _map_fitted
 	_map.show_grid = false
@@ -99,14 +137,22 @@ func _ready() -> void:
 	_map.show_logistics = true
 	_map.show_forest_density = true
 	_map.show_internal_title_bar = false
+	_map.use_settler_sprites = true
 	_map.mouse_filter = Control.MOUSE_FILTER_STOP
+	_map.enable_camera_control = true
 	_configure_input_filters()
 	_setup_tick_timer()
 	_help.text = controller.build_help_text()
-	_wire_build_buttons()
+	_wire_build_palette()
+	_wire_time_buttons()
+	_wire_tutorial()
+	tutorial.enabled = tutorial_enabled
+	if _tutorial_panel != null:
+		_tutorial_panel.visible = tutorial_enabled
+	if _build_palette != null:
+		_build_palette.ensure_built()
 	_start_game()
 	_initialized = true
-	call_deferred("_focus_play_on_start")
 
 
 func _configure_input_filters() -> void:
@@ -119,6 +165,9 @@ func _configure_input_filters() -> void:
 	_set_decorative_richtext(_inspector)
 	_set_decorative_richtext(_event_log)
 	_set_decorative_richtext(_help)
+	_set_decorative_richtext(_tutorial_instruction)
+	_set_decorative_control(_mode_title)
+	_set_decorative_control(_mode_instruction)
 	var title: Label = get_node_or_null("RootVBox/ContentHBox/RightPanel/TitleLabel") as Label
 	_set_decorative_control(title)
 	var build_header: Label = get_node_or_null("RootVBox/ContentHBox/RightPanel/BuildHeader") as Label
@@ -142,7 +191,7 @@ func _set_decorative_richtext(node: RichTextLabel) -> void:
 
 
 func _focus_play_on_start() -> void:
-	if _play_btn != null:
+	if _play_btn != null and is_inside_tree():
 		_play_btn.grab_focus()
 
 
@@ -154,13 +203,25 @@ func _setup_tick_timer() -> void:
 	_update_tick_timer()
 
 
-func _wire_build_buttons() -> void:
-	_connect_btn("%RoadBtn", func(): controller.set_road_mode(true))
-	_connect_btn("%WoodcutterBtn", func(): controller.set_build_mode("woodcutter"))
-	_connect_btn("%ForesterBtn", func(): controller.set_build_mode("forester"))
-	_connect_btn("%SawmillBtn", func(): controller.set_build_mode("sawmill"))
-	_connect_btn("%QuarryBtn", func(): controller.set_build_mode("quarry"))
-	_connect_btn("%CancelBtn", func(): controller.clear_modes(); _preview.text = "")
+func _wire_build_palette() -> void:
+	if _build_palette == null:
+		_wire_legacy_build_buttons()
+		return
+	_build_palette.build_selected.connect(func(t): _set_build_mode(t))
+	_build_palette.road_selected.connect(invoke_road_mode)
+	_build_palette.cancel_selected.connect(invoke_cancel_modes)
+
+
+func _wire_legacy_build_buttons() -> void:
+	_connect_btn("%RoadBtn", invoke_road_mode)
+	_connect_btn("%WoodcutterBtn", func(): _set_build_mode("woodcutter"))
+	_connect_btn("%ForesterBtn", func(): _set_build_mode("forester"))
+	_connect_btn("%SawmillBtn", func(): _set_build_mode("sawmill"))
+	_connect_btn("%QuarryBtn", func(): _set_build_mode("quarry"))
+	_connect_btn("%CancelBtn", invoke_cancel_modes)
+
+
+func _wire_time_buttons() -> void:
 	_connect_btn("%PauseBtn", invoke_pause)
 	_connect_btn("%PlayBtn", invoke_play)
 	_connect_btn("%Speed1Btn", func(): invoke_set_speed(1.0))
@@ -171,10 +232,24 @@ func _wire_build_buttons() -> void:
 	_connect_btn("%MenuBtn", func(): get_tree().change_scene_to_file("res://client/scenes/main_menu.tscn"))
 
 
+func _wire_tutorial() -> void:
+	tutorial.step_changed.connect(_on_tutorial_step_changed)
+	tutorial.tutorial_completed.connect(_on_tutorial_completed)
+	if _tutorial_next != null:
+		_tutorial_next.pressed.connect(func(): tutorial.advance_manual())
+	if _tutorial_skip != null:
+		_tutorial_skip.pressed.connect(_exit_tutorial_to_menu)
+
+
 func _connect_btn(node_path: String, callback: Callable) -> void:
 	var btn: Button = get_node_or_null(node_path)
 	if btn != null:
 		btn.pressed.connect(callback)
+
+
+func _set_build_mode(building_type: String) -> void:
+	controller.set_build_mode(building_type)
+	_refresh_mode_ui()
 
 
 func invoke_play() -> void:
@@ -203,16 +278,18 @@ func invoke_set_speed(multiplier: float) -> void:
 
 
 func invoke_build_mode(building_type: String) -> void:
-	controller.set_build_mode(building_type)
+	_set_build_mode(building_type)
 
 
 func invoke_road_mode() -> void:
 	controller.set_road_mode(true)
+	_refresh_mode_ui()
 
 
 func invoke_cancel_modes() -> void:
 	controller.clear_modes()
 	_preview.text = ""
+	_refresh_mode_ui()
 	_refresh_map_overlays()
 
 
@@ -246,6 +323,14 @@ func get_current_tick() -> int:
 	return controller.get_current_tick()
 
 
+func is_tutorial_enabled() -> bool:
+	return tutorial_enabled and tutorial.enabled
+
+
+func get_tutorial_step_index() -> int:
+	return tutorial.step_index
+
+
 func simulate_map_click_at_hex(q: int, r: int) -> void:
 	var local: Vector2 = _map.hex_center_local(q, r)
 	simulate_map_click_at_local(local)
@@ -272,11 +357,45 @@ func _start_game() -> void:
 	_victory.visible = false
 	_map_fitted = false
 	_map.auto_fit_on_data_change = true
+	if tutorial.enabled:
+		tutorial.start(controller.get_snapshot(), _map)
+		_refresh_tutorial_ui()
 	_refresh_all()
 	call_deferred("_focus_play_on_start")
 
 
+func _exit_tutorial_to_menu() -> void:
+	tutorial.skip_or_exit()
+	get_tree().change_scene_to_file("res://client/scenes/main_menu.tscn")
+
+
+func _on_tutorial_step_changed(_idx: int, _step: Dictionary) -> void:
+	_refresh_tutorial_ui()
+
+
+func _on_tutorial_completed() -> void:
+	if _tutorial_title != null:
+		_tutorial_title.text = "Tutorial complete!"
+	if _tutorial_instruction != null:
+		_tutorial_instruction.text = "You finished the guided steps. Keep playing or return to the menu."
+
+
+func _refresh_tutorial_ui() -> void:
+	if not tutorial.enabled or _tutorial_panel == null:
+		return
+	var step: Dictionary = tutorial.current_step()
+	_tutorial_panel.visible = true
+	if _tutorial_title != null:
+		_tutorial_title.text = str(step.get("title", "Tutorial"))
+	if _tutorial_instruction != null:
+		_tutorial_instruction.text = str(step.get("instruction", ""))
+	if _tutorial_next != null:
+		_tutorial_next.visible = str(step.get("completion", "")) == "manual_next"
+
+
 func _update_tick_timer() -> void:
+	if _tick_timer == null or not _tick_timer.is_inside_tree():
+		return
 	var interval: float = TICK_BASE_SEC / maxf(controller.speed_multiplier, 0.25)
 	_tick_timer.wait_time = interval
 	if controller.paused:
@@ -329,29 +448,37 @@ func _handle_keyboard_shortcut(event: InputEventKey) -> bool:
 			return true
 		KEY_EQUAL, KEY_KP_ADD:
 			_map.zoom_by_factor(ZOOM_STEP)
+			_sprite_layer.queue_redraw()
 			return true
 		KEY_MINUS, KEY_KP_SUBTRACT:
 			_map.zoom_by_factor(1.0 / ZOOM_STEP)
+			_sprite_layer.queue_redraw()
 			return true
 		KEY_W, KEY_UP:
 			_map.pan_by_screen_delta(Vector2(0, PAN_STEP_PX))
+			_sprite_layer.queue_redraw()
 			return true
 		KEY_S, KEY_DOWN:
 			_map.pan_by_screen_delta(Vector2(0, -PAN_STEP_PX))
+			_sprite_layer.queue_redraw()
 			return true
 		KEY_A, KEY_LEFT:
 			_map.pan_by_screen_delta(Vector2(PAN_STEP_PX, 0))
+			_sprite_layer.queue_redraw()
 			return true
 		KEY_D, KEY_RIGHT:
 			_map.pan_by_screen_delta(Vector2(-PAN_STEP_PX, 0))
+			_sprite_layer.queue_redraw()
 			return true
 	if BUILD_KEY_MAP.has(event.keycode):
-		invoke_build_mode(str(BUILD_KEY_MAP[event.keycode]))
+		_set_build_mode(str(BUILD_KEY_MAP[event.keycode]))
 		return true
 	return false
 
 
-func _on_snapshot_refreshed(_snapshot: Dictionary) -> void:
+func _on_snapshot_refreshed(snapshot: Dictionary) -> void:
+	if tutorial.enabled:
+		tutorial.update(snapshot, _map, _last_selection, controller)
 	_refresh_all()
 
 
@@ -366,9 +493,10 @@ func _on_victory() -> void:
 
 func _on_map_click(q: int, r: int) -> void:
 	controller.handle_hex_click(q, r)
-	var selection: Dictionary = controller.get_selection_at(q, r)
-	_inspector.text = SelectionFormatter.format(selection, controller.get_snapshot())
+	_last_selection = controller.get_selection_at(q, r)
+	_update_inspector(_last_selection)
 	_refresh_map_overlays()
+	_refresh_mode_ui()
 
 
 func _on_map_hover(q: int, r: int) -> void:
@@ -378,22 +506,31 @@ func _on_map_hover(q: int, r: int) -> void:
 	if preview.get("active", false):
 		var reason: String = str(preview.get("reason", ""))
 		if preview.get("valid", false):
-			_preview.text = "Valid placement"
+			_preview.text = "Valid placement — click to confirm"
 		else:
 			_preview.text = reason if reason != "" else "Invalid placement"
 	elif controller.road_mode_active:
 		var road_prev: Dictionary = controller.get_road_preview()
 		if road_prev.get("active", false):
-			_preview.text = "Road route OK" if road_prev.get("valid", false) else str(road_prev.get("reason", "Invalid route"))
-		else:
+			_preview.text = "Road route OK — click to confirm" if road_prev.get("valid", false) else str(road_prev.get("reason", "Invalid route"))
+		elif controller.road_start_hex.x >= 0:
 			_preview.text = "Road mode: select destination"
+		else:
+			_preview.text = "Road mode: select start on your network"
 	else:
 		_preview.text = ""
+
+
+func _update_inspector(selection: Dictionary) -> void:
+	if _inspector == null:
+		return
+	_inspector.text = SelectionFormatter.format(selection, controller.get_snapshot(), controller.get_mode_context())
 
 
 func _refresh_all() -> void:
 	_refresh_map()
 	_refresh_panels()
+	_refresh_mode_ui()
 
 
 func _refresh_map() -> void:
@@ -402,15 +539,52 @@ func _refresh_map() -> void:
 		_map_fitted = true
 		_map.auto_fit_on_data_change = false
 	_refresh_map_overlays()
+	if _sprite_layer != null:
+		_sprite_layer.queue_redraw()
 
 
 func _refresh_map_overlays() -> void:
 	_map.set_placement_ghost(controller.get_placement_preview())
 	var road_prev: Dictionary = controller.get_road_preview()
+	var start: Vector2i = controller.road_start_hex
 	_map.set_road_preview(
 		road_prev.get("hexes", []),
 		bool(road_prev.get("valid", false)),
+		start.x,
+		start.y,
 	)
+
+
+func _refresh_mode_ui() -> void:
+	var banner: Dictionary = controller.get_mode_banner_text()
+	if _mode_banner != null:
+		_mode_banner.visible = str(banner.get("title", "")) != ""
+	if _mode_title != null:
+		_mode_title.text = str(banner.get("title", ""))
+	if _mode_instruction != null:
+		_mode_instruction.text = str(banner.get("instruction", ""))
+	if _build_palette != null:
+		if controller.road_mode_active:
+			_build_palette.set_road_active(true)
+		elif controller.placement_building_type != "":
+			_build_palette.set_active_build(controller.placement_building_type)
+		else:
+			_build_palette.clear_active()
+	_refresh_mode_preview_text()
+
+
+func _refresh_mode_preview_text() -> void:
+	if _preview == null:
+		return
+	if controller.placement_building_type != "":
+		_preview.text = "Move over the map, then click a valid hex."
+	elif controller.road_mode_active:
+		if controller.road_start_hex.x >= 0:
+			_preview.text = "Road mode: select destination"
+		else:
+			_preview.text = "Road mode: select start on your network"
+	elif not controller.road_mode_active and controller.placement_building_type == "":
+		_preview.text = ""
 
 
 func _refresh_panels() -> void:

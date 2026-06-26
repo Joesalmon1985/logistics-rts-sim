@@ -1,0 +1,193 @@
+{
+	"shots": [
+		{
+			"context": "woodcutter_preview",
+			"help_text_found": true,
+			"hud_found": true,
+			"map_rect": {
+				"h": 0.0,
+				"w": 0.0,
+				"x": 0.0,
+				"y": 0.0
+			},
+			"map_viewport_found": true,
+			"objective_panel_found": true,
+			"off_screen_panels": [],
+			"panel_rects": {
+				"controls_help": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"event_warnings": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"inspector": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"map_viewport": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"objective_panel": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"play_button": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"status_label": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"stockpile_status": {
+					"h": 0.0,
+					"w": 0.0,
+					"x": 0.0,
+					"y": 0.0
+				}
+			},
+			"panels": {
+				"build_palette": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"help_panel": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"mode_banner": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"objective_panel": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"play_button": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"preview_label": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"time_controls": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": true
+				},
+				"tutorial_panel": {
+					"exists": true,
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					},
+					"visible": false
+				}
+			},
+			"panels_on_screen": false,
+			"paused_initial": true,
+			"possible_fullscreen_input_blockers": [
+				{
+					"name": "SettlerMvpGame",
+					"path": "SettlerMvpGame",
+					"rect": {
+						"h": 1080.0,
+						"w": 1920.0,
+						"x": 0.0,
+						"y": 0.0
+					}
+				}
+			],
+			"scene_loaded": true,
+			"selected_hex_initial": {
+				"q": -1,
+				"r": -1
+			},
+			"top_level_control_rects": [
+				{
+					"mouse_filter": 1,
+					"name": "RootVBox",
+					"rect": {
+						"h": 0.0,
+						"w": 0.0,
+						"x": 0.0,
+						"y": 0.0
+					}
+				}
+			],
+			"viewport_size": "1920x1080",
+			"visibility_gate_pass": true
+		}
+	]
+}

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://settler_mvp_game"]
+[gd_scene load_steps=4 format=3 uid="uid://settler_mvp_game"]
 
 [ext_resource type="Script" path="res://client/scenes/settler_mvp_game.gd" id="1"]
 [ext_resource type="Script" path="res://client/ui/map_viewport.gd" id="2"]
+[ext_resource type="Script" path="res://client/ui/build_palette.gd" id="4"]
 
 [node name="SettlerMvpGame" type="Control"]
 layout_mode = 3
@@ -104,6 +105,62 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 22
 text = "Settler MVP"
 
+[node name="TutorialPanel" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(0, 120)
+
+[node name="TutorialVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel"]
+layout_mode = 2
+
+[node name="TutorialTitle" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Tutorial"
+
+[node name="TutorialInstruction" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 72)
+fit_content = true
+text = "Tutorial instructions"
+
+[node name="TutorialBtnRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+layout_mode = 2
+
+[node name="TutorialNextBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Next"
+
+[node name="TutorialSkipBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Exit to Menu"
+
+[node name="ModeBanner" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+
+[node name="ModeVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel/ModeBanner"]
+layout_mode = 2
+
+[node name="ModeTitle" type="Label" parent="RootVBox/ContentHBox/RightPanel/ModeBanner/ModeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.55, 1)
+text = "Mode"
+
+[node name="ModeInstruction" type="Label" parent="RootVBox/ContentHBox/RightPanel/ModeBanner/ModeVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = "Instructions"
+
 [node name="ObjectivePanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -128,7 +185,14 @@ mouse_filter = 2
 focus_mode = 0
 text = "Build menu"
 
+[node name="BuildPalette" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 180)
+script = ExtResource("4")
+
 [node name="BuildRow1" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
+visible = false
 layout_mode = 2
 
 [node name="RoadBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow1"]
@@ -169,6 +233,7 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
+custom_minimum_size = Vector2(0, 24)
 autowrap_mode = 3
 text = ""
 
@@ -182,7 +247,11 @@ fit_content = true
 scroll_active = true
 text = "Warnings"
 
-[node name="Inspector" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="InspectorPanel" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Inspector" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel/InspectorPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2

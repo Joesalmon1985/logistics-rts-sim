@@ -11,6 +11,7 @@ const SCENE_PATHS: Dictionary = {
 	"military": "res://client/scenes/military_viewer_demo.tscn",
 	"spectator": "res://client/scenes/economy_spectator_bot_demo.tscn",
 	"settler_mvp": "res://client/scenes/settler_mvp_game.tscn",
+	"main_menu": "res://client/scenes/main_menu.tscn",
 }
 
 
@@ -21,7 +22,7 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	if packed == null:
 		return {"ok": false, "reason": "failed to load scene"}
 	var scene: Node = packed.instantiate()
-	if variant == "settler_mvp":
+	if variant == "settler_mvp" or variant == "main_menu":
 		if scene == null:
 			return {"ok": false, "reason": "failed to instantiate settler scene"}
 	elif variant == "spectator":
@@ -74,6 +75,8 @@ static func capture(ctx: Dictionary) -> Image:
 	var subvp: SubViewport = ctx.get("viewport")
 	if subvp == null:
 		return Image.create(1, 1, false, Image.FORMAT_RGBA8)
+	subvp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	RenderingServer.force_draw(true, 0.0)
 	var tex: ViewportTexture = subvp.get_texture()
 	if tex == null:
 		return Image.create(1, 1, false, Image.FORMAT_RGBA8)
