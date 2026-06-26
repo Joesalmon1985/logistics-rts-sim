@@ -4,6 +4,8 @@ extends Control
 ## Settler MVP — human-playable settlement logistics mode.
 
 const SCREEN_SIZE := Vector2i(1920, 1080)
+const LAUNCH_MIN_SIZE := Vector2i(1280, 720)
+const RIGHT_PANEL_MIN_WIDTH := 380.0
 const TICK_BASE_SEC: float = 0.25
 const PAN_STEP_PX: float = 48.0
 const ZOOM_STEP: float = 1.12
@@ -102,11 +104,18 @@ func _bind_ui_nodes() -> void:
 func _ready() -> void:
 	if _initialized:
 		return
-	custom_minimum_size = Vector2(1280, 720)
+	custom_minimum_size = Vector2(LAUNCH_MIN_SIZE)
 	if not (get_parent() is SubViewport):
-		set_deferred("size", SCREEN_SIZE)
+		var win: Window = get_window()
+		if win != null:
+			win.min_size = LAUNCH_MIN_SIZE
 	_setup_scene()
 	call_deferred("_focus_play_on_start")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		call_deferred("_enforce_launch_layout")
 
 
 func _setup_scene() -> void:
@@ -147,6 +156,8 @@ func _setup_scene() -> void:
 	_map.use_settler_sprites = true
 	_map.mouse_filter = Control.MOUSE_FILTER_STOP
 	_map.enable_camera_control = true
+	_ensure_right_panel_scroll()
+	_enforce_launch_layout()
 	_configure_input_filters()
 	_setup_tick_timer()
 	_help.text = controller.build_help_text()
@@ -160,6 +171,7 @@ func _setup_scene() -> void:
 		_build_palette.ensure_built()
 	_start_game()
 	_initialized = true
+	call_deferred("_enforce_launch_layout")
 
 
 func _configure_input_filters() -> void:
@@ -181,6 +193,75 @@ func _configure_input_filters() -> void:
 	_set_decorative_control(build_header)
 	if _map_area != null:
 		_map_area.mouse_filter = Control.MOUSE_FILTER_PASS
+
+
+func _get_right_panel() -> VBoxContainer:
+	var scroll: ScrollContainer = find_child("RightPanelScroll", true, false) as ScrollContainer
+	if scroll != null:
+		return scroll.get_child(0) as VBoxContainer
+	return find_child("RightPanel", true, false) as VBoxContainer
+
+
+func _ensure_right_panel_scroll() -> void:
+	# RightPanelScroll is authored in settler_mvp_game.tscn (HSplitContainer layout).
+	pass
+
+
+func _enforce_launch_layout() -> void:
+	if not is_inside_tree():
+		return
+	var viewport_w: float = get_viewport_rect().size.x
+	if viewport_w < 200.0:
+		return
+	var right_w: float = clampf(RIGHT_PANEL_MIN_WIDTH, 340.0, viewport_w * 0.4)
+	var split_x: int = int(clampf(viewport_w - right_w - 6.0, 320.0, viewport_w - right_w))
+	var hsplit: HSplitContainer = get_node_or_null("RootVBox/ContentHBox") as HSplitContainer
+	if hsplit != null:
+		hsplit.split_offset = split_x
+	var scroll: ScrollContainer = find_child("RightPanelScroll", true, false) as ScrollContainer
+	if scroll != null:
+		scroll.custom_minimum_size.x = right_w
+	if _map != null:
+		_map.custom_minimum_size = Vector2.ZERO
+		_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if _map_area != null:
+		_map_area.custom_minimum_size = Vector2.ZERO
+		_map_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_map_area.size_flags_stretch_ratio = 1.0
+
+
+func get_viewport_size_for_probes() -> Vector2i:
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return LAUNCH_MIN_SIZE
+	return Vector2i(vp.get_visible_rect().size)
+
+
+func get_right_panel_global_rect() -> Rect2:
+	var scroll: Control = find_child("RightPanelScroll", true, false) as Control
+	if scroll != null:
+		return scroll.get_global_rect()
+	var right: Control = find_child("RightPanel", true, false) as Control
+	if right == null:
+		return Rect2()
+	return right.get_global_rect()
+
+
+func get_map_viewport_global_rect() -> Rect2:
+	if _map == null:
+		return Rect2()
+	return _map.get_global_rect()
+
+
+func get_mode_status_text() -> String:
+	return _mode_status.text if _mode_status != null else ""
+
+
+func get_help_text() -> String:
+	if _help == null:
+		return ""
+	return _help.get_parsed_text()
 
 
 func _set_decorative_control(node: Control) -> void:
@@ -317,7 +398,9 @@ func get_status_text() -> String:
 
 
 func get_inspector_text() -> String:
-	return _inspector.text if _inspector != null else ""
+	if _inspector == null:
+		return ""
+	return _inspector.get_parsed_text()
 
 
 func get_selected_hex() -> Vector2i:

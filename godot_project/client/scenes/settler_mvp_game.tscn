@@ -82,61 +82,72 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.95, 0.45, 1)
 text = "Victory!"
 
-[node name="ContentHBox" type="HBoxContainer" parent="RootVBox"]
+[node name="ContentHBox" type="HSplitContainer" parent="RootVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+split_offset = 860
+dragger_visibility = 2
 theme_override_constants/separation = 6
 
 [node name="MapArea" type="PanelContainer" parent="RootVBox/ContentHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 2.0
+size_flags_stretch_ratio = 1.0
 mouse_filter = 1
 
 [node name="MapViewport" type="Control" parent="RootVBox/ContentHBox/MapArea"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(900, 600)
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("2")
 
-[node name="RightPanel" type="VBoxContainer" parent="RootVBox/ContentHBox"]
+[node name="RightPanelScroll" type="ScrollContainer" parent="RootVBox/ContentHBox"]
+unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(500, 0)
-size_flags_horizontal = 0
+custom_minimum_size = Vector2(380, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="RightPanel" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll"]
+layout_mode = 2
+custom_minimum_size = Vector2(380, 0)
+size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="TitleLabel" type="Label" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="TitleLabel" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 22
 text = "Settler MVP"
 
-[node name="TutorialPanel" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="TutorialPanel" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(0, 180)
 
-[node name="TutorialVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel"]
+[node name="TutorialVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel"]
 layout_mode = 2
 
-[node name="TutorialTitle" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialTitle" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Tutorial"
 
-[node name="TutorialProgress" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialProgress" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Step 1 of 11"
 
-[node name="TutorialInstruction" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialInstruction" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(460, 96)
@@ -144,34 +155,34 @@ fit_content = true
 theme_override_font_sizes/normal_font_size = 15
 text = "Tutorial instructions"
 
-[node name="TutorialBtnRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialBtnRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 layout_mode = 2
 
-[node name="TutorialNextBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+[node name="TutorialNextBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Next"
 
-[node name="TutorialSkipBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+[node name="TutorialSkipBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Skip Tutorial"
 
-[node name="TutorialExitBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+[node name="TutorialExitBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Back to Menu"
 
-[node name="ModeBanner" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="ModeBanner" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(0, 48)
 
-[node name="ModeVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel/ModeBanner"]
+[node name="ModeVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/ModeBanner"]
 layout_mode = 2
 
-[node name="ModeTitle" type="Label" parent="RootVBox/ContentHBox/RightPanel/ModeBanner/ModeVBox"]
+[node name="ModeTitle" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/ModeBanner/ModeVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(460, 22)
@@ -179,7 +190,7 @@ theme_override_colors/font_color = Color(1, 0.92, 0.55, 1)
 theme_override_font_sizes/font_size = 18
 text = "Mode"
 
-[node name="ModeInstruction" type="Label" parent="RootVBox/ContentHBox/RightPanel/ModeBanner/ModeVBox"]
+[node name="ModeInstruction" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/ModeBanner/ModeVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(460, 36)
@@ -187,7 +198,7 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 text = "Instructions"
 
-[node name="ObjectivePanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="ObjectivePanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -198,7 +209,7 @@ fit_content = true
 scroll_active = true
 text = "Objective"
 
-[node name="StockLabel" type="Label" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="StockLabel" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -207,57 +218,57 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 text = "Stock:"
 
-[node name="BuildHeader" type="Label" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="BuildHeader" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 16
 text = "Build menu"
 
-[node name="BuildPalette" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="BuildPalette" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 180)
 script = ExtResource("4")
 
-[node name="BuildRow1" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="BuildRow1" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 visible = false
 layout_mode = 2
 
-[node name="RoadBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow1"]
+[node name="RoadBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BuildRow1"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Road"
 
-[node name="WoodcutterBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow1"]
+[node name="WoodcutterBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BuildRow1"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Woodcutter"
 
-[node name="ForesterBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow1"]
+[node name="ForesterBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BuildRow1"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Forester"
 
-[node name="BuildRow2" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="BuildRow2" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 layout_mode = 2
 
-[node name="SawmillBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow2"]
+[node name="SawmillBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BuildRow2"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Sawmill"
 
-[node name="QuarryBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow2"]
+[node name="QuarryBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BuildRow2"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Quarry"
 
-[node name="CancelBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BuildRow2"]
+[node name="CancelBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BuildRow2"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Cancel"
 
-[node name="PreviewLabel" type="Label" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="PreviewLabel" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -268,7 +279,7 @@ theme_override_colors/font_color = Color(0.95, 0.85, 0.55, 1)
 autowrap_mode = 3
 text = ""
 
-[node name="WarningsPanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="WarningsPanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -278,11 +289,11 @@ fit_content = true
 scroll_active = true
 text = "Warnings"
 
-[node name="InspectorPanel" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="InspectorPanel" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Inspector" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel/InspectorPanel"]
+[node name="Inspector" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/InspectorPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -293,7 +304,7 @@ fit_content = true
 scroll_active = true
 text = "Click a hex to inspect."
 
-[node name="EventLog" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="EventLog" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -304,7 +315,7 @@ theme_override_font_sizes/normal_font_size = 13
 scroll_active = true
 text = ""
 
-[node name="HelpPanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="HelpPanel" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -314,15 +325,15 @@ theme_override_font_sizes/normal_font_size = 13
 fit_content = true
 scroll_active = true
 
-[node name="BottomRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
+[node name="BottomRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 layout_mode = 2
 
-[node name="NewGameBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BottomRow"]
+[node name="NewGameBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BottomRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "New Game"
 
-[node name="MenuBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/BottomRow"]
+[node name="MenuBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/BottomRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Main Menu"

@@ -1,0 +1,206 @@
+{
+	"build_button_count": 6,
+	"build_palette_visible": true,
+	"capture_method": "real_desktop",
+	"carried_ware_icon_visible": true,
+	"carrier_sprite_visible": true,
+	"construction_site_distinct": true,
+	"failure_reasons": [],
+	"forester_sprite_distinct": true,
+	"hq_sprite_visible": true,
+	"human_understandable_pass": true,
+	"inspector_panel_visible": true,
+	"main_menu_route_used": true,
+	"map_visible": true,
+	"mode_or_help_text_visible": true,
+	"objective_panel_visible": true,
+	"panels": {
+		"build_palette": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 228.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 584.0
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": true
+		},
+		"help_panel": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 252.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 1187.0
+			},
+			"text": "[b]Settler MVP[/b]\nPress Space or Play to start the settlement simulation.\nYou can inspect, pan, zoom and place plans while paused.\n\n1. Connect roads from HQ to forest and rock areas.\n2. Build Woodcutter, Forester, Sawmill, and Quarry on suitable terrain.\n3. Press Play and watch carriers deliver materials.\n4. Win when all four buildings are complete, connected, and you store 10 planks + 10 stone.\n\n[b]Time[/b]: Space Play/Pause · . or Enter Step · F1/F2/F3 speed 1x/2x/4x\n[b]Map[/b]: Right-drag or WASD pan · Wheel or +/- zoom · Left-click inspect/place\n[b]Build[/b]: 1–4 building modes · R road · Esc cancel · H toggle this help",
+			"text_len": 632,
+			"visible": true
+		},
+		"inspector": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 120.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 983.0
+			},
+			"text": "Click a hex to inspect.",
+			"text_len": 23,
+			"visible": true
+		},
+		"inspector_panel": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 120.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 983.0
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": true
+		},
+		"map_viewport": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 685.0,
+				"w": 812.0,
+				"x": 0.0,
+				"y": 35.0
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": true
+		},
+		"mode_status": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 23.0,
+				"w": 169.0,
+				"x": 846.0,
+				"y": 4.0
+			},
+			"text": "Mode: Inspect / select",
+			"text_len": 22,
+			"visible": true
+		},
+		"objective_panel": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 154.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 367.0
+			},
+			"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10",
+			"text_len": 323,
+			"visible": true
+		},
+		"time_controls": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 31.0,
+				"w": 41.0,
+				"x": 1086.0,
+				"y": 0.0
+			},
+			"text": "Play",
+			"text_len": 4,
+			"visible": true
+		},
+		"tutorial_instruction": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 198.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 128.0
+			},
+			"text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"text_len": 269,
+			"visible": true
+		},
+		"tutorial_panel": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 289.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 72.0
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": true
+		},
+		"tutorial_title": {
+			"exists": true,
+			"reasons": [],
+			"rect": {
+				"h": 28.0,
+				"w": 460.0,
+				"x": 812.0,
+				"y": 72.0
+			},
+			"text": "Welcome to Settler MVP",
+			"text_len": 22,
+			"visible": true
+		}
+	},
+	"quarry_sprite_distinct": true,
+	"sawmill_sprite_distinct": true,
+	"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/actual_human_launch_tutorial_after.png",
+	"sprite_checks": {
+		"construction_site": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"forester": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"headquarters": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"quarry": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"sawmill": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"woodcutter": {
+			"exists": true,
+			"hash": "0000000000000000"
+		}
+	},
+	"terrain_distinct": true,
+	"time_controls_visible": true,
+	"tutorial_button_activated": true,
+	"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+	"tutorial_panel_visible": true,
+	"tutorial_title_text": "Welcome to Settler MVP",
+	"viewport_size": [
+		1280,
+		720
+	],
+	"window_size": [
+		1280,
+		720
+	],
+	"woodcutter_sprite_distinct": true
+}

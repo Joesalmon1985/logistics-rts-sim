@@ -8,4 +8,4 @@ if [[ ! -x "$GODOT" ]]; then
 	echo "Set GODOT to your Godot 4.5.x binary and try again." >&2
 	exit 127
 fi
-exec "$GODOT" --path "$ROOT/godot_project" "$@"
+exec "$GODOT" --path "$ROOT/godot_project" --resolution 1280x720 "$@"

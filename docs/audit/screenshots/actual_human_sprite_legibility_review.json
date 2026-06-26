@@ -1,0 +1,38 @@
+{
+	"carried_ware_icon_visible": true,
+	"carrier_sprite_visible": true,
+	"construction_site_distinct": true,
+	"forester_sprite_distinct": true,
+	"hq_sprite_visible": true,
+	"quarry_sprite_distinct": true,
+	"sawmill_sprite_distinct": true,
+	"sprite_checks": {
+		"construction_site": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"forester": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"headquarters": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"quarry": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"sawmill": {
+			"exists": true,
+			"hash": "0000000000000000"
+		},
+		"woodcutter": {
+			"exists": true,
+			"hash": "0000000000000000"
+		}
+	},
+	"terrain_distinct": true,
+	"verify_failures": [],
+	"woodcutter_sprite_distinct": true
+}
