@@ -21,6 +21,16 @@ var map_title: String = "Map"
 var command_overlays: Array = []
 var economy_badges: Array = []
 var show_military_hud: bool = false
+var enable_camera_control: bool = false
+var enable_hover: bool = false
+var auto_fit_on_data_change: bool = true
+var placement_ghost: Dictionary = {}
+var road_preview_hexes: Array = []
+var road_preview_valid: bool = true
+var hover_q: int = -1
+var hover_r: int = -1
+var _dragging: bool = false
+var _drag_last: Vector2 = Vector2.ZERO
 
 ## Palette constants shared with viewport pixel probes (read-only display).
 const COLOR_GRASS := Color(0.38, 0.72, 0.32)
@@ -39,6 +49,8 @@ var _building_colors: Dictionary = {
 	"command_hub": Color(0.92, 0.78, 0.18),
 	"woodcutter": Color(0.62, 0.38, 0.18),
 	"sawmill": Color(0.72, 0.52, 0.28),
+	"forester": Color(0.28, 0.62, 0.32),
+	"quarry": Color(0.55, 0.55, 0.58),
 	"storehouse": Color(0.55, 0.55, 0.62),
 	"power_generator": Color(0.92, 0.58, 0.12),
 	"power_plant": Color(0.92, 0.58, 0.12),
@@ -51,6 +63,8 @@ var _building_short_labels: Dictionary = {
 	"command_hub": "HUB",
 	"woodcutter": "WOOD",
 	"sawmill": "SAW",
+	"forester": "FOR",
+	"quarry": "QRY",
 	"storehouse": "STORE",
 	"power_generator": "PWR",
 	"power_plant": "PWR",
@@ -61,7 +75,8 @@ var _building_short_labels: Dictionary = {
 
 func set_render_data(data: Dictionary) -> void:
 	render_data = data
-	fit_to_content()
+	if auto_fit_on_data_change:
+		fit_to_content()
 	queue_redraw()
 
 
@@ -228,6 +243,8 @@ func _draw() -> void:
 		_draw_hex(origin, selected_q, selected_r, Color(1, 1, 1, 0.12), 1.0, true)
 		var sel_center: Vector2 = _hex_center(origin, selected_q, selected_r)
 		draw_arc(sel_center, HEX_SIZE * zoom * 0.95, 0, TAU, 32, Color(1, 1, 0.4), 3.0)
+	_draw_placement_ghost(origin)
+	_draw_road_preview(origin)
 
 
 func _draw_title_bar() -> void:
@@ -556,27 +573,110 @@ func _player_color(player_id: String) -> Color:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var origin: Vector2 = size * 0.5 + pan_offset
-		var local: Vector2 = event.position
-		var best_q: int = -1
-		var best_r: int = -1
-		var best_dist: float = 999999.0
-		for tile in render_data.get("terrain", []):
-			var q: int = int(tile.get("q", 0))
-			var r: int = int(tile.get("r", 0))
-			var center: Vector2 = _hex_center(origin, q, r)
-			var dist: float = center.distance_to(local)
-			if dist < HEX_SIZE * zoom * 1.05 and dist < best_dist:
-				best_dist = dist
-				best_q = q
-				best_r = r
-		if best_q >= 0:
-			set_selection(best_q, best_r)
-			selection_clicked.emit(best_q, best_r)
+	if enable_camera_control:
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+				zoom = clampf(zoom * 1.1, 0.5, 4.0)
+				queue_redraw()
+				accept_event()
+				return
+			if event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+				zoom = clampf(zoom / 1.1, 0.5, 4.0)
+				queue_redraw()
+				accept_event()
+				return
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				_dragging = event.pressed
+				_drag_last = event.position
+				accept_event()
+				return
+		if event is InputEventMouseMotion:
+			if _dragging:
+				pan_offset += event.position - _drag_last
+				_drag_last = event.position
+				queue_redraw()
+				accept_event()
+				return
+			if enable_hover:
+				var picked: Vector2i = pixel_to_hex(event.position)
+				if picked.x != hover_q or picked.y != hover_r:
+					hover_q = picked.x
+					hover_r = picked.y
+					hover_changed.emit(hover_q, hover_r)
+				accept_event()
+				return
+
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_RIGHT and not enable_camera_control:
+			return
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			var picked_left: Vector2i = pixel_to_hex(event.position)
+			if picked_left.x >= 0:
+				set_selection(picked_left.x, picked_left.y)
+				selection_clicked.emit(picked_left.x, picked_left.y)
+				accept_event()
+
+
+func pixel_to_hex(local: Vector2) -> Vector2i:
+	var origin: Vector2 = size * 0.5 + pan_offset
+	var best_q: int = -1
+	var best_r: int = -1
+	var best_dist: float = 999999.0
+	for tile in render_data.get("terrain", []):
+		var q: int = int(tile.get("q", 0))
+		var r: int = int(tile.get("r", 0))
+		var center: Vector2 = _hex_center(origin, q, r)
+		var dist: float = center.distance_to(local)
+		if dist < HEX_SIZE * zoom * 1.05 and dist < best_dist:
+			best_dist = dist
+			best_q = q
+			best_r = r
+	return Vector2i(best_q, best_r)
+
+
+func set_placement_ghost(ghost: Dictionary) -> void:
+	placement_ghost = ghost
+	queue_redraw()
+
+
+func set_road_preview(hexes: Array, valid: bool) -> void:
+	road_preview_hexes = hexes
+	road_preview_valid = valid
+	queue_redraw()
+
+
+func _draw_placement_ghost(origin: Vector2) -> void:
+	if not bool(placement_ghost.get("active", false)):
+		return
+	var q: int = int(placement_ghost.get("q", -1))
+	var r: int = int(placement_ghost.get("r", -1))
+	if q < 0:
+		return
+	var valid: bool = bool(placement_ghost.get("valid", false))
+	var color: Color = Color(0.2, 0.9, 0.35, 0.35) if valid else Color(0.95, 0.25, 0.25, 0.35)
+	_draw_hex(origin, q, r, color, 1.0, false)
+	var center: Vector2 = _hex_center(origin, q, r)
+	var ring: Color = Color(0.35, 1.0, 0.45) if valid else Color(1.0, 0.35, 0.35)
+	draw_arc(center, HEX_SIZE * zoom * 0.95, 0, TAU, 32, ring, 3.0)
+
+
+func _draw_road_preview(origin: Vector2) -> void:
+	if road_preview_hexes.size() < 2:
+		return
+	var line_color: Color = Color(0.35, 0.95, 0.45, 0.9) if road_preview_valid else Color(0.95, 0.35, 0.35, 0.9)
+	for i in range(road_preview_hexes.size() - 1):
+		var a: Dictionary = road_preview_hexes[i]
+		var b: Dictionary = road_preview_hexes[i + 1]
+		var pa: Vector2 = _hex_center(origin, int(a.get("q", 0)), int(a.get("r", 0)))
+		var pb: Vector2 = _hex_center(origin, int(b.get("q", 0)), int(b.get("r", 0)))
+		draw_line(pa, pb, line_color, 4.0 * zoom)
+	for hex in road_preview_hexes:
+		var center: Vector2 = _hex_center(origin, int(hex.get("q", 0)), int(hex.get("r", 0)))
+		draw_circle(center, 5.0 * zoom, line_color)
 
 
 signal selection_clicked(q: int, r: int)
+signal hover_changed(q: int, r: int)
 
 
 func get_map_origin() -> Vector2:

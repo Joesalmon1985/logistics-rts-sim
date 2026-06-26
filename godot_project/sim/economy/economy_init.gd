@@ -78,6 +78,9 @@ static func initialize(state: GameState, scenario: Dictionary, terrain_config: D
 		"player_id": primary_player_id,
 	})
 
+	_store_objective_config(state, scenario)
+	_apply_starting_roads(state, scenario, primary_player_id)
+
 
 static func _merge_spawn_scenario(scenario: Dictionary, spawn: Dictionary) -> Dictionary:
 	var merged: Dictionary = scenario.duplicate(true)
@@ -264,3 +267,27 @@ static func _spawn_completed_building(
 	}
 	EconomyState.add_building(state, building)
 	return building_id
+
+
+static func _store_objective_config(state: GameState, scenario: Dictionary) -> void:
+	var objective_path: String = str(scenario.get("objective_config", ""))
+	if objective_path != "":
+		EconomyState.set_meta_value(state, "objective_config_path", objective_path)
+
+
+static func _apply_starting_roads(state: GameState, scenario: Dictionary, player_id: String) -> void:
+	for segment in scenario.get("starting_roads", []):
+		if typeof(segment) != TYPE_DICTIONARY:
+			continue
+		var from_q: int = int(segment.get("from_q", -1))
+		var from_r: int = int(segment.get("from_r", -1))
+		var to_q: int = int(segment.get("to_q", -1))
+		var to_r: int = int(segment.get("to_r", -1))
+		if from_q < 0 or to_q < 0:
+			continue
+		EconomyRoadSystem.place_road(
+			state,
+			HexCoord.new(from_q, from_r),
+			HexCoord.new(to_q, to_r),
+			player_id,
+		)

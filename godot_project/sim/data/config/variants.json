@@ -3,7 +3,21 @@
   "variants": {
     "economy_trial": {
       "subsystems": ["map", "economy", "diagnostics"],
-      "commands": ["NoopCommand", "PlaceRoadCommand"]
+      "commands": [
+        "NoopCommand",
+        "PlaceRoadCommand",
+        "RemoveRoadCommand",
+        "PlaceBuildingPlanCommand",
+        "CancelConstructionCommand",
+        "AssignWorkerCommand",
+        "SetWorkerPolicyCommand",
+        "SetConstructionPriorityCommand",
+        "SetProductionPriorityCommand",
+        "SetWarePriorityCommand",
+        "EnableBuildingCommand",
+        "DisableBuildingCommand",
+        "UpgradeBuildingCommand"
+      ]
     },
     "military_trial": {
       "subsystems": ["map", "military", "diagnostics"],

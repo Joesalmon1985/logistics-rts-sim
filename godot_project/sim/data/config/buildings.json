@@ -53,7 +53,7 @@
       "worker_type": "forester",
       "storage_capacity": 5,
       "recipe_id": "forest_renewal",
-      "required_deposit": "",
+      "required_deposit": "forest",
       "required_terrain": "forest",
       "food_tier": 0
     },

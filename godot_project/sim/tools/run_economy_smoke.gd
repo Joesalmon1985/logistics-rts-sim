@@ -10,7 +10,7 @@ const BOT_MAX_TICKS: int = 20000
 const REPLAY_TICKS: int = 500
 const SMOKE_006_SEED: int = 607
 const SMOKE_006_TICKS: int = 500
-const SMOKE_006_EXPECTED_HASH: String = "sha256:1273aa90b79c6436518b27680ac827cb0658332902b944ff35aed51acbf4accf"
+const SMOKE_006_EXPECTED_HASH: String = "sha256:27d91679d8c0ff82281f5ededde2e2d4db7cc8ccadc74217d2b8c011ddf715ce"
 const SMOKE_007_SEED: int = 28001
 const SMOKE_007_EXPECTED_HASH: String = ""
 

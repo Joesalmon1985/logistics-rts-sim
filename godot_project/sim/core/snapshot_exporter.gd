@@ -62,7 +62,7 @@ static func export_snapshot(state: GameState) -> Dictionary:
 	var map_data: Dictionary = state.map.to_dict() if state.map != null else {}
 	var display_layers: Dictionary = _build_display_layers(state)
 
-	return {
+	var snapshot: Dictionary = {
 		"schema_version": SCHEMA_VERSION,
 		"variant": state.variant_id,
 		"tick": state.tick,
@@ -83,6 +83,21 @@ static func export_snapshot(state: GameState) -> Dictionary:
 		"diagnostics": state.diagnostics.duplicate(true),
 		"players": player_data,
 	}
+	_attach_objective(snapshot, state)
+	return snapshot
+
+
+static func _attach_objective(snapshot: Dictionary, state: GameState) -> void:
+	if state.variant_id != "economy_trial":
+		return
+	var objective_path: String = str(EconomyState.get_meta_value(state, "objective_config_path", ""))
+	if objective_path == "":
+		return
+	var config: Dictionary = SettlerObjective.load_config(objective_path)
+	if config.is_empty():
+		return
+	var player_id: String = str(EconomyState.get_meta_value(state, "primary_player_id", "p1"))
+	snapshot["objective"] = SettlerObjective.evaluate(state, config, player_id)
 
 
 static func export_debug_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
