@@ -31,7 +31,27 @@ def draw_building(name: str, size: int, body: tuple, roof: tuple, accent: tuple)
         fill=(*roof, 255),
     )
     d.rectangle([size // 3, size // 2, size // 3 + size // 5, size - m], fill=(*accent, 255))
-    d.ellipse([size - m * 3, m, size - m, m * 3], fill=(*accent, 200))
+    if name == "headquarters":
+        d.rectangle([size // 2 - 4, m // 2, size // 2 + 4, size // 3], fill=(220, 60, 60, 255))
+        d.rectangle([m + 4, size - m - 10, m + 18, size - m - 2], fill=(180, 140, 70, 255))
+        d.rectangle([size - m - 18, size - m - 10, size - m - 4, size - m - 2], fill=(180, 140, 70, 255))
+    elif name == "woodcutter":
+        d.rectangle([size - m - 14, size // 2, size - m - 4, size - m], fill=(120, 70, 35, 255))
+        d.polygon([(size - m - 20, size // 2), (size - m - 8, size // 2 - 10), (size - m - 8, size // 2 + 10)], fill=(200, 200, 210, 255))
+    elif name == "forester":
+        d.polygon([(size // 2, m + 6), (size // 2 - 10, size // 2), (size // 2 + 10, size // 2)], fill=(40, 150, 60, 255))
+        d.rectangle([size // 2 - 2, size // 2, size // 2 + 2, size - m - 4], fill=(90, 55, 30, 255))
+    elif name == "sawmill":
+        d.ellipse([size // 2 - 10, size // 2 - 6, size // 2 + 10, size // 2 + 6], outline=(200, 200, 210, 255), width=3)
+        d.rectangle([m + 6, size - m - 8, m + 20, size - m - 2], fill=(190, 150, 90, 255))
+    elif name == "quarry":
+        d.ellipse([size // 2 - 8, size // 2, size // 2 + 8, size - m - 2], fill=(170, 170, 175, 255))
+        d.line([(size // 2 - 12, size // 2 + 4), (size // 2 + 12, size // 2 - 8)], fill=(90, 90, 95, 255), width=3)
+    elif name == "construction_site":
+        d.line([(m, size // 2), (size - m, size // 2)], fill=(accent[0], accent[1], accent[2], 255), width=2)
+        d.line([(size // 2, m), (size // 2, size - m)], fill=(accent[0], accent[1], accent[2], 255), width=2)
+    else:
+        d.ellipse([size - m * 3, m, size - m, m * 3], fill=(*accent, 200))
     return img
 
 
@@ -69,8 +89,9 @@ def draw_logistics(kind: str, size: int) -> Image.Image:
         d.ellipse([4, 4, size - 4, size - 4], fill=(200, 170, 60, 255))
         d.ellipse([10, 10, size - 10, size - 10], fill=(240, 210, 90, 255))
     elif kind == "carrier":
-        d.ellipse([6, 10, size - 6, size - 6], fill=(230, 140, 50, 255))
-        d.rectangle([size // 3, 4, 2 * size // 3, 14], fill=(180, 100, 40, 255))
+        d.ellipse([10, 18, size - 10, size - 8], fill=(230, 140, 50, 255))
+        d.rectangle([size // 3, 8, 2 * size // 3, 18], fill=(180, 100, 40, 255))
+        d.rectangle([size // 2 - 4, 22, size // 2 + 4, 34], fill=(80, 50, 30, 255))
     else:  # builder
         d.rectangle([size // 3, size // 4, 2 * size // 3, size - 8], fill=(70, 130, 200, 255))
         d.rectangle([size // 4, size // 3, size // 3, size // 2], fill=(200, 160, 90, 255))

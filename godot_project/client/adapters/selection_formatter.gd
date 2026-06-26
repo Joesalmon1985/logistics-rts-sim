@@ -21,7 +21,7 @@ static func format(selection: Dictionary, snapshot: Dictionary = {}, mode_contex
 		"construction_site":
 			return _format_construction_site(data, q, r, snapshot)
 		"carrier":
-			return _format_carrier(data, q, r)
+			return _format_carrier(data, q, r, snapshot)
 		"forest":
 			return _format_forest(data, q, r, snapshot)
 		"tile":
@@ -45,9 +45,9 @@ static func _format_building(data: Dictionary, q: int, r: int, snapshot: Diction
 		"Position: (%d, %d)" % [q, r],
 	])
 	if btype in ["headquarters", "command_hub"]:
-		lines.append(_hq_stock_summary(snapshot))
+		lines.append(_hq_stock_summary(snapshot, data))
 		lines.append(_road_connection_line(q, r, snapshot))
-		lines.append("Objective: connect production buildings and store 10 planks + 10 stone at HQ.")
+		lines.append("Tip: Build roads from here to new buildings.")
 	else:
 		lines.append(_store_line_for_building(int(data.get("id", 0)), snapshot))
 		lines.append(_recipe_line(btype))
@@ -120,25 +120,27 @@ static func _format_forest(data: Dictionary, q: int, r: int, snapshot: Dictionar
 	return "\n".join(lines)
 
 
-static func _format_carrier(data: Dictionary, q: int, r: int) -> String:
+static func _format_carrier(data: Dictionary, q: int, r: int, snapshot: Dictionary) -> String:
 	var lines: PackedStringArray = PackedStringArray([
 		"Carrier",
-		"Transports goods along roads between buildings.",
+		"Carries goods along roads.",
 		"",
-		"Position: (%d, %d)" % [q, r],
-		"Status: %s" % str(data.get("state", "idle")).capitalize(),
+		"Status: %s" % _carrier_status_text(data),
 	])
 	var ware: String = str(data.get("ware_type", ""))
 	if ware != "":
-		lines.append("Carrying: %s x%d" % [ware, int(data.get("ware_amount", 0))])
-	var route: Array = data.get("route_points", [])
-	if route.size() >= 2:
-		var start: Dictionary = route[0]
-		var end: Dictionary = route[route.size() - 1]
-		lines.append("Route: (%d,%d) -> (%d,%d)" % [
-			int(start.get("q", 0)), int(start.get("r", 0)),
-			int(end.get("q", 0)), int(end.get("r", 0)),
-		])
+		lines.append("Carrying: %s x%d" % [ware.capitalize(), int(data.get("ware_amount", 0))])
+		lines.append("Current task: delivering %s" % ware)
+	else:
+		lines.append("Carrying: (nothing)")
+	var from_to: Dictionary = _carrier_from_to_display(data, snapshot)
+	if from_to.has("from"):
+		lines.append("From: %s" % str(from_to["from"]))
+	if from_to.has("to"):
+		lines.append("To: %s" % str(from_to["to"]))
+	elif not from_to.is_empty():
+		lines.append("Route: in progress")
+	lines.append("Tip: Carriers move automatically when roads connect buildings.")
 	return "\n".join(lines)
 
 
@@ -228,15 +230,26 @@ static func _store_line_for_building(building_id: int, snapshot: Dictionary) -> 
 	return "Local storage: empty"
 
 
-static func _hq_stock_summary(snapshot: Dictionary) -> String:
+static func _hq_stock_summary(snapshot: Dictionary, building: Dictionary = {}) -> String:
+	var store_id: int = int(building.get("store_id", 0))
+	if store_id > 0:
+		var store: Dictionary = _ware_store_lookup(snapshot).get(store_id, {})
+		var wares: Dictionary = store.get("wares", {})
+		if typeof(wares) == TYPE_DICTIONARY and not wares.is_empty():
+			var lines: PackedStringArray = PackedStringArray(["Stored goods:"])
+			for ware_type in ["timber", "planks", "stone", "builder_work"]:
+				if wares.has(ware_type) and int(wares[ware_type]) > 0:
+					lines.append("- %s: %d" % [ware_type.capitalize(), int(wares[ware_type])])
+			if lines.size() > 1:
+				return "\n".join(lines)
 	var totals: Dictionary = snapshot.get("diagnostics", {}).get("ware_totals", {}).get("by_type", {})
 	var parts: PackedStringArray = PackedStringArray()
-	for ware in ["timber", "planks", "stone", "builder_work"]:
+	for ware in ["timber", "planks", "stone"]:
 		if totals.has(ware):
-			parts.append("%s: %d" % [ware, int(totals[ware])])
+			parts.append("- %s: %d" % [ware.capitalize(), int(totals[ware])])
 	if parts.is_empty():
-		return "Stored goods: (none yet)"
-	return "Stored goods: %s" % ", ".join(parts)
+		return "Stored goods:\n- (none yet)"
+	return "Stored goods:\n%s" % "\n".join(parts)
 
 
 static func _recipe_line(btype: String) -> String:
@@ -305,7 +318,79 @@ static func _hex_has_road_network(q: int, r: int, snapshot: Dictionary) -> bool:
 
 
 static func _road_connected_to_hq(_q: int, _r: int, snapshot: Dictionary) -> bool:
+	return _hex_has_road_network(_q, _r, snapshot)
+
+
+static func _carrier_status_text(data: Dictionary) -> String:
+	var state: String = str(data.get("state", "idle")).to_lower()
+	match state:
+		"moving", "assigned":
+			return "Delivering"
+		"blocked":
+			return "Blocked"
+		_:
+			return "Idle"
+
+
+## Display-only: resolve carrier origin/destination labels from snapshot (never affects sim).
+static func _carrier_from_to_display(data: Dictionary, snapshot: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	var job_id: int = int(data.get("job_id", 0))
+	for job in snapshot.get("delivery_jobs", []):
+		if int(job.get("id", -1)) != job_id:
+			continue
+		out["from"] = _building_label_for_store(snapshot, str(job.get("source_store_id", "")))
+		out["to"] = _entity_label(snapshot, str(job.get("dest_entity_id", "")), str(job.get("dest_entity_type", "")))
+		return out
+	var route: Array = data.get("route_points", [])
+	if route.size() >= 2:
+		var start_q: int = int(route[0].get("q", -1))
+		var start_r: int = int(route[0].get("r", -1))
+		var end_q: int = int(route[route.size() - 1].get("q", -1))
+		var end_r: int = int(route[route.size() - 1].get("r", -1))
+		out["from"] = _building_at_hex(snapshot, start_q, start_r)
+		out["to"] = _building_at_hex(snapshot, end_q, end_r)
+	return out
+
+
+static func _building_at_hex(snapshot: Dictionary, q: int, r: int) -> String:
 	for building in snapshot.get("buildings", []):
-		if str(building.get("building_type", "")) in ["headquarters", "command_hub"]:
-			return true
-	return not snapshot.get("roads", []).is_empty()
+		if BuildingCatalog.occupies_hex(building, q, r):
+			return BuildingCatalog.display_name(str(building.get("building_type", "")))
+	for site in snapshot.get("construction_sites", []):
+		var sq: int = int(site.get("anchor_q", site.get("q", -1)))
+		var sr: int = int(site.get("anchor_r", site.get("r", -1)))
+		if sq == q and sr == r:
+			return "Construction Site: %s" % BuildingCatalog.display_name(str(site.get("building_type", "")))
+	return "Road node (%d,%d)" % [q, r]
+
+
+static func _building_label_for_store(snapshot: Dictionary, store_id_str: String) -> String:
+	var store_id: int = int(store_id_str)
+	for building in snapshot.get("buildings", []):
+		if int(building.get("store_id", -1)) == store_id:
+			return BuildingCatalog.display_name(str(building.get("building_type", "")))
+	return "Store %s" % store_id_str
+
+
+static func _entity_label(snapshot: Dictionary, entity_id: String, entity_type: String) -> String:
+	var eid: int = int(entity_id)
+	if entity_type == "building":
+		for building in snapshot.get("buildings", []):
+			if int(building.get("id", -1)) == eid:
+				return BuildingCatalog.display_name(str(building.get("building_type", "")))
+	if entity_type == "construction_site":
+		for site in snapshot.get("construction_sites", []):
+			if int(site.get("id", -1)) == eid:
+				return "Construction Site: %s" % BuildingCatalog.display_name(str(site.get("building_type", "")))
+	return "%s %s" % [entity_type, entity_id]
+
+
+static func _ware_store_lookup(snapshot: Dictionary) -> Dictionary:
+	var lookup: Dictionary = {}
+	var entities: Dictionary = snapshot.get("entities", {})
+	for store in entities.get("ware_stores", []):
+		if typeof(store) != TYPE_DICTIONARY:
+			continue
+		lookup[int(store.get("id", 0))] = store
+	return lookup

@@ -29,7 +29,7 @@ Tutorial mode:
 ./scripts/run_tutorial.sh
 ```
 
-The main menu offers **Tutorial**, **Free Play / Settler MVP**, **Debug Viewers**, and **Quit**. See [human-playable play guide](docs/audit/RUN_HUMAN_PLAYABLE_SETTLER_PLAY_GUIDE.md) and [run doc](docs/runs/RUN_HUMAN_PLAYABLE_SETTLER_MVP.md).
+The main menu offers **Tutorial**, **Free Play / Settler MVP**, **Debug Viewers**, and **Quit**. See [tutorial legibility play guide](docs/audit/RUN_TUTORIAL_LEGIBILITY_PLAY_GUIDE.md), [human-playable play guide](docs/audit/RUN_HUMAN_PLAYABLE_SETTLER_PLAY_GUIDE.md), and [run doc](docs/runs/RUN_TUTORIAL_LEGIBILITY_SETTLER_MVP.md).
 
 Legacy direct scene launch (optional):
 

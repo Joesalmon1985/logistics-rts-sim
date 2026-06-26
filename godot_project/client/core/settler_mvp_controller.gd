@@ -19,12 +19,12 @@ const BUILD_LABELS: Dictionary = {
 }
 
 const REASON_MESSAGES: Dictionary = {
-	"FOOTPRINT_OVERLAP": "Another building or site occupies this hex.",
+	"FOOTPRINT_OVERLAP": "Already occupied.",
 	"OUT_OF_BOUNDS": "Outside the map.",
-	"OUTSIDE_BUILD_RADIUS": "Too far from headquarters.",
-	"NOT_BUILDABLE": "Terrain cannot support this building.",
-	"TERRAIN_MISMATCH": "Wrong terrain type for this building.",
-	"DEPOSIT_REQUIRED": "Needs forest, rock, or another deposit here.",
+	"OUTSIDE_BUILD_RADIUS": "Too far from Headquarters.",
+	"NOT_BUILDABLE": "Not buildable terrain.",
+	"TERRAIN_MISMATCH": "Not buildable terrain.",
+	"DEPOSIT_REQUIRED": "Needs nearby trees or rock.",
 	"SLOPE_TOO_STEEP": "Slope is too steep to build.",
 	"UNKNOWN_BUILDING": "Unknown building type.",
 	"NOT_ADJACENT": "Road endpoints must be adjacent hexes.",
@@ -344,19 +344,21 @@ func build_warnings_text() -> String:
 func get_mode_banner_text() -> Dictionary:
 	if placement_building_type != "":
 		var label: String = str(BUILD_LABELS.get(placement_building_type, placement_building_type))
+		var role: String = BuildingCatalog.role_text(placement_building_type)
+		var tip: String = BuildingCatalog.tip_text(placement_building_type)
 		return {
 			"title": "Placing %s" % label,
-			"instruction": "Move over the map, then click a valid hex. Esc cancels.",
+			"instruction": "Click a green hex to place it. Red means it cannot be built there. Esc cancels.\n%s\n%s" % [role, tip],
 		}
 	if road_mode_active:
 		if road_start_hex.x < 0:
 			return {
 				"title": "Road mode",
-				"instruction": "Click a start point on your road network.",
+				"instruction": "Click a start point on your road network, then click the destination. Roads let carriers move goods between buildings.",
 			}
 		return {
-			"title": "Road mode",
-			"instruction": "Click destination hex to extend the road.",
+			"title": "Road start selected",
+			"instruction": "Now click where the road should go.",
 		}
 	return {"title": "", "instruction": ""}
 

@@ -300,6 +300,7 @@ static func _build_carrier_markers(snapshot: Dictionary, visibility: Dictionary,
 			"ware_type": str(c.get("ware_type", "")),
 			"ware_amount": int(c.get("ware_amount", 0)),
 			"current_node_id": int(c.get("current_node_id", 0)),
+			"job_id": int(c.get("job_id", 0)),
 			"route_points": route_points,
 			"edge_progress": int(c.get("edge_progress", 0)),
 		})

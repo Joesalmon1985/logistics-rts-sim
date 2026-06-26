@@ -179,7 +179,8 @@ static func settle_frames(ctx: Dictionary) -> void:
 
 static func teardown(ctx: Dictionary, host: Node) -> void:
 	ViewerTestHarness.teardown(ctx)
-	host.queue_free()
+	if is_instance_valid(host):
+		host.free()
 
 
 static func simulate_key(scene: Node, keycode: Key) -> void:

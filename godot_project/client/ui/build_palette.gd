@@ -40,19 +40,19 @@ func _build_ui() -> void:
 	add_child(row1)
 	_add_btn(row1, "road", "Road", true)
 	for btype in BUILD_TYPES.slice(0, 2):
-		_add_btn(row1, btype, BuildingCatalog.display_name(btype).split(" ")[0], false)
+		_add_btn(row1, btype, BuildingCatalog.display_name(btype), false)
 	var row2 := HBoxContainer.new()
 	row2.name = "Row2"
 	add_child(row2)
 	for btype in BUILD_TYPES.slice(2, 4):
-		_add_btn(row2, btype, BuildingCatalog.display_name(btype).split(" ")[0], false)
+		_add_btn(row2, btype, BuildingCatalog.display_name(btype), false)
 	_add_btn(row2, "cancel", "Cancel", true)
 
 
 func _add_btn(parent: Node, key: String, label_text: String, is_action: bool) -> void:
 	var btn := TextureButton.new()
 	btn.name = "%sBtn" % key.capitalize()
-	btn.custom_minimum_size = Vector2(72, 72)
+	btn.custom_minimum_size = Vector2(88, 72)
 	btn.ignore_texture_size = true
 	btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	btn.tooltip_text = str(TOOLTIPS.get(key, label_text))
@@ -62,6 +62,8 @@ func _add_btn(parent: Node, key: String, label_text: String, is_action: bool) ->
 	var cap: Label = Label.new()
 	cap.text = label_text
 	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cap.custom_minimum_size = Vector2(88, 0)
 	var wrap := VBoxContainer.new()
 	wrap.add_child(btn)
 	wrap.add_child(cap)

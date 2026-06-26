@@ -39,9 +39,12 @@ var tutorial: SettlerTutorialController = SettlerTutorialController.new()
 @onready var _mode_instruction: Label = %ModeInstruction
 @onready var _tutorial_panel: PanelContainer = %TutorialPanel
 @onready var _tutorial_title: Label = %TutorialTitle
+@onready var _tutorial_progress: Label = %TutorialProgress
 @onready var _tutorial_instruction: RichTextLabel = %TutorialInstruction
 @onready var _tutorial_next: Button = %TutorialNextBtn
 @onready var _tutorial_skip: Button = %TutorialSkipBtn
+@onready var _tutorial_exit: Button = %TutorialExitBtn
+@onready var _mode_status: Label = %ModeStatusLabel
 
 var _sprite_layer: SettlerSpriteLayer
 
@@ -87,9 +90,12 @@ func _bind_ui_nodes() -> void:
 	_mode_instruction = find_child("ModeInstruction", true, false) as Label
 	_tutorial_panel = find_child("TutorialPanel", true, false) as PanelContainer
 	_tutorial_title = find_child("TutorialTitle", true, false) as Label
+	_tutorial_progress = find_child("TutorialProgress", true, false) as Label
 	_tutorial_instruction = find_child("TutorialInstruction", true, false) as RichTextLabel
 	_tutorial_next = find_child("TutorialNextBtn", true, false) as Button
 	_tutorial_skip = find_child("TutorialSkipBtn", true, false) as Button
+	_tutorial_exit = find_child("TutorialExitBtn", true, false) as Button
+	_mode_status = find_child("ModeStatusLabel", true, false) as Label
 	_sprite_layer = find_child("SettlerSpriteLayer", true, false) as SettlerSpriteLayer
 
 
@@ -126,6 +132,7 @@ func _setup_scene() -> void:
 		_map.add_child(_sprite_layer)
 	if _sprite_layer != null:
 		_sprite_layer.setup(_map)
+		_sprite_layer.animation_enabled = true
 	_map.hover_changed.connect(func(_q, _r):
 		if _sprite_layer != null:
 			_sprite_layer.queue_redraw()
@@ -238,7 +245,9 @@ func _wire_tutorial() -> void:
 	if _tutorial_next != null:
 		_tutorial_next.pressed.connect(func(): tutorial.advance_manual())
 	if _tutorial_skip != null:
-		_tutorial_skip.pressed.connect(_exit_tutorial_to_menu)
+		_tutorial_skip.pressed.connect(_skip_tutorial)
+	if _tutorial_exit != null:
+		_tutorial_exit.pressed.connect(_exit_tutorial_to_menu)
 
 
 func _connect_btn(node_path: String, callback: Callable) -> void:
@@ -364,6 +373,34 @@ func _start_game() -> void:
 	call_deferred("_focus_play_on_start")
 
 
+func _skip_tutorial() -> void:
+	tutorial.enabled = false
+	tutorial_enabled = false
+	if _tutorial_panel != null:
+		_tutorial_panel.visible = false
+	_append_event("Tutorial skipped — use the build menu and inspector to continue.")
+
+
+func get_tutorial_title_text() -> String:
+	return _tutorial_title.text if _tutorial_title != null else ""
+
+
+func get_tutorial_instruction_text() -> String:
+	if _tutorial_instruction == null:
+		return ""
+	return _tutorial_instruction.get_parsed_text()
+
+
+func get_mode_banner_title() -> String:
+	return _mode_title.text if _mode_title != null else ""
+
+
+func get_objective_text() -> String:
+	if _objective == null:
+		return ""
+	return _objective.get_parsed_text()
+
+
 func _exit_tutorial_to_menu() -> void:
 	tutorial.skip_or_exit()
 	get_tree().change_scene_to_file("res://client/scenes/main_menu.tscn")
@@ -387,8 +424,11 @@ func _refresh_tutorial_ui() -> void:
 	_tutorial_panel.visible = true
 	if _tutorial_title != null:
 		_tutorial_title.text = str(step.get("title", "Tutorial"))
+	if _tutorial_progress != null:
+		_tutorial_progress.text = "Step %d of %d" % [tutorial.step_index + 1, tutorial.steps.size()]
 	if _tutorial_instruction != null:
-		_tutorial_instruction.text = str(step.get("instruction", ""))
+		_tutorial_instruction.clear()
+		_tutorial_instruction.append_text(str(step.get("instruction", "")))
 	if _tutorial_next != null:
 		_tutorial_next.visible = str(step.get("completion", "")) == "manual_next"
 
@@ -506,17 +546,17 @@ func _on_map_hover(q: int, r: int) -> void:
 	if preview.get("active", false):
 		var reason: String = str(preview.get("reason", ""))
 		if preview.get("valid", false):
-			_preview.text = "Valid placement — click to confirm"
+			_preview.text = "Valid placement — click a green hex to confirm."
 		else:
-			_preview.text = reason if reason != "" else "Invalid placement"
+			_preview.text = reason if reason != "" else "Invalid placement — red hex."
 	elif controller.road_mode_active:
 		var road_prev: Dictionary = controller.get_road_preview()
 		if road_prev.get("active", false):
-			_preview.text = "Road route OK — click to confirm" if road_prev.get("valid", false) else str(road_prev.get("reason", "Invalid route"))
+			_preview.text = "Road route OK — click to confirm." if road_prev.get("valid", false) else str(road_prev.get("reason", "Invalid route"))
 		elif controller.road_start_hex.x >= 0:
-			_preview.text = "Road mode: select destination"
+			_preview.text = "Road start selected — now click where the road should go."
 		else:
-			_preview.text = "Road mode: select start on your network"
+			_preview.text = "Road mode — click a start point on your road network."
 	else:
 		_preview.text = ""
 
@@ -540,6 +580,7 @@ func _refresh_map() -> void:
 		_map.auto_fit_on_data_change = false
 	_refresh_map_overlays()
 	if _sprite_layer != null:
+		_sprite_layer.set_snapshot(controller.get_snapshot())
 		_sprite_layer.queue_redraw()
 
 
@@ -559,6 +600,7 @@ func _refresh_mode_ui() -> void:
 	var banner: Dictionary = controller.get_mode_banner_text()
 	if _mode_banner != null:
 		_mode_banner.visible = str(banner.get("title", "")) != ""
+		_mode_banner.custom_minimum_size = Vector2(0, 56) if _mode_banner.visible else Vector2(0, 0)
 	if _mode_title != null:
 		_mode_title.text = str(banner.get("title", ""))
 	if _mode_instruction != null:
@@ -570,7 +612,26 @@ func _refresh_mode_ui() -> void:
 			_build_palette.set_active_build(controller.placement_building_type)
 		else:
 			_build_palette.clear_active()
+	_refresh_mode_status()
 	_refresh_mode_preview_text()
+
+
+func _refresh_mode_status() -> void:
+	if _mode_status == null:
+		return
+	if controller.road_mode_active:
+		if controller.road_start_hex.x >= 0:
+			_mode_status.text = "Mode: Road — pick destination"
+		else:
+			_mode_status.text = "Mode: Road — pick start"
+	elif controller.placement_building_type != "":
+		var label: String = SettlerMvpController.BUILD_LABELS.get(
+			controller.placement_building_type,
+			controller.placement_building_type,
+		)
+		_mode_status.text = "Mode: Placing %s" % label
+	else:
+		_mode_status.text = "Mode: Inspect / select"
 
 
 func _refresh_mode_preview_text() -> void:

@@ -33,7 +33,17 @@ layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 focus_mode = 0
+theme_override_font_sizes/font_size = 16
 text = "Simulation: Paused | Speed: 1x | Tick: 0"
+
+[node name="ModeStatusLabel" type="Label" parent="RootVBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(1, 0.92, 0.55, 1)
+theme_override_font_sizes/font_size = 16
+text = "Mode: Inspect"
 
 [node name="PauseBtn" type="Button" parent="RootVBox/TopBar"]
 unique_name_in_owner = true
@@ -81,7 +91,7 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 2.6
+size_flags_stretch_ratio = 2.0
 mouse_filter = 1
 
 [node name="MapViewport" type="Control" parent="RootVBox/ContentHBox/MapArea"]
@@ -94,8 +104,8 @@ script = ExtResource("2")
 
 [node name="RightPanel" type="VBoxContainer" parent="RootVBox/ContentHBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(420, 0)
-size_flags_horizontal = 3
+custom_minimum_size = Vector2(500, 0)
+size_flags_horizontal = 0
 theme_override_constants/separation = 6
 
 [node name="TitleLabel" type="Label" parent="RootVBox/ContentHBox/RightPanel"]
@@ -109,7 +119,7 @@ text = "Settler MVP"
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 180)
 
 [node name="TutorialVBox" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel"]
 layout_mode = 2
@@ -117,14 +127,21 @@ layout_mode = 2
 [node name="TutorialTitle" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "Tutorial"
+
+[node name="TutorialProgress" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Step 1 of 11"
 
 [node name="TutorialInstruction" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 72)
+custom_minimum_size = Vector2(460, 96)
 fit_content = true
+theme_override_font_sizes/normal_font_size = 15
 text = "Tutorial instructions"
 
 [node name="TutorialBtnRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
@@ -138,7 +155,12 @@ text = "Next"
 [node name="TutorialSkipBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Exit to Menu"
+text = "Skip Tutorial"
+
+[node name="TutorialExitBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back to Menu"
 
 [node name="ModeBanner" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
 unique_name_in_owner = true
@@ -152,12 +174,16 @@ layout_mode = 2
 [node name="ModeTitle" type="Label" parent="RootVBox/ContentHBox/RightPanel/ModeBanner/ModeVBox"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(460, 22)
 theme_override_colors/font_color = Color(1, 0.92, 0.55, 1)
+theme_override_font_sizes/font_size = 18
 text = "Mode"
 
 [node name="ModeInstruction" type="Label" parent="RootVBox/ContentHBox/RightPanel/ModeBanner/ModeVBox"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(460, 36)
+theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 text = "Instructions"
 
@@ -166,7 +192,8 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
-custom_minimum_size = Vector2(0, 120)
+custom_minimum_size = Vector2(0, 100)
+theme_override_font_sizes/normal_font_size = 15
 fit_content = true
 scroll_active = true
 text = "Objective"
@@ -176,6 +203,7 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
+theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 text = "Stock:"
 
@@ -183,6 +211,7 @@ text = "Stock:"
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
+theme_override_font_sizes/font_size = 16
 text = "Build menu"
 
 [node name="BuildPalette" type="VBoxContainer" parent="RootVBox/ContentHBox/RightPanel"]
@@ -233,7 +262,9 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 36)
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.95, 0.85, 0.55, 1)
 autowrap_mode = 3
 text = ""
 
@@ -256,7 +287,8 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 120)
+theme_override_font_sizes/normal_font_size = 15
 fit_content = true
 scroll_active = true
 text = "Click a hex to inspect."
@@ -266,8 +298,9 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
-size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 120)
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 72)
+theme_override_font_sizes/normal_font_size = 13
 scroll_active = true
 text = ""
 
@@ -276,7 +309,8 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 focus_mode = 0
-custom_minimum_size = Vector2(0, 90)
+custom_minimum_size = Vector2(0, 80)
+theme_override_font_sizes/normal_font_size = 13
 fit_content = true
 scroll_active = true
 
