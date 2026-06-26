@@ -18,6 +18,7 @@ var show_route_flow: bool = true
 var production_pulse_ids: Array = []
 var destination_pulse_ids: Array = []
 var map_title: String = "Map"
+var show_internal_title_bar: bool = true
 var command_overlays: Array = []
 var economy_badges: Array = []
 var show_military_hud: bool = false
@@ -184,7 +185,8 @@ func _draw() -> void:
 		draw_string(_default_font(), Vector2(16, 32), "No snapshot loaded — click Load/Reset Demo", HORIZONTAL_ALIGNMENT_LEFT, -1, 18)
 		return
 
-	_draw_title_bar()
+	if show_internal_title_bar:
+		_draw_title_bar()
 	var origin: Vector2 = size * 0.5 + pan_offset
 	_draw_fog(origin)
 	for tile in render_data.get("terrain", []):
@@ -677,6 +679,28 @@ func _draw_road_preview(origin: Vector2) -> void:
 
 signal selection_clicked(q: int, r: int)
 signal hover_changed(q: int, r: int)
+
+
+func pan_by_screen_delta(delta: Vector2) -> void:
+	pan_offset += delta
+	queue_redraw()
+
+
+func zoom_by_factor(factor: float) -> void:
+	if factor <= 0.0:
+		return
+	zoom = clampf(zoom * factor, 0.5, 4.0)
+	queue_redraw()
+
+
+func get_camera_state() -> Dictionary:
+	return {"zoom": zoom, "pan_offset": pan_offset}
+
+
+func set_camera_state(state: Dictionary) -> void:
+	zoom = float(state.get("zoom", zoom))
+	pan_offset = state.get("pan_offset", pan_offset)
+	queue_redraw()
 
 
 func get_map_origin() -> Vector2:

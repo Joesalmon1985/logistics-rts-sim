@@ -253,10 +253,16 @@ func submit_road_path(path: Array) -> Dictionary:
 
 func build_status_text() -> String:
 	if viewer.snapshot.is_empty():
-		return "Tick: — | Paused"
+		return "Simulation: Paused | Speed: 1x | Tick: —"
 	var tick: int = int(viewer.snapshot.get("tick", 0))
 	var play_state: String = "Paused" if paused else "Playing"
-	return "Tick: %d | %s | Speed: %.0fx" % [tick, play_state, speed_multiplier]
+	return "Simulation: %s | Speed: %.0fx | Tick: %d" % [play_state, speed_multiplier, tick]
+
+
+func get_current_tick() -> int:
+	if viewer.snapshot.is_empty():
+		return 0
+	return int(viewer.snapshot.get("tick", 0))
 
 
 func build_objective_text() -> String:
@@ -316,12 +322,15 @@ func build_warnings_text() -> String:
 func build_help_text() -> String:
 	return (
 		"[b]Settler MVP[/b]\n"
+		+ "Press Space or Play to start the settlement simulation.\n"
+		+ "You can inspect, pan, zoom and place plans while paused.\n\n"
 		+ "1. Connect roads from HQ to forest and rock areas.\n"
 		+ "2. Build Woodcutter, Forester, Sawmill, and Quarry on suitable terrain.\n"
 		+ "3. Press Play and watch carriers deliver materials.\n"
 		+ "4. Win when all four buildings are complete, connected, and you store 10 planks + 10 stone.\n\n"
-		+ "[b]Controls[/b]: Build menu → hover map for preview → click to place. "
-		+ "Road mode → click start then end hex. Esc cancels. Drag to pan, wheel to zoom."
+		+ "[b]Time[/b]: Space Play/Pause · . or Enter Step · F1/F2/F3 speed 1x/2x/4x\n"
+		+ "[b]Map[/b]: Right-drag or WASD pan · Wheel or +/- zoom · Left-click inspect/place\n"
+		+ "[b]Build[/b]: 1–4 building modes · R road · Esc cancel · H toggle this help"
 	)
 
 

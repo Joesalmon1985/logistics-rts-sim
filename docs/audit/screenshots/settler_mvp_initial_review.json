@@ -1,0 +1,91 @@
+{
+	"help_text_found": true,
+	"hud_found": true,
+	"map_rect": {
+		"h": 1111.0,
+		"w": 1382.0,
+		"x": 0.0,
+		"y": 2.0
+	},
+	"map_viewport_found": true,
+	"objective_panel_found": true,
+	"off_screen_panels": [],
+	"panel_rects": {
+		"controls_help": {
+			"h": 391.0,
+			"w": 532.0,
+			"x": 1388.0,
+			"y": 685.0
+		},
+		"event_warnings": {
+			"h": 80.0,
+			"w": 532.0,
+			"x": 1388.0,
+			"y": 367.0
+		},
+		"inspector": {
+			"h": 100.0,
+			"w": 532.0,
+			"x": 1388.0,
+			"y": 453.0
+		},
+		"map_viewport": {
+			"h": 1111.0,
+			"w": 1382.0,
+			"x": 0.0,
+			"y": 2.0
+		},
+		"objective_panel": {
+			"h": 161.0,
+			"w": 532.0,
+			"x": 1388.0,
+			"y": 39.0
+		},
+		"play_button": {
+			"h": 31.0,
+			"w": 41.0,
+			"x": 1726.0,
+			"y": -33.0
+		},
+		"status_label": {
+			"h": 23.0,
+			"w": 1655.0,
+			"x": 0.0,
+			"y": -29.0
+		},
+		"stockpile_status": {
+			"h": 23.0,
+			"w": 532.0,
+			"x": 1388.0,
+			"y": 206.0
+		}
+	},
+	"panels_on_screen": true,
+	"paused_initial": true,
+	"png_sanity": {
+		"exists": true,
+		"non_blank": false,
+		"ok": false,
+		"size_bytes": 81
+	},
+	"possible_fullscreen_input_blockers": [],
+	"scene_loaded": true,
+	"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/settler_mvp_initial.png",
+	"selected_hex_initial": {
+		"q": -1,
+		"r": -1
+	},
+	"top_level_control_rects": [
+		{
+			"mouse_filter": 1,
+			"name": "RootVBox",
+			"rect": {
+				"h": 1146.0,
+				"w": 1920.0,
+				"x": 0.0,
+				"y": -33.0
+			}
+		}
+	],
+	"viewport_size": "1920x1080"
+}

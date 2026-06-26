@@ -1,0 +1,18 @@
+{
+	"active_mode": "woodcutter",
+	"camera_offset_or_position": "(-618.7267, -318.6035)",
+	"camera_zoom_or_scale": 1.6091083180929,
+	"changed_from_previous": true,
+	"input_action_attempted": "build_woodcutter",
+	"inspector_text_summary": "BUILDING\nType: headquarters\nPlayer: p1\nPosition: (6, 6)\nState: active\nStore: P:23 R:20 S:17 T:5 X:27\nID: 1",
+	"message_log_summary": "Simulation: Paused | Speed: 1x | Tick: 0",
+	"objective_text_summary": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not",
+	"road_mode": false,
+	"screenshot_hash": "488cb0b25cbcc3b4003f2f0fe70d673c",
+	"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/settler_mvp_04_build_mode.png",
+	"selected_hex": {
+		"q": 6,
+		"r": 6
+	},
+	"step_name": "build_mode"
+}

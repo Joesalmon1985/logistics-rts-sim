@@ -10,6 +10,7 @@ const SCENE_PATHS: Dictionary = {
 	"economy": "res://client/scenes/economy_viewer_demo.tscn",
 	"military": "res://client/scenes/military_viewer_demo.tscn",
 	"spectator": "res://client/scenes/economy_spectator_bot_demo.tscn",
+	"settler_mvp": "res://client/scenes/settler_mvp_game.tscn",
 }
 
 
@@ -20,7 +21,10 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	if packed == null:
 		return {"ok": false, "reason": "failed to load scene"}
 	var scene: Node = packed.instantiate()
-	if variant == "spectator":
+	if variant == "settler_mvp":
+		if scene == null:
+			return {"ok": false, "reason": "failed to instantiate settler scene"}
+	elif variant == "spectator":
 		if scene == null:
 			return {"ok": false, "reason": "failed to instantiate spectator scene"}
 	else:
@@ -33,18 +37,23 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	subvp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	if scene is Control:
 		var control_scene: Control = scene as Control
+		control_scene.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		control_scene.position = Vector2.ZERO
 		control_scene.custom_minimum_size = SIZE
 		control_scene.size = SIZE
 	subvp.add_child(scene)
 	host.add_child(subvp)
 	var map: MapViewport = scene.get_node_or_null("%MapViewport") as MapViewport
+	var controller: Variant = null
+	if scene != null and "controller" in scene:
+		controller = scene.controller
 	return {
 		"ok": true,
 		"variant": variant,
 		"scene": scene,
 		"viewport": subvp,
 		"map": map,
-		"controller": scene.controller,
+		"controller": controller,
 		"frames_left": DEFAULT_FRAMES,
 	}
 

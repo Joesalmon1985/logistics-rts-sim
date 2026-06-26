@@ -1,0 +1,104 @@
+{
+	"help_text_found": true,
+	"hud_found": true,
+	"map_rect": {
+		"h": 0.0,
+		"w": 0.0,
+		"x": 0.0,
+		"y": 0.0
+	},
+	"map_viewport_found": true,
+	"objective_panel_found": true,
+	"off_screen_panels": [
+		"objective_panel",
+		"stockpile_status",
+		"inspector",
+		"controls_help",
+		"event_warnings",
+		"play_button",
+		"status_label"
+	],
+	"panel_rects": {
+		"controls_help": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"event_warnings": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"inspector": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"map_viewport": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"objective_panel": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"play_button": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"status_label": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		},
+		"stockpile_status": {
+			"h": 0.0,
+			"w": 0.0,
+			"x": 0.0,
+			"y": 0.0
+		}
+	},
+	"panels_on_screen": false,
+	"paused_initial": true,
+	"possible_fullscreen_input_blockers": [
+		{
+			"name": "SettlerMvpGame",
+			"path": "",
+			"rect": {
+				"h": 1080.0,
+				"w": 1920.0,
+				"x": 0.0,
+				"y": 0.0
+			}
+		}
+	],
+	"scene_loaded": true,
+	"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/settler_mvp_test_initial.png",
+	"selected_hex_initial": {
+		"q": -1,
+		"r": -1
+	},
+	"top_level_control_rects": [
+		{
+			"mouse_filter": 1,
+			"name": "RootVBox",
+			"rect": {
+				"h": 0.0,
+				"w": 0.0,
+				"x": 0.0,
+				"y": 0.0
+			}
+		}
+	],
+	"viewport_size": "1920x1080"
+}

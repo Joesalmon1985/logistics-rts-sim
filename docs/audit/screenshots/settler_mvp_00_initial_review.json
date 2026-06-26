@@ -1,0 +1,18 @@
+{
+	"active_mode": "",
+	"camera_offset_or_position": "(-618.7267, -318.6035)",
+	"camera_zoom_or_scale": 1.6091083180929,
+	"changed_from_previous": true,
+	"input_action_attempted": "none",
+	"inspector_text_summary": "Click a hex to inspect.",
+	"message_log_summary": "Simulation: Paused | Speed: 1x | Tick: 0",
+	"objective_text_summary": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not",
+	"road_mode": false,
+	"screenshot_hash": "488cb0b25cbcc3b4003f2f0fe70d673c",
+	"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/settler_mvp_00_initial.png",
+	"selected_hex": {
+		"q": -1,
+		"r": -1
+	},
+	"step_name": "initial"
+}
