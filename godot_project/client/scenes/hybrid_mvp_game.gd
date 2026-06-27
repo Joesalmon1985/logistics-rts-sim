@@ -162,6 +162,7 @@ func _setup_scene() -> void:
 	if tutorial_enabled:
 		tutorial.start(controller.get_snapshot(), _map)
 	_refresh_all()
+	_update_tick_timer()
 	_initialized = true
 
 
@@ -355,6 +356,7 @@ func _refresh_all() -> void:
 		_inspector.text = controller.build_inspector_text()
 	_refresh_mode_ui()
 	_refresh_tutorial_ui()
+	_update_tick_timer()
 
 
 func _refresh_map() -> void:

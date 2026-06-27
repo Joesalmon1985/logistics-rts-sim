@@ -42,7 +42,7 @@ var selected_r: int = -1
 var selected_entity_id: String = ""
 var follow_target: String = "free"
 var camera_mode: String = "free"
-var autoplay_enabled: bool = false
+var autoplay_enabled: bool = true
 var speed_multiplier: float = 1.0
 var event_log_lines: PackedStringArray = PackedStringArray()
 var recent_change_lines: PackedStringArray = PackedStringArray()
@@ -69,12 +69,16 @@ func reset_match() -> void:
 	match_label = "Hybrid bot-vs-bot (seed %d)" % int(scenario.get("seed", 0))
 	state = runner.create_game(scenario)
 	_prepare_demo_lane_map()
+	HybridTestHelper.prepare_playable_map(state, 0, 0, 13, 9, 2, 5)
+	HybridTestHelper.prepare_playable_map(state, 0, 0, 13, 9, 11, 5)
 	dual.bot_p1 = EconomyExpansionBot.new("p1")
 	dual.bot_p2 = EconomyExpansionBot.new("p2")
 	dual.bot_p1.reset("p1")
 	dual.bot_p2.reset("p2")
 	dual.max_ticks = int(scenario.get("max_ticks", 2500))
 	dual.stall_ticks_threshold = int(scenario.get("stall_ticks_threshold", 400))
+	for _i in range(12):
+		autoplay_step()
 	_refresh("Match reset — %s" % match_label)
 
 
@@ -234,7 +238,7 @@ func build_transport_bar_text() -> String:
 		return "Tick — | PAUSED | 1.0x | camera free"
 	return "Tick %d | %s | %.1fx | camera %s | follow %s" % [
 		int(snapshot.get("tick", 0)),
-		"AUTOPLAY" if autoplay_enabled else "PAUSED",
+		"Playing" if autoplay_enabled else "Paused",
 		speed_multiplier,
 		camera_mode,
 		follow_target,
@@ -276,7 +280,7 @@ func build_objective_text() -> String:
 
 func build_recent_events_text() -> String:
 	if recent_change_lines.is_empty():
-		return "[i]Step ticks to watch economy, supply, and combat.[/i]"
+		return "[i]Live bot-vs-bot hybrid match — watch economy, supply, and combat unfold.[/i]"
 	return "\n".join(recent_change_lines)
 
 

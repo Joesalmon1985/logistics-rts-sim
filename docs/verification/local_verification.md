@@ -797,3 +797,18 @@ If `$DISPLAY` is set, also run the real GUI checklist from `./scripts/run_game.s
 Launch scripts: `./scripts/run_game.sh`, `./scripts/run_skirmish.sh`, `./scripts/run_hybrid.sh`, `./scripts/run_hybrid_3d_spectator.sh`
 
 Note: `ECON_BOT_002` is excluded from default `run_tests.gd`; run via `run_bot_long.gd` only.
+
+## Real-time tutorials and 3D hybrid spectator QA
+
+Product gate — all player-facing modes must start in **Playing** state (any mode starting paused = fail):
+
+```bash
+timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_realtime_tutorials_and_3d_qa.gd
+TEST_FILTER=realtime timeout 500s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=tutorial_completable timeout 500s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=3d_spectator timeout 500s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_hybrid_bot_vs_bot_3d_smoke.gd
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/capture_realtime_tutorials_and_3d_screenshots.gd
+```
+
+Screenshots: `docs/audit/screenshots/realtime_tutorials_and_3d/`. If `$DISPLAY` is set, manually verify modes launch running via `./scripts/run_game.sh`.

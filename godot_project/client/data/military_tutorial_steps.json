@@ -51,7 +51,7 @@
     {
       "id": "move_unit",
       "title": "Move your squad",
-      "instruction": "With your squad selected, click an empty hex to move there. You can also press Play to watch it advance.",
+      "instruction": "With your squad selected, click an empty hex to move there. The squad advances automatically while the game is running.",
       "completion": "unit_moved"
     },
     {

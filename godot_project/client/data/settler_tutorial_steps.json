@@ -3,13 +3,13 @@
     {
       "id": "welcome",
       "title": "Welcome to Settler MVP",
-      "instruction": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+      "instruction": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nThe game runs in real time. You can pause with Space or the Pause button while you read.\n\nStart by clicking your Headquarters.",
       "completion": "manual_next"
     },
     {
       "id": "camera",
       "title": "Pan and zoom the map",
-      "instruction": "Use WASD or right-drag to pan. Use +/- or the mouse wheel to zoom. Try moving the map now.",
+      "instruction": "Use WASD or right-drag to pan. Use +/- or the mouse wheel to zoom. Look for green FOREST zones and gray STONE (rock) zones on the map.",
       "completion": "camera_moved"
     },
     {
@@ -19,23 +19,21 @@
       "completion": "hq_selected"
     },
     {
-      "id": "play_time",
-      "title": "Press Play",
-      "instruction": "Press Play or press Space to start time. You can still inspect and read panels while paused. Watch the tick counter increase, then pause when ready.",
-      "completion": "tick_advanced",
-      "step_kind": "action",
-      "allow_manual_override": true
+      "id": "realtime_note",
+      "title": "Real-time simulation",
+      "instruction": "The game is already running. Watch the tick counter increase at the top. Press Space or Pause whenever you want to stop time while reading.",
+      "completion": "manual_next"
     },
     {
       "id": "road_basics",
       "title": "Enter Road mode",
-      "instruction": "Click Road in the build menu (or press R). Click a start point on your road network, then click where the road should go. Roads let carriers move goods between buildings.",
+      "instruction": "Click Road in the build menu (or press R). Click a start point on your road network, then click where the road should go. Extend roads toward FOREST and STONE zones.",
       "completion": "road_placed"
     },
     {
       "id": "build_woodcutter",
       "title": "Build Woodcutter Lodge",
-      "instruction": "Click Woodcutter in the build menu (or press 1). Move over forest near a road and click a green hex to place a construction site.",
+      "instruction": "Click Woodcutter in the build menu (or press 1). Move over FOREST tiles near a road and click a green hex to place a construction site.",
       "completion": "woodcutter_placed"
     },
     {
@@ -53,13 +51,13 @@
     {
       "id": "build_quarry",
       "title": "Build Quarry",
-      "instruction": "Quarries produce stone from rock. Place a Quarry on quarryable rock terrain near roads.",
+      "instruction": "Quarries produce stone from rock. Place a Quarry on STONE (rock) terrain near roads.",
       "completion": "quarry_placed"
     },
     {
       "id": "watch_economy",
       "title": "Watch carriers and goods",
-      "instruction": "Press Play and watch carriers deliver materials along roads. Click a carrier to see what it is carrying. Check the inspector if a building is waiting.",
+      "instruction": "While time runs, watch carriers deliver materials along roads. Click a carrier to see what it is carrying. Check the inspector if a building is waiting.",
       "completion": "economy_watched"
     },
     {

@@ -37,7 +37,7 @@ var viewer: ViewerController
 var placement_building_type: String = ""
 var road_mode_active: bool = false
 var road_start_hex: Vector2i = Vector2i(-1, -1)
-var paused: bool = true
+var paused: bool = false
 var speed_multiplier: float = 1.0
 var victory_shown: bool = false
 var hover_q: int = -1
@@ -378,7 +378,7 @@ func build_help_text() -> String:
 		+ "You can inspect, pan, zoom and place plans while paused.\n\n"
 		+ "1. Connect roads from HQ to forest and rock areas.\n"
 		+ "2. Build Woodcutter, Forester, Sawmill, and Quarry on suitable terrain.\n"
-		+ "3. Press Play and watch carriers deliver materials.\n"
+		+ "3. Watch carriers deliver materials while time runs.\n"
 		+ "4. Win when all four buildings are complete, connected, and you store 10 planks + 10 stone.\n\n"
 		+ "[b]Time[/b]: Space Play/Pause · . or Enter Step · F1/F2/F3 speed 1x/2x/4x\n"
 		+ "[b]Map[/b]: Right-drag or WASD pan · Wheel or +/- zoom · Left-click inspect/place\n"

@@ -80,7 +80,7 @@ static func _format_construction_site(data: Dictionary, q: int, r: int, snapshot
 		for ware_type in required:
 			lines.append("- %s: %d / %d" % [ware_type, int(delivered.get(ware_type, 0)), int(required[ware_type])])
 	lines.append(_road_connection_line(q, r, snapshot))
-	lines.append("Tip: Press Play to let carriers deliver materials.")
+	lines.append("Tip: Carriers deliver materials while the simulation runs.")
 	return "\n".join(lines)
 
 

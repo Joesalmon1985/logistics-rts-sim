@@ -357,6 +357,8 @@ func _draw_tree_density(origin: Vector2, td: Dictionary, is_source: bool = false
 		draw_arc(center, HEX_SIZE * zoom * 0.9, 0, TAU, 24, Color(0.4, 0.95, 0.45, 0.85), 2.5)
 	_draw_hex(origin, q, r, tint, 0.8, false)
 	var label_color: Color = Color(0.75, 1.0, 0.65) if is_source else Color(0.55, 0.95, 0.55)
+	if density >= 50:
+		draw_string(_default_font(), center + Vector2(-22, 4 * zoom), "FOREST", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, label_color)
 	var prefix: String = "SRC D:" if is_source else "D:"
 	draw_string(_default_font(), center + Vector2(-14, -14 * zoom), "%s%d" % [prefix, density], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, label_color)
 
@@ -546,9 +548,17 @@ func _draw_resource(origin: Vector2, res: Dictionary) -> void:
 	var q: int = int(res.get("q", 0))
 	var r: int = int(res.get("r", 0))
 	var center: Vector2 = _hex_center(origin, q, r)
-	draw_circle(center + Vector2(0, -8 * zoom), 5.0 * zoom, Color(0.95, 0.65, 0.15))
 	var dtype: String = str(res.get("deposit_type", res.get("field_type", "res")))
-	draw_string(_default_font(), center + Vector2(-10, -12 * zoom), dtype.substr(0, 3), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(1, 0.9, 0.5))
+	var label: String = dtype.to_upper()
+	if dtype == "rock":
+		label = "STONE"
+		draw_circle(center + Vector2(0, -8 * zoom), 7.0 * zoom, Color(0.65, 0.65, 0.7, 0.85))
+	elif dtype == "forest":
+		label = "FOREST"
+		draw_circle(center + Vector2(0, -8 * zoom), 7.0 * zoom, Color(0.2, 0.65, 0.25, 0.85))
+	else:
+		draw_circle(center + Vector2(0, -8 * zoom), 5.0 * zoom, Color(0.95, 0.65, 0.15))
+	draw_string(_default_font(), center + Vector2(-18, 6 * zoom), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 0.95, 0.85))
 
 
 func _draw_fog(origin: Vector2) -> void:

@@ -2,32 +2,39 @@
   "steps": [
     {
       "id": "welcome",
-      "title": "Welcome to Hybrid MVP",
-      "instruction": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+      "title": "Hybrid economy + RTS",
+      "instruction": "This mode combines settlement logistics with delegated military control.\n\nYou will learn:\n1. Economy supplies your military.\n2. Roads connect buildings.\n3. Barracks trains units.\n4. Attack Posture sends units to fight.\n\nThe game runs in real time — pause with Space if you need to read.\n\nStart by clicking your Headquarters.",
       "completion": "manual_next"
     },
     {
       "id": "inspect_hq",
-      "title": "Inspect Headquarters",
-      "instruction": "Click your Headquarters. The inspector shows stored goods and your hybrid objective progress.",
+      "title": "Select Command Hub",
+      "instruction": "Click your Headquarters (gold building). The inspector shows stored goods and hybrid objective progress.",
       "completion": "hq_selected"
     },
     {
-      "id": "road_basics",
-      "title": "Connect roads",
-      "instruction": "Click Road in the build palette. Connect HQ to forest and rock so carriers can deliver materials to military sites.",
-      "completion": "road_placed"
+      "id": "road_network",
+      "title": "Inspect the road network",
+      "instruction": "Roads already connect your HQ eastward. Brown lines are roads — carriers use them to deliver planks, stone, and tools.\n\nClick Road in the build palette to extend the network toward the labeled FOREST and STONE zones on the map.",
+      "completion": "manual_next"
+    },
+    {
+      "id": "economy_build",
+      "title": "Place Woodcutter near forest",
+      "instruction": "Click Woodcutter in the build palette. Green-highlighted hexes near FOREST tiles are valid. Place a Woodcutter Lodge adjacent to trees and your road network.",
+      "completion": "economy_building_placed",
+      "building_type": "woodcutter"
     },
     {
       "id": "build_military",
       "title": "Place Barracks",
-      "instruction": "Click Barracks in the build palette, then click a valid hex near your road network. Military construction needs planks, stone and tools delivered by carriers.",
+      "instruction": "Click Barracks in the build palette, then click a valid hex near your road network. Military construction needs planks, stone, and tools delivered by carriers.",
       "completion": "military_site_placed"
     },
     {
       "id": "watch_supply",
-      "title": "Watch materials arrive",
-      "instruction": "Press Play and watch carriers deliver wares to the military construction site. Check warnings if production is blocked.",
+      "title": "Watch supplies move",
+      "instruction": "While time runs, watch carriers deliver wares to the military construction site. Check warnings if production is blocked.",
       "completion": "tick_advanced"
     },
     {
@@ -46,13 +53,19 @@
     {
       "id": "attack_posture",
       "title": "Set Attack Posture",
-      "instruction": "Click Attack Posture, then click the enemy base on the east side of the map. Your squad will attack automatically.",
+      "instruction": "Click Attack Posture, then click the enemy Command Hub on the east side of the map. Your squad will attack automatically.",
       "completion": "attack_posture_set"
     },
     {
+      "id": "watch_combat",
+      "title": "Watch combat progress",
+      "instruction": "While time runs, watch your squad move and fight. Objective progress updates in the panel on the right.",
+      "completion": "combat_progress"
+    },
+    {
       "id": "victory",
-      "title": "Complete the objective",
-      "instruction": "Press Play and watch your force destroy the enemy Command Hub to win.",
+      "title": "Complete the tutorial",
+      "instruction": "Destroy the enemy Command Hub to win. You can pause anytime with Space or the Pause button.",
       "completion": "objective_complete"
     }
   ]

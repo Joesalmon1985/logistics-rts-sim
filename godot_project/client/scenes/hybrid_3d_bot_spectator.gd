@@ -34,6 +34,7 @@ func _ready() -> void:
 	_setup_autoplay_timer()
 	_connect_buttons()
 	controller.reset_match()
+	_update_autoplay_timer()
 	_refresh_all()
 
 
@@ -84,6 +85,9 @@ func _refresh_all() -> void:
 		_camera.set_mode_name(controller.camera_mode)
 		_camera.follow_position = controller.get_follow_position()
 	Hybrid3dSpectatorHud.refresh(_hud_root, controller)
+	var play_btn: Button = find_child("PlayPauseBtn", true, false) as Button
+	if play_btn != null:
+		play_btn.text = "Pause" if controller.autoplay_enabled else "Play"
 
 
 func _on_autoplay_tick() -> void:

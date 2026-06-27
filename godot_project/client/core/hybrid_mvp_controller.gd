@@ -42,7 +42,7 @@ var placement_building_type: String = ""
 var road_mode_active: bool = false
 var attack_mode_active: bool = false
 var road_start_hex: Vector2i = Vector2i(-1, -1)
-var paused: bool = true
+var paused: bool = false
 var speed_multiplier: float = 1.0
 var victory_shown: bool = false
 var hover_q: int = -1
@@ -61,7 +61,7 @@ func reset_game() -> void:
 	var runner := SimulationTickRunner.new()
 	var scenario: Dictionary = ConfigLoader.load_scenario(SCENARIO_PATH)
 	var state: GameState = runner.create_game(scenario)
-	HybridTestHelper.flatten_grass(state, 0, 0, 15, 15)
+	HybridTestHelper.prepare_playable_map(state, 0, 0, 15, 15, 2, 2)
 	state = runner.run_ticks(state, 1)
 	viewer.load_demo_state(state, "p1")
 	_apply_auto_worker_policy()

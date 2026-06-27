@@ -19,6 +19,7 @@ var _roads_root: Node3D
 var _buildings_root: Node3D
 var _units_root: Node3D
 var _overlays_root: Node3D
+var _resources_root: Node3D
 var _selection_marker: MeshInstance3D
 var _box_mesh: BoxMesh
 var _cylinder_mesh: CylinderMesh
@@ -40,6 +41,9 @@ func _ready() -> void:
 	_overlays_root = Node3D.new()
 	_overlays_root.name = "Overlays"
 	add_child(_overlays_root)
+	_resources_root = Node3D.new()
+	_resources_root.name = "Resources"
+	add_child(_resources_root)
 	_box_mesh = BoxMesh.new()
 	_cylinder_mesh = CylinderMesh.new()
 	_cylinder_mesh.top_radius = 0.35
@@ -71,6 +75,7 @@ func get_entity_count() -> Dictionary:
 		"roads": _roads_root.get_child_count(),
 		"buildings": _buildings_root.get_child_count(),
 		"units": _units_root.get_child_count(),
+		"resources": _resources_root.get_child_count(),
 	}
 
 
@@ -80,11 +85,13 @@ func _rebuild_world() -> void:
 	_clear_children(_buildings_root)
 	_clear_children(_units_root)
 	_clear_children(_overlays_root)
+	_clear_children(_resources_root)
 	if snapshot.is_empty():
 		_selection_marker.visible = false
 		return
 	for tile in _terrain_tiles(snapshot):
 		_spawn_terrain(tile)
+	_spawn_resource_markers(snapshot)
 	for road in snapshot.get("roads", []):
 		if overlay_visibility.get("roads", true):
 			_spawn_road(road)
@@ -122,6 +129,9 @@ func _spawn_terrain(tile: Dictionary) -> void:
 		"forest":
 			color = Color(0.12, 0.42, 0.18)
 			height = 0.18
+		"rock":
+			color = Color(0.52, 0.52, 0.58)
+			height = 0.22
 		"water":
 			color = Color(0.22, 0.48, 0.82)
 			height = 0.05
@@ -250,6 +260,40 @@ func _spawn_combat_markers() -> void:
 		marker.scale = Vector3(0.35, 0.35, 0.35)
 		marker.position = hex_to_world(q, r) + Vector3(0, 0.6, 0)
 		_overlays_root.add_child(marker)
+
+
+func _spawn_resource_markers(data: Dictionary) -> void:
+	var snap: Dictionary = _normalize_snapshot(data)
+	var layers: Dictionary = snap.get("display_layers", {})
+	if typeof(layers) != TYPE_DICTIONARY:
+		layers = {}
+	for td in snap.get("tree_density", layers.get("tree_density", [])):
+		if typeof(td) != TYPE_DICTIONARY:
+			continue
+		var density: int = int(td.get("tree_density", 0))
+		if density < 40:
+			continue
+		var q: int = int(td.get("q", 0))
+		var r: int = int(td.get("r", 0))
+		var tree := _make_mesh_instance(_cylinder_mesh, Color(0.18, 0.72, 0.28))
+		tree.scale = Vector3(0.25, 0.9 + float(mini(density, 80)) * 0.008, 0.25)
+		tree.position = hex_to_world(q, r) + Vector3(0, 0.55, 0)
+		_resources_root.add_child(tree)
+	for res in snap.get("resources", layers.get("resources", [])):
+		if typeof(res) != TYPE_DICTIONARY:
+			continue
+		var rq: int = int(res.get("q", 0))
+		var rr: int = int(res.get("r", 0))
+		var dtype: String = str(res.get("deposit_type", res.get("field_type", "")))
+		var res_color: Color = Color(0.72, 0.72, 0.78)
+		if dtype == "rock":
+			res_color = Color(0.58, 0.58, 0.65)
+		elif dtype == "forest":
+			res_color = Color(0.22, 0.68, 0.32)
+		var marker := _make_mesh_instance(_box_mesh, res_color)
+		marker.scale = Vector3(0.35, 0.5, 0.35)
+		marker.position = hex_to_world(rq, rr) + Vector3(0, 0.35, 0)
+		_resources_root.add_child(marker)
 
 
 func _building_spec(btype: String, military: bool) -> Dictionary:

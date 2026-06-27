@@ -760,6 +760,8 @@ func _refresh_panels() -> void:
 	_objective.text = controller.build_objective_text()
 	_stock.text = controller.build_stockpile_text()
 	_warnings.text = controller.build_warnings_text()
+	if _play_btn != null:
+		_play_btn.text = "Play" if controller.paused else "Pause"
 	_update_tick_timer()
 
 
