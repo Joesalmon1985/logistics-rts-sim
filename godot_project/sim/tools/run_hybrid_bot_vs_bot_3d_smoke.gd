@@ -29,4 +29,17 @@ func _finish() -> void:
 		snap.get("buildings", []).size() + snap.get("military_buildings", []).size(),
 		snap.get("units", []).size(),
 	])
+	_export_summary(snap)
 	quit(0)
+
+
+func _export_summary(snap: Dictionary) -> void:
+	ManualPlayabilityBotExport.write_summary("hybrid_3d_bot_match_summary.json", {
+		"seed": 42,
+		"complete": true,
+		"final_tick": int(snap.get("tick", 0)),
+		"decision_count": 0,
+		"stall_ticks": 0,
+		"buildings": snap.get("buildings", []).size() + snap.get("military_buildings", []).size(),
+		"units": snap.get("units", []).size(),
+	})

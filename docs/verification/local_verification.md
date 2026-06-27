@@ -776,6 +776,24 @@ timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/ve
 timeout 3600s "$GODOT" --headless --path godot_project --script res://sim/tools/run_mrp_full_verification.gd
 ```
 
+## Manual playability QA (RUN_MANUAL_PLAYABILITY_QA)
+
+Primary gate — menu-route screenshots, tutorial navigation, time controls, bot functional smokes:
+
+```bash
+timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_manual_playability_qa.gd
+TEST_FILTER=manual_qa timeout 500s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/capture_actual_playability_screenshots.gd -- --mode=all
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_fast.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tutorial_bot_smoke.gd
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tutorial_military_bot_smoke.gd
+timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tutorial_hybrid_bot_smoke.gd
+timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_hybrid_bot_vs_bot_3d_smoke.gd
+timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_failure_modes.gd
+```
+
+If `$DISPLAY` is set, also run the real GUI checklist from `./scripts/run_game.sh` (Settler/Skirmish/Hybrid tutorial Next/Back/Play) and save captures under `docs/audit/screenshots/manual_playability/real_gui/`.
+
 Launch scripts: `./scripts/run_game.sh`, `./scripts/run_skirmish.sh`, `./scripts/run_hybrid.sh`, `./scripts/run_hybrid_3d_spectator.sh`
 
 Note: `ECON_BOT_002` is excluded from default `run_tests.gd`; run via `run_bot_long.gd` only.

@@ -100,6 +100,10 @@ func _export_artifacts(
 		sf.store_string(JSON.stringify(snapshot, "\t"))
 		sf.close()
 
+	summary["decision_log_path"] = csv_path
+	summary["final_snapshot_path"] = snap_path
+	ManualPlayabilityBotExport.write_summary("economy_bot_summary.json", summary)
+
 
 func _quit(code: int) -> void:
 	print("EXIT: %d (%s)" % [code, "pass" if code == 0 else "fail"])

@@ -32,8 +32,11 @@ var _tutorial_title: Label
 var _tutorial_progress: Label
 var _tutorial_instruction: RichTextLabel
 var _tutorial_next: Button
+var _tutorial_back: Button
 var _tutorial_skip: Button
 var _tutorial_exit: Button
+var _tutorial_next_reason: Label
+var _tutorial_step_kind: Label
 var _build_palette: VBoxContainer
 
 var _sprite_layer: HybridSpriteLayer
@@ -61,8 +64,11 @@ func _bind_ui_nodes() -> void:
 	_tutorial_progress = find_child("TutorialProgress", true, false) as Label
 	_tutorial_instruction = find_child("TutorialInstruction", true, false) as RichTextLabel
 	_tutorial_next = find_child("TutorialNextBtn", true, false) as Button
+	_tutorial_back = find_child("TutorialBackBtn", true, false) as Button
 	_tutorial_skip = find_child("TutorialSkipBtn", true, false) as Button
 	_tutorial_exit = find_child("TutorialExitBtn", true, false) as Button
+	_tutorial_next_reason = find_child("TutorialNextReasonLabel", true, false) as Label
+	_tutorial_step_kind = find_child("TutorialStepKind", true, false) as Label
 	_build_palette = find_child("BuildPalette", true, false) as VBoxContainer
 	_sprite_layer = find_child("HybridSpriteLayer", true, false) as HybridSpriteLayer
 
@@ -167,20 +173,21 @@ func _setup_tick_timer() -> void:
 
 
 func _wire_buttons() -> void:
-	_connect_btn("%PlayBtn", _toggle_play)
-	_connect_btn("%PauseBtn", func(): controller.paused = true)
-	_connect_btn("%StepBtn", func(): controller.step_tick())
-	_connect_btn("%Speed1Btn", func(): controller.speed_multiplier = 1.0)
-	_connect_btn("%Speed2Btn", func(): controller.speed_multiplier = 2.0)
-	_connect_btn("%Speed4Btn", func(): controller.speed_multiplier = 4.0)
+	_connect_btn("%PlayBtn", invoke_play)
+	_connect_btn("%PauseBtn", invoke_pause)
+	_connect_btn("%StepBtn", invoke_step)
+	_connect_btn("%Speed1Btn", func(): invoke_set_speed(1.0))
+	_connect_btn("%Speed2Btn", func(): invoke_set_speed(2.0))
+	_connect_btn("%Speed4Btn", func(): invoke_set_speed(4.0))
 	_connect_btn("%RoadBtn", func(): controller.set_road_mode(true); _refresh_mode_ui())
 	_connect_btn("%AttackBtn", func(): controller.set_attack_mode(true); _refresh_mode_ui())
 	_connect_btn("%QueueBtn", func(): controller.queue_rifle_squad_at_selection())
 	_connect_btn("%CancelModeBtn", func(): controller.clear_modes(); _refresh_mode_ui())
 	_connect_btn("%MenuBtn", func(): get_tree().change_scene_to_file("res://client/scenes/main_menu.tscn"))
 	_connect_btn("%TutorialNextBtn", func(): tutorial.advance_manual(); _refresh_tutorial_ui())
-	_connect_btn("%TutorialSkipBtn", func(): tutorial.skip_or_exit(); _refresh_tutorial_ui())
-	_connect_btn("%TutorialExitBtn", func(): tutorial.skip_or_exit(); _refresh_tutorial_ui())
+	_connect_btn("%TutorialBackBtn", func(): tutorial.retreat_manual(); _refresh_tutorial_ui())
+	_connect_btn("%TutorialSkipBtn", func(): _skip_tutorial())
+	_connect_btn("%TutorialExitBtn", func(): _exit_tutorial_to_menu())
 	for btype in HybridMvpController.ECONOMY_BUILD_TYPES + HybridMvpController.MILITARY_BUILD_TYPES:
 		var btn: Button = _build_palette.get_node_or_null("Build_%s" % btype) as Button
 		if btn != null:
@@ -193,13 +200,87 @@ func _connect_btn(path: String, cb: Callable) -> void:
 		btn.pressed.connect(cb)
 
 
-func _toggle_play() -> void:
-	controller.paused = not controller.paused
-	if not controller.paused:
-		_tick_timer.start(TICK_BASE_SEC / controller.speed_multiplier)
-	else:
-		_tick_timer.stop()
+func invoke_play() -> void:
+	controller.paused = false
+	_update_tick_timer()
 	_refresh_status()
+
+
+func invoke_pause() -> void:
+	controller.paused = true
+	_update_tick_timer()
+	_refresh_status()
+
+
+func invoke_step() -> void:
+	if not controller.paused:
+		return
+	controller.step_tick()
+	_refresh_all()
+
+
+func invoke_set_speed(multiplier: float) -> void:
+	controller.speed_multiplier = multiplier
+	_update_tick_timer()
+	_refresh_status()
+
+
+func _update_tick_timer() -> void:
+	if _tick_timer == null:
+		return
+	var interval: float = TICK_BASE_SEC / maxf(controller.speed_multiplier, 0.25)
+	_tick_timer.wait_time = interval
+	if controller.paused:
+		_tick_timer.stop()
+	elif _tick_timer.is_inside_tree():
+		_tick_timer.start(interval)
+
+
+func _skip_tutorial() -> void:
+	tutorial.enabled = false
+	tutorial_enabled = false
+	if _tutorial_panel != null:
+		_tutorial_panel.visible = false
+
+
+func _exit_tutorial_to_menu() -> void:
+	tutorial.skip_or_exit()
+	get_tree().change_scene_to_file("res://client/scenes/main_menu.tscn")
+
+
+func simulate_tutorial_next() -> void:
+	if _tutorial_next != null and not _tutorial_next.disabled:
+		_tutorial_next.pressed.emit()
+	elif tutorial.enabled:
+		tutorial.advance_manual()
+		_refresh_tutorial_ui()
+
+
+func simulate_tutorial_back() -> void:
+	if _tutorial_back != null and not _tutorial_back.disabled:
+		_tutorial_back.pressed.emit()
+	elif tutorial.enabled:
+		tutorial.retreat_manual()
+		_refresh_tutorial_ui()
+
+
+func invoke_play_toggle() -> void:
+	if controller.paused:
+		invoke_play()
+	else:
+		invoke_pause()
+
+
+func get_current_tick() -> int:
+	return int(controller.get_snapshot().get("tick", 0))
+
+
+func is_sim_paused() -> bool:
+	return controller.paused
+
+
+func get_tutorial_step_index() -> int:
+	return tutorial.step_index
 
 
 func _on_tick_timer() -> void:
@@ -216,8 +297,33 @@ func _on_map_click(q: int, r: int) -> void:
 	tutorial.update(controller.get_snapshot(), _map, controller.get_selection_at(q, r), controller)
 
 
-func _on_snapshot_refreshed(_snap: Dictionary) -> void:
+func _on_snapshot_refreshed(snap: Dictionary) -> void:
+	if tutorial.enabled:
+		tutorial.update(snap, _map, controller.get_selection_at(_map.selected_q, _map.selected_r), controller)
 	_refresh_all()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	if not (event is InputEventKey):
+		return
+	match (event as InputEventKey).keycode:
+		KEY_SPACE:
+			invoke_play_toggle()
+			get_viewport().set_input_as_handled()
+		KEY_PERIOD, KEY_ENTER, KEY_KP_ENTER:
+			invoke_step()
+			get_viewport().set_input_as_handled()
+		KEY_F1:
+			invoke_set_speed(1.0)
+			get_viewport().set_input_as_handled()
+		KEY_F2:
+			invoke_set_speed(2.0)
+			get_viewport().set_input_as_handled()
+		KEY_F3:
+			invoke_set_speed(4.0)
+			get_viewport().set_input_as_handled()
 
 
 func _on_message_logged(_text: String) -> void:
@@ -278,15 +384,16 @@ func _refresh_mode_ui() -> void:
 
 
 func _refresh_tutorial_ui() -> void:
-	if not tutorial.enabled or tutorial.exited:
-		if _tutorial_panel != null:
-			_tutorial_panel.visible = false
-		return
-	var step: Dictionary = tutorial.current_step()
-	if _tutorial_panel != null:
-		_tutorial_panel.visible = not step.is_empty()
-	if step.is_empty():
-		return
-	_tutorial_title.text = str(step.get("title", ""))
-	_tutorial_instruction.text = str(step.get("instruction", ""))
-	_tutorial_progress.text = "Step %d / %d" % [tutorial.step_index + 1, tutorial.steps.size()]
+	TutorialNavigationUI.refresh(
+		tutorial,
+		_tutorial_panel,
+		_tutorial_title,
+		_tutorial_progress,
+		_tutorial_instruction,
+		_tutorial_back,
+		_tutorial_next,
+		_tutorial_next_reason,
+		_tutorial_skip,
+		_tutorial_exit,
+		_tutorial_step_kind
+	)

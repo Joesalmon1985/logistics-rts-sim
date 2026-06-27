@@ -1,0 +1,12 @@
+{
+	"commands_submitted": 25,
+	"complete": true,
+	"complete_or_milestone": true,
+	"decision_count": 25,
+	"decision_log_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/bot_runs/tutorial_bot_decisions.csv",
+	"final_snapshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/bot_runs/tutorial_bot_final_snapshot.json",
+	"final_tick": 125,
+	"scenario_loads": true,
+	"seed": 42,
+	"stall_ticks": 54
+}

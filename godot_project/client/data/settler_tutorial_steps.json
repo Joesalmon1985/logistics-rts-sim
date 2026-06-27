@@ -21,8 +21,10 @@
     {
       "id": "play_time",
       "title": "Press Play",
-      "instruction": "Click Play or press Space to run the simulation. Watch the tick counter increase, then pause when ready.",
-      "completion": "tick_advanced"
+      "instruction": "Press Play or press Space to start time. You can still inspect and read panels while paused. Watch the tick counter increase, then pause when ready.",
+      "completion": "tick_advanced",
+      "step_kind": "action",
+      "allow_manual_override": true
     },
     {
       "id": "road_basics",

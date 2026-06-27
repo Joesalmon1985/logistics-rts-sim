@@ -1,0 +1,4078 @@
+{
+	"capture_method": "real_desktop_window",
+	"entries": [
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_00_main_menu",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": false,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"status_label_visible": false,
+				"step_button_visible": false,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_00_main_menu.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_01_start_prompt",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_01_start_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Settler MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x325",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,403 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,1019 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,1019 460x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,620 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_02_after_next_prompt",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_02_after_next_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Use WASD or right-drag to pan. Use +/- or the mouse wheel to zoom. Try moving the map now.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 2 of 11",
+			"tutorial_title_text": "Pan and zoom the map",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x325",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,403 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,1019 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,1019 460x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,620 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_03_after_back_prompt",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_03_after_back_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Settler MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x214",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,292 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,908 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,908 460x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,509 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_04_hq_selected",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_04_hq_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Settler MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x325",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,403 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,1019 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,1019 460x120",
+					"text": "Carrier\nCarries goods along roads.\n\nStatus: Idle\nCarrying: (nothing)\nTip: Carriers move automatically when roads connect buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,620 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_05_unpaused_tick_advancing",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_05_unpaused_tick_advancing.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Settler MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x325",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,403 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,1019 460x132",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,1019 460x132",
+					"text": "Carrier\nCarries goods along roads.\n\nStatus: Idle\nCarrying: (nothing)\nTip: Carriers move automatically when roads connect buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,620 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_06_road_mode",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_06_road_mode.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Settler MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x325",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,403 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,1019 460x132",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,1019 460x132",
+					"text": "Carrier\nCarries goods along roads.\n\nStatus: Idle\nCarrying: (nothing)\nTip: Carriers move automatically when roads connect buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,620 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 4"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "settler_tutorial_07_build_woodcutter_mode",
+			"mode": "settler_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/settler_tutorial_07_build_woodcutter_mode.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a road-and-carrier settlement game. Your job is to build a small working economy.\n\nGoal:\n1. Connect buildings to Headquarters with roads.\n2. Build a Woodcutter, Forester, Sawmill and Quarry.\n3. Store 10 planks and 10 stone.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Settler MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x325",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,486 460x154",
+					"text": "[b]Objective[/b]\n[color=#cccccc]…[/color] Woodcutter Lodge — Not built yet.\n[color=#cccccc]…[/color] Forester Camp — Not built yet.\n[color=#cccccc]…[/color] Sawmill — Not built yet.\n[color=#cccccc]…[/color] Quarry — Not built yet.\n[color=#55cc66]✓[/color] Store planks: 23 / 10\n[color=#55cc66]✓[/color] Store stone: 17 / 10"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,1102 460x132",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "812,1102 460x132",
+					"text": "Carrier\nCarries goods along roads.\n\nStatus: Idle\nCarrying: (nothing)\nTip: Carriers move automatically when roads connect buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,703 460x228",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 818x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 4"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_00_main_menu",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": false,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"status_label_visible": false,
+				"step_button_visible": false,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_00_main_menu.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_01_start_prompt",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_01_start_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_02_after_next_prompt",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_02_after_next_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Use WASD or right-drag to pan. Use +/- or the mouse wheel to zoom. Try moving the map now.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 2 of 11",
+			"tutorial_title_text": "Pan and zoom the battlefield",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_03_after_back_prompt",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_03_after_back_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x214",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,292 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,845 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,845 460x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,556 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_04_command_hub_selected",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_04_command_hub_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x120",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_05_unpaused_tick_advancing",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_05_unpaused_tick_advancing.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_06_build_or_queue_panel",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_06_build_or_queue_panel.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 3"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_07_unit_selected",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_07_unit_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 3"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_tutorial_08_attack_order",
+			"mode": "skirmish_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_tutorial_08_attack_order.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This is a small RTS skirmish. Your goal is to destroy the enemy Command Hub.\n\nYou will:\n1. Read credits and power.\n2. Build a Power Generator and Barracks.\n3. Queue a Rifle Squad.\n4. Move and attack with your squad.\n\nStart by clicking your Command Hub.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Welcome to Skirmish MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,72 460x348",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,426 460x138",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,979 460x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "812,979 460x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "812,690 460x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 3"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 812x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_00_main_menu",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": false,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"status_label_visible": false,
+				"step_button_visible": false,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_00_main_menu.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_01_start_prompt",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_01_start_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "[i]Click a hex to inspect settlement or military objects.[/i]"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-426 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_02_after_next_prompt",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_02_after_next_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Click your Headquarters. The inspector shows stored goods and your hybrid objective progress.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 2 of 9",
+			"tutorial_title_text": "Inspect Headquarters",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "[i]Click a hex to inspect settlement or military objects.[/i]"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-426 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_03_after_back_prompt",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_03_after_back_prompt.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-291 400x213",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,5 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,750 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,750 400x120",
+					"text": "[i]Click a hex to inspect settlement or military objects.[/i]"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,286 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-361 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-361 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-361 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-357 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-326 876x1408",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_04_hq_or_hybrid_base_selected",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_04_hq_or_hybrid_base_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-426 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_05_unpaused_tick_advancing",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_05_unpaused_tick_advancing.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-426 41x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 982x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_06_economy_to_military_supply_visible",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_06_economy_to_military_supply_visible.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1031,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "972,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 968x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_07_military_posture_or_order_panel",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_07_military_posture_or_order_panel.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1031,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "972,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 968x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_tutorial_08_objective_progress",
+			"mode": "hybrid_tutorial",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_back_visible": true,
+				"tutorial_exit_visible": true,
+				"tutorial_instruction_visible": true,
+				"tutorial_next_visible": true,
+				"tutorial_panel_visible": true,
+				"tutorial_skip_visible": true,
+				"tutorial_title_visible": true
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_tutorial_08_objective_progress.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Welcome to Hybrid MVP",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,-356 400x343",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,70 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,815 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,815 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,351 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1031,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "972,-426 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-426 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-422 968x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-391 876x1538",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_mvp_00_launch",
+			"mode": "skirmish_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_mvp_00_launch.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Tutorial instructions",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,72 380x184",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,671 380x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,671 380x120",
+					"text": "Click a hex to inspect."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,382 380x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 892x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_mvp_01_unit_or_base_selected",
+			"mode": "skirmish_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_mvp_01_unit_or_base_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Tutorial instructions",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,72 380x184",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,671 380x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,671 380x120",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,382 380x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 0"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 892x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_mvp_02_unpaused",
+			"mode": "skirmish_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_mvp_02_unpaused.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Tutorial instructions",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,72 380x184",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,671 380x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,671 380x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,382 380x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 892x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_mvp_03_move_or_attack_command",
+			"mode": "skirmish_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_mvp_03_move_or_attack_command.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Tutorial instructions",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,72 380x184",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,671 380x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,671 380x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,382 380x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 3"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 892x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_mvp_04_production_or_build_queue",
+			"mode": "skirmish_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_mvp_04_production_or_build_queue.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Tutorial instructions",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,72 380x184",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,671 380x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,671 380x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,382 380x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 3"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 892x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "skirmish_mvp_05_victory_or_progress",
+			"mode": "skirmish_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/skirmish_mvp_05_victory_or_progress.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "Tutorial instructions",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 11",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,72 380x184",
+					"text": "[b]Objective[/b]\nDestroy the enemy Command Hub to win the skirmish.\n\n1. Build Power Generator and Barracks near your hub.\n2. Queue a Rifle Squad at the Barracks.\n3. Select your squad and attack the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,671 380x138",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "892,671 380x138",
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (3, 3)"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "892,382 380x254",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1086,0 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1023,0 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1237,0 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,4 838x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 3"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,35 892x685",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_00_launch",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_00_launch.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "[i]Click a hex to inspect settlement or military objects.[/i]"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-253 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_01_economy_selected",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_01_economy_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-253 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_02_military_selected",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_02_military_selected.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-253 41x31",
+					"text": "Play"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 982x23",
+					"text": "Simulation: Paused | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_03_unpaused",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_03_unpaused.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1045,-253 41x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "986,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 982x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_04_supply_chain_visible",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_04_supply_chain_visible.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1031,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "972,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 968x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_05_attack_or_posture_visible",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_05_attack_or_posture_visible.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1031,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "972,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 968x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_mvp_06_victory_or_progress",
+			"mode": "hybrid_mvp",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": true,
+				"inspector_panel_visible": true,
+				"inspector_visible": true,
+				"map_viewport_visible": true,
+				"objective_panel_visible": true,
+				"pause_button_visible": true,
+				"play_button_visible": true,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": true,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_mvp_06_victory_or_progress.png",
+			"tutorial_back_button_text": "Back",
+			"tutorial_exit_button_text": "Back to Main Menu",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "Next",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "Skip Tutorial",
+			"tutorial_step_number_text": "Step 1 of 9",
+			"tutorial_title_text": "Tutorial",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,-103 400x138",
+					"text": "Hybrid objective\n○ Build supplied Barracks — Place and supply a military construction site.\n○ Produce Rifle Squad — 0 / 1 ready.\n○ Destroy enemy Command Hub — Set Attack Posture on the enemy base."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,642 400x120",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "880,642 400x120",
+					"text": "Headquarters\nStores goods and connects your settlement to the road network.\n\nStatus: Working\nPosition: (2, 2)\nStored goods:\n- Timber: 10\n- Planks: 58\n- Stone: 58\nRoad connection: yes\nTip: Build roads from here to new buildings.\nTip: Your central storehouse — keep roads connected to new buildings."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "880,178 400x408",
+					"text": ""
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1031,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "972,-253 55x31",
+					"text": "Pause"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "1090,-253 43x31",
+					"text": "Step"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "0,-249 968x23",
+					"text": "Simulation: Playing | Speed: 1x | Tick: 1"
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 14,
+					"rect": "0,-218 876x1191",
+					"text": ""
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_3d_00_launch",
+			"mode": "hybrid_3d",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": true,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": false,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_3d_00_launch.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "760,320 520x120",
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "760,40 520x22",
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free"
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_3d_01_camera_moved",
+			"mode": "hybrid_3d",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": true,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": false,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_3d_01_camera_moved.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "760,320 520x120",
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "760,40 520x22",
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free"
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_3d_02_bot_activity",
+			"mode": "hybrid_3d",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": true,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": false,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_3d_02_bot_activity.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "760,320 520x120",
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "760,40 520x22",
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free"
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_3d_03_logistics_to_combat_visible",
+			"mode": "hybrid_3d",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": true,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": false,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_3d_03_logistics_to_combat_visible.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "760,320 520x120",
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "760,40 520x22",
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free"
+				}
+			],
+			"window_size": "1280x720"
+		},
+		{
+			"capture_method": "real_desktop_window",
+			"failure_reasons": [],
+			"functionality": {
+
+			},
+			"milestone": "hybrid_3d_04_hud_readable",
+			"mode": "hybrid_3d",
+			"pass": true,
+			"readability": {
+
+			},
+			"required_ui": {
+				"build_palette_visible": false,
+				"inspector_panel_visible": false,
+				"inspector_visible": true,
+				"map_viewport_visible": false,
+				"objective_panel_visible": false,
+				"pause_button_visible": false,
+				"play_button_visible": false,
+				"play_pause_visible": true,
+				"status_label_visible": true,
+				"step_button_visible": false,
+				"tick_visible": true,
+				"time_controls_visible": true,
+				"tutorial_panel_visible": false
+			},
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/manual_playability/hybrid_3d_04_hud_readable.png",
+			"tutorial_back_button_text": "",
+			"tutorial_exit_button_text": "",
+			"tutorial_instruction_text": "",
+			"tutorial_next_button_text": "",
+			"tutorial_next_disabled_reason": "",
+			"tutorial_skip_button_text": "",
+			"tutorial_step_number_text": "",
+			"tutorial_title_text": "",
+			"viewport_size": "1280x720",
+			"visible_text_blocks": [
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 16,
+					"rect": "760,320 520x120",
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers."
+				},
+				{
+					"contrast_notes": "panel_present",
+					"font_size_or_estimate": 15,
+					"rect": "760,40 520x22",
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free"
+				}
+			],
+			"window_size": "1280x720"
+		}
+	],
+	"generated_at": "2026-06-27T07:42:30"
+}

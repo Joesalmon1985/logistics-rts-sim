@@ -92,6 +92,8 @@ func _export_artifacts(
 			])
 		cf.close()
 
+	ManualPlayabilityBotExport.write_summary("military_bot_summary.json", summary)
+
 
 func _quit(code: int) -> void:
 	print("EXIT: %d (%s)" % [code, "pass" if code == 0 else "fail"])

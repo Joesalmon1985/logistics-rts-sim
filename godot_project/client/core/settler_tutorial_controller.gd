@@ -1,18 +1,9 @@
 class_name SettlerTutorialController
-extends RefCounted
+extends BaseTutorialController
 
 ## Client-side guided tutorial — reads snapshot/UI only; never mutates sim directly.
 
-signal step_changed(step_index: int, step: Dictionary)
-signal tutorial_completed()
-signal tutorial_exited()
-
 const STEPS_PATH := "res://client/data/settler_tutorial_steps.json"
-
-var enabled: bool = false
-var steps: Array = []
-var step_index: int = 0
-var exited: bool = false
 
 var _initial_camera_pan: Vector2 = Vector2.ZERO
 var _initial_camera_zoom: float = 1.0
@@ -44,22 +35,6 @@ func start(snapshot: Dictionary, map: MapViewport) -> void:
 		_initial_camera_zoom = map.zoom
 		_camera_baseline_set = true
 	step_changed.emit(step_index, current_step())
-
-
-func current_step() -> Dictionary:
-	if step_index < 0 or step_index >= steps.size():
-		return {}
-	return steps[step_index]
-
-
-func advance_manual() -> void:
-	if current_step().get("completion", "") == "manual_next":
-		_advance()
-
-
-func skip_or_exit() -> void:
-	exited = true
-	tutorial_exited.emit()
 
 
 func update(snapshot: Dictionary, map: MapViewport, selection: Dictionary, controller: SettlerMvpController) -> void:
@@ -97,14 +72,6 @@ func update(snapshot: Dictionary, map: MapViewport, selection: Dictionary, contr
 			done = bool(snapshot.get("objective", {}).get("complete", false))
 	if done:
 		_advance()
-
-
-func _advance() -> void:
-	step_index += 1
-	if step_index >= steps.size():
-		tutorial_completed.emit()
-		return
-	step_changed.emit(step_index, current_step())
 
 
 static func _is_hq_selection(selection: Dictionary) -> bool:

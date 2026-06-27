@@ -142,18 +142,30 @@ text = "Tutorial"
 [node name="TutorialProgress" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "Step 1 of 11"
+
+[node name="TutorialStepKind" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Read"
 
 [node name="TutorialInstruction" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(460, 96)
 fit_content = true
-theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/normal_font_size = 16
 text = "Tutorial instructions"
 
 [node name="TutorialBtnRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
 layout_mode = 2
+
+[node name="TutorialBackBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"
 
 [node name="TutorialNextBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
@@ -168,7 +180,14 @@ text = "Skip Tutorial"
 [node name="TutorialExitBtn" type="Button" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Back to Menu"
+text = "Back to Main Menu"
+
+[node name="TutorialNextReasonLabel" type="Label" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+text = ""
 
 [node name="ModeBanner" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanelScroll/RightPanel"]
 unique_name_in_owner = true

@@ -114,28 +114,51 @@ text = "Tutorial"
 [node name="TutorialProgress" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Step 1 / 9"
+theme_override_font_sizes/font_size = 16
+text = "Step 1 of 9"
+
+[node name="TutorialStepKind" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Read"
 
 [node name="TutorialInstruction" type="RichTextLabel" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 100)
 fit_content = true
+theme_override_font_sizes/normal_font_size = 16
 
-[node name="TutorialNextBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialBtnRow" type="HBoxContainer" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+layout_mode = 2
+
+[node name="TutorialBackBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"
+
+[node name="TutorialNextBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Next"
 
-[node name="TutorialSkipBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialSkipBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Skip step"
+text = "Skip Tutorial"
 
-[node name="TutorialExitBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+[node name="TutorialExitBtn" type="Button" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox/TutorialBtnRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Exit tutorial"
+text = "Back to Main Menu"
+
+[node name="TutorialNextReasonLabel" type="Label" parent="RootVBox/ContentHBox/RightPanel/TutorialPanel/TutorialVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+text = ""
 
 [node name="ModeBanner" type="PanelContainer" parent="RootVBox/ContentHBox/RightPanel"]
 unique_name_in_owner = true

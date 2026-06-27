@@ -76,6 +76,7 @@ func _export_artifacts(state: GameState, bot: TutorialHybridBot, snapshot: Dicti
 	if f:
 		f.store_string(JSON.stringify(summary, "\t"))
 		f.close()
+	ManualPlayabilityBotExport.write_summary("hybrid_bot_summary.json", summary)
 
 
 func _quit(code: int) -> void:

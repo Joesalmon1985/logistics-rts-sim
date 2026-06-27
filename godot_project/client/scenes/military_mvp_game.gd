@@ -44,8 +44,11 @@ var tutorial: MilitaryTutorialController = MilitaryTutorialController.new()
 @onready var _tutorial_progress: Label = %TutorialProgress
 @onready var _tutorial_instruction: RichTextLabel = %TutorialInstruction
 @onready var _tutorial_next: Button = %TutorialNextBtn
+@onready var _tutorial_back: Button = %TutorialBackBtn
 @onready var _tutorial_skip: Button = %TutorialSkipBtn
 @onready var _tutorial_exit: Button = %TutorialExitBtn
+@onready var _tutorial_next_reason: Label = %TutorialNextReasonLabel
+@onready var _tutorial_step_kind: Label = %TutorialStepKind
 @onready var _mode_status: Label = %ModeStatusLabel
 
 var _render_bridge: MilitarySpectatorRenderBridge = MilitarySpectatorRenderBridge.new()
@@ -95,8 +98,11 @@ func _bind_ui_nodes() -> void:
 	_tutorial_progress = find_child("TutorialProgress", true, false) as Label
 	_tutorial_instruction = find_child("TutorialInstruction", true, false) as RichTextLabel
 	_tutorial_next = find_child("TutorialNextBtn", true, false) as Button
+	_tutorial_back = find_child("TutorialBackBtn", true, false) as Button
 	_tutorial_skip = find_child("TutorialSkipBtn", true, false) as Button
 	_tutorial_exit = find_child("TutorialExitBtn", true, false) as Button
+	_tutorial_next_reason = find_child("TutorialNextReasonLabel", true, false) as Label
+	_tutorial_step_kind = find_child("TutorialStepKind", true, false) as Label
 	_mode_status = find_child("ModeStatusLabel", true, false) as Label
 
 
@@ -430,7 +436,9 @@ func _wire_tutorial() -> void:
 	tutorial.step_changed.connect(_on_tutorial_step_changed)
 	tutorial.tutorial_completed.connect(_on_tutorial_completed)
 	if _tutorial_next != null:
-		_tutorial_next.pressed.connect(func(): tutorial.advance_manual())
+		_tutorial_next.pressed.connect(func(): tutorial.advance_manual(); _refresh_tutorial_ui())
+	if _tutorial_back != null:
+		_tutorial_back.pressed.connect(func(): tutorial.retreat_manual(); _refresh_tutorial_ui())
 	if _tutorial_skip != null:
 		_tutorial_skip.pressed.connect(_skip_tutorial)
 	if _tutorial_exit != null:
@@ -481,19 +489,35 @@ func _on_tutorial_completed() -> void:
 
 
 func _refresh_tutorial_ui() -> void:
-	if not tutorial.enabled or _tutorial_panel == null:
-		return
-	var step: Dictionary = tutorial.current_step()
-	_tutorial_panel.visible = true
-	if _tutorial_title != null:
-		_tutorial_title.text = str(step.get("title", "Tutorial"))
-	if _tutorial_progress != null:
-		_tutorial_progress.text = "Step %d of %d" % [tutorial.step_index + 1, tutorial.steps.size()]
-	if _tutorial_instruction != null:
-		_tutorial_instruction.clear()
-		_tutorial_instruction.append_text(str(step.get("instruction", "")))
-	if _tutorial_next != null:
-		_tutorial_next.visible = str(step.get("completion", "")) == "manual_next"
+	TutorialNavigationUI.refresh(
+		tutorial,
+		_tutorial_panel,
+		_tutorial_title,
+		_tutorial_progress,
+		_tutorial_instruction,
+		_tutorial_back,
+		_tutorial_next,
+		_tutorial_next_reason,
+		_tutorial_skip,
+		_tutorial_exit,
+		_tutorial_step_kind
+	)
+
+
+func simulate_tutorial_next() -> void:
+	if _tutorial_next != null and not _tutorial_next.disabled:
+		_tutorial_next.pressed.emit()
+	elif tutorial.enabled:
+		tutorial.advance_manual()
+		_refresh_tutorial_ui()
+
+
+func simulate_tutorial_back() -> void:
+	if _tutorial_back != null and not _tutorial_back.disabled:
+		_tutorial_back.pressed.emit()
+	elif tutorial.enabled:
+		tutorial.retreat_manual()
+		_refresh_tutorial_ui()
 
 
 func _update_tick_timer() -> void:
