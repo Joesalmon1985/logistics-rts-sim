@@ -19,3 +19,10 @@ training_runs/
 /runs/
 wandb/
 .DS_Store
+.env
+.env.*
+tools/art_pipeline/outputs/
+tools/art_pipeline/processed/
+tools/art_pipeline/contact_sheets/
+tools/art_pipeline/batches/
+tools/art_pipeline/generated_prompts.csv

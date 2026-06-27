@@ -1,0 +1,52 @@
+{
+  "style_excerpt": "Cosy logistics colony sprite, mobile-readable, slightly top-down three-quarter view, hand-painted toy-like strategy-board aesthetic, clear silhouette, warm daylight from upper-left, no text, no UI, no border, single centered subject.",
+  "style_passes": {
+    "broad": {
+      "base_prompt": "Create a game sprite for a cosy logistics colony. {style_excerpt} Exploratory interpretation welcome. Subject: {subject}. Category: {category}. {category_hint}",
+      "variant_ids": ["v01_chunky", "v02_clean", "v03_textured", "v04_warm"]
+    },
+    "production": {
+      "base_prompt": "Create a polished game sprite for a cosy logistics colony. {style_excerpt} Tight, consistent colony look. Subject: {subject}. Category: {category}. {category_hint}",
+      "variant_ids": ["v02_clean", "v05_contrast", "v06_soft", "v03_textured"]
+    }
+  },
+  "category_hints": {
+    "terrain": "Tileable square terrain tile for a hex strategy map.",
+    "buildings": "Standalone building sprite with readable roof silhouette.",
+    "logistics": "Logistics unit or path element for a supply chain game.",
+    "wares": "Single resource item icon, iconic and simple."
+  },
+  "negative_prompt_notes": "text, letters, numbers, watermark, signature, UI label, border frame, drop shadow plate, scenery backdrop, photorealistic, gritty realism, weapon, blood",
+  "variants": [
+    {
+      "variant_id": "v01_chunky",
+      "label": "chunkier silhouette",
+      "modifier": "Use a chunkier, bolder silhouette with simplified shapes for small-screen readability."
+    },
+    {
+      "variant_id": "v02_clean",
+      "label": "cleaner/simple version",
+      "modifier": "Use a cleaner, simpler design with fewer details and smooth painted shapes."
+    },
+    {
+      "variant_id": "v03_textured",
+      "label": "more textured version",
+      "modifier": "Add gentle hand-painted surface texture while keeping the silhouette clear."
+    },
+    {
+      "variant_id": "v04_warm",
+      "label": "warmer palette",
+      "modifier": "Use a warmer, sunlit colour palette with inviting earth tones."
+    },
+    {
+      "variant_id": "v05_contrast",
+      "label": "higher contrast mobile-readable",
+      "modifier": "Increase contrast and value separation for mobile readability."
+    },
+    {
+      "variant_id": "v06_soft",
+      "label": "softer toy-like version",
+      "modifier": "Use softer, rounder toy-like forms with a friendly painted finish."
+    }
+  ]
+}
