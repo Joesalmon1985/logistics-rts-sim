@@ -1,0 +1,11 @@
+tick,actor_id,chosen_command,reason
+0,tutorial_military_bot,AttackMoveCommand,rush enemy hub with unit 2
+1,tutorial_military_bot,PlaceBuildingCommand,place power_generator
+2,tutorial_military_bot,PlaceBuildingCommand,place resource_processor
+3,tutorial_military_bot,PlaceBuildingCommand,place barracks
+43,tutorial_military_bot,QueueUnitCommand,queue rifle_squad
+63,tutorial_military_bot,AttackMoveCommand,rush enemy hub with unit 14
+64,tutorial_military_bot,QueueUnitCommand,queue rifle_squad
+84,tutorial_military_bot,AttackMoveCommand,rush enemy hub with unit 15
+85,tutorial_military_bot,QueueUnitCommand,queue rifle_squad
+105,tutorial_military_bot,AttackMoveCommand,rush enemy hub with unit 16

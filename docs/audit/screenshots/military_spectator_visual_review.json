@@ -1,0 +1,305 @@
+{
+	"all_ok": true,
+	"shots": [
+		{
+			"asset_gate_pass": true,
+			"failures": [],
+			"file": "military_spectator_00_overview",
+			"panels": {
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 122.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 814.0
+					},
+					"text": "[tick 0] unit_spawned\n[tick 0] military_initialized\n[tick 0] game_created\n[tick 0] Demo reset — Military skirmish (seed 7)",
+					"text_len": 122,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 475.0
+					},
+					"text": "Click the map to inspect units, buildings, or construction sites.",
+					"text_len": 65,
+					"visible": true
+				},
+				"production": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 267.0
+					},
+					"text": "Production queues:\n- Barracks: Rifle Squad 0/20",
+					"text_len": 47,
+					"visible": true
+				},
+				"recent_changes": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 384.0
+					},
+					"text": "No grounded changes yet — step ticks to watch the skirmish.",
+					"text_len": 59,
+					"visible": true
+				},
+				"summary": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 186.0
+					},
+					"text": "Credits: 4900 | Power: 0 / 0 | Units: Rifle Squad=1 | Buildings: 5 | Sites: 0",
+					"text_len": 77,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/military_spectator_00_overview.png",
+			"visibility_gate_pass": true
+		},
+		{
+			"asset_gate_pass": true,
+			"failures": [],
+			"file": "military_spectator_01_unit_selected",
+			"panels": {
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 122.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 814.0
+					},
+					"text": "[tick 0] unit_spawned\n[tick 0] military_initialized\n[tick 0] game_created\n[tick 0] Demo reset — Military skirmish (seed 7)",
+					"text_len": 122,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 475.0
+					},
+					"text": "Rifle Squad\nBasic infantry — good against other infantry.\n\nHealth: 100 / 100\nStatus: Idle\nPosition: (1, 0)\nOrders: { \"type\": \"none\" }",
+					"text_len": 133,
+					"visible": true
+				},
+				"production": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 267.0
+					},
+					"text": "Production queues:\n- Barracks: Rifle Squad 0/20",
+					"text_len": 47,
+					"visible": true
+				},
+				"recent_changes": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 384.0
+					},
+					"text": "No grounded changes yet — step ticks to watch the skirmish.",
+					"text_len": 59,
+					"visible": true
+				},
+				"summary": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 186.0
+					},
+					"text": "Credits: 4900 | Power: 0 / 0 | Units: Rifle Squad=1 | Buildings: 5 | Sites: 0",
+					"text_len": 77,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/military_spectator_01_unit_selected.png",
+			"visibility_gate_pass": true
+		},
+		{
+			"asset_gate_pass": true,
+			"failures": [],
+			"file": "military_spectator_02_combat_event",
+			"panels": {
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 122.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 814.0
+					},
+					"text": "[tick 1] tick_advanced\n[tick 1] building_damaged\n[tick 1] unit_damaged\n[tick 1] unit_attacked\n[tick 1] unit_spawned\n[tick 1] military_initialized\n[tick 1] Sim tick\n[tick 0] unit_spawned\n[tick 0] military_initialized\n[tick 0] game_created\n[tick 0] Demo reset — Military skirmish (seed 7)",
+					"text_len": 286,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 475.0
+					},
+					"text": "Rifle Squad\nBasic infantry — good against other infantry.\n\nHealth: 100 / 100\nStatus: Idle\nPosition: (1, 0)\nOrders: { \"type\": \"none\" }",
+					"text_len": 133,
+					"visible": true
+				},
+				"production": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 267.0
+					},
+					"text": "Production queues:\n- Barracks: Rifle Squad 1/20",
+					"text_len": 47,
+					"visible": true
+				},
+				"recent_changes": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 384.0
+					},
+					"text": "[tick 1] Summary updated",
+					"text_len": 24,
+					"visible": true
+				},
+				"summary": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 186.0
+					},
+					"text": "Credits: 4900 | Power: 150 / 50 | Units: Rifle Squad=1 | Buildings: 5 | Sites: 0",
+					"text_len": 80,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/military_spectator_02_combat_event.png",
+			"visibility_gate_pass": true
+		},
+		{
+			"asset_gate_pass": true,
+			"failures": [],
+			"file": "military_spectator_03_production_queue",
+			"panels": {
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 122.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 814.0
+					},
+					"text": "[tick 1] tick_advanced\n[tick 1] building_damaged\n[tick 1] unit_damaged\n[tick 1] unit_attacked\n[tick 1] unit_spawned\n[tick 1] military_initialized\n[tick 1] Sim tick\n[tick 0] unit_spawned\n[tick 0] military_initialized\n[tick 0] game_created\n[tick 0] Demo reset — Military skirmish (seed 7)",
+					"text_len": 286,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 475.0
+					},
+					"text": "Command Hub\nYour main base. Lose it and the battle is over.\n\nHealth: 1500 / 1500\nStatus: Operational\nPosition: (4, 4)",
+					"text_len": 117,
+					"visible": true
+				},
+				"production": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 267.0
+					},
+					"text": "Production queues:\n- Barracks: Rifle Squad 1/20",
+					"text_len": 47,
+					"visible": true
+				},
+				"recent_changes": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 56.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 384.0
+					},
+					"text": "[tick 1] Summary updated",
+					"text_len": 24,
+					"visible": true
+				},
+				"summary": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 521.0,
+						"x": 1399.0,
+						"y": 186.0
+					},
+					"text": "Credits: 4900 | Power: 150 / 50 | Units: Rifle Squad=1 | Buildings: 5 | Sites: 0",
+					"text_len": 80,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/military_spectator_03_production_queue.png",
+			"visibility_gate_pass": true
+		}
+	]
+}

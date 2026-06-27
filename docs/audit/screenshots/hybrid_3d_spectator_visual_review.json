@@ -1,0 +1,805 @@
+{
+	"shots": [
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_00_main_menu",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: expanding settlement",
+					"text_len": 69,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: expanding settlement",
+					"text_len": 69,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 0] hybrid_game_created\n[tick 0] unit_spawned\n[tick 0] military_initialized\n[tick 0] economy_initialized\n[tick 0] game_created\n[tick 0] Match reset — Hybrid bot-vs-bot (seed 4242)",
+					"text_len": 184,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free",
+					"text_len": 50,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_00_main_menu.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_01_match_start",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: expanding settlement",
+					"text_len": 69,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: expanding settlement",
+					"text_len": 69,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 0] hybrid_game_created\n[tick 0] unit_spawned\n[tick 0] military_initialized\n[tick 0] economy_initialized\n[tick 0] game_created\n[tick 0] Match reset — Hybrid bot-vs-bot (seed 4242)",
+					"text_len": 184,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 0 | PAUSED | 1.0x | camera free | follow free",
+					"text_len": 50,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_01_match_start.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_02_bot_a_base_growing",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 40] tick_advanced\n[tick 40] Bot step: p1+p2 commands + tick\n[tick 39] tick_advanced\n[tick 39] Bot step: p1+p2 commands + tick\n[tick 38] tick_advanced\n[tick 38] Bot step: p1+p2 commands + tick\n[tick 37] tick_advanced\n[tick 37] Bot step: p1+p2 commands + tick\n[tick 36] tick_advanced\n[tick 36] Bot step: p1+p2 commands + tick\n[tick 35] tick_advanced\n[tick 35] Bot step: p1+p2 commands + tick\n[tick 34] tick_advanced\n[tick 34] Bot step: p1+p2 commands + tick\n[tick 33] tick_advanced\n[tick 33] Bot step: p1+p2 commands + tick\n[tick 32] tick_advanced\n[tick 32] Bot step: p1+p2 commands + tick\n[tick 31] tick_advanced\n[tick 31] Bot step: p1+p2 commands + tick\n[tick 30] tick_advanced\n[tick 30] Bot step: p1+p2 commands + tick\n[tick 29] tick_advanced\n[tick 29] Bot step: p1+p2 commands + tick\n[tick 28] tick_advanced\n[tick 28] Bot step: p1+p2 commands + tick\n[tick 27] tick_advanced\n[tick 27] Bot step: p1+p2 commands + tick\n[tick 26] tick_advanced\n[tick 26] Bot step: p1+p2 commands + tick\n[tick 25] tick_advanced\n[tick 25] Bot step: p1+p2 commands + tick\n[tick 24] tick_advanced\n[tick 24] Bot step: p1+p2 commands + tick\n[tick 23] tick_advanced\n[tick 23] Bot step: p1+p2 commands + tick\n[tick 22] tick_advanced\n[tick 22] Bot step: p1+p2 commands + tick\n[tick 21] tick_advanced\n[tick 21] Bot step: p1+p2 commands + tick",
+					"text_len": 1319,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 40 | PAUSED | 1.0x | camera free | follow free",
+					"text_len": 51,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_02_bot_a_base_growing.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_03_bot_b_base_growing",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 40] tick_advanced\n[tick 40] Bot step: p1+p2 commands + tick\n[tick 39] tick_advanced\n[tick 39] Bot step: p1+p2 commands + tick\n[tick 38] tick_advanced\n[tick 38] Bot step: p1+p2 commands + tick\n[tick 37] tick_advanced\n[tick 37] Bot step: p1+p2 commands + tick\n[tick 36] tick_advanced\n[tick 36] Bot step: p1+p2 commands + tick\n[tick 35] tick_advanced\n[tick 35] Bot step: p1+p2 commands + tick\n[tick 34] tick_advanced\n[tick 34] Bot step: p1+p2 commands + tick\n[tick 33] tick_advanced\n[tick 33] Bot step: p1+p2 commands + tick\n[tick 32] tick_advanced\n[tick 32] Bot step: p1+p2 commands + tick\n[tick 31] tick_advanced\n[tick 31] Bot step: p1+p2 commands + tick\n[tick 30] tick_advanced\n[tick 30] Bot step: p1+p2 commands + tick\n[tick 29] tick_advanced\n[tick 29] Bot step: p1+p2 commands + tick\n[tick 28] tick_advanced\n[tick 28] Bot step: p1+p2 commands + tick\n[tick 27] tick_advanced\n[tick 27] Bot step: p1+p2 commands + tick\n[tick 26] tick_advanced\n[tick 26] Bot step: p1+p2 commands + tick\n[tick 25] tick_advanced\n[tick 25] Bot step: p1+p2 commands + tick\n[tick 24] tick_advanced\n[tick 24] Bot step: p1+p2 commands + tick\n[tick 23] tick_advanced\n[tick 23] Bot step: p1+p2 commands + tick\n[tick 22] tick_advanced\n[tick 22] Bot step: p1+p2 commands + tick\n[tick 21] tick_advanced\n[tick 21] Bot step: p1+p2 commands + tick",
+					"text_len": 1319,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 40 | PAUSED | 1.0x | camera follow_bot_b | follow p2",
+					"text_len": 57,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_03_bot_b_base_growing.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_04_supply_to_military_site",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 40] tick_advanced\n[tick 40] Bot step: p1+p2 commands + tick\n[tick 39] tick_advanced\n[tick 39] Bot step: p1+p2 commands + tick\n[tick 38] tick_advanced\n[tick 38] Bot step: p1+p2 commands + tick\n[tick 37] tick_advanced\n[tick 37] Bot step: p1+p2 commands + tick\n[tick 36] tick_advanced\n[tick 36] Bot step: p1+p2 commands + tick\n[tick 35] tick_advanced\n[tick 35] Bot step: p1+p2 commands + tick\n[tick 34] tick_advanced\n[tick 34] Bot step: p1+p2 commands + tick\n[tick 33] tick_advanced\n[tick 33] Bot step: p1+p2 commands + tick\n[tick 32] tick_advanced\n[tick 32] Bot step: p1+p2 commands + tick\n[tick 31] tick_advanced\n[tick 31] Bot step: p1+p2 commands + tick\n[tick 30] tick_advanced\n[tick 30] Bot step: p1+p2 commands + tick\n[tick 29] tick_advanced\n[tick 29] Bot step: p1+p2 commands + tick\n[tick 28] tick_advanced\n[tick 28] Bot step: p1+p2 commands + tick\n[tick 27] tick_advanced\n[tick 27] Bot step: p1+p2 commands + tick\n[tick 26] tick_advanced\n[tick 26] Bot step: p1+p2 commands + tick\n[tick 25] tick_advanced\n[tick 25] Bot step: p1+p2 commands + tick\n[tick 24] tick_advanced\n[tick 24] Bot step: p1+p2 commands + tick\n[tick 23] tick_advanced\n[tick 23] Bot step: p1+p2 commands + tick\n[tick 22] tick_advanced\n[tick 22] Bot step: p1+p2 commands + tick\n[tick 21] tick_advanced\n[tick 21] Bot step: p1+p2 commands + tick",
+					"text_len": 1319,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 40 | PAUSED | 1.0x | camera follow_bot_b | follow p2",
+					"text_len": 57,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_04_supply_to_military_site.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_05_soldiers_produced",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 160] tick_advanced\n[tick 160] Bot step: p1+p2 commands + tick\n[tick 159] tick_advanced\n[tick 159] Bot step: p1+p2 commands + tick\n[tick 158] tick_advanced\n[tick 158] Bot step: p1+p2 commands + tick\n[tick 157] tick_advanced\n[tick 157] Bot step: p1+p2 commands + tick\n[tick 156] tick_advanced\n[tick 156] Bot step: p1+p2 commands + tick\n[tick 155] tick_advanced\n[tick 155] Bot step: p1+p2 commands + tick\n[tick 154] tick_advanced\n[tick 154] Bot step: p1+p2 commands + tick\n[tick 153] tick_advanced\n[tick 153] Bot step: p1+p2 commands + tick\n[tick 152] tick_advanced\n[tick 152] Bot step: p1+p2 commands + tick\n[tick 151] tick_advanced\n[tick 151] Bot step: p1+p2 commands + tick\n[tick 150] tick_advanced\n[tick 150] Bot step: p1+p2 commands + tick\n[tick 149] tick_advanced\n[tick 149] Bot step: p1+p2 commands + tick\n[tick 148] tick_advanced\n[tick 148] Bot step: p1+p2 commands + tick\n[tick 147] tick_advanced\n[tick 147] Bot step: p1+p2 commands + tick\n[tick 146] tick_advanced\n[tick 146] Bot step: p1+p2 commands + tick\n[tick 145] tick_advanced\n[tick 145] Bot step: p1+p2 commands + tick\n[tick 144] tick_advanced\n[tick 144] Bot step: p1+p2 commands + tick\n[tick 143] tick_advanced\n[tick 143] Bot step: p1+p2 commands + tick\n[tick 142] tick_advanced\n[tick 142] Bot step: p1+p2 commands + tick\n[tick 141] tick_advanced\n[tick 141] Bot step: p1+p2 commands + tick",
+					"text_len": 1359,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 160 | PAUSED | 1.0x | camera follow_bot_b | follow p2",
+					"text_len": 58,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_05_soldiers_produced.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_06_forces_moving",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 160] tick_advanced\n[tick 160] Bot step: p1+p2 commands + tick\n[tick 159] tick_advanced\n[tick 159] Bot step: p1+p2 commands + tick\n[tick 158] tick_advanced\n[tick 158] Bot step: p1+p2 commands + tick\n[tick 157] tick_advanced\n[tick 157] Bot step: p1+p2 commands + tick\n[tick 156] tick_advanced\n[tick 156] Bot step: p1+p2 commands + tick\n[tick 155] tick_advanced\n[tick 155] Bot step: p1+p2 commands + tick\n[tick 154] tick_advanced\n[tick 154] Bot step: p1+p2 commands + tick\n[tick 153] tick_advanced\n[tick 153] Bot step: p1+p2 commands + tick\n[tick 152] tick_advanced\n[tick 152] Bot step: p1+p2 commands + tick\n[tick 151] tick_advanced\n[tick 151] Bot step: p1+p2 commands + tick\n[tick 150] tick_advanced\n[tick 150] Bot step: p1+p2 commands + tick\n[tick 149] tick_advanced\n[tick 149] Bot step: p1+p2 commands + tick\n[tick 148] tick_advanced\n[tick 148] Bot step: p1+p2 commands + tick\n[tick 147] tick_advanced\n[tick 147] Bot step: p1+p2 commands + tick\n[tick 146] tick_advanced\n[tick 146] Bot step: p1+p2 commands + tick\n[tick 145] tick_advanced\n[tick 145] Bot step: p1+p2 commands + tick\n[tick 144] tick_advanced\n[tick 144] Bot step: p1+p2 commands + tick\n[tick 143] tick_advanced\n[tick 143] Bot step: p1+p2 commands + tick\n[tick 142] tick_advanced\n[tick 142] Bot step: p1+p2 commands + tick\n[tick 141] tick_advanced\n[tick 141] Bot step: p1+p2 commands + tick",
+					"text_len": 1359,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 160 | PAUSED | 1.0x | camera battle | follow battle",
+					"text_len": 56,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_06_forces_moving.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_07_combat",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 161] tick_advanced\n[tick 161] Bot step: p1+p2 commands + tick\n[tick 160] tick_advanced\n[tick 160] Bot step: p1+p2 commands + tick\n[tick 159] tick_advanced\n[tick 159] Bot step: p1+p2 commands + tick\n[tick 158] tick_advanced\n[tick 158] Bot step: p1+p2 commands + tick\n[tick 157] tick_advanced\n[tick 157] Bot step: p1+p2 commands + tick\n[tick 156] tick_advanced\n[tick 156] Bot step: p1+p2 commands + tick\n[tick 155] tick_advanced\n[tick 155] Bot step: p1+p2 commands + tick\n[tick 154] tick_advanced\n[tick 154] Bot step: p1+p2 commands + tick\n[tick 153] tick_advanced\n[tick 153] Bot step: p1+p2 commands + tick\n[tick 152] tick_advanced\n[tick 152] Bot step: p1+p2 commands + tick\n[tick 151] tick_advanced\n[tick 151] Bot step: p1+p2 commands + tick\n[tick 150] tick_advanced\n[tick 150] Bot step: p1+p2 commands + tick\n[tick 149] tick_advanced\n[tick 149] Bot step: p1+p2 commands + tick\n[tick 148] tick_advanced\n[tick 148] Bot step: p1+p2 commands + tick\n[tick 147] tick_advanced\n[tick 147] Bot step: p1+p2 commands + tick\n[tick 146] tick_advanced\n[tick 146] Bot step: p1+p2 commands + tick\n[tick 145] tick_advanced\n[tick 145] Bot step: p1+p2 commands + tick\n[tick 144] tick_advanced\n[tick 144] Bot step: p1+p2 commands + tick\n[tick 143] tick_advanced\n[tick 143] Bot step: p1+p2 commands + tick\n[tick 142] tick_advanced\n[tick 142] Bot step: p1+p2 commands + tick",
+					"text_len": 1359,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 161 | PAUSED | 1.0x | camera battle | follow battle",
+					"text_len": 56,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_07_combat.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		},
+		{
+			"failures": [],
+			"file": "hybrid_3d_spectator_08_victory_or_timeout",
+			"panels": {
+				"bot_a": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 227.0
+					},
+					"text": "Bot A — stock [—] | econ 1 mil 3 units 0 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"bot_b": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 23.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 256.0
+					},
+					"text": "Bot B — stock [—] | econ 1 mil 3 units 1 | plan: (noop)",
+					"text_len": 55,
+					"visible": true
+				},
+				"events": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 335.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 531.0
+					},
+					"text": "[tick 241] tick_advanced\n[tick 241] Bot step: p1+p2 commands + tick\n[tick 240] tick_advanced\n[tick 240] Bot step: p1+p2 commands + tick\n[tick 239] tick_advanced\n[tick 239] Bot step: p1+p2 commands + tick\n[tick 238] tick_advanced\n[tick 238] Bot step: p1+p2 commands + tick\n[tick 237] tick_advanced\n[tick 237] Bot step: p1+p2 commands + tick\n[tick 236] tick_advanced\n[tick 236] Bot step: p1+p2 commands + tick\n[tick 235] tick_advanced\n[tick 235] Bot step: p1+p2 commands + tick\n[tick 234] tick_advanced\n[tick 234] Bot step: p1+p2 commands + tick\n[tick 233] tick_advanced\n[tick 233] Bot step: p1+p2 commands + tick\n[tick 232] tick_advanced\n[tick 232] Bot step: p1+p2 commands + tick\n[tick 231] tick_advanced\n[tick 231] Bot step: p1+p2 commands + tick\n[tick 230] tick_advanced\n[tick 230] Bot step: p1+p2 commands + tick\n[tick 229] tick_advanced\n[tick 229] Bot step: p1+p2 commands + tick\n[tick 228] tick_advanced\n[tick 228] Bot step: p1+p2 commands + tick\n[tick 227] tick_advanced\n[tick 227] Bot step: p1+p2 commands + tick\n[tick 226] tick_advanced\n[tick 226] Bot step: p1+p2 commands + tick\n[tick 225] tick_advanced\n[tick 225] Bot step: p1+p2 commands + tick\n[tick 224] tick_advanced\n[tick 224] Bot step: p1+p2 commands + tick\n[tick 223] tick_advanced\n[tick 223] Bot step: p1+p2 commands + tick\n[tick 222] tick_advanced\n[tick 222] Bot step: p1+p2 commands + tick",
+					"text_len": 1359,
+					"visible": true
+				},
+				"inspector": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 120.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 343.0
+					},
+					"text": "Nothing selected\n\nClick the 3D world to inspect roads, buildings, carriers, or soldiers.",
+					"text_len": 88,
+					"visible": true
+				},
+				"objective": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 49.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 172.0
+					},
+					"text": "Destroy the enemy Command Hub. Both bots start on a demo lane and expand toward the central outpost.",
+					"text_len": 100,
+					"visible": true
+				},
+				"status": {
+					"exists": true,
+					"reasons": [],
+					"rect": {
+						"h": 22.0,
+						"w": 533.0,
+						"x": 1387.0,
+						"y": 115.0
+					},
+					"text": "Tick 241 | PAUSED | 1.0x | camera battle | follow battle",
+					"text_len": 56,
+					"visible": true
+				}
+			},
+			"plain_english_gate_pass": true,
+			"png_bytes": 81,
+			"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/hybrid_3d_spectator_08_victory_or_timeout.png",
+			"visibility_gate_pass": true,
+			"world_gate_pass": true
+		}
+	]
+}

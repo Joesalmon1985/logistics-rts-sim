@@ -150,6 +150,8 @@ static func _complete_site(state: GameState, site: Dictionary) -> void:
 
 	if upgrade_source_id > 0:
 		_apply_upgrade_completion(state, upgrade_source_id, building_type)
+	elif HybridConfig.is_hybrid(state) and HybridState.get_config(state).is_military_building(building_type):
+		HybridConstructionSystem.spawn_from_completed_site(state, site)
 	else:
 		EconomyInit._spawn_completed_building(state, building_type, anchor_q, anchor_r, player_id, EconomyState.get_config(state))
 

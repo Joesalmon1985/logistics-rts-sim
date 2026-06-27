@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "description": "Build supplied military capability and destroy the enemy Command Hub.",
+  "require_military_building": "barracks",
+  "require_unit_type": "rifle_squad",
+  "require_unit_count": 1,
+  "victory_on_enemy_hub_destroyed": true
+}

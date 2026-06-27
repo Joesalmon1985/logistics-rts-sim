@@ -44,8 +44,43 @@
     },
     "hybrid": {
       "subsystems": ["map", "economy", "military", "hybrid", "diagnostics"],
-      "commands": ["NoopCommand", "PlaceRoadCommand", "SetBuildingStanceCommand"],
-      "forbidden_player_commands": ["MoveUnitCommand", "AttackUnitCommand"]
+      "commands": [
+        "NoopCommand",
+        "PlaceRoadCommand",
+        "RemoveRoadCommand",
+        "PlaceBuildingPlanCommand",
+        "CancelConstructionCommand",
+        "AssignWorkerCommand",
+        "SetWorkerPolicyCommand",
+        "SetConstructionPriorityCommand",
+        "SetProductionPriorityCommand",
+        "SetWarePriorityCommand",
+        "EnableBuildingCommand",
+        "DisableBuildingCommand",
+        "UpgradeBuildingCommand",
+        "QueueUnitCommand",
+        "CancelProductionCommand",
+        "SetRallyPointCommand",
+        "StartResearchCommand",
+        "EnableMilitaryBuildingCommand",
+        "DisableMilitaryBuildingCommand",
+        "SetBuildingStanceCommand",
+        "DelegatedAttackCommand",
+        "SetPatrolZoneCommand",
+        "SetGuardPolicyCommand",
+        "SetRepairPriorityCommand",
+        "CancelDelegatedOrderCommand"
+      ],
+      "forbidden_player_commands": [
+        "MoveUnitCommand",
+        "AttackUnitCommand",
+        "AttackMoveCommand",
+        "PatrolCommand",
+        "GuardCommand",
+        "StopUnitCommand",
+        "HarvestResourceCommand",
+        "PlaceBuildingCommand"
+      ]
     }
   }
 }

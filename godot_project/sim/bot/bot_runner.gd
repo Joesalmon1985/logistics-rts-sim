@@ -82,4 +82,7 @@ func _variant_victory(state: GameState) -> bool:
 		return int(MilitaryState.get_meta_value(state, "victory_decided", 0)) == 1
 	if state.variant_id == "economy_trial":
 		return false
+	if state.variant_id == "hybrid":
+		var snap: Dictionary = SnapshotExporter.export_snapshot(state)
+		return bool(snap.get("objective", {}).get("complete", false))
 	return false

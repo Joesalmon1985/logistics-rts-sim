@@ -10,7 +10,13 @@ static func export_snapshot(state: GameState) -> Dictionary:
 		# cycle (which would make sibling military classes resolve to bare GDScript).
 		var military_exporter: GDScript = load("res://sim/military/military_snapshot_exporter.gd")
 		return military_exporter.export_snapshot(state)
+	if state.variant_id == "hybrid":
+		var hybrid_exporter: GDScript = load("res://sim/hybrid/hybrid_snapshot_exporter.gd")
+		return hybrid_exporter.export_snapshot(state)
+	return export_economy_snapshot(state)
 
+
+static func export_economy_snapshot(state: GameState) -> Dictionary:
 	var player_data: Array = []
 	for player in players_to_array(state):
 		player_data.append(player.to_dict())
@@ -88,16 +94,22 @@ static func export_snapshot(state: GameState) -> Dictionary:
 
 
 static func _attach_objective(snapshot: Dictionary, state: GameState) -> void:
-	if state.variant_id != "economy_trial":
-		return
 	var objective_path: String = str(EconomyState.get_meta_value(state, "objective_config_path", ""))
 	if objective_path == "":
 		return
-	var config: Dictionary = SettlerObjective.load_config(objective_path)
-	if config.is_empty():
-		return
 	var player_id: String = str(EconomyState.get_meta_value(state, "primary_player_id", "p1"))
-	snapshot["objective"] = SettlerObjective.evaluate(state, config, player_id)
+	if state.variant_id == "hybrid":
+		var config: Dictionary = HybridObjective.load_config(objective_path)
+		if config.is_empty():
+			return
+		snapshot["objective"] = HybridObjective.evaluate(state, config, player_id)
+		return
+	if state.variant_id != "economy_trial":
+		return
+	var econ_config: Dictionary = SettlerObjective.load_config(objective_path)
+	if econ_config.is_empty():
+		return
+	snapshot["objective"] = SettlerObjective.evaluate(state, econ_config, player_id)
 
 
 static func export_debug_snapshot(state: GameState, actor_id: String = "") -> Dictionary:
@@ -226,7 +238,7 @@ static func export_bot_observation_snapshot(state: GameState, actor_id: String =
 				blocked_job_markers.append(job)
 
 	var resolved_actor: String = actor_id if actor_id != "" else "p1"
-	return {
+	var snapshot := {
 		"schema_version": SCHEMA_VERSION,
 		"variant": state.variant_id,
 		"tick": state.tick,
@@ -242,6 +254,8 @@ static func export_bot_observation_snapshot(state: GameState, actor_id: String =
 		"diagnostics": state.diagnostics.duplicate(false),
 		"players": player_data,
 	}
+	_attach_objective(snapshot, state)
+	return snapshot
 
 
 static func _build_bot_display_layers(state: GameState, player_id: String) -> Dictionary:

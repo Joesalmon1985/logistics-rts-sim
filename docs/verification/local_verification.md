@@ -746,3 +746,36 @@ timeout 60s "$GODOT" --headless --path godot_project \
 Interactive scene: `godot_project/client/scenes/economy_human_proof_demo.tscn`
 
 Expect: oracle `ORACLE PASS`, human_proof tests **4/4 pass**, smoke `HUMAN PROOF SMOKE PASS`, no `SCRIPT ERROR`. `ECON_BOT_002` may remain red (document only).
+
+## MRP full-stack verification (Linux)
+
+Authority: [`docs/runs/MRP_hybrid_3d_spectator_added.md`](../runs/MRP_hybrid_3d_spectator_added.md).
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+
+# Bot suites
+timeout 150s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_fast.gd
+timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_bot_long.gd
+
+# Filtered test slices
+TEST_FILTER=military_mvp timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=hybrid_mvp timeout 130s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=hybrid_3d_spectator timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=HYB_SMOKE timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+
+# Screen legibility gates
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_military_spectator_screen.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_military_mvp_screen.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_hybrid_observer_screen.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_hybrid_mvp_screen.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/verify_hybrid_3d_spectator_screen.gd
+
+# Orchestrator (full stack; long-running)
+timeout 3600s "$GODOT" --headless --path godot_project --script res://sim/tools/run_mrp_full_verification.gd
+```
+
+Launch scripts: `./scripts/run_game.sh`, `./scripts/run_skirmish.sh`, `./scripts/run_hybrid.sh`, `./scripts/run_hybrid_3d_spectator.sh`
+
+Note: `ECON_BOT_002` is excluded from default `run_tests.gd`; run via `run_bot_long.gd` only.

@@ -1,0 +1,26 @@
+tick,actor_id,chosen_command,reason
+0,tutorial_economy_bot,SetWorkerPolicyCommand,auto workers
+1,tutorial_economy_bot,queue_roads,connect to (10;3)
+1,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+2,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+3,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+4,tutorial_economy_bot,PlaceBuildingPlanCommand,place woodcutter
+5,tutorial_economy_bot,queue_roads,connect to (11;3)
+5,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+19,tutorial_economy_bot,PlaceBuildingPlanCommand,place forester
+20,tutorial_economy_bot,queue_roads,connect to (7;4)
+20,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+21,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+22,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+23,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+36,tutorial_economy_bot,PlaceBuildingPlanCommand,place sawmill
+37,tutorial_economy_bot,queue_roads,connect to (2;1)
+37,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+38,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+39,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+40,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+41,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+42,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+43,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+44,tutorial_economy_bot,PlaceRoadCommand,connect logistics
+68,tutorial_economy_bot,PlaceBuildingPlanCommand,place quarry

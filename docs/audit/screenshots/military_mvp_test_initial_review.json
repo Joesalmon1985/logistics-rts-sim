@@ -1,0 +1,141 @@
+{
+	"build_palette_found": true,
+	"failures": [
+		"summary:not_visible",
+		"summary:missing_credits",
+		"objective:not_visible",
+		"build_palette:not_visible"
+	],
+	"help_text_found": true,
+	"hud_found": true,
+	"map_viewport_found": true,
+	"objective_panel_found": true,
+	"panel_rects": {
+		"build_palette": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"controls_help": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"inspector": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"map_viewport": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"objective_panel": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"play_button": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"production_panel": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"status_label": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"summary_label": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		},
+		"tutorial_panel": {
+			"exists": true,
+			"reasons": [
+				"not_in_tree"
+			],
+			"rect": {
+
+			},
+			"text": "",
+			"text_len": 0,
+			"visible": false
+		}
+	},
+	"plain_english_gate_pass": false,
+	"production_panel_found": true,
+	"scene_loaded": true,
+	"screenshot_path": "/home/joe/Projects/WideRTS/godot_project/../docs/audit/screenshots/military_mvp_test_initial.png",
+	"viewport_size": "1920x1080",
+	"visibility_gate_pass": false
+}

@@ -177,7 +177,7 @@ func export_summary(export_path: String) -> bool:
 func compare_command_gaps() -> Dictionary:
 	if viewer.state == null:
 		return {}
-	return EconomyHumanProofContract.compare_command_availability(viewner.state, active_player_id)
+	return EconomyHumanProofContract.compare_command_availability(viewer.state, active_player_id)
 
 
 func _advance_turn_after_command() -> void:

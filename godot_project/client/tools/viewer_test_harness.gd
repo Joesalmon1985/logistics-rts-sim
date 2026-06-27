@@ -10,7 +10,12 @@ const SCENE_PATHS: Dictionary = {
 	"economy": "res://client/scenes/economy_viewer_demo.tscn",
 	"military": "res://client/scenes/military_viewer_demo.tscn",
 	"spectator": "res://client/scenes/economy_spectator_bot_demo.tscn",
+	"military_spectator": "res://client/scenes/military_spectator_demo.tscn",
+	"hybrid_observer": "res://client/scenes/hybrid_observer_demo.tscn",
+	"hybrid_mvp": "res://client/scenes/hybrid_mvp_game.tscn",
+	"hybrid_3d_spectator": "res://client/scenes/hybrid_3d_bot_spectator.tscn",
 	"settler_mvp": "res://client/scenes/settler_mvp_game.tscn",
+	"military_mvp": "res://client/scenes/military_mvp_game.tscn",
 	"main_menu": "res://client/scenes/main_menu.tscn",
 }
 
@@ -22,10 +27,10 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	if packed == null:
 		return {"ok": false, "reason": "failed to load scene"}
 	var scene: Node = packed.instantiate()
-	if variant == "settler_mvp" or variant == "main_menu":
+	if variant in ["settler_mvp", "military_mvp", "main_menu", "hybrid_mvp"]:
 		if scene == null:
-			return {"ok": false, "reason": "failed to instantiate settler scene"}
-	elif variant == "spectator":
+			return {"ok": false, "reason": "failed to instantiate playable scene"}
+	elif variant in ["spectator", "military_spectator", "hybrid_observer", "hybrid_3d_spectator"]:
 		if scene == null:
 			return {"ok": false, "reason": "failed to instantiate spectator scene"}
 	else:
@@ -89,9 +94,18 @@ static func capture(ctx: Dictionary) -> Image:
 static func teardown(ctx: Dictionary) -> void:
 	var scene: Node = ctx.get("scene")
 	if scene != null and is_instance_valid(scene):
-		var sprite_layer: EconomySpriteLayer = scene.get_node_or_null("%SpriteLayer") as EconomySpriteLayer
-		if sprite_layer != null:
-			sprite_layer.clear_all()
+		var economy_sprite_layer: EconomySpriteLayer = scene.get_node_or_null("%SpriteLayer") as EconomySpriteLayer
+		if economy_sprite_layer != null:
+			economy_sprite_layer.clear_all()
+		var military_sprite_layer: MilitarySpriteLayer = scene.get_node_or_null("%SpriteLayer") as MilitarySpriteLayer
+		if military_sprite_layer != null:
+			military_sprite_layer.clear_all()
+		var hybrid_sprite_layer: HybridSpriteLayer = scene.get_node_or_null("%SpriteLayer") as HybridSpriteLayer
+		if hybrid_sprite_layer != null:
+			hybrid_sprite_layer.clear_all()
+		var hybrid_sprite_layer2: HybridSpriteLayer = scene.find_child("HybridSpriteLayer", true, false) as HybridSpriteLayer
+		if hybrid_sprite_layer2 != null:
+			hybrid_sprite_layer2.clear_all()
 	var subvp: SubViewport = ctx.get("viewport")
 	if subvp != null and is_instance_valid(subvp):
 		subvp.queue_free()

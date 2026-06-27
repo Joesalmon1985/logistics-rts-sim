@@ -40,4 +40,5 @@ static func create_default() -> CommandRegistry:
 	)
 	EconomyCommandRegistry.register_all(registry)
 	MilitaryCommandRegistry.register_all(registry)
+	HybridCommandRegistry.register_all(registry)
 	return registry

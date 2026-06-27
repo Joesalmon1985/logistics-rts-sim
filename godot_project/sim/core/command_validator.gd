@@ -11,6 +11,8 @@ func _init(p_registry: CommandRegistry = null) -> void:
 func validate_and_apply(state: GameState, command: SimCommand) -> CommandResult:
 	if command == null:
 		return CommandResult.fail("UNKNOWN_COMMAND", "Command is null")
+	if HybridState.is_forbidden_player_command(state, command):
+		return CommandResult.fail(HybridConstants.ERR_FORBIDDEN_DIRECT, "Direct unit command forbidden in hybrid")
 	if not registry.has_type(command.type):
 		return CommandResult.fail("UNKNOWN_COMMAND", "Unknown command type: %s" % command.type)
 

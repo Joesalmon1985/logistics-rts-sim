@@ -44,6 +44,10 @@ static var _shared_config: EconomyConfig = null
 
 
 static func get_config(state: GameState) -> EconomyConfig:
+	if state != null and state.variant_id == "hybrid":
+		var hybrid_cfg: EconomyConfig = HybridState.get_merged_economy_config()
+		if hybrid_cfg != null:
+			return hybrid_cfg
 	if state != null:
 		ensure_buckets(state)
 		var override: Variant = get_meta_value(state, "economy_config_override", null)

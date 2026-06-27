@@ -87,6 +87,12 @@ static func load_construction_costs_config() -> Dictionary:
 	return config
 
 
+static func load_hybrid_config() -> Dictionary:
+	var config: Dictionary = load_json("config/hybrid.json")
+	_validate_schema_version(config, "hybrid")
+	return config
+
+
 static func load_military_buildings_config() -> Dictionary:
 	var config: Dictionary = load_json("config/military_buildings.json")
 	_validate_schema_version(config, "military_buildings")

@@ -552,11 +552,17 @@ func _draw_resource(origin: Vector2, res: Dictionary) -> void:
 
 
 func _draw_fog(origin: Vector2) -> void:
-	var fog: Dictionary = render_data.get("fog", {})
+	var fog_raw: Variant = render_data.get("fog", {})
+	if fog_raw is Array or not fog_raw is Dictionary:
+		return
+	var fog: Dictionary = fog_raw
 	if fog.is_empty():
 		return
 	for player_id in fog:
-		var pdata: Dictionary = fog[player_id]
+		var pdata_raw: Variant = fog[player_id]
+		if not pdata_raw is Dictionary:
+			continue
+		var pdata: Dictionary = pdata_raw
 		var levels: Dictionary = pdata.get("levels", {})
 		for key in levels:
 			var parts: PackedStringArray = str(key).split(",")

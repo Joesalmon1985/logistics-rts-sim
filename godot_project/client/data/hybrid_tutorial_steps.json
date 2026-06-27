@@ -1,0 +1,59 @@
+{
+  "steps": [
+    {
+      "id": "welcome",
+      "title": "Welcome to Hybrid MVP",
+      "instruction": "This mode combines settlement logistics with delegated military control.\n\nGoal:\n1. Build economy and roads.\n2. Build and supply a Barracks.\n3. Queue a Rifle Squad.\n4. Set Attack Posture on the enemy Command Hub.\n\nStart by clicking your Headquarters.",
+      "completion": "manual_next"
+    },
+    {
+      "id": "inspect_hq",
+      "title": "Inspect Headquarters",
+      "instruction": "Click your Headquarters. The inspector shows stored goods and your hybrid objective progress.",
+      "completion": "hq_selected"
+    },
+    {
+      "id": "road_basics",
+      "title": "Connect roads",
+      "instruction": "Click Road in the build palette. Connect HQ to forest and rock so carriers can deliver materials to military sites.",
+      "completion": "road_placed"
+    },
+    {
+      "id": "build_military",
+      "title": "Place Barracks",
+      "instruction": "Click Barracks in the build palette, then click a valid hex near your road network. Military construction needs planks, stone and tools delivered by carriers.",
+      "completion": "military_site_placed"
+    },
+    {
+      "id": "watch_supply",
+      "title": "Watch materials arrive",
+      "instruction": "Press Play and watch carriers deliver wares to the military construction site. Check warnings if production is blocked.",
+      "completion": "tick_advanced"
+    },
+    {
+      "id": "military_ready",
+      "title": "Barracks complete",
+      "instruction": "Wait until the Barracks finishes construction and connects to roads. Select it to read supply status in the inspector.",
+      "completion": "military_building_ready",
+      "building_type": "barracks"
+    },
+    {
+      "id": "queue_unit",
+      "title": "Queue Rifle Squad",
+      "instruction": "Select your Barracks, then click Queue Rifle Squad. Training consumes rations and tools from your stockpile.",
+      "completion": "unit_queued_or_ready"
+    },
+    {
+      "id": "attack_posture",
+      "title": "Set Attack Posture",
+      "instruction": "Click Attack Posture, then click the enemy base on the east side of the map. Your squad will attack automatically.",
+      "completion": "attack_posture_set"
+    },
+    {
+      "id": "victory",
+      "title": "Complete the objective",
+      "instruction": "Press Play and watch your force destroy the enemy Command Hub to win.",
+      "completion": "objective_complete"
+    }
+  ]
+}

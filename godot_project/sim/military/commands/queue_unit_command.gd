@@ -16,6 +16,11 @@ func validate(state: GameState) -> CommandResult:
 	var check: Dictionary = MilitaryProductionSystem.can_queue(state, building, unit_type)
 	if not check.get("ok", false):
 		return CommandResult.fail(str(check.get("reason", "REJECTED")))
+	if HybridConfig.is_hybrid(state):
+		var hybrid_check: Dictionary = HybridProductionSystem.can_queue(state, building, unit_type, player_id)
+		if not hybrid_check.get("ok", false):
+			return CommandResult.fail(str(hybrid_check.get("reason", "REJECTED")))
+		return CommandResult.ok()
 	var cfg: MilitaryConfig = MilitaryState.get_config(state)
 	var cost: int = int(cfg.get_unit_def(unit_type).get("credit_cost", 0))
 	if MilitaryState.player_credits(state, player_id) < cost:
@@ -27,6 +32,8 @@ func apply(state: GameState) -> CommandResult:
 	var building_id: int = int(payload.get("building_id", 0))
 	var building: Dictionary = MilitaryState.get_building(state, building_id)
 	var unit_type: String = str(payload.get("unit_type", ""))
+	if HybridConfig.is_hybrid(state):
+		return HybridProductionSystem.queue_unit(state, building_id, building, unit_type, player_id)
 	var cfg: MilitaryConfig = MilitaryState.get_config(state)
 	var udef: Dictionary = cfg.get_unit_def(unit_type)
 	var cost: int = int(udef.get("credit_cost", 0))

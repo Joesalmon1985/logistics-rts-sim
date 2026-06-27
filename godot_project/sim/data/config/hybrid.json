@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "military_buildings": {
+    "barracks": {
+      "construction": {"planks": 4, "stone": 2, "tools": 2, "builder_work": 8},
+      "economy_stub": {
+        "footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+        "required_terrain": "grass",
+        "storage_capacity": 20,
+        "ports": [[0, 0], [1, 1]]
+      }
+    },
+    "power_generator": {
+      "construction": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 6},
+      "economy_stub": {
+        "footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+        "required_terrain": "grass",
+        "storage_capacity": 10,
+        "ports": [[0, 0]]
+      }
+    },
+    "research_lab": {
+      "construction": {"planks": 5, "stone": 3, "tools": 2, "builder_work": 10},
+      "economy_stub": {
+        "footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+        "required_terrain": "grass",
+        "storage_capacity": 15,
+        "ports": [[0, 0]]
+      }
+    },
+    "radar_tower": {
+      "construction": {"planks": 4, "stone": 3, "tools": 2, "builder_work": 8},
+      "economy_stub": {
+        "footprint": [[0, 0]],
+        "required_terrain": "grass",
+        "storage_capacity": 5,
+        "ports": [[0, 0]]
+      }
+    },
+    "repair_depot": {
+      "construction": {"planks": 4, "stone": 2, "tools": 2, "builder_work": 8},
+      "economy_stub": {
+        "footprint": [[0, 0], [1, 0], [0, 1], [1, 1]],
+        "required_terrain": "grass",
+        "storage_capacity": 20,
+        "ports": [[0, 0]]
+      }
+    },
+    "guard_post": {
+      "construction": {"planks": 3, "stone": 2, "tools": 1, "builder_work": 6},
+      "economy_stub": {
+        "footprint": [[0, 0]],
+        "required_terrain": "grass",
+        "storage_capacity": 5,
+        "ports": [[0, 0]]
+      }
+    }
+  },
+  "unit_production_costs": {
+    "rifle_squad": {"tools": 1, "rations": 2},
+    "scout": {"tools": 1, "rations": 1},
+    "light_vehicle": {"tools": 2, "iron_ingots": 2, "rations": 2}
+  },
+  "repair_costs_per_tick": {
+    "iron_ingots": 1,
+    "tools": 1
+  },
+  "research_costs": {
+    "advanced_weapons": {"tools": 2, "iron_ingots": 2}
+  },
+  "forbidden_player_commands": [
+    "MoveUnitCommand",
+    "AttackUnitCommand",
+    "AttackMoveCommand",
+    "PatrolCommand",
+    "GuardCommand",
+    "StopUnitCommand",
+    "HarvestResourceCommand"
+  ]
+}

@@ -96,10 +96,16 @@ static func _find_active_building(state: GameState, player_id: String, building_
 			continue
 		if str(building.get("building_type", "")) != building_type:
 			continue
-		if str(building.get("state", "")) != EconomyConstants.BLD_ACTIVE:
+		if not _building_counts_for_objective(str(building.get("state", ""))):
 			continue
 		return building
 	return {}
+
+
+static func _building_counts_for_objective(state_name: String) -> bool:
+	if state_name == EconomyConstants.BLD_ACTIVE:
+		return true
+	return state_name.begins_with("paused_")
 
 
 static func _player_ware_total(state: GameState, player_id: String, ware_type: String) -> int:

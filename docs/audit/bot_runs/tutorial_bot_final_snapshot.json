@@ -1,0 +1,6522 @@
+{
+	"blocked_job_markers": [],
+	"buildings": [
+		{
+			"anchor_q": 6,
+			"anchor_r": 6,
+			"assigned_workers": [],
+			"building_type": "headquarters",
+			"enabled": 1,
+			"id": 1,
+			"paused_reason": "",
+			"player_id": "p1",
+			"port_node_ids": [
+				{
+					"dq": 0,
+					"dr": 0,
+					"node_id": 3,
+					"q": 6,
+					"r": 6
+				},
+				{
+					"dq": 1,
+					"dr": 2,
+					"node_id": 4,
+					"q": 7,
+					"r": 8
+				}
+			],
+			"ports": [
+				[
+					0,
+					0
+				],
+				[
+					1,
+					2
+				]
+			],
+			"priority": 0,
+			"production_progress": 0,
+			"road_node_id": 3,
+			"state": "active",
+			"store_id": 2,
+			"worker_type": ""
+		},
+		{
+			"anchor_q": 10,
+			"anchor_r": 3,
+			"assigned_workers": [
+				10
+			],
+			"building_type": "woodcutter",
+			"enabled": 1,
+			"id": 34,
+			"last_production_tick": 124,
+			"paused_reason": "",
+			"player_id": "p1",
+			"port_node_ids": [
+				{
+					"dq": 0,
+					"dr": 0,
+					"node_id": 26,
+					"q": 10,
+					"r": 3
+				}
+			],
+			"ports": [
+				[
+					0,
+					0
+				]
+			],
+			"priority": 0,
+			"production_progress": 2,
+			"road_node_id": 26,
+			"state": "active",
+			"store_id": 35,
+			"worker_type": "woodcutter"
+		},
+		{
+			"anchor_q": 11,
+			"anchor_r": 3,
+			"assigned_workers": [
+				11
+			],
+			"building_type": "forester",
+			"enabled": 1,
+			"id": 47,
+			"last_production_tick": 124,
+			"paused_reason": "",
+			"player_id": "p1",
+			"port_node_ids": [
+				{
+					"dq": 0,
+					"dr": 0,
+					"node_id": 32,
+					"q": 11,
+					"r": 3
+				}
+			],
+			"ports": [
+				[
+					0,
+					0
+				]
+			],
+			"priority": 0,
+			"production_progress": 4,
+			"road_node_id": 32,
+			"state": "active",
+			"store_id": 48,
+			"worker_type": "forester"
+		},
+		{
+			"anchor_q": 7,
+			"anchor_r": 4,
+			"assigned_workers": [
+				12
+			],
+			"building_type": "sawmill",
+			"enabled": 1,
+			"id": 84,
+			"last_production_tick": 117,
+			"paused_reason": "input_missing",
+			"player_id": "p1",
+			"port_node_ids": [
+				{
+					"dq": 0,
+					"dr": 0,
+					"node_id": 45,
+					"q": 7,
+					"r": 4
+				}
+			],
+			"ports": [
+				[
+					0,
+					0
+				]
+			],
+			"priority": 0,
+			"production_progress": 0,
+			"road_node_id": 45,
+			"state": "paused_missing_input",
+			"store_id": 85,
+			"worker_type": "carpenter"
+		},
+		{
+			"anchor_q": 2,
+			"anchor_r": 1,
+			"assigned_workers": [],
+			"building_type": "quarry",
+			"enabled": 1,
+			"id": 103,
+			"paused_reason": "",
+			"player_id": "p1",
+			"port_node_ids": [
+				{
+					"dq": 0,
+					"dr": 0,
+					"node_id": 69,
+					"q": 2,
+					"r": 1
+				}
+			],
+			"ports": [
+				[
+					0,
+					0
+				]
+			],
+			"priority": 0,
+			"production_progress": 0,
+			"road_node_id": 69,
+			"state": "active",
+			"store_id": 104,
+			"worker_type": "quarrier"
+		}
+	],
+	"carrier_markers": [
+		{
+			"current_node_id": 45,
+			"edge_progress": 0,
+			"id": 14,
+			"job_id": 0,
+			"player_id": "p1",
+			"route_index": 0,
+			"route_node_ids": [],
+			"state": "idle",
+			"ware_amount": 0,
+			"ware_type": ""
+		},
+		{
+			"current_node_id": 3,
+			"edge_progress": 0,
+			"id": 15,
+			"job_id": 0,
+			"player_id": "p1",
+			"route_index": 0,
+			"route_node_ids": [],
+			"state": "idle",
+			"ware_amount": 0,
+			"ware_type": ""
+		},
+		{
+			"current_node_id": 3,
+			"edge_progress": 0,
+			"id": 16,
+			"job_id": 0,
+			"player_id": "p1",
+			"route_index": 0,
+			"route_node_ids": [],
+			"state": "idle",
+			"ware_amount": 0,
+			"ware_type": ""
+		}
+	],
+	"construction_sites": [
+		{
+			"anchor_q": 10,
+			"anchor_r": 3,
+			"builder_work_remaining": 0,
+			"building_type": "woodcutter",
+			"delivered": {
+				"planks": 2,
+				"stone": 1,
+				"tools": 1
+			},
+			"id": 27,
+			"player_id": "p1",
+			"priority": 0,
+			"required": {
+				"builder_work": 5,
+				"planks": 2,
+				"stone": 1,
+				"tools": 1
+			},
+			"state": "completed",
+			"upgrade_source_id": 0
+		},
+		{
+			"anchor_q": 11,
+			"anchor_r": 3,
+			"builder_work_remaining": 0,
+			"building_type": "forester",
+			"delivered": {
+				"planks": 2,
+				"stone": 1,
+				"tools": 1
+			},
+			"id": 36,
+			"player_id": "p1",
+			"priority": 0,
+			"required": {
+				"builder_work": 5,
+				"planks": 2,
+				"stone": 1,
+				"tools": 1
+			},
+			"state": "completed",
+			"upgrade_source_id": 0
+		},
+		{
+			"anchor_q": 7,
+			"anchor_r": 4,
+			"builder_work_remaining": 0,
+			"building_type": "sawmill",
+			"delivered": {
+				"planks": 3,
+				"stone": 2,
+				"tools": 1
+			},
+			"id": 49,
+			"player_id": "p1",
+			"priority": 0,
+			"required": {
+				"builder_work": 8,
+				"planks": 3,
+				"stone": 2,
+				"tools": 1
+			},
+			"state": "completed",
+			"upgrade_source_id": 0
+		},
+		{
+			"anchor_q": 2,
+			"anchor_r": 1,
+			"builder_work_remaining": 0,
+			"building_type": "quarry",
+			"delivered": {
+				"planks": 3,
+				"stone": 1,
+				"tools": 1
+			},
+			"id": 87,
+			"player_id": "p1",
+			"priority": 0,
+			"required": {
+				"builder_work": 8,
+				"planks": 3,
+				"stone": 1,
+				"tools": 1
+			},
+			"state": "completed",
+			"upgrade_source_id": 0
+		}
+	],
+	"delivery_jobs": [
+		{
+			"amount": 1,
+			"block_reason": "",
+			"carrier_id": 14,
+			"dest_entity_id": 84,
+			"dest_entity_type": "building",
+			"dest_store_id": 85,
+			"id": 101,
+			"player_id": "p1",
+			"priority": 0,
+			"source_store_id": 2,
+			"status": "delivered",
+			"ware_type": "timber"
+		}
+	],
+	"diagnostics": {
+		"economy_score_components": {
+			"p1": {
+				"active_production_buildings": 3,
+				"blocked_jobs_count": 0,
+				"completed_buildings": 3,
+				"completed_deliveries_count": 42,
+				"total_stock_value": 9
+			}
+		},
+		"economy_scores": {
+			"p1": 87
+		},
+		"player_stalls": {
+			"p1": {
+				"last_change_tick": 124,
+				"score": 87,
+				"stall_ticks": 1
+			}
+		},
+		"shortages": {
+			"food": 0,
+			"tools": 0,
+			"workers": 0
+		},
+		"stall": {
+			"last_progress_tick": 120,
+			"primary_reason": "",
+			"stall_ticks": 0
+		},
+		"tick": 125
+	},
+	"display_layers": {
+		"height_buildability": [
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 0,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 0
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 1,
+				"r": 1
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 1,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 1,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 1,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 0
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 2,
+				"r": 1
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 2,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 2,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 2,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 0
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 3,
+				"r": 1
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 3,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 3,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 3,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 4,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 5,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 6,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 7,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 8,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 9,
+				"r": 3
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 9,
+				"r": 4
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 9,
+				"r": 5
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 9,
+				"r": 6
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 9,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 9,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 10,
+				"r": 3
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 10,
+				"r": 4
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 10,
+				"r": 5
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 10,
+				"r": 6
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 10,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 10,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 11,
+				"r": 3
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 11,
+				"r": 4
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 11,
+				"r": 5
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 11,
+				"r": 6
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 11,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 11,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 2
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 12,
+				"r": 3
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 12,
+				"r": 4
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 12,
+				"r": 5
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 12,
+				"r": 6
+			},
+			{
+				"buildable": 0,
+				"height_level": 1,
+				"q": 12,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 12,
+				"r": 11
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 0
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 1
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 2
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 3
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 4
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 5
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 6
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 7
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 8
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 9
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 10
+			},
+			{
+				"buildable": 1,
+				"height_level": 1,
+				"q": 13,
+				"r": 11
+			}
+		],
+		"hex_grid_visible": 0,
+		"ownership": [
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 0,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 1,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 2,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 3,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 4,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 5,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 6,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 7,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 8,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 9,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 10,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 11,
+				"r": 11
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 9
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 12,
+				"r": 10
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 0
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 1
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 2
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 3
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 4
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 5
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 6
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 7
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 8
+			},
+			{
+				"owner_player_id": "p1",
+				"q": 13,
+				"r": 9
+			}
+		],
+		"resources": [
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 1,
+				"r": 1
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 1,
+				"r": 2
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 1,
+				"r": 3
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 2,
+				"r": 1
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 2,
+				"r": 2
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 2,
+				"r": 3
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 3,
+				"r": 1
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 3,
+				"r": 2
+			},
+			{
+				"deposit_amount": 150,
+				"deposit_revealed": 1,
+				"deposit_type": "rock",
+				"q": 3,
+				"r": 3
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 9,
+				"r": 3
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 9,
+				"r": 4
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 9,
+				"r": 5
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 9,
+				"r": 6
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 9,
+				"r": 7
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 10,
+				"r": 3
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 10,
+				"r": 4
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 10,
+				"r": 5
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 10,
+				"r": 6
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 10,
+				"r": 7
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 11,
+				"r": 3
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 11,
+				"r": 4
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 11,
+				"r": 5
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 11,
+				"r": 6
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 11,
+				"r": 7
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 12,
+				"r": 3
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 12,
+				"r": 4
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 12,
+				"r": 5
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 12,
+				"r": 6
+			},
+			{
+				"deposit_amount": 0,
+				"deposit_revealed": 1,
+				"deposit_type": "forest",
+				"q": 12,
+				"r": 7
+			}
+		],
+		"terrain": [
+			{
+				"q": 0,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 0,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 1,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 1,
+				"r": 2,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 1,
+				"r": 3,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 1,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 1,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 1,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 2,
+				"r": 2,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 2,
+				"r": 3,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 2,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 2,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 1,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 3,
+				"r": 2,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 3,
+				"r": 3,
+				"terrain_type": "rock"
+			},
+			{
+				"q": 3,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 3,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 4,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 5,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 6,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 7,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 8,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 9,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 9,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 9,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 9,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 9,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 9,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 10,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 10,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 10,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 10,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 10,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 10,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 11,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 11,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 11,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 11,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 11,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 11,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 12,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 12,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 12,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 12,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"q": 12,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 12,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"q": 13,
+				"r": 11,
+				"terrain_type": "grass"
+			}
+		],
+		"tree_density": [
+			{
+				"q": 9,
+				"r": 3,
+				"tree_density": 80
+			},
+			{
+				"q": 9,
+				"r": 4,
+				"tree_density": 80
+			},
+			{
+				"q": 9,
+				"r": 5,
+				"tree_density": 80
+			},
+			{
+				"q": 9,
+				"r": 6,
+				"tree_density": 80
+			},
+			{
+				"q": 9,
+				"r": 7,
+				"tree_density": 80
+			},
+			{
+				"q": 10,
+				"r": 3,
+				"tree_density": 81
+			},
+			{
+				"q": 10,
+				"r": 4,
+				"tree_density": 100
+			},
+			{
+				"q": 10,
+				"r": 5,
+				"tree_density": 80
+			},
+			{
+				"q": 10,
+				"r": 6,
+				"tree_density": 80
+			},
+			{
+				"q": 10,
+				"r": 7,
+				"tree_density": 80
+			},
+			{
+				"q": 11,
+				"r": 3,
+				"tree_density": 80
+			},
+			{
+				"q": 11,
+				"r": 4,
+				"tree_density": 100
+			},
+			{
+				"q": 11,
+				"r": 5,
+				"tree_density": 80
+			},
+			{
+				"q": 11,
+				"r": 6,
+				"tree_density": 80
+			},
+			{
+				"q": 11,
+				"r": 7,
+				"tree_density": 80
+			},
+			{
+				"q": 12,
+				"r": 3,
+				"tree_density": 100
+			},
+			{
+				"q": 12,
+				"r": 4,
+				"tree_density": 80
+			},
+			{
+				"q": 12,
+				"r": 5,
+				"tree_density": 80
+			},
+			{
+				"q": 12,
+				"r": 6,
+				"tree_density": 80
+			},
+			{
+				"q": 12,
+				"r": 7,
+				"tree_density": 80
+			}
+		]
+	},
+	"entities": {
+		"buildings": {
+			"1": {
+				"anchor_q": 6,
+				"anchor_r": 6,
+				"assigned_workers": [],
+				"building_type": "headquarters",
+				"enabled": 1,
+				"id": 1,
+				"paused_reason": "",
+				"player_id": "p1",
+				"port_node_ids": [
+					{
+						"dq": 0,
+						"dr": 0,
+						"node_id": 3,
+						"q": 6,
+						"r": 6
+					},
+					{
+						"dq": 1,
+						"dr": 2,
+						"node_id": 4,
+						"q": 7,
+						"r": 8
+					}
+				],
+				"ports": [
+					[
+						0,
+						0
+					],
+					[
+						1,
+						2
+					]
+				],
+				"priority": 0,
+				"production_progress": 0,
+				"road_node_id": 3,
+				"state": "active",
+				"store_id": 2,
+				"worker_type": ""
+			},
+			"103": {
+				"anchor_q": 2,
+				"anchor_r": 1,
+				"assigned_workers": [],
+				"building_type": "quarry",
+				"enabled": 1,
+				"id": 103,
+				"paused_reason": "",
+				"player_id": "p1",
+				"port_node_ids": [
+					{
+						"dq": 0,
+						"dr": 0,
+						"node_id": 69,
+						"q": 2,
+						"r": 1
+					}
+				],
+				"ports": [
+					[
+						0,
+						0
+					]
+				],
+				"priority": 0,
+				"production_progress": 0,
+				"road_node_id": 69,
+				"state": "active",
+				"store_id": 104,
+				"worker_type": "quarrier"
+			},
+			"34": {
+				"anchor_q": 10,
+				"anchor_r": 3,
+				"assigned_workers": [
+					10
+				],
+				"building_type": "woodcutter",
+				"enabled": 1,
+				"id": 34,
+				"last_production_tick": 124,
+				"paused_reason": "",
+				"player_id": "p1",
+				"port_node_ids": [
+					{
+						"dq": 0,
+						"dr": 0,
+						"node_id": 26,
+						"q": 10,
+						"r": 3
+					}
+				],
+				"ports": [
+					[
+						0,
+						0
+					]
+				],
+				"priority": 0,
+				"production_progress": 2,
+				"road_node_id": 26,
+				"state": "active",
+				"store_id": 35,
+				"worker_type": "woodcutter"
+			},
+			"47": {
+				"anchor_q": 11,
+				"anchor_r": 3,
+				"assigned_workers": [
+					11
+				],
+				"building_type": "forester",
+				"enabled": 1,
+				"id": 47,
+				"last_production_tick": 124,
+				"paused_reason": "",
+				"player_id": "p1",
+				"port_node_ids": [
+					{
+						"dq": 0,
+						"dr": 0,
+						"node_id": 32,
+						"q": 11,
+						"r": 3
+					}
+				],
+				"ports": [
+					[
+						0,
+						0
+					]
+				],
+				"priority": 0,
+				"production_progress": 4,
+				"road_node_id": 32,
+				"state": "active",
+				"store_id": 48,
+				"worker_type": "forester"
+			},
+			"84": {
+				"anchor_q": 7,
+				"anchor_r": 4,
+				"assigned_workers": [
+					12
+				],
+				"building_type": "sawmill",
+				"enabled": 1,
+				"id": 84,
+				"last_production_tick": 117,
+				"paused_reason": "input_missing",
+				"player_id": "p1",
+				"port_node_ids": [
+					{
+						"dq": 0,
+						"dr": 0,
+						"node_id": 45,
+						"q": 7,
+						"r": 4
+					}
+				],
+				"ports": [
+					[
+						0,
+						0
+					]
+				],
+				"priority": 0,
+				"production_progress": 0,
+				"road_node_id": 45,
+				"state": "paused_missing_input",
+				"store_id": 85,
+				"worker_type": "carpenter"
+			}
+		},
+		"carriers": {
+			"14": {
+				"current_node_id": 45,
+				"edge_progress": 0,
+				"id": 14,
+				"job_id": 0,
+				"player_id": "p1",
+				"route_index": 0,
+				"route_node_ids": [],
+				"state": "idle",
+				"ware_amount": 0,
+				"ware_type": ""
+			},
+			"15": {
+				"current_node_id": 3,
+				"edge_progress": 0,
+				"id": 15,
+				"job_id": 0,
+				"player_id": "p1",
+				"route_index": 0,
+				"route_node_ids": [],
+				"state": "idle",
+				"ware_amount": 0,
+				"ware_type": ""
+			},
+			"16": {
+				"current_node_id": 3,
+				"edge_progress": 0,
+				"id": 16,
+				"job_id": 0,
+				"player_id": "p1",
+				"route_index": 0,
+				"route_node_ids": [],
+				"state": "idle",
+				"ware_amount": 0,
+				"ware_type": ""
+			}
+		},
+		"construction_sites": {
+			"27": {
+				"anchor_q": 10,
+				"anchor_r": 3,
+				"builder_work_remaining": 0,
+				"building_type": "woodcutter",
+				"delivered": {
+					"planks": 2,
+					"stone": 1,
+					"tools": 1
+				},
+				"id": 27,
+				"player_id": "p1",
+				"priority": 0,
+				"required": {
+					"builder_work": 5,
+					"planks": 2,
+					"stone": 1,
+					"tools": 1
+				},
+				"state": "completed",
+				"upgrade_source_id": 0
+			},
+			"36": {
+				"anchor_q": 11,
+				"anchor_r": 3,
+				"builder_work_remaining": 0,
+				"building_type": "forester",
+				"delivered": {
+					"planks": 2,
+					"stone": 1,
+					"tools": 1
+				},
+				"id": 36,
+				"player_id": "p1",
+				"priority": 0,
+				"required": {
+					"builder_work": 5,
+					"planks": 2,
+					"stone": 1,
+					"tools": 1
+				},
+				"state": "completed",
+				"upgrade_source_id": 0
+			},
+			"49": {
+				"anchor_q": 7,
+				"anchor_r": 4,
+				"builder_work_remaining": 0,
+				"building_type": "sawmill",
+				"delivered": {
+					"planks": 3,
+					"stone": 2,
+					"tools": 1
+				},
+				"id": 49,
+				"player_id": "p1",
+				"priority": 0,
+				"required": {
+					"builder_work": 8,
+					"planks": 3,
+					"stone": 2,
+					"tools": 1
+				},
+				"state": "completed",
+				"upgrade_source_id": 0
+			},
+			"87": {
+				"anchor_q": 2,
+				"anchor_r": 1,
+				"builder_work_remaining": 0,
+				"building_type": "quarry",
+				"delivered": {
+					"planks": 3,
+					"stone": 1,
+					"tools": 1
+				},
+				"id": 87,
+				"player_id": "p1",
+				"priority": 0,
+				"required": {
+					"builder_work": 8,
+					"planks": 3,
+					"stone": 1,
+					"tools": 1
+				},
+				"state": "completed",
+				"upgrade_source_id": 0
+			}
+		},
+		"delivery_jobs": {
+			"101": {
+				"amount": 1,
+				"block_reason": "",
+				"carrier_id": 14,
+				"dest_entity_id": 84,
+				"dest_entity_type": "building",
+				"dest_store_id": 85,
+				"id": 101,
+				"player_id": "p1",
+				"priority": 0,
+				"source_store_id": 2,
+				"status": "delivered",
+				"ware_type": "timber"
+			}
+		},
+		"economy_meta": {
+			"blocked_routes": {
+				"26->4": {
+					"from_node_id": 26,
+					"reason": "NO_PATH",
+					"to_node_id": 4
+				},
+				"3->4": {
+					"from_node_id": 3,
+					"reason": "NO_PATH",
+					"to_node_id": 4
+				},
+				"4->26": {
+					"from_node_id": 4,
+					"reason": "NO_PATH",
+					"to_node_id": 26
+				},
+				"4->3": {
+					"from_node_id": 4,
+					"reason": "NO_PATH",
+					"to_node_id": 3
+				},
+				"4->32": {
+					"from_node_id": 4,
+					"reason": "NO_PATH",
+					"to_node_id": 32
+				},
+				"4->45": {
+					"from_node_id": 4,
+					"reason": "NO_PATH",
+					"to_node_id": 45
+				},
+				"4->69": {
+					"from_node_id": 4,
+					"reason": "NO_PATH",
+					"to_node_id": 69
+				}
+			},
+			"build_radius": 10,
+			"deposit_summary": {
+				"active": 9,
+				"depleted": 20,
+				"revealed": 29
+			},
+			"forest_summary": {
+				"depleted_hexes": 0,
+				"forest_hexes": 20,
+				"total_density": 1661
+			},
+			"hq_building_id": 1,
+			"hq_building_ids": {
+				"p1": 1
+			},
+			"hq_position_q": 6,
+			"hq_position_r": 6,
+			"hq_positions": {
+				"p1": {
+					"q": 6,
+					"r": 6
+				}
+			},
+			"last_progress_tick": 120,
+			"last_route_failure": {
+				"from_node_id": 26,
+				"reason": "NO_PATH",
+				"to_node_id": 4
+			},
+			"objective_config_path": "config/settler_mvp_objective.json",
+			"player_economy_stats": {
+				"p1": {
+					"completed_deliveries_count": 42
+				}
+			},
+			"player_score_history": {
+				"p1": {
+					"last_change_tick": 124,
+					"score": 87,
+					"stall_ticks": 1
+				}
+			},
+			"primary_player_id": "p1",
+			"progress_score": 31,
+			"stall_reason": "",
+			"stall_ticks": 1,
+			"stall_ticks_threshold": 50,
+			"statistics": {
+				"carrier_utilisation": {
+					"busy": 0,
+					"idle": 3,
+					"total": 3
+				},
+				"progress_score": 31,
+				"tick": 124,
+				"ware_totals": {
+					"by_location": {
+						"104": {
+
+						},
+						"2": {
+							"planks": 13,
+							"rations": 20,
+							"stone": 12,
+							"timber": 6,
+							"tools": 20
+						},
+						"35": {
+							"timber": 4
+						},
+						"48": {
+
+						},
+						"85": {
+							"planks": 4,
+							"timber": 1
+						}
+					},
+					"by_type": {
+						"planks": 17,
+						"rations": 20,
+						"stone": 12,
+						"timber": 11,
+						"tools": 20
+					}
+				},
+				"worker_utilisation": {
+					"assigned": 3,
+					"idle": 6,
+					"total": 9
+				}
+			},
+			"worker_policies": {
+				"p1": "auto"
+			}
+		},
+		"reservations": {
+
+		},
+		"road_nodes": {
+			"18": {
+				"building_id": 0,
+				"id": 18,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 7,
+				"r": 6,
+				"segment_ids": [
+					17,
+					19
+				]
+			},
+			"20": {
+				"building_id": 0,
+				"id": 20,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 8,
+				"r": 6,
+				"segment_ids": [
+					19,
+					21
+				]
+			},
+			"22": {
+				"building_id": 0,
+				"id": 22,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 9,
+				"r": 5,
+				"segment_ids": [
+					21,
+					23
+				]
+			},
+			"24": {
+				"building_id": 0,
+				"id": 24,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 10,
+				"r": 4,
+				"segment_ids": [
+					23,
+					25
+				]
+			},
+			"26": {
+				"building_id": 34,
+				"id": 26,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 10,
+				"r": 3,
+				"segment_ids": [
+					25,
+					31,
+					40
+				]
+			},
+			"3": {
+				"building_id": 1,
+				"id": 3,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 6,
+				"r": 6,
+				"segment_ids": [
+					17
+				]
+			},
+			"32": {
+				"building_id": 47,
+				"id": 32,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 11,
+				"r": 3,
+				"segment_ids": [
+					31
+				]
+			},
+			"4": {
+				"building_id": 1,
+				"id": 4,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 7,
+				"r": 8,
+				"segment_ids": []
+			},
+			"41": {
+				"building_id": 0,
+				"id": 41,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 9,
+				"r": 3,
+				"segment_ids": [
+					40,
+					42
+				]
+			},
+			"43": {
+				"building_id": 0,
+				"id": 43,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 8,
+				"r": 3,
+				"segment_ids": [
+					42,
+					44
+				]
+			},
+			"45": {
+				"building_id": 84,
+				"id": 45,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 7,
+				"r": 4,
+				"segment_ids": [
+					44,
+					53
+				]
+			},
+			"54": {
+				"building_id": 0,
+				"id": 54,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 7,
+				"r": 3,
+				"segment_ids": [
+					53,
+					55
+				]
+			},
+			"56": {
+				"building_id": 0,
+				"id": 56,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 7,
+				"r": 2,
+				"segment_ids": [
+					55,
+					57
+				]
+			},
+			"58": {
+				"building_id": 0,
+				"id": 58,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 7,
+				"r": 1,
+				"segment_ids": [
+					57,
+					59
+				]
+			},
+			"60": {
+				"building_id": 0,
+				"id": 60,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 6,
+				"r": 1,
+				"segment_ids": [
+					59,
+					61
+				]
+			},
+			"62": {
+				"building_id": 0,
+				"id": 62,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 5,
+				"r": 1,
+				"segment_ids": [
+					61,
+					63
+				]
+			},
+			"64": {
+				"building_id": 0,
+				"id": 64,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 4,
+				"r": 1,
+				"segment_ids": [
+					63,
+					66
+				]
+			},
+			"67": {
+				"building_id": 0,
+				"id": 67,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 3,
+				"r": 1,
+				"segment_ids": [
+					66,
+					68
+				]
+			},
+			"69": {
+				"building_id": 103,
+				"id": 69,
+				"inventory": {
+					"capacity": 5,
+					"reserved": {
+
+					},
+					"wares": {
+
+					}
+				},
+				"player_id": "p1",
+				"q": 2,
+				"r": 1,
+				"segment_ids": [
+					68
+				]
+			}
+		},
+		"roads": {
+			"17": {
+				"congestion": 0,
+				"edge_key": "6,6|7,6",
+				"hex_a_q": 6,
+				"hex_a_r": 6,
+				"hex_b_q": 7,
+				"hex_b_r": 6,
+				"id": 17,
+				"player_id": "p1"
+			},
+			"19": {
+				"congestion": 0,
+				"edge_key": "7,6|8,6",
+				"hex_a_q": 7,
+				"hex_a_r": 6,
+				"hex_b_q": 8,
+				"hex_b_r": 6,
+				"id": 19,
+				"player_id": "p1"
+			},
+			"21": {
+				"congestion": 0,
+				"edge_key": "8,6|9,5",
+				"hex_a_q": 8,
+				"hex_a_r": 6,
+				"hex_b_q": 9,
+				"hex_b_r": 5,
+				"id": 21,
+				"player_id": "p1"
+			},
+			"23": {
+				"congestion": 0,
+				"edge_key": "10,4|9,5",
+				"hex_a_q": 9,
+				"hex_a_r": 5,
+				"hex_b_q": 10,
+				"hex_b_r": 4,
+				"id": 23,
+				"player_id": "p1"
+			},
+			"25": {
+				"congestion": 0,
+				"edge_key": "10,3|10,4",
+				"hex_a_q": 10,
+				"hex_a_r": 4,
+				"hex_b_q": 10,
+				"hex_b_r": 3,
+				"id": 25,
+				"player_id": "p1"
+			},
+			"31": {
+				"congestion": 0,
+				"edge_key": "10,3|11,3",
+				"hex_a_q": 10,
+				"hex_a_r": 3,
+				"hex_b_q": 11,
+				"hex_b_r": 3,
+				"id": 31,
+				"player_id": "p1"
+			},
+			"40": {
+				"congestion": 0,
+				"edge_key": "10,3|9,3",
+				"hex_a_q": 10,
+				"hex_a_r": 3,
+				"hex_b_q": 9,
+				"hex_b_r": 3,
+				"id": 40,
+				"player_id": "p1"
+			},
+			"42": {
+				"congestion": 0,
+				"edge_key": "8,3|9,3",
+				"hex_a_q": 9,
+				"hex_a_r": 3,
+				"hex_b_q": 8,
+				"hex_b_r": 3,
+				"id": 42,
+				"player_id": "p1"
+			},
+			"44": {
+				"congestion": 0,
+				"edge_key": "7,4|8,3",
+				"hex_a_q": 8,
+				"hex_a_r": 3,
+				"hex_b_q": 7,
+				"hex_b_r": 4,
+				"id": 44,
+				"player_id": "p1"
+			},
+			"53": {
+				"congestion": 0,
+				"edge_key": "7,3|7,4",
+				"hex_a_q": 7,
+				"hex_a_r": 4,
+				"hex_b_q": 7,
+				"hex_b_r": 3,
+				"id": 53,
+				"player_id": "p1"
+			},
+			"55": {
+				"congestion": 0,
+				"edge_key": "7,2|7,3",
+				"hex_a_q": 7,
+				"hex_a_r": 3,
+				"hex_b_q": 7,
+				"hex_b_r": 2,
+				"id": 55,
+				"player_id": "p1"
+			},
+			"57": {
+				"congestion": 0,
+				"edge_key": "7,1|7,2",
+				"hex_a_q": 7,
+				"hex_a_r": 2,
+				"hex_b_q": 7,
+				"hex_b_r": 1,
+				"id": 57,
+				"player_id": "p1"
+			},
+			"59": {
+				"congestion": 0,
+				"edge_key": "6,1|7,1",
+				"hex_a_q": 7,
+				"hex_a_r": 1,
+				"hex_b_q": 6,
+				"hex_b_r": 1,
+				"id": 59,
+				"player_id": "p1"
+			},
+			"61": {
+				"congestion": 0,
+				"edge_key": "5,1|6,1",
+				"hex_a_q": 6,
+				"hex_a_r": 1,
+				"hex_b_q": 5,
+				"hex_b_r": 1,
+				"id": 61,
+				"player_id": "p1"
+			},
+			"63": {
+				"congestion": 0,
+				"edge_key": "4,1|5,1",
+				"hex_a_q": 5,
+				"hex_a_r": 1,
+				"hex_b_q": 4,
+				"hex_b_r": 1,
+				"id": 63,
+				"player_id": "p1"
+			},
+			"66": {
+				"congestion": 0,
+				"edge_key": "3,1|4,1",
+				"hex_a_q": 4,
+				"hex_a_r": 1,
+				"hex_b_q": 3,
+				"hex_b_r": 1,
+				"id": 66,
+				"player_id": "p1"
+			},
+			"68": {
+				"congestion": 0,
+				"edge_key": "2,1|3,1",
+				"hex_a_q": 3,
+				"hex_a_r": 1,
+				"hex_b_q": 2,
+				"hex_b_r": 1,
+				"id": 68,
+				"player_id": "p1"
+			}
+		},
+		"ware_stores": {
+			"104": {
+				"capacity": 15,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"2": {
+				"capacity": 100,
+				"reserved": {
+
+				},
+				"wares": {
+					"planks": 13,
+					"rations": 20,
+					"stone": 12,
+					"timber": 6,
+					"tools": 20
+				}
+			},
+			"35": {
+				"capacity": 10,
+				"reserved": {
+
+				},
+				"wares": {
+					"timber": 4
+				}
+			},
+			"48": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"85": {
+				"capacity": 15,
+				"reserved": {
+
+				},
+				"wares": {
+					"planks": 4,
+					"timber": 1
+				}
+			}
+		},
+		"workers": {
+			"10": {
+				"assigned_building_id": 34,
+				"has_tool": 1,
+				"home_store_id": 2,
+				"id": 10,
+				"player_id": "p1",
+				"state": "assigned",
+				"worker_type": "woodcutter"
+			},
+			"11": {
+				"assigned_building_id": 47,
+				"has_tool": 1,
+				"home_store_id": 2,
+				"id": 11,
+				"player_id": "p1",
+				"state": "assigned",
+				"worker_type": "forester"
+			},
+			"12": {
+				"assigned_building_id": 84,
+				"has_tool": 1,
+				"home_store_id": 2,
+				"id": 12,
+				"player_id": "p1",
+				"state": "assigned",
+				"worker_type": "carpenter"
+			},
+			"13": {
+				"assigned_building_id": 0,
+				"has_tool": 0,
+				"home_store_id": 2,
+				"id": 13,
+				"player_id": "p1",
+				"state": "idle",
+				"worker_type": "quarrier"
+			},
+			"5": {
+				"assigned_building_id": 0,
+				"has_tool": 0,
+				"home_store_id": 2,
+				"id": 5,
+				"player_id": "p1",
+				"state": "idle",
+				"worker_type": "builder"
+			},
+			"6": {
+				"assigned_building_id": 0,
+				"has_tool": 0,
+				"home_store_id": 2,
+				"id": 6,
+				"player_id": "p1",
+				"state": "idle",
+				"worker_type": "builder"
+			},
+			"7": {
+				"assigned_building_id": 0,
+				"has_tool": 0,
+				"home_store_id": 2,
+				"id": 7,
+				"player_id": "p1",
+				"state": "idle",
+				"worker_type": "carrier"
+			},
+			"8": {
+				"assigned_building_id": 0,
+				"has_tool": 0,
+				"home_store_id": 2,
+				"id": 8,
+				"player_id": "p1",
+				"state": "idle",
+				"worker_type": "carrier"
+			},
+			"9": {
+				"assigned_building_id": 0,
+				"has_tool": 0,
+				"home_store_id": 2,
+				"id": 9,
+				"player_id": "p1",
+				"state": "idle",
+				"worker_type": "carrier"
+			}
+		}
+	},
+	"map": {
+		"height": 12,
+		"hexes": [
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 0,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 1,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 2,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 3,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 1,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 10,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 11,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 12,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 13,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 1,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 2,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 3,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 2,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 1,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 2,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 3,
+				"terrain_type": "rock"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 3,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 4,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 5,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 6,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 7,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 3,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 4,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 5,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 6,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 7,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 8,
+				"r": 9,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 0,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 1,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 10,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 11,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 2,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 3,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 4,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 5,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 6,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 0,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 7,
+				"terrain_type": "forest"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 8,
+				"terrain_type": "grass"
+			},
+			{
+				"buildability": 1,
+				"height_level": 1,
+				"passability": 1,
+				"q": 9,
+				"r": 9,
+				"terrain_type": "grass"
+			}
+		],
+		"width": 14
+	},
+	"objective": {
+		"complete": true,
+		"player_id": "p1",
+		"requirements": [
+			{
+				"current": 1,
+				"detail": "",
+				"done": true,
+				"key": "building_woodcutter",
+				"label": "Woodcutter Lodge",
+				"target": 1
+			},
+			{
+				"current": 1,
+				"detail": "",
+				"done": true,
+				"key": "building_forester",
+				"label": "Forester Camp",
+				"target": 1
+			},
+			{
+				"current": 1,
+				"detail": "",
+				"done": true,
+				"key": "building_sawmill",
+				"label": "Sawmill",
+				"target": 1
+			},
+			{
+				"current": 1,
+				"detail": "",
+				"done": true,
+				"key": "building_quarry",
+				"label": "Quarry",
+				"target": 1
+			},
+			{
+				"current": 17,
+				"detail": "",
+				"done": true,
+				"key": "ware_planks",
+				"label": "Store planks",
+				"target": 10
+			},
+			{
+				"current": 12,
+				"detail": "",
+				"done": true,
+				"key": "ware_stone",
+				"label": "Store stone",
+				"target": 10
+			}
+		],
+		"victory": true
+	},
+	"players": [
+		{
+			"player_id": "p1"
+		}
+	],
+	"rng_state": 42,
+	"road_nodes": [
+		{
+			"building_id": 1,
+			"id": 3,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 6,
+			"r": 6,
+			"segment_ids": [
+				17
+			]
+		},
+		{
+			"building_id": 1,
+			"id": 4,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 7,
+			"r": 8,
+			"segment_ids": []
+		},
+		{
+			"building_id": 0,
+			"id": 18,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 7,
+			"r": 6,
+			"segment_ids": [
+				17,
+				19
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 20,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 8,
+			"r": 6,
+			"segment_ids": [
+				19,
+				21
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 22,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 9,
+			"r": 5,
+			"segment_ids": [
+				21,
+				23
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 24,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 10,
+			"r": 4,
+			"segment_ids": [
+				23,
+				25
+			]
+		},
+		{
+			"building_id": 34,
+			"id": 26,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 10,
+			"r": 3,
+			"segment_ids": [
+				25,
+				31,
+				40
+			]
+		},
+		{
+			"building_id": 47,
+			"id": 32,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 11,
+			"r": 3,
+			"segment_ids": [
+				31
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 41,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 9,
+			"r": 3,
+			"segment_ids": [
+				40,
+				42
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 43,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 8,
+			"r": 3,
+			"segment_ids": [
+				42,
+				44
+			]
+		},
+		{
+			"building_id": 84,
+			"id": 45,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 7,
+			"r": 4,
+			"segment_ids": [
+				44,
+				53
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 54,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 7,
+			"r": 3,
+			"segment_ids": [
+				53,
+				55
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 56,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 7,
+			"r": 2,
+			"segment_ids": [
+				55,
+				57
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 58,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 7,
+			"r": 1,
+			"segment_ids": [
+				57,
+				59
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 60,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 6,
+			"r": 1,
+			"segment_ids": [
+				59,
+				61
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 62,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 5,
+			"r": 1,
+			"segment_ids": [
+				61,
+				63
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 64,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 4,
+			"r": 1,
+			"segment_ids": [
+				63,
+				66
+			]
+		},
+		{
+			"building_id": 0,
+			"id": 67,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 3,
+			"r": 1,
+			"segment_ids": [
+				66,
+				68
+			]
+		},
+		{
+			"building_id": 103,
+			"id": 69,
+			"inventory": {
+				"capacity": 5,
+				"reserved": {
+
+				},
+				"wares": {
+
+				}
+			},
+			"player_id": "p1",
+			"q": 2,
+			"r": 1,
+			"segment_ids": [
+				68
+			]
+		}
+	],
+	"roads": [
+		{
+			"congestion": 0,
+			"edge_key": "6,6|7,6",
+			"hex_a_q": 6,
+			"hex_a_r": 6,
+			"hex_b_q": 7,
+			"hex_b_r": 6,
+			"id": 17,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "7,6|8,6",
+			"hex_a_q": 7,
+			"hex_a_r": 6,
+			"hex_b_q": 8,
+			"hex_b_r": 6,
+			"id": 19,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "8,6|9,5",
+			"hex_a_q": 8,
+			"hex_a_r": 6,
+			"hex_b_q": 9,
+			"hex_b_r": 5,
+			"id": 21,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "10,4|9,5",
+			"hex_a_q": 9,
+			"hex_a_r": 5,
+			"hex_b_q": 10,
+			"hex_b_r": 4,
+			"id": 23,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "10,3|10,4",
+			"hex_a_q": 10,
+			"hex_a_r": 4,
+			"hex_b_q": 10,
+			"hex_b_r": 3,
+			"id": 25,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "10,3|11,3",
+			"hex_a_q": 10,
+			"hex_a_r": 3,
+			"hex_b_q": 11,
+			"hex_b_r": 3,
+			"id": 31,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "10,3|9,3",
+			"hex_a_q": 10,
+			"hex_a_r": 3,
+			"hex_b_q": 9,
+			"hex_b_r": 3,
+			"id": 40,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "8,3|9,3",
+			"hex_a_q": 9,
+			"hex_a_r": 3,
+			"hex_b_q": 8,
+			"hex_b_r": 3,
+			"id": 42,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "7,4|8,3",
+			"hex_a_q": 8,
+			"hex_a_r": 3,
+			"hex_b_q": 7,
+			"hex_b_r": 4,
+			"id": 44,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "7,3|7,4",
+			"hex_a_q": 7,
+			"hex_a_r": 4,
+			"hex_b_q": 7,
+			"hex_b_r": 3,
+			"id": 53,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "7,2|7,3",
+			"hex_a_q": 7,
+			"hex_a_r": 3,
+			"hex_b_q": 7,
+			"hex_b_r": 2,
+			"id": 55,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "7,1|7,2",
+			"hex_a_q": 7,
+			"hex_a_r": 2,
+			"hex_b_q": 7,
+			"hex_b_r": 1,
+			"id": 57,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "6,1|7,1",
+			"hex_a_q": 7,
+			"hex_a_r": 1,
+			"hex_b_q": 6,
+			"hex_b_r": 1,
+			"id": 59,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "5,1|6,1",
+			"hex_a_q": 6,
+			"hex_a_r": 1,
+			"hex_b_q": 5,
+			"hex_b_r": 1,
+			"id": 61,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "4,1|5,1",
+			"hex_a_q": 5,
+			"hex_a_r": 1,
+			"hex_b_q": 4,
+			"hex_b_r": 1,
+			"id": 63,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "3,1|4,1",
+			"hex_a_q": 4,
+			"hex_a_r": 1,
+			"hex_b_q": 3,
+			"hex_b_r": 1,
+			"id": 66,
+			"player_id": "p1"
+		},
+		{
+			"congestion": 0,
+			"edge_key": "2,1|3,1",
+			"hex_a_q": 3,
+			"hex_a_r": 1,
+			"hex_b_q": 2,
+			"hex_b_r": 1,
+			"id": 68,
+			"player_id": "p1"
+		}
+	],
+	"schema_version": 1,
+	"seed": 42,
+	"tick": 125,
+	"variant": "economy_trial",
+	"ware_movement_markers": [],
+	"worker_markers": [
+		{
+			"assigned_building_id": 0,
+			"has_tool": 0,
+			"home_store_id": 2,
+			"id": 5,
+			"player_id": "p1",
+			"state": "idle",
+			"worker_type": "builder"
+		},
+		{
+			"assigned_building_id": 0,
+			"has_tool": 0,
+			"home_store_id": 2,
+			"id": 6,
+			"player_id": "p1",
+			"state": "idle",
+			"worker_type": "builder"
+		},
+		{
+			"assigned_building_id": 0,
+			"has_tool": 0,
+			"home_store_id": 2,
+			"id": 7,
+			"player_id": "p1",
+			"state": "idle",
+			"worker_type": "carrier"
+		},
+		{
+			"assigned_building_id": 0,
+			"has_tool": 0,
+			"home_store_id": 2,
+			"id": 8,
+			"player_id": "p1",
+			"state": "idle",
+			"worker_type": "carrier"
+		},
+		{
+			"assigned_building_id": 0,
+			"has_tool": 0,
+			"home_store_id": 2,
+			"id": 9,
+			"player_id": "p1",
+			"state": "idle",
+			"worker_type": "carrier"
+		},
+		{
+			"assigned_building_id": 34,
+			"has_tool": 1,
+			"home_store_id": 2,
+			"id": 10,
+			"player_id": "p1",
+			"state": "assigned",
+			"worker_type": "woodcutter"
+		},
+		{
+			"assigned_building_id": 47,
+			"has_tool": 1,
+			"home_store_id": 2,
+			"id": 11,
+			"player_id": "p1",
+			"state": "assigned",
+			"worker_type": "forester"
+		},
+		{
+			"assigned_building_id": 84,
+			"has_tool": 1,
+			"home_store_id": 2,
+			"id": 12,
+			"player_id": "p1",
+			"state": "assigned",
+			"worker_type": "carpenter"
+		},
+		{
+			"assigned_building_id": 0,
+			"has_tool": 0,
+			"home_store_id": 2,
+			"id": 13,
+			"player_id": "p1",
+			"state": "idle",
+			"worker_type": "quarrier"
+		}
+	]
+}
