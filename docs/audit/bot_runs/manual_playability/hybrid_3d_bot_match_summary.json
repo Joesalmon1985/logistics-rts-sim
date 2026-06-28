@@ -1,0 +1,12 @@
+{
+	"buildings": 8,
+	"commands_submitted": 0,
+	"complete": true,
+	"complete_or_milestone": true,
+	"decision_count": 0,
+	"final_tick": 132,
+	"scenario_loads": true,
+	"seed": 42,
+	"stall_ticks": 0,
+	"units": 1
+}
