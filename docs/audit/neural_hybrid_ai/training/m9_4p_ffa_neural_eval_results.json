@@ -1,0 +1,9 @@
+{
+  "eval_ref": "docs/audit/neural_hybrid_ai/eval/4_neural_ffa",
+  "spectator_ref": "docs/audit/neural_hybrid_ai/eval/4_neural_ffa_spectator",
+  "description": "4 trained modular neural bots FFA headless eval + 2D spectator capture",
+  "inference_modes": ["trained_neural"],
+  "heuristic_fallback_count": 0,
+  "tick_cap": 200,
+  "winner": null
+}

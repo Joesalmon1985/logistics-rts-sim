@@ -1,0 +1,26 @@
+{
+  "checkpoint_pt": "/home/joe/Projects/WideRTS/python_tools/training/hybrid_ai/checkpoints/latest.pt",
+  "checkpoint_godot": "/home/joe/Projects/WideRTS/godot_project/sim/hybrid/ai/checkpoints/latest_modular_policy.json",
+  "meta": {
+    "trained_stages": [
+      "m1_economy_imitation",
+      "m2_logistics_imitation",
+      "m3_military_production_imitation",
+      "m4_combat_imitation",
+      "m5_arbiter_imitation",
+      "m6_expert_tuning",
+      "m7_arbiter_tuning"
+    ],
+    "teacher_rows": 1440,
+    "inference_mode": "trained_neural"
+  },
+  "trained_stages": [
+    "m1_economy_imitation",
+    "m2_logistics_imitation",
+    "m3_military_production_imitation",
+    "m4_combat_imitation",
+    "m5_arbiter_imitation",
+    "m6_expert_tuning",
+    "m7_arbiter_tuning"
+  ]
+}

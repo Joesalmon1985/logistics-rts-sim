@@ -812,3 +812,17 @@ timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/c
 ```
 
 Screenshots: `docs/audit/screenshots/realtime_tutorials_and_3d/`. If `$DISPLAY` is set, manually verify modes launch running via `./scripts/run_game.sh`.
+
+## PRD — Neural Hybrid / Spectator / Mobile (Linux)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+TEST_FILTER=neural_hybrid timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=hybrid_spectator timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=mobile_hex timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=mobile_ffa timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/run_neural_hybrid_4p_smoke.gd
+timeout 30s "$GODOT" --headless --path godot_project --script res://sim/tools/run_mobile_hex_view_qa.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/run_hybrid_mobile_ffa_qa.gd
+```

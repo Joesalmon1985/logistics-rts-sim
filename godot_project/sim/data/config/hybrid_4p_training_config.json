@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "players": 4,
+  "max_ticks": 50000,
+  "stall_threshold_ticks": 1000,
+  "elimination_rule": "command_hub_destroyed",
+  "winner_rule": "sole_remaining_player",
+  "fog_enabled": true,
+  "curriculum_stage": 0
+}

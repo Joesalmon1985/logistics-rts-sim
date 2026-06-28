@@ -26,6 +26,12 @@ func _connect_buttons() -> void:
 	var hybrid_3d: Button = get_node_or_null("%Hybrid3dSpectatorBtn")
 	if hybrid_3d != null:
 		hybrid_3d.pressed.connect(_on_hybrid_3d_spectator)
+	var hybrid_2d: Button = get_node_or_null("%Hybrid2dSpectatorBtn")
+	if hybrid_2d != null:
+		hybrid_2d.pressed.connect(_on_hybrid_2d_spectator)
+	var hybrid_ffa: Button = get_node_or_null("%HybridFfaBtn")
+	if hybrid_ffa != null:
+		hybrid_ffa.pressed.connect(_on_hybrid_ffa)
 	var hybrid_mvp: Button = get_node_or_null("%HybridMvpBtn")
 	if hybrid_mvp != null:
 		hybrid_mvp.pressed.connect(_on_hybrid_mvp)
@@ -63,6 +69,14 @@ func _on_debug_viewers() -> void:
 
 func _on_hybrid_3d_spectator() -> void:
 	get_tree().change_scene_to_file("res://client/scenes/hybrid_3d_bot_spectator.tscn")
+
+
+func _on_hybrid_2d_spectator() -> void:
+	get_tree().change_scene_to_file("res://client/scenes/hybrid_bot_spectator_2d.tscn")
+
+
+func _on_hybrid_ffa() -> void:
+	get_tree().change_scene_to_file("res://client/scenes/hybrid_mobile_ffa_menu.tscn")
 
 
 func _on_hybrid_mvp() -> void:

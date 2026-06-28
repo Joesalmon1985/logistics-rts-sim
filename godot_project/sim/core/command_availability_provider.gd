@@ -39,6 +39,8 @@ static func _list_candidates(state: GameState, actor_id: String) -> Array:
 			raw = EconomyCommandAvailability.list_candidates(state, resolved_actor)
 		"military_trial":
 			raw = MilitaryCommandAvailability.list_candidates(state, resolved_actor)
+		"hybrid":
+			raw = HybridCommandAvailability.list_candidates(state, resolved_actor)
 		_:
 			raw = []
 
