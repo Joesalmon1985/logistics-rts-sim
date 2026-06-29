@@ -1,0 +1,1227 @@
+{
+	"p1": {
+		"commands_rejected_count": 499,
+		"furthest_phase": "place_woodcutter",
+		"intent": "place_road",
+		"last_rejection_reason": "ROAD_EXISTS",
+		"milestones": {
+			"attack_issued": false,
+			"barracks_placed": false,
+			"enemy_hub_damaged": false,
+			"road_segment_placed": true,
+			"sawmill_placed": false,
+			"unit_produced": false,
+			"unit_queued": false,
+			"woodcutter_placed": false,
+			"worker_policy_set": true
+		},
+		"phase": "place_woodcutter",
+		"phase_history": [
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 200
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 201
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 203
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 204
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 206
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 207
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 209
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 210
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 212
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 213
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 215
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 216
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 218
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 219
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 221
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 222
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 224
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 225
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 227
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 228
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 230
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 231
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 233
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 234
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 236
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 237
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 239
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 240
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 242
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 243
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 245
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 246
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 248
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 249
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 251
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 252
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 254
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 255
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 257
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 258
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 260
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 261
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 263
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 264
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 266
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 267
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 269
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 270
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 272
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 273
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 275
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 276
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 278
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 279
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 281
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 282
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 284
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 285
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 287
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 288
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 290
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 291
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 293
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 294
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 296
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 297
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 299
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 300
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 302
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 303
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 305
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 306
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 308
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 309
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 311
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 312
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 314
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 315
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 317
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 318
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 320
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 321
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 323
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 324
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 326
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 327
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 329
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 330
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 332
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 333
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 335
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 336
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 338
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 339
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 341
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 342
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 344
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 345
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 347
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 348
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 350
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 351
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 353
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 354
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 356
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 357
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 359
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 360
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 362
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 363
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 365
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 366
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 368
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 369
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 371
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 372
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 374
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 375
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 377
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 378
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 380
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 381
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 383
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 384
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 386
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 387
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 389
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 390
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 392
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 393
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 395
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 396
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 398
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 399
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 401
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 402
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 404
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 405
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 407
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 408
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 410
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 411
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 413
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 414
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 416
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 417
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 419
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 420
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 422
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 423
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 425
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 426
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 428
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 429
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 431
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 432
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 434
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 435
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 437
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 438
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 440
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 441
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 443
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 444
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 446
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 447
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 449
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 450
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 452
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 453
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 455
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 456
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 458
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 459
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 461
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 462
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 464
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 465
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 467
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 468
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 470
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 471
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 473
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 474
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 476
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 477
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 479
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 480
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 482
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 483
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 485
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 486
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 488
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 489
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 491
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 492
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 494
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 495
+			},
+			{
+				"intent": "place_road",
+				"phase": "place_woodcutter",
+				"rejection": "ROAD_EXISTS",
+				"tick": 497
+			},
+			{
+				"intent": "place_road",
+				"phase": "roads",
+				"rejection": "ROAD_EXISTS",
+				"tick": 498
+			}
+		],
+		"plan_index": 1,
+		"player_id": "p1",
+		"stall_ticks_in_phase": 0,
+		"target_q": 3,
+		"target_r": 9
+	}
+}

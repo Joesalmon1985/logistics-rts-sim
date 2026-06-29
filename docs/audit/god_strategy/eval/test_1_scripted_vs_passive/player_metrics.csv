@@ -1,2 +1,2 @@
-player_id,phase,intent,rejection,units,buildings
-p1,roads,place_road,NOT_OWNER,0,1
+player_id,phase,furthest_phase,intent,rejection,units,buildings
+p1,place_woodcutter,place_woodcutter,place_road,ROAD_EXISTS,0,1

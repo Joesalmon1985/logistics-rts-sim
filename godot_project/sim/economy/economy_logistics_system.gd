@@ -372,14 +372,22 @@ static func _dest_node_id_for_coords(
 		return _select_entrance_node(state, building, 0, false)
 	if dest_entity_type == "construction_site":
 		var site: Dictionary = EconomyState.get_construction_site(state, dest_entity_id)
-		return EconomyRoadSystem.create_building_road_node(
-			state,
-			0,
-			int(site.get("anchor_q", 0)),
-			int(site.get("anchor_r", 0)),
-			player_id,
-		)
+		return _construction_site_dest_node(state, site, player_id, 0)
 	return 0
+
+
+static func _construction_site_dest_node(
+	state: GameState,
+	site: Dictionary,
+	player_id: String,
+	peer_node_id: int = 0,
+) -> int:
+	var aq: int = int(site.get("anchor_q", 0))
+	var ar: int = int(site.get("anchor_r", 0))
+	var nearest: int = EconomyRoadSystem.nearest_connected_road_node(state, aq, ar, player_id, peer_node_id)
+	if nearest > 0:
+		return nearest
+	return EconomyRoadSystem.create_building_road_node(state, 0, aq, ar, player_id)
 
 
 static func _dest_store_id(state: GameState, dest_entity_id: int, dest_entity_type: String) -> int:
@@ -439,12 +447,11 @@ static func _dest_node_id(state: GameState, job: Dictionary, source_node_hint: i
 		return _select_entrance_node(state, building, source_node_hint, false)
 	if dest_type == "construction_site":
 		var site: Dictionary = EconomyState.get_construction_site(state, dest_id)
-		return EconomyRoadSystem.create_building_road_node(
+		return _construction_site_dest_node(
 			state,
-			0,
-			int(site.get("anchor_q", 0)),
-			int(site.get("anchor_r", 0)),
+			site,
 			str(job.get("player_id", "p1")),
+			source_node_hint,
 		)
 	return 0
 

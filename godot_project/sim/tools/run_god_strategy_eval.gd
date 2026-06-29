@@ -1,30 +1,31 @@
 extends SceneTree
 
-## God-Strategy eval harness — domination regression + 4P scripted FFA.
+## God-Strategy eval harness — domination regression @ proof tick cap.
 
 
 func _initialize() -> void:
 	SimBootstrap.load_all()
 	var ok: bool = true
-	var passive_dir: String = GodStrategyEvalRunner.run_eval_mode("1_scripted_vs_3_passive", 500, true)
-	if passive_dir == "":
+	var regression_dir: String = GodStrategyEvalRunner.run_eval_mode(
+		"domination_regression",
+		GodStrategyConstants.PROOF_TICK_CAP,
+		true,
+		GodStrategyEvalRunner.SCENARIO_REGRESSION,
+	)
+	if regression_dir == "":
 		ok = false
-	if GodStrategyEvalRunner.run_eval_mode("4_scripted_ffa", 300, false) == "":
+	elif not GodStrategyEvalRunner.evaluate_pass(regression_dir, GodStrategyConstants.PROOF_TICK_CAP):
 		ok = false
-	if ok and passive_dir != "":
-		var winner_path: String = passive_dir.path_join("winner.txt")
-		if FileAccess.file_exists(winner_path) and FileAccess.get_file_as_string(winner_path).strip_edges() == "p1":
-			ok = true
-		else:
-			var stall_path: String = passive_dir.path_join("bot_stall_report.json")
-			if FileAccess.file_exists(stall_path):
-				var stall: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(stall_path))
-				if typeof(stall) == TYPE_DICTIONARY and bool(stall.get("past_barracks_phase", false)):
-					ok = true
-				else:
-					ok = false
-			else:
-				ok = false
+
+	var smoke_dir: String = GodStrategyEvalRunner.run_eval_mode(
+		"4p_mvp_a_smoke",
+		GodStrategyConstants.SMOKE_TICK_CAP,
+		true,
+		GodStrategyEvalRunner.SCENARIO_MVP_A,
+	)
+	if smoke_dir == "":
+		ok = false
+
 	if ok:
 		print("GOD STRATEGY EVAL PASS")
 		quit(0)

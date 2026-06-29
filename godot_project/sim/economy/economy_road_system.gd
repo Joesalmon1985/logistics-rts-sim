@@ -224,6 +224,45 @@ static func decrement_congestion(state: GameState, road_id: int) -> void:
 	EconomyState.add_road(state, road)
 
 
+static func nearest_connected_road_node(
+	state: GameState,
+	q: int,
+	r: int,
+	player_id: String,
+	peer_node_id: int = 0,
+) -> int:
+	var at: int = _find_node_at(state, q, r)
+	if at > 0:
+		var node: Dictionary = EconomyState.get_road_node(state, at)
+		if not node.get("segment_ids", []).is_empty():
+			if player_id == "" or str(node.get("player_id", "")) == player_id:
+				return at
+	var anchor := HexCoord.new(q, r)
+	var best_id: int = 0
+	var best_score: int = 999999
+	for neighbor in anchor.neighbors():
+		if not state.map.in_bounds(neighbor):
+			continue
+		var nid: int = _find_node_at(state, neighbor.q, neighbor.r)
+		if nid <= 0:
+			continue
+		var nnode: Dictionary = EconomyState.get_road_node(state, nid)
+		if nnode.get("segment_ids", []).is_empty():
+			continue
+		if player_id != "" and str(nnode.get("player_id", "")) != player_id:
+			continue
+		var score: int = 1
+		if peer_node_id > 0:
+			var route: Array = EconomyPathfinder.find_route(state, peer_node_id, nid, player_id)
+			if route.is_empty():
+				continue
+			score = route.size()
+		if score < best_score or (score == best_score and (best_id == 0 or nid < best_id)):
+			best_score = score
+			best_id = nid
+	return best_id
+
+
 static func segment_between_nodes(state: GameState, from_node_id: int, to_node_id: int) -> int:
 	var from_node: Dictionary = EconomyState.get_road_node(state, from_node_id)
 	var to_node: Dictionary = EconomyState.get_road_node(state, to_node_id)

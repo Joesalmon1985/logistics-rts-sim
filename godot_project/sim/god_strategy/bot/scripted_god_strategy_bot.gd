@@ -14,11 +14,13 @@ var _last_intent: String = ""
 var _last_target: Dictionary = {}
 var _cached_placements: Dictionary = {}
 var _bound_state: GameState = null
+var _telemetry: GodStrategyBotTelemetry = GodStrategyBotTelemetry.new()
 
 
 func _init(p_player_id: String = "p1") -> void:
 	player_id = p_player_id
 	actor_id = "scripted_god_strategy_bot_%s" % p_player_id
+	_telemetry.reset(p_player_id)
 
 
 func reset(p_player_id: String = "p1") -> void:
@@ -34,11 +36,11 @@ func reset(p_player_id: String = "p1") -> void:
 	_last_target = {}
 	_cached_placements.clear()
 	_bound_state = null
+	_telemetry.reset(p_player_id)
 
 
 func get_last_telemetry() -> Dictionary:
-	return {
-		"player_id": player_id,
+	var report: Dictionary = _telemetry.get_progression_report({
 		"phase": _phase,
 		"intent": _last_intent,
 		"last_rejection_reason": _last_rejection_reason,
@@ -47,11 +49,20 @@ func get_last_telemetry() -> Dictionary:
 		"target_q": int(_last_target.get("q", -1)),
 		"target_r": int(_last_target.get("r", -1)),
 		"plan_index": _plan_index,
-	}
+	})
+	return report
 
 
-func decide(_tick: int) -> SimCommand:
+func get_progression_report() -> Dictionary:
+	return get_last_telemetry()
+
+
+func decide(tick: int) -> SimCommand:
 	_stall_ticks_in_phase += 1
+	_telemetry.update_from_snapshot(_last_snapshot, _bound_state)
+	_telemetry.record_phase(tick, _phase, _last_intent, _last_rejection_reason)
+	_sync_plan_to_state()
+
 	if not _road_queue.is_empty():
 		_phase = "roads"
 		return _next_road_command()
@@ -81,9 +92,17 @@ func decide(_tick: int) -> SimCommand:
 func on_command_applied(command: SimCommand, result: CommandResult) -> void:
 	if command == null:
 		return
+
 	if not result.success:
 		_commands_rejected_count += 1
 		_last_rejection_reason = str(result.error_code)
+		if command.type == "PlaceRoadCommand":
+			if str(result.error_code) in GodStrategyConstants.SKIPPABLE_ROAD_ERRORS:
+				if not _road_queue.is_empty():
+					_road_queue.pop_front()
+				_stall_ticks_in_phase = 0
+				_telemetry.on_command_applied(command, CommandResult.ok())
+				return
 		if command.type == "PlaceBuildingPlanCommand":
 			var btype: String = str(command.payload.get("building_type", ""))
 			_cached_placements.erase(btype)
@@ -91,12 +110,10 @@ func on_command_applied(command: SimCommand, result: CommandResult) -> void:
 
 	_last_rejection_reason = ""
 	_stall_ticks_in_phase = 0
+	_telemetry.on_command_applied(command, result)
 	match command.type:
 		"PlaceRoadCommand":
-			if not _road_queue.is_empty() and (
-				result.success
-				or str(result.error_code) in ["ROAD_EXISTS", "NOT_OWNER", "TERRAIN_BLOCKED", "OUT_OF_BOUNDS"]
-			):
+			if not _road_queue.is_empty():
 				_road_queue.pop_front()
 		"PlaceBuildingPlanCommand":
 			if result.success or _building_or_site_exists(str(command.payload.get("building_type", ""))):
@@ -110,6 +127,28 @@ func on_command_applied(command: SimCommand, result: CommandResult) -> void:
 		"SetWorkerPolicyCommand":
 			if result.success and _plan_index == 0:
 				_plan_index += 1
+
+
+func _sync_plan_to_state() -> void:
+	var plan: Array = _build_plan()
+	var idx: int = 0
+	for action in plan:
+		match str(action.get("type", "")):
+			"set_worker_policy":
+				idx += 1
+			"place_building":
+				if _building_or_site_exists(str(action.get("building_type", ""))):
+					idx += 1
+				else:
+					_plan_index = idx
+					return
+			"queue_unit":
+				if _count_units(str(action.get("unit_type", ""))) > 0:
+					idx += 1
+				else:
+					_plan_index = idx
+					return
+	_plan_index = idx
 
 
 func _build_plan() -> Array:
@@ -171,15 +210,27 @@ func _command_for_action(action: Dictionary) -> SimCommand:
 		"queue_unit":
 			var bid: int = _building_id(str(action.get("building_type", "")))
 			if bid <= 0:
+				_phase = "wait_production"
 				return null
 			if _count_units(str(action.get("unit_type", ""))) > 0:
 				_plan_index += 1
 				return null
+			var unit_type: String = str(action.get("unit_type", "rifle_squad"))
+			if _bound_state != null:
+				var building: Dictionary = MilitaryState.get_building(_bound_state, bid)
+				if not building.is_empty():
+					var check: Dictionary = HybridProductionSystem.can_queue(
+						_bound_state, building, unit_type, player_id,
+					)
+					if not check.get("ok", false):
+						_phase = "wait_production"
+						_last_intent = "wait_%s_wares" % unit_type
+						return null
 			_phase = "queue_unit"
-			_last_intent = "queue_%s" % str(action.get("unit_type", ""))
+			_last_intent = "queue_%s" % unit_type
 			return QueueUnitCommand.new(player_id, _tick_from_snapshot(), {
 				"building_id": bid,
-				"unit_type": str(action.get("unit_type", "rifle_squad")),
+				"unit_type": unit_type,
 			})
 	return null
 
@@ -189,8 +240,14 @@ func _legal_placement(building_type: String) -> Vector2i:
 		return Vector2i(-1, -1)
 	if _cached_placements.has(building_type):
 		var cached: Dictionary = _cached_placements[building_type]
-		return Vector2i(int(cached.get("q", -1)), int(cached.get("r", -1)))
-	var found: Vector2i = GodStrategyMapViability.find_legal_hex(_runtime_state(), player_id, building_type)
+		var cq: int = int(cached.get("q", -1))
+		var cr: int = int(cached.get("r", -1))
+		if GodStrategyRoadPlanner.has_delivery_path(_bound_state, player_id, _hq_position().x, _hq_position().y, cq, cr):
+			return Vector2i(cq, cr)
+		_cached_placements.erase(building_type)
+	var found: Vector2i = GodStrategyMapViability.find_legal_hex_with_road_path(
+		_runtime_state(), player_id, building_type,
+	)
 	if found.x >= 0:
 		_cached_placements[building_type] = {"q": found.x, "r": found.y}
 	return found
@@ -287,39 +344,37 @@ func _building_or_site_exists(building_type: String) -> bool:
 	for s in _last_snapshot.get("construction_sites", []):
 		if str(s.get("building_type", "")) == building_type and str(s.get("player_id", "")) == player_id:
 			return true
+	for b in _last_snapshot.get("military_buildings", []):
+		if str(b.get("building_type", "")) == building_type and str(b.get("player_id", "")) == player_id:
+			return true
 	return false
 
 
 func _has_pending_construction() -> bool:
 	for s in _last_snapshot.get("construction_sites", []):
-		if str(s.get("player_id", "")) == player_id:
+		if str(s.get("player_id", "")) != player_id:
+			continue
+		var site_state: String = str(s.get("state", ""))
+		if site_state in [EconomyConstants.CONS_ACTIVE, EconomyConstants.CONS_BLOCKED]:
 			return true
 	return false
 
 
 func _queue_roads_to(target_q: int, target_r: int) -> void:
+	_road_queue.clear()
+	if _bound_state == null:
+		return
 	var hq: Vector2i = _hq_position()
-	var current := HexCoord.new(hq.x, hq.y)
-	var target := HexCoord.new(target_q, target_r)
-	var guard: int = 0
-	while (current.q != target.q or current.r != target.r) and guard < 256:
-		guard += 1
-		var best_neighbor: HexCoord = current
-		var best_dist: int = current.distance(target)
-		for neighbour in current.neighbors():
-			var dist: int = neighbour.distance(target)
-			if dist < best_dist:
-				best_dist = dist
-				best_neighbor = neighbour
-		if best_neighbor.q == current.q and best_neighbor.r == current.r:
-			break
-		_road_queue.append({
-			"from_q": current.q,
-			"from_r": current.r,
-			"to_q": best_neighbor.q,
-			"to_r": best_neighbor.r,
-		})
-		current = best_neighbor
+	if GodStrategyRoadPlanner.has_delivery_path(_bound_state, player_id, hq.x, hq.y, target_q, target_r):
+		return
+	for segment in GodStrategyRoadPlanner.plan_road_segments(
+		_bound_state, player_id, hq.x, hq.y, target_q, target_r,
+	):
+		var from_hex := HexCoord.new(int(segment.get("from_q", -1)), int(segment.get("from_r", -1)))
+		var to_hex := HexCoord.new(int(segment.get("to_q", -1)), int(segment.get("to_r", -1)))
+		if EconomyRoadSystem.has_road_between(_bound_state, from_hex, to_hex):
+			continue
+		_road_queue.append(segment)
 
 
 func _next_road_command() -> SimCommand:

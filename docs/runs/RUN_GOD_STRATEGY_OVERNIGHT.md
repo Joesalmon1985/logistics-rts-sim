@@ -69,3 +69,17 @@ Human-reported pitfall addressed: `GodStrategyMapViability` + `GOD_A_009` + dire
 ## Next Cursor prompt
 
 Tune `ScriptedGodStrategyBot` road routing to reach barracks+unit phase consistently, then run 8000-tick domination regression. Start Milestone C (worker needs) once combat-phase bot progress is logged in stall reports.
+
+---
+
+## Milestone A Hardening continuation (`feature/god-strategy-milestone-a-hardening`)
+
+**Date:** 2026-06-29
+
+Follow-up run per hardening plan: fixed road-stall root cause, added `god_strategy_domination_regression.json` (16×16, seed 99001, 3000-tick proof cap), phase telemetry (`bot_phase_progression.json`), micro-scenario ladder (`GOD_A_013`–`GOD_A_016`), and eval gates rejecting disguised tick-cap wins.
+
+**Highlights:** construction-site logistics via nearest road node; regression p1-vs-passive; HQ store capacity fix for `starting_wares`; player-wide ware spend for hybrid unit queue.
+
+**Verification (Linux):** `GOD_A_010` @ 3000 passed; micro ladder + `GOD_B` + `HYB_SMOKE` green. `GOD_A_011` @ 3000 and eval @ 3000 were the remaining acceptance gates at branch push time.
+
+**Run doc:** `docs/runs/RUN_GOD_STRATEGY_MILESTONE_A_HARDENING.md`

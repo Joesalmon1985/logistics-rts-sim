@@ -80,6 +80,8 @@ static func player_hq_store(state: GameState, player_id: String) -> Dictionary:
 
 
 static func spend_wares_from_hq(state: GameState, player_id: String, costs: Dictionary) -> bool:
+	if bool(EconomyState.get_meta_value(state, "god_strategy_player_wide_wares", false)):
+		return spend_wares_for_player(state, player_id, costs)
 	var store: Dictionary = player_hq_store(state, player_id)
 	for ware_type in costs:
 		if str(ware_type) == "builder_work":
@@ -99,6 +101,8 @@ static func spend_wares_from_hq(state: GameState, player_id: String, costs: Dict
 
 
 static func has_wares_in_hq(state: GameState, player_id: String, costs: Dictionary) -> bool:
+	if bool(EconomyState.get_meta_value(state, "god_strategy_player_wide_wares", false)):
+		return has_wares_for_player(state, player_id, costs)
 	var store: Dictionary = player_hq_store(state, player_id)
 	for ware_type in costs:
 		if str(ware_type) == "builder_work":
@@ -106,6 +110,83 @@ static func has_wares_in_hq(state: GameState, player_id: String, costs: Dictiona
 		if not EconomyState.inventory_has(store, str(ware_type), int(costs[ware_type])):
 			return false
 	return true
+
+
+static func has_wares_for_player(state: GameState, player_id: String, costs: Dictionary) -> bool:
+	for ware_type in costs:
+		if str(ware_type) == "builder_work":
+			continue
+		if _player_ware_count(state, player_id, str(ware_type)) < int(costs[ware_type]):
+			return false
+	return true
+
+
+static func spend_wares_for_player(state: GameState, player_id: String, costs: Dictionary) -> bool:
+	if not has_wares_for_player(state, player_id, costs):
+		return false
+	for ware_type in costs:
+		if str(ware_type) == "builder_work":
+			continue
+		var remaining: int = _spend_ware_type_from_player(state, player_id, str(ware_type), int(costs[ware_type]))
+		if remaining > 0:
+			return false
+	return true
+
+
+static func _player_ware_count(state: GameState, player_id: String, ware_type: String) -> int:
+	var total: int = 0
+	var hq_ids: Dictionary = EconomyState.get_meta_value(state, "hq_building_ids", {})
+	var hq_id: int = int(hq_ids.get(player_id, EconomyState.get_meta_value(state, "hq_building_id", 0)))
+	var hq: Dictionary = EconomyState.get_building(state, hq_id)
+	var hq_store_id: int = int(hq.get("store_id", 0))
+	if hq_store_id > 0:
+		total += int(EconomyState.get_ware_store(state, hq_store_id).get("wares", {}).get(ware_type, 0))
+	for building in EconomyState.all_buildings(state):
+		if str(building.get("player_id", "")) != player_id:
+			continue
+		var store_id: int = int(building.get("store_id", 0))
+		if store_id <= 0 or store_id == hq_store_id:
+			continue
+		total += int(EconomyState.get_ware_store(state, store_id).get("wares", {}).get(ware_type, 0))
+	return total
+
+
+static func _spend_ware_type_from_player(
+	state: GameState,
+	player_id: String,
+	ware_type: String,
+	amount: int,
+) -> int:
+	var remaining: int = amount
+	var hq_ids: Dictionary = EconomyState.get_meta_value(state, "hq_building_ids", {})
+	var hq_id: int = int(hq_ids.get(player_id, EconomyState.get_meta_value(state, "hq_building_id", 0)))
+	var hq: Dictionary = EconomyState.get_building(state, hq_id)
+	var hq_store_id: int = int(hq.get("store_id", 0))
+	if hq_store_id > 0:
+		remaining = _spend_from_store(state, hq_store_id, ware_type, remaining)
+	for building in EconomyState.all_buildings(state):
+		if remaining <= 0:
+			break
+		if str(building.get("player_id", "")) != player_id:
+			continue
+		var store_id: int = int(building.get("store_id", 0))
+		if store_id <= 0 or store_id == hq_store_id:
+			continue
+		remaining = _spend_from_store(state, store_id, ware_type, remaining)
+	return remaining
+
+
+static func _spend_from_store(state: GameState, store_id: int, ware_type: String, amount: int) -> int:
+	if amount <= 0:
+		return 0
+	var store: Dictionary = EconomyState.get_ware_store(state, store_id)
+	var have: int = int(store.get("wares", {}).get(ware_type, 0))
+	var take: int = mini(have, amount)
+	if take <= 0:
+		return amount
+	EconomyState.inventory_remove(store, ware_type, take)
+	EconomyState.set_ware_store(state, store_id, store)
+	return amount - take
 
 
 static func target_visible_to_player(state: GameState, player_id: String, q: int, r: int) -> bool:

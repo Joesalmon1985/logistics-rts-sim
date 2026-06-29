@@ -65,7 +65,17 @@ static func _set_owned_grass(state: GameState, q: int, r: int, player_id: String
 	var coord := HexCoord.new(q, r)
 	if not state.map.in_bounds(coord):
 		return
+	var existing: HexTile = state.map.get_tile(coord)
+	if existing != null and existing.owner_player_id != "" and existing.owner_player_id != player_id:
+		return
 	var tile := HexTile.new("grass", 0, 1, 1)
+	if existing != null:
+		tile.terrain_type = existing.terrain_type
+		tile.tree_density = existing.tree_density
+		tile.deposit_type = existing.deposit_type
+		tile.deposit_amount = existing.deposit_amount
+		tile.deposit_revealed = existing.deposit_revealed
+		tile.buildability = existing.buildability
 	tile.owner_player_id = player_id
 	state.map.set_tile(coord, tile)
 
