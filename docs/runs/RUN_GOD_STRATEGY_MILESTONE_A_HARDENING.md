@@ -49,9 +49,9 @@ Hardening run fixing the scripted-bot road stall (`NOT_OWNER` / `ROAD_EXISTS` lo
 
 ## Milestone A sign-off answers
 
-1. **Genuinely proven?** Micro ladder green + `GOD_A_010` @ 3000 ticks passed; `GOD_A_011` @ 3000 ticks required for full unit-production sign-off (see verification table).
+1. **Genuinely proven?** Micro ladder green + `GOD_A_010`/`GOD_A_011` @ 3000 ticks passed; eval @ 3000 is the remaining domination gate.
 2. **p1 reach barracks?** Yes — `GOD_A_010` passed @ 3000 ticks (2026-06-29).
-3. **p1 queue/produce rifle_squad?** Diagnostic @ tick 100 shows `unit_queued`; full `GOD_A_011` @ 3000 ticks is the acceptance gate.
+3. **p1 queue/produce rifle_squad?** Yes — `GOD_A_011` passed @ 3000 ticks (2026-06-29).
 4. **Delegated attack?** `GOD_A_016_micro_attack` passes.
 5. **Enemy hub damage?** Micro attack + eval telemetry (`enemy_hub_damaged` flag).
 6. **Domination vs tick-cap?** Eval writes `match_end_reason.txt` (`domination` \| `tick_cap` \| `stall_break`).
@@ -65,7 +65,7 @@ Hardening run fixing the scripted-bot road stall (`NOT_OWNER` / `ROAD_EXISTS` lo
 |---------|------|--------|-------|
 | `TEST_FILTER=GOD_A_009` | 0 | passed | Map viability (prior runs) |
 | `TEST_FILTER=GOD_A_010` timeout 2400s | 0 | **passed** | ~11 min |
-| `TEST_FILTER=GOD_A_011` timeout 2400s | — | in progress at push | Tick-100 diagnostic: `unit_queued=true`; full 3000-tick run ~15 min |
+| `TEST_FILTER=GOD_A_011` timeout 2400s | 0 | **passed** | ~33 min (2026-06-29, post-push) |
 | `TEST_FILTER=GOD_A_012` | 0 | passed | Determinism @ 800 ticks |
 | `TEST_FILTER=GOD_A_013` | 0 | passed | Layout sweep |
 | `TEST_FILTER=GOD_A_014` | 0 | passed | Resource audit |

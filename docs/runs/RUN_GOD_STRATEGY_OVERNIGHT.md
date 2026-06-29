@@ -80,6 +80,6 @@ Follow-up run per hardening plan: fixed road-stall root cause, added `god_strate
 
 **Highlights:** construction-site logistics via nearest road node; regression p1-vs-passive; HQ store capacity fix for `starting_wares`; player-wide ware spend for hybrid unit queue.
 
-**Verification (Linux):** `GOD_A_010` @ 3000 passed; micro ladder + `GOD_B` + `HYB_SMOKE` green. `GOD_A_011` @ 3000 and eval @ 3000 were the remaining acceptance gates at branch push time.
+**Verification (Linux):** `GOD_A_010` and `GOD_A_011` @ 3000 passed; micro ladder + `GOD_B` + `HYB_SMOKE` green. `run_god_strategy_eval.gd` @ 3000 is the remaining domination gate.
 
 **Run doc:** `docs/runs/RUN_GOD_STRATEGY_MILESTONE_A_HARDENING.md`
