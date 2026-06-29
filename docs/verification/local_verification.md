@@ -826,3 +826,16 @@ timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/ru
 timeout 30s "$GODOT" --headless --path godot_project --script res://sim/tools/run_mobile_hex_view_qa.gd
 timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/run_hybrid_mobile_ffa_qa.gd
 ```
+
+## God-Strategy MVP (Milestone A + B)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+TEST_FILTER=GOD_A timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_B timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=HYB_SMOKE timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_god_strategy_eval.gd
+```
+
+Artefacts: `docs/audit/god_strategy/eval/`

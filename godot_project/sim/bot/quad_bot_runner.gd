@@ -47,14 +47,21 @@ func run_match(state: GameState, scenario: Dictionary) -> GameState:
 		var stall: int = int(EconomyState.get_meta_value(state, "stall_ticks", 0))
 		if stall >= stall_ticks_threshold and stall_ticks_threshold > 0:
 			break
-		var ffa: Dictionary = HybridFfaObjective.evaluate(state)
-		if bool(ffa.get("match_over", false)):
-			break
+		if GodStrategyMatchEnd.is_god_strategy_scenario(scenario):
+			var god_end: Dictionary = GodStrategyMatchEnd.evaluate(state, scenario)
+			if bool(god_end.get("match_over", false)):
+				break
+		else:
+			var ffa: Dictionary = HybridFfaObjective.evaluate(state)
+			if bool(ffa.get("match_over", false)):
+				break
 	return state
 
 
 func _apply_bot_turn(state: GameState, player_id: String, bot: Bot) -> void:
 	var snapshot: Dictionary = SnapshotExporter.export_bot_observation_snapshot(state, player_id)
+	if bot is ScriptedGodStrategyBot:
+		(bot as ScriptedGodStrategyBot).bind_state(state)
 	bot.observe(snapshot, player_id)
 	var command: SimCommand = bot.decide(state.tick)
 	if command != null and command.type != "NoopCommand":
