@@ -214,6 +214,7 @@ const TEST_SCRIPTS: Array[String] = [
 	"res://sim/tests/god_strategy/test_GOD_A_016_micro_barracks.gd",
 	"res://sim/tests/god_strategy/test_GOD_A_016_micro_queue_unit.gd",
 	"res://sim/tests/god_strategy/test_GOD_A_016_micro_attack.gd",
+	"res://sim/tests/god_strategy/test_GOD_A_017_domination_regression.gd",
 	"res://sim/tests/god_strategy/test_GOD_B_001_draft_completes_8x4_deterministically.gd",
 	"res://sim/tests/god_strategy/test_GOD_B_002_card_unlock_enables_building.gd",
 	"res://sim/tests/god_strategy/test_GOD_B_003_age3_sole_vp_winner.gd",

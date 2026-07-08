@@ -30,6 +30,13 @@ static func _execute_attack(state: GameState, order: Dictionary) -> void:
 			continue
 		if str(unit.get("weapon", "")) == "":
 			continue
+		var uorder: Dictionary = unit.get("order", {})
+		if (
+			str(uorder.get("type", "")) == MilitaryConstants.ORDER_ATTACK_MOVE
+			and int(uorder.get("q", -1)) == target_q
+			and int(uorder.get("r", -1)) == target_r
+		):
+			continue
 		MilitaryOrderSystem.issue_attack_move(state, unit, target_q, target_r)
 
 

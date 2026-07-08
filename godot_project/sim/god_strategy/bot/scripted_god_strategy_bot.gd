@@ -67,10 +67,16 @@ func decide(tick: int) -> SimCommand:
 		_phase = "roads"
 		return _next_road_command()
 
-	if _count_units("rifle_squad") > 0:
-		if not _attack_issued:
-			_phase = "attack"
-			return _attack_command()
+	if _count_living_combat_units("rifle_squad") > 0:
+		if _enemy_hubs_alive():
+			if _attack_issued and not _target_hub_still_alive():
+				_attack_issued = false
+			if not _attack_issued:
+				_phase = "attack"
+				return _attack_command()
+		var extra: SimCommand = _try_queue_extra_unit()
+		if extra != null:
+			return extra
 		_phase = "hold"
 		return SetWorkerPolicyCommand.new(
 			player_id, _tick_from_snapshot(), {"policy": "auto", "player_id": player_id},
@@ -262,26 +268,31 @@ func _runtime_state() -> GameState:
 
 
 func _attack_command() -> SimCommand:
-	var nearest: Dictionary = {}
-	var nearest_dist: int = 999999
+	var best: Dictionary = {}
+	var best_hp: int = 999999
+	var best_dist: int = 999999
 	var hq: Vector2i = _hq_position()
 	for building in _all_buildings():
 		if str(building.get("building_type", "")) != "command_hub":
 			continue
 		if str(building.get("player_id", "")) == player_id:
 			continue
+		if str(building.get("state", "")) == MilitaryConstants.BLD_DESTROYED:
+			continue
 		var tq: int = int(building.get("anchor_q", building.get("q", 0)))
 		var tr: int = int(building.get("anchor_r", building.get("r", 0)))
+		var hp: int = int(building.get("hp", 999999))
 		var dist: int = HexCoord.new(hq.x, hq.y).distance(HexCoord.new(tq, tr))
-		if dist < nearest_dist:
-			nearest_dist = dist
-			nearest = building
-	if nearest.is_empty():
+		if hp < best_hp or (hp == best_hp and dist < best_dist):
+			best_hp = hp
+			best_dist = dist
+			best = building
+	if best.is_empty():
 		return null
 	_last_intent = "delegated_attack"
 	_last_target = {
-		"q": int(nearest.get("anchor_q", nearest.get("q", 0))),
-		"r": int(nearest.get("anchor_r", nearest.get("r", 0))),
+		"q": int(best.get("anchor_q", best.get("q", 0))),
+		"r": int(best.get("anchor_r", best.get("r", 0))),
 	}
 	return DelegatedAttackCommand.new(player_id, _tick_from_snapshot(), {
 		"target_q": int(_last_target.get("q", 0)),
@@ -321,6 +332,73 @@ func _count_units(unit_type: String) -> int:
 		if str(unit.get("unit_type", "")) == unit_type and str(unit.get("player_id", "")) == player_id:
 			count += 1
 	return count
+
+
+func _count_living_combat_units(unit_type: String = "rifle_squad") -> int:
+	var count: int = 0
+	for unit in _last_snapshot.get("units", []):
+		if str(unit.get("unit_type", "")) != unit_type:
+			continue
+		if str(unit.get("player_id", "")) != player_id:
+			continue
+		if str(unit.get("state", "")) == MilitaryConstants.UNIT_DEAD:
+			continue
+		if str(unit.get("weapon", "")) == "":
+			continue
+		count += 1
+	return count
+
+
+func _enemy_hubs_alive() -> bool:
+	for building in _all_buildings():
+		if str(building.get("building_type", "")) != "command_hub":
+			continue
+		if str(building.get("player_id", "")) == player_id:
+			continue
+		if str(building.get("state", "")) != MilitaryConstants.BLD_DESTROYED:
+			return true
+	return false
+
+
+func _target_hub_still_alive() -> bool:
+	if _last_target.is_empty():
+		return false
+	var tq: int = int(_last_target.get("q", -1))
+	var tr: int = int(_last_target.get("r", -1))
+	for building in _all_buildings():
+		if str(building.get("building_type", "")) != "command_hub":
+			continue
+		var bq: int = int(building.get("anchor_q", building.get("q", 0)))
+		var br: int = int(building.get("anchor_r", building.get("r", 0)))
+		if bq == tq and br == tr:
+			return str(building.get("state", "")) != MilitaryConstants.BLD_DESTROYED
+	return false
+
+
+func _try_queue_extra_unit() -> SimCommand:
+	if not _enemy_hubs_alive():
+		return null
+	if not _has_military_building("barracks"):
+		return null
+	if _count_units("rifle_squad") >= 6:
+		return null
+	var bid: int = _building_id("barracks")
+	if bid <= 0:
+		return null
+	if _bound_state != null:
+		var building: Dictionary = MilitaryState.get_building(_bound_state, bid)
+		if not building.is_empty():
+			var check: Dictionary = HybridProductionSystem.can_queue(
+				_bound_state, building, "rifle_squad", player_id,
+			)
+			if not check.get("ok", false):
+				return null
+	_phase = "queue_unit"
+	_last_intent = "queue_rifle_squad"
+	return QueueUnitCommand.new(player_id, _tick_from_snapshot(), {
+		"building_id": bid,
+		"unit_type": "rifle_squad",
+	})
 
 
 func _has_military_building(building_type: String) -> bool:

@@ -86,10 +86,24 @@ static func run_eval_mode(
 
 
 static func domination_regression_passes(max_ticks: int = GodStrategyConstants.PROOF_TICK_CAP) -> bool:
-	return evaluate_pass(
-		run_eval_mode("domination_regression", max_ticks, true, SCENARIO_REGRESSION),
-		max_ticks,
+	return evaluate_domination_pass(
+		run_eval_mode("phase0_domination", max_ticks, true, SCENARIO_REGRESSION),
 	)
+
+
+static func evaluate_domination_pass(out_dir: String) -> bool:
+	if out_dir == "":
+		return false
+	var summary_path: String = out_dir.path_join("match_summary.json")
+	if not FileAccess.file_exists(summary_path):
+		return false
+	var summary: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(summary_path))
+	if typeof(summary) != TYPE_DICTIONARY:
+		return false
+	var match_end: Dictionary = summary.get("match_end", {})
+	var end_reason: String = str(match_end.get("end_reason", ""))
+	var winner: String = str(match_end.get("winner_player_id", ""))
+	return end_reason == "domination" and winner == "p1"
 
 
 static func evaluate_pass(out_dir: String, max_ticks: int = GodStrategyConstants.PROOF_TICK_CAP) -> bool:
@@ -171,6 +185,8 @@ static func _past_barracks_phase(telemetry: Dictionary) -> bool:
 
 static func _out_dir(mode_name: String) -> String:
 	var project_root: String = ProjectSettings.globalize_path("res://").path_join("..")
+	if mode_name == "phase0_domination":
+		return project_root.path_join("docs/audit/god_strategy/final/phase0")
 	return project_root.path_join("docs/audit/god_strategy/eval").path_join(mode_name)
 
 

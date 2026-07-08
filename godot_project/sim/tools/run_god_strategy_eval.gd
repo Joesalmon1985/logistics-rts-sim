@@ -7,14 +7,14 @@ func _initialize() -> void:
 	SimBootstrap.load_all()
 	var ok: bool = true
 	var regression_dir: String = GodStrategyEvalRunner.run_eval_mode(
-		"domination_regression",
+		"phase0_domination",
 		GodStrategyConstants.PROOF_TICK_CAP,
 		true,
 		GodStrategyEvalRunner.SCENARIO_REGRESSION,
 	)
 	if regression_dir == "":
 		ok = false
-	elif not GodStrategyEvalRunner.evaluate_pass(regression_dir, GodStrategyConstants.PROOF_TICK_CAP):
+	elif not GodStrategyEvalRunner.evaluate_domination_pass(regression_dir):
 		ok = false
 
 	var smoke_dir: String = GodStrategyEvalRunner.run_eval_mode(

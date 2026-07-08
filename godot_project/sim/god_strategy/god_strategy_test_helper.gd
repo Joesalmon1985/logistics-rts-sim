@@ -214,10 +214,29 @@ static func prep_domination_regression(state: GameState, scenario: Dictionary) -
 		if not slots.is_empty():
 			EconomyState.set_meta_value(state, "god_strategy_build_slots_%s" % pid, slots)
 		_apply_spawn_starting_roads(state, spawn, pid)
-		_apply_spawn_prebuilt(state, spawn, pid)
+		# Units/buildings from scenario spawns are applied by hybrid_init during create_game.
 		if spawn.has("hub_hp_override"):
 			_apply_hub_hp_override(state, pid, int(spawn.get("hub_hp_override", 0)))
+	if bool(scenario.get("domination_combat_speed", false)):
+		_flatten_domination_combat_corridor(state)
 	_expand_regression_hq_stores(state, scenario)
+
+
+static func _flatten_domination_combat_corridor(state: GameState) -> void:
+	# East-west march lane for p1 squads plus vertical spokes toward p3/p4 hubs.
+	for q in range(0, state.map.width):
+		for r in range(0, state.map.height):
+			var coord := HexCoord.new(q, r)
+			if not state.map.in_bounds(coord):
+				continue
+			var on_lane: bool = r == 8 and q >= 2 and q <= 14
+			var on_spoke: bool = q == 8 and r >= 2 and r <= 13
+			if not on_lane and not on_spoke:
+				continue
+			var tile := HexTile.new("grass", 0, 1, 1)
+			if state.map.get_tile(coord) != null:
+				tile.owner_player_id = state.map.get_tile(coord).owner_player_id
+			state.map.set_tile(coord, tile)
 
 
 static func _expand_regression_hq_stores(state: GameState, scenario: Dictionary) -> void:
