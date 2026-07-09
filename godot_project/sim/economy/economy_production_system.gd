@@ -96,7 +96,13 @@ static func _tick_building(state: GameState, building: Dictionary) -> void:
 
 	building["state"] = EconomyConstants.BLD_ACTIVE
 	building["paused_reason"] = ""
-	var progress: int = int(building.get("production_progress", 0)) + 1
+	var progress_fp: int = int(building.get("production_progress_fp", 0))
+	progress_fp += WorkerNeedsSystem.get_production_progress_fp(state, building)
+	var progress: int = int(building.get("production_progress", 0))
+	while progress_fp >= WorkerNeedsSystem.NEED_SCALE:
+		progress_fp -= WorkerNeedsSystem.NEED_SCALE
+		progress += 1
+	building["production_progress_fp"] = progress_fp
 	var ticks_needed: int = int(recipe.get("ticks", 1))
 
 	if progress < ticks_needed:

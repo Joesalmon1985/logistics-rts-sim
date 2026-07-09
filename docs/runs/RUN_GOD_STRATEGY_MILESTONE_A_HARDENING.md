@@ -49,23 +49,24 @@ Hardening run fixing the scripted-bot road stall (`NOT_OWNER` / `ROAD_EXISTS` lo
 
 ## Milestone A sign-off answers
 
-1. **Genuinely proven?** Micro ladder green + `GOD_A_010`/`GOD_A_011` @ 3000 ticks passed; eval @ 3000 is the remaining domination gate.
-2. **p1 reach barracks?** Yes — `GOD_A_010` passed @ 3000 ticks (2026-06-29).
-3. **p1 queue/produce rifle_squad?** Yes — `GOD_A_011` passed @ 3000 ticks (2026-06-29).
-4. **Delegated attack?** `GOD_A_016_micro_attack` passes.
-5. **Enemy hub damage?** Micro attack + eval telemetry (`enemy_hub_damaged` flag).
-6. **Domination vs tick-cap?** Eval writes `match_end_reason.txt` (`domination` \| `tick_cap` \| `stall_break`).
-7. **Legitimate vs disguised stall?** Eval `evaluate_pass()` requires `furthest_phase >= queue_unit` and `unit_produced` on tick-cap.
-8. **Verification** — table below.
-9. **Next:** Ratchet `PROOF_TICK_CAP` 3000→2500→2000 after `GOD_A_010`+`GOD_A_011` both green; refresh long-form `god_strategy_4p_mvp_a` eval separately.
+1. **Genuinely proven?** **Yes** — micro ladder (`GOD_A_013`–`GOD_A_016`) green, `GOD_A_010`/`GOD_A_011` @ 3000 ticks passed, and `run_god_strategy_eval.gd` @ 3000 exited 0 with legitimate tick-cap (`unit_produced`, `furthest_phase` = `hold` ≥ `queue_unit`).
+2. **p1 reach barracks?** Yes — `GOD_A_010` @ 3000 ticks; eval regression `barracks_placed` milestone @ tick 28.
+3. **p1 queue/produce rifle_squad?** Yes — `GOD_A_011` @ 3000 ticks; eval regression `unit_produced` @ tick 68 queue / tick 88 attack.
+4. **Delegated attack?** Yes — eval regression `attack_issued`; `GOD_A_016_micro_attack` passes.
+5. **Enemy hub damage?** Not in 3000-tick regression (`enemy_hub_damaged: false`; p2 `hub_hp_override: 50` survives). Micro attack scenario confirms combat path works.
+6. **Domination vs tick-cap?** **Tick-cap** — `match_end_reason.txt` = `tick_cap`; winner `p1` by survival score (1225 vs 1010).
+7. **Legitimate vs disguised stall?** **Legitimate** — `furthest_phase` = `hold`, `unit_produced` = true, `blocker_class` ≠ `road_ownership`.
+8. **Verification** — table below (2026-06-30 session).
+9. **Next:** Ratchet `PROOF_TICK_CAP` 3000→2500→2000; optional domination variant (lower p2 hub HP or pre-built unit); **Milestone B hardening** — not Milestone C until domination or faster tick-cap combat proof is desired.
 
-## Verification results (Linux Godot 4.5.2, 2026-06-29)
+## Verification results (Linux Godot 4.5.2, 2026-06-30)
 
 | Command | Exit | Status | Notes |
 |---------|------|--------|-------|
+| `TEST_FILTER=GOD_A_007` | 0 | passed | Eval artefact writer |
 | `TEST_FILTER=GOD_A_009` | 0 | passed | Map viability (prior runs) |
-| `TEST_FILTER=GOD_A_010` timeout 2400s | 0 | **passed** | ~11 min |
-| `TEST_FILTER=GOD_A_011` timeout 2400s | 0 | **passed** | ~33 min (2026-06-29, post-push) |
+| `TEST_FILTER=GOD_A_010` timeout 2400s | 0 | **passed** | ~11 min (2026-06-29) |
+| `TEST_FILTER=GOD_A_011` timeout 2400s | 0 | **passed** | ~33 min (2026-06-29) |
 | `TEST_FILTER=GOD_A_012` | 0 | passed | Determinism @ 800 ticks |
 | `TEST_FILTER=GOD_A_013` | 0 | passed | Layout sweep |
 | `TEST_FILTER=GOD_A_014` | 0 | passed | Resource audit |
@@ -73,8 +74,9 @@ Hardening run fixing the scripted-bot road stall (`NOT_OWNER` / `ROAD_EXISTS` lo
 | `TEST_FILTER=GOD_A_016` | 0 | passed | 4/4 micro (sawmill, barracks, queue, attack) |
 | `TEST_FILTER=GOD_B` | 0 | passed | 5/5 |
 | `TEST_FILTER=HYB_SMOKE` | 0 | passed | 9/9 |
-| `verify_failure_modes.gd` | 0 | passed | (prior batch) |
-| `run_god_strategy_eval.gd` @ 3000 | — | not re-run this session | Re-run before merge |
+| `verify_failure_modes.gd` | 0 | passed | 2026-06-30 |
+| `run_god_strategy_eval.gd` timeout 2400s | 0 | **passed** | ~32 min; domination_regression tick-cap + 4p_mvp_a_smoke |
+| `TEST_FILTER=GOD_A` timeout 3600s | — | **timed out** | Killed during `GOD_A_011` (~60 min needed); use `timeout 7200s` or run 010/011 individually |
 
 ## Verification commands
 
@@ -85,7 +87,7 @@ cd godot_project
 
 TEST_FILTER=GOD_A_010 timeout 2400s $GODOT --headless --path . -s res://sim/tools/run_tests.gd
 TEST_FILTER=GOD_A_011 timeout 2400s $GODOT --headless --path . -s res://sim/tools/run_tests.gd
-TEST_FILTER=GOD_A timeout 3600s $GODOT --headless --path . -s res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_A timeout 7200s $GODOT --headless --path . -s res://sim/tools/run_tests.gd
 TEST_FILTER=GOD_B timeout 180s $GODOT --headless --path . -s res://sim/tools/run_tests.gd
 TEST_FILTER=HYB_SMOKE timeout 180s $GODOT --headless --path . -s res://sim/tools/run_tests.gd
 timeout 2400s $GODOT --headless --path . -s res://sim/tools/run_god_strategy_eval.gd
@@ -105,9 +107,10 @@ Ratchet down after integration passes with `furthest_phase` still climbing in th
 ## Known issues / follow-ups
 
 - `GOD_A_010`/`GOD_A_011` @ 3000 ticks are slow (~0.5 s/tick headless); wrap in `timeout 2400s`.
+- `run_god_strategy_eval.gd` domination_regression @ 3000 takes ~32 min; legitimate tick-cap pass does not yet destroy enemy hub.
 - Long-form `god_strategy_4p_mvp_a.json` @ 8000 ticks remains manual-only.
 - `validate_full_chain_layout` still uses `has_road_path` (plan-only); runtime gate is `has_delivery_path` + `build_slots`.
-- Do not claim full Milestone A sign-off until `GOD_A_011` @ 3000 and `run_god_strategy_eval.gd` @ 3000 both pass on CI/reviewer machine.
+- CanonicalJson float warnings during replay hash (pre-existing; does not block eval pass).
 
 ## Lessons learned
 

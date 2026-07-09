@@ -1,0 +1,49 @@
+{
+	"heuristic_vs_passive": {
+		"domination_endings": 0,
+		"rows": [
+			{
+				"alive": [
+					"p1",
+					"p2",
+					"p3",
+					"p4"
+				],
+				"end_reason": "tick_cap",
+				"seed": 99001,
+				"survival_score_p1": 1045,
+				"tick": 120,
+				"winner": "p1"
+			}
+		],
+		"seeds": 1,
+		"win_rate": 1.0,
+		"wins_p1": 1
+	},
+	"rank_scores": {
+		"heuristic": 11925,
+		"scripted": 11925
+	},
+	"scenario": "god_strategy_ai_eval",
+	"scripted_vs_passive": {
+		"domination_endings": 0,
+		"rows": [
+			{
+				"alive": [
+					"p1",
+					"p2",
+					"p3",
+					"p4"
+				],
+				"end_reason": "tick_cap",
+				"seed": 99001,
+				"survival_score_p1": 1045,
+				"tick": 120,
+				"winner": "p1"
+			}
+		],
+		"seeds": 1,
+		"win_rate": 1.0,
+		"wins_p1": 1
+	}
+}

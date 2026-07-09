@@ -13,8 +13,19 @@ static func load_regression_scenario() -> Dictionary:
 	return ConfigLoader.load_scenario(REGRESSION_SCENARIO_PATH)
 
 
+static func ensure_god_strategy(state: GameState, scenario: Dictionary) -> void:
+	if int(EconomyState.get_meta_value(state, "god_strategy_active", 0)) <= 0:
+		EconomyState.set_meta_value(state, "god_strategy_active", 1)
+		GodStrategyState.init_match(state, scenario)
+		WorkerNeedsSystem.init_match(state, scenario)
+		WorkerPolicySystem.init_match(state, scenario)
+		WorkerSelectionSystem.init_match(state, scenario)
+		PollutionSystem.init_match(state, scenario)
+
+
 static func load_micro_scenario(name: String) -> Dictionary:
-	return ConfigLoader.load_scenario("scenarios/god_strategy/micro/%s" % name)
+	var file_name: String = name if name.ends_with(".json") else "%s.json" % name
+	return ConfigLoader.load_scenario("scenarios/god_strategy/micro/%s" % file_name)
 
 
 static func prep_all_spawns(state: GameState, scenario: Dictionary) -> void:

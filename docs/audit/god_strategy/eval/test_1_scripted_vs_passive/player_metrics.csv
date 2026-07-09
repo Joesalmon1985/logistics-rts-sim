@@ -1,2 +1,2 @@
 player_id,phase,furthest_phase,intent,rejection,units,buildings
-p1,place_woodcutter,place_woodcutter,place_road,ROAD_EXISTS,0,1
+p1,wait_production,wait_production,wait_rifle_squad_wares,,0,2

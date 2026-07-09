@@ -1,0 +1,21 @@
+{
+	"phase": 8,
+	"slug": "phase8-mobile-human-vs-neural",
+	"status": "partial",
+	"verified_at": "2026-07-09",
+	"tests": [
+		"test_god_strategy_mobile_ffa_load",
+		"test_god_strategy_mobile_ffa_main_menu_entry",
+		"run_god_strategy_mobile_qa.gd"
+	],
+	"results": "viewer tests passed; QA script exit 0",
+	"screenshots_dir": "docs/audit/screenshots/god_strategy_final/",
+	"capture_method": "headless_synthesized",
+	"profile": "390x844",
+	"main_menu_wired": true,
+	"gaps": [
+		"Opponents use scripted teacher imitation (LearnedModularGodBot), not trained god-strategy checkpoints",
+		"Screenshots are synthesized layout diagrams in headless CI; real DISPLAY captures still recommended",
+		"Draft UI and full victory/defeat flow remain minimal shells"
+	]
+}

@@ -79,6 +79,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Hybrid FFA"
 
+[node name="GodStrategyFfaBtn" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "God-Strategy FFA"
+
 [node name="DebugViewersBtn" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

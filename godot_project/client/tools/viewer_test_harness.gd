@@ -18,6 +18,8 @@ const SCENE_PATHS: Dictionary = {
 	"settler_mvp": "res://client/scenes/settler_mvp_game.tscn",
 	"military_mvp": "res://client/scenes/military_mvp_game.tscn",
 	"main_menu": "res://client/scenes/main_menu.tscn",
+	"god_strategy_mobile_ffa": "res://client/scenes/god_strategy_mobile_ffa_game.tscn",
+	"god_strategy_mobile_ffa_menu": "res://client/scenes/god_strategy_mobile_ffa_menu.tscn",
 }
 
 
@@ -28,7 +30,7 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	if packed == null:
 		return {"ok": false, "reason": "failed to load scene"}
 	var scene: Node = packed.instantiate()
-	if variant in ["settler_mvp", "military_mvp", "main_menu", "hybrid_mvp"]:
+	if variant in ["settler_mvp", "military_mvp", "main_menu", "hybrid_mvp", "god_strategy_mobile_ffa", "god_strategy_mobile_ffa_menu"]:
 		if scene == null:
 			return {"ok": false, "reason": "failed to instantiate playable scene"}
 	elif variant in ["spectator", "military_spectator", "hybrid_observer", "hybrid_3d_spectator", "hybrid_2d_spectator"]:

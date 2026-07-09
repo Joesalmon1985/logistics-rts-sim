@@ -52,13 +52,13 @@ Do not mark a phase complete without committed artefacts and exit-0 verification
 |-------|------|-------------------|--------|
 | 0 | `phase0-domination` | Scripted domination vs 3 passive; logistics warfare; HYB-SMOKE green | [x] passed 2026-07-08 |
 | 1 | `phase1-ages-culture` | Ages + draft + Age 3 VP; reach Age 2+ smoke | [x] passed 2026-07-08 (GOD_B 5/5) |
-| 2 | `phase2-worker-needs` | Cohort needs + throughput delta + replay hash | [ ] not started |
-| 3 | `phase3-worker-policy` | WorkerPolicy API + masks + perf note | [ ] blocked on 2 |
-| 4 | `phase4-societal-selection` | Divergent culture distributions + telemetry | [ ] blocked on 3 |
-| 5 | `phase5-heuristic-god-ai` | Modular heuristic beats scripted; inspectable proposals | [ ] blocked on 4 |
-| 6 | `phase6-neural-god-ai` | Neural beats **passive and heuristic**; ≥1 neural 4P ending | [ ] blocked on 5 |
-| 7 | `phase7-pollution-collapse` | Pollution harm + restoration + shared collapse tests | [ ] blocked on 6 |
-| 8 | `phase8-mobile-human-vs-neural` | Touch 4P FFA vs neural; DISPLAY screenshot pack committed | [ ] blocked on 7 |
+| 2 | `phase2-worker-needs` | Cohort needs + throughput delta + replay hash | [x] GOD_C 3/3 (2026-07-09) |
+| 3 | `phase3-worker-policy` | WorkerPolicy API + masks + perf note | [x] GOD_D 3/3 (2026-07-09) |
+| 4 | `phase4-societal-selection` | Divergent culture distributions + telemetry | [x] GOD_E 2/2 (2026-07-09) |
+| 5 | `phase5-heuristic-god-ai` | Modular heuristic beats scripted; inspectable proposals | [~] scaffold + GOD_F_001/002; fair `god_strategy_ai_eval` scenario |
+| 6 | `phase6-neural-god-ai` | Neural beats **passive and heuristic**; ≥1 neural 4P ending | [ ] **blocked** — teacher-imitation only; no trained god-strategy checkpoint |
+| 7 | `phase7-pollution-collapse` | Pollution harm + restoration + shared collapse tests | [x] GOD_G 3/3 (2026-07-09) |
+| 8 | `phase8-mobile-human-vs-neural` | Touch 4P FFA vs neural; DISPLAY screenshot pack committed | [ ] **blocked on Phase 6** — menu + shell + headless screenshots only |
 
 **PRD complete only when Phase 8 is checked and the product sentence is true.**
 

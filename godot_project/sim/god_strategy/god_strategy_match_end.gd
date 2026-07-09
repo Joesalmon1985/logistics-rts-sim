@@ -3,6 +3,9 @@ extends RefCounted
 
 ## God-strategy match end — hub-site elimination, domination, tick-cap survival score.
 
+const GLOBAL_COLLAPSE_THRESHOLD: int = 9000
+const RESTORATION_VICTORY_THRESHOLD: int = 2000
+
 
 static func is_god_strategy_scenario(scenario: Dictionary) -> bool:
 	if bool(scenario.get("god_strategy_mvp_a", false)):
@@ -30,6 +33,50 @@ static func evaluate(state: GameState, scenario: Dictionary = {}) -> Dictionary:
 	var winner: String = ""
 	var match_over: bool = false
 	var end_reason: String = ""
+
+	var pending_winner: String = str(EconomyState.get_meta_value(state, "god_strategy_pending_winner", ""))
+	if pending_winner != "":
+		return {
+			"alive_players": _alive_list(state),
+			"eliminated_players": _eliminated_list(state),
+			"winner_player_id": pending_winner,
+			"match_over": true,
+			"victory": true,
+			"end_reason": str(EconomyState.get_meta_value(state, "god_strategy_end_reason", "age3_vp")),
+			"survival_scores": {},
+			"elimination_rule": "command_hub_or_active_hub_site",
+			"winner_rule": str(scenario.get("winner_rule", "domination_or_tick_cap_score")),
+			"tick": state.tick,
+		}
+
+	if PollutionSystem.is_shared_collapse(state):
+		return {
+			"alive_players": [],
+			"eliminated_players": _all_player_ids(state, scenario),
+			"winner_player_id": "",
+			"match_over": true,
+			"victory": false,
+			"end_reason": "shared_collapse",
+			"survival_scores": {},
+			"elimination_rule": "command_hub_or_active_hub_site",
+			"winner_rule": str(scenario.get("winner_rule", "domination_or_tick_cap_score")),
+			"tick": state.tick,
+		}
+
+	var restoration_winner: String = PollutionSystem.restoration_victory_leader(state)
+	if restoration_winner != "" and GodStrategyState.current_age_id(state) == "futuristic_collapse":
+		return {
+			"alive_players": _alive_list(state),
+			"eliminated_players": _eliminated_list(state),
+			"winner_player_id": restoration_winner,
+			"match_over": true,
+			"victory": true,
+			"end_reason": "restoration_victory",
+			"survival_scores": GodStrategyMatchEnd.compute_survival_scores(state),
+			"elimination_rule": "command_hub_or_active_hub_site",
+			"winner_rule": str(scenario.get("winner_rule", "domination_or_tick_cap_score")),
+			"tick": state.tick,
+		}
 
 	if alive.size() <= 1:
 		match_over = true
@@ -149,3 +196,65 @@ static func _empty_result() -> Dictionary:
 		"winner_rule": "domination_or_tick_cap_score",
 		"tick": 0,
 	}
+
+
+static func _alive_list(state: GameState) -> Array[String]:
+	var alive: Array[String] = []
+	for player in MilitaryState.all_players(state):
+		var pid: String = str(player.get("player_id", ""))
+		if pid != "" and player_alive(state, pid):
+			alive.append(pid)
+	return alive
+
+
+static func _eliminated_list(state: GameState) -> Array[String]:
+	var eliminated: Array[String] = []
+	for player in MilitaryState.all_players(state):
+		var pid: String = str(player.get("player_id", ""))
+		if pid != "" and not player_alive(state, pid):
+			eliminated.append(pid)
+	return eliminated
+
+
+static func _all_player_ids(state: GameState, scenario: Dictionary) -> Array:
+	var ids: Array = []
+	for player in MilitaryState.all_players(state):
+		var pid: String = str(player.get("player_id", ""))
+		if pid != "":
+			ids.append(pid)
+	if ids.is_empty():
+		return scenario.get("players", ["p1"])
+	return ids
+
+
+# Keep local helpers as fallbacks if PollutionSystem fails to register (parse errors).
+static func _is_shared_collapse(state: GameState) -> bool:
+	if not state.entities.has("god_strategy_pollution"):
+		return false
+	var bucket: Variant = state.entities["god_strategy_pollution"]
+	if typeof(bucket) != TYPE_DICTIONARY:
+		return false
+	return int(bucket.get("global_pollution", 0)) >= GLOBAL_COLLAPSE_THRESHOLD
+
+
+static func _restoration_victory_leader(state: GameState) -> String:
+	if GodStrategyState.current_age_id(state) != "futuristic_collapse":
+		return ""
+	if not state.entities.has("god_strategy_pollution"):
+		return ""
+	var bucket: Dictionary = state.entities["god_strategy_pollution"]
+	if int(bucket.get("global_pollution", 0)) > RESTORATION_VICTORY_THRESHOLD:
+		return ""
+	if int(bucket.get("restoration_score", 0)) < 5000:
+		return ""
+	var best_pid: String = ""
+	var best: int = -1
+	for player in MilitaryState.all_players(state):
+		var pid: String = str(player.get("player_id", ""))
+		if pid == "" or not player_alive(state, pid):
+			continue
+		var score: int = int(bucket.get("restoration_score", 0)) + VictoryPointSystem.get_vp(state, pid) * 100
+		if score > best:
+			best = score
+			best_pid = pid
+	return best_pid

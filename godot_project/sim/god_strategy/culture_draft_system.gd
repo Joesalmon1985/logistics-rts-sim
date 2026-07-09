@@ -73,6 +73,15 @@ static func complete_draft_for_all_players(state: GameState) -> void:
 			pick_next_card(state, str(player.get("player_id", "")))
 
 
+static func draft_active(state: GameState) -> bool:
+	var bucket: Dictionary = GodStrategyState.get_bucket(state, GodStrategyConstants.BUCKET_DRAFT)
+	var hands: Dictionary = bucket.get("hands", {})
+	for pid in hands.keys():
+		if (hands[pid] as Array).size() > 0:
+			return true
+	return false
+
+
 static func draft_complete(state: GameState) -> bool:
 	var bucket: Dictionary = GodStrategyState.get_bucket(state, GodStrategyConstants.BUCKET_DRAFT)
 	for player in MilitaryState.all_players(state):
