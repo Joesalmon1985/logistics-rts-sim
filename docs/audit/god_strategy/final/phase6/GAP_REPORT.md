@@ -27,7 +27,9 @@ Phase 7 sim tests (GOD_G) and Phase 8 menu/shell/screenshots may exist as scaffo
 
 ## Suggested next run
 
+**Run doc:** [`docs/runs/RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md`](../../../runs/RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md)
+
 1. Port hybrid modular training transport to god-strategy observations/actions.
 2. Train from `ScriptedGodStrategyBot` / `HeuristicModularGodBot` teacher logs.
-3. Re-run GOD_F_003 with real checkpoint load + multi-seed win-rate tables.
+3. Re-run GOD_F_003 with real checkpoint load + multi-seed win-rate tables on `god_strategy_ai_eval` (not domination regression).
 4. Only then resume Phase 8 DISPLAY screenshot pack as product evidence.

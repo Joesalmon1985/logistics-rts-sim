@@ -859,4 +859,18 @@ timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/ru
 ```
 
 Artefacts: `docs/audit/god_strategy/final/phase2/` … `phase8/`, screenshots under `docs/audit/screenshots/god_strategy_final/`.
-Phase 6 neural gate: see `docs/audit/god_strategy/final/phase6/GAP_REPORT.md`.
+
+**Phase 6 neural gate (hard stop 2026-07-09):** see `docs/audit/god_strategy/final/phase6/GAP_REPORT.md`.  
+**Next run:** `docs/runs/RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md`.  
+**Lessons:** `docs/audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md`.
+
+### AI eval scenario rules
+
+| Scenario | Use for |
+|----------|---------|
+| `god_strategy_domination_regression.json` | Combat-speed **proof** only (1-HP hubs + pre-placed squads) |
+| `god_strategy_ai_eval.json` | Bot **win-rate comparison** (fair hubs) |
+
+Do not report tick-1 domination from the regression scenario as a neural/heuristic win-rate result.
+
+`TEST_FILTER=GOD_F` may need **2400s+** once real multi-seed fair evals land; 900s is a lower bound for scaffolding only.

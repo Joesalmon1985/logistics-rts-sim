@@ -1,10 +1,13 @@
 # RUN — Final God-Strategy Playable
 
-**Status:** In progress — Phases 0–1 passed on `feature/final-god-strategy-phase0-domination`  
+**Status:** Hard-stopped at Phase 6 (2026-07-09) — Phases 0–4 + 7 sim green; Phase 5/8 scaffolding only  
 **PRD:** [`docs/prd/FINAL_GOD_STRATEGY_PLAYABLE_PRD.md`](../prd/FINAL_GOD_STRATEGY_PLAYABLE_PRD.md)  
 **Rationale:** [`docs/audit/FINAL_PRD_RATIONALE.md`](../audit/FINAL_PRD_RATIONALE.md)  
+**Lessons:** [`docs/audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md`](../audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md)  
+**Phase 6 gap:** [`docs/audit/god_strategy/final/phase6/GAP_REPORT.md`](../audit/god_strategy/final/phase6/GAP_REPORT.md)  
+**Next run:** [`RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md`](RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md)  
 **Branch prefix:** `feature/final-god-strategy-<phase-slug>`  
-**Base:** After Phase 0 prerequisites — prefer merging or continuing `feature/god-strategy-milestone-a-hardening` WIP rather than discarding it
+**Base:** `main` (phases 2–8 WIP merged from `feature/final-god-strategy-phases2-8`)
 
 ---
 
@@ -31,7 +34,8 @@ Read before any code:
 - `docs/design/HYBRID_GOD_STRATEGY_DESIGN_GOALS_FINAL.md`
 - `docs/prd/HYBRID_GOD_STRATEGY_MVP_PRD.md` (systems reference only)
 - `docs/audit/CURRENT_STATE_OF_PLAY_HYBRID_GAME.md`
-- `docs/audit/RUN_GOD_STRATEGY_MILESTONE_A_LESSONS_LEARNED.md` (if present)
+- `docs/audit/RUN_GOD_STRATEGY_MILESTONE_A_LESSONS_LEARNED.md`
+- `docs/audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md`
 - `docs/verification/local_verification.md`
 
 ---
@@ -55,9 +59,9 @@ Do not mark a phase complete without committed artefacts and exit-0 verification
 | 2 | `phase2-worker-needs` | Cohort needs + throughput delta + replay hash | [x] GOD_C 3/3 (2026-07-09) |
 | 3 | `phase3-worker-policy` | WorkerPolicy API + masks + perf note | [x] GOD_D 3/3 (2026-07-09) |
 | 4 | `phase4-societal-selection` | Divergent culture distributions + telemetry | [x] GOD_E 2/2 (2026-07-09) |
-| 5 | `phase5-heuristic-god-ai` | Modular heuristic beats scripted; inspectable proposals | [~] scaffold + GOD_F_001/002; fair `god_strategy_ai_eval` scenario |
-| 6 | `phase6-neural-god-ai` | Neural beats **passive and heuristic**; ≥1 neural 4P ending | [ ] **blocked** — teacher-imitation only; no trained god-strategy checkpoint |
-| 7 | `phase7-pollution-collapse` | Pollution harm + restoration + shared collapse tests | [x] GOD_G 3/3 (2026-07-09) |
+| 5 | `phase5-heuristic-god-ai` | Modular heuristic beats scripted; inspectable proposals | [~] partial — proposals + fair eval scaffold; multi-seed domination bar thin |
+| 6 | `phase6-neural-god-ai` | Neural beats **passive and heuristic**; ≥1 neural 4P ending | [ ] **hard stop** — teacher imitation only; see gap report |
+| 7 | `phase7-pollution-collapse` | Pollution harm + restoration + shared collapse tests | [x] GOD_G 3/3 (2026-07-09) — sim only; product still blocked by Phase 6 |
 | 8 | `phase8-mobile-human-vs-neural` | Touch 4P FFA vs neural; DISPLAY screenshot pack committed | [ ] **blocked on Phase 6** — menu + shell + headless screenshots only |
 
 **PRD complete only when Phase 8 is checked and the product sentence is true.**
@@ -68,14 +72,14 @@ Do not mark a phase complete without committed artefacts and exit-0 verification
 
 Preferred: one long run completes 0–8.
 
-If required, **one** split only:
+| Track | Phases | Status |
+|-------|--------|--------|
+| **Final-A (attempt)** | 0–6 | Stopped at Phase 6 kill switch 2026-07-09; gap report committed |
+| **Final-B** | 7–8 product | **Not started** — Phase 7 sim tests landed early as scaffolding; product Phase 8 waits on Phase 6 |
 
-| Track | Phases | When allowed |
-|-------|--------|--------------|
-| **Final-A** | 0–6 | After Phase 6 hard exit passes, commit + push |
-| **Final-B** | 7–8 | Continuation run with gap report from Final-A |
+Continuation: [`RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md`](RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md) completes Phase 6, then Phase 8.
 
-Forbidden: splitting before Phase 6; multiple silent splits; weakening DoD.
+Forbidden: splitting before Phase 6; multiple silent splits; weakening DoD; claiming neural when using teacher imitation.
 
 ---
 
@@ -95,20 +99,25 @@ timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/v
 TEST_FILTER=HYB_SMOKE timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 ```
 
-### Phase 0 (illustrative — update `local_verification.md` when budgets change)
+### Phase filters (see also `local_verification.md`)
 
 ```bash
-TEST_FILTER=GOD_A timeout 2400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
-timeout 7200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_god_strategy_eval.gd
+TEST_FILTER=GOD_C timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_D timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_E timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_G timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_F timeout 2400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=god_strategy_mobile timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
 ```
 
-Require domination artefacts under `docs/audit/god_strategy/final/phase0/` (not tick-cap-as-domination).
+Use `god_strategy_ai_eval.json` for bot win-rate comparison — **not** `god_strategy_domination_regression` (combat-speed proof only).
 
 ### Phase 8 screenshots
 
 - Require real `DISPLAY` (Xvfb or desktop).
 - Capture named sequence per PRD §10 into `docs/audit/screenshots/god_strategy_final/`.
 - Commit PNGs + review JSON/MD; fail on 1×1 / map-only / clipped panels / &lt;44px targets.
+- Headless synthesized layouts are **not** sufficient for Phase 8 hard exit.
 
 ### Full suite
 
@@ -125,7 +134,8 @@ docs/audit/screenshots/god_strategy_final/
   gs_final_00_main_menu.png
   …
   review.json / review.md
-docs/audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md  # end of run
+docs/audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md
+docs/audit/god_strategy/final/phase6/GAP_REPORT.md
 ```
 
 Model weights: `models/` or `checkpoints/` — **gitignored**. Commit eval JSON, not weights (unless explicitly requested).
@@ -146,13 +156,14 @@ Model weights: `models/` or `checkpoints/` — **gitignored**. Commit eval JSON,
 
 ## Acceptance (run-level)
 
-- [ ] All phase hard exits met **or** honest stop at first failure with gap report
+- [x] Honest stop at Phase 6 with gap report (2026-07-09)
+- [ ] All phase hard exits met
 - [ ] If claiming complete: PRD §1 sentence true + Phase 8 screenshot pack in git
-- [ ] `verify_failure_modes.gd` still fails deliberate fixtures (integrity preserved)
-- [ ] Final report per `.cursor/rules/07-final-report-format.mdc`
+- [x] `verify_failure_modes.gd` still fails deliberate fixtures (integrity preserved)
+- [ ] Final report per `.cursor/rules/07-final-report-format.mdc` when PRD complete
 
 ---
 
-## Suggested next step after this skeleton
+## Suggested next step
 
-Human reviews and approves `docs/prd/FINAL_GOD_STRATEGY_PLAYABLE_PRD.md`, then authorizes Phase 0 implementation (domination hardening), preferably continuing existing Milestone A hardening work.
+Execute [`RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md`](RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md): train real god-strategy modular checkpoints, prove neural vs passive and heuristic, then resume Phase 8 DISPLAY product gate.
