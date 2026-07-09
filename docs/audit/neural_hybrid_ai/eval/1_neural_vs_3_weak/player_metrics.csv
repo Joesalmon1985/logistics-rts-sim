@@ -1,0 +1,5 @@
+player_id,inference_mode,decisions,heuristic_fallback
+p1,trained_neural,200,0
+p2,,200,200
+p3,,200,200
+p4,,200,200

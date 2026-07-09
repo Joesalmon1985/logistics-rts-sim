@@ -1,0 +1,127 @@
+{
+	"match_end": {
+		"alive_players": [
+			"p1",
+			"p2",
+			"p3",
+			"p4"
+		],
+		"eliminated_players": [],
+		"elimination_rule": "command_hub_or_active_hub_site",
+		"end_reason": "tick_cap",
+		"match_over": true,
+		"survival_scores": {
+			"p1": 1010,
+			"p2": 1010,
+			"p3": 1010,
+			"p4": 1010
+		},
+		"tick": 500,
+		"victory": true,
+		"winner_player_id": "p1",
+		"winner_rule": "domination_or_tick_cap_score"
+	},
+	"mode": "1_scripted_vs_3_passive",
+	"tick": 500,
+	"viability": {
+		"ok": true,
+		"players": {
+			"p1": {
+				"failures": [],
+				"ok": true,
+				"sites": {
+					"barracks": [
+						{
+							"q": 3,
+							"r": 9
+						}
+					],
+					"sawmill": [
+						{
+							"q": 3,
+							"r": 10
+						}
+					],
+					"woodcutter": [
+						{
+							"q": 9,
+							"r": 1
+						}
+					]
+				}
+			},
+			"p2": {
+				"failures": [],
+				"ok": true,
+				"sites": {
+					"barracks": [
+						{
+							"q": 16,
+							"r": 11
+						}
+					],
+					"sawmill": [
+						{
+							"q": 16,
+							"r": 11
+						}
+					],
+					"woodcutter": [
+						{
+							"q": 21,
+							"r": 8
+						}
+					]
+				}
+			},
+			"p3": {
+				"failures": [],
+				"ok": true,
+				"sites": {
+					"barracks": [
+						{
+							"q": 9,
+							"r": 4
+						}
+					],
+					"sawmill": [
+						{
+							"q": 9,
+							"r": 4
+						}
+					],
+					"woodcutter": [
+						{
+							"q": 9,
+							"r": 1
+						}
+					]
+				}
+			},
+			"p4": {
+				"failures": [],
+				"ok": true,
+				"sites": {
+					"barracks": [
+						{
+							"q": 11,
+							"r": 16
+						}
+					],
+					"sawmill": [
+						{
+							"q": 11,
+							"r": 17
+						}
+					],
+					"woodcutter": [
+						{
+							"q": 21,
+							"r": 8
+						}
+					]
+				}
+			}
+		}
+	}
+}

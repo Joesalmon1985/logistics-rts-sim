@@ -1,0 +1,5 @@
+tick,player_id,reward_proxy,inference_mode
+227,p1,1.0,trained_neural
+227,p2,1.0,trained_neural
+227,p3,1.0,trained_neural
+227,p4,1.0,trained_neural

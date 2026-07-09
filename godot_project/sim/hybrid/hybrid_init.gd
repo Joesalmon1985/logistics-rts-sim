@@ -26,6 +26,14 @@ static func initialize(state: GameState, scenario: Dictionary, terrain_config: D
 		"seed": state.seed,
 	})
 
+	if GodStrategyMatchEnd.is_god_strategy_scenario(scenario):
+		EconomyState.set_meta_value(state, "god_strategy_active", 1)
+		GodStrategyState.init_match(state, scenario)
+		WorkerNeedsSystem.init_match(state, scenario)
+		WorkerPolicySystem.init_match(state, scenario)
+		WorkerSelectionSystem.init_match(state, scenario)
+		PollutionSystem.init_match(state, scenario)
+
 
 static func _initialize_military(state: GameState, scenario: Dictionary) -> void:
 	MilitaryState.ensure_buckets(state)

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "age_id": "historic",
+  "cards": [
+    {"id": "guild_sawmill", "unlock_id": "unlock_sawmill", "vp": 2, "unlocks_building": "sawmill"},
+    {"id": "city_wall", "unlock_id": "unlock_barracks", "vp": 3, "unlocks_building": "barracks"},
+    {"id": "market_hall", "unlock_id": "unlock_storehouse", "vp": 2, "unlocks_building": "storehouse"},
+    {"id": "iron_works", "unlock_id": "unlock_smithy", "vp": 3, "unlocks_building": "smithy"},
+    {"id": "scriptorium", "unlock_id": "unlock_research", "vp": 2, "unlocks_building": "research_lab"},
+    {"id": "granary", "unlock_id": "unlock_mill", "vp": 2, "unlocks_building": "mill"},
+    {"id": "trade_road", "unlock_id": "unlock_roads", "vp": 1, "unlocks_building": ""},
+    {"id": "fortress_yard", "unlock_id": "unlock_guard_post", "vp": 3, "unlocks_building": "guard_post"}
+  ]
+}

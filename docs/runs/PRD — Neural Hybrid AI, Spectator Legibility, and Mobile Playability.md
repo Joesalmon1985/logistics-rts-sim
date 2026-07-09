@@ -1,6 +1,7 @@
 # PRD — Neural Hybrid AI, Spectator Legibility, and Mobile Playability
 
-Status: Ready for implementation planning  
+Status: Infrastructure / Part D **discipline reference** — **product Definition of Done superseded** by [`docs/prd/FINAL_GOD_STRATEGY_PLAYABLE_PRD.md`](../prd/FINAL_GOD_STRATEGY_PLAYABLE_PRD.md)  
+**Do not claim the project product-complete from this file.** Hybrid 4P FFA Part D remains useful for mobile/screenshot/neural patterns; the Final PRD applies that discipline to **Full God-Strategy** (ages, culture, workers, pollution) with phases 0–8.  
 Supersedes: `docs/runs/PRD - New PRD.md` (draft paste)
 
 **Suggested branches** (dependency order):

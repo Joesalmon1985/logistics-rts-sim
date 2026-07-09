@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "age_id": "prehistoric",
+  "cards": [
+    {"id": "campfire", "unlock_id": "unlock_woodcutter", "vp": 0, "unlocks_building": "woodcutter"},
+    {"id": "stone_tools", "unlock_id": "unlock_sawmill", "vp": 1, "unlocks_building": "sawmill"},
+    {"id": "tribal_barracks", "unlock_id": "unlock_barracks", "vp": 2, "unlocks_building": "barracks"},
+    {"id": "paths", "unlock_id": "unlock_roads", "vp": 1, "unlocks_building": ""},
+    {"id": "store_pit", "unlock_id": "unlock_storehouse", "vp": 1, "unlocks_building": "storehouse"},
+    {"id": "hunter_lodge", "unlock_id": "unlock_hunter", "vp": 1, "unlocks_building": "hunter"},
+    {"id": "quarry_mark", "unlock_id": "unlock_quarry", "vp": 2, "unlocks_building": "quarry"},
+    {"id": "watch_post", "unlock_id": "unlock_guard_post", "vp": 2, "unlocks_building": "guard_post"},
+    {"id": "fishing_weir", "unlock_id": "unlock_fisher", "vp": 1, "unlocks_building": "fisher"},
+    {"id": "forester_ring", "unlock_id": "unlock_forester", "vp": 1, "unlocks_building": "forester"}
+  ]
+}

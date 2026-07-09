@@ -1,0 +1,33 @@
+{
+	"p1": {
+		"commands_rejected_count": 0,
+		"furthest_phase": "attack",
+		"intent": "delegated_attack",
+		"last_rejection_reason": "",
+		"milestones": {
+			"attack_issued": true,
+			"barracks_placed": false,
+			"enemy_hub_damaged": false,
+			"road_segment_placed": false,
+			"sawmill_placed": false,
+			"unit_produced": true,
+			"unit_queued": false,
+			"woodcutter_placed": false,
+			"worker_policy_set": false
+		},
+		"phase": "attack",
+		"phase_history": [
+			{
+				"intent": "",
+				"phase": "init",
+				"rejection": "",
+				"tick": 0
+			}
+		],
+		"plan_index": 1,
+		"player_id": "p1",
+		"stall_ticks_in_phase": 0,
+		"target_q": 8,
+		"target_r": 2
+	}
+}

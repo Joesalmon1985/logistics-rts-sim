@@ -21,6 +21,7 @@ static func export_snapshot(state: GameState) -> Dictionary:
 	econ["tech"] = mil_layers.get("tech", {})
 	econ["delegated_orders"] = HybridState.all_delegated_orders(state)
 	econ["hybrid_diagnostics"] = state.diagnostics.get("hybrid", {})
+	econ["god_strategy"] = GodStrategyTick.export_diagnostics(state)
 	return econ
 
 

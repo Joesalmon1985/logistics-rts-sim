@@ -812,3 +812,65 @@ timeout 300s "$GODOT" --headless --path godot_project --script res://sim/tools/c
 ```
 
 Screenshots: `docs/audit/screenshots/realtime_tutorials_and_3d/`. If `$DISPLAY` is set, manually verify modes launch running via `./scripts/run_game.sh`.
+
+## PRD — Neural Hybrid / Spectator / Mobile (Linux)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+TEST_FILTER=neural_hybrid timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=hybrid_spectator timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=mobile_hex timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=mobile_ffa timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/run_neural_hybrid_4p_smoke.gd
+timeout 30s "$GODOT" --headless --path godot_project --script res://sim/tools/run_mobile_hex_view_qa.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/run_hybrid_mobile_ffa_qa.gd
+```
+
+## God-Strategy MVP (Milestone A + B)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+TEST_FILTER=GOD_A timeout 7200s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_B timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=HYB_SMOKE timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+# Milestone A proof: domination_regression @ PROOF_TICK_CAP (3000) — allow ~25–40 min
+timeout 2400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_god_strategy_eval.gd
+# Long integration tests (barracks / unit production)
+TEST_FILTER=GOD_A_010 timeout 2400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_A_011 timeout 2400s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+```
+
+Artefacts: `docs/audit/god_strategy/eval/`
+
+## Final God-Strategy (Phases 2–8 filters)
+
+```bash
+export GODOT=/home/joe/Documents/Godot/Godot_v4.5.2-stable_linux.x86_64
+export GODOT_USER_DATA_DIR="$(pwd)/godot_project/.godot_user"
+TEST_FILTER=GOD_C timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_D timeout 180s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_E timeout 120s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_G timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=GOD_F timeout 900s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+TEST_FILTER=god_strategy_mobile timeout 60s "$GODOT" --headless --path godot_project --script res://sim/tools/run_tests.gd
+timeout 90s "$GODOT" --headless --path godot_project --script res://sim/tools/run_god_strategy_mobile_qa.gd
+```
+
+Artefacts: `docs/audit/god_strategy/final/phase2/` … `phase8/`, screenshots under `docs/audit/screenshots/god_strategy_final/`.
+
+**Phase 6 neural gate (hard stop 2026-07-09):** see `docs/audit/god_strategy/final/phase6/GAP_REPORT.md`.  
+**Next run:** `docs/runs/RUN_FINAL_GOD_STRATEGY_PHASE6_NEURAL.md`.  
+**Lessons:** `docs/audit/RUN_FINAL_GOD_STRATEGY_PLAYABLE_LESSONS_LEARNED.md`.
+
+### AI eval scenario rules
+
+| Scenario | Use for |
+|----------|---------|
+| `god_strategy_domination_regression.json` | Combat-speed **proof** only (1-HP hubs + pre-placed squads) |
+| `god_strategy_ai_eval.json` | Bot **win-rate comparison** (fair hubs) |
+
+Do not report tick-1 domination from the regression scenario as a neural/heuristic win-rate result.
+
+`TEST_FILTER=GOD_F` may need **2400s+** once real multi-seed fair evals land; 900s is a lower bound for scaffolding only.

@@ -1,0 +1,12 @@
+{
+	"phase": 5,
+	"slug": "phase5-heuristic-god-ai",
+	"status": "partial",
+	"verified_at": "2026-07-09",
+	"tests": [
+		"test_GOD_F_001_heuristic_module_proposals",
+		"test_GOD_F_002_heuristic_beats_scripted_eval"
+	],
+	"notes": "Fair AI eval scenario (god_strategy_ai_eval). Heuristic emits inspectable proposals. Full multi-seed win-rate bar still thin (120-tick CI budget).",
+	"artefacts": "docs/audit/god_strategy/final/phase5/win_rate_tables.json"
+}

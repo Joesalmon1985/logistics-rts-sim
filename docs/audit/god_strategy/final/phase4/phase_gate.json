@@ -1,0 +1,12 @@
+{
+	"phase": 4,
+	"slug": "phase4-societal-selection",
+	"status": "passed",
+	"verified_at": "2026-07-09",
+	"tests": [
+		"test_GOD_E_001_culture_paths_diverge",
+		"test_GOD_E_002_selection_replay_deterministic"
+	],
+	"results": "2/2 passed",
+	"notes": "Culture draft paths diverge deterministically; selection histogram exported."
+}

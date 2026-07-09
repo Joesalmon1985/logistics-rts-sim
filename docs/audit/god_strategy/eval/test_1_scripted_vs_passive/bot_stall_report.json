@@ -1,0 +1,105 @@
+{
+	"blocker_class": "logistics",
+	"furthest_phase": "wait_production",
+	"match_end": {
+		"alive_players": [
+			"p1",
+			"p2",
+			"p3",
+			"p4"
+		],
+		"eliminated_players": [],
+		"elimination_rule": "command_hub_or_active_hub_site",
+		"end_reason": "tick_cap",
+		"match_over": true,
+		"survival_scores": {
+			"p1": 1025,
+			"p2": 1010,
+			"p3": 1010,
+			"p4": 1010
+		},
+		"tick": 500,
+		"victory": true,
+		"winner_player_id": "p1",
+		"winner_rule": "domination_or_tick_cap_score"
+	},
+	"milestones": {
+		"attack_issued": false,
+		"barracks_placed": true,
+		"enemy_hub_damaged": false,
+		"road_segment_placed": false,
+		"sawmill_placed": true,
+		"unit_produced": false,
+		"unit_queued": false,
+		"woodcutter_placed": true,
+		"worker_policy_set": true
+	},
+	"p1_telemetry": {
+		"commands_rejected_count": 0,
+		"furthest_phase": "wait_production",
+		"intent": "wait_rifle_squad_wares",
+		"last_rejection_reason": "",
+		"milestones": {
+			"attack_issued": false,
+			"barracks_placed": true,
+			"enemy_hub_damaged": false,
+			"road_segment_placed": false,
+			"sawmill_placed": true,
+			"unit_produced": false,
+			"unit_queued": false,
+			"woodcutter_placed": true,
+			"worker_policy_set": true
+		},
+		"phase": "wait_production",
+		"phase_history": [
+			{
+				"intent": "",
+				"phase": "init",
+				"rejection": "",
+				"tick": 0
+			},
+			{
+				"intent": "place_woodcutter",
+				"phase": "place_woodcutter",
+				"rejection": "",
+				"tick": 1
+			},
+			{
+				"intent": "place_woodcutter",
+				"phase": "wait_construction",
+				"rejection": "",
+				"tick": 2
+			},
+			{
+				"intent": "place_sawmill",
+				"phase": "place_sawmill",
+				"rejection": "",
+				"tick": 10
+			},
+			{
+				"intent": "place_sawmill",
+				"phase": "wait_production",
+				"rejection": "",
+				"tick": 11
+			},
+			{
+				"intent": "place_barracks",
+				"phase": "place_barracks",
+				"rejection": "",
+				"tick": 33
+			},
+			{
+				"intent": "place_barracks",
+				"phase": "wait_production",
+				"rejection": "",
+				"tick": 34
+			}
+		],
+		"plan_index": 1,
+		"player_id": "p1",
+		"stall_ticks_in_phase": 432,
+		"target_q": 9,
+		"target_r": 13
+	},
+	"past_barracks_phase": false
+}

@@ -1,0 +1,34 @@
+{
+	"blocker_class": "map",
+	"match_end": {
+		"alive_players": [
+			"p1",
+			"p2",
+			"p3",
+			"p4"
+		],
+		"eliminated_players": [],
+		"elimination_rule": "command_hub_or_active_hub_site",
+		"end_reason": "",
+		"match_over": false,
+		"survival_scores": {
+
+		},
+		"tick": 1001,
+		"victory": false,
+		"winner_player_id": "",
+		"winner_rule": "domination_or_tick_cap_score"
+	},
+	"p1_telemetry": {
+		"commands_rejected_count": 1000,
+		"intent": "place_road",
+		"last_rejection_reason": "NOT_OWNER",
+		"phase": "roads",
+		"plan_index": 1,
+		"player_id": "p1",
+		"stall_ticks_in_phase": 1000,
+		"target_q": 3,
+		"target_r": 9
+	},
+	"past_barracks_phase": false
+}

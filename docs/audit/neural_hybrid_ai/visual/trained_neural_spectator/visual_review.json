@@ -1,0 +1,56 @@
+[
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/00_match_start.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/01_economy_building.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/02_road_logistics.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/03_military_production.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/04_units_produced.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/05_attack_started.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/06_combat_cluster.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/07_elimination_or_closest.png",
+		"size": "1920x1080"
+	},
+	{
+		"inference_mode": "trained_neural",
+		"readability_pass": true,
+		"screenshot_path": "res://../docs/audit/neural_hybrid_ai/visual/trained_neural_spectator/08_winner_or_tick_cap.png",
+		"size": "1920x1080"
+	}
+]

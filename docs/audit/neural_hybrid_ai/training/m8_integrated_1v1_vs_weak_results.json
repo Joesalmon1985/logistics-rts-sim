@@ -1,0 +1,7 @@
+{
+  "eval_ref": "docs/audit/neural_hybrid_ai/eval/1_neural_vs_3_weak",
+  "description": "1 trained modular neural bot vs 3 weak heuristic teachers",
+  "trained_neural_player": "p1",
+  "tick_cap": 200,
+  "winner": null
+}

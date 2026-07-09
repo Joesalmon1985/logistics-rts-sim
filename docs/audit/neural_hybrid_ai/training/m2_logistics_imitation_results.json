@@ -1,0 +1,6 @@
+{
+  "samples": 240,
+  "accuracy": 0.23333333432674408,
+  "final_loss": 1.9522545337677002,
+  "expert": "scouting"
+}

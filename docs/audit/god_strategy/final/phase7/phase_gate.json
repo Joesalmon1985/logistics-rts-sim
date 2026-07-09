@@ -1,0 +1,13 @@
+{
+	"phase": 7,
+	"slug": "phase7-pollution-collapse",
+	"status": "passed",
+	"verified_at": "2026-07-09",
+	"tests": [
+		"test_GOD_G_001_pollution_degrades_worker_safety",
+		"test_GOD_G_002_shared_collapse_loss",
+		"test_GOD_G_003_restoration_victory_path"
+	],
+	"results": "3/3 passed",
+	"notes": "Match-end pollution checks inlined in GodStrategyMatchEnd for bot-eval stability."
+}

@@ -1,0 +1,282 @@
+{
+	"ai_telemetry_sample": [
+		{
+			"bot_kind": "learned_modular_god",
+			"checkpoint_loaded": true,
+			"commands_rejected_count": 0,
+			"furthest_phase": "wait_production",
+			"intent": "place_barracks",
+			"last_rejection_reason": "",
+			"milestones": {
+				"attack_issued": false,
+				"barracks_placed": true,
+				"enemy_hub_damaged": false,
+				"road_segment_placed": false,
+				"sawmill_placed": true,
+				"unit_produced": false,
+				"unit_queued": false,
+				"woodcutter_placed": true,
+				"worker_policy_set": false
+			},
+			"module_proposals": [
+				{
+					"confidence": 900,
+					"intent": "wait_production",
+					"module": "EconomyPolicy",
+					"source": "learned",
+					"tick": 60
+				},
+				{
+					"confidence": 850,
+					"intent": "build_army",
+					"module": "MilitaryPolicy",
+					"source": "learned",
+					"tick": 60
+				}
+			],
+			"phase": "wait_production",
+			"phase_history": [
+				{
+					"intent": "",
+					"phase": "init",
+					"rejection": "",
+					"tick": 1
+				},
+				{
+					"intent": "place_woodcutter",
+					"phase": "place_woodcutter",
+					"rejection": "",
+					"tick": 2
+				},
+				{
+					"intent": "place_woodcutter",
+					"phase": "wait_construction",
+					"rejection": "",
+					"tick": 3
+				},
+				{
+					"intent": "place_sawmill",
+					"phase": "place_sawmill",
+					"rejection": "",
+					"tick": 11
+				},
+				{
+					"intent": "place_sawmill",
+					"phase": "wait_production",
+					"rejection": "",
+					"tick": 12
+				},
+				{
+					"intent": "place_barracks",
+					"phase": "place_barracks",
+					"rejection": "",
+					"tick": 25
+				},
+				{
+					"intent": "place_barracks",
+					"phase": "wait_production",
+					"rejection": "",
+					"tick": 26
+				}
+			],
+			"plan_index": 2,
+			"player_id": "p2",
+			"stall_ticks_in_phase": 60,
+			"target_q": 7,
+			"target_r": 6,
+			"used_heuristic_fallback": false
+		},
+		{
+			"bot_kind": "learned_modular_god",
+			"checkpoint_loaded": true,
+			"commands_rejected_count": 0,
+			"furthest_phase": "wait_production",
+			"intent": "place_barracks",
+			"last_rejection_reason": "",
+			"milestones": {
+				"attack_issued": false,
+				"barracks_placed": true,
+				"enemy_hub_damaged": false,
+				"road_segment_placed": false,
+				"sawmill_placed": true,
+				"unit_produced": false,
+				"unit_queued": false,
+				"woodcutter_placed": true,
+				"worker_policy_set": false
+			},
+			"module_proposals": [
+				{
+					"confidence": 900,
+					"intent": "wait_production",
+					"module": "EconomyPolicy",
+					"source": "learned",
+					"tick": 60
+				},
+				{
+					"confidence": 850,
+					"intent": "build_army",
+					"module": "MilitaryPolicy",
+					"source": "learned",
+					"tick": 60
+				}
+			],
+			"phase": "wait_production",
+			"phase_history": [
+				{
+					"intent": "",
+					"phase": "init",
+					"rejection": "",
+					"tick": 1
+				},
+				{
+					"intent": "place_woodcutter",
+					"phase": "place_woodcutter",
+					"rejection": "",
+					"tick": 2
+				},
+				{
+					"intent": "place_woodcutter",
+					"phase": "wait_construction",
+					"rejection": "",
+					"tick": 3
+				},
+				{
+					"intent": "place_sawmill",
+					"phase": "place_sawmill",
+					"rejection": "",
+					"tick": 17
+				},
+				{
+					"intent": "place_sawmill",
+					"phase": "wait_production",
+					"rejection": "",
+					"tick": 18
+				},
+				{
+					"intent": "place_barracks",
+					"phase": "place_barracks",
+					"rejection": "",
+					"tick": 34
+				},
+				{
+					"intent": "place_barracks",
+					"phase": "wait_production",
+					"rejection": "",
+					"tick": 35
+				}
+			],
+			"plan_index": 2,
+			"player_id": "p3",
+			"stall_ticks_in_phase": 60,
+			"target_q": 6,
+			"target_r": 8,
+			"used_heuristic_fallback": false
+		},
+		{
+			"bot_kind": "learned_modular_god",
+			"checkpoint_loaded": true,
+			"commands_rejected_count": 0,
+			"furthest_phase": "wait_production",
+			"intent": "place_barracks_blocked",
+			"last_rejection_reason": "NO_LEGAL_SITE",
+			"milestones": {
+				"attack_issued": false,
+				"barracks_placed": false,
+				"enemy_hub_damaged": false,
+				"road_segment_placed": false,
+				"sawmill_placed": true,
+				"unit_produced": false,
+				"unit_queued": false,
+				"woodcutter_placed": true,
+				"worker_policy_set": false
+			},
+			"module_proposals": [
+				{
+					"confidence": 900,
+					"intent": "place_barracks",
+					"module": "EconomyPolicy",
+					"source": "learned",
+					"tick": 60
+				},
+				{
+					"confidence": 850,
+					"intent": "build_army",
+					"module": "MilitaryPolicy",
+					"source": "learned",
+					"tick": 60
+				}
+			],
+			"phase": "place_barracks",
+			"phase_history": [
+				{
+					"intent": "",
+					"phase": "init",
+					"rejection": "",
+					"tick": 1
+				},
+				{
+					"intent": "place_woodcutter",
+					"phase": "place_woodcutter",
+					"rejection": "",
+					"tick": 2
+				},
+				{
+					"intent": "place_woodcutter",
+					"phase": "wait_construction",
+					"rejection": "",
+					"tick": 3
+				},
+				{
+					"intent": "place_sawmill",
+					"phase": "place_sawmill",
+					"rejection": "",
+					"tick": 9
+				},
+				{
+					"intent": "place_sawmill",
+					"phase": "wait_production",
+					"rejection": "",
+					"tick": 10
+				},
+				{
+					"intent": "place_barracks_blocked",
+					"phase": "place_barracks",
+					"rejection": "NO_LEGAL_SITE",
+					"tick": 38
+				}
+			],
+			"plan_index": 1,
+			"player_id": "p4",
+			"stall_ticks_in_phase": 60,
+			"target_q": 9,
+			"target_r": 8,
+			"used_heuristic_fallback": false
+		}
+	],
+	"capture_method": "headless_synthesized",
+	"failure_reason": "",
+	"match_summary": {
+		"alive": [
+			"p1",
+			"p2",
+			"p3",
+			"p4"
+		],
+		"difficulty": "normal",
+		"eliminated": [],
+		"end_reason": "",
+		"human_player_id": "p1",
+		"opponent_kind": "learned_modular_god",
+		"tick": 61,
+		"winner": ""
+	},
+	"opponent_kind": "learned_modular_god",
+	"pass": true,
+	"profile": "390x844",
+	"screenshots": [
+		"gs_final_01_match_start.png",
+		"gs_final_03_economy.png",
+		"gs_final_06_ai_intent.png"
+	],
+	"touch_target_min_px": 48
+}

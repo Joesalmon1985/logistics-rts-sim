@@ -1,0 +1,5 @@
+player_id,phase,intent,rejection,units,buildings
+p1,roads,place_road,NOT_OWNER,0,1
+p2,roads,place_road,NOT_OWNER,0,1
+p3,roads,place_road,ROAD_EXISTS,0,1
+p4,roads,place_road,NOT_OWNER,0,1

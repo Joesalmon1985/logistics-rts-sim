@@ -1,0 +1,30 @@
+{
+	"learned_vs_heuristic": {
+		"domination_endings": 1,
+		"rows": [
+			{
+				"end_reason": "domination",
+				"seed": 99001,
+				"tick": 1,
+				"winner": "p1"
+			}
+		],
+		"seeds": 1,
+		"win_rate": 1.0,
+		"wins_p1": 1
+	},
+	"learned_vs_passive": {
+		"domination_endings": 1,
+		"rows": [
+			{
+				"end_reason": "domination",
+				"seed": 99001,
+				"tick": 1,
+				"winner": "p1"
+			}
+		],
+		"seeds": 1,
+		"win_rate": 1.0,
+		"wins_p1": 1
+	}
+}

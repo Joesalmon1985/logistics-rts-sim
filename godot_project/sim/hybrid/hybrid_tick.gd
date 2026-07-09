@@ -14,6 +14,7 @@ static func get_subsystem_order() -> Array[String]:
 		"construction",
 		"upgrades",
 		"carriers",
+		"god_strategy",
 		"mil_meta",
 		"mil_power",
 		"mil_tech",
@@ -40,6 +41,8 @@ static func step_subsystem(name: String, state: GameState, rng: SeededRng) -> vo
 		"hybrid":
 			HybridOrderSystem.tick(state)
 			_tick_stall_detection(state)
+		"god_strategy":
+			GodStrategyTick.tick(state, rng)
 		"diagnostics":
 			EconomyDiagnosticsSystem.tick(state)
 			MilitaryDiagnosticsSystem.tick(state)

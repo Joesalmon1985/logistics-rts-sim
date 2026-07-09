@@ -1,0 +1,19 @@
+{
+	"eval_name": "4_neural_ffa",
+	"ffa": {
+		"alive_players": [
+			"p1",
+			"p2",
+			"p3",
+			"p4"
+		],
+		"eliminated_players": [],
+		"elimination_rule": "command_hub_destroyed",
+		"match_over": false,
+		"tick": 200,
+		"victory": false,
+		"winner_player_id": "",
+		"winner_rule": "sole_remaining_player"
+	},
+	"tick": 200
+}

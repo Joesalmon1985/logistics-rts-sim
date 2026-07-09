@@ -14,9 +14,12 @@ const SCENE_PATHS: Dictionary = {
 	"hybrid_observer": "res://client/scenes/hybrid_observer_demo.tscn",
 	"hybrid_mvp": "res://client/scenes/hybrid_mvp_game.tscn",
 	"hybrid_3d_spectator": "res://client/scenes/hybrid_3d_bot_spectator.tscn",
+	"hybrid_2d_spectator": "res://client/scenes/hybrid_bot_spectator_2d.tscn",
 	"settler_mvp": "res://client/scenes/settler_mvp_game.tscn",
 	"military_mvp": "res://client/scenes/military_mvp_game.tscn",
 	"main_menu": "res://client/scenes/main_menu.tscn",
+	"god_strategy_mobile_ffa": "res://client/scenes/god_strategy_mobile_ffa_game.tscn",
+	"god_strategy_mobile_ffa_menu": "res://client/scenes/god_strategy_mobile_ffa_menu.tscn",
 }
 
 
@@ -27,10 +30,10 @@ static func mount(host: Node, variant: String) -> Dictionary:
 	if packed == null:
 		return {"ok": false, "reason": "failed to load scene"}
 	var scene: Node = packed.instantiate()
-	if variant in ["settler_mvp", "military_mvp", "main_menu", "hybrid_mvp"]:
+	if variant in ["settler_mvp", "military_mvp", "main_menu", "hybrid_mvp", "god_strategy_mobile_ffa", "god_strategy_mobile_ffa_menu"]:
 		if scene == null:
 			return {"ok": false, "reason": "failed to instantiate playable scene"}
-	elif variant in ["spectator", "military_spectator", "hybrid_observer", "hybrid_3d_spectator"]:
+	elif variant in ["spectator", "military_spectator", "hybrid_observer", "hybrid_3d_spectator", "hybrid_2d_spectator"]:
 		if scene == null:
 			return {"ok": false, "reason": "failed to instantiate spectator scene"}
 	else:

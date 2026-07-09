@@ -1,0 +1,968 @@
+{
+	"mvp_a": {
+		"full_chain_layout": {
+			"ok": false,
+			"players": {
+				"p1": {
+					"failures": [
+						{
+							"building_type": "barracks",
+							"reason": "NO_CHAIN_LAYOUT"
+						}
+					],
+					"ok": false,
+					"road_paths": {
+						"sawmill": [
+							{
+								"from_q": 3,
+								"from_r": 11,
+								"to_q": 4,
+								"to_r": 11
+							},
+							{
+								"from_q": 4,
+								"from_r": 11,
+								"to_q": 5,
+								"to_r": 11
+							},
+							{
+								"from_q": 5,
+								"from_r": 11,
+								"to_q": 6,
+								"to_r": 11
+							},
+							{
+								"from_q": 6,
+								"from_r": 11,
+								"to_q": 7,
+								"to_r": 11
+							},
+							{
+								"from_q": 7,
+								"from_r": 11,
+								"to_q": 8,
+								"to_r": 11
+							},
+							{
+								"from_q": 8,
+								"from_r": 11,
+								"to_q": 8,
+								"to_r": 12
+							},
+							{
+								"from_q": 8,
+								"from_r": 12,
+								"to_q": 8,
+								"to_r": 13
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 3,
+								"from_r": 11,
+								"to_q": 3,
+								"to_r": 10
+							},
+							{
+								"from_q": 3,
+								"from_r": 10,
+								"to_q": 3,
+								"to_r": 9
+							},
+							{
+								"from_q": 3,
+								"from_r": 9,
+								"to_q": 2,
+								"to_r": 9
+							}
+						]
+					},
+					"sites": {
+						"sawmill": {
+							"q": 9,
+							"r": 13
+						},
+						"woodcutter": {
+							"q": 3,
+							"r": 9
+						}
+					}
+				},
+				"p2": {
+					"failures": [
+						{
+							"building_type": "barracks",
+							"reason": "NO_CHAIN_LAYOUT"
+						}
+					],
+					"ok": false,
+					"road_paths": {
+						"sawmill": [
+							{
+								"from_q": 18,
+								"from_r": 11,
+								"to_q": 17,
+								"to_r": 11
+							},
+							{
+								"from_q": 17,
+								"from_r": 11,
+								"to_q": 16,
+								"to_r": 11
+							},
+							{
+								"from_q": 16,
+								"from_r": 11,
+								"to_q": 15,
+								"to_r": 11
+							},
+							{
+								"from_q": 15,
+								"from_r": 11,
+								"to_q": 14,
+								"to_r": 11
+							},
+							{
+								"from_q": 14,
+								"from_r": 11,
+								"to_q": 13,
+								"to_r": 11
+							},
+							{
+								"from_q": 13,
+								"from_r": 11,
+								"to_q": 12,
+								"to_r": 11
+							},
+							{
+								"from_q": 12,
+								"from_r": 11,
+								"to_q": 11,
+								"to_r": 11
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 18,
+								"from_r": 11,
+								"to_q": 18,
+								"to_r": 10
+							},
+							{
+								"from_q": 18,
+								"from_r": 10,
+								"to_q": 19,
+								"to_r": 10
+							},
+							{
+								"from_q": 19,
+								"from_r": 10,
+								"to_q": 20,
+								"to_r": 9
+							}
+						]
+					},
+					"sites": {
+						"sawmill": {
+							"q": 12,
+							"r": 10
+						},
+						"woodcutter": {
+							"q": 21,
+							"r": 8
+						}
+					}
+				},
+				"p3": {
+					"failures": [],
+					"ok": true,
+					"road_paths": {
+						"barracks": [
+							{
+								"from_q": 11,
+								"from_r": 3,
+								"to_q": 10,
+								"to_r": 4
+							},
+							{
+								"from_q": 10,
+								"from_r": 4,
+								"to_q": 9,
+								"to_r": 5
+							},
+							{
+								"from_q": 9,
+								"from_r": 5,
+								"to_q": 9,
+								"to_r": 6
+							},
+							{
+								"from_q": 9,
+								"from_r": 6,
+								"to_q": 9,
+								"to_r": 7
+							},
+							{
+								"from_q": 9,
+								"from_r": 7,
+								"to_q": 9,
+								"to_r": 8
+							}
+						],
+						"sawmill": [
+							{
+								"from_q": 11,
+								"from_r": 3,
+								"to_q": 10,
+								"to_r": 3
+							},
+							{
+								"from_q": 10,
+								"from_r": 3,
+								"to_q": 9,
+								"to_r": 3
+							},
+							{
+								"from_q": 9,
+								"from_r": 3,
+								"to_q": 8,
+								"to_r": 3
+							},
+							{
+								"from_q": 8,
+								"from_r": 3,
+								"to_q": 7,
+								"to_r": 3
+							},
+							{
+								"from_q": 7,
+								"from_r": 3,
+								"to_q": 6,
+								"to_r": 3
+							},
+							{
+								"from_q": 6,
+								"from_r": 3,
+								"to_q": 5,
+								"to_r": 4
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 11,
+								"from_r": 3,
+								"to_q": 11,
+								"to_r": 2
+							},
+							{
+								"from_q": 11,
+								"from_r": 2,
+								"to_q": 11,
+								"to_r": 1
+							},
+							{
+								"from_q": 11,
+								"from_r": 1,
+								"to_q": 10,
+								"to_r": 1
+							},
+							{
+								"from_q": 10,
+								"from_r": 1,
+								"to_q": 9,
+								"to_r": 1
+							},
+							{
+								"from_q": 9,
+								"from_r": 1,
+								"to_q": 8,
+								"to_r": 1
+							}
+						]
+					},
+					"sites": {
+						"barracks": {
+							"q": 9,
+							"r": 9
+						},
+						"sawmill": {
+							"q": 6,
+							"r": 4
+						},
+						"woodcutter": {
+							"q": 9,
+							"r": 1
+						}
+					}
+				},
+				"p4": {
+					"failures": [
+						{
+							"building_type": "barracks",
+							"reason": "NO_CHAIN_LAYOUT"
+						}
+					],
+					"ok": false,
+					"road_paths": {
+						"sawmill": [
+							{
+								"from_q": 11,
+								"from_r": 17,
+								"to_q": 12,
+								"to_r": 16
+							},
+							{
+								"from_q": 12,
+								"from_r": 16,
+								"to_q": 12,
+								"to_r": 15
+							},
+							{
+								"from_q": 12,
+								"from_r": 15,
+								"to_q": 12,
+								"to_r": 14
+							},
+							{
+								"from_q": 12,
+								"from_r": 14,
+								"to_q": 12,
+								"to_r": 13
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 11,
+								"from_r": 17,
+								"to_q": 10,
+								"to_r": 17
+							},
+							{
+								"from_q": 10,
+								"from_r": 17,
+								"to_q": 9,
+								"to_r": 17
+							},
+							{
+								"from_q": 9,
+								"from_r": 17,
+								"to_q": 8,
+								"to_r": 17
+							},
+							{
+								"from_q": 8,
+								"from_r": 17,
+								"to_q": 7,
+								"to_r": 17
+							}
+						]
+					},
+					"sites": {
+						"sawmill": {
+							"q": 13,
+							"r": 13
+						},
+						"woodcutter": {
+							"q": 8,
+							"r": 16
+						}
+					}
+				}
+			},
+			"scenario": "God-Strategy MVP A — destroy enemy Command Hubs. Economy chain + delegated military."
+		},
+		"resource_audit": {
+			"failures": [],
+			"ok": true,
+			"total_costs": {
+				"planks": 7,
+				"rations": 2,
+				"stone": 5,
+				"tools": 4
+			}
+		},
+		"scenario_path": "scenarios/god_strategy/god_strategy_4p_mvp_a.json",
+		"viability": {
+			"ok": true,
+			"players": {
+				"p1": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 9,
+								"r": 13
+							}
+						],
+						"sawmill": [
+							{
+								"q": 9,
+								"r": 10
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 3,
+								"r": 9
+							}
+						]
+					}
+				},
+				"p2": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 12,
+								"r": 9
+							}
+						],
+						"sawmill": [
+							{
+								"q": 13,
+								"r": 12
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 21,
+								"r": 8
+							}
+						]
+					}
+				},
+				"p3": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 9,
+								"r": 9
+							}
+						],
+						"sawmill": [
+							{
+								"q": 6,
+								"r": 4
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 9,
+								"r": 1
+							}
+						]
+					}
+				},
+				"p4": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 13,
+								"r": 12
+							}
+						],
+						"sawmill": [
+							{
+								"q": 13,
+								"r": 13
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 12,
+								"r": 12
+							}
+						]
+					}
+				}
+			}
+		}
+	},
+	"regression": {
+		"full_chain_layout": {
+			"ok": false,
+			"players": {
+				"p1": {
+					"failures": [],
+					"ok": true,
+					"road_paths": {
+						"barracks": [
+							{
+								"from_q": 2,
+								"from_r": 8,
+								"to_q": 3,
+								"to_r": 8
+							},
+							{
+								"from_q": 3,
+								"from_r": 8,
+								"to_q": 4,
+								"to_r": 8
+							},
+							{
+								"from_q": 4,
+								"from_r": 8,
+								"to_q": 5,
+								"to_r": 8
+							},
+							{
+								"from_q": 5,
+								"from_r": 8,
+								"to_q": 6,
+								"to_r": 8
+							},
+							{
+								"from_q": 6,
+								"from_r": 8,
+								"to_q": 7,
+								"to_r": 8
+							},
+							{
+								"from_q": 7,
+								"from_r": 8,
+								"to_q": 8,
+								"to_r": 8
+							},
+							{
+								"from_q": 8,
+								"from_r": 8,
+								"to_q": 8,
+								"to_r": 9
+							}
+						],
+						"sawmill": [
+							{
+								"from_q": 2,
+								"from_r": 8,
+								"to_q": 3,
+								"to_r": 8
+							},
+							{
+								"from_q": 3,
+								"from_r": 8,
+								"to_q": 4,
+								"to_r": 8
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 2,
+								"from_r": 8,
+								"to_q": 1,
+								"to_r": 9
+							},
+							{
+								"from_q": 1,
+								"from_r": 9,
+								"to_q": 0,
+								"to_r": 10
+							}
+						]
+					},
+					"sites": {
+						"barracks": {
+							"q": 8,
+							"r": 10
+						},
+						"sawmill": {
+							"q": 5,
+							"r": 8
+						},
+						"woodcutter": {
+							"q": 1,
+							"r": 10
+						}
+					}
+				},
+				"p2": {
+					"failures": [],
+					"ok": true,
+					"road_paths": {
+						"barracks": [
+							{
+								"from_q": 14,
+								"from_r": 8,
+								"to_q": 14,
+								"to_r": 7
+							},
+							{
+								"from_q": 14,
+								"from_r": 7,
+								"to_q": 13,
+								"to_r": 7
+							},
+							{
+								"from_q": 13,
+								"from_r": 7,
+								"to_q": 12,
+								"to_r": 7
+							},
+							{
+								"from_q": 12,
+								"from_r": 7,
+								"to_q": 12,
+								"to_r": 6
+							},
+							{
+								"from_q": 12,
+								"from_r": 6,
+								"to_q": 11,
+								"to_r": 6
+							},
+							{
+								"from_q": 11,
+								"from_r": 6,
+								"to_q": 10,
+								"to_r": 6
+							},
+							{
+								"from_q": 10,
+								"from_r": 6,
+								"to_q": 9,
+								"to_r": 6
+							},
+							{
+								"from_q": 9,
+								"from_r": 6,
+								"to_q": 8,
+								"to_r": 6
+							}
+						],
+						"sawmill": [
+							{
+								"from_q": 14,
+								"from_r": 8,
+								"to_q": 13,
+								"to_r": 8
+							},
+							{
+								"from_q": 13,
+								"from_r": 8,
+								"to_q": 12,
+								"to_r": 8
+							},
+							{
+								"from_q": 12,
+								"from_r": 8,
+								"to_q": 11,
+								"to_r": 9
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 14,
+								"from_r": 8,
+								"to_q": 13,
+								"to_r": 9
+							},
+							{
+								"from_q": 13,
+								"from_r": 9,
+								"to_q": 12,
+								"to_r": 10
+							}
+						]
+					},
+					"sites": {
+						"barracks": {
+							"q": 8,
+							"r": 6
+						},
+						"sawmill": {
+							"q": 12,
+							"r": 8
+						},
+						"woodcutter": {
+							"q": 13,
+							"r": 10
+						}
+					}
+				},
+				"p3": {
+					"failures": [],
+					"ok": true,
+					"road_paths": {
+						"barracks": [
+							{
+								"from_q": 8,
+								"from_r": 2,
+								"to_q": 7,
+								"to_r": 3
+							},
+							{
+								"from_q": 7,
+								"from_r": 3,
+								"to_q": 6,
+								"to_r": 4
+							},
+							{
+								"from_q": 6,
+								"from_r": 4,
+								"to_q": 6,
+								"to_r": 5
+							},
+							{
+								"from_q": 6,
+								"from_r": 5,
+								"to_q": 6,
+								"to_r": 6
+							},
+							{
+								"from_q": 6,
+								"from_r": 6,
+								"to_q": 6,
+								"to_r": 7
+							}
+						],
+						"sawmill": [
+							{
+								"from_q": 8,
+								"from_r": 2,
+								"to_q": 7,
+								"to_r": 3
+							},
+							{
+								"from_q": 7,
+								"from_r": 3,
+								"to_q": 6,
+								"to_r": 4
+							},
+							{
+								"from_q": 6,
+								"from_r": 4,
+								"to_q": 6,
+								"to_r": 5
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 8,
+								"from_r": 2,
+								"to_q": 7,
+								"to_r": 3
+							},
+							{
+								"from_q": 7,
+								"from_r": 3,
+								"to_q": 6,
+								"to_r": 4
+							},
+							{
+								"from_q": 6,
+								"from_r": 4,
+								"to_q": 6,
+								"to_r": 5
+							},
+							{
+								"from_q": 6,
+								"from_r": 5,
+								"to_q": 6,
+								"to_r": 6
+							}
+						]
+					},
+					"sites": {
+						"barracks": {
+							"q": 6,
+							"r": 8
+						},
+						"sawmill": {
+							"q": 7,
+							"r": 5
+						},
+						"woodcutter": {
+							"q": 7,
+							"r": 6
+						}
+					}
+				},
+				"p4": {
+					"failures": [
+						{
+							"building_type": "barracks",
+							"reason": "NO_CHAIN_LAYOUT"
+						}
+					],
+					"ok": false,
+					"road_paths": {
+						"sawmill": [
+							{
+								"from_q": 8,
+								"from_r": 13,
+								"to_q": 9,
+								"to_r": 12
+							},
+							{
+								"from_q": 9,
+								"from_r": 12,
+								"to_q": 10,
+								"to_r": 11
+							},
+							{
+								"from_q": 10,
+								"from_r": 11,
+								"to_q": 10,
+								"to_r": 10
+							},
+							{
+								"from_q": 10,
+								"from_r": 10,
+								"to_q": 10,
+								"to_r": 9
+							},
+							{
+								"from_q": 10,
+								"from_r": 9,
+								"to_q": 9,
+								"to_r": 9
+							}
+						],
+						"woodcutter": [
+							{
+								"from_q": 8,
+								"from_r": 13,
+								"to_q": 7,
+								"to_r": 13
+							},
+							{
+								"from_q": 7,
+								"from_r": 13,
+								"to_q": 6,
+								"to_r": 13
+							}
+						]
+					},
+					"sites": {
+						"sawmill": {
+							"q": 10,
+							"r": 8
+						},
+						"woodcutter": {
+							"q": 7,
+							"r": 13
+						}
+					}
+				}
+			},
+			"scenario": "God-Strategy domination regression — combat-speed squads, proof tick cap 3000."
+		},
+		"resource_audit": {
+			"failures": [],
+			"ok": true,
+			"total_costs": {
+				"planks": 7,
+				"rations": 2,
+				"stone": 5,
+				"tools": 4
+			}
+		},
+		"scenario_path": "scenarios/god_strategy/god_strategy_domination_regression.json",
+		"viability": {
+			"ok": true,
+			"players": {
+				"p1": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 8,
+								"r": 10
+							}
+						],
+						"sawmill": [
+							{
+								"q": 6,
+								"r": 8
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 1,
+								"r": 10
+							}
+						]
+					}
+				},
+				"p2": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 8,
+								"r": 6
+							}
+						],
+						"sawmill": [
+							{
+								"q": 12,
+								"r": 8
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 13,
+								"r": 10
+							}
+						]
+					}
+				},
+				"p3": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 6,
+								"r": 8
+							}
+						],
+						"sawmill": [
+							{
+								"q": 6,
+								"r": 8
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 8,
+								"r": 5
+							}
+						]
+					}
+				},
+				"p4": {
+					"failures": [],
+					"ok": true,
+					"sites": {
+						"barracks": [
+							{
+								"q": 10,
+								"r": 7
+							}
+						],
+						"sawmill": [
+							{
+								"q": 8,
+								"r": 10
+							}
+						],
+						"woodcutter": [
+							{
+								"q": 7,
+								"r": 13
+							}
+						]
+					}
+				}
+			}
+		}
+	}
+}
