@@ -100,9 +100,12 @@ namespace God.Game
                         case Terrain.Mountain:
                         {
                             float ridge = f.Ridge(x, z);
-                            float valley = Mathf.SmoothStep(0f, 1f, (cd - cr) / 10f); // an open valley floor round the piles, not a wall of peaks
+                            // The piles sit in a pass that runs along the ranges, open at both ends, so the peaks never ring them.
+                            float lobe = f.Noise(Mathf.Atan2(z - f.Centre(h).y, x - f.Centre(h).x) * 9f + h * 31f, h * 17f, 6, 1f / 6f);
+                            float pass = f.PassDistance(h, x, z);
+                            float valley = Mathf.SmoothStep(0f, 1f, (pass - 7f - 6f * lobe) / 14f) * Mathf.SmoothStep(0f, 1f, (cd - cr * 0.7f) / 8f);
                             float pr = (0.025f + 0.09f * Mathf.SmoothStep(0f, 1f, (ridge - 0.10f) / 0.6f)) * dens * dens * fade * rim * valley; // squared: peaks carry the richness strongly
-                            if (r < pr) { it.Kind = IslandItem.Kinds.Peak; it.Scale = size * (0.65f + 0.6f * s); it.Radius = 6f * it.Scale; it.Bulky = true; add = true; }
+                            if (r < pr) { it.Kind = IslandItem.Kinds.Peak; it.Scale = size * (0.65f + 0.6f * s) * Mathf.Lerp(0.55f, 1f, Mathf.SmoothStep(0f, 1f, (cd - cr) / 30f)); it.Radius = 6f * it.Scale; it.Bulky = true; add = true; }
                             else if (r < pr + 0.035f * dens * k) { it.Kind = IslandItem.Kinds.Rock; it.Scale = 0.8f + 1.0f * s; it.Radius = 1.2f; add = true; }
                             else if (r < pr + 0.030f * dens * k * (1f - ridge)) { it.Kind = IslandItem.Kinds.Conifer; it.Scale = 0.7f + 0.3f * s; it.Radius = 1.6f; add = true; }
                             break;

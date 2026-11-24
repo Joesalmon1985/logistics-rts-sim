@@ -27,7 +27,7 @@ namespace God.Game
         private readonly Vector2[] _hqCorners;
 
         /// <summary>How far (m) the terrain lookup point is pushed by noise.</summary>
-        public const float WarpAmp = 30f;
+        public const float WarpAmp = 26f;
         /// <summary>Width (m) of the colour blend between two terrains.</summary>
         public const float BlendWidth = 7f;
         /// <summary>Base level of the sea surface (m).</summary>
@@ -86,8 +86,8 @@ namespace God.Game
         /// <summary>The domain warp: the point whose nearest hex centre decides the terrain.</summary>
         public void Warp(float x, float z, out float wx, out float wz)
         {
-            wx = x + (Fbm(x, z, 0, 1f / 85f) * 2f - 1f) * WarpAmp + (Noise(x, z, 2, 1f / 34f) * 2f - 1f) * 12f + (Noise(x, z, 2, 1f / 13f) * 2f - 1f) * 4f;
-            wz = z + (Fbm(x, z, 1, 1f / 85f) * 2f - 1f) * WarpAmp + (Noise(x, z, 3, 1f / 34f) * 2f - 1f) * 12f + (Noise(x, z, 3, 1f / 13f) * 2f - 1f) * 4f;
+            wx = x + (Fbm(x, z, 0, 1f / 85f) * 2f - 1f) * WarpAmp + (Noise(x, z, 2, 1f / 34f) * 2f - 1f) * 17f + (Noise(x, z, 2, 1f / 13f) * 2f - 1f) * 5f;
+            wz = z + (Fbm(x, z, 1, 1f / 85f) * 2f - 1f) * WarpAmp + (Noise(x, z, 3, 1f / 34f) * 2f - 1f) * 17f + (Noise(x, z, 3, 1f / 13f) * 2f - 1f) * 5f;
         }
 
         // ------------------------------------------------------------------ regions
@@ -213,11 +213,25 @@ namespace God.Game
         /// </summary>
         public float Ridge(float x, float z)
         {
-            float a = Hash01(5, 77) * Mathf.PI + (Noise(x, z, 7, 1f / 220f) - 0.5f) * 2.2f;
+            float a = RidgeAngle(x, z);
             float ca = Mathf.Cos(a), sa = Mathf.Sin(a);
             float u = x * ca + z * sa, v = (-x * sa + z * ca) * 2.6f;
             float n = Noise(u, v, 8, 1f / 75f) * 0.7f + Noise(u, v, 10, 1f / 28f) * 0.3f;
             return Mathf.SmoothStep(0f, 1f, (n - 0.40f) / 0.30f);
+        }
+
+        /// <summary>Direction (radians) the mountain ranges run at a point.</summary>
+        public float RidgeAngle(float x, float z) => Hash01(5, 77) * Mathf.PI + (Noise(x, z, 7, 1f / 220f) - 0.5f) * 2.2f;
+
+        /// <summary>
+        /// Distance (m) from a point to the pass through a mountain hex: a valley along the ranges' direction through the
+        /// pile clearing, so the piles sit in an open valley instead of a ring of peaks.
+        /// </summary>
+        public float PassDistance(int h, float x, float z)
+        {
+            float cx = _cx[h] + ClearingOffset.x, cz = _cz[h] + ClearingOffset.y;
+            float a = RidgeAngle(cx, cz);
+            return Mathf.Abs((x - cx) * -Mathf.Sin(a) + (z - cz) * Mathf.Cos(a));
         }
 
         /// <summary>Dune ripple 0..1 of the desert.</summary>

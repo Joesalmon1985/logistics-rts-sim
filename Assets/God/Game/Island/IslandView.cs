@@ -285,7 +285,7 @@ namespace God.Game
                     continue;
                 }
                 float fade = Mathf.Sin(k * Mathf.PI);
-                _mpb.SetColor("_Color", new Color(1.0f, 0.80f, 0.35f) * (0.32f * fade));
+                _mpb.SetColor("_Color", new Color(1.0f, 0.80f, 0.35f) * (0.45f * fade));
                 p.Glow.GetComponent<MeshRenderer>().SetPropertyBlock(_mpb);
                 if (props != null) props.transform.localPosition = new Vector3(0, Mathf.Abs(Mathf.Sin(k * Mathf.PI * 2f)) * 1.2f * (1f - k), 0);
             }
