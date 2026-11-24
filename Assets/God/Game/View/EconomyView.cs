@@ -199,8 +199,12 @@ namespace God.Game
             if (gone != null) foreach (int id in gone) { Destroy(_walkers[id].Root); _walkers.Remove(id); }
         }
 
+        /// <summary>The debug labels and stock text drawn by this view; the HUD turns them off (its strip and cards say it better).</summary>
+        public bool ShowDebugText = true;
+
         private void OnGUI()
         {
+            if (!ShowDebugText) return;
             var s = _sim.State; var e = s.Economy;
             if (e == null) return;
             if (_label == null)
