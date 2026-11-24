@@ -415,6 +415,8 @@ namespace God.Game
 
         // ---------------------------------------------------------------- frame update of the world markers
 
+        private bool _overlayWasPlacing;
+
         private void LateUpdate()
         {
             if (Boot == null) return;
@@ -422,7 +424,8 @@ namespace God.Game
             if (t.LastRollTick != _seenRoll) { _seenRoll = t.LastRollTick; _rollTime = Time.unscaledTime; }
             if (SelectedBuilding != 0 && t.BuildingById(SelectedBuilding) == null) SelectedBuilding = 0;
             if (Outcome != GameOutcome.Playing && Mode != HudMode.Normal) Cancel();
-            if (Boot.Territory != null) Boot.Territory.OverlayVisible = Placing;
+            // Only on a change, so other callers (tests, dev tools) may show the glow too.
+            if (Boot.Territory != null && Placing != _overlayWasPlacing) { _overlayWasPlacing = Placing; Boot.Territory.OverlayVisible = Placing; }
             RefreshSpots(t);
             DrawDynamic(t);
         }
