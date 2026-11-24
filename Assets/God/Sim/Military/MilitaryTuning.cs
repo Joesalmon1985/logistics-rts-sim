@@ -74,7 +74,9 @@ namespace God.Sim
         public const int FireFlashTicks = 3;
 
         // Enemy waves.
-        public const int WaveIntervalTicks = 900;       // 90 s
+        /// <summary>A grace period before the first wave, so a new player can build up (24 Nov smoke: at 90 s a passive town fell by 6.5 min).</summary>
+        public const int FirstWaveTicks = 4800;         // 8 min
+        public const int WaveIntervalTicks = 1200;      // 2 min
         public const int FirstWaveInfantry = 2;
         public const int FirstVehicleWave = 3;
 

@@ -141,7 +141,7 @@ namespace God.Sim
         // Waves.
         public int WaveNumber;
         /// <summary>Tick the next wave spawns at.</summary>
-        public long NextWaveTick = MilitaryTuning.WaveIntervalTicks;
+        public long NextWaveTick = MilitaryTuning.FirstWaveTicks;
         public bool WavesStopped;
         /// <summary>Dev switch for tests: false holds the wave clock without ending it for good.</summary>
         public bool WavesEnabled = true;

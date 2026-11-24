@@ -590,25 +590,25 @@ namespace God.Sim.Tests
         }
 
         [Test]
-        public void Waves_ComeEvery90s_WithTheRightComposition()
+        public void Waves_ComeOnTheirClock_WithTheRightComposition()
         {
             var b = Fortified();
-            b.Step(899);
+            b.Step(MilitaryTuning.FirstWaveTicks - 1);
             Assert.AreEqual(0, b.M.WaveNumber);
             Assert.AreEqual(1, b.M.TicksToNextWave(b.S.Tick));
             b.Step(1);
             Assert.AreEqual(1, b.M.WaveNumber);
-            b.Step(900 * 3);
+            b.Step(MilitaryTuning.WaveIntervalTicks * 3);
             var waves = b.Events<WaveSpawned>().ToList();
             Assert.AreEqual(4, waves.Count);
-            CollectionAssert.AreEqual(new long[] { 900, 1800, 2700, 3600 }, waves.Select(w => w.Tick).ToArray());
+            CollectionAssert.AreEqual(new long[] { MilitaryTuning.FirstWaveTicks, MilitaryTuning.FirstWaveTicks + MilitaryTuning.WaveIntervalTicks, MilitaryTuning.FirstWaveTicks + 2 * MilitaryTuning.WaveIntervalTicks, MilitaryTuning.FirstWaveTicks + 3 * MilitaryTuning.WaveIntervalTicks }, waves.Select(w => w.Tick).ToArray());
             CollectionAssert.AreEqual(new[] { 2, 3, 4, 5 }, waves.Select(w => w.Infantry).ToArray());
             CollectionAssert.AreEqual(new[] { 0, 0, 1, 2 }, waves.Select(w => w.Vehicles).ToArray());
 
             var spawned = b.Events<UnitSpawned>().Where(e => e.Faction == Faction.Enemy).ToList();
             Assert.AreEqual(2 + 3 + 5 + 7, spawned.Count);
-            foreach (var e in spawned.Where(e => e.Tick == 900)) Assert.AreEqual(UnitKind.Infantry, e.Kind);
-            Assert.AreEqual(1, spawned.Count(e => e.Tick == 2700 && e.Kind == UnitKind.Vehicle));
+            foreach (var e in spawned.Where(e => e.Tick == MilitaryTuning.FirstWaveTicks)) Assert.AreEqual(UnitKind.Infantry, e.Kind);
+            Assert.AreEqual(1, spawned.Count(e => e.Tick == MilitaryTuning.FirstWaveTicks + 2 * MilitaryTuning.WaveIntervalTicks && e.Kind == UnitKind.Vehicle));
             var barracks = b.T.Buildings.First(x => x.Kind == BuildingKinds.Barracks);
             var shop = b.T.Buildings.First(x => x.Kind == BuildingKinds.VehicleWorkshop);
             foreach (var e in spawned)
@@ -623,7 +623,7 @@ namespace God.Sim.Tests
         {
             var b = Fortified();
             Assert.IsTrue(b.Do(new PlaceBuilding(Faction.Player, b.Node(b.PlayerHq, -3, 0), BuildingSize.Small)).Ok);
-            b.Step(900);
+            b.Step(MilitaryTuning.FirstWaveTicks);
             var grp = b.M.WaveGroups.Single(g => g.Id != 0);
             var home = b.M.BuildingById(b.EnemyHq.Id);
             long best = long.MaxValue; int bestId = 0;
@@ -646,11 +646,11 @@ namespace God.Sim.Tests
             var b = new Bed(3, waves: true);
             b.Do(new RemoveBuilding(Faction.Enemy, b.EnemyKind(BuildingKinds.Barracks).Id));
             b.Do(new RemoveBuilding(Faction.Enemy, b.EnemyKind(BuildingKinds.VehicleWorkshop).Id));
-            b.Step(900);
+            b.Step(MilitaryTuning.FirstWaveTicks);
             Assert.IsTrue(b.M.WavesStopped);
             Assert.AreEqual(0, b.M.WaveNumber);
             Assert.AreEqual(-1, b.M.TicksToNextWave(b.S.Tick));
-            b.Step(1800);
+            b.Step(2 * MilitaryTuning.WaveIntervalTicks);
             Assert.AreEqual(0, b.M.Units.Count);
             Assert.AreEqual(1, b.Events<WavesStopped>().Count());
         }
@@ -661,7 +661,7 @@ namespace God.Sim.Tests
             var b = new Bed(3, waves: true);
             b.Do(new RemoveBuilding(Faction.Enemy, b.EnemyKind(BuildingKinds.VehicleWorkshop).Id));
             b.M.BuildingById(b.PlayerHq.Id).Health = b.M.BuildingById(b.PlayerHq.Id).MaxHealth = 100000000;
-            b.Step(2700);
+            b.Step(MilitaryTuning.FirstWaveTicks + 2 * MilitaryTuning.WaveIntervalTicks);
             Assert.AreEqual(3, b.M.WaveNumber);
             Assert.AreEqual(0, b.Events<UnitSpawned>().Count(e => e.Kind == UnitKind.Vehicle));
         }

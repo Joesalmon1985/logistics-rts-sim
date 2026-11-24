@@ -6,7 +6,16 @@ The full plan, rules and package order are in [`docs/UNITY_POC_PLAN.md`](docs/UN
 
 ## State
 
-Package P0 (project skeleton) is done: the Unity project, the pure C# sim core (seeded `Rng`, command/event tick loop at 10 Hz, hex topology, the 19-hex island deal with hidden numbers), the copied island terrain view, tests, a Windows build script and a boot scene that deals an island from a seed and shows it from the tilted god camera. There are no game rules yet. P1 (land, dice, territory) onwards adds them.
+The proof of concept is playable (24 Nov 2026). Packages P0 to P5 are merged on `unity/poc`:
+- the island deal and hidden dice;
+- territory, buildings and roads;
+- the economy with carriers and priorities;
+- the military with targets, defend flags and enemy waves;
+- the natural island look;
+- models;
+- the god HUD.
+
+How to play: [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
 
 ## Layout
 
@@ -14,7 +23,7 @@ Package P0 (project skeleton) is done: the Unity project, the pure C# sim core (
 |---|---|
 | `Assets/God/Sim` (`God.Sim`) | Pure C#, no UnityEngine. The whole game state and rules. Ticks in integers, receives commands. |
 | `Assets/God/Game` (`God.Game`) | Views, camera, HUD and input. Reads the sim, sends commands, never changes sim state. |
-| `Assets/God/Tests/EditMode`, `PlayMode` | NUnit tests. EditMode covers the sim, PlayMode the boot scene. |
+| `Assets/God/Tests/EditMode`, `PlayMode` | NUnit tests. EditMode covers the sim; PlayMode covers the scene, views, models and HUD. |
 | `Assets/God/Editor` | Editor code: the Windows build and the scene maker. |
 | `Assets/God/Scenes/Main.unity` | The boot scene. |
 | `DotNet/` | `God.Sim` and its tests compiled outside Unity (the `.cs` files are linked by glob). |
@@ -37,4 +46,8 @@ Install Unity 6000.3.28f1, then open this folder as a project (Unity Hub, or `un
 
 ## Play
 
-Open `Main.unity` and press Play, or run `GodOfTheIsland.exe`. Today it shows a freshly dealt island from the god camera (add `-godseed N` to the command line for another island). The build menu, dice and everything else arrive with later packages.
+Run `Builds/Windows/GodOfTheIsland.exe`, or open `Main.unity` and press Play. See [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
+
+## Smoke
+
+`GodOfTheIsland.exe -batchmode -nographics -godsmoke 15000 -logFile smoke.log` plays 25 sim-minutes headless with the chain bot, logs `SMOKE` lines and quits with exit code 0 on success.

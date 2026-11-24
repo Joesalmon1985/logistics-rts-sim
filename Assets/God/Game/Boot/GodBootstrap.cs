@@ -68,6 +68,7 @@ namespace God.Game
             Economy = EconomyView.Create(Sim, transform);
             Military = MilitaryView.Create(Sim, transform);
             ReadRunArgs();
+            SmokeRun.StartIfAsked(this);
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.62f, 0.70f, 0.82f);

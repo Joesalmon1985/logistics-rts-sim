@@ -101,7 +101,7 @@ You are a god looking down on an island. You never control a person directly. Yo
 - **Damage:** a destroyed building leaves rubble. Its plot can be built on again.
 - **Enemy base:**
   - an HQ, a barracks, a vehicle workshop and 3 other buildings, pre-placed on a far corner;
-  - a wave every 90 seconds, starting at 2 infantry and growing by 1 each wave, with a vehicle from wave 3;
+  - the first wave after 8 minutes, then one every 2 minutes, starting at 2 infantry and growing by 1 each wave, with a vehicle from wave 3. (The plan first said every 90 seconds. On 24 Nov the smoke run showed that a passive town fell by 6½ minutes.);
   - each wave attacks your nearest building.
 - **Win and lose:** destroy the enemy HQ to win. You lose if your HQ falls while you have no other HQ.
 
