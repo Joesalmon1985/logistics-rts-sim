@@ -46,7 +46,13 @@ You are a god looking down on an island. You never control a person directly. Yo
   - Each tile whose number comes up puts one **pile** of its raw goods at a harvest spot on the tile, inside your build area. Harvesters on that tile collect it.
   - A tile with no harvester holds up to 3 piles. After that, its piles go to waste.
 - A 7 does nothing for now.
-- Richness shows only as the size of the centrepiece (W package look).
+- Richness shows only through how dense and big the dressing is.
+- **Owner, 24 Nov:** the hexes are abstract. The sim stays a random set of hexes, but the island must *look* natural and uneven, with no visible hexagons, circles or rings:
+  - terrain borders wander;
+  - the coastline is irregular;
+  - dressing is scattered naturally.
+  
+  This is package P4a (`unity/p4-organic-look`).
 
 ### Territory and placement
 
