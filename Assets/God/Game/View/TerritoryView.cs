@@ -22,7 +22,16 @@ namespace God.Game
         public System.Func<int> Built;
 
         private GodSim _sim;
-        private GameObject _lit, _flat;
+        private GameObject _lit, _flat, _overlay;
+        /// <summary>The tiny dice tick drawn by this view; the HUD draws its own and turns this off.</summary>
+        public bool ShowDiceTick = true;
+        private bool _overlayVisible = true;
+        /// <summary>The build circles and the dots on buildable nodes: the HUD shows them only while placing.</summary>
+        public bool OverlayVisible
+        {
+            get => _overlayVisible;
+            set { _overlayVisible = value; if (_overlay != null) _overlay.SetActive(value); }
+        }
         private Material _litMat, _flatMat;
         private int _signature = int.MinValue;
         private long _seenRollTick;
@@ -92,9 +101,11 @@ namespace God.Game
             Rebuilds++;
             if (_lit != null) Destroy(_lit);
             if (_flat != null) Destroy(_flat);
+            if (_overlay != null) Destroy(_overlay);
             var t = s.Territory; var g = t.Grid;
             var lit = new MeshBuilder();
             var flat = new MeshBuilder();
+            var ring = new MeshBuilder(); // circles and dots (shown only while placing)
 
             // Build circles and the faint dots of buildable nodes.
             foreach (var hq in t.Hqs)
@@ -107,7 +118,7 @@ namespace God.Game
                 for (int k = 0; k < seg; k++)
                 {
                     float a0 = k * Mathf.PI * 2f / seg, a1 = (k + 1) * Mathf.PI * 2f / seg;
-                    flat.Strip(centre + new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)) * (float)c.Radius,
+                    ring.Strip(centre + new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)) * (float)c.Radius,
                                centre + new Vector3(Mathf.Cos(a1), 0, Mathf.Sin(a1)) * (float)c.Radius, 0.7f, col);
                 }
             }
@@ -117,7 +128,7 @@ namespace God.Game
                 foreach (int n in t.BuildableNodes(f))
                 {
                     if (t.NodeBuilding[n] != 0 || t.NodeFlag[n] != 0 || t.NodeRoad[n] != 0) continue;
-                    Dot(flat, P(g, n, DotY), 0.45f, dot);
+                    Dot(ring, P(g, n, DotY), 0.45f, dot);
                 }
             }
 
@@ -177,6 +188,9 @@ namespace God.Game
             _flat = flat.ToObject("Territory flat", transform, _flatMat);
             foreach (var r in _lit.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             foreach (var r in _flat.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _overlay = ring.ToObject("Territory overlay", transform, _flatMat);
+            _overlay.SetActive(_overlayVisible);
+            foreach (var r in _overlay.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
         private static void Dot(MeshBuilder mb, Vector3 c, float half, Color col)
@@ -199,6 +213,7 @@ namespace God.Game
         /// <summary>The tiny dice tick: a small square in the top-left corner that flashes on every roll. No number.</summary>
         private void OnGUI()
         {
+            if (!ShowDiceTick) return;
             float since = SinceRoll;
             float k = Mathf.Clamp01(1f - since / TickSeconds);
             float size = 14f + 10f * k;

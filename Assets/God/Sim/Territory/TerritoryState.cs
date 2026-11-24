@@ -240,7 +240,13 @@ namespace God.Sim
         /// so ties are deterministic). Interior nodes must be free land clear of medium buildings; the ends are not
         /// checked here (use <see cref="TerritoryRules.CheckRoad"/>). Null when there is no way.
         /// </summary>
-        public int[] FindRoadPath(int from, int to)
+        public int[] FindRoadPath(int from, int to) => FindRoadPath(from, to, null);
+
+        /// <summary>
+        /// As <see cref="FindRoadPath(int,int)"/>, but the path also keeps clear of the nodes in <paramref name="avoid"/>
+        /// (the part of a road being laid step by step, so the next stretch cannot cross it). Null avoids nothing.
+        /// </summary>
+        public int[] FindRoadPath(int from, int to, ICollection<int> avoid)
         {
             var g = Grid;
             if (!g.IsLand(from) || !g.IsLand(to)) return null;
@@ -255,7 +261,7 @@ namespace God.Sim
                 {
                     int v = g.Neighbour(u, d);
                     if (v < 0 || !g.IsLand(v) || prev.ContainsKey(v)) continue;
-                    if (v != to && (!NodeAt(v).IsFree || InMediumHalo(v))) continue;
+                    if (v != to && (!NodeAt(v).IsFree || InMediumHalo(v) || (avoid != null && avoid.Contains(v)))) continue;
                     prev[v] = u;
                     queue.Enqueue(v);
                 }

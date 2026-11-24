@@ -576,6 +576,20 @@ namespace God.Sim.Tests
         }
 
         [Test]
+        public void FindRoadPath_WithAvoid_KeepsClearOfThoseNodes_AndLeavesStateAlone()
+        {
+            var a = _t.FlagAtNode(N(1, -1)).Node;
+            var straight = _t.FindRoadPath(a, N(5, 3));
+            var avoid = new HashSet<int>(straight.Skip(1).Take(straight.Length - 2));
+            var around = _t.FindRoadPath(a, N(5, 3), avoid);
+            Assert.NotNull(around);
+            Assert.IsFalse(around.Skip(1).Take(around.Length - 2).Any(avoid.Contains), "none of the avoided nodes is used");
+            for (int i = 1; i < around.Length; i++) Assert.IsTrue(_g.Adjacent(around[i - 1], around[i]));
+            CollectionAssert.AreEqual(straight, _t.FindRoadPath(a, N(5, 3), null), "null avoids nothing");
+            Assert.IsNull(_t.FindRoadPath(a, N(5, 3), new HashSet<int>(_g.CircleNodes(N(5, 3)).Where(n => n != N(5, 3)))), "a fully fenced target has no way");
+        }
+
+        [Test]
         public void RoadJoinsTwoHqCircles_AndRoutesBetweenTheirFlags()
         {
             var topo = _s.Board.Topology;
