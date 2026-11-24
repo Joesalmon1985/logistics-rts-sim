@@ -109,6 +109,21 @@ namespace God.Game
             Quad(a - side, b - side, b + side, a + side, col);
         }
 
+        /// <summary>Empties the builder so it can be reused (dynamic meshes rebuilt each frame).</summary>
+        public void Clear() { _v.Clear(); _n.Clear(); _c.Clear(); _t.Clear(); }
+
+        /// <summary>Writes the shapes into an existing mesh (cleared first), for meshes rebuilt every frame.</summary>
+        public void ApplyTo(Mesh m)
+        {
+            m.Clear();
+            if (_v.Count > 65000) m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            m.SetVertices(_v);
+            m.SetNormals(_n);
+            m.SetColors(_c);
+            m.SetTriangles(_t, 0);
+            m.RecalculateBounds();
+        }
+
         public Mesh ToMesh(string name)
         {
             var m = new Mesh { name = name };
