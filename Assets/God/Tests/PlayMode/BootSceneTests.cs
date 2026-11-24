@@ -41,6 +41,7 @@ namespace God.Game.Tests
         {
             yield return SceneManager.LoadSceneAsync("Assets/God/Scenes/Main.unity", new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
+            GodBootstrap.Instance.Running = false; // the sim runs by default now; this test is about a still sim
             var board = GodBootstrap.Instance.Sim.State.Board;
             var terrain = (God.Sim.Terrain[])board.HexTerrain.Clone();
             var numbers = (int[])board.HexNumber.Clone();
