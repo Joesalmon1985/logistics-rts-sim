@@ -148,6 +148,9 @@ namespace God.Game.Tests
         [UnityTest]
         public IEnumerator Pulse_GlowsTheHex_AndFadesOut()
         {
+            // A scene left by an earlier test may still run its sim and pulse the dice; clear it first.
+            foreach (var b in Object.FindObjectsByType<GodBootstrap>(FindObjectsSortMode.None)) Object.Destroy(b.gameObject);
+            yield return null;
             const ulong seed = GodBootstrap.DefaultSeed;
             var v = IslandView.Create(GodSim.Create(seed).State.Board, seed, null, _root.transform);
             HexDressingView.Pulse(new[] { 3, 99 });

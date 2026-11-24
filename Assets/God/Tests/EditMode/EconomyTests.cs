@@ -500,6 +500,18 @@ namespace God.Sim.Tests
         }
     }
 
+    public class EconomyEnemyBaseTests
+    {
+        [Test]
+        public void EnemyBase_StartsFinished_NotAsSites()
+        {
+            var s = GodSim.Create(EconomyFullChainTests.ChainSeed).State;
+            var enemy = s.Economy.Buildings.Where(b => b.Faction == Faction.Enemy && !b.IsHq).ToList();
+            Assert.GreaterOrEqual(enemy.Count, 5);
+            Assert.IsTrue(enemy.All(b => b.Built), "the pre-placed enemy base is standing at the start");
+        }
+    }
+
     public class EconomyDeterminismTests
     {
         private static ulong Run(ulong seed, int ticks)

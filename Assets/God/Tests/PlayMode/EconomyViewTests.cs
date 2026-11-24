@@ -22,6 +22,7 @@ namespace God.Game.Tests
             yield return null;
             var boot = GodBootstrap.Instance;
             Assert.IsNotNull(boot.Economy, "the scene builds the economy view");
+            boot.Sim.State.Military.WavesEnabled = false; // this test measures the economy view, not the war
             boot.DebugSample();
             boot.Speed = 48f;
             Time.captureFramerate = 30; // fixed 1/30 s per frame, so the sim speed does not depend on how fast the machine renders

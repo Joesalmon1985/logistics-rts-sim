@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace God.Sim
 {
@@ -39,6 +40,8 @@ namespace God.Sim
             // Military first: it pre-places the enemy base, which the economy then records as already built.
             MilitaryModule.StartGame(s);
             EconomyModule.StartGame(s);
+            foreach (var b in s.Territory.Buildings.ToArray())
+                if (b.Faction == Faction.Enemy && b.Size != BuildingSize.Hq) EconomyModule.CompleteInstantly(s, b.Id);
             var sim = new GodSim(s);
             TerritoryModule.Install(sim);
             EconomyModule.Install(sim);
