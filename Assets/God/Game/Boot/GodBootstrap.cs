@@ -22,8 +22,15 @@ namespace God.Game
         /// <summary>The territory debug view (P1).</summary>
         public TerritoryView Territory { get; private set; }
 
+        /// <summary>The economy debug view (P2).</summary>
+        public EconomyView Economy { get; private set; }
+
         /// <summary>When true the bootstrap steps the sim at 10 Hz times <see cref="Speed"/>. Off by default; <c>-godrun</c> or F3 turns it on.</summary>
         public bool Running;
+
+        /// <summary>The scripted builder started by F2 (dev): it sends the commands of the full economy chain.</summary>
+        public ChainBot Chain { get; private set; }
+        private long _lastThink;
         public float Speed = 1f;
 
         private float _framedAspect = -1f;
@@ -37,6 +44,8 @@ namespace God.Game
             BoardSpace.Topo = Sim.State.Board.Topology;
             Island = HexDressingView.Create(Sim.State.Board, transform);
             Territory = TerritoryView.Create(Sim, transform);
+            Territory.Built = () => { int n = 0; foreach (var eb in Sim.State.Economy.Buildings) if (eb.Built) n++; return n; };
+            Economy = EconomyView.Create(Sim, transform);
             ReadRunArgs();
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
@@ -58,8 +67,10 @@ namespace God.Game
 
         private void Update()
         {
-            // Debug keys: F2 lays out the sample, F3 runs or pauses the sim, F4 doubles its speed (F5 halves it).
+            // Debug keys: F2 starts the full economy chain script, F3 runs or pauses the sim, F4 doubles its speed (F5 halves it),
+            // F6 lays out the P1 territory sample.
             if (Input.GetKeyDown(KeyCode.F2)) DebugSample();
+            if (Input.GetKeyDown(KeyCode.F6)) TerritorySample.Apply(Sim);
             if (Input.GetKeyDown(KeyCode.F3)) Running = !Running;
             if (Input.GetKeyDown(KeyCode.F4)) Speed = Mathf.Min(Speed * 2f, 64f);
             if (Input.GetKeyDown(KeyCode.F5)) Speed = Mathf.Max(Speed * 0.5f, 0.25f);
@@ -68,15 +79,21 @@ namespace God.Game
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
             if (steps > 0) Sim.Step(steps);
+            if (Chain != null && Sim.State.Tick - _lastThink >= 20) { _lastThink = Sim.State.Tick; Chain.Think(); }
             Sim.DrainEvents();
         }
 
-        /// <summary>Dev: places the sample layout through commands. Returns the refusals (empty when all went through).</summary>
+        /// <summary>
+        /// Dev: starts the scripted full chain (sawmill, quarry, woodcutter, kiln, clay pit, mine, smelter, farm, barracks,
+        /// vehicle workshop, with HQs and roads as needed), sending the same commands a player would, and runs the sim.
+        /// Returns the bot's log (empty at the start).
+        /// </summary>
         public System.Collections.Generic.List<string> DebugSample()
         {
-            var log = TerritorySample.Apply(Sim);
-            foreach (var l in log) Debug.LogWarning("TerritorySample: " + l);
-            return log;
+            Chain = new ChainBot(Sim);
+            _lastThink = Sim.State.Tick;
+            Running = true;
+            return Chain.Log;
         }
 
         private void ReadRunArgs()
