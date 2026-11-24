@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "guard_radius": 3,
-  "patrol_reengage_radius": 4,
-  "attack_move_scan_radius": 4,
-  "guard_chase_radius": 5,
-  "target_acquisition": "nearest",
-  "auto_acquire_idle": 1
-}
