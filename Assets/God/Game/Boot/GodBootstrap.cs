@@ -22,6 +22,9 @@ namespace God.Game
         /// <summary>The territory debug view (P1).</summary>
         public TerritoryView Territory { get; private set; }
 
+        /// <summary>The military debug view (P3).</summary>
+        public MilitaryView Military { get; private set; }
+
         /// <summary>When true the bootstrap steps the sim at 10 Hz times <see cref="Speed"/>. Off by default; <c>-godrun</c> or F3 turns it on.</summary>
         public bool Running;
         public float Speed = 1f;
@@ -37,6 +40,7 @@ namespace God.Game
             BoardSpace.Topo = Sim.State.Board.Topology;
             Island = HexDressingView.Create(Sim.State.Board, transform);
             Territory = TerritoryView.Create(Sim, transform);
+            Military = MilitaryView.Create(Sim, transform);
             ReadRunArgs();
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
@@ -63,6 +67,10 @@ namespace God.Game
             if (Input.GetKeyDown(KeyCode.F3)) Running = !Running;
             if (Input.GetKeyDown(KeyCode.F4)) Speed = Mathf.Min(Speed * 2f, 64f);
             if (Input.GetKeyDown(KeyCode.F5)) Speed = Mathf.Max(Speed * 0.5f, 0.25f);
+            if (Input.GetKeyDown(KeyCode.F6)) DebugSpawnSquad();
+            if (Input.GetKeyDown(KeyCode.F7)) DebugMarkNearestEnemy();
+            if (Input.GetKeyDown(KeyCode.F8)) DebugDefendHq();
+            if (Input.GetKeyDown(KeyCode.F9)) DebugFight();
             if (!Running) return;
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
@@ -79,6 +87,48 @@ namespace God.Game
             return log;
         }
 
+        /// <summary>Dev (F6): three infantry and two vehicles for the player, at the player HQ.</summary>
+        public void DebugSpawnSquad()
+        {
+            var hq = Sim.State.Territory.HqsOf(Faction.Player)[0];
+            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, hq.Node));
+            for (int i = 0; i < 2; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Vehicle, hq.Node));
+        }
+
+        /// <summary>Dev (F7): marks the enemy building nearest the player HQ, after the ones already marked.</summary>
+        public void DebugMarkNearestEnemy()
+        {
+            var t = Sim.State.Territory; var m = Sim.State.Military; var g = t.Grid;
+            var hq = t.HqsOf(Faction.Player)[0];
+            Building best = null; int bd = int.MaxValue;
+            foreach (var b in t.Buildings)
+            {
+                if (b.Faction != Faction.Enemy || m.Marked.Contains(b.Id)) continue;
+                int d = g.Distance(b.Node, hq.Node);
+                if (d < bd) { bd = d; best = b; }
+            }
+            if (best != null) Sim.Submit(new MarkTarget(best.Id));
+        }
+
+        /// <summary>Dev (F8): a defend flag with two guards on the player HQ.</summary>
+        public void DebugDefendHq()
+        {
+            Sim.Submit(SetDefend.OnBuilding(Sim.State.Territory.HqsOf(Faction.Player)[0].Id, 2));
+        }
+
+        /// <summary>Dev (F9): a ready-made fight at the enemy base: five player units, three enemy infantry, all enemy buildings marked.</summary>
+        public void DebugFight()
+        {
+            var t = Sim.State.Territory; var g = t.Grid;
+            var eh = t.HqsOf(Faction.Enemy)[0];
+            int at(int di, int dj) { int n = g.Id(g.I(eh.Node) + di, g.J(eh.Node) + dj); return g.IsLand(n) ? n : eh.Node; }
+            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, at(-5 + i, 2)));
+            for (int i = 0; i < 2; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Vehicle, at(-6, i)));
+            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(Faction.Enemy, UnitKind.Infantry, at(-1 - i, 3)));
+            foreach (var b in t.Buildings) if (b.Faction == Faction.Enemy) Sim.Submit(new MarkTarget(b.Id));
+            DebugDefendHq();
+        }
+
         private void ReadRunArgs()
         {
             var args = System.Environment.GetCommandLineArgs();
@@ -86,6 +136,7 @@ namespace God.Game
             {
                 if (args[i] == "-godrun") Running = true;
                 else if (args[i] == "-godsample") DebugSample();
+                else if (args[i] == "-godfight") DebugFight();
                 else if (args[i] == "-godspeed" && i + 1 < args.Length && float.TryParse(args[i + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var sp)) Speed = sp;
             }
         }
