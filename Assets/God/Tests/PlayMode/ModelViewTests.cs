@@ -74,7 +74,7 @@ namespace God.Game.Tests
             boot.Speed = 24f;
             Time.captureFramerate = 30;
             int maxWalkers = 0, maxSites = 0, maxCarrying = 0, maxTools = 0;
-            bool townShot = false;
+            bool townShot = false; int townScore = 0;
             int frames = 0;
             while (s.Tick < 9000 && frames++ < 12000)
             {
@@ -87,23 +87,24 @@ namespace God.Game.Tests
                 if (frames % 60 == 0)
                     foreach (var b in s.Economy.Buildings.Where(b => b.Built))
                         Assert.Greater(eco.Buildings.CountBuilt(b.IsHq ? TerritoryTuning.HqKind : b.Kind, b.Faction), 0, b.Kind + " " + b.Id + " drawn");
-                if (!townShot && s.Tick > 3000 && frames % 10 == 0 && eco.Walkers.CarryingNow >= 2 && s.Economy.Buildings.Any(x => !x.Built && !x.IsHq && x.Faction == Faction.Player && s.Economy.SiteProgressPermille(x.Id) >= 450
-                    && s.Economy.Buildings.Count(y => y.Built && y.Faction == Faction.Player && (At(g, y.Node) - At(g, x.Node)).magnitude < 30f) >= 3))
+                // The town picture: retaken whenever a better moment comes (a site going up, carriers loaded near it, town round it).
+                if (s.Tick > 2500 && frames % 15 == 0)
                 {
-                    townShot = true;
-                    float keep = boot.Speed; boot.Speed = 1f;
-                    for (int i = 0; i < 20; i++) yield return null;
-                    var pts = s.Economy.Buildings.Where(b => b.Faction == Faction.Player).Select(b => At(g, b.Node)).ToList();
-                    // The site with the most of the town round it.
-                    var site = s.Economy.Buildings.Where(b => !b.Built && b.Faction == Faction.Player && s.Economy.SiteProgressPermille(b.Id) >= 450)
-                        .OrderByDescending(b => (b.IsHq ? -100 : 0) + pts.Count(p => (p - At(g, b.Node)).magnitude < 30f)).First();
-                    var sp = At(g, site.Node);
-                    var near = pts.Where(p => (p - sp).magnitude < 30f).ToList();
-                    var c = near.Aggregate(Vector3.zero, (a, p) => a + p) / near.Count;
-                    Aim(cam, Vector3.Lerp(c, sp, 0.6f), 52f, 50f);
-                    yield return null;
-                    Shot(cam, "p4b_town.png");
-                    boot.Speed = keep;
+                    var pts = s.Economy.Buildings.Where(b => b.Faction == Faction.Player && b.Built).Select(b => At(g, b.Node)).ToList();
+                    var loaded = s.Economy.Walkers.Where(w => w.Loaded && w.CurrentNode >= 0 && w.Faction == Faction.Player).Select(w => At(g, w.CurrentNode)).ToList();
+                    foreach (var x in s.Economy.Buildings.Where(b => !b.Built && !b.IsHq && b.Faction == Faction.Player))
+                    {
+                        var sp = At(g, x.Node);
+                        int score = pts.Count(p => (p - sp).magnitude < 30f) * 2 + loaded.Count(p => (p - sp).magnitude < 30f) * 3 + (s.Economy.SiteProgressPermille(x.Id) >= 450 ? 4 : 0);
+                        if (score <= townScore) continue;
+                        townScore = score; townShot = true;
+                        var near = pts.Where(p => (p - sp).magnitude < 30f).ToList();
+                        var c = near.Count > 0 ? near.Aggregate(Vector3.zero, (q, p) => q + p) / near.Count : sp;
+                        Aim(cam, Vector3.Lerp(c, sp, 0.6f), 58f, 50f);
+                        yield return null;
+                        Shot(cam, "p4b_town.png");
+                        break;
+                    }
                 }
             }
             Time.captureFramerate = 0;
@@ -130,7 +131,8 @@ namespace God.Game.Tests
             for (int i = 0; i < 3; i++) yield return null;
             Shot(cam, "p4b_island.png", 1920, 1080);
             var ehq = s.Territory.HqsOf(Faction.Enemy)[0];
-            Aim(cam, At(g, ehq.Node) + new Vector3(0, 0, 4f), 75f, 50f);
+            var epts = s.Territory.Buildings.Where(b => b.Faction == Faction.Enemy).Select(b => At(g, b.Node)).ToList();
+            Aim(cam, epts.Aggregate(Vector3.zero, (q, p) => q + p) / epts.Count, 78f, 50f);
             for (int i = 0; i < 3; i++) yield return null;
             Shot(cam, "p4b_enemy.png");
 

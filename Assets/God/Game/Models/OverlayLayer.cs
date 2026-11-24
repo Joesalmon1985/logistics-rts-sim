@@ -61,7 +61,7 @@ namespace God.Game
                 {
                     var b = m.BuildingById(m.Marked[i]);
                     if (b == null) continue;
-                    var mk = Get(_targets, ti++, PropModels.TargetStandard(), new Vector3(0, 5.3f, -0.9f), 0.2f, new Color(0.18f, 0.12f, 0.08f));
+                    var mk = Get(_targets, ti++, PropModels.TargetStandard(), new Vector3(0, 6.0f, -0.9f), 0.2f, new Color(0.18f, 0.12f, 0.08f));
                     float r = RadiusOf(b.Size);
                     var p = new Vector3(b.X / 1000f, 0, b.Z / 1000f) - right * r * 0.8f + back * r * 0.6f;
                     mk.Go.transform.SetPositionAndRotation(ModelKit.OnGround(p.x, p.z), rot);

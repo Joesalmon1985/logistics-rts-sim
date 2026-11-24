@@ -125,8 +125,8 @@ namespace God.Game
                 mb.Box(tower + Vector3.up * 4.75f, new Vector3(3.3f, 0.25f, 3.3f), st.Frame);
                 mb.Box(tower + Vector3.up * 6.5f, new Vector3(3.5f, 0.25f, 3.5f), st.Accent);
                 mb.Cone(tower + Vector3.up * 6.6f, 2.7f, 3.2f, 8, st.Roof);
-                Banner(mb, rig, tower + Vector3.up * 9.5f, 2.6f, st);
-                rig.Height = 12.5f;
+                Banner(mb, rig, tower + Vector3.up * 9.2f, 4.2f, st);
+                rig.Height = 13.4f;
             }
             else
             {
@@ -140,7 +140,7 @@ namespace God.Game
                 }
                 mb.Box(tower + Vector3.up * 7.75f, new Vector3(3.7f, 0.3f, 3.7f), st.Accent);
                 mb.Box(tower + new Vector3(0, 5.2f, 1.72f), new Vector3(0.5f, 1.0f, 0.1f), ModelKit.Soot);
-                Banner(mb, rig, tower + Vector3.up * 8.0f, 4f, st);
+                Banner(mb, rig, tower + Vector3.up * 8.0f, 4.2f, st);
                 rig.Height = 12.5f;
             }
             ModelKit.Chimney(mb, new Vector3(-3.6f, 5.2f, -2.4f), 1.6f, 0.4f, st.Stone ? st.Wall * 0.9f : ModelKit.Rock);

@@ -227,7 +227,10 @@ namespace God.Game
             // Banner: lowered to half mast when paused; a gentle sway.
             v.BannerDrop = Mathf.MoveTowards(v.BannerDrop, paused ? 2.3f : 0f, dt * 3f);
             v.Banner.localPosition = rig.BannerTop + Vector3.down * v.BannerDrop;
-            v.Banner.localRotation = Quaternion.Euler(0, 180f + Mathf.Sin(_time * 1.3f + v.Seed * 6f) * 10f, 0);
+            // The cloth turns to face the camera (a flat cloth seen edge-on would vanish), swaying a little.
+            var cam = Camera.main;
+            float camYaw = cam != null ? cam.transform.eulerAngles.y : 0f;
+            v.Banner.rotation = Quaternion.Euler(0, camYaw + 20f + Mathf.Sin(_time * 1.3f + v.Seed * 6f) * 10f, 0);
 
             if (v.Wheel != null && working) v.Wheel.localRotation *= Quaternion.Euler(rig.WheelSpeed * dt, 0, 0);
             if (v.Worker != null)
@@ -249,7 +252,6 @@ namespace God.Game
             if (missing)
             {
                 v.Icon.transform.localPosition = new Vector3(0, rig.Height + 1.4f + Mathf.Sin(_time * 2f + v.Seed) * 0.2f, 0);
-                var cam = Camera.main;
                 if (cam != null) v.Icon.transform.rotation = cam.transform.rotation;
             }
 
