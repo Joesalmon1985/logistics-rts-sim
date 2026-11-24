@@ -34,7 +34,13 @@ namespace God.Game
         public EconomyView Economy { get; private set; }
 
         /// <summary>When true the bootstrap steps the sim at 10 Hz times <see cref="Speed"/>. Off by default; <c>-godrun</c> or F3 turns it on.</summary>
-        public bool Running;
+        public bool Running = true;
+        /// <summary>The god HUD and input (P5).</summary>
+        public GodHud Hud { get; private set; }
+        /// <summary>The god camera controls (P5).</summary>
+        public GodCameraRig Rig { get; private set; }
+        /// <summary>Seed for the next scene load (set by the end cards); consumed by the next bootstrap.</summary>
+        public static ulong? PendingSeed;
         /// <summary>The seed the island was dealt (and dressed) from.</summary>
         public ulong Seed => seed;
 
@@ -50,6 +56,7 @@ namespace God.Game
         {
             Instance = this;
             seed = SeedFromCommandLine(seed);
+            if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
             Sim = GodSim.Create(seed);
             BoardSpace.Topo = Sim.State.Board.Topology;
             if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)
@@ -77,6 +84,31 @@ namespace God.Game
             GodCamera.clearFlags = CameraClearFlags.SolidColor;
             GodCamera.backgroundColor = new Color(0.62f, 0.78f, 0.90f);
             EnsureSun();
+
+            Rig = GodCameraRig.Attach(GodCamera);
+            if (Island != null) Rig.HeightAt = (x, z) => Island.HeightAt(new Vector3(x, 0f, z));
+            Hud = GodHud.Create(this, Rig);
+        }
+
+        /// <summary>The seed the next game uses: the same one, or a fresh one for a new island. Sets <see cref="PendingSeed"/>.</summary>
+        public ulong PrepareRestart(bool newIsland)
+        {
+            ulong next = seed;
+            if (newIsland)
+            {
+                // View-side only (not sim state): any fresh seed will do.
+                next = (ulong)System.DateTime.UtcNow.Ticks * 6364136223846793005UL + 1442695040888963407UL + seed;
+                next %= 1000000000UL; if (next == seed) next++;
+            }
+            PendingSeed = next;
+            return next;
+        }
+
+        /// <summary>Reloads the scene: the same island ("Play again") or a new one.</summary>
+        public void Restart(bool newIsland)
+        {
+            PrepareRestart(newIsland);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
         }
 
         private void Update()
@@ -92,7 +124,9 @@ namespace God.Game
             if (Input.GetKeyDown(KeyCode.F7)) DebugMarkNearestEnemy();
             if (Input.GetKeyDown(KeyCode.F8)) DebugDefendHq();
             if (Input.GetKeyDown(KeyCode.F9)) DebugFight();
-            if (!Running) return;
+            if (Sim.State.Military != null && Sim.State.Military.IsGameOver) return;
+            // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
+            if (!Running) { if (Sim.PendingCommands.Count > 0) { Sim.Step(); Sim.DrainEvents(); } return; }
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
@@ -173,7 +207,8 @@ namespace God.Game
             if (GodCamera != null && !Mathf.Approximately(_framedAspect, GodCamera.aspect))
             {
                 _framedAspect = GodCamera.aspect;
-                IslandCamera.Frame(GodCamera, BoardSpace.BoardRadius + 40f);
+                if (Rig != null) Rig.Reframe(BoardSpace.BoardRadius + 40f);
+                else IslandCamera.Frame(GodCamera, BoardSpace.BoardRadius + 40f);
             }
         }
 
