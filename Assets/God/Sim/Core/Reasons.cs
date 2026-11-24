@@ -20,6 +20,10 @@ namespace God.Sim
         public const string BadRoad = "bad_road";
         public const string NotOnRoad = "not_on_road";
 
+        // P2: economy
+        public const string WrongTerrain = "wrong_terrain";
+        public const string NotAnInput = "not_an_input";
+
         public static string Sentence(string code, params object[] args)
         {
             switch (code)
@@ -38,6 +42,8 @@ namespace God.Sim
                 case CannotRemove: return "That cannot be removed.";
                 case BadRoad: return args != null && args.Length > 0 && args[0] is string s ? s : "That road cannot be laid.";
                 case NotOnRoad: return "A flag goes on one of your road nodes.";
+                case WrongTerrain: return "That building needs different land.";
+                case NotAnInput: return "That building does not take that ware.";
                 default: return code;
             }
         }

@@ -12,6 +12,8 @@ namespace God.Sim
         public int Corner;
         /// <summary>The node under the HQ: the node a corner sits on.</summary>
         public int Node;
+        /// <summary>True while the HQ is only a construction site (P2): it has no build circle and gives no reach yet.</summary>
+        public bool Site;
     }
 
     public sealed class Building
@@ -150,10 +152,11 @@ namespace God.Sim
         public Flag FlagAtNode(int node) => NodeFlag[node] == 0 ? null : FlagById(NodeFlag[node]);
         public Road RoadAtNode(int node) => NodeRoad[node] == 0 ? null : RoadById(NodeRoad[node]);
 
+        /// <summary>The finished HQs of a faction (an HQ still being built is not listed).</summary>
         public List<Hq> HqsOf(Faction f)
         {
             var l = new List<Hq>();
-            foreach (var h in Hqs) if (h.Faction == f) l.Add(h);
+            foreach (var h in Hqs) if (h.Faction == f && !h.Site) l.Add(h);
             return l;
         }
 
@@ -167,7 +170,7 @@ namespace God.Sim
         public List<HqCircle> Circles()
         {
             var l = new List<HqCircle>();
-            foreach (var h in Hqs) l.Add(CircleOf(h));
+            foreach (var h in Hqs) if (!h.Site) l.Add(CircleOf(h));
             return l;
         }
 
@@ -176,7 +179,7 @@ namespace God.Sim
         {
             var g = Grid;
             if (!g.IsLand(node)) return false;
-            foreach (var h in Hqs) if (h.Faction == f && g.InCircle(h.Node, node)) return true;
+            foreach (var h in Hqs) if (h.Faction == f && !h.Site && g.InCircle(h.Node, node)) return true;
             return false;
         }
 
@@ -186,7 +189,7 @@ namespace God.Sim
             var g = Grid;
             var set = new SortedSet<int>();
             foreach (var h in Hqs)
-                if (h.Faction == f)
+                if (h.Faction == f && !h.Site)
                     foreach (int n in g.CircleNodes(h.Node)) if (g.IsLand(n)) set.Add(n);
             return new List<int>(set);
         }

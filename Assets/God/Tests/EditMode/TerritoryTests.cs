@@ -206,7 +206,7 @@ namespace God.Sim.Tests
         private static string Why(GodSim sim, Command c) => sim.Check(c).Reason;
 
         [Test]
-        public void LegalHq_AtTwoCornerSteps_AppearsAtTheNextTick()
+        public void LegalHq_AtTwoCornerSteps_BecomesASiteAtTheNextTick_AndAnHqWhenCompleted()
         {
             var sim = GodSim.Create(3); var s = sim.State;
             var p = s.Territory.HqsOf(Faction.Player).Single();
@@ -214,8 +214,13 @@ namespace God.Sim.Tests
             Assert.IsTrue(sim.Submit(new PlaceHq(Faction.Player, c)).Ok);
             Assert.AreEqual(1, s.Territory.HqsOf(Faction.Player).Count);
             sim.Step();
+            // P2: the HQ is now a construction site (no circle, no reach) until the economy carries its wares.
+            Assert.AreEqual(2, s.Territory.Hqs.Count(h => h.Faction == Faction.Player));
+            Assert.AreEqual(1, s.Territory.HqsOf(Faction.Player).Count, "a site is not a finished HQ");
+            Assert.IsTrue(s.Territory.Hqs.Single(h => h.Corner == c).Site);
+            Assert.IsTrue(sim.DrainEvents().OfType<BuildingPlaced>().Any(e => e.Size == BuildingSize.Hq));
+            TerritoryRules.CompleteHq(s, s.Territory.Hqs.Single(h => h.Corner == c).Id, null);
             Assert.AreEqual(2, s.Territory.HqsOf(Faction.Player).Count);
-            Assert.IsTrue(sim.DrainEvents().OfType<HqPlaced>().Any(e => e.Corner == c));
             Assert.AreEqual(1, s.Territory.Buildings.Count(b => b.Node == s.Territory.Grid.CornerNode(c)));
             Assert.AreNotEqual(0, s.Territory.NodeFlag[s.Territory.Grid.FlagNodeOf(s.Territory.Grid.CornerNode(c))], "the new HQ has a flag");
         }
@@ -576,7 +581,7 @@ namespace God.Sim.Tests
             var topo = _s.Board.Topology;
             int target = topo.Corners.First(c => topo.VertexHexes(c).Count == 3 && topo.CornerDistance(_hq.Corner, c) == 2 && _sim.Check(new PlaceHq(Faction.Player, c)).Ok);
             Assert.IsTrue(Do(new PlaceHq(Faction.Player, target)).Ok);
-            var hq2 = _t.HqsOf(Faction.Player).Single(h => h.Corner == target);
+            var hq2 = _t.Hqs.Single(h => h.Faction == Faction.Player && h.Corner == target);
             var a = _t.FlagAtNode(_g.FlagNodeOf(_hq.Node));
             var b = _t.FlagAtNode(_g.FlagNodeOf(hq2.Node));
             var path = _t.FindRoadPath(a.Node, b.Node);

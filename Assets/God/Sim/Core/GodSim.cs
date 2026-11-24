@@ -36,8 +36,10 @@ namespace God.Sim
             var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim") };
             s.Board = BoardGenerator.CreateIslandBoard(seed);
             TerritoryModule.StartGame(s);
+            EconomyModule.StartGame(s);
             var sim = new GodSim(s);
             TerritoryModule.Install(sim);
+            EconomyModule.Install(sim);
             return sim;
         }
 
