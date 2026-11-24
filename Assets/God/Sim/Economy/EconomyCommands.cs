@@ -24,7 +24,7 @@ namespace God.Sim
             var b = s.Economy?.Find(c.BuildingId);
             if (b == null || b.IsHq) return CommandResult.RejectDefault(Reasons.NoSuchThing);
             if (b.Faction != c.Faction) return CommandResult.RejectDefault(Reasons.NotOwner);
-            if (c.Ware == Ware.None || (int)c.Ware >= Wares.Count || b.Wanted[(int)c.Ware] <= 0) return CommandResult.RejectDefault(Reasons.NotAnInput);
+            if (c.Ware == Ware.None || (int)c.Ware >= Wares.Count || (b.Def.Cost[(int)c.Ware] <= 0 && b.Def.In[(int)c.Ware] <= 0)) return CommandResult.RejectDefault(Reasons.NotAnInput);
             return CommandResult.Accept();
         }
         protected override CommandResult Validate(GodState s, SetInputPriority c) => Check(s, c);

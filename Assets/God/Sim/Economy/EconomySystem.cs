@@ -95,7 +95,7 @@ namespace God.Sim
                         break;
                     default:
                         if (home == null || !home.IsHq) { Kill(e, w); break; }
-                        if (w.Phase == WalkerPhase.Outbound && (e.Find(w.SrcId) == null || e.Find(w.DstId) == null))
+                        if (w.Phase == WalkerPhase.Outbound && (e.Find(w.SrcId) == null || !DstWants(e, w)))
                         {
                             ReleaseJob(e, w);
                             ClearJob(w);
@@ -139,6 +139,13 @@ namespace God.Sim
                     if (e.Find(w.Home) is EcoBuilding hb && hb.HarvestWalker == WalkerIdOf(w)) hb.HarvestWalker = 0;
                     break;
             }
+        }
+
+        /// <summary>The destination still exists and still asks for the ware (a site finished at once no longer does).</summary>
+        private static bool DstWants(EconomyState e, Walker w)
+        {
+            var d = e.Find(w.DstId);
+            return d != null && (w.DstIsHq || d.Wanted[(int)w.JobWare] > 0);
         }
 
         private static int WalkerIdOf(Walker w) => w.Id < 0 ? -w.Id - 1 : w.Id;
@@ -253,6 +260,16 @@ namespace God.Sim
             if (hex < 0 || RawKinds.OfTerrain(s.Board.HexTerrain[hex]) != d.Harvests) { b.Status = BuildStatus.WrongTerrain; return; }
             if (b.Out[(int)d.HarvestWare] + EconomyTuning.WaresPerPile > EconomyTuning.OutputCap) { b.Status = BuildStatus.OutputFull; return; }
             if (t.Piles[hex] - e.PilesReserved[hex] <= 0) { b.Status = BuildStatus.NoPiles; return; }
+            // Sharing a hex: the harvester with the fewest trips so far goes first, ties to the lower id.
+            foreach (var o in e.Buildings)
+            {
+                if (o == b || o.IsHq || !o.Built || o.Paused || o.Hex != hex || o.HarvestWalker != 0) continue;
+                var od = o.Def;
+                if (od.Role != BuildingRole.Harvester || od.Harvests != d.Harvests) continue;
+                if (o.Out[(int)od.HarvestWare] + EconomyTuning.WaresPerPile > EconomyTuning.OutputCap) continue;
+                if (o.Claims < b.Claims || (o.Claims == b.Claims && o.Id < b.Id)) { b.Status = BuildStatus.NoPiles; return; }
+            }
+            b.Claims++;
             var g = t.Grid;
             var path = StraightPath(g, b.Node, g.HexCentreNode(hex));
             var w = new Walker { Id = e.NextWalkerId++, Kind = WalkerKind.Harvester, Faction = b.Faction, Home = b.Id, Phase = WalkerPhase.Outbound, Path = path, Target = hex };
@@ -531,6 +548,7 @@ namespace God.Sim
                         if (home != null)
                         {
                             home.Out[(int)w.JobWare] += EconomyTuning.WaresPerPile;
+                            home.Produced++;
                             home.HarvestWalker = 0;
                         }
                         Retire(w);
@@ -586,7 +604,7 @@ namespace God.Sim
                 {
                     var dst = e.Find(w.DstId);
                     int here = w.Path[w.Path.Length - 1];
-                    if (dst == null || (w.DstIsHq && !dst.Built))
+                    if (dst == null || (w.DstIsHq && !dst.Built) || (!w.DstIsHq && dst.Wanted[wi] <= 0))
                     {
                         // Destination gone: take it to the nearest HQ, or lose it.
                         var fl = t.FlagAtNode(here);

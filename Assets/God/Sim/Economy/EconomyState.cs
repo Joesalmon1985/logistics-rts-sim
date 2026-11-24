@@ -67,7 +67,10 @@ namespace God.Sim
         public bool Working;
         public int WorkLeft;
         public int HarvestWalker;
+        /// <summary>Cycles finished (harvester trips returned, workshop cycles, units).</summary>
         public int Produced;
+        /// <summary>Harvester trips begun; the harvester with the fewest goes first when several share a hex.</summary>
+        public int Claims;
 
         // ---- HQ ----
         public int[] Stock = new int[Wares.Count];

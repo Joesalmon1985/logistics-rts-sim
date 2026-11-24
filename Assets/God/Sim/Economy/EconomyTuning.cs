@@ -8,8 +8,8 @@ namespace God.Sim
         public const int CarriersPerHq = 6;
         /// <summary>Builders each HQ holds.</summary>
         public const int BuildersPerHq = 2;
-        /// <summary>Ticks a carrier takes per lattice step (5 m): 0.5 s.</summary>
-        public const int CarrierStepTicks = 5;
+        /// <summary>Ticks a carrier takes per lattice step (5 m): 0.3 s.</summary>
+        public const int CarrierStepTicks = 3;
         public const int BuilderStepTicks = 6;
         public const int HarvesterStepTicks = 6;
 
@@ -21,7 +21,7 @@ namespace God.Sim
 
         // ---- harvesting ----
         /// <summary>Wares one pile gives (a pile is a cartload).</summary>
-        public const int WaresPerPile = 3;
+        public const int WaresPerPile = 4;
         /// <summary>Ticks a harvester spends at the pile.</summary>
         public const int GatherTicks = 20;
 
