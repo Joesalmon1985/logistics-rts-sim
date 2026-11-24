@@ -102,6 +102,8 @@ namespace God.Game
         public static void Pulse(IEnumerable<int> hexes)
         {
             if (hexes == null) return;
+            // P4a: the organic island has its own soft glow over each hex's region; the old look is used only when built.
+            if (Instance == null && IslandView.Instance != null) { IslandView.Instance.Pulse(hexes); return; }
             EnsurePulseRoot();
             foreach (int h in hexes)
             {
@@ -127,7 +129,11 @@ namespace God.Game
         /// <summary>Hex ids that are pulsing now (for tests and the demo).</summary>
         public static IReadOnlyCollection<int> PulsingNow
         {
-            get { var l = new List<int>(); foreach (var kv in Active) if (kv.Value.T > 0f) l.Add(kv.Key); return l; }
+            get
+            {
+                if (Instance == null && IslandView.Instance != null) return IslandView.Instance.PulsingNow;
+                var l = new List<int>(); foreach (var kv in Active) if (kv.Value.T > 0f) l.Add(kv.Key); return l;
+            }
         }
 
         private static Transform FindProps(int h)

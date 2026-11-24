@@ -16,7 +16,12 @@ namespace God.Game
 
         public static GodBootstrap Instance { get; private set; }
         public GodSim Sim { get; private set; }
-        public HexDressingView Island { get; private set; }
+        /// <summary>The organic island look (P4a): the hexes stay in the sim, the player sees a natural island.</summary>
+        public IslandView Island { get; private set; }
+        /// <summary>The old hex-tile look, built only with <see cref="legacyHexLook"/> or <c>-godhexlook</c> (kept until the P2/P3 merge).</summary>
+        public HexDressingView LegacyIsland { get; private set; }
+
+        [SerializeField] private bool legacyHexLook = false;
         public Camera GodCamera { get; private set; }
 
         /// <summary>The territory debug view (P1).</summary>
@@ -24,6 +29,8 @@ namespace God.Game
 
         /// <summary>When true the bootstrap steps the sim at 10 Hz times <see cref="Speed"/>. Off by default; <c>-godrun</c> or F3 turns it on.</summary>
         public bool Running;
+        /// <summary>The seed the island was dealt (and dressed) from.</summary>
+        public ulong Seed => seed;
         public float Speed = 1f;
 
         private float _framedAspect = -1f;
@@ -35,7 +42,10 @@ namespace God.Game
             seed = SeedFromCommandLine(seed);
             Sim = GodSim.Create(seed);
             BoardSpace.Topo = Sim.State.Board.Topology;
-            Island = HexDressingView.Create(Sim.State.Board, transform);
+            if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)
+                LegacyIsland = HexDressingView.Create(Sim.State.Board, transform);
+            else
+                Island = IslandView.Create(Sim.State.Board, seed, Sim, transform);
             Territory = TerritoryView.Create(Sim, transform);
             ReadRunArgs();
 
