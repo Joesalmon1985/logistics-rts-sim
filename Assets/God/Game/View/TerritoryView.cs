@@ -18,6 +18,9 @@ namespace God.Game
         private const float DotY = 0.25f, RoadY = 0.30f, RingY = 0.34f;
         private const float TickSeconds = 0.9f;
 
+        /// <summary>Set by the economy view's owner: how many economy buildings are finished (sites are drawn by the economy view).</summary>
+        public System.Func<int> Built;
+
         private GodSim _sim;
         private GameObject _lit, _flat;
         private Material _litMat, _flatMat;
@@ -58,11 +61,13 @@ namespace God.Game
             }
         }
 
-        private static int Signature(TerritoryState t)
+        private int Signature(TerritoryState t)
         {
             unchecked
             {
                 int h = t.NextId * 31 + t.Hqs.Count * 7 + t.Buildings.Count * 13 + t.Flags.Count * 17 + t.Roads.Count * 19;
+                foreach (var hq in t.Hqs) if (hq.Site) h = h * 31 + hq.Id;
+                if (Built != null) h = h * 31 + Built.Invoke();
                 for (int i = 0; i < t.Piles.Length; i++) h = h * 31 + t.Piles[i];
                 return h;
             }
@@ -94,6 +99,7 @@ namespace God.Game
             // Build circles and the faint dots of buildable nodes.
             foreach (var hq in t.Hqs)
             {
+                if (hq.Site) continue;
                 var col = FactionColour(hq.Faction);
                 var c = t.CircleOf(hq);
                 var centre = new Vector3((float)c.X, RingY, (float)c.Z);
@@ -132,6 +138,8 @@ namespace God.Game
             // Buildings: HQ, medium and small placeholder blocks.
             foreach (var b in t.Buildings)
             {
+                var eco = s.Economy?.Find(b.Id);
+                if (eco != null && !eco.Built) continue; // a construction site: drawn by the economy view
                 var col = FactionColour(b.Faction);
                 var p = P(g, b.Node, 0f);
                 switch (b.Size)

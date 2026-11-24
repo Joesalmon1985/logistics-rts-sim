@@ -18,9 +18,15 @@ namespace God.Sim
     {
         public int Node;
         public BuildingSize Size;
-        /// <summary>Placeholder kind until P2.</summary>
+        /// <summary>A <see cref="BuildingKinds"/> id. The placeholder kind appears finished at once (P1); any other kind is a construction site.</summary>
         public string Kind = TerritoryTuning.PlaceholderKind;
         public PlaceBuilding(Faction f, int node, BuildingSize size) : base(f) { Node = node; Size = size; }
+        /// <summary>The typed form: the size comes from the kind's def. An unknown kind is refused when validated.</summary>
+        public PlaceBuilding(Faction f, int node, string kind) : base(f)
+        {
+            Node = node; Kind = kind;
+            Size = EconomyDefs.Get(kind)?.Size ?? BuildingSize.Small;
+        }
     }
 
     public sealed class RemoveBuilding : FactionCommand
@@ -62,8 +68,12 @@ namespace God.Sim
 
     public sealed class PlaceBuildingHandler : CommandHandler<PlaceBuilding>
     {
-        protected override CommandResult Validate(GodState s, PlaceBuilding c) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckBuilding(s, c.Faction, c.Node, c.Size);
+        protected override CommandResult Validate(GodState s, PlaceBuilding c)
+        {
+            if (!c.ValidFaction) return TerritoryHandlers.Bad(c);
+            var r = TerritoryRules.CheckBuilding(s, c.Faction, c.Node, c.Size);
+            return r.Ok ? EconomyRules.CheckKind(s, c.Kind, c.Size, c.Node) : r;
+        }
         protected override CommandResult Apply(GodState s, PlaceBuilding c, EventBuffer ev) =>
             !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceBuilding(s, c.Faction, c.Node, c.Size, c.Kind, ev);
     }

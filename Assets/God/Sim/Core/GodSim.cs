@@ -36,9 +36,12 @@ namespace God.Sim
             var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim") };
             s.Board = BoardGenerator.CreateIslandBoard(seed);
             TerritoryModule.StartGame(s);
+            // Military first: it pre-places the enemy base, which the economy then records as already built.
             MilitaryModule.StartGame(s);
+            EconomyModule.StartGame(s);
             var sim = new GodSim(s);
             TerritoryModule.Install(sim);
+            EconomyModule.Install(sim);
             MilitaryModule.Install(sim);
             return sim;
         }

@@ -18,7 +18,7 @@ namespace God.Sim
             if (corner < 0 || corner >= topo.CornerCount || topo.VertexHexes(corner).Count != 3) return Refuse(Reasons.NotLandCorner);
             if (t.HqNearCorner(corner)) return Refuse(Reasons.HqTooClose);
             bool reach = false;
-            foreach (var h in t.Hqs) if (h.Faction == f && topo.CornerDistance(h.Corner, corner) == 2) { reach = true; break; }
+            foreach (var h in t.Hqs) if (h.Faction == f && !h.Site && topo.CornerDistance(h.Corner, corner) == 2) { reach = true; break; }
             if (!reach) return Refuse(Reasons.HqOutOfReach);
             return CheckHqSite(t, g.CornerNode(corner));
         }
@@ -36,22 +36,32 @@ namespace God.Sim
         }
 
         /// <summary>Puts an HQ and its flag down without the reach rule (game start, tests).</summary>
-        public static Hq AddHq(GodState s, Faction f, int corner, EventBuffer ev)
+        public static Hq AddHq(GodState s, Faction f, int corner, EventBuffer ev, bool site = false)
         {
             var t = s.Territory; var g = t.Grid;
             int node = g.CornerNode(corner);
             var b = AddBuilding(t, f, node, BuildingSize.Hq, TerritoryTuning.HqKind, g.FlagNodeOf(node));
-            var hq = new Hq { Id = b.Id, Faction = f, Corner = corner, Node = node };
+            var hq = new Hq { Id = b.Id, Faction = f, Corner = corner, Node = node, Site = site };
             t.Hqs.Add(hq);
-            ev?.Add(new HqPlaced { Faction = f, HqId = hq.Id, Corner = corner });
+            if (site) ev?.Add(new BuildingPlaced { Faction = f, BuildingId = b.Id, Node = node, Size = BuildingSize.Hq });
+            else ev?.Add(new HqPlaced { Faction = f, HqId = hq.Id, Corner = corner });
             return hq;
+        }
+
+        /// <summary>An HQ construction site is finished: it gets its build circle and reach, and HqPlaced is emitted.</summary>
+        public static void CompleteHq(GodState s, int hqId, EventBuffer ev)
+        {
+            var hq = s.Territory.HqOf(hqId);
+            if (hq == null || !hq.Site) return;
+            hq.Site = false;
+            ev?.Add(new HqPlaced { Faction = hq.Faction, HqId = hq.Id, Corner = hq.Corner });
         }
 
         public static CommandResult DoPlaceHq(GodState s, Faction f, int corner, EventBuffer ev)
         {
             var r = CheckHq(s, f, corner);
             if (!r.Ok) return r;
-            AddHq(s, f, corner, ev);
+            AddHq(s, f, corner, ev, true);
             return r;
         }
 
