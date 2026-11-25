@@ -148,3 +148,96 @@ P2 and P3 can run at the same time, and so can P4 alongside P1 to P3.
 
 - `dotnet test` and the EditMode and PlayMode tests pass, the headless smoke wins against the enemy base, and a Windows build runs.
 - The report says plainly what was tested by hand and what was not.
+
+---
+
+# Stage 2: six factions, AI, trade and conquest (25 Nov 2026)
+
+The owner's request after playing the first proof of concept:
+
+> "expand this to a bigger island (big enough for 6 player catan). Lets get the AI working, along with trade between factions. Factions should be able to send trade envoys with offers of goods for trade, if these are accepted the actual goods should be sent between factions. Also the AI should be able to play the game between 6 factions, each starting with one HQ, they should expand to get 10 VPs eventually, with conflict and conquest and units created."
+
+They also couldn't find how to save or quit.
+
+## Owner decisions (25 Nov)
+
+| Question | Answer |
+|---|---|
+| Victory points | An HQ is 1 VP. An HQ upgraded to a **Citadel** is 2 VP. The first faction to 10 VP wins. |
+| Conquest | An HQ brought to zero is **captured**. It and the buildings in its area switch to the attacker, along with their VP. A faction with no HQ left is out. |
+| Players | You and 5 AIs. **Watch** mode lets all 6 AIs play each other. |
+| Trade | Envoy caravans walk. The envoy walks overland from the offering HQ to the other faction's HQ, carrying the goods on offer. If the offer is accepted, it drops them and walks home with the goods paid in return. If it is refused, it brings the goods back. Units can kill the envoys of factions they are at war with, and the goods are then lost. |
+
+## Rules (my defaults; say if any is wrong)
+
+### Island
+- 30 land hexes, as in six-player Catan: rows of 3, 4, 5, 6, 5, 4 and 3.
+  - Forest 8, Hills 6, Fields 7, Mountain 7, Desert 2.
+  - The 28 number tokens are dealt so that no 6 or 8 touches another.
+- The organic look is kept, and the coastline wraps the new shape.
+- Each of the 6 factions starts with one HQ and its start stock. The start corners are spread round the island, as far apart as possible, all on legal corners.
+
+### Factions and war
+- There are 6 factions, each with its own colour and people's style.
+- Each pair of factions is either **at peace** or **at war**. Everyone starts at peace.
+- Units fight only factions they are at war with, and walk past everyone else.
+- Commands:
+  - `DeclareWar(a, b)` makes a pair go to war at once.
+  - `OfferPeace(a, b)` makes them peaceful once both sides have offered.
+- You can only target buildings of a faction you are at war with.
+
+### VP, Citadel, capture
+- A finished HQ is worth 1 VP, and a Citadel is worth 2 VP.
+- **Citadel:** upgrade a finished HQ for 3 plank, 4 brick, 4 stone and 3 iron, carried to it. It takes 30 s. It has 3000 health (an HQ has 1500).
+- **Capture:**
+  - When an HQ or Citadel reaches 0 health from a faction's units, it passes to that faction at 50% health.
+  - Everything in its build area passes with it: buildings, sites, flags and the roads wholly inside it.
+  - So do the stock and idle carriers in its store.
+  - The old owner's walkers inside the area are removed.
+- A faction with no HQ is **eliminated**: its units disband and its roads stay as ruins. Ordinary buildings still burn to rubble.
+- The game ends when a faction reaches 10 VP. With one faction left standing, it wins anyway.
+
+### Trade
+- `OfferTrade(from, to, give[], want[])` sends at most 8 wares each way.
+  - The offered goods leave the offering HQ's stock at once.
+  - An envoy walker carries them overland to the target's nearest HQ.
+- The target answers with `AnswerTrade(accept)`. AIs answer straight away; you get 60 s, with an offer card.
+  - **Accepted:** the goods go into the target's store. The wanted goods are taken from the target's stock and carried home by the envoy.
+  - **Refused**, or the target lacks the wanted goods: the envoy brings the offer home.
+- An envoy killed on the way loses its goods.
+
+### AI (owner rules from the 18 Nov design, adapted)
+- Each AI faction runs a bot that uses only commands, like a person.
+- **Economy and expansion:** build the chain, expand to new HQ corners towards missing terrain and rich land, and upgrade to a Citadel once the economy runs.
+- **Army:** build units, keep guards on its HQs, and mark the targets of factions it is at war with.
+- **War:**
+  - Declare war on a faction leading by 2 or more VP. If two factions are tied for the lead, the leaders fight each other.
+  - Declare war on a weak neighbour when its own army is clearly stronger.
+  - Make peace once the reason is gone.
+- **Trade:**
+  - Trade with anyone who isn't winning, preferring the worst-placed faction.
+  - Trade for target builds or missing wares, or to shed surplus.
+  - Accept fair offers that help.
+
+### Menu, save, quit
+- **Esc** opens a menu: Resume, Save, Load, New island, Watch AIs, Quit.
+- Saving writes the whole sim state, plus the bots' state, as JSON to the player's data folder. Loading the same save gives the same state hash.
+- A small start card offers **Play** (you are faction 1) or **Watch**. `-godwatch` starts watch mode.
+
+### HUD and views
+- All 6 colours and styles appear in the views.
+- A small standings list shows VP per faction.
+- The enemy card gains Declare war / Offer peace.
+- A trade panel lets you send offers.
+- An offer card lets you answer incoming envoys.
+- Envoys are drawn as a walker with a pack animal.
+
+## Packages
+
+| # | Package | Depends on |
+|---|---|---|
+| P7 | Six factions: `Faction` becomes 6 ids. The human faction becomes a game setting. 30-hex island, 6 starts, war and peace, VP, Citadel, capture, elimination, 10 VP win. The static enemy base and waves are removed. Minimal view and HUD updates so it compiles and shows 6 colours. | - |
+| P8 | Trade: envoys in the sim, offers and answers, killing envoys, HUD trade panel and offer card, envoy model. | P7 |
+| P9 | AI: bot for the economy, expansion, Citadels, army and war; a 6-AI headless game reaching 10 VP. | P7 (trade hooks after P8) |
+| P10 | Menu and save/load/quit, start card and watch mode, standings, war/peace on the enemy card, 6-faction look. | P7 |
+| P11 | Integration: AI trading, balance across seeds, a watch smoke that ends with a winner on the build, play guide. | P8, P9, P10 |
