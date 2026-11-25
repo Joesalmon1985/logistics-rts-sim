@@ -10,9 +10,6 @@ namespace God.Sim.Tests
         /// <summary>A new game (everyone starts at peace, and there are no enemy waves any more).</summary>
         public static GodSim NoWar(ulong seed) => GodSim.Create(seed);
 
-        /// <summary>A unit order from a vehicle workshop (stage 2 vehicles are gone: it now makes a kitless soldier).</summary>
-        public static bool FromWorkshop(GodState s, UnitOrder u) => s.Economy.Find(u.BuildingId)?.Kind == BuildingKinds.VehicleWorkshop;
-
         public static GodSim Quiet(ulong seed)
         {
             // No dice piles: nothing but the test itself changes the piles.

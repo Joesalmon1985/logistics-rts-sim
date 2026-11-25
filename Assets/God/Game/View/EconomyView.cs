@@ -108,7 +108,6 @@ namespace God.Game
                 case BuildingKinds.Forge: return new Color(0.50f, 0.56f, 0.66f);
                 case BuildingKinds.Tannery: return new Color(0.55f, 0.36f, 0.20f);
                 case BuildingKinds.Weaver: return new Color(0.80f, 0.78f, 0.86f);
-                case BuildingKinds.VehicleWorkshop: return new Color(0.15f, 0.75f, 0.85f);
                 default:
                     {
                         // The new processors and armouries take the colour of what they make, a little darker.

@@ -180,7 +180,7 @@ namespace God.Game
 
         // ---------------------------------------------------------------- readout, toast, help
 
-        /// <summary>The army line: your soldiers, wagons and guards, and who you are at war with.</summary>
+        /// <summary>The army line: your soldiers (melee and ranged), guards, and who you are at war with.</summary>
         public string ArmyText()
         {
             var m = Sim.State.Military;

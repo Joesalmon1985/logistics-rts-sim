@@ -27,8 +27,7 @@ namespace God.Game
     /// <summary>
     /// P4b: one procedural low-poly model per building kind, in two styles (player timber and thatch, enemy stone and
     /// slate), each recognisable by its silhouette and a prop: log pile and axe stump, clay pit, stone blocks and hoist,
-    /// mine mouth in a mound, barn and field, saw shed with a wheel, dome kiln, furnace, barracks yard with a spear rack,
-    /// wheelwright's shed with a big door. The faction colour shows only on the ridge cap, eave band and banner.
+    /// mine mouth in a mound, barn and field, saw shed with a wheel, dome kiln, furnace, barracks yard with a spear rack. The faction colour shows only on the ridge cap, eave band and banner.
     /// Local space, feet at y = 0, the door (+Z) faces the building's flag. View code only.
     /// </summary>
     public static partial class BuildingModels
@@ -38,7 +37,6 @@ namespace God.Game
         {
             TerritoryTuning.HqKind, BuildingKinds.Woodcutter, BuildingKinds.ClayPit, BuildingKinds.Quarry, BuildingKinds.Mine,
             BuildingKinds.Farm, BuildingKinds.Sawmill, BuildingKinds.Kiln, BuildingKinds.Smelter, BuildingKinds.Barracks,
-            BuildingKinds.VehicleWorkshop,
             // stage 3: the seven new processors and the ten armouries (the other processors and the harvesters are above)
             BuildingKinds.Bakery, BuildingKinds.MortarMill, BuildingKinds.Foundry, BuildingKinds.Pottery, BuildingKinds.Forge,
             BuildingKinds.Tannery, BuildingKinds.Weaver,
@@ -113,7 +111,6 @@ namespace God.Game
                 case BuildingKinds.Kiln: Kiln(mb, st, rig); break;
                 case BuildingKinds.Smelter: Smelter(mb, st, rig); break;
                 case BuildingKinds.Barracks: Barracks(mb, st, rig); break;
-                case BuildingKinds.VehicleWorkshop: Workshop(mb, st, rig); break;
                 default: Cottage(mb, st, rig); break;
             }
         }
@@ -403,35 +400,6 @@ namespace God.Game
             Banner(mb, rig, new Vector3(3.4f, 0, -1.2f), 6.4f, st);
             rig.HasWorker = true; rig.Worker = dummy + new Vector3(-1.3f, 0, -0.1f); rig.WorkerYaw = 90f; rig.WorkerTool = ToolKind.Spear;
             rig.Height = 6.6f; rig.Radius = 5.0f;
-        }
-
-        private static void Workshop(MeshBuilder mb, ModelStyle st, BuildingRig rig)
-        {
-            // A tall shed with a big double door standing open.
-            var c = new Vector3(-0.6f, 0, -1.6f);
-            ModelKit.House(mb, c, 6.4f, 4.2f, 3.6f, 2.6f, st, false);
-            var doorC = c + new Vector3(0, 0, 2.12f);
-            mb.Box(doorC + new Vector3(0, 1.4f, 0), new Vector3(3.0f, 2.8f, 0.12f), new Color(0.07f, 0.06f, 0.05f));
-            mb.Box(doorC + new Vector3(0, 2.95f, 0.05f), new Vector3(3.5f, 0.3f, 0.2f), st.Frame);
-            foreach (int side in new[] { -1, 1 })
-            {
-                var hinge = doorC + new Vector3(side * 1.5f, 0, 0.05f);
-                var leaf = ModelKit.Dir(side * 60f) * 0.75f;
-                mb.Box(hinge + leaf + Vector3.up * 1.4f, new Vector3(0.14f, 2.7f, 1.5f), ModelKit.Plank * 0.8f, side * 60f + 90f);
-            }
-            // A war-wagon frame outside, a spare wheel, planks.
-            var cart = new Vector3(-3.4f, 0, 1.9f);
-            mb.Box(cart + Vector3.up * 0.9f, new Vector3(1.4f, 0.25f, 2.4f), ModelKit.Wood);
-            ModelKit.Beam(mb, cart + new Vector3(0, 0.9f, 1.2f), cart + new Vector3(0, 0.3f, 2.6f), 0.06f, ModelKit.Wood);
-            mb.Box(cart + new Vector3(0.72f, 0.5f, -0.6f), new Vector3(0.12f, 1.0f, 0.12f), ModelKit.DarkWood);
-            ModelKit.PlankStack(mb, new Vector3(2.4f, 0, 2.2f), 2.4f, 3, 0f);
-            Banner(mb, rig, new Vector3(3.9f, 0, -3.4f), 6.0f, st);
-            rig.HasWheel = true; rig.Wheel = new Vector3(3.6f, 1.25f, 0.6f); rig.WheelR = 1.05f; rig.WheelSpeed = 70f;
-            // The wheelwright's stand under the wheel.
-            mb.Box(new Vector3(3.6f, 0.6f, 0.6f), new Vector3(0.3f, 1.2f, 0.3f), st.Frame);
-            mb.Box(new Vector3(3.6f, 0.06f, 0.6f), new Vector3(0.9f, 0.12f, 1.2f), st.Frame);
-            rig.HasWorker = true; rig.Worker = new Vector3(2.7f, 0, 1.4f); rig.WorkerYaw = 60f; rig.WorkerTool = ToolKind.Hammer;
-            rig.Height = 7.0f; rig.Radius = 5.0f;
         }
 
         private static void Cottage(MeshBuilder mb, ModelStyle st, BuildingRig rig)

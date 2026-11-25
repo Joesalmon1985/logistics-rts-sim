@@ -237,7 +237,7 @@ namespace God.Sim.Tests
         [Test]
         public void TheOldChainIsGone()
         {
-            Assert.IsNull(EconomyDefs.Get(BuildingKinds.VehicleWorkshop), "no vehicle workshop");
+            Assert.IsNull(EconomyDefs.Get("vehicle_workshop"), "no vehicle workshop");
             foreach (var d in EconomyDefs.Defs)
             {
                 Assert.AreEqual(0, d.In[(int)Ware.Kindling] + d.Out[(int)Ware.Kindling] + d.Cost[(int)Ware.Kindling], d.Kind + ": no kindling");
