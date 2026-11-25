@@ -46,6 +46,8 @@ namespace God.Sim
         public bool Built;
         public bool Paused;
         public BuildStatus Status;
+        /// <summary>Stage 3: harvester level, 1 to 3 (see <see cref="UpgradeBuilding"/>). Other buildings stay at 1.</summary>
+        public int Level = 1;
 
         // ---- site ----
         /// <summary>Ticks of building work done.</summary>
