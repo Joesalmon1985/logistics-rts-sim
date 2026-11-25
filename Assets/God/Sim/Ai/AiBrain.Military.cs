@@ -174,6 +174,7 @@ namespace God.Sim
                         && _strength[(int)Side] >= Tune.JoinWarMinStrength
                         && Coalition(x) * 100 >= _strength[(int)x] * Tune.CoalitionPercent;
                     bool declare = ownerDeclare || OpportunistReason(x, false);
+                    if (S.Tick < Tune.WarsFromTick) declare = false; // Q4: the first minutes belong to building
                     // One declaration per think: the next think sees the new war (one opportunistic front at a time).
                     if (declare && !losing && Send(new DeclareWar(Side, x), "war on " + FactionInfo.Name(x))) return;
                     continue;

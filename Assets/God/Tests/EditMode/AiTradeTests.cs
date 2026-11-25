@@ -228,20 +228,25 @@ namespace God.Sim.Tests
         // ---------------- whole games ----------------
 
         /// <summary>
-        /// Six trading brains play whole games: most games end within 90 sim-minutes, every game has trades and accepted
-        /// ones, most have 4 factions at 3 VP or more, a war and a capture, and the invariants hold. The table goes to the output.
+        /// Six trading brains play whole games: every game ends with a winner within 75 sim-minutes, has trades and accepted
+        /// ones, 4 factions at 3 VP or more, a war and a capture, at least two armies (most factions arm over the four
+        /// games), and the invariants hold. The table goes to the output. (Q4 restored the strict form; the 12-seed balance report is
+        /// <see cref="BalanceReport_Seeds1To12"/>.)
         /// </summary>
         [Test]
         public void SixTradingBrains_Balance_OverSeveralSeeds()
         {
             var seeds = new ulong[] { 2, 3, 8, 9 };
-            int broad = 0, warred = 0, captured = 0, ended = 0;
+            int broad = 0, warred = 0, captured = 0, ended = 0, armies = 0;
             foreach (var seed in seeds)
             {
-                var (sim, _, log) = AiTests.Play(seed, 90 * 600, 0, null, new AiTrader());
+                var (sim, _, log) = AiTests.Play(seed, 75 * 600, 0, null, new AiTrader());
                 var s = sim.State;
                 TestContext.Out.WriteLine(Row(seed, s, log));
-                if (s.IsGameOver) ended++;
+                if (s.IsGameOver && s.Factions.Winner >= 0) ended++;
+                int withSoldiers = s.Setup.Factions.Count(f => s.Economy.ProducedLog.Any(u => u.Faction == f));
+                armies += withSoldiers;
+                Assert.GreaterOrEqual(withSoldiers, 2, "seed " + seed + ": at least two factions arm");
                 Assert.Greater(log.Offered, 0, "seed " + seed + " has trades");
                 Assert.Greater(log.Accepted, 0, "seed " + seed + " has accepted trades");
                 Assert.IsEmpty(SimInvariants.Check(s));
@@ -249,14 +254,16 @@ namespace God.Sim.Tests
                 if (log.Wars > 0) warred++;
                 if (log.Captures > 0) captured++;
             }
-            // Stage 3 (Q1): the new chain is not balanced yet (package Q4 tunes it); half the games are broad for now.
-            Assert.GreaterOrEqual(broad, seeds.Length / 2, "4 of 6 factions reach 3 VP in half the games");
-            Assert.GreaterOrEqual(ended, seeds.Length - 1, "most games end within 90 minutes");
-            Assert.GreaterOrEqual(warred, seeds.Length - 1);
-            Assert.GreaterOrEqual(captured, seeds.Length - 1);
+            Assert.AreEqual(seeds.Length, broad, "4 of 6 factions reach 3 VP in every game");
+            Assert.AreEqual(seeds.Length, ended, "every game ends with a winner within 75 minutes");
+            Assert.AreEqual(seeds.Length, warred, "every game has a war");
+            Assert.AreEqual(seeds.Length, captured, "every game has a capture");
+            // Q4 honest target: most factions arm before the game ends (15 of 24 here); the mountain-poor seed 9 ends at minute
+            // 38 with only two armies.
+            Assert.GreaterOrEqual(armies, seeds.Length * 6 * 7 / 12, "most factions make soldiers");
         }
 
-        /// <summary>Balance report over seeds 1 to 12 and the default seed, without and with the trader (run by name; prints the per-seed table).</summary>
+        /// <summary>Balance report over seeds 1 to 12 and the default seed, without and with the trader (run by name; prints the per-seed table). The fuller Q4 table (soldiers, weapons, upgrades, kit duels) is in the play guide.</summary>
         [Test, Explicit("balance report: run by name")]
         public void BalanceReport_Seeds1To12()
         {

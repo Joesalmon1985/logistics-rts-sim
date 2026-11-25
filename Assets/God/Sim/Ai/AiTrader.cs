@@ -103,10 +103,17 @@ namespace God.Sim
         {
             var s = brain.Sim.State;
             if (from == brain.Side || s.Factions.IsEliminated(from) || s.Factions.AtWar(brain.Side, from)) return false;
-            if (SoleLeader(s) == from) return false;
             int got = 0, paid = 0;
             for (int w = 1; w < Wares.Count; w++) { got += give[w] * TradeTuning.ValueOf((Ware)w); paid += want[w] * TradeTuning.ValueOf((Ware)w); }
             if (paid <= 0 || got * 100 < paid * brain.Tune.TradeFairPercent) return false;
+            // Tutorial (plan stage 3): the AIs decline the learner's trades only when unfair; a fair one is taken whenever
+            // the wares asked for are in stock.
+            if (s.Setup.Tutorial && s.Setup.HasHuman && from == s.Setup.HumanFaction)
+            {
+                for (int w = 1; w < Wares.Count; w++) if (want[w] > 0 && TradeRules.FreeStock(s, brain.Side, (Ware)w) < want[w]) return false;
+                return true;
+            }
+            if (SoleLeader(s) == from) return false;
             var surplus = brain.WareSurplus();
             for (int w = 1; w < Wares.Count; w++) if (want[w] > surplus[w]) return false;
             var needs = brain.WareNeeds();

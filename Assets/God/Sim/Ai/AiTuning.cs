@@ -144,6 +144,11 @@ namespace God.Sim
         public int OpportunistPercent = 200;
         /// <summary>A faction at the top of the VP table starts no opportunistic war.</summary>
         public bool LeaderStaysOut = true;
+        /// <summary>
+        /// No AI declares war before this tick (Q4: 15 minutes). Before, a faction with an early army answered a quick
+        /// leader's lead by sweeping its unguarded HQs and won before minute 25.
+        /// </summary>
+        public int WarsFromTick = 15 * 600;
         /// <summary>...and at least this strong...</summary>
         public int OpportunistMinStrength = 30;
         /// <summary>...and the war is kept while the own army stays at least this percent of the neighbour's (and half that minimum strength).</summary>

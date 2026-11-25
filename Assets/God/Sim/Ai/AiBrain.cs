@@ -512,6 +512,9 @@ namespace God.Sim
             bool citadelTime = chainUp && (hqs >= Tune.CitadelFromHqs || (corners == 0 && _hqSites.Count == 0));
             bool citadelFirst = citadelTime && (_citadels < hqs - Tune.CitadelLag || corners == 0 || hqs >= Tune.TargetHqs);
             if (citadelFirst) Citadel();
+            // Q4: boxed in (no corner left to take) with two HQs or more: steel for Citadels comes before the army, as
+            // Citadels are its only peaceful VP.
+            if (corners == 0 && _hqSites.Count == 0 && hqs >= 2 && OwnLandFor(BuildingKinds.Forge)) { Want(BuildingKinds.Mine, 1, maxSites); Want(BuildingKinds.Forge, 1, maxSites); }
             // A town grows before it spreads: a further HQ once each HQ has its share of finished buildings.
             int builtTotal = 0; foreach (var kv in _built) builtTotal += kv.Value;
             bool developed = builtTotal >= Tune.BuildingsPerHqBeforeExpand * (hqs - 1);
