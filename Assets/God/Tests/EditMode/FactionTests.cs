@@ -193,10 +193,11 @@ namespace God.Sim.Tests
             Assert.IsTrue(e.Find(hq2).Built);
             Assert.AreEqual(2, FactionRules.VictoryPoints(s, Faction.F0));
 
-            // The first HQ lacks iron and some stone; the second holds them, so carriers must bring them over the road.
+            // Stage 3 Citadel: 4 brick, 4 mortar, 3 plank, 2 steel. The first HQ lacks steel and some mortar; the second
+            // holds them, so carriers must bring them over the road.
             var h1 = e.Find(hq1.Id); var h2 = e.Find(hq2);
-            h1.Stock[(int)Ware.Plank] = 3; h1.Stock[(int)Ware.Brick] = 4; h1.Stock[(int)Ware.Stone] = 1; h1.Stock[(int)Ware.Iron] = 0;
-            h2.Stock[(int)Ware.Stone] = 3; h2.Stock[(int)Ware.Iron] = 3;
+            h1.Stock[(int)Ware.Plank] = 3; h1.Stock[(int)Ware.Brick] = 4; h1.Stock[(int)Ware.Mortar] = 1; h1.Stock[(int)Ware.Steel] = 0;
+            h2.Stock[(int)Ware.Mortar] = 3; h2.Stock[(int)Ware.Steel] = 2;
             int delivered = e.DeliveredWares;
 
             Assert.AreEqual(Reasons.NotOwner, sim.Check(new UpgradeToCitadel(Faction.F1, hq1.Id)).Reason);
@@ -216,8 +217,9 @@ namespace God.Sim.Tests
             Assert.IsTrue(t.HqOf(hq1.Id).Citadel, "upgraded");
             Assert.Greater(allInAt, 0);
             Assert.That(s.Tick - allInAt, Is.InRange(FactionTuning.CitadelBuildTicks - 1, FactionTuning.CitadelBuildTicks + 1), "30 s of work once the wares are in");
-            Assert.AreEqual(0, h2.Stock[(int)Ware.Iron], "the iron was carried over");
-            Assert.GreaterOrEqual(e.DeliveredWares - delivered, 3 + 3, "iron and stone came by carrier");
+            Assert.AreEqual(0, h2.Stock[(int)Ware.Steel], "the steel was carried over");
+            Assert.AreEqual(0, h2.Stock[(int)Ware.Mortar], "and the mortar");
+            Assert.GreaterOrEqual(e.DeliveredWares - delivered, 2 + 3, "steel and mortar came by carrier");
             Assert.AreEqual(0, h1.Stock[(int)Ware.Plank] + h1.Stock[(int)Ware.Brick], "its own stock went in first");
             Assert.IsFalse(h1.Upgrading);
             Assert.AreEqual(1, sim.DrainEvents().OfType<CitadelCompleted>().Count());

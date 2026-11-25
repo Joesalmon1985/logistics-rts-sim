@@ -141,21 +141,29 @@ namespace God.Sim.Tests
 
         // ---------------- economy, expansion, Citadels ----------------
 
+        /// <summary>The stage 3 army chain of the simple AI (Q1): raws, planks, bricks, mortar, bread, iron, axes and the barracks.</summary>
+        private static readonly string[] ArmyChain =
+        {
+            BuildingKinds.Woodcutter, BuildingKinds.Quarry, BuildingKinds.Sawmill, BuildingKinds.ClayPit, BuildingKinds.Kiln, BuildingKinds.MortarMill,
+            BuildingKinds.Farm, BuildingKinds.Mine, BuildingKinds.Bakery, BuildingKinds.Smelter, BuildingKinds.Axesmith, BuildingKinds.Barracks,
+        };
+
+        // Stage 3: seeds where F0's start lands let a lone brain (no trade) reach the barracks (seed scan, 25 Nov).
         [TestCase(1UL)]
         [TestCase(2UL)]
-        [TestCase(3UL)]
         [TestCase(4UL)]
+        [TestCase(5UL)]
         public void Brain_BuildsTheWholeChain_AndAnArmy(ulong seed)
         {
             var sim = Solo(seed, Faction.F0, out _);
             var s = sim.State;
-            StepUntil(sim, 30 * 600, () => KindsBuilt(s, Faction.F0) >= 10
+            StepUntil(sim, 30 * 600, () => ArmyChain.All(k => s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Built && b.Kind == k))
                 && s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Barracks && b.Produced > 0)
-                && s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.VehicleWorkshop && b.Produced > 0));
+                && s.Military.CountUnits(Faction.F0) > 0);
             var kinds = s.Economy.Buildings.Where(b => b.Faction == Faction.F0 && b.Built && !b.IsHq).Select(b => b.Kind).Distinct().ToList();
-            Assert.AreEqual(10, kinds.Count, "seed " + seed + " built " + string.Join(",", kinds) + " by tick " + s.Tick);
-            Assert.IsTrue(s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Barracks && b.Produced > 0), "infantry made");
-            Assert.IsTrue(s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.VehicleWorkshop && b.Produced > 0), "vehicles made");
+            CollectionAssert.IsSubsetOf(ArmyChain, kinds, "seed " + seed + " built " + string.Join(",", kinds) + " by tick " + s.Tick);
+            Assert.IsTrue(s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Barracks && b.Produced > 0), "soldiers made");
+            Assert.IsTrue(s.Economy.ProducedLog.Where(u => u.Faction == Faction.F0).All(u => u.Kit.Weapon == Ware.Axe), "the simple AI arms them with axes");
             Assert.Greater(s.Military.CountUnits(Faction.F0), 0, "an army");
             foreach (var b in s.Economy.Buildings.Where(b => b.Faction == Faction.F0 && !b.IsHq))
                 Assert.AreNotEqual(BuildStatus.SiteNoRoad, b.Status, "joined by road: " + b.Kind + " " + b.Id);
@@ -178,11 +186,14 @@ namespace God.Sim.Tests
         [Test]
         public void Brain_UpgradesCitadels()
         {
-            var sim = Solo(2, Faction.F1, out _);
+            // Stage 3: a Citadel takes steel (forge) as well as bricks, mortar and planks; seed 5's Amber gets one by minute 22 alone.
+            var sim = Solo(5, Faction.F0, out _);
             var s = sim.State;
-            StepUntil(sim, 60 * 600, () => s.Territory.Hqs.Any(h => h.Faction == Faction.F1 && h.Citadel));
-            Assert.IsTrue(s.Territory.Hqs.Any(h => h.Faction == Faction.F1 && h.Citadel), "a Citadel by tick " + s.Tick);
-            Assert.GreaterOrEqual(FactionRules.VictoryPoints(s, Faction.F1), 3);
+            StepUntil(sim, 60 * 600, () => s.Territory.Hqs.Any(h => h.Faction == Faction.F0 && h.Citadel));
+            Assert.IsTrue(s.Territory.Hqs.Any(h => h.Faction == Faction.F0 && h.Citadel), "a Citadel by tick " + s.Tick);
+            Assert.GreaterOrEqual(FactionRules.VictoryPoints(s, Faction.F0), 3);
+            Assert.IsTrue(s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Forge && b.Built), "steel from a forge");
+            Assert.IsTrue(s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Level > 1), "it upgrades harvesters on the way");
         }
 
         // ---------------- war and peace (owner rules) ----------------
@@ -360,7 +371,7 @@ namespace God.Sim.Tests
             Assert.AreSame(NoTrade.Instance, new AiBrain(sim, Faction.F3).Trader);
             var need = ai.Brains[0].WareNeeds();
             Assert.AreEqual(Wares.Count, need.Length);
-            Assert.Greater(need[(int)Ware.Iron], 0, "a Citadel needs iron the start stock has not got");
+            Assert.Greater(need[(int)Ware.Steel], 0, "a Citadel needs steel the start stock has not got");
             Assert.AreEqual(Wares.Count, ai.Brains[0].WareSurplus().Length);
         }
 

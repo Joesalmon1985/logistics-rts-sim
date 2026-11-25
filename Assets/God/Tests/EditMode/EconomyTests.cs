@@ -70,11 +70,15 @@ namespace God.Sim.Tests
         {
             var s = EcoHelp.NoWar(3).State;
             var hq = s.Economy.HqsOf(Faction.F0).Single();
-            Assert.AreEqual(8, s.Economy.Stock(hq.Id, Ware.Plank));
+            // Stage 3: 8 log, 6 stone, 6 clay, 4 grain, 6 plank, 4 brick, 2 mortar.
+            Assert.AreEqual(8, s.Economy.Stock(hq.Id, Ware.Log));
             Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Stone));
+            Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Clay));
+            Assert.AreEqual(4, s.Economy.Stock(hq.Id, Ware.Grain));
+            Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Plank));
             Assert.AreEqual(4, s.Economy.Stock(hq.Id, Ware.Brick));
-            Assert.Greater(s.Economy.Stock(hq.Id, Ware.Log), 0);
-            Assert.Greater(s.Economy.Stock(hq.Id, Ware.Clay), 0);
+            Assert.AreEqual(2, s.Economy.Stock(hq.Id, Ware.Mortar));
+            Assert.AreEqual(36, hq.Stock.Sum(), "nothing else");
             Assert.AreEqual(6, hq.IdleCarriers);
             Assert.AreEqual(1, s.Economy.HqsOf(Faction.F1).Count);
         }
@@ -91,8 +95,8 @@ namespace God.Sim.Tests
             sim.DrainEvents();
             EcoHelp.Run(sim, 1500, () => e.Find(id).Built);
             Assert.IsTrue(e.Find(id).Built);
-            Assert.AreEqual(planks - 3, e.TotalStock(Faction.F0, Ware.Plank));
-            Assert.AreEqual(bricks - 2, e.TotalStock(Faction.F0, Ware.Brick));
+            Assert.AreEqual(planks - 2, e.TotalStock(Faction.F0, Ware.Plank), "a processor costs 2 plank");
+            Assert.AreEqual(bricks - 1, e.TotalStock(Faction.F0, Ware.Brick), "and 1 brick");
             Assert.AreEqual(1000, e.SiteProgressPermille(id));
             Assert.IsTrue(sim.DrainEvents().OfType<BuildingCompleted>().Any(c => c.BuildingId == id));
             EcoHelp.Run(sim, 400);
@@ -113,7 +117,7 @@ namespace God.Sim.Tests
             Assert.IsFalse(e.Find(id).Built);
             Assert.AreEqual(BuildStatus.SiteNoRoad, e.Find(id).Status);
             Assert.AreEqual(0, e.Walkers.Count);
-            Assert.AreEqual(8, e.TotalStock(Faction.F0, Ware.Plank));
+            Assert.AreEqual(EconomyTuning.StartPlank, e.TotalStock(Faction.F0, Ware.Plank));
             Assert.AreEqual(0, e.SiteProgressPermille(id));
             // The road arrives: now it is built.
             Assert.IsTrue(new EconomyBot(sim, Faction.F0).ConnectFlag(t.BuildingById(id).FlagNode));
@@ -158,7 +162,8 @@ namespace God.Sim.Tests
             Assert.IsTrue(e.Find(id).Built);
             Assert.IsFalse(t.HqOf(id).Site);
             Assert.AreEqual(2, t.HqsOf(Faction.F0).Count);
-            Assert.AreEqual(4, 8 - e.TotalStock(Faction.F0, Ware.Plank), "4 planks carried");
+            Assert.AreEqual(3, EconomyTuning.StartPlank - e.TotalStock(Faction.F0, Ware.Plank), "3 planks carried");
+            Assert.AreEqual(2, EconomyTuning.StartMortar - e.TotalStock(Faction.F0, Ware.Mortar), "2 mortar carried");
             Assert.AreEqual(EconomyTuning.CarriersPerHq, e.Find(id).IdleCarriers);
         }
     }
@@ -245,53 +250,6 @@ namespace God.Sim.Tests
             Assert.AreEqual(BuildingSize.Medium, EconomyDefs.Get(BuildingKinds.Farm).Size);
             Assert.AreEqual(RawKind.Grain, EconomyDefs.Get(BuildingKinds.Farm).Harvests);
         }
-
-        [Test]
-        public void Sawmill_SplitsOneLogIntoPlankAndKindling()
-        {
-            var sim = EcoHelp.Quiet(3);
-            var e = sim.State.Economy;
-            int logs = e.TotalStock(Faction.F0, Ware.Log), planks = e.TotalStock(Faction.F0, Ware.Plank);
-            int id = EcoHelp.Place(sim, BuildingKinds.Sawmill, true);
-            EcoHelp.Run(sim, 700);
-            int used = logs - e.TotalStock(Faction.F0, Ware.Log) - e.Find(id).In[(int)Ware.Log];
-            Assert.Greater(used, 0);
-            Assert.AreEqual(planks + used, e.TotalStock(Faction.F0, Ware.Plank), "one plank per log");
-            Assert.AreEqual(used, e.TotalStock(Faction.F0, Ware.Kindling), "and one kindling");
-        }
-
-        [Test]
-        public void Kiln_And_Smelter_AreComposites()
-        {
-            var sim = EcoHelp.Quiet(3);
-            var e = sim.State.Economy; var hq = EcoHelp.Hq(sim);
-            hq.Stock[(int)Ware.Kindling] = 4; hq.Stock[(int)Ware.Ore] = 3; hq.Stock[(int)Ware.Clay] = 3;
-            int kiln = EcoHelp.Place(sim, BuildingKinds.Kiln, true);
-            int smelter = EcoHelp.Place(sim, BuildingKinds.Smelter, true);
-            EcoHelp.Run(sim, 1800);
-            var k = e.Find(kiln); var m = e.Find(smelter);
-            Assert.Greater(k.Produced, 0); Assert.Greater(m.Produced, 0);
-            Assert.AreEqual(4 + k.Produced, e.TotalStock(Faction.F0, Ware.Brick) + k.Out[(int)Ware.Brick], "brick = clay + kindling");
-            Assert.AreEqual(m.Produced, e.TotalStock(Faction.F0, Ware.Iron) + m.Out[(int)Ware.Iron], "iron = ore + kindling");
-            Assert.LessOrEqual(k.Produced + m.Produced, 4, "each cycle burns one kindling of the four");
-            Assert.AreEqual(4, k.Produced + m.Produced, "both ran until the kindling was gone");
-        }
-
-        [Test]
-        public void Factories_PutUnitOrdersOnTheQueue()
-        {
-            var sim = EcoHelp.Quiet(3);
-            var s = sim.State; var e = s.Economy; var hq = EcoHelp.Hq(sim);
-            hq.Stock[(int)Ware.Grain] = 1; hq.Stock[(int)Ware.Iron] = 6;
-            int barracks = EcoHelp.Place(sim, BuildingKinds.Barracks, true);
-            int vw = EcoHelp.Place(sim, BuildingKinds.VehicleWorkshop, true);
-            sim.DrainEvents();
-            EcoHelp.Run(sim, 1200);
-            Assert.AreEqual(1, s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry && u.BuildingId == barracks));
-            Assert.AreEqual(1, s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Vehicle && u.BuildingId == vw));
-            Assert.IsTrue(s.Economy.ProducedLog.All(u => u.Faction == Faction.F0));
-            Assert.AreEqual(2, sim.DrainEvents().OfType<UnitProduced>().Count());
-        }
     }
 
     public class EconomyPriorityTests
@@ -300,21 +258,22 @@ namespace God.Sim.Tests
         {
             var sim = EcoHelp.Quiet(3);
             var hq = EcoHelp.Hq(sim);
-            hq.Stock[(int)Ware.Iron] = 1; hq.Stock[(int)Ware.Grain] = 0;
+            hq.Stock[(int)Ware.Bread] = 0;
             int a = EcoHelp.Place(sim, BuildingKinds.Barracks, true);
             int b = EcoHelp.Place(sim, BuildingKinds.Barracks, true);
             return (sim, a, b);
         }
 
-        private static int IronReceived(EconomyState e, int id) => e.Find(id).In[(int)Ware.Iron] + e.Find(id).Incoming[(int)Ware.Iron];
+        private static int AxesReceived(EconomyState e, int id) => e.Find(id).In[(int)Ware.Axe] + e.Find(id).Incoming[(int)Ware.Axe];
 
         [Test]
         public void SameRank_LowerIdOrNearerWins()
         {
             var (sim, a, b) = TwoBarracks();
+            EcoHelp.Hq(sim).Stock[(int)Ware.Axe] = 1;
             EcoHelp.Run(sim, 400);
             var e = sim.State.Economy;
-            Assert.AreEqual(1, IronReceived(e, a) + IronReceived(e, b));
+            Assert.AreEqual(1, AxesReceived(e, a) + AxesReceived(e, b));
         }
 
         [Test]
@@ -326,12 +285,12 @@ namespace God.Sim.Tests
                 var e = sim.State.Economy;
                 // Settle the default order first, then rewind by making a fresh game with the priorities set before any ware moves.
                 int hi = aHigh ? a : b, lo = aHigh ? b : a;
-                Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, lo, Ware.Iron, Priority.Low)).Ok);
-                Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, hi, Ware.Iron, Priority.High)).Ok);
-                EcoHelp.Hq(sim).Stock[(int)Ware.Iron] = 1;
+                Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, lo, Ware.Axe, Priority.Low)).Ok);
+                Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, hi, Ware.Axe, Priority.High)).Ok);
+                EcoHelp.Hq(sim).Stock[(int)Ware.Axe] = 1;
                 EcoHelp.Run(sim, 400);
-                Assert.AreEqual(1, IronReceived(e, hi), "high priority gets the only iron");
-                Assert.AreEqual(0, IronReceived(e, lo));
+                Assert.AreEqual(1, AxesReceived(e, hi), "high priority gets the only axe");
+                Assert.AreEqual(0, AxesReceived(e, lo));
             }
         }
 
@@ -340,21 +299,21 @@ namespace God.Sim.Tests
         {
             var (sim, a, b) = TwoBarracks();
             var e = sim.State.Economy; var hq = EcoHelp.Hq(sim);
-            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, a, Ware.Iron, Priority.Stop)).Ok);
-            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, b, Ware.Iron, Priority.Stop)).Ok);
-            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, b, Ware.Grain, Priority.Stop)).Ok);
-            hq.Stock[(int)Ware.Iron] = 3;
+            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, a, Ware.Axe, Priority.Stop)).Ok);
+            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, b, Ware.Axe, Priority.Stop)).Ok);
+            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, b, Ware.Bread, Priority.Stop)).Ok);
+            hq.Stock[(int)Ware.Axe] = 3;
             EcoHelp.Run(sim, 400);
-            Assert.AreEqual(3, hq.Stock[(int)Ware.Iron], "nobody asks, nothing moves");
-            Assert.AreEqual(0, IronReceived(e, a) + IronReceived(e, b));
+            Assert.AreEqual(3, hq.Stock[(int)Ware.Axe], "nobody asks, nothing moves");
+            Assert.AreEqual(0, AxesReceived(e, a) + AxesReceived(e, b));
             // Pause: inputs stop and work stops.
-            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, a, Ware.Iron, Priority.Normal)).Ok);
+            Assert.IsTrue(sim.Submit(new SetInputPriority(Faction.F0, a, Ware.Axe, Priority.Normal)).Ok);
             Assert.IsTrue(sim.Submit(new SetPaused(Faction.F0, a, true)).Ok);
-            hq.Stock[(int)Ware.Grain] = 2;
+            hq.Stock[(int)Ware.Bread] = 2;
             EcoHelp.Run(sim, 400);
-            Assert.AreEqual(0, e.Find(a).In[(int)Ware.Grain], "paused: no grain either");
+            Assert.AreEqual(0, e.Find(a).In[(int)Ware.Bread], "paused: no bread either");
             Assert.AreEqual(BuildStatus.Paused, e.Find(a).Status);
-            Assert.AreEqual(0, IronReceived(e, a));
+            Assert.AreEqual(0, AxesReceived(e, a));
             Assert.IsEmpty(sim.State.Economy.ProducedLog.Where(u => u.BuildingId == a).ToList());
             Assert.IsTrue(sim.Submit(new SetPaused(Faction.F0, a, false)).Ok);
             EcoHelp.Run(sim, 600);
@@ -366,7 +325,8 @@ namespace God.Sim.Tests
         {
             var (sim, a, b) = TwoBarracks();
             Assert.AreEqual(Reasons.NotAnInput, sim.Check(new SetInputPriority(Faction.F0, a, Ware.Log, Priority.High)).Reason);
-            Assert.AreEqual(Reasons.NotOwner, sim.Check(new SetInputPriority(Faction.F1, a, Ware.Iron, Priority.High)).Reason);
+            Assert.AreEqual(Reasons.NotOwner, sim.Check(new SetInputPriority(Faction.F1, a, Ware.Axe, Priority.High)).Reason);
+            Assert.AreEqual(Reasons.NotAnInput, sim.Check(new SetInputPriority(Faction.F0, a, Ware.Iron, Priority.High)).Reason, "stage 3: the barracks takes gear, not iron");
             Assert.AreEqual(Reasons.NoSuchThing, sim.Check(new SetPaused(Faction.F0, 99999, true)).Reason);
             Assert.AreEqual(Reasons.NoSuchThing, sim.Check(new SetPaused(Faction.F0, EcoHelp.Hq(sim).Id, true)).Reason);
         }
@@ -416,14 +376,14 @@ namespace God.Sim.Tests
             var sim = EcoHelp.Quiet(3);
             var e = sim.State.Economy;
             int saw = EcoHelp.Place(sim, BuildingKinds.Sawmill, true);
-            int kiln = EcoHelp.Place(sim, BuildingKinds.Kiln, true);
-            EcoHelp.Run(sim, 300, () => e.Walkers.Any(w => w.Kind == WalkerKind.Carrier && w.SrcId == saw && w.Phase == WalkerPhase.Outbound));
+            int axes = EcoHelp.Place(sim, BuildingKinds.Axesmith, true);
+            EcoHelp.Run(sim, 600, () => e.Walkers.Any(w => w.Kind == WalkerKind.Carrier && w.SrcId == saw && w.Phase == WalkerPhase.Outbound));
             Assert.IsTrue(sim.Submit(new RemoveBuilding(Faction.F0, saw)).Ok);
             EcoHelp.Run(sim, 900);
             AssertClean(sim);
             Assert.AreEqual(0, e.Walkers.Count);
             Assert.AreEqual(EconomyTuning.CarriersPerHq, EcoHelp.Hq(sim).IdleCarriers);
-            Assert.AreEqual(0, e.Find(kiln).Incoming[(int)Ware.Kindling] , "no claim left on the dead producer");
+            Assert.AreEqual(0, e.Find(axes).Incoming[(int)Ware.Plank], "no claim left on the dead producer");
         }
 
         [Test]
@@ -521,8 +481,10 @@ namespace God.Sim.Tests
 
     public class EconomyFullChainTests
     {
-        /// <summary>An island where F0's chain bot finishes the whole chain well inside 10 minutes (seed scan, 25 Nov).</summary>
+        /// <summary>An island where F0's chain bot finishes the whole stage 3 chain inside <see cref="ChainTicks"/> (seed scan, 25 Nov).</summary>
         public static ulong ChainSeed = 9UL;
+        /// <summary>The stage 3 chain is longer (12 buildings, and bread and axes before a soldier): 30 minutes.</summary>
+        public const int ChainTicks = 18000;
 
         public static (GodSim sim, ChainBot bot) RunChain(ulong seed, int ticks)
         {
@@ -532,22 +494,21 @@ namespace God.Sim.Tests
             {
                 sim.Step();
                 if (i % 20 == 0) bot.Think();
-                if (sim.State.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry) >= 1 && sim.State.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Vehicle) >= 1 && bot.Done) break;
+                if (sim.State.Economy.ProducedLog.Count(u => u.Kit.IsArmed) >= 1 && bot.Done) break;
             }
             return (sim, bot);
         }
 
         [Test]
-        public void TenMinuteRun_BuildsTheWholeChain_AndProducesInfantryAndVehicle()
+        public void ChainRun_BuildsTheWholeChain_AndMakesAnAxeman()
         {
-            var (sim, bot) = RunChain(ChainSeed, 6000);
+            var (sim, bot) = RunChain(ChainSeed, ChainTicks);
             var s = sim.State; var e = s.Economy;
             string why = "placed " + string.Join(",", bot.Placed.Keys) + " tick " + s.Tick + "; " + string.Join(" | ", bot.Log.Distinct());
             Assert.IsTrue(bot.Done, why);
             foreach (var kv in bot.Placed) Assert.IsTrue(e.Find(kv.Value).Built, kv.Key + " built. " + why);
-            Assert.GreaterOrEqual(s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry), 1, why);
-            Assert.GreaterOrEqual(s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Vehicle), 1, why);
-            Assert.LessOrEqual(s.Tick, 6000);
+            Assert.GreaterOrEqual(s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry && u.Kit.Weapon == Ware.Axe), 1, why);
+            Assert.LessOrEqual(s.Tick, ChainTicks);
         }
 
         [Test]
@@ -567,7 +528,7 @@ namespace God.Sim.Tests
                     {
                         Assert.GreaterOrEqual(b.In[w], 0); Assert.GreaterOrEqual(b.Incoming[w], 0); Assert.GreaterOrEqual(b.Stock[w], 0);
                         Assert.LessOrEqual(b.OutReserved[w], b.Out[w]); Assert.LessOrEqual(b.StockReserved[w], b.Stock[w]);
-                        Assert.LessOrEqual(b.Out[w], EconomyTuning.OutputCap);
+                        Assert.LessOrEqual(b.Out[w], b.Def.Role == BuildingRole.Harvester ? EconomyTuning.HarvesterOutputCap : EconomyTuning.OutputCap);
                         if (b.Built && !b.IsHq) Assert.LessOrEqual(b.In[w] + b.Incoming[w], Math.Max(EconomyTuning.InputBuffer, b.Def.In[w]), b.Kind);
                     }
                     if (b.IsHq && b.Built)
@@ -582,9 +543,9 @@ namespace God.Sim.Tests
             int ok = 0; var failed = new List<ulong>();
             for (ulong seed = 1; seed <= 16; seed++)
             {
-                var (sim, bot) = RunChain(seed, 6000);
+                var (sim, bot) = RunChain(seed, ChainTicks);
                 var q = sim.State.Economy.ProducedLog;
-                if (q.Any(u => u.Kind == UnitKind.Infantry) && q.Any(u => u.Kind == UnitKind.Vehicle)) ok++; else failed.Add(seed);
+                if (q.Any(u => u.Kit.IsArmed)) ok++; else failed.Add(seed);
             }
             Assert.GreaterOrEqual(ok, 6, "failed seeds: " + string.Join(",", failed));
         }
