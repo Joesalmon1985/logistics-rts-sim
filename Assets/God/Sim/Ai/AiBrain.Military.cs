@@ -11,19 +11,19 @@ namespace God.Sim
         {
             Array.Clear(_strength, 0, _strength.Length);
             Array.Clear(_vp, 0, _vp.Length);
-            _mine.Clear(); _inf = 0; _veh = 0;
+            _mine.Clear(); _inf = 0;
             foreach (var u in M.Units)
             {
                 _strength[(int)u.Faction] += UnitStrength(u);
                 if (u.Faction != Side) continue;
                 _mine.Add(u);
-                if (u.Kind == UnitKind.Vehicle) _veh++; else _inf++;
+                _inf++;
             }
             for (int i = 0; i < S.FactionCount; i++)
                 if (!S.Factions.IsEliminated((Faction)i)) _vp[i] = FactionRules.VictoryPoints(S, (Faction)i);
         }
 
-        private int UnitStrength(MilUnit u) => u.Kind == UnitKind.Vehicle ? Tune.VehicleStrength : Tune.InfantryStrength;
+        private int UnitStrength(MilUnit u) => Tune.InfantryStrength;
 
         /// <summary>Army strength of a faction (sum over its units), as the AI counts it.</summary>
         public int StrengthOf(Faction f)
@@ -250,7 +250,7 @@ namespace God.Sim
             foreach (var b in m.Buildings)
             {
                 if (extra >= 2 || b.Faction != best.Faction || b.IsHq) continue;
-                if (b.Kind != BuildingKinds.Barracks && b.Kind != BuildingKinds.VehicleWorkshop) continue;
+                if (b.Kind != BuildingKinds.Barracks) continue;
                 if (Pathing.Dist2(b.X, b.Z, best.X, best.Z) > 60000L * 60000L) continue;
                 if (Send(new MarkTarget(Side, b.Id), "mark " + b.Kind + " " + b.Id)) extra++;
             }
