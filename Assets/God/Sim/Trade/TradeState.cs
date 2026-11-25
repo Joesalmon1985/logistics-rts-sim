@@ -166,7 +166,7 @@ namespace God.Sim
         public int Accepted, Refused, Killed;
 
         /// <summary>The judge AI factions (and everyone in watch mode) answer with. Not part of the state hash; set it after creating or loading a game.</summary>
-        public ITradeJudge Judge = new DefaultTradeJudge();
+        [Newtonsoft.Json.JsonIgnore] public ITradeJudge Judge = new DefaultTradeJudge();
 
         // ---------------- snapshot API ----------------
 

@@ -66,6 +66,9 @@ namespace God.Game
             return l;
         }
 
+        /// <summary>The model a view draws: the Citadel model for an upgraded HQ, else the model of its kind.</summary>
+        private static string ModelKindOf(BView v) => v.Citadel ? BuildingModels.CitadelKind : v.Kind;
+
         private static string KindOf(Building b) => b.Size == BuildingSize.Hq ? TerritoryTuning.HqKind : b.Kind;
 
         private void LateUpdate()
@@ -127,7 +130,7 @@ namespace God.Game
             v.BasePos = p;
             v.Root.transform.position = p;
             v.Root.transform.rotation = Quaternion.Euler(0, ModelKit.Yaw(fp - p), 0);
-            v.Rig = BuildingModels.RigOf(v.Kind, v.Faction);
+            v.Rig = BuildingModels.RigOf(ModelKindOf(v), v.Faction);
             _views[b.Id] = v;
             return v;
         }
@@ -149,10 +152,8 @@ namespace God.Game
         private void BuildModel(BView v)
         {
             var rig = v.Rig; var tr = v.Root.transform;
-            v.Model = ModelKit.Part("Model", tr, BuildingModels.MeshOf(v.Kind, v.Faction));
+            v.Model = ModelKit.Part("Model", tr, BuildingModels.MeshOf(ModelKindOf(v), v.Faction));
             var mt = v.Model.transform;
-            // A Citadel is drawn as a bigger HQ for now (P10 gives it its own model).
-            if (v.Citadel) mt.localScale = Vector3.one * 1.3f;
             var banner = ModelKit.Part("Banner", mt, BuildingModels.BannerMesh(v.Faction));
             banner.transform.localPosition = rig.BannerTop;
             banner.transform.localRotation = Quaternion.Euler(0, 180f, 0);

@@ -33,6 +33,8 @@ namespace God.Game
             Cloth = new Color(0.30f, 0.27f, 0.25f),
         };
 
+        private static Color Tint(Color baseCol, Color with, float k) { var c = Color.Lerp(baseCol, with, k); c.a = 1f; return c; }
+
         private static readonly ModelStyle[] ByFaction = new ModelStyle[FactionInfo.Max];
 
         /// <summary>The style of a faction: its family (timber or stone) with the faction colour as the accent.</summary>
@@ -43,9 +45,11 @@ namespace God.Game
             if (ByFaction[i] != null) return ByFaction[i];
             var b = FactionLook.Stone(f) ? Slate : Timber;
             var acc = ModelKit.Accent(FactionLook.Colour(f));
+            // The family look stays; roof, roof trim and plinth lean towards the faction colour so six factions read apart.
             return ByFaction[i] = new ModelStyle
             {
-                Stone = b.Stone, Wall = b.Wall, Frame = b.Frame, Roof = b.Roof, RoofEdge = b.RoofEdge, Plinth = b.Plinth, Door = b.Door,
+                Stone = b.Stone, Wall = b.Wall, Frame = b.Frame, Door = b.Door,
+                Roof = Tint(b.Roof, acc, 0.12f), RoofEdge = Tint(b.RoofEdge, acc * 0.85f, 0.55f), Plinth = Tint(b.Plinth, acc, 0.12f),
                 Accent = acc, AccentDark = acc * 0.7f, Cloth = b.Cloth,
             };
         }

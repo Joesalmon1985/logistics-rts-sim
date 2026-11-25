@@ -52,13 +52,35 @@ namespace God.Sim
             EconomyModule.StartGame(s);
             TradeModule.StartGame(s);
             var sim = new GodSim(s);
+            InstallModules(sim);
+            return sim;
+        }
+
+        /// <summary>Registers every module's handlers and systems. Shared by <see cref="Create(GameSetup)"/> and <see cref="FromState"/>.</summary>
+        private static void InstallModules(GodSim sim)
+        {
             TerritoryModule.Install(sim);
             EconomyModule.Install(sim);
             MilitaryModule.Install(sim);
             TradeModule.Install(sim);
             FactionsModule.Install(sim);
+        }
+
+        /// <summary>
+        /// A working sim over a state that already exists (a loaded save): handlers and systems installed, nothing dealt.
+        /// Caches (board topology, node grid, health index, route cache) are rebuilt from the state, never stored.
+        /// </summary>
+        public static GodSim FromState(GodState state)
+        {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            var sim = new GodSim(state);
+            InstallModules(sim);
+            state.Military?.IndexBuildings();
             return sim;
         }
+
+        /// <summary>Puts a command back in the queue without validating it (a load restores what was queued).</summary>
+        internal void RestorePending(Command c) { _pending.Add(c); }
 
         /// <summary>One hash over the whole state the modules drive (territory, economy, military, factions, trade). Equal for equal setup and commands.</summary>
         public ulong StateHash() => StateHashOf(State);

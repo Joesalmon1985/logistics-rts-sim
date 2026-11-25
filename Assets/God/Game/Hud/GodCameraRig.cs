@@ -79,6 +79,7 @@ namespace God.Game
         public void Zoom(float ticks, Vector2 screen)
         {
             if (Mathf.Approximately(ticks, 0f) || !GroundPoint(screen, out var p)) return;
+            _glideTo = null;
             var pos = Cam.transform.position;
             float f = Mathf.Pow(1f - ZoomStep, ticks);
             float h0 = pos.y - p.y;
@@ -89,9 +90,36 @@ namespace God.Game
             Clamp();
         }
 
+        private Vector3? _glideTo;
+
+        /// <summary>
+        /// Flies the camera so the ground point is at the centre of the view, <paramref name="height"/> above it (the tilt stays).
+        /// Gliding ends at once when the player pans or zooms.
+        /// </summary>
+        public void FocusOn(Vector3 ground, float height, bool instant = false)
+        {
+            var f = Cam.transform.forward;
+            float t = height / Mathf.Max(0.2f, -f.y);
+            var target = new Vector3(ground.x, GroundY(ground.x, ground.z), ground.z) - f * t;
+            if (instant) { Cam.transform.position = target; _glideTo = null; Clamp(); }
+            else _glideTo = target;
+        }
+
+        public bool Gliding => _glideTo.HasValue;
+
+        private void LateUpdate()
+        {
+            if (Cam == null || !_glideTo.HasValue) return;
+            var tr = Cam.transform;
+            tr.position = Vector3.Lerp(tr.position, _glideTo.Value, 1f - Mathf.Exp(-6f * Time.unscaledDeltaTime));
+            if ((tr.position - _glideTo.Value).sqrMagnitude < 0.04f) { tr.position = _glideTo.Value; _glideTo = null; }
+            Clamp();
+        }
+
         /// <summary>Slides the camera over the ground by a world offset (y ignored).</summary>
         public void PanBy(Vector3 delta)
         {
+            _glideTo = null;
             delta.y = 0f;
             Cam.transform.position += delta;
             Clamp();
