@@ -65,6 +65,25 @@ namespace God.Game
                 case Ware.Kindling: return new Color(0.98f, 0.55f, 0.12f);
                 case Ware.Brick: return new Color(0.70f, 0.20f, 0.18f);
                 case Ware.Iron: return new Color(0.30f, 0.45f, 0.62f);
+                // processed, stage 3: earthy for food and building goods, cool for metals, soft for cloth
+                case Ware.Bread: return new Color(0.74f, 0.46f, 0.22f);
+                case Ware.Mortar: return new Color(0.66f, 0.64f, 0.55f);
+                case Ware.Bronze: return new Color(0.80f, 0.55f, 0.22f);
+                case Ware.Pottery: return new Color(0.90f, 0.62f, 0.50f);
+                case Ware.Steel: return new Color(0.60f, 0.68f, 0.78f);
+                case Ware.Leather: return new Color(0.55f, 0.32f, 0.20f);
+                case Ware.Cloth: return new Color(0.55f, 0.75f, 0.78f);
+                // gear: attack in warm and green tones, defence in cool blues and greys
+                case Ware.Sword: return new Color(0.82f, 0.84f, 0.90f);
+                case Ware.Spear: return new Color(0.62f, 0.72f, 0.45f);
+                case Ware.Axe: return new Color(0.80f, 0.35f, 0.28f);
+                case Ware.Bow: return new Color(0.66f, 0.48f, 0.26f);
+                case Ware.Sling: return new Color(0.78f, 0.68f, 0.45f);
+                case Ware.BigShield: return new Color(0.35f, 0.50f, 0.80f);
+                case Ware.Helmet: return new Color(0.55f, 0.58f, 0.64f);
+                case Ware.SmallShield: return new Color(0.30f, 0.65f, 0.70f);
+                case Ware.Breastplate: return new Color(0.45f, 0.45f, 0.62f);
+                case Ware.LightArmour: return new Color(0.62f, 0.54f, 0.40f);
                 default: return Color.magenta;
             }
         }
@@ -83,8 +102,53 @@ namespace God.Game
                 case BuildingKinds.Smelter: return new Color(0.30f, 0.45f, 0.70f);
                 case BuildingKinds.Barracks: return new Color(0.20f, 0.60f, 0.45f);
                 case BuildingKinds.VehicleWorkshop: return new Color(0.15f, 0.75f, 0.85f);
-                default: return Color.white;
+                default:
+                    {
+                        // The new processors and armouries take the colour of what they make, a little darker.
+                        var w = KindOutput(kind);
+                        return w == Ware.None ? Color.white : Color.Lerp(WareColour(w), new Color(0.25f, 0.2f, 0.15f), 0.18f);
+                    }
             }
+        }
+
+        /// <summary>The ware a building kind is known for (what its button shows as a dot), by kind alone so it works before defs exist.</summary>
+        public static Ware KindOutput(string kind)
+        {
+            switch (kind)
+            {
+                case BuildingKinds.Woodcutter: return Ware.Log;
+                case BuildingKinds.ClayPit: return Ware.Clay;
+                case BuildingKinds.Farm: return Ware.Grain;
+                case BuildingKinds.Quarry: return Ware.Stone;
+                case BuildingKinds.Mine: return Ware.Ore;
+                case BuildingKinds.Sawmill: return Ware.Plank;
+                case BuildingKinds.Kiln: return Ware.Brick;
+                case BuildingKinds.Smelter: return Ware.Iron;
+                case BuildingKinds.Bakery: return Ware.Bread;
+                case BuildingKinds.MortarMill: return Ware.Mortar;
+                case BuildingKinds.Foundry: return Ware.Bronze;
+                case BuildingKinds.Pottery: return Ware.Pottery;
+                case BuildingKinds.Forge: return Ware.Steel;
+                case BuildingKinds.Tannery: return Ware.Leather;
+                case BuildingKinds.Weaver: return Ware.Cloth;
+                case BuildingKinds.Swordsmith: return Ware.Sword;
+                case BuildingKinds.Spearmaker: return Ware.Spear;
+                case BuildingKinds.Axesmith: return Ware.Axe;
+                case BuildingKinds.Bowyer: return Ware.Bow;
+                case BuildingKinds.Slingmaker: return Ware.Sling;
+                case BuildingKinds.Shieldwright: return Ware.BigShield;
+                case BuildingKinds.Helmsmith: return Ware.Helmet;
+                case BuildingKinds.Bucklersmith: return Ware.SmallShield;
+                case BuildingKinds.Armourer: return Ware.Breastplate;
+                case BuildingKinds.Leatherworker: return Ware.LightArmour;
+                default: return Ware.None;
+            }
+        }
+
+        public static Color KindDot(string kind)
+        {
+            var w = KindOutput(kind);
+            return w == Ware.None ? Color.white : WareColour(w);
         }
 
         public static Color StatusColour(BuildStatus s)
