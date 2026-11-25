@@ -5,29 +5,48 @@ using UnityEngine;
 namespace God.Game
 {
     /// <summary>
-    /// Headless smoke for the built player: <c>-godsmoke N</c> runs N sim ticks as fast as possible with a chain bot for
-    /// every faction building its economy, and logs a summary every 1000 ticks. (There is no military AI yet: that is P9.)
-    /// It quits with exit code 0 if no exception was logged and every faction built at least 3 kinds at some point,
-    /// otherwise 1. Use only with <c>-batchmode -nographics</c>. The view still only reads state; the bots send commands.
+    /// Headless smoke for the built player: <c>-godsmoke N</c> plays a watch game (six AI brains, see <see cref="AiHost"/>)
+    /// as fast as possible for up to N sim ticks, and logs the standings every 1000 ticks: VP, HQs, Citadels and units per
+    /// faction, and the wars, captures and eliminations so far. It quits with exit code 0 when no exception was logged, the
+    /// invariants hold, and either someone won or the game passed the health checks (at least 3 factions expanded, at least
+    /// one war, at least one capture); otherwise 1. Use only with <c>-batchmode -nographics</c>. The view still only reads
+    /// state; the brains send commands.
     /// </summary>
     public sealed class SmokeRun : MonoBehaviour
     {
-        private const int TicksPerFrame = 100;
+        private const int TicksPerFrame = 200;
         private GodBootstrap _boot;
         private long _endTick;
-        private int _exceptions;
-        private readonly int[] _maxKinds = new int[FactionInfo.Max];
+        private bool _quit = true;
+        private int _exceptions, _wars, _captures, _eliminations, _invariantFailures;
+        private readonly int[] _maxHqs = new int[FactionInfo.Max];
+        private string _invariantNote = "ok";
+
+        /// <summary>The verdict once finished: null while running.</summary>
+        public bool? Ok { get; private set; }
+        /// <summary>The last standings line and the end line (for tests).</summary>
+        public string LastLine { get; private set; }
+        public int Wars => _wars;
+        public int Captures => _captures;
 
         public static void StartIfAsked(GodBootstrap boot)
         {
             var args = System.Environment.GetCommandLineArgs();
             int i = System.Array.IndexOf(args, "-godsmoke");
             if (i < 0) return;
-            long ticks = 6000;
+            long ticks = 40000;
             if (i + 1 < args.Length && long.TryParse(args[i + 1], out var n)) ticks = n;
+            Begin(boot, ticks, true);
+        }
+
+        /// <summary>Starts a smoke on a loaded game (the PlayMode test calls this; the player uses <c>-godsmoke</c>). <paramref name="quit"/>: quit the application with the verdict.</summary>
+        public static SmokeRun Begin(GodBootstrap boot, long ticks, bool quit)
+        {
             var run = boot.gameObject.AddComponent<SmokeRun>();
             run._boot = boot;
             run._endTick = ticks;
+            run._quit = quit;
+            return run;
         }
 
         private void OnEnable() => Application.logMessageReceived += OnLog;
@@ -40,46 +59,70 @@ namespace God.Game
 
         private void Start()
         {
-            _boot.Running = false; // the smoke steps the sim itself
-            _boot.DebugSample();   // starts a chain bot per faction
-            Debug.Log("SMOKE start seed " + _boot.Seed + " ticks " + _endTick + " factions " + _boot.Sim.State.FactionCount);
+            _boot.Running = false; // the smoke steps the sim itself; the AI thinks inside each step
+            var s = _boot.Sim.State;
+            Debug.Log("SMOKE start seed " + _boot.Seed + " ticks " + _endTick + " factions " + s.FactionCount
+                + " brains " + (AiHost.Director != null && AiHost.Director.Sim == _boot.Sim ? AiHost.Director.Brains.Count : 0)
+                + (s.Setup.HasHuman ? " human " + FactionInfo.Name(s.Setup.HumanFaction) : " watch"));
         }
 
         private void Update()
         {
+            if (Ok.HasValue) return;
             var sim = _boot.Sim; var s = sim.State;
             for (int k = 0; k < TicksPerFrame && s.Tick < _endTick && !s.IsGameOver; k++)
             {
                 sim.Step();
-                sim.DrainEvents();
-                if (s.Tick % 20 == 0) _boot.ThinkChains();
-                if (s.Tick % 200 == 0) foreach (var f in s.Setup.Factions) _maxKinds[(int)f] = Mathf.Max(_maxKinds[(int)f], KindsBuilt(s, f));
-                if (s.Tick % 1000 == 0) Debug.Log("SMOKE " + Summary(s));
+                foreach (var ev in sim.DrainEvents())
+                {
+                    if (ev is WarDeclared) _wars++;
+                    else if (ev is HqCaptured) _captures++;
+                    else if (ev is FactionEliminated) _eliminations++;
+                }
+                if (s.Tick % 200 == 0) foreach (var f in s.Setup.Factions) _maxHqs[(int)f] = Mathf.Max(_maxHqs[(int)f], s.Territory.HqsOf(f).Count);
+                if (s.Tick % 500 == 0) CheckInvariants(s);
+                if (s.Tick % 1000 == 0) Debug.Log(LastLine = "SMOKE " + Summary(s));
             }
             if (s.Tick >= _endTick || s.IsGameOver) Finish(s);
         }
 
-        private static int KindsBuilt(GodState s, Faction f) =>
-            s.Economy.Buildings.Where(b => b.Faction == f && b.Built && !b.IsHq).Select(b => b.Kind).Distinct().Count();
-
-        private static string Summary(GodState s)
+        private void CheckInvariants(GodState s)
         {
-            var e = s.Economy;
-            var parts = s.Setup.Factions.Select(f => FactionInfo.Name(f) + " " + KindsBuilt(s, f) + " kinds, "
-                + e.ProducedLog.Count(o => o.Faction == f) + " units made, " + FactionRules.VictoryPoints(s, f) + " VP");
-            return "tick " + s.Tick + " | " + string.Join(" | ", parts) + " | over " + s.IsGameOver;
+            var bad = SimInvariants.Check(s);
+            if (bad.Count == 0) return;
+            _invariantFailures++;
+            _invariantNote = "tick " + s.Tick + ": " + string.Join("; ", bad);
+            Debug.LogWarning("SMOKE invariants " + _invariantNote);
+        }
+
+        private string Summary(GodState s)
+        {
+            var parts = FactionRules.Standings(s).Select(st => FactionInfo.Name(st.Faction) + " " + st.VictoryPoints + " VP " + st.Hqs + " HQ "
+                + st.Citadels + " Cit " + s.Military.CountUnits(st.Faction) + " units"
+                + (st.Eliminated ? " (out)" : s.Factions.Enemies(st.Faction).Count > 0 ? " war " + string.Join("/", s.Factions.Enemies(st.Faction).Select(FactionInfo.Name)) : ""));
+            return "tick " + s.Tick + " min " + (s.Tick / 600.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " | " + string.Join(" | ", parts)
+                + " | wars " + _wars + " captures " + _captures + " eliminations " + _eliminations;
         }
 
         private void Finish(GodState s)
         {
-            foreach (var f in s.Setup.Factions) _maxKinds[(int)f] = Mathf.Max(_maxKinds[(int)f], KindsBuilt(s, f));
-            int worst = s.Setup.Factions.Min(f => _maxKinds[(int)f]);
-            var bad = SimInvariants.Check(s);
-            bool ok = _exceptions == 0 && worst >= 3 && bad.Count == 0;
-            Debug.Log("SMOKE END " + Summary(s) + " | fewest kinds built at once " + worst + " | invariants " + (bad.Count == 0 ? "ok" : string.Join("; ", bad))
-                + " | exceptions " + _exceptions + " | " + (ok ? "OK" : "FAIL"));
+            foreach (var f in s.Setup.Factions) _maxHqs[(int)f] = Mathf.Max(_maxHqs[(int)f], s.Territory.HqsOf(f).Count);
+            CheckInvariants(s);
+            int expanded = s.Setup.Factions.Count(f => _maxHqs[(int)f] >= 2);
+            bool won = s.IsGameOver && s.Factions.Winner >= 0;
+            bool healthy = expanded >= 3 && _wars >= 1 && _captures >= 1;
+            bool ok = _exceptions == 0 && _invariantFailures == 0 && (won || healthy);
+            string over = s.IsGameOver
+                ? "GAME OVER at tick " + s.Factions.GameOverTick + " (minute " + (s.Factions.GameOverTick / 600.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "): "
+                  + (s.Factions.Winner >= 0 ? FactionInfo.Name((Faction)s.Factions.Winner) : "nobody") + " wins by " + s.Factions.EndReason
+                : "no game over by tick " + s.Tick;
+            Debug.Log("SMOKE " + over);
+            LastLine = "SMOKE END " + Summary(s) + " | " + over + " | factions expanded " + expanded + " | invariants " + _invariantNote
+                + " | exceptions " + _exceptions + " | " + (ok ? "OK" : "FAIL");
+            Debug.Log(LastLine);
+            Ok = ok;
             enabled = false;
-            Application.Quit(ok ? 0 : 1);
+            if (_quit) Application.Quit(ok ? 0 : 1);
         }
     }
 }

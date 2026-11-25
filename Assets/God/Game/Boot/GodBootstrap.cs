@@ -110,12 +110,12 @@ namespace God.Game
             {
                 seed = SeedFromCommandLine(seed);
                 if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
-                var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") ? GameSetup.NoHuman : 0);
+                var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") || HasArg("-godsmoke") ? GameSetup.NoHuman : 0);
                 PendingSetup = null;
                 setup.Seed = seed;
                 Sim = GodSim.Create(setup);
-                // A script or a flag chose already: the AIs play (not in the smoke and dev runs, which bring their own bots).
-                if (flagged && !HasArg("-godsmoke") && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
+                // A script or a flag chose already: the AIs play (the smoke too: it watches six brains; not the dev runs).
+                if (flagged && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
             }
             ShowStartCard = !SkipStartCard && !flagged && !startAi && loaded == null;
             BoardSpace.Topo = Sim.State.Board.Topology;
@@ -182,11 +182,10 @@ namespace God.Game
         /// </summary>
         public void StartAi()
         {
+            // P11: the faction AI (P9 brains) plays every non-human faction. Brains rebuild from state, so a loaded game goes on.
             Chains.Clear();
-            var s = Sim.State;
-            foreach (var f in s.Setup.Factions)
-                if (!FactionLook.IsHuman(s, f) && !s.Factions.IsEliminated(f)) Chains.Add(new ChainBot(Sim, f));
-            _lastThink = s.Tick;
+            if (AiHost.Director == null || AiHost.Director.Sim != Sim) AiHost.StartForGame(Sim);
+            _lastThink = Sim.State.Tick;
         }
 
         /// <summary>Snapshot of the running game: the sim, what is queued, and every registered extra.</summary>
@@ -261,7 +260,7 @@ namespace God.Game
             if (Menu != null && Menu.Blocking) return; // the menu or the start card holds the game
             if (Sim.State.IsGameOver) { PumpEvents(); return; }
             // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
-            if (!Running) { if (Sim.PendingCommands.Count > 0) { Sim.Step(); PumpEvents(); } return; }
+            if (!Running) { if (Sim.PendingCommands.Count > 0) { AiHost.StepHeld(Sim); PumpEvents(); } return; }
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
@@ -278,13 +277,13 @@ namespace God.Game
 
         /// <summary>
         /// Dev (F2): starts the scripted economy chain (sawmill, quarry, woodcutter, kiln, clay pit, mine, smelter, farm,
-        /// barracks, vehicle workshop, with HQs and roads as needed) for every faction, each sending the same commands a
-        /// player would, and runs the sim. Returns the log of the human faction's bot (F0's in watch mode).
+        /// barracks, vehicle workshop, with HQs and roads as needed) for every faction no AI brain plays (the human one),
+        /// each sending the same commands a player would, and runs the sim. Returns the log of the human faction's bot (F0's in watch mode).
         /// </summary>
         public System.Collections.Generic.List<string> DebugSample()
         {
             Chains.Clear();
-            foreach (var f in Sim.State.Setup.Factions) if (!Sim.State.Factions.IsEliminated(f)) Chains.Add(new ChainBot(Sim, f));
+            foreach (var f in Sim.State.Setup.Factions) if (!Sim.State.Factions.IsEliminated(f) && !AiHost.Drives(Sim, f)) Chains.Add(new ChainBot(Sim, f));
             _lastThink = Sim.State.Tick;
             Running = true;
             return Chain?.Log ?? new System.Collections.Generic.List<string>();

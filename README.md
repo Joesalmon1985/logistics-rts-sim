@@ -52,4 +52,4 @@ Run `Builds/Windows/GodOfTheIsland.exe`, or open `Main.unity` and press Play. Se
 
 ## Smoke
 
-`GodOfTheIsland.exe -batchmode -nographics -godsmoke 15000 -logFile smoke.log` plays 25 sim-minutes headless with a chain bot per faction, logs `SMOKE` lines and quits with exit code 0 on success (no exception, every faction built at least 3 kinds, invariants hold).
+`GodOfTheIsland.exe -batchmode -nographics -godsmoke 40000 -logFile smoke.log` plays a watch game of six AI factions headless for up to 40000 ticks (about 67 sim-minutes), logs `SMOKE` standings every 1000 ticks (VP, HQs, Citadels, units, wars, captures, eliminations) and the game-over line, and quits with exit code 0 on success (no exception, invariants hold, and someone won or at least 3 factions expanded with a war and a capture). The AI lives in `Assets/God/Sim/Ai` (P9); its weights are in `AiTuning`.

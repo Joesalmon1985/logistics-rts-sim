@@ -2,7 +2,7 @@
 
 Run `Builds\Windows\GodOfTheIsland.exe`. To get a different island, add `-godseed 1234`. Add `-godwatch` to watch with no human faction (the build tools are hidden).
 
-Stage 2 (P7, 25 Nov): the island has 30 hexes and **six factions** (Amber, Azure, Crimson, Jade, Violet and Ivory), each starting with one HQ, spread round the coast. You play Amber. Everyone starts at peace. There are no enemy waves any more, and the other factions have no military AI yet (that is P9): press **F2** to start a chain bot that builds the economy of every faction, yours included.
+Stage 2 (P7, 25 Nov): the island has 30 hexes and **six factions** (Amber, Azure, Crimson, Jade, Violet and Ivory), each starting with one HQ, spread round the coast. You play Amber. Everyone starts at peace. There are no enemy waves any more. Since P9 the other five factions are played by an **AI** from the start: they build their economy with roads, expand to new HQ corners, upgrade Citadels, raise armies, guard their HQs, go to war and capture HQs. They declare war on a faction that leads by 2 VP or more (tied leaders fight each other), and on a weak neighbour when their army is clearly stronger, and make peace once the reason is gone. **F2** still starts a chain bot for your own economy. `-godwatch` gives all six factions an AI; `-godnoai` starts a game with none.
 
 **Victory points:** a finished HQ is worth 1 VP and a Citadel 2 VP. The first faction to **10 VP** wins; so does the last faction left. A faction with no HQ is out.
 
@@ -79,7 +79,7 @@ Press **Trade** on the cloud strip. Pick a faction you are not at war with, set 
 
 ## Not in yet
 
-- No military AI or trade yet (P8, P9); the F2 chain bots only build economies.
+- No trade yet (P8); the AI's trade hooks are empty until P11.
 - No saving (P10).
 - No sound.
 - No tutorial.
