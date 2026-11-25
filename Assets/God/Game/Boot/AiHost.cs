@@ -14,10 +14,15 @@ namespace God.Game
         /// <summary>The director of the last game started (null before, or with <c>-godnoai</c>).</summary>
         public static AiDirector Director { get; private set; }
 
-        /// <summary>Gives each listed faction a brain. Call once per sim (a loaded game included: brains rebuild from its state).</summary>
+        /// <summary>
+        /// Gives each listed faction a brain that trades (<see cref="AiTrader"/> unless another trader is given). Call once
+        /// per sim (a loaded game included: brains rebuild from its state). It also makes the brains the game's trade judge,
+        /// which a save does not keep, so offers reaching an AI faction are answered by its brain; offers to the human
+        /// faction still wait for the HUD offer card.
+        /// </summary>
         public static AiDirector Start(GodSim sim, IEnumerable<Faction> factions, IAiTrader trader = null)
         {
-            Director = AiDirector.Attach(sim, factions, AiTuning.Default, trader);
+            Director = AiDirector.Attach(sim, factions, AiTuning.Default, trader ?? new AiTrader());
             return Director;
         }
 

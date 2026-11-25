@@ -247,14 +247,14 @@ namespace God.Sim.Tests
             Assert.GreaterOrEqual(captured, seeds.Length - 1);
         }
 
-        /// <summary>Balance report over seeds 1 to 12, without and with the trader (run by name; prints the per-seed table).</summary>
+        /// <summary>Balance report over seeds 1 to 12 and the default seed, without and with the trader (run by name; prints the per-seed table).</summary>
         [Test, Explicit("balance report: run by name")]
         public void BalanceReport_Seeds1To12()
         {
             foreach (bool trade in new[] { false, true })
             {
                 TestContext.Out.WriteLine(trade ? "WITH AiTrader" : "WITHOUT trade");
-                for (ulong seed = 1; seed <= 12; seed++)
+                foreach (ulong seed in Enumerable.Range(1, 12).Select(i => (ulong)i).Concat(new[] { 20261124UL }))
                 {
                     var (sim, _, log) = AiTests.Play(seed, 90 * 600, 0, null, trade ? new AiTrader() : null);
                     TestContext.Out.WriteLine(Row(seed, sim.State, log));

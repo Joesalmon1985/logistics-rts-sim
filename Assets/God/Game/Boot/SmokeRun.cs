@@ -7,7 +7,7 @@ namespace God.Game
     /// <summary>
     /// Headless smoke for the built player: <c>-godsmoke N</c> plays a watch game (six AI brains, see <see cref="AiHost"/>)
     /// as fast as possible for up to N sim ticks, and logs the standings every 1000 ticks: VP, HQs, Citadels and units per
-    /// faction, and the wars, captures and eliminations so far. It quits with exit code 0 when no exception was logged, the
+    /// faction, the wars, captures and eliminations so far, and the trades (offered, accepted, refused, envoys killed). It quits with exit code 0 when no exception was logged, the
     /// invariants hold, and either someone won or the game passed the health checks (at least 3 factions expanded, at least
     /// one war, at least one capture); otherwise 1. Use only with <c>-batchmode -nographics</c>. The view still only reads
     /// state; the brains send commands.
@@ -18,7 +18,7 @@ namespace God.Game
         private GodBootstrap _boot;
         private long _endTick;
         private bool _quit = true;
-        private int _exceptions, _wars, _captures, _eliminations, _invariantFailures;
+        private int _exceptions, _wars, _captures, _eliminations, _invariantFailures, _offered, _accepted, _refused, _killed;
         private readonly int[] _maxHqs = new int[FactionInfo.Max];
         private string _invariantNote = "ok";
 
@@ -28,6 +28,9 @@ namespace God.Game
         public string LastLine { get; private set; }
         public int Wars => _wars;
         public int Captures => _captures;
+        /// <summary>Trade offers sent and accepted so far (P11).</summary>
+        public int TradesOffered => _offered;
+        public int TradesAccepted => _accepted;
 
         public static void StartIfAsked(GodBootstrap boot)
         {
@@ -78,6 +81,10 @@ namespace God.Game
                     if (ev is WarDeclared) _wars++;
                     else if (ev is HqCaptured) _captures++;
                     else if (ev is FactionEliminated) _eliminations++;
+                    else if (ev is TradeOffered) _offered++;
+                    else if (ev is TradeAccepted) _accepted++;
+                    else if (ev is TradeRefused) _refused++;
+                    else if (ev is EnvoyKilled) _killed++;
                 }
                 if (s.Tick % 200 == 0) foreach (var f in s.Setup.Factions) _maxHqs[(int)f] = Mathf.Max(_maxHqs[(int)f], s.Territory.HqsOf(f).Count);
                 if (s.Tick % 500 == 0) CheckInvariants(s);
@@ -101,7 +108,8 @@ namespace God.Game
                 + st.Citadels + " Cit " + s.Military.CountUnits(st.Faction) + " units"
                 + (st.Eliminated ? " (out)" : s.Factions.Enemies(st.Faction).Count > 0 ? " war " + string.Join("/", s.Factions.Enemies(st.Faction).Select(FactionInfo.Name)) : ""));
             return "tick " + s.Tick + " min " + (s.Tick / 600.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " | " + string.Join(" | ", parts)
-                + " | wars " + _wars + " captures " + _captures + " eliminations " + _eliminations;
+                + " | wars " + _wars + " captures " + _captures + " eliminations " + _eliminations
+                + " | trades offered " + _offered + " accepted " + _accepted + " refused " + _refused + " killed " + _killed;
         }
 
         private void Finish(GodState s)
