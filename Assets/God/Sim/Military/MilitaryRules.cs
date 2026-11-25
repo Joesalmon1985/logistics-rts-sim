@@ -36,34 +36,39 @@ namespace God.Sim
     {
         // ---------------- spawning ----------------
 
-        public static MilUnit SpawnUnit(GodState s, Faction f, UnitKind kind, int x, int z, EventBuffer ev)
+        /// <summary>Spawns a soldier with a kit (normalised: no weapon fights as a sword with no defence).</summary>
+        public static MilUnit SpawnUnit(GodState s, Faction f, UnitKind kind, Kit kit, int x, int z, EventBuffer ev)
         {
             var m = s.Military;
-            var st = MilitaryTuning.Of(kind);
+            var k = MilitaryTuning.Normalize(kit);
+            var st = MilitaryTuning.Of(k);
             var u = new MilUnit
             {
-                Id = m.NextUnitId++, Faction = f, Kind = kind, X = x, Z = z,
+                Id = m.NextUnitId++, Faction = f, Kind = kind, Kit = k, X = x, Z = z,
                 Health = st.MaxHealth, MaxHealth = st.MaxHealth,
                 FaceX = 1, FaceZ = 0,
             };
             m.Units.Add(u);
-            ev?.Add(new UnitSpawned { UnitId = u.Id, Faction = f, Kind = kind, X = x, Z = z });
+            ev?.Add(new UnitSpawned { UnitId = u.Id, Faction = f, Kind = kind, Kit = k, X = x, Z = z });
             return u;
         }
 
+        /// <summary>Spawns a soldier without gear (a sword, no defence).</summary>
+        public static MilUnit SpawnUnit(GodState s, Faction f, UnitKind kind, int x, int z, EventBuffer ev) => SpawnUnit(s, f, kind, default, x, z, ev);
+
         /// <summary>Spawns at a node with a small id-based spread so units do not stack.</summary>
-        private static MilUnit SpawnAtNode(GodState s, Faction f, UnitKind kind, int node, EventBuffer ev)
+        private static MilUnit SpawnAtNode(GodState s, Faction f, UnitKind kind, Kit kit, int node, EventBuffer ev)
         {
             var g = s.Territory.Grid;
             int x = Pathing.NodeMmX(g, node), z = Pathing.NodeMmZ(g, node);
             int k = s.Military.NextUnitId % MilitaryTuning.SpawnSpreadX.Length;
             int sx = x + MilitaryTuning.SpawnSpreadX[k], sz = z + MilitaryTuning.SpawnSpreadZ[k];
             if (Pathing.IsLandPoint(g, sx, sz)) { x = sx; z = sz; }
-            return SpawnUnit(s, f, kind, x, z, ev);
+            return SpawnUnit(s, f, kind, kit, x, z, ev);
         }
 
         /// <summary>
-        /// Drains <see cref="GodState.UnitQueue"/>: each order spawns at its factory's flag node. When the factory is gone (or
+        /// Drains <see cref="GodState.UnitQueue"/>: each order spawns a soldier wearing <c>order.Kit</c> at its factory's flag node. When the factory is gone (or
         /// has changed hands) the unit spawns at the faction's HQ nearest to where the factory last stood (its flag node);
         /// when the faction has no HQ either, the order is dropped.
         /// </summary>
@@ -76,7 +81,7 @@ namespace God.Sim
             foreach (var o in orders)
             {
                 var b = t.BuildingById(o.BuildingId);
-                if (b != null && b.Faction == o.Faction) { SpawnAtNode(s, o.Faction, o.Kind, b.FlagNode, ev); continue; }
+                if (b != null && b.Faction == o.Faction) { SpawnAtNode(s, o.Faction, o.Kind, o.Kit, b.FlagNode, ev); continue; }
 
                 Hq best = null; long bestD = long.MaxValue;
                 int refNode = m.Known.TryGetValue(o.BuildingId, out var k) ? k.node : -1;
@@ -87,7 +92,7 @@ namespace God.Sim
                     if (best == null || d < bestD) { best = h; bestD = d; }
                 }
                 if (best == null) continue;
-                SpawnAtNode(s, o.Faction, o.Kind, t.BuildingById(best.Id).FlagNode, ev);
+                SpawnAtNode(s, o.Faction, o.Kind, o.Kit, t.BuildingById(best.Id).FlagNode, ev);
             }
         }
 

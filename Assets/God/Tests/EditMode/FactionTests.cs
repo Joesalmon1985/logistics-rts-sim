@@ -138,8 +138,8 @@ namespace God.Sim.Tests
             var (start, dir) = b.LandLine(b.PlayerHq, 4);
             var a = b.Spawn(Faction.F0, UnitKind.Infantry, start);
             var e = b.Spawn(Faction.F1, UnitKind.Infantry, b.Walk(start, dir, 2));
-            var n = b.Spawn(Faction.F2, UnitKind.Vehicle, b.Walk(start, dir, 4));
-            // A move order takes F1's soldier right past F0's and on towards F2's vehicle: nobody stops or shoots.
+            var n = b.Spawn(Faction.F2, new Kit(Ware.Bow), b.Walk(start, dir, 4));
+            // A move order takes F1's soldier right past F0's and on towards F2's archer: nobody stops or shoots.
             b.Do(new DevMoveUnit(e.Id, Pathing.NodeMmX(b.G, start), Pathing.NodeMmZ(b.G, start)));
             b.Step(4);
             Assert.AreEqual(0, b.Events<UnitFired>().Count(), "nobody fires at peace");
@@ -155,7 +155,7 @@ namespace God.Sim.Tests
             Assert.Greater(shots.Count(x => x.AttackerId == a.Id && x.TargetId == e.Id), 0, "at war they fight");
             Assert.Greater(shots.Count(x => x.AttackerId == e.Id && x.TargetId == a.Id), 0);
             Assert.AreEqual(0, shots.Count(x => x.AttackerId == n.Id || x.TargetId == n.Id), "the third faction is left alone");
-            Assert.AreEqual(220, n.Health);
+            Assert.AreEqual(100, n.Health);
         }
 
         [Test]
@@ -284,10 +284,10 @@ namespace God.Sim.Tests
             var areaRoads = t.Roads.Where(r => r.Faction == Faction.F0 && r.Nodes.All(n => t.InArea(b.PlayerHq, n))).Select(r => r.Id).ToList();
             Assert.Greater(areaRoads.Count, 0);
 
-            // Strike while F0 walkers are out: one vehicle shot (60) brings the HQ down in the tick it arrives.
+            // Strike while F0 walkers are out: one axe blow (32 on buildings) brings the HQ down in the tick it arrives.
             Assert.IsTrue(b.RunUntil(400, () => e.Walkers.Count(w => w.Faction == Faction.F0) >= 2), "F0 walkers on the move");
-            b.M.BuildingById(hqId).Health = 60;
-            b.Sim.Submit(new DevSpawnUnit(Faction.F1, UnitKind.Vehicle, b.G.FlagNodeOf(b.PlayerHq.Node)));
+            b.M.BuildingById(hqId).Health = 30;
+            b.Sim.Submit(DevSpawnUnit.WithKit(Faction.F1, new Kit(Ware.Axe), b.G.FlagNodeOf(b.PlayerHq.Node)));
             int[] stockBefore = null; int lostBefore = 0, walkersAtCapture = 0;
             Assert.IsTrue(b.RunUntil(400, () =>
             {
@@ -367,8 +367,8 @@ namespace God.Sim.Tests
             b.Step();
             Assert.AreEqual(3000, b.M.BuildingById(hq.Id).MaxHealth);
             Assert.AreEqual(2, FactionRules.VictoryPoints(b.S, Faction.F0));
-            b.M.BuildingById(hq.Id).Health = 60;
-            b.Spawn(Faction.F1, UnitKind.Vehicle, b.G.FlagNodeOf(hq.Node));
+            b.M.BuildingById(hq.Id).Health = 30;
+            b.Spawn(Faction.F1, new Kit(Ware.Axe), b.G.FlagNodeOf(hq.Node));
             Assert.IsTrue(b.RunUntil(300, () => hq.Faction == Faction.F1));
             Assert.IsTrue(hq.Citadel);
             Assert.AreEqual(1500, b.M.BuildingById(hq.Id).Health);
@@ -381,7 +381,7 @@ namespace God.Sim.Tests
             var b = new Bed(3);
             var small = b.EnemySmall(0);
             b.M.BuildingById(small.Id).Health = 10;
-            b.Spawn(Faction.F0, UnitKind.Vehicle, small.FlagNode);
+            b.Spawn(Faction.F0, new Kit(Ware.Axe), small.FlagNode);
             Assert.IsTrue(b.RunUntil(100, () => b.T.BuildingById(small.Id) == null));
             Assert.AreEqual(1, b.M.Rubbles.Count);
             Assert.IsFalse(b.Events<HqCaptured>().Any());
@@ -391,8 +391,8 @@ namespace God.Sim.Tests
         public void LastFactionStanding_WinsAndTheSimStops()
         {
             var b = new Bed(3, factions: 2);
-            b.M.BuildingById(b.EnemyHq.Id).Health = 60;
-            b.Spawn(Faction.F0, UnitKind.Vehicle, b.G.FlagNodeOf(b.EnemyHq.Node));
+            b.M.BuildingById(b.EnemyHq.Id).Health = 30;
+            b.Spawn(Faction.F0, new Kit(Ware.Axe), b.G.FlagNodeOf(b.EnemyHq.Node));
             Assert.IsTrue(b.RunUntil(300, () => b.S.IsGameOver));
             var over = b.Events<GameOver>().Single();
             Assert.AreEqual(0, over.Winner);

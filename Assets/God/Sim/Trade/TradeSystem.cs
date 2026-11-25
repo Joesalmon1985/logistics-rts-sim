@@ -129,7 +129,7 @@ namespace God.Sim
 
         /// <summary>
         /// Every unit that is ready to fire and not engaged with an enemy unit shoots the nearest envoy of a faction it is at
-        /// war with within its range (ties: lowest envoy id). Envoys rank below units. Damage is that of a shot at infantry.
+        /// war with within its range (ties: lowest envoy id). Envoys rank below units. A soldier reaches an envoy from its weapon range or <see cref="MilitaryTuning.EnvoyReachMm"/>, whichever is longer, and does its weapon's damage (no rolls: an envoy does not fight back).
         /// </summary>
         private static void Shoot(GodState s, EventBuffer ev)
         {
@@ -139,8 +139,9 @@ namespace God.Sim
             foreach (var u in m.Units)
             {
                 if (u.Health <= 0 || u.Cooldown > 0 || u.TargetKind == TargetKind.Unit) continue;
-                var st = MilitaryTuning.Of(u.Kind);
-                long r2 = (long)st.RangeMm * st.RangeMm;
+                var st = MilitaryTuning.Of(u.Kit);
+                long reach = System.Math.Max(st.RangeMm, MilitaryTuning.EnvoyReachMm);
+                long r2 = reach * reach;
                 Envoy pick = null; long bd = long.MaxValue;
                 foreach (var env in t.Envoys)
                 {
@@ -149,8 +150,8 @@ namespace God.Sim
                     if (d <= r2 && d < bd) { bd = d; pick = env; }
                 }
                 if (pick == null) continue;
-                int dmg = MilitaryTuning.ShotDamage(u.Kind, TargetClass.Infantry);
-                u.Cooldown = st.CooldownTicks; u.FireFlash = MilitaryTuning.FireFlashTicks;
+                int dmg = st.W.Damage;
+                u.Cooldown = st.CooldownTicks; u.FireFlash = MilitaryTuning.FireFlashTicks; u.LastOutcome = AttackOutcome.Hit; u.LastDamage = dmg;
                 if (pick.X != u.X || pick.Z != u.Z) { u.FaceX = pick.X - u.X; u.FaceZ = pick.Z - u.Z; }
                 pick.Health -= dmg; pick.HitFlash = MilitaryTuning.FireFlashTicks;
                 if (pick.Health <= 0)

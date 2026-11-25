@@ -588,7 +588,7 @@ namespace God.Sim.Tests
                         if (r.Ok) offers++;
                     }
                     if (tick % 400 == 100) { var a = (Faction)rng.NextInt(6); var c = (Faction)rng.NextInt(6); if (a != c) b.Sim.Submit(new DeclareWar(a, c)); }
-                    if (tick % 400 == 130) { var a = (Faction)rng.NextInt(6); b.Sim.Submit(new DevSpawnUnit(a, rng.NextInt(2) == 0 ? UnitKind.Infantry : UnitKind.Vehicle, b.S.Economy.HqsOf((Faction)rng.NextInt(6)).FirstOrDefault()?.Node ?? 0)); }
+                    if (tick % 400 == 130) { var a = (Faction)rng.NextInt(6); b.Sim.Submit(DevSpawnUnit.WithKit(a, rng.NextInt(2) == 0 ? new Kit(Ware.Sword) : new Kit(Ware.Bow), b.S.Economy.HqsOf((Faction)rng.NextInt(6)).FirstOrDefault()?.Node ?? 0)); }
                 }
                 Assert.Greater(offers, 50, "seed " + seed);
                 Assert.Greater(b.T.Accepted, 5, "some were accepted (seed " + seed + ")");

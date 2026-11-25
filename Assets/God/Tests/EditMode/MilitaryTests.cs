@@ -84,6 +84,14 @@ namespace God.Sim.Tests
             return M.UnitById(before);
         }
 
+        /// <summary>Spawns a soldier wearing a kit.</summary>
+        public MilUnit Spawn(Faction f, Kit kit, int node)
+        {
+            int before = M.NextUnitId;
+            Assert.IsTrue(Do(DevSpawnUnit.WithKit(f, kit, node)).Ok);
+            return M.UnitById(before);
+        }
+
         public int Node(Hq hq, int di, int dj) => G.Id(G.I(hq.Node) + di, G.J(hq.Node) + dj);
 
         /// <summary>A run of land nodes in one lattice direction from some node inside a circle, as a start node and direction.</summary>
@@ -158,16 +166,18 @@ namespace God.Sim.Tests
         }
 
         [Test]
-        public void Vehicle_IsFasterThanInfantry()
+        public void HeavyKit_IsSlower_ThanABareSoldier()
         {
             var b = new Bed();
             var (start, dir) = b.LandLine(b.PlayerHq, 8);
-            var a = b.Spawn(Faction.F0, UnitKind.Infantry, start);
-            var v = b.Spawn(Faction.F0, UnitKind.Vehicle, start);
+            var bare = b.Spawn(Faction.F0, new Kit(Ware.Sword), start);
+            var heavy = b.Spawn(Faction.F0, new Kit(Ware.Sword, Ware.BigShield, Ware.None, Ware.Breastplate), start);
+            Assert.AreEqual(300, MilitaryTuning.Of(bare.Kit).SpeedMmPerTick);
+            Assert.AreEqual(210, MilitaryTuning.Of(heavy.Kit).SpeedMmPerTick, "big shield -10%, breastplate -20%");
             int gx = Pathing.NodeMmX(b.G, b.Walk(start, dir, 8)), gz = Pathing.NodeMmZ(b.G, b.Walk(start, dir, 8));
-            b.Do(new DevMoveUnit(a.Id, gx, gz)); b.Do(new DevMoveUnit(v.Id, gx, gz));
+            b.Do(new DevMoveUnit(bare.Id, gx, gz)); b.Do(new DevMoveUnit(heavy.Id, gx, gz));
             b.Step(20);
-            Assert.Greater(Pathing.Dist(v.X, v.Z, gx, gz) * -1, Pathing.Dist(a.X, a.Z, gx, gz) * -1, "the vehicle is closer to the goal");
+            Assert.Less(Pathing.Dist(bare.X, bare.Z, gx, gz), Pathing.Dist(heavy.X, heavy.Z, gx, gz), "the bare soldier is closer to the goal");
         }
 
         [Test]
@@ -190,12 +200,12 @@ namespace God.Sim.Tests
                     a = coast[i]; c = coast[j]; break;
                 }
             Assert.GreaterOrEqual(a, 0, "the coast has a notch the straight line cannot cross");
-            var u = b.Spawn(Faction.F0, UnitKind.Vehicle, a);
+            var u = b.Spawn(Faction.F0, UnitKind.Infantry, a);
             int gx = Pathing.NodeMmX(b.G, c), gz = Pathing.NodeMmZ(b.G, c);
             int straight = Pathing.Dist(u.X, u.Z, gx, gz);
             Assert.IsTrue(b.Do(new DevMoveUnit(u.Id, gx, gz)).Ok);
             long travelled = 0; int px = u.X, pz = u.Z;
-            for (int i = 0; i < 2000 && u.HasGoal; i++)
+            for (int i = 0; i < 4000 && u.HasGoal; i++)
             {
                 b.Step();
                 Assert.IsTrue(Pathing.IsLandPoint(b.G, u.X, u.Z), "on land at tick " + i);
@@ -223,55 +233,70 @@ namespace God.Sim.Tests
     public class MilitaryCombatTests
     {
         [Test]
-        public void DamageMultipliers_FollowTheTable()
-        {
-            Assert.AreEqual(12, MilitaryTuning.ShotDamage(UnitKind.Infantry, TargetClass.Infantry));
-            Assert.AreEqual(4, MilitaryTuning.ShotDamage(UnitKind.Infantry, TargetClass.Vehicle));
-            Assert.AreEqual(4, MilitaryTuning.ShotDamage(UnitKind.Infantry, TargetClass.Building));
-            Assert.AreEqual(20, MilitaryTuning.ShotDamage(UnitKind.Vehicle, TargetClass.Infantry));
-            Assert.AreEqual(60, MilitaryTuning.ShotDamage(UnitKind.Vehicle, TargetClass.Vehicle));
-            Assert.AreEqual(60, MilitaryTuning.ShotDamage(UnitKind.Vehicle, TargetClass.Building));
-            Assert.AreEqual(100, MilitaryTuning.Infantry.MaxHealth);
-            Assert.AreEqual(220, MilitaryTuning.Vehicle.MaxHealth);
-            Assert.AreEqual(12000, MilitaryTuning.Infantry.RangeMm);
-            Assert.AreEqual(16000, MilitaryTuning.Vehicle.RangeMm);
-            Assert.AreEqual(20000, MilitaryTuning.SightMm);
-            Assert.AreEqual(6, MilitaryTuning.Infantry.CooldownTicks);
-            Assert.AreEqual(20, MilitaryTuning.Vehicle.CooldownTicks);
-        }
-
-        [Test]
-        public void Fight_FiresOnCooldown_WithTheTableDamage_AndEndsInDeath()
+        public void Fight_StrikesOnCooldown_DamageMatchesTheOutcome_AndEndsInDeath()
         {
             var b = new Bed();
             var (start, dir) = b.LandLine(b.PlayerHq, 3);
-            var inf = b.Spawn(Faction.F1, UnitKind.Infantry, start);
-            var veh = b.Spawn(Faction.F0, UnitKind.Vehicle, b.Walk(start, dir, 3)); // 15 m apart: vehicle in range, infantry not
-            Assert.IsTrue(b.RunUntil(400, () => !b.M.Units.Contains(inf)), "the infantry dies");
+            var a = b.Spawn(Faction.F1, new Kit(Ware.Sword), start);
+            var c = b.Spawn(Faction.F0, new Kit(Ware.Sword), b.Walk(start, dir, 3));
+            Assert.IsTrue(b.RunUntil(1500, () => !b.M.Units.Contains(a) || !b.M.Units.Contains(c)), "one of them dies");
 
-            var vehShots = b.Events<UnitFired>().Where(e => e.AttackerId == veh.Id).ToList();
-            Assert.AreEqual(5, vehShots.Count, "5 shots of 20 kill 100 hp");
-            foreach (var e in vehShots) { Assert.AreEqual(20, e.Damage); Assert.AreEqual(inf.Id, e.TargetId); Assert.AreEqual(TargetKind.Unit, e.TargetKind); }
-            for (int i = 1; i < vehShots.Count; i++) Assert.AreEqual(20, vehShots[i].Tick - vehShots[i - 1].Tick, "2 s between vehicle shots");
-
-            var infShots = b.Events<UnitFired>().Where(e => e.AttackerId == inf.Id).ToList();
-            Assert.Greater(infShots.Count, 0, "the infantry closed to 12 m and answered");
-            foreach (var e in infShots) Assert.AreEqual(4, e.Damage, "x0.5 against vehicles");
-            for (int i = 1; i < infShots.Count; i++) Assert.AreEqual(6, infShots[i].Tick - infShots[i - 1].Tick, "0.6 s between infantry shots");
-            Assert.AreEqual(220 - 4 * infShots.Count, veh.Health);
-            Assert.AreEqual(1, b.Events<UnitDied>().Count(e => e.UnitId == inf.Id));
+            var shots = b.Events<UnitFired>().ToList();
+            Assert.Greater(shots.Count, 8);
+            foreach (var e in shots)
+            {
+                Assert.AreEqual(Ware.Sword, e.Weapon); Assert.AreEqual(TargetKind.Unit, e.TargetKind); Assert.IsFalse(e.Ranged);
+                switch (e.Outcome)
+                {
+                    case AttackOutcome.Miss: case AttackOutcome.Blocked: Assert.AreEqual(0, e.Damage, "a sword blocked or missed does nothing"); break;
+                    case AttackOutcome.Hit: Assert.AreEqual(12, e.Damage); break;
+                    case AttackOutcome.Crit: Assert.AreEqual(24, e.Damage); break;
+                    default: Assert.Fail("outcome " + e.Outcome); break;
+                }
+                Assert.LessOrEqual(Pathing.Dist(e.FromX, e.FromZ, e.ToX, e.ToZ), 2000, "melee: closed to 2 m");
+            }
+            foreach (var who in new[] { a, c })
+            {
+                var mine = shots.Where(e => e.AttackerId == who.Id).ToList();
+                for (int i = 1; i < mine.Count; i++) Assert.AreEqual(8, mine[i].Tick - mine[i - 1].Tick, "8 ticks between sword blows");
+            }
+            Assert.IsTrue(shots.Any(e => e.Outcome == AttackOutcome.Blocked), "a sword without a shield parries now and then");
+            var dead = b.Events<UnitDied>().Single();
+            var alive = dead.UnitId == a.Id ? c : a;
+            Assert.AreEqual(alive.Id, dead.KillerId);
+            Assert.AreEqual(100 - shots.Where(e => e.TargetId == alive.Id).Sum(e => e.Damage), alive.Health);
         }
 
         [Test]
-        public void Infantry_Beats_Infantry_With_x1_5()
+        public void TurnOrder_LongerReachFirst_ThenLowerId_AndTheDeadDoNotStrike()
         {
-            var b = new Bed();
-            var (start, dir) = b.LandLine(b.PlayerHq, 2);
-            var a = b.Spawn(Faction.F0, UnitKind.Infantry, start);
-            var e = b.Spawn(Faction.F1, UnitKind.Infantry, b.Walk(start, dir, 2)); // 10 m, in range of both
-            b.Step(7);
-            Assert.AreEqual(100 - 12 - 12, a.Health, "two volleys of 12 within 7 ticks");
-            Assert.AreEqual(100 - 12 - 12, e.Health);
+            for (ulong seed = 1; seed <= 6; seed++)
+            {
+                var b = new Bed(seed);
+                var (start, _) = b.LandLine(b.PlayerHq, 1);
+                int id0 = b.M.NextUnitId;
+                // All four arrive in one tick: sword (lowest id, shortest reach), sling (longest reach), two spears.
+                Assert.IsTrue(b.Sim.Submit(DevSpawnUnit.WithKit(Faction.F0, new Kit(Ware.Sword), start)).Ok);
+                Assert.IsTrue(b.Sim.Submit(DevSpawnUnit.WithKit(Faction.F1, new Kit(Ware.Sling), start)).Ok);
+                Assert.IsTrue(b.Sim.Submit(DevSpawnUnit.WithKit(Faction.F0, new Kit(Ware.Spear), start)).Ok);
+                Assert.IsTrue(b.Sim.Submit(DevSpawnUnit.WithKit(Faction.F1, new Kit(Ware.Spear), start)).Ok);
+                b.Log.Clear();
+                b.Step();
+                var sword = b.M.UnitById(id0); var sling = b.M.UnitById(id0 + 1); var spear = b.M.UnitById(id0 + 2); var spear2 = b.M.UnitById(id0 + 3);
+                Assert.AreEqual(Ware.Sling, sling.Kit.Weapon); Assert.AreEqual(Ware.Spear, spear2.Kit.Weapon);
+                var order = b.Events<UnitFired>().Select(e => e.AttackerId).ToList();
+                CollectionAssert.AreEqual(new[] { sling.Id, spear.Id, spear2.Id, sword.Id }, order, "seed " + seed + ": sling 18 m, spears 3.5 m (lower id first), sword 2 m");
+            }
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                var b = new Bed(seed);
+                var (start, _) = b.LandLine(b.PlayerHq, 1);
+                var x = b.Spawn(Faction.F0, new Kit(Ware.Axe), start);
+                var y = b.Spawn(Faction.F1, new Kit(Ware.Axe), start);
+                x.Health = 1; y.Health = 1;
+                Assert.IsTrue(b.RunUntil(300, () => b.Events<UnitDied>().Any()));
+                Assert.AreEqual(1, b.Events<UnitDied>().Count(), "seed " + seed + ": never both in one tick");
+            }
         }
 
         [Test]
@@ -281,11 +306,11 @@ namespace God.Sim.Tests
             var eb = b.EnemySmall(0);
             int ebX = Pathing.NodeMmX(b.G, eb.Node);
             var rec = b.M.BuildingById(eb.Id);
-            var veh = b.Spawn(Faction.F0, UnitKind.Vehicle, b.Node(b.EnemyHq, 0, 0));
+            var mine = b.Spawn(Faction.F0, new Kit(Ware.Bow), b.Node(b.EnemyHq, 0, 0));
             var inf = b.Spawn(Faction.F1, UnitKind.Infantry, b.Node(b.EnemyHq, 0, 0));
             b.Step();
-            Assert.AreEqual(TargetKind.Unit, veh.TargetKind, "enemy unit before any building");
-            Assert.AreEqual(inf.Id, veh.TargetId);
+            Assert.AreEqual(TargetKind.Unit, mine.TargetKind, "enemy unit before any building");
+            Assert.AreEqual(inf.Id, mine.TargetId);
             Assert.AreEqual(ebX, rec.X);
         }
 
@@ -295,11 +320,12 @@ namespace God.Sim.Tests
             var b = new Bed();
             var target = b.EnemySmall(0);
             int node = target.Node;
-            b.Spawn(Faction.F0, UnitKind.Vehicle, b.G.FlagNodeOf(node));
-            b.Spawn(Faction.F0, UnitKind.Vehicle, b.G.FlagNodeOf(node));
+            b.Spawn(Faction.F0, new Kit(Ware.Axe), b.G.FlagNodeOf(node));
+            b.Spawn(Faction.F0, new Kit(Ware.Axe), b.G.FlagNodeOf(node));
             // They take whatever enemy building is nearest; hold the others up so only the woodcutter dies first.
             foreach (var r in b.M.Buildings) if (r.Id != target.Id) r.Health = r.MaxHealth = 1000000;
             Assert.IsTrue(b.RunUntil(600, () => b.T.BuildingById(target.Id) == null), "the woodcutter falls");
+            foreach (var e in b.Events<UnitFired>()) { Assert.AreEqual(AttackOutcome.Building, e.Outcome); Assert.AreEqual(32, e.Damage, "axe: 16 x 200% on buildings"); }
 
             var d = b.Events<BuildingDestroyed>().Single();
             Assert.AreEqual(target.Id, d.BuildingId); Assert.AreEqual(node, d.Node); Assert.IsFalse(d.IsHq);
@@ -320,21 +346,28 @@ namespace God.Sim.Tests
     public class MilitarySpawnTests
     {
         [Test]
-        public void UnitQueue_IsDrained_AndTheUnitAppearsAtTheFactoryFlag()
+        public void UnitQueue_IsDrained_AndTheSoldierWearsItsKit()
         {
             var b = new Bed();
             int node = b.Node(b.PlayerHq, -3, 0);
             Assert.IsTrue(b.Do(new PlaceBuilding(Faction.F0, node, BuildingSize.Medium) { Kind = BuildingKinds.Barracks }).Ok);
             var fac = b.T.BuildingAtNode(node);
+            var kit = new Kit(Ware.Spear, Ware.SmallShield, Ware.Helmet, Ware.LightArmour);
+            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Infantry, Kit = kit });
             b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Infantry });
-            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Vehicle });
+            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Infantry, Kit = new Kit(Ware.Bow, Ware.BigShield, Ware.Helmet) });
             b.Step();
             Assert.AreEqual(0, b.S.UnitQueue.Count);
-            Assert.AreEqual(2, b.M.Units.Count);
-            Assert.AreEqual(UnitKind.Infantry, b.M.Units[0].Kind); Assert.AreEqual(UnitKind.Vehicle, b.M.Units[1].Kind);
+            Assert.AreEqual(3, b.M.Units.Count);
+            Assert.AreEqual(kit, b.M.Units[0].Kit);
+            Assert.AreEqual(new Kit(Ware.Sword), b.M.Units[1].Kit, "a stage 2 order (no weapon) fights as a sword with no defence");
+            Assert.AreEqual(new Kit(Ware.Bow, Ware.None, Ware.Helmet), b.M.Units[2].Kit, "a bow takes no shield");
+            foreach (var u in b.M.Units) Assert.AreEqual(100, u.Health);
             int fx = Pathing.NodeMmX(b.G, fac.FlagNode), fz = Pathing.NodeMmZ(b.G, fac.FlagNode);
             foreach (var u in b.M.Units) Assert.Less(Pathing.Dist(u.X, u.Z, fx, fz), 3500, "spawned at the factory flag");
-            Assert.AreEqual(2, b.Events<UnitSpawned>().Count());
+            var spawned = b.Events<UnitSpawned>().ToList();
+            Assert.AreEqual(3, spawned.Count);
+            Assert.AreEqual(kit, spawned[0].Kit);
         }
 
         [Test]
@@ -403,7 +436,7 @@ namespace God.Sim.Tests
             var second = b.EnemySmall(0);
             b.Do(new MarkTarget(Faction.F0, first.Id)); b.Do(new MarkTarget(Faction.F0, second.Id));
             // Next to target 1, so it is in sight from the start (an unseen mark would let them shoot the HQ instead).
-            for (int i = 0; i < 4; i++) b.Spawn(Faction.F0, UnitKind.Vehicle, first.FlagNode);
+            for (int i = 0; i < 4; i++) b.Spawn(Faction.F0, new Kit(Ware.Axe), first.FlagNode);
             bool secondTouched = false;
             bool firstDone = false;
             for (int i = 0; i < 1500 && b.M.BuildingById(second.Id) != null; i++)
@@ -550,7 +583,7 @@ namespace God.Sim.Tests
             b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 2));
             b.Step(60);
             var anchor = b.M.Defends[0];
-            // An enemy infantry about 14 m from the anchor, beyond a guard's 12 m range.
+            // An enemy soldier about 14 m from the anchor, beyond a guard's reach.
             int en = -1;
             for (int d = 0; d < 6 && en < 0; d++)
             {
@@ -584,7 +617,10 @@ namespace God.Sim.Tests
         {
             var b = new Bed(seed);
             for (int i = 0; i < 3; i++) b.Spawn(Faction.F0, UnitKind.Infantry, b.PlayerHq.Node);
-            for (int i = 0; i < 2; i++) b.Spawn(Faction.F0, UnitKind.Vehicle, b.PlayerHq.Node);
+            b.Spawn(Faction.F0, new Kit(Ware.Axe, Ware.SmallShield, Ware.Helmet), b.PlayerHq.Node);
+            b.Spawn(Faction.F0, new Kit(Ware.Bow, Ware.None, Ware.None, Ware.LightArmour), b.PlayerHq.Node);
+            b.Spawn(Faction.F1, new Kit(Ware.Spear, Ware.BigShield), b.EnemyHq.Node);
+            b.Spawn(Faction.F1, new Kit(Ware.Sling), b.EnemyHq.Node);
             b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 2));
             b.Do(new MarkTarget(Faction.F0, b.EnemySmall(0).Id));
             b.Do(new MarkTarget(Faction.F0, b.EnemyHq.Id));

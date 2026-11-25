@@ -61,7 +61,10 @@ namespace God.Sim
         public Faction Faction;
         public UnitKind Kind;
         public int Node;
+        /// <summary>Its gear; no weapon means a sword and no defence.</summary>
+        public Kit Kit;
         public DevSpawnUnit(Faction faction, UnitKind kind, int node) { PlayerId = (int)faction; Faction = faction; Kind = kind; Node = node; }
+        public static DevSpawnUnit WithKit(Faction faction, Kit kit, int node) => new DevSpawnUnit(faction, UnitKind.Infantry, node) { Kit = kit };
     }
 
     /// <summary>Dev: order a unit to walk to a point (millimetres), around water. It ignores its brain until it arrives.</summary>
@@ -200,7 +203,7 @@ namespace God.Sim
         {
             var r = Validate(s, c); if (!r.Ok) return r;
             var g = s.Territory.Grid;
-            MilitaryRules.SpawnUnit(s, c.Faction, c.Kind, Pathing.NodeMmX(g, c.Node), Pathing.NodeMmZ(g, c.Node), ev);
+            MilitaryRules.SpawnUnit(s, c.Faction, c.Kind, c.Kit, Pathing.NodeMmX(g, c.Node), Pathing.NodeMmZ(g, c.Node), ev);
             return r;
         }
     }

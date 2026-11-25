@@ -17,13 +17,14 @@ namespace God.Sim
                 _strength[(int)u.Faction] += UnitStrength(u);
                 if (u.Faction != Side) continue;
                 _mine.Add(u);
-                if (u.Kind == UnitKind.Vehicle) _veh++; else _inf++;
+                _inf++;
             }
             for (int i = 0; i < S.FactionCount; i++)
                 if (!S.Factions.IsEliminated((Faction)i)) _vp[i] = FactionRules.VictoryPoints(S, (Faction)i);
         }
 
-        private int UnitStrength(MilUnit u) => u.Kind == UnitKind.Vehicle ? Tune.VehicleStrength : Tune.InfantryStrength;
+        /// <summary>Stage 3: a soldier's strength grows with its kit (one point per two defence pieces). Q4 refines this.</summary>
+        private int UnitStrength(MilUnit u) => Tune.InfantryStrength + MilitaryTuning.DefencePieces(u.Kit) / 2;
 
         /// <summary>Army strength of a faction (sum over its units), as the AI counts it.</summary>
         public int StrengthOf(Faction f)

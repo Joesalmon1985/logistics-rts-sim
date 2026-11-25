@@ -26,7 +26,7 @@ namespace God.Sim.Tests
             foreach (var kv in new[] { (Faction.F0, 0), (Faction.F1, 0) })
             {
                 var hq = t.HqsOf(kv.Item1)[0];
-                for (int k = 0; k < 3; k++) sim.Submit(new DevSpawnUnit(kv.Item1, k == 2 ? UnitKind.Vehicle : UnitKind.Infantry, hq.Node));
+                for (int k = 0; k < 3; k++) sim.Submit(k == 2 ? DevSpawnUnit.WithKit(kv.Item1, new Kit(Ware.Bow, Ware.None, Ware.Helmet), hq.Node) : new DevSpawnUnit(kv.Item1, UnitKind.Infantry, hq.Node));
             }
             var hq3 = t.HqsOf(Faction.F3)[0];
             var rec = e.Find(hq3.Id);

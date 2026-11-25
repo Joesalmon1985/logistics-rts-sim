@@ -10,6 +10,9 @@ namespace God.Sim.Tests
         /// <summary>A new game (everyone starts at peace, and there are no enemy waves any more).</summary>
         public static GodSim NoWar(ulong seed) => GodSim.Create(seed);
 
+        /// <summary>A unit order from a vehicle workshop (stage 2 vehicles are gone: it now makes a kitless soldier).</summary>
+        public static bool FromWorkshop(GodState s, UnitOrder u) => s.Economy.Find(u.BuildingId)?.Kind == BuildingKinds.VehicleWorkshop;
+
         public static GodSim Quiet(ulong seed)
         {
             // No dice piles: nothing but the test itself changes the piles.
@@ -288,7 +291,7 @@ namespace God.Sim.Tests
             sim.DrainEvents();
             EcoHelp.Run(sim, 1200);
             Assert.AreEqual(1, s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry && u.BuildingId == barracks));
-            Assert.AreEqual(1, s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Vehicle && u.BuildingId == vw));
+            Assert.AreEqual(1, s.Economy.ProducedLog.Count(u => u.BuildingId == vw), "the workshop makes a (kitless) soldier now that vehicles are gone");
             Assert.IsTrue(s.Economy.ProducedLog.All(u => u.Faction == Faction.F0));
             Assert.AreEqual(2, sim.DrainEvents().OfType<UnitProduced>().Count());
         }
@@ -532,13 +535,13 @@ namespace God.Sim.Tests
             {
                 sim.Step();
                 if (i % 20 == 0) bot.Think();
-                if (sim.State.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry) >= 1 && sim.State.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Vehicle) >= 1 && bot.Done) break;
+                if (sim.State.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry) >= 1 && sim.State.Economy.ProducedLog.Count(u => EcoHelp.FromWorkshop(sim.State, u)) >= 1 && bot.Done) break;
             }
             return (sim, bot);
         }
 
         [Test]
-        public void TenMinuteRun_BuildsTheWholeChain_AndProducesInfantryAndVehicle()
+        public void TenMinuteRun_BuildsTheWholeChain_AndBothFactoriesProduce()
         {
             var (sim, bot) = RunChain(ChainSeed, 6000);
             var s = sim.State; var e = s.Economy;
@@ -546,7 +549,7 @@ namespace God.Sim.Tests
             Assert.IsTrue(bot.Done, why);
             foreach (var kv in bot.Placed) Assert.IsTrue(e.Find(kv.Value).Built, kv.Key + " built. " + why);
             Assert.GreaterOrEqual(s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Infantry), 1, why);
-            Assert.GreaterOrEqual(s.Economy.ProducedLog.Count(u => u.Kind == UnitKind.Vehicle), 1, why);
+            Assert.GreaterOrEqual(s.Economy.ProducedLog.Count(u => EcoHelp.FromWorkshop(s, u)), 1, why);
             Assert.LessOrEqual(s.Tick, 6000);
         }
 
@@ -584,7 +587,7 @@ namespace God.Sim.Tests
             {
                 var (sim, bot) = RunChain(seed, 6000);
                 var q = sim.State.Economy.ProducedLog;
-                if (q.Any(u => u.Kind == UnitKind.Infantry) && q.Any(u => u.Kind == UnitKind.Vehicle)) ok++; else failed.Add(seed);
+                if (q.Any(u => u.Kind == UnitKind.Infantry) && q.Any(u => EcoHelp.FromWorkshop(sim.State, u))) ok++; else failed.Add(seed);
             }
             Assert.GreaterOrEqual(ok, 6, "failed seeds: " + string.Join(",", failed));
         }

@@ -218,7 +218,7 @@ namespace God.Sim
                     var u = m.Units[i];
                     if (u.Faction != f) continue;
                     m.Units.RemoveAt(i--);
-                    ev?.Add(new UnitDied { UnitId = u.Id, Faction = f, Kind = u.Kind, X = u.X, Z = u.Z, Disbanded = true });
+                    ev?.Add(new UnitDied { UnitId = u.Id, Faction = f, Kind = u.Kind, Kit = u.Kit, X = u.X, Z = u.Z, Disbanded = true });
                 }
                 foreach (var o in FactionInfo.All)
                 {

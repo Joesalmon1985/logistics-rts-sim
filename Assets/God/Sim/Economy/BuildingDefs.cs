@@ -80,7 +80,7 @@ namespace God.Sim
             barracks.In[(int)Ware.Grain] = 1; barracks.In[(int)Ware.Iron] = 1; barracks.Unit = UnitKind.Infantry; Medium(barracks);
 
             var vw = Add(BuildingKinds.VehicleWorkshop, "Vehicle workshop", BuildingRole.Factory, EconomyTuning.VehicleWorkshopTicks);
-            vw.In[(int)Ware.Iron] = 2; vw.In[(int)Ware.Plank] = 1; vw.Unit = UnitKind.Vehicle; Medium(vw);
+            vw.In[(int)Ware.Iron] = 2; vw.In[(int)Ware.Plank] = 1; vw.Unit = UnitKind.Infantry; /* Q2: vehicles removed; Q1 drops this building */ Medium(vw);
         }
 
         private static BuildingDef Add(string kind, string label, BuildingRole role, int cycle)

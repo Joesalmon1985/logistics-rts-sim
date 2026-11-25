@@ -1,16 +1,26 @@
 namespace God.Sim
 {
-    public sealed class UnitSpawned : SimEvent { public int UnitId; public Faction Faction; public UnitKind Kind; public int X, Z; }
-    /// <summary>A unit is gone: killed, or <c>Disbanded</c> because its faction was eliminated.</summary>
-    public sealed class UnitDied : SimEvent { public int UnitId; public Faction Faction; public UnitKind Kind; public int X, Z; public bool Disbanded; }
+    public sealed class UnitSpawned : SimEvent { public int UnitId; public Faction Faction; public UnitKind Kind; public Kit Kit; public int X, Z; }
+    /// <summary>
+    /// A unit is gone: killed (<c>KillerId</c> is the unit whose attack did it, 0 when unknown), or <c>Disbanded</c>
+    /// because its faction was eliminated.
+    /// </summary>
+    public sealed class UnitDied : SimEvent { public int UnitId; public Faction Faction; public UnitKind Kind; public Kit Kit; public int X, Z; public bool Disbanded; public int KillerId; }
 
-    /// <summary>One shot: a tracer from the attacker to the target. Positions are millimetres at the time of firing.</summary>
+    /// <summary>
+    /// One attack resolved: a swing or a shot from the attacker at its target, how it ended (<see cref="AttackOutcome"/>:
+    /// miss, blocked, hit, crit, or a strike on a building) and the damage done. Positions are millimetres at the time of
+    /// the attack. <c>Weapon</c> tells the view what to draw (a bow or sling shot flies; melee is a swing).
+    /// </summary>
     public sealed class UnitFired : SimEvent
     {
         public int AttackerId; public Faction Faction; public UnitKind Kind;
+        public Ware Weapon;
         public TargetKind TargetKind; public int TargetId;
         public int FromX, FromZ, ToX, ToZ;
+        public AttackOutcome Outcome;
         public int Damage;
+        public bool Ranged => Gear.IsRanged(Weapon);
     }
 
     public sealed class BuildingDestroyed : SimEvent

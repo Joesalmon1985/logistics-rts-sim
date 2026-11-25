@@ -7,7 +7,8 @@ namespace God.Sim
     /// written in parallel. Economy fills <see cref="GodState.UnitQueue"/> when a unit factory finishes a cycle;
     /// the military drains it each tick and spawns the unit at that building's flag.
     /// </summary>
-    public enum UnitKind { Infantry = 0, Vehicle = 1 }
+    /// <summary>Stage 3: every unit is a soldier (infantry); what it fights with is its <see cref="Kit"/>. Vehicles are gone.</summary>
+    public enum UnitKind { Infantry = 0 }
 
     public struct UnitOrder
     {

@@ -140,7 +140,7 @@ namespace God.Sim
         /// Updates position, facing and the path cache.
         /// </summary>
         public static bool MoveToward(NodeGrid g, MilUnit u, int goalX, int goalZ) =>
-            MoveToward(g, u, goalX, goalZ, MilitaryTuning.Of(u.Kind).SpeedMmPerTick);
+            MoveToward(g, u, goalX, goalZ, MilitaryTuning.Of(u.Kit).SpeedMmPerTick);
 
         /// <summary>As <see cref="MoveToward(NodeGrid, MilUnit, int, int)"/> with an explicit speed in mm per tick (envoys walk on a body that is not a unit).</summary>
         public static bool MoveToward(NodeGrid g, MilUnit u, int goalX, int goalZ, int speed)
