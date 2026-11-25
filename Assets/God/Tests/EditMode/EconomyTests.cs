@@ -70,15 +70,16 @@ namespace God.Sim.Tests
         {
             var s = EcoHelp.NoWar(3).State;
             var hq = s.Economy.HqsOf(Faction.F0).Single();
-            // Stage 3: 8 log, 6 stone, 6 clay, 4 grain, 6 plank, 4 brick, 2 mortar.
+            // Stage 3 as balanced in Q4: 8 log, 8 stone, 6 clay, 4 grain, 8 plank, 8 brick, 6 mortar (enough for two HQs
+            // toward land the start lacks).
             Assert.AreEqual(8, s.Economy.Stock(hq.Id, Ware.Log));
-            Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Stone));
+            Assert.AreEqual(8, s.Economy.Stock(hq.Id, Ware.Stone));
             Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Clay));
             Assert.AreEqual(4, s.Economy.Stock(hq.Id, Ware.Grain));
-            Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Plank));
-            Assert.AreEqual(4, s.Economy.Stock(hq.Id, Ware.Brick));
-            Assert.AreEqual(2, s.Economy.Stock(hq.Id, Ware.Mortar));
-            Assert.AreEqual(36, hq.Stock.Sum(), "nothing else");
+            Assert.AreEqual(8, s.Economy.Stock(hq.Id, Ware.Plank));
+            Assert.AreEqual(8, s.Economy.Stock(hq.Id, Ware.Brick));
+            Assert.AreEqual(6, s.Economy.Stock(hq.Id, Ware.Mortar));
+            Assert.AreEqual(48, hq.Stock.Sum(), "nothing else");
             Assert.AreEqual(6, hq.IdleCarriers);
             Assert.AreEqual(1, s.Economy.HqsOf(Faction.F1).Count);
         }

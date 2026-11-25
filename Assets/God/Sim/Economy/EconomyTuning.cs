@@ -35,7 +35,7 @@ namespace God.Sim
         public const int TrickleTicks = 400;
 
         /// <summary>Wares per pile by level: 4, 5, 6.</summary>
-        public static int WaresPerPileAt(int level) => level >= 3 ? 6 : level == 2 ? 5 : WaresPerPile;
+        public static int WaresPerPileAt(int level) => level >= 3 ? WaresPerPile + 2 : level == 2 ? WaresPerPile + 1 : WaresPerPile;
 
         /// <summary>Ticks at the pile by level: level 2 a third faster (x3/4), level 3 twice as fast (x1/2).</summary>
         public static int GatherTicksAt(int level) => level >= 3 ? GatherTicks / 2 : level == 2 ? GatherTicks * 3 / 4 : GatherTicks;
@@ -83,7 +83,8 @@ namespace God.Sim
         /// <summary>Level 2 to 3: 2 mortar, 2 iron, 2 bread.</summary>
         public const int Level3Mortar = 2, Level3Iron = 2, Level3Bread = 2;
 
-        // ---- every HQ that exists at the game start ----
-        public const int StartLog = 8, StartStone = 6, StartClay = 6, StartGrain = 4, StartPlank = 6, StartBrick = 4, StartMortar = 2;
+        // ---- every HQ that exists at the game start (Q4: more stone, planks, bricks and mortar, so a start that lacks a land
+        //      can still pay for two HQs toward it) ----
+        public const int StartLog = 8, StartStone = 8, StartClay = 6, StartGrain = 4, StartPlank = 8, StartBrick = 8, StartMortar = 6;
     }
 }

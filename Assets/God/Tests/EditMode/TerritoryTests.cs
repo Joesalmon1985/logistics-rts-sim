@@ -8,19 +8,21 @@ namespace God.Sim.Tests
     public class StartAndDiceTests
     {
         [Test]
-        public void Dice_AreDeterministic_AndRollEverySixSeconds()
+        public void Dice_AreDeterministic_AndRollEveryInterval()
         {
+            const int I = TerritoryTuning.DiceIntervalTicks; // 4.5 s since Q4 (was 6 s)
+            Assert.AreEqual(45, I);
             var a = GodSim.Create(5); var b = GodSim.Create(5);
-            a.Step(59);
+            a.Step(I - 1);
             Assert.AreEqual(0, a.State.Territory.RollCount);
             a.Step(1);
             Assert.AreEqual(1, a.State.Territory.RollCount);
-            Assert.AreEqual(60, a.State.Territory.LastRollTick);
+            Assert.AreEqual(I, a.State.Territory.LastRollTick);
             Assert.AreEqual(1, a.DrainEvents().OfType<DiceRolled>().Count());
-            a.Step(6000); b.Step(6060);
+            a.Step(6000); b.Step(6000 + I);
             Assert.AreEqual(b.State.Territory.LastTotal, a.State.Territory.LastTotal);
             CollectionAssert.AreEqual(b.State.Territory.Piles, a.State.Territory.Piles);
-            Assert.AreEqual(101, a.State.Territory.RollCount);
+            Assert.AreEqual((6000 + I) / I, a.State.Territory.RollCount);
         }
 
         [Test]

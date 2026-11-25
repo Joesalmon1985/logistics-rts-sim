@@ -122,6 +122,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(TradeReasons.BadWare, Check(Faction.F0, Faction.F1, give, W((Ware.Rock, 1))).Reason);
             Assert.AreEqual(TradeReasons.SameWare, Check(Faction.F0, Faction.F1, give, W((Ware.Log, 1))).Reason);
             Assert.AreEqual(TradeReasons.NoStock, Check(Faction.F0, Faction.F1, W((Ware.Iron, 1)), want).Reason, "nothing in stock");
+            b.S.Economy.HqsOf(Faction.F0)[0].Stock[(int)Ware.Stone] = 6; b.Initial = b.TotalGoods();
             Assert.AreEqual(TradeReasons.NoStock, Check(Faction.F0, Faction.F1, W((Ware.Stone, 7)), want).Reason, "only 6 stone");
             Assert.AreEqual(Reasons.NotOwner, Check((Faction)7, Faction.F1, give, want).Reason);
 
@@ -239,6 +240,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(TradeVerdict.Refuse, judge.Decide(b.S, Offer(W((Ware.Log, 2)), W((Ware.Brick, 2)))), "4 for 8");
             Assert.AreEqual(TradeVerdict.Accept, judge.Decide(b.S, Offer(W((Ware.Log, 8)), W((Ware.Clay, 2)))), "a generous offer is taken");
             Assert.AreEqual(TradeVerdict.Refuse, judge.Decide(b.S, Offer(W((Ware.Log, 8)), W((Ware.Iron, 1)))), "it has no iron");
+            b.S.Economy.HqsOf(Faction.F1)[0].Stock[(int)Ware.Brick] = 4;
             Assert.AreEqual(TradeVerdict.Refuse, judge.Decide(b.S, Offer(W((Ware.Log, 8)), W((Ware.Brick, 5)))), "it has 4 brick");
         }
 
@@ -323,14 +325,16 @@ namespace God.Sim.Tests
             var b = new TradeBed(3);
             int id = b.Send(Faction.F1, Faction.F0, W((Ware.Log, 3)), W((Ware.Brick, 4)));
             Assert.IsTrue(b.RunUntil(3000, () => b.T.PendingFor(Faction.F0).Count == 1));
-            b.S.Economy.HqsOf(Faction.F0)[0].Stock[(int)Ware.Brick] = 3; // spent meanwhile
-            long total = b.Initial; b.Initial -= 1; // one brick was spent outside the sim's rules for this test
+            var hq0 = b.S.Economy.HqsOf(Faction.F0)[0];
+            int spent = hq0.Stock[(int)Ware.Brick] - 3;
+            hq0.Stock[(int)Ware.Brick] = 3; // spent meanwhile
+            long total = b.Initial; b.Initial -= spent; // bricks spent outside the sim's rules for this test
             Assert.IsTrue(b.Do(new AnswerTrade(Faction.F0, id, true)).Ok);
             Assert.AreEqual(RefusalCause.CannotPay, b.Ev<TradeRefused>().Single().Cause);
             Assert.AreEqual(0, b.Ev<TradeAccepted>().Count());
             Assert.AreEqual(3, b.Stock(Faction.F0, Ware.Brick), "nothing was taken");
             Assert.IsTrue(b.RunUntil(3000, () => b.Ev<EnvoyHome>().Any()));
-            Assert.AreEqual(total - 1, b.TotalGoods());
+            Assert.AreEqual(total - spent, b.TotalGoods());
         }
 
         [Test]

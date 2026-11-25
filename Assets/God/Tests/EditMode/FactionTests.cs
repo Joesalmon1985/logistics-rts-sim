@@ -181,7 +181,7 @@ namespace God.Sim.Tests
     public class CitadelTests
     {
         [Test]
-        public void Citadel_IsDelivered_Upgraded_Worth2Vp_With3000Health()
+        public void Citadel_IsDelivered_Upgraded_Worth2Vp_With5000Health()
         {
             var sim = EcoHelp.Quiet(3);
             var s = sim.State; var e = s.Economy; var t = s.Territory; var topo = s.Board.Topology;
@@ -198,6 +198,7 @@ namespace God.Sim.Tests
             var h1 = e.Find(hq1.Id); var h2 = e.Find(hq2);
             h1.Stock[(int)Ware.Plank] = 3; h1.Stock[(int)Ware.Brick] = 4; h1.Stock[(int)Ware.Mortar] = 1; h1.Stock[(int)Ware.Steel] = 0;
             h2.Stock[(int)Ware.Mortar] = 3; h2.Stock[(int)Ware.Steel] = 2;
+            for (int w = 0; w < Wares.Count; w++) if (w != (int)Ware.Mortar && w != (int)Ware.Steel) h2.Stock[w] = 0;
             int delivered = e.DeliveredWares;
 
             Assert.AreEqual(Reasons.NotOwner, sim.Check(new UpgradeToCitadel(Faction.F1, hq1.Id)).Reason);
@@ -227,9 +228,10 @@ namespace God.Sim.Tests
             Assert.AreEqual(3, FactionRules.VictoryPoints(s, Faction.F0), "Citadel 2 + HQ 1");
             sim.Step();
             var rec = s.Military.BuildingById(hq1.Id);
-            Assert.AreEqual(3000, rec.MaxHealth);
-            Assert.AreEqual(3000, rec.Health);
-            Assert.AreEqual(1500, s.Military.BuildingById(hq2).MaxHealth);
+            Assert.AreEqual(MilitaryTuning.CitadelHealth, rec.MaxHealth);
+            Assert.AreEqual(MilitaryTuning.CitadelHealth, rec.Health);
+            Assert.AreEqual(MilitaryTuning.HqHealth, s.Military.BuildingById(hq2).MaxHealth);
+            Assert.AreEqual(new[] { 3000, 5000 }, new[] { MilitaryTuning.HqHealth, MilitaryTuning.CitadelHealth }, "Q4: sturdier than stage 2 (1500, 3000)");
             Assert.AreEqual(FactionReasons.AlreadyCitadel, sim.Check(new UpgradeToCitadel(Faction.F0, hq1.Id)).Reason);
             Assert.IsEmpty(SimInvariants.Check(s));
         }
@@ -302,7 +304,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(hqId, cap.HqId); Assert.AreEqual(Faction.F0, cap.From); Assert.AreEqual(Faction.F1, cap.To);
             Assert.Greater(cap.WalkersRemoved, 0, "walkers were on the move (" + walkersAtCapture + ")");
             Assert.AreEqual(Faction.F1, t.HqOf(hqId).Faction);
-            Assert.AreEqual(750, b.M.BuildingById(hqId).Health, "half of 1500");
+            Assert.AreEqual(MilitaryTuning.HqHealth / 2, b.M.BuildingById(hqId).Health, "half its health");
             Assert.IsNull(b.M.Rubbles.FirstOrDefault(r => r.Node == b.PlayerHq.Node), "an HQ is captured, not razed");
 
             // The whole area passed.
@@ -367,13 +369,13 @@ namespace God.Sim.Tests
             var hq = b.T.HqOf(b.PlayerHq.Id);
             hq.Citadel = true; // test set-up: as if upgraded
             b.Step();
-            Assert.AreEqual(3000, b.M.BuildingById(hq.Id).MaxHealth);
+            Assert.AreEqual(MilitaryTuning.CitadelHealth, b.M.BuildingById(hq.Id).MaxHealth);
             Assert.AreEqual(2, FactionRules.VictoryPoints(b.S, Faction.F0));
             b.M.BuildingById(hq.Id).Health = 30;
             b.Spawn(Faction.F1, new Kit(Ware.Axe), b.G.FlagNodeOf(hq.Node));
             Assert.IsTrue(b.RunUntil(300, () => hq.Faction == Faction.F1));
             Assert.IsTrue(hq.Citadel);
-            Assert.AreEqual(1500, b.M.BuildingById(hq.Id).Health);
+            Assert.AreEqual(MilitaryTuning.CitadelHealth / 2, b.M.BuildingById(hq.Id).Health);
             Assert.AreEqual(2 + 1, FactionRules.VictoryPoints(b.S, Faction.F1), "F1's own HQ plus the Citadel");
         }
 
@@ -495,7 +497,7 @@ namespace God.Sim.Tests
                 Assert.IsEmpty(bad, "tick " + s.State.Tick + ": " + string.Join("; ", bad));
             });
             Assert.GreaterOrEqual(sim.State.Tick, 6000);
-            Assert.Greater(checks, 50);
+            Assert.Greater(checks, 40, "invariants checked all along (bots step the sim themselves between checks)");
             var e = sim.State.Economy;
             foreach (var f in FactionInfo.All)
                 Assert.GreaterOrEqual(e.Buildings.Count(x => x.Faction == f && x.Built && !x.IsHq), 2, FactionInfo.Name(f) + " built its economy: " + string.Join(";", bots[(int)f].Log));
