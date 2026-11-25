@@ -59,7 +59,7 @@ namespace God.Game
             DrawStrip(st, vw, stripH, repaint);
             DrawArmy(st, stripH, repaint);
             DrawToastAndHelp(st, vw, vh, stripH, repaint);
-            if (Outcome == GameOutcome.Playing) DrawCards(st, vw, vh, stripH, repaint);
+            if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); }
             else DrawEnd(st, vw, vh, repaint);
             DrawTooltip(st, vw, vh);
         }
@@ -170,6 +170,7 @@ namespace God.Game
                 }
                 x += w + 5f;
             }
+            x = DrawTradeTile(st, x, y, w, h, repaint);
             GUI.enabled = true;
 
             // Stock of your wares: small counts with a colour swatch.

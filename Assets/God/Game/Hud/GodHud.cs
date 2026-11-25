@@ -150,6 +150,8 @@ namespace God.Game
         {
             if (Mode == HudMode.Road && RoadNodes.Count > 0) { ClearRoad(); return; }
             if (Mode != HudMode.Normal) { Mode = HudMode.Normal; PlaceKind = null; ClearRoad(); return; }
+            if (SelectedEnvoy != 0) { ClearEnvoy(); return; }
+            if (TradeOpen) { CloseTrade(); return; }
             ClearSelection();
         }
 
@@ -406,7 +408,9 @@ namespace God.Game
                 {
                     bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
                     int b = Mode == HudMode.Place || Mode == HudMode.PlaceHq ? 0 : PickBuilding(mouse);
-                    WorldClick(HoverNode, b, shift);
+                    int envoy = Mode == HudMode.Normal ? PickEnvoy(mouse) : 0;
+                    if (envoy != 0) SelectEnvoy(envoy);
+                    else { ClearEnvoy(); WorldClick(HoverNode, b, shift); }
                 }
                 if (Input.GetMouseButtonUp(1) && !Rig.Dragged && !over) Cancel();
             }
@@ -452,6 +456,7 @@ namespace God.Game
             // Only on a change, so other callers (tests, dev tools) may show the glow too.
             if (Boot.Territory != null && Placing != _overlayWasPlacing) { _overlayWasPlacing = Placing; Boot.Territory.OverlayVisible = Placing; }
             RefreshSpots(t);
+            RefreshTradeLog();
             DrawDynamic(t);
         }
 

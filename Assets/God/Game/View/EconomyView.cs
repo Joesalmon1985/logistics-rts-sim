@@ -15,6 +15,7 @@ namespace God.Game
         private GodSim _sim;
         private BuildingLayer _buildings;
         private WalkerLayer _walkers;
+        private EnvoyLayer _envoys;
         private GUIStyle _label, _stock;
         private readonly StringBuilder _sb = new StringBuilder();
 
@@ -33,6 +34,8 @@ namespace God.Game
         public GodSim Sim => _sim;
         public BuildingLayer Buildings => _buildings;
         public WalkerLayer Walkers => _walkers;
+        /// <summary>The trade envoys (P8): a herald leading a pack donkey.</summary>
+        public EnvoyLayer Envoys => _envoys;
         public int WalkerCount => _walkers.Count;
         public int BuildingMarkerCount => _buildings.Count;
 
@@ -44,6 +47,7 @@ namespace God.Game
             v._sim = sim;
             v._buildings = BuildingLayer.Create(sim, go.transform);
             v._walkers = WalkerLayer.Create(sim, go.transform);
+            v._envoys = EnvoyLayer.Create(sim, go.transform);
             return v;
         }
 

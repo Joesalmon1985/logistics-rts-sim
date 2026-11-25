@@ -57,6 +57,15 @@ Click one of your buildings to open its card:
 - You can't move units yourself; you only give god orders.
 - The line under the cloud shows your soldiers, wagons and guards and who you are at war with; below it, the VP of every faction.
 
+## Trade
+
+Press **Trade** on the cloud strip. Pick a faction you are not at war with, set what you give and what you want with the + and - buttons (at most 8 wares each way; the goods must be free in one of your HQs), and press **Send envoy**. The goods leave your HQ at once. A herald with a pack donkey walks over the land (not the roads) to their nearest HQ.
+
+- An AI judges the offer when the envoy arrives (fair within a quarter, and they must have the goods). If they accept, the goods are swapped and the envoy walks home with what you asked for. If they refuse, it brings your goods back.
+- When an envoy of theirs reaches you, an offer card appears: Accept or Refuse within 60 s, or it is refused. You can also click any envoy.
+- Enemy soldiers of a faction at war with the sender shoot envoys (40 health). A killed envoy loses its goods. War declared mid-trip turns the envoy home.
+- Trades that involve you show as small lines under the standings.
+
 ## A good start
 
 1. Build a woodcutter, a quarry and a sawmill near the HQ, and give each one a road.
