@@ -63,10 +63,13 @@ namespace God.Game
             Instance = this;
             seed = SeedFromCommandLine(seed);
             if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
-            var setup = PendingSetup ?? new GameSetup(seed, System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godwatch") >= 0 ? GameSetup.NoHuman : 0);
+            var cmd = System.Environment.GetCommandLineArgs();
+            bool watch = System.Array.IndexOf(cmd, "-godwatch") >= 0 || System.Array.IndexOf(cmd, "-godsmoke") >= 0;
+            var setup = PendingSetup ?? new GameSetup(seed, watch ? GameSetup.NoHuman : 0);
             PendingSetup = null;
             setup.Seed = seed;
             Sim = GodSim.Create(setup);
+            AiHost.StartForGame(Sim); // P9: a brain for every faction but the human one
             BoardSpace.Topo = Sim.State.Board.Topology;
             if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)
                 LegacyIsland = HexDressingView.Create(Sim.State.Board, transform);
@@ -133,7 +136,7 @@ namespace God.Game
             if (Input.GetKeyDown(KeyCode.F5)) Speed = Mathf.Max(Speed * 0.5f, 0.25f);
             if (Sim.State.IsGameOver) return;
             // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
-            if (!Running) { if (Sim.PendingCommands.Count > 0) { Sim.Step(); Sim.DrainEvents(); } return; }
+            if (!Running) { if (Sim.PendingCommands.Count > 0) { AiHost.StepHeld(Sim); Sim.DrainEvents(); } return; }
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
@@ -150,13 +153,13 @@ namespace God.Game
 
         /// <summary>
         /// Dev (F2): starts the scripted economy chain (sawmill, quarry, woodcutter, kiln, clay pit, mine, smelter, farm,
-        /// barracks, vehicle workshop, with HQs and roads as needed) for every faction, each sending the same commands a
-        /// player would, and runs the sim. Returns the log of the human faction's bot (F0's in watch mode).
+        /// barracks, vehicle workshop, with HQs and roads as needed) for every faction no AI brain plays (the human one),
+        /// each sending the same commands a player would, and runs the sim. Returns the log of the human faction's bot (F0's in watch mode).
         /// </summary>
         public System.Collections.Generic.List<string> DebugSample()
         {
             Chains.Clear();
-            foreach (var f in Sim.State.Setup.Factions) if (!Sim.State.Factions.IsEliminated(f)) Chains.Add(new ChainBot(Sim, f));
+            foreach (var f in Sim.State.Setup.Factions) if (!Sim.State.Factions.IsEliminated(f) && !AiHost.Drives(Sim, f)) Chains.Add(new ChainBot(Sim, f));
             _lastThink = Sim.State.Tick;
             Running = true;
             return Chain?.Log ?? new System.Collections.Generic.List<string>();
