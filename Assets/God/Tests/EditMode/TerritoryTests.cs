@@ -10,8 +10,8 @@ namespace God.Sim.Tests
         [Test]
         public void Dice_AreDeterministic_AndRollEveryInterval()
         {
-            const int I = TerritoryTuning.DiceIntervalTicks; // 4.5 s since Q4 (was 6 s)
-            Assert.AreEqual(45, I);
+            const int I = TerritoryTuning.DiceIntervalTicks; // 6 s
+            Assert.AreEqual(60, I);
             var a = GodSim.Create(5); var b = GodSim.Create(5);
             a.Step(I - 1);
             Assert.AreEqual(0, a.State.Territory.RollCount);

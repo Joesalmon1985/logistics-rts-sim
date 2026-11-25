@@ -482,10 +482,12 @@ namespace God.Sim.Tests
 
     public class EconomyFullChainTests
     {
-        /// <summary>An island where F0's chain bot finishes the whole stage 3 chain inside <see cref="ChainTicks"/> (seed scan, 25 Nov).</summary>
-        public static ulong ChainSeed = 9UL;
-        /// <summary>The stage 3 chain is longer (12 buildings, and bread and axes before a soldier): 30 minutes.</summary>
-        public const int ChainTicks = 18000;
+        /// <summary>An island where F0's chain bot finishes the whole stage 3 chain inside <see cref="ChainTicks"/> (Q4 seed scan: first soldier at minute 10.2).</summary>
+        public static ulong ChainSeed = 8UL;
+        /// <summary>The chain bot's first soldier on <see cref="ChainSeed"/>: 15 minutes (it places one building at a time, one woodcutter only).</summary>
+        public const int ChainTicks = 15 * 600;
+        /// <summary>The time the bot gets on every seed of the scan: 30 minutes.</summary>
+        public const int ScanTicks = 30 * 600;
 
         public static (GodSim sim, ChainBot bot) RunChain(ulong seed, int ticks)
         {
@@ -544,11 +546,12 @@ namespace God.Sim.Tests
             int ok = 0; var failed = new List<ulong>();
             for (ulong seed = 1; seed <= 16; seed++)
             {
-                var (sim, bot) = RunChain(seed, ChainTicks);
+                var (sim, bot) = RunChain(seed, ScanTicks);
                 var q = sim.State.Economy.ProducedLog;
                 if (q.Any(u => u.Kit.IsArmed)) ok++; else failed.Add(seed);
             }
-            Assert.GreaterOrEqual(ok, 6, "failed seeds: " + string.Join(",", failed));
+            // Q4 scan: 10 of 16 (seeds 3, 4, 5, 7, 8, 9, 10, 12, 14, 16); the rest lack a land the bot never trades for.
+            Assert.GreaterOrEqual(ok, 9, "failed seeds: " + string.Join(",", failed));
         }
     }
 }

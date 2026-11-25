@@ -89,7 +89,7 @@ namespace God.Sim
             Harvester(BuildingKinds.Mine, "Mine", RawKind.Rock, Ware.Ore, BuildingSize.Small);
 
             // ---- processors: one per pair of raws ----
-            Processor(BuildingKinds.Sawmill, "Sawmill", Ware.Log, Ware.Stone, Ware.Plank, EconomyTuning.SawmillTicks);
+            Processor(BuildingKinds.Sawmill, "Sawmill", Ware.Log, Ware.Stone, Ware.Plank, EconomyTuning.SawmillTicks).Out[(int)Ware.Plank] = EconomyTuning.SawmillPlanks;
             Processor(BuildingKinds.Kiln, "Brick kiln", Ware.Log, Ware.Clay, Ware.Brick, EconomyTuning.KilnTicks);
             Processor(BuildingKinds.Smelter, "Smelter", Ware.Log, Ware.Ore, Ware.Iron, EconomyTuning.SmelterTicks);
             Processor(BuildingKinds.Bakery, "Bakery", Ware.Log, Ware.Grain, Ware.Bread, EconomyTuning.BakeryTicks);
@@ -136,13 +136,14 @@ namespace God.Sim
             d.Cost[(int)Ware.Log] = EconomyTuning.SmallLog; d.Cost[(int)Ware.Stone] = EconomyTuning.SmallStone;
         }
 
-        private static void Processor(string kind, string label, Ware a, Ware b, Ware make, int cycle)
+        private static BuildingDef Processor(string kind, string label, Ware a, Ware b, Ware make, int cycle)
         {
             var d = Add(kind, label, BuildingRole.Workshop, cycle, BuildingSize.Medium);
             d.In[(int)a] = 1; d.In[(int)b] = 1; d.Out[(int)make] = 1; d.Makes = make;
             d.Cost[(int)Ware.Plank] = EconomyTuning.ProcessorPlank;
             d.Cost[(int)Ware.Brick] = EconomyTuning.ProcessorBrick;
             d.Cost[(int)Ware.Stone] = EconomyTuning.ProcessorStone;
+            return d;
         }
 
         private static void ArmouryDef(string kind, string label, Ware a, Ware b, Ware make)

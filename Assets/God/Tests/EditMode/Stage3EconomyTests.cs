@@ -47,7 +47,7 @@ namespace God.Sim.Tests
             for (int w = 0; w < Wares.Count; w++)
             {
                 Assert.AreEqual((Ware)w == a || (Ware)w == b ? 1 : 0, d.In[w], kind + " takes " + (Ware)w);
-                Assert.AreEqual((Ware)w == make ? 1 : 0, d.Out[w], kind + " makes " + (Ware)w);
+                Assert.AreEqual((Ware)w != make ? 0 : kind == BuildingKinds.Sawmill ? EconomyTuning.SawmillPlanks : 1, d.Out[w], kind + " makes " + (Ware)w);
             }
             Assert.AreSame(d, EconomyDefs.MakerOf(make));
             if (armoury) Assert.AreNotEqual(GearSlot.None, Gear.SlotOf(make)); else Assert.IsTrue(Wares.IsProcessed(make));
@@ -76,7 +76,8 @@ namespace God.Sim.Tests
             EcoHelp.Run(sim, 2500, () => e.Find(id).Produced == 2 && e.Walkers.Count == 0 && e.Find(id).Out[(int)make] == 0);
             var rec = e.Find(id);
             Assert.AreEqual(2, rec.Produced, kind);
-            Assert.AreEqual(before + 2, e.TotalStock(Faction.F0, make), kind + ": two " + Wares.Name(make) + " in the HQ");
+            int per = kind == BuildingKinds.Sawmill ? EconomyTuning.SawmillPlanks : 1;
+            Assert.AreEqual(before + 2 * per, e.TotalStock(Faction.F0, make), kind + ": two cycles of " + Wares.Name(make) + " in the HQ");
             Assert.AreEqual(0, e.TotalStock(Faction.F0, a) + rec.In[(int)a], "both " + Wares.Name(a) + " used");
             Assert.AreEqual(0, e.TotalStock(Faction.F0, b) + rec.In[(int)b], "both " + Wares.Name(b) + " used");
         }

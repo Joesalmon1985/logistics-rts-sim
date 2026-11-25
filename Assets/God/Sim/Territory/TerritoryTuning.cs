@@ -3,8 +3,8 @@ namespace God.Sim
     /// <summary>Tuning constants of land, dice and territory (P1). Change here only.</summary>
     public static class TerritoryTuning
     {
-        /// <summary>Sim ticks between dice rolls: 45 ticks at 10 Hz = 4.5 seconds (Q4: was 6 s; the stage 3 chain needs more raws).</summary>
-        public const int DiceIntervalTicks = 45;
+        /// <summary>Sim ticks between dice rolls: 60 ticks at 10 Hz = 6 seconds.</summary>
+        public const int DiceIntervalTicks = 60;
 
         /// <summary>Most piles a hex holds before further piles are wasted.</summary>
         public const int PileCap = 3;

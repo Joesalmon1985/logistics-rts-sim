@@ -54,6 +54,8 @@ namespace God.Sim
 
         // ---- production cycles (ticks) ----
         public const int SawmillTicks = 40;
+        /// <summary>Planks a sawmill makes from one log and one stone (Q4: 2, was 1; planks were the bottleneck of every chain).</summary>
+        public const int SawmillPlanks = 2;
         public const int KilnTicks = 50;
         public const int SmelterTicks = 60;
         public const int BakeryTicks = 40;
