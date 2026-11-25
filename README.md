@@ -15,7 +15,12 @@ The proof of concept is playable (24 Nov 2026). Packages P0 to P5 are merged on 
 - models;
 - the god HUD.
 
-Stage 2 package P7 (branch `unity/p7-factions`) makes it six factions on a 30-hex island, with war and peace, victory points, Citadels, capture and elimination. The static enemy base and its waves are gone. P8 (trade), P9 (AI) and P10 (menu, save, watch mode) build on it.
+Stage 2 (25 Nov 2026) is merged as packages P7 to P11:
+- P7: six factions on a 30-hex island, war and peace, victory points, Citadels, capture and elimination;
+- P8: trade envoys, offers and answers, the trade panel and offer card;
+- P9: a faction AI for every non-human faction;
+- P10: the start card, Esc menu, three save slots, watch mode and standings;
+- P11: AI trade (`AiTrader`: the AIs offer spare goods for wares they lack the land for, and answer offers by their own needs), balance across seeds, and a watch smoke that ends with a winner on the build.
 
 How to play: [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
 
@@ -52,4 +57,4 @@ Run `Builds/Windows/GodOfTheIsland.exe`, or open `Main.unity` and press Play. Se
 
 ## Smoke
 
-`GodOfTheIsland.exe -batchmode -nographics -godsmoke 40000 -logFile smoke.log` plays a watch game of six AI factions headless for up to 40000 ticks (about 67 sim-minutes), logs `SMOKE` standings every 1000 ticks (VP, HQs, Citadels, units, wars, captures, eliminations) and the game-over line, and quits with exit code 0 on success (no exception, invariants hold, and someone won or at least 3 factions expanded with a war and a capture). The AI lives in `Assets/God/Sim/Ai` (P9); its weights are in `AiTuning`.
+`GodOfTheIsland.exe -batchmode -nographics -godsmoke 60000 -godseed 1 -logFile smoke.log` plays a watch game of six AI factions headless for up to 60000 ticks (100 sim-minutes). Every 1000 ticks it logs a `SMOKE` line with the standings (VP, HQs, Citadels, units, wars per faction), the wars, captures and eliminations so far, and the trades (offered, accepted, refused, envoys killed). It ends with the game-over line and a `SMOKE END` verdict, and quits with exit code 0 on success: no exception, invariants hold, and someone won (or at least 3 factions expanded with a war and a capture). The AI lives in `Assets/God/Sim/Ai`; its weights, trade ones included, are in `AiTuning`.

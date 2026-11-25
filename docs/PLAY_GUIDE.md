@@ -1,10 +1,16 @@
-# How to play the proof of concept
+# How to play God of the Island
 
-Run `Builds\Windows\GodOfTheIsland.exe`. To get a different island, add `-godseed 1234`. Add `-godwatch` to watch with no human faction (the build tools are hidden).
+Run `Builds\Windows\GodOfTheIsland.exe`.
 
-Stage 2 (P7, 25 Nov): the island has 30 hexes and **six factions** (Amber, Azure, Crimson, Jade, Violet and Ivory), each starting with one HQ, spread round the coast. You play Amber. Everyone starts at peace. There are no enemy waves any more. Since P9 the other five factions are played by an **AI** from the start: they build their economy with roads, expand to new HQ corners, upgrade Citadels, raise armies, guard their HQs, go to war and capture HQs. They declare war on a faction that leads by 2 VP or more (tied leaders fight each other), and on a weak neighbour when their army is clearly stronger, and make peace once the reason is gone. **F2** still starts a chain bot for your own economy. `-godwatch` gives all six factions an AI; `-godnoai` starts a game with none.
+You are a god looking down on an island. Six peoples live there, each with one town hall (HQ) on the coast. You never steer a person. You place buildings, and your people build them, fetch the goods and carry them along your roads.
 
-**Victory points:** a finished HQ is worth 1 VP and a Citadel 2 VP. The first faction to **10 VP** wins; so does the last faction left. A faction with no HQ is out.
+## Starting, saving and quitting
+
+- **The start card** appears first. Press **Play** to play the Amber people against five computer players. Press **Watch** to watch all six play each other. You can type a seed (a number that picks the island) or roll a new one with the dice button. **Load** opens a saved game.
+- **Esc** opens the menu (when you are not holding a tool). It pauses the game. It has Resume, Save, Load, New island, Watch and Quit.
+- **Saving:** pick one of three slots. A loaded game starts paused; press Space to go on.
+- **Quitting:** Esc, then Quit.
+- From the command line, `-godseed 1234` picks an island and `-godwatch` starts a watch game.
 
 ## Controls
 
@@ -14,75 +20,77 @@ Stage 2 (P7, 25 Nov): the island has 30 hexes and **six factions** (Amber, Azure
 | Zoom | Mouse wheel |
 | Pause | Space, or the Play/Pause button on the cloud |
 | Speed | `+` and `-`, or the 1x / 2x / 4x buttons |
-| Cancel a tool | Right-click or Esc |
-| Menu: save, load, new island, watch, quit | Esc with no tool in hand (it pauses the game). Three save slots. |
-| Watch mode only | 1 to 6 fly to a faction's HQ, Tab to the latest capture or fight, speeds up to 16x |
+| Put a tool down | Right-click or Esc |
+| Watch mode | 1 to 6 fly to a people's HQ, Tab to the latest fight or capture, speeds up to 16x |
 
-A small card at the start offers **Play** (you are Amber), **Watch** (six AIs), a seed with a dice button, and **Load**. Saves are in the game's data folder, `saves/slot1.json` to `slot3.json`.
+## The six peoples and how to win
 
-## Build
+The peoples are Amber (you), Azure, Crimson, Jade, Violet and Ivory.
 
-1. Pick a building on the cloud strip at the top. Hover a button to see its cost and what it takes and gives.
-2. The spots where it can go glow. Click one. Hold Shift to place several.
-3. **Join it to a road.** Pick **Road**, then click a flag (your HQ has one). Then click where the road should go; it finds its own path. Finish by clicking another flag or a building's flag, or click the free end again to plant a new flag there.
-4. Builders and carriers walk the materials out. Nothing gets built without a road.
+- **Victory points (VP):** each finished HQ is worth 1 VP. A **Citadel** is worth 2.
+- The first people to **10 VP** win. The last people standing also win.
+- A people with no HQ left is out.
+- The list under the cloud shows everyone's VP and who is at war with whom.
 
-**Where things can go:**
-- Woodcutter, clay pit, quarry and mine must stand on forest, hills or mountain land. Each one collects the goods that pile up at the middle of that land when its hidden number is rolled.
-- The farm needs field land.
-- A new **HQ** can only go on the glowing corners, two steps from an HQ you already have. It gives you a new building area.
+## Building
 
-## The chain
+1. Pick a building on the cloud strip at the top. Hover a button to see what it costs and what it makes.
+2. The places where it can go glow. Click one. Hold Shift to place several.
+3. **Give it a road.** Pick **Road**, click a flag (your HQ has one), then click where the road should end. Nothing gets built without a road.
+4. Builders and carriers do the rest.
 
-| Building | Takes | Gives |
+Where things go:
+- Woodcutters need forest, clay pits need hills, quarries and mines need mountains, farms need fields.
+- A new **HQ** goes on one of the glowing corners two steps from an HQ you have. It opens a new area to build in. Spread towards land you are missing.
+
+What makes what:
+
+| Building | Takes | Makes |
 |---|---|---|
-| Sawmill | log | plank and kindling |
-| Kiln | clay and kindling | brick |
+| Sawmill | logs | planks and kindling |
+| Kiln | clay and kindling | bricks |
 | Smelter | ore and kindling | iron |
 | Barracks | grain and iron | a soldier |
 | Vehicle workshop | 2 iron and a plank | a war wagon |
 
-## Priorities
+Click one of your buildings to set which goods it gets first (Stop, Low, Norm, High), to pause it, to keep guards at it, or to pull it down.
 
-Click one of your buildings to open its card:
-- For each ware it takes, set **Stop / Low / Norm / High**. Carriers serve High first.
-- **Pause** stops it.
-- **Defend here** keeps 0 to 5 guards at it.
-- **Demolish** removes it.
+**Citadel:** click your HQ and press **Upgrade to Citadel**. It needs 3 planks, 4 bricks, 4 stone and 3 iron, and 30 seconds of work.
 
-## War and peace
+## War, peace and capture
 
-- Click a building of another faction to open its card. At peace, it offers **Declare war**; war starts at once.
-- At war, press **Target**. Units attack targets in the order you marked them. **Offer peace** ends the war once they offer too.
-- Units fight only factions you are at war with and walk past everyone else.
-- New units first fill any defend spots, then go after the first target.
-- An HQ brought to zero by units is **captured**, at half health, with every building, site, flag and road in its area and its stock. Other buildings burn.
-- Click your HQ for **Upgrade to Citadel** (3 plank, 4 brick, 4 stone, 3 iron; 30 s of work).
-- You can't move units yourself; you only give god orders.
-- The line under the cloud shows your soldiers, wagons and guards and who you are at war with; below it, the VP of every faction.
+- Everyone starts at peace. Soldiers only fight peoples they are at war with.
+- Click a building of another people. At peace, the card offers **Declare war**. At war, it offers **Target** and **Offer peace**. Peace comes once both sides offer it.
+- Soldiers and wagons from your barracks and workshop first fill your guard posts, then attack your targets in order. You cannot move them yourself.
+- An HQ beaten down to nothing is **captured**: it changes sides with everything around it and its goods. Its VP go to the winner.
 
 ## Trade
 
-Press **Trade** on the cloud strip. Pick a faction you are not at war with, set what you give and what you want with the + and - buttons (at most 8 wares each way; the goods must be free in one of your HQs), and press **Send envoy**. The goods leave your HQ at once. A herald with a pack donkey walks over the land (not the roads) to their nearest HQ.
+Press **Trade** on the cloud strip. Pick a people you are not at war with, choose what you give and what you want (up to 8 goods each way), and press **Send envoy**. The goods leave your HQ at once. A herald with a pack donkey walks over the land to their nearest HQ.
 
-- An AI judges the offer when the envoy arrives (fair within a quarter, and they must have the goods). If they accept, the goods are swapped and the envoy walks home with what you asked for. If they refuse, it brings your goods back.
-- When an envoy of theirs reaches you, an offer card appears: Accept or Refuse within 60 s, or it is refused. You can also click any envoy.
-- Enemy soldiers of a faction at war with the sender shoot envoys (40 health). A killed envoy loses its goods. War declared mid-trip turns the envoy home.
-- Trades that involve you show as small lines under the standings.
+- If they accept, the goods are swapped and the herald walks home with what you asked for. If they refuse, the herald brings your goods back.
+- When another people's herald reaches you, a card appears. Accept or Refuse within 60 seconds, or the offer is refused.
+- Soldiers at war with a herald's people shoot heralds. A killed herald loses its goods.
+
+## How the computer players behave
+
+- They build the same buildings you do, join them with roads, spread to new HQ corners (towards land they lack), and turn HQs into Citadels when they can.
+- They keep guards at home and raise an army.
+- **War:** they gang up on anyone who leads by 2 VP or more, and attack a weak neighbour when they are much stronger. They make peace once the reason is gone, or when they are losing badly.
+- **Trade:** when they need goods they cannot make, for example stone with no mountain nearby, they send a herald with goods they can spare. They prefer to trade with whoever is doing worst, and never with the leader or an enemy. They send at most one new offer every 30 seconds, and do not ask again for 2 minutes after a no.
+- They accept a fair offer (worth at least three quarters of what they give) when it brings something they need for goods they can spare. They refuse the leader and anyone at war with them.
+- They may send you offers too.
 
 ## A good start
 
-1. Build a woodcutter, a quarry and a sawmill near the HQ, and give each one a road.
-2. Add a clay pit and a kiln for bricks, which the medium buildings need.
-3. Add a mine, a smelter and a farm, then a barracks.
-4. Click your HQ and set **Defend here** to 2 or 3. Soldiers from the barracks will then guard it.
+1. Build a woodcutter, a quarry and a sawmill near your HQ, each with a road.
+2. Add a clay pit and a kiln for bricks.
+3. Add a mine, a smelter, a farm and a barracks.
+4. Click your HQ and set guards to 2 or 3.
+5. If your start has no mountain or no forest, build a new HQ towards it early, or trade for stone or planks.
 
 ## Not in yet
 
-- No trade yet (P8); the AI's trade hooks are empty until P11.
-- No saving (P10).
-- No sound.
-- No tutorial.
-- Unit selection isn't planned.
-
-Balance is untested by hand. On 10 of the 16 test islands, the start area lacks a terrain the chain needs, so you'll have to build a second HQ quickly.
+- No sound and no tutorial.
+- You cannot select or move units.
+- Balance has been checked by computer players only, not by hand.
