@@ -81,6 +81,13 @@ Press **Trade** on the cloud strip. Pick a people you are not at war with, choos
 - They accept a fair offer (worth at least three quarters of what they give) when it brings something they need for goods they can spare. They refuse the leader and anyone at war with them.
 - They may send you offers too.
 
+## Tutorial and the build bar (stage 3)
+
+- **Tutorial** on the start card begins a fixed island (seed 40) where you are Amber and the AIs never declare war on you. Pop-up cards sit in the bottom-left corner and never stop the game. Each has a goal that ticks by itself when you do it; **Next** or **Skip step** moves on, **Hide tutorial** hides them all. Esc menu: **Tutorial tips: on/off**.
+- The build bar has tabs: **Gather** (5 harvesters), **Process** (10), **Arms** (10), **Army** (barracks) and **Land** (HQ, road, demolish, trade). Tab and Shift+Tab cycle them; 1 to 5 pick one (in watch mode 1 to 6 and Tab keep their jump meanings). A building whose recipe is not in the game yet shows greyed with a "coming soon" tooltip.
+- The stock bar shows raws, processed goods and gear in three groups; hover a swatch for its name.
+- Harvesters look bigger at level 2 and 3 (annexe, stockpile, coloured roof, gold gate posts at level 3).
+
 ## A good start
 
 1. Build a woodcutter, a quarry and a sawmill near your HQ, each with a road.

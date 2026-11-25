@@ -39,6 +39,11 @@ namespace God.Game
             TerritoryTuning.HqKind, BuildingKinds.Woodcutter, BuildingKinds.ClayPit, BuildingKinds.Quarry, BuildingKinds.Mine,
             BuildingKinds.Farm, BuildingKinds.Sawmill, BuildingKinds.Kiln, BuildingKinds.Smelter, BuildingKinds.Barracks,
             BuildingKinds.VehicleWorkshop,
+            // stage 3: the seven new processors and the ten armouries (the other processors and the harvesters are above)
+            BuildingKinds.Bakery, BuildingKinds.MortarMill, BuildingKinds.Foundry, BuildingKinds.Pottery, BuildingKinds.Forge,
+            BuildingKinds.Tannery, BuildingKinds.Weaver,
+            BuildingKinds.Swordsmith, BuildingKinds.Spearmaker, BuildingKinds.Axesmith, BuildingKinds.Bowyer, BuildingKinds.Slingmaker,
+            BuildingKinds.Shieldwright, BuildingKinds.Helmsmith, BuildingKinds.Bucklersmith, BuildingKinds.Armourer, BuildingKinds.Leatherworker,
         };
 
         private static readonly Dictionary<string, BuildingRig> Rigs = new Dictionary<string, BuildingRig>();
@@ -85,6 +90,16 @@ namespace God.Game
 
         public static void Build(MeshBuilder mb, string kind, ModelStyle st, BuildingRig rig)
         {
+            int level = 1;
+            int colon = kind == null ? -1 : kind.IndexOf(':');
+            if (colon > 0) { int.TryParse(kind.Substring(colon + 1), out level); kind = kind.Substring(0, colon); }
+            BuildKind(mb, kind, st, rig);
+            if (level >= 2) HarvesterLevel(mb, kind, st, rig, Mathf.Min(level, 3));
+        }
+
+        private static void BuildKind(MeshBuilder mb, string kind, ModelStyle st, BuildingRig rig)
+        {
+            if (BuildStage3(mb, kind, st, rig)) return;
             switch (kind)
             {
                 case TerritoryTuning.HqKind: Hq(mb, st, rig); break;

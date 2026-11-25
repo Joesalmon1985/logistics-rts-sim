@@ -154,6 +154,7 @@ namespace God.Sim
             {
                 var x = (Faction)i;
                 if (x == Side || fs.IsEliminated(x)) continue;
+                if (S.Setup.Tutorial && S.Setup.HasHuman && x == S.Setup.HumanFaction && !fs.AtWar(Side, x)) continue; // tutorial: no war on the human
                 bool losing = Losing(x);
                 if (!fs.AtWar(Side, x))
                 {

@@ -16,7 +16,7 @@ namespace God.Game
     {
         private sealed class BView
         {
-            public int Id, Node; public string Kind; public Faction Faction; public BuildingSize Size; public bool Citadel;
+            public int Id, Node, Level = 1; public string Kind; public Faction Faction; public BuildingSize Size; public bool Citadel;
             public GameObject Root, Model, Site, SiteWares, Worker, Glow, Icon;
             public Transform Banner, Wheel;
             public BuildingRig Rig;
@@ -67,7 +67,7 @@ namespace God.Game
         }
 
         /// <summary>The model a view draws: the Citadel model for an upgraded HQ, else the model of its kind.</summary>
-        private static string ModelKindOf(BView v) => v.Citadel ? BuildingModels.CitadelKind : v.Kind;
+        private static string ModelKindOf(BView v) => v.Citadel ? BuildingModels.CitadelKind : BuildingModels.KindAtLevel(v.Kind, v.Level);
 
         private static string KindOf(Building b) => b.Size == BuildingSize.Hq ? TerritoryTuning.HqKind : b.Kind;
 
@@ -84,13 +84,14 @@ namespace God.Game
             {
                 _alive.Add(b.Id);
                 bool citadel = b.Size == BuildingSize.Hq && t.HqOf(b.Id)?.Citadel == true;
-                if (_views.TryGetValue(b.Id, out var v) && (v.Faction != b.Faction || v.Citadel != citadel))
+                var eco = e?.Find(b.Id);
+                int level = eco != null && !eco.IsHq ? Mathf.Clamp(eco.Level, 1, 3) : 1;
+                if (_views.TryGetValue(b.Id, out var v) && (v.Faction != b.Faction || v.Citadel != citadel || v.Level != level))
                 {
-                    // Captured (or upgraded): rebuild in the new owner's style and colour.
+                    // Captured, upgraded to a Citadel or to a higher harvester level: rebuild in the new owner's style and shape.
                     Destroy(v.Root); _views.Remove(b.Id); v = null; Restyled++;
                 }
-                if (v == null) v = Make(b, g);
-                var eco = e?.Find(b.Id);
+                if (v == null) v = Make(b, g, level);
                 bool built;
                 if (eco != null) built = eco.Built;
                 else { var hq = t.HqOf(b.Id); built = hq == null || !hq.Site; }
@@ -118,9 +119,9 @@ namespace God.Game
 
         // ---------------------------------------------------------------- make
 
-        private BView Make(Building b, NodeGrid g)
+        private BView Make(Building b, NodeGrid g, int level)
         {
-            var v = new BView { Id = b.Id, Node = b.Node, Kind = KindOf(b), Faction = b.Faction, Size = b.Size, Seed = (b.Id * 0.618f) % 1f };
+            var v = new BView { Id = b.Id, Node = b.Node, Level = level, Kind = KindOf(b), Faction = b.Faction, Size = b.Size, Seed = (b.Id * 0.618f) % 1f };
             v.Citadel = b.Size == BuildingSize.Hq && _sim.State.Territory.HqOf(b.Id)?.Citadel == true;
             v.Root = new GameObject("Building " + v.Kind + " " + b.Id);
             v.Root.transform.SetParent(transform, false);

@@ -105,6 +105,15 @@ namespace God.Game
         /// <summary>Start card, Play: you are Amber on the seed in the field.</summary>
         public void StartPlay() => Begin(false);
 
+        /// <summary>Start card, Tutorial: the fixed tutorial island with the guide cards, you as Amber.</summary>
+        public void StartTutorial() { Close(); GodBootstrap.StartTutorial(); }
+
+        /// <summary>Esc menu: tutorial tips on or off.</summary>
+        public void ToggleTutorialTips() { Boot.Tutorial?.ToggleTips(); }
+
+        /// <summary>True when the Esc menu offers the tutorial tips switch (a tutorial game that is not finished).</summary>
+        public bool HasTutorialTips => Boot.Tutorial != null && !Boot.Tutorial.Guide.Finished;
+
         /// <summary>Start card, Watch: six AIs on the seed in the field.</summary>
         public void StartWatch() => Begin(true);
 
@@ -210,6 +219,7 @@ namespace God.Game
             if (GUILayout.Button("Play as Amber", st.BtnSel, GUILayout.Height(40f))) StartPlay();
             if (GUILayout.Button("Watch 6 AIs", st.Btn, GUILayout.Height(40f))) StartWatch();
             GUILayout.EndHorizontal();
+            if (GUILayout.Button(new GUIContent("Tutorial", "A guided first game on a fixed island, for new players."), st.Btn, GUILayout.Height(30f))) StartTutorial();
             if (GUILayout.Button("Load a game", st.Btn, GUILayout.Height(30f))) ShowLoadFromStart();
         }
 
@@ -235,6 +245,7 @@ namespace God.Game
             if (GUILayout.Button("Resume", st.BtnSel, GUILayout.Height(34f))) Resume();
             if (GUILayout.Button("Save", st.Btn, GUILayout.Height(30f))) ShowSave();
             if (GUILayout.Button("Load", st.Btn, GUILayout.Height(30f))) ShowLoad();
+            if (HasTutorialTips && GUILayout.Button("Tutorial tips: " + (Boot.Tutorial.Guide.Hidden ? "off" : "on"), st.Btn, GUILayout.Height(30f))) ToggleTutorialTips();
             GUILayout.Space(4f);
             if (GUILayout.Button("New island", st.Btn, GUILayout.Height(30f))) NewIsland();
             if (Boot.Hud != null && Boot.Hud.Watching)
