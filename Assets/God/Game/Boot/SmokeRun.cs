@@ -108,6 +108,7 @@ namespace God.Game
                 + st.Citadels + " Cit " + s.Military.CountUnits(st.Faction) + " units"
                 + (st.Eliminated ? " (out)" : s.Factions.Enemies(st.Faction).Count > 0 ? " war " + string.Join("/", s.Factions.Enemies(st.Faction).Select(FactionInfo.Name)) : ""));
             return "tick " + s.Tick + " min " + (s.Tick / 600.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " | " + string.Join(" | ", parts)
+                + " | soldiers made " + s.Economy.UnitsProduced + " harvester upgrades " + s.Economy.Buildings.Count(b => b.Level > 1)
                 + " | wars " + _wars + " captures " + _captures + " eliminations " + _eliminations
                 + " | trades offered " + _offered + " accepted " + _accepted + " refused " + _refused + " killed " + _killed;
         }

@@ -112,16 +112,16 @@ namespace God.Sim
     }
 
     /// <summary>
-    /// The full chain script: sawmill, a second HQ, then harvesters, workshops and factories, strictly in that order, each
-    /// placed once its wares are free. An item that has no legal spot even with every HQ finished is skipped.
+    /// The chain script (stage 3): logs and stone, planks, bricks and mortar, bread, iron and axes, then the barracks,
+    /// strictly in that order, each placed once its wares are free; a harvester whose land is out of reach gets an HQ toward it. An item that has no legal spot even with every HQ finished is skipped.
     /// </summary>
     public sealed class ChainBot : EconomyBot
     {
         public readonly List<string> Wants = new List<string>
         {
-            BuildingKinds.Sawmill, BuildingKinds.Quarry, BuildingKinds.Woodcutter, BuildingKinds.Kiln,
-            BuildingKinds.ClayPit, BuildingKinds.Mine, BuildingKinds.Smelter, BuildingKinds.Farm,
-            BuildingKinds.Barracks, BuildingKinds.VehicleWorkshop,
+            BuildingKinds.Woodcutter, BuildingKinds.Quarry, BuildingKinds.Sawmill, BuildingKinds.ClayPit,
+            BuildingKinds.Kiln, BuildingKinds.MortarMill, BuildingKinds.Farm, BuildingKinds.Bakery,
+            BuildingKinds.Mine, BuildingKinds.Smelter, BuildingKinds.Axesmith, BuildingKinds.Barracks,
         };
         public readonly Dictionary<string, int> Placed = new Dictionary<string, int>();
         public readonly HashSet<string> Skipped = new HashSet<string>();
@@ -131,18 +131,38 @@ namespace God.Sim
 
         public bool Done => Placed.Count + Skipped.Count == Wants.Count;
 
-        private bool Affordable(BuildingDef d)
+        private bool Affordable(BuildingDef d) => Missing(d) == null;
+
+        /// <summary>The wares short for a building's cost (stock less what open sites still need), or null when it is affordable.</summary>
+        private bool[] Missing(BuildingDef d)
         {
             var e = S.Economy;
+            bool[] miss = null;
             for (int w = 1; w < Wares.Count; w++)
             {
                 if (d.Cost[w] == 0) continue;
                 int free = e.TotalStock(Side, (Ware)w);
                 foreach (var b in e.Buildings)
                     if (!b.Built && b.Faction == Side) free -= Math.Max(0, b.Def.Cost[w] - b.In[w]);
-                if (free < d.Cost[w]) return false;
+                if (free < d.Cost[w]) (miss ?? (miss = new bool[Wares.Count]))[w] = true;
             }
-            return true;
+            return miss;
+        }
+
+        /// <summary>
+        /// Stage 3: processors eat the raws a building costs (the sawmill takes stone, for one). While the next want is short of a
+        /// ware, the processors that take it and do not make another short ware pause, so the ware can pile up in the HQ.
+        /// </summary>
+        private void HoldFor(bool[] missing)
+        {
+            foreach (var b in S.Economy.Buildings)
+            {
+                if (b.Faction != Side || b.IsHq || !b.Built || !b.Def.Processor) continue;
+                bool hold = false;
+                if (missing != null && !missing[(int)b.Def.Makes])
+                    for (int w = 1; w < Wares.Count; w++) if (missing[w] && b.Def.In[w] > 0) hold = true;
+                if (b.Paused != hold && !S.IsGameOver) Sim.Submit(new SetPaused(Side, b.Id, hold)); // applies next tick; no extra step
+            }
         }
 
         private bool HqPending()
@@ -171,13 +191,13 @@ namespace God.Sim
             {
                 if (Placed.ContainsKey(want) || Skipped.Contains(want)) continue;
                 var d = EconomyDefs.Get(want);
-                if (!Affordable(d)) return;
+                var missing = Missing(d);
+                HoldFor(missing);
+                if (missing != null) return;
                 int id = PlaceAndConnect(want);
                 if (id != 0)
                 {
                     Placed[want] = id;
-                    // The vehicle workshop needs two iron per unit: let it win iron over the barracks.
-                    if (want == BuildingKinds.VehicleWorkshop && Sim.Submit(new SetInputPriority(Side, id, Ware.Iron, Priority.High)).Ok) Sim.Step();
                     return;
                 }
                 var terrain = TerrainFor(want);
@@ -188,6 +208,7 @@ namespace God.Sim
                 Skipped.Add(want);
                 Log.Add("skipped " + want);
             }
+            HoldFor(null); // everything placed: no processor waits for a want any more
         }
 
         public int HqsPlaced;

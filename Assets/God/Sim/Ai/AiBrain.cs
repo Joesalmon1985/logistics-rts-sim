@@ -57,6 +57,8 @@ namespace God.Sim
         private readonly Dictionary<string, int> _built = new Dictionary<string, int>();
         private int _openSites, _citadels;
         private bool _upgrading;
+        /// <summary>A harvester of the faction is being upgraded (one at a time).</summary>
+        private bool _harvUpgrading;
         /// <summary>Free wares: HQ stock not yet promised, minus what open sites and an upgrade still need, minus reservations.</summary>
         private readonly int[] _budget = new int[Wares.Count];
         /// <summary>Nodes of the flags joined by road to the faction's main network.</summary>
@@ -70,7 +72,7 @@ namespace God.Sim
         private readonly int[] _strength = new int[FactionInfo.Max];
         private readonly int[] _vp = new int[FactionInfo.Max];
         private readonly List<MilUnit> _mine = new List<MilUnit>();
-        private int _inf, _veh;
+        private int _inf;
         private int[,] _harvOnHex;
         /// <summary>(hex, kind) of every harvester or harvester site of the faction.</summary>
         private readonly HashSet<(int, string)> _myHarvOn = new HashSet<(int, string)>();
@@ -102,6 +104,7 @@ namespace God.Sim
             Trader.ConsiderOffers(this);
             Priorities();
             Build();
+            KeepRaws();
             Roads();
             Trader.ProposeTrades(this);
         }
@@ -114,7 +117,7 @@ namespace God.Sim
             Look();
             return FactionInfo.Name(Side) + " hqs " + _hqs.Count + "+" + _hqSites.Count + " corners " + CountExpansionCorners()
                 + " lands " + string.Join("/", _lands) + " free p" + _budget[(int)Ware.Plank] + " s" + _budget[(int)Ware.Stone]
-                + " b" + _budget[(int)Ware.Brick] + " i" + _budget[(int)Ware.Iron] + " sites " + _openSites + " army " + _inf + "i" + _veh + "v";
+                + " b" + _budget[(int)Ware.Brick] + " m" + _budget[(int)Ware.Mortar] + " st" + _budget[(int)Ware.Steel] + " sites " + _openSites + " army " + _inf;
         }
 
         private bool Send(Command c, string note)
@@ -136,7 +139,7 @@ namespace God.Sim
         {
             var s = S; var t = T; var e = E;
             _hqs.Clear(); _hqSites.Clear(); _have.Clear(); _built.Clear(); _reserved.Clear(); _lands.Clear();
-            _openSites = 0; _citadels = 0; _upgrading = false;
+            _openSites = 0; _citadels = 0; _upgrading = false; _harvUpgrading = false;
             foreach (var h in t.Hqs)
                 if (h.Faction == Side) { if (h.Site) _hqSites.Add(h); else { _hqs.Add(h); if (h.Citadel) _citadels++; } }
             _myHarvOn.Clear(); _areaHexes.Clear();
@@ -170,6 +173,15 @@ namespace God.Sim
                 }
                 _have[b.Kind] = (_have.TryGetValue(b.Kind, out int n) ? n : 0) + 1;
                 if (b.Built) _built[b.Kind] = (_built.TryGetValue(b.Kind, out int k) ? k : 0) + 1;
+                if (b.Built)
+                {
+                    if (b.Upgrading && b.UpgradeDef != null)
+                    {
+                        _harvUpgrading = true;
+                        var c = b.UpgradeDef.Cost;
+                        for (int w = 0; w < Wares.Count; w++) _budget[w] -= Math.Max(0, c[w] - b.In[w] - b.Incoming[w]);
+                    }
+                }
                 else
                 {
                     _openSites++;
@@ -318,23 +330,33 @@ namespace God.Sim
         /// <summary>True when one of the faction's finished HQ areas touches land of this terrain (as of the last look).</summary>
         public bool HasLand(Terrain tt) => _lands.Contains(tt);
 
+        /// <summary>The land a raw comes from (log forest, clay hills, grain fields, stone and ore mountain).</summary>
+        private static Terrain LandOf(Ware raw)
+        {
+            switch (raw)
+            {
+                case Ware.Log: return Terrain.Forest;
+                case Ware.Clay: return Terrain.Hills;
+                case Ware.Grain: return Terrain.Fields;
+                default: return Terrain.Mountain;
+            }
+        }
+
         /// <summary>
-        /// True when the faction cannot make this ware itself: a land its chain needs is in none of its HQ areas (stone and
-        /// ore need mountain; logs, planks and kindling forest; clay hills; grain fields; bricks hills and forest; iron
-        /// mountain and forest). Uses the last look (call <see cref="WareNeeds"/> first).
+        /// True when the faction cannot make this ware itself: a land its chain needs is in none of its HQ areas. A raw
+        /// needs its land; a processed ware the lands of both its raws; gear the lands of both inputs of its armoury.
+        /// Uses the last look (call <see cref="WareNeeds"/> first).
         /// </summary>
         public bool LacksLandFor(Ware w)
         {
-            switch (w)
-            {
-                case Ware.Log: case Ware.Plank: case Ware.Kindling: return !HasLand(Terrain.Forest);
-                case Ware.Clay: return !HasLand(Terrain.Hills);
-                case Ware.Grain: return !HasLand(Terrain.Fields);
-                case Ware.Rock: case Ware.Stone: case Ware.Ore: return !HasLand(Terrain.Mountain);
-                case Ware.Brick: return !HasLand(Terrain.Hills) || !HasLand(Terrain.Forest);
-                case Ware.Iron: return !HasLand(Terrain.Mountain) || !HasLand(Terrain.Forest);
-                default: return false;
-            }
+            if (w == Ware.None || w == Ware.Kindling) return false;
+            if (w == Ware.Rock) return !HasLand(Terrain.Mountain);
+            if (Wares.IsRaw(w)) return !HasLand(LandOf(w));
+            var maker = EconomyDefs.MakerOf(w);
+            if (maker == null) return false;
+            for (int i = 1; i < Wares.Count; i++)
+                if (maker.In[i] > 0 && LacksLandFor((Ware)i)) return true;
+            return false;
         }
 
         // ---------------- input priorities and factories ----------------
@@ -349,37 +371,71 @@ namespace God.Sim
             if (b.Paused != paused) Send(new SetPaused(Side, b.Id, paused), (paused ? "pause " : "resume ") + b.Kind);
         }
 
-        /// <summary>Steers scarce wares: iron to the vehicle workshop when an army is needed, away from factories while a Citadel is upgrading in peace; kindling to the smelter when iron is short.</summary>
+        /// <summary>
+        /// Steers scarce wares (simple stage 3 version): the barracks pauses when the army is big enough, and so does the
+        /// axesmith once axes pile up; planks go to the axesmith at low priority while a Citadel is upgrading in peace.
+        /// </summary>
         private void Priorities()
         {
             bool war = S.Factions.Enemies(Side).Count > 0;
             int units = _mine.Count;
             int wanted = ArmyWanted(war);
-            bool needArmy = war || units < wanted;
-            bool saveIron = _upgrading && !war;
-            bool ironShort = _budget[(int)Ware.Iron] < 3;
-            // The factory ratio: the kind that is ahead pauses (never both).
             bool capped = units >= Math.Min(Tune.ArmyCap, wanted + (war ? 6 : 0)) && !(war && units < Tune.ArmyCap);
-            bool vehicleAhead = _veh * Tune.InfantryPerVehicle > _inf + 2;
-            bool infantryAhead = _inf > _veh * Tune.InfantryPerVehicle + 2;
-            bool hasVw = Built(BuildingKinds.VehicleWorkshop) > 0, hasBarracks = Built(BuildingKinds.Barracks) > 0;
+            int weapons = 0;
+            foreach (var g in Gear.Attack) weapons += _free[(int)g];
             foreach (var b in E.Buildings)
             {
                 if (b.Faction != Side || b.IsHq || !b.Built) continue;
+                var d = b.Def;
+                // Enough of its ware in stock: a processor pauses and leaves its raws to the other processors and sites.
+                if (d.Processor) SetPause(b, _free[(int)d.Makes] >= Tune.EnoughProcessed);
                 switch (b.Kind)
                 {
-                    case BuildingKinds.VehicleWorkshop:
-                        SetPrio(b, Ware.Iron, saveIron ? Priority.Low : needArmy ? Priority.High : Priority.Normal);
-                        SetPause(b, capped || (vehicleAhead && hasBarracks));
-                        break;
                     case BuildingKinds.Barracks:
-                        SetPrio(b, Ware.Iron, saveIron ? Priority.Low : Priority.Normal);
-                        SetPause(b, capped || (infantryAhead && hasVw));
+                        SetPause(b, capped);
                         break;
-                    case BuildingKinds.Smelter:
-                        SetPrio(b, Ware.Kindling, ironShort && (needArmy || _upgrading) ? Priority.High : Priority.Normal);
+                    case BuildingKinds.Axesmith:
+                        SetPrio(b, Ware.Plank, _upgrading && !war ? Priority.Low : Priority.Normal);
+                        SetPause(b, capped && weapons >= Tune.SpareWeapons);
                         break;
                 }
+            }
+        }
+
+        /// <summary>
+        /// After the want list has reserved its wares: a processor stops taking a raw that the wants are short of while it
+        /// already has a few of its own ware in stock, so the raw can pile up in the HQ for the next building. A raw with no
+        /// harvester of the faction's own yet is kept for building one: all of it while there is not even a site, and
+        /// <see cref="AiTuning.KeepRawWithoutHarvester"/> beyond the site's cost once there is.
+        /// </summary>
+        private void KeepRaws()
+        {
+            foreach (var b in E.Buildings)
+            {
+                if (b.Faction != Side || b.IsHq || !b.Built) continue;
+                var d = b.Def;
+                if (!d.Processor) continue;
+                bool stocked = _free[(int)d.Makes] >= Tune.KeepProcessed;
+                foreach (var raw in Wares.Raws)
+                {
+                    if (d.In[(int)raw] <= 0) continue;
+                    string harvester = HarvesterOf(raw);
+                    bool noHarvester = Built(harvester) == 0 && (Have(harvester) == 0 || _free[(int)raw] < Tune.KeepRawWithoutHarvester);
+                    bool keep = noHarvester || (_budget[(int)raw] < 0 && stocked);
+                    SetPrio(b, raw, keep ? Priority.Stop : Priority.Normal);
+                }
+            }
+        }
+
+        private static string HarvesterOf(Ware raw)
+        {
+            switch (raw)
+            {
+                case Ware.Log: return BuildingKinds.Woodcutter;
+                case Ware.Clay: return BuildingKinds.ClayPit;
+                case Ware.Grain: return BuildingKinds.Farm;
+                case Ware.Stone: return BuildingKinds.Quarry;
+                default: return BuildingKinds.Mine;
             }
         }
 
@@ -393,29 +449,35 @@ namespace God.Sim
 
         private int _actions;
         private bool _hqDone;
+        /// <summary>The urgent HQ found no corner this think: its cost is held so the cheaper wants cannot eat it (stage 3).</summary>
+        private bool _hqHeld;
 
         /// <summary>The ordered want list: each want is placed when its wares are free, else its cost is reserved so cheaper wants below cannot starve it.</summary>
         private void Build()
         {
-            _actions = 0; _hqDone = false;
+            _actions = 0; _hqDone = false; _hqHeld = false;
             int hqs = _hqs.Count;
             int maxSites = Tune.MaxOpenSitesBase + hqs / 2;
-            bool missingLand = !_lands.Contains(Terrain.Forest) || !_lands.Contains(Terrain.Mountain);
+            bool missingLand = !_lands.Contains(Terrain.Forest) || !_lands.Contains(Terrain.Mountain) || !_lands.Contains(Terrain.Hills);
 
-            // Stone is scarce until a quarry runs and planks until a sawmill runs: the sawmill first (on the start logs), then
-            // the quarry, then an urgent HQ toward missing forest or mountain, and only then the woodcutter.
-            Want(BuildingKinds.Sawmill, 1, maxSites, true);
-            Want(BuildingKinds.Quarry, 1, maxSites, true);
-            if (missingLand) Expand(true);
+            // Stage 3 chain (simple; Q4 refines it): logs and stone first (every building needs them), the sawmill for planks,
+            // then an urgent HQ toward missing forest, mountain or hills, then clay for bricks and mortar.
             Want(BuildingKinds.Woodcutter, 1, maxSites, true);
-            Want(BuildingKinds.ClayPit, 1, maxSites);
+            Want(BuildingKinds.Quarry, 1, maxSites, true);
+            Want(BuildingKinds.Sawmill, 1, maxSites, true);
+            if (missingLand) Expand(true);
+            Want(BuildingKinds.ClayPit, 1, maxSites, true);
             Want(BuildingKinds.Kiln, 1, maxSites);
+            Want(BuildingKinds.MortarMill, 1, maxSites);
             // A short ware gets a harvester on every hex of its land in reach first (one harvester per hex: piles are shared).
             if (_free[(int)Ware.Stone] < Tune.ScarceWare) Cover(BuildingKinds.Quarry, maxSites);
-            if (_free[(int)Ware.Plank] < Tune.ScarceWare) Cover(BuildingKinds.Woodcutter, maxSites);
-            if (_free[(int)Ware.Brick] < Tune.ScarceWare && Built(BuildingKinds.Kiln) > 0) Cover(BuildingKinds.ClayPit, maxSites);
+            if (_free[(int)Ware.Log] < Tune.ScarceWare || _free[(int)Ware.Plank] < Tune.ScarceWare) Cover(BuildingKinds.Woodcutter, maxSites);
+            if ((_free[(int)Ware.Brick] < Tune.ScarceWare || _free[(int)Ware.Mortar] < Tune.ScarceWare) && Built(BuildingKinds.Kiln) > 0) Cover(BuildingKinds.ClayPit, maxSites);
 
-            bool chainUp = Built(BuildingKinds.Smelter) > 0;
+            // Better harvesters as soon as planks and bricks are made (one at a time, only with free wares).
+            if (Built(BuildingKinds.Sawmill) > 0 && Built(BuildingKinds.Kiln) > 0) UpgradeHarvester();
+
+            bool chainUp = Built(BuildingKinds.Forge) > 0;
             int corners = CountExpansionCorners();
             // Citadels from CitadelFromHqs HQs on, or as soon as there is no corner left to take.
             bool citadelTime = chainUp && (hqs >= Tune.CitadelFromHqs || (corners == 0 && _hqSites.Count == 0));
@@ -426,24 +488,56 @@ namespace God.Sim
             bool developed = builtTotal >= Tune.BuildingsPerHqBeforeExpand * (hqs - 1);
             if (developed && (hqs < Tune.TargetHqs || !_lands.Contains(Terrain.Hills) || !_lands.Contains(Terrain.Fields))) Expand(false);
 
-            Want(BuildingKinds.Mine, 1, maxSites);
-            Want(BuildingKinds.Smelter, 1, maxSites);
+            // The army: bread (farm, bakery) and axes (mine, smelter, axesmith) for the barracks; steel (forge) for Citadels.
             Want(BuildingKinds.Farm, 1, maxSites);
+            Want(BuildingKinds.Mine, 1, maxSites);
+            Want(BuildingKinds.Bakery, 1, maxSites);
+            Want(BuildingKinds.Smelter, 1, maxSites);
+            Want(BuildingKinds.Axesmith, 1, maxSites);
             Want(BuildingKinds.Barracks, 1, maxSites);
-            Want(BuildingKinds.VehicleWorkshop, 1, maxSites);
+            Want(BuildingKinds.Forge, 1, maxSites);
             if (!citadelFirst && citadelTime) Citadel();
 
             Cover(BuildingKinds.Quarry, maxSites);
             Cover(BuildingKinds.Woodcutter, maxSites);
+            Want(BuildingKinds.ClayPit, 1 + hqs / 3, maxSites);
             Want(BuildingKinds.Mine, 1 + hqs / 3, maxSites);
-            Want(BuildingKinds.Sawmill, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.Smelter, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.ClayPit, 1 + hqs / 4, maxSites);
+            Want(BuildingKinds.Sawmill, 1 + hqs / 3, maxSites);
             Want(BuildingKinds.Farm, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.Kiln, 1 + hqs / 5, maxSites);
+            Want(BuildingKinds.Kiln, 1 + hqs / 4, maxSites);
+            Want(BuildingKinds.MortarMill, 1 + hqs / 4, maxSites);
+            Want(BuildingKinds.Bakery, 1 + hqs / 4, maxSites);
+            Want(BuildingKinds.Smelter, 1 + hqs / 4, maxSites);
+            Want(BuildingKinds.Axesmith, 1 + hqs / 4, maxSites);
             Want(BuildingKinds.Barracks, 1 + hqs / 5, maxSites);
             // Late game: more Citadels whenever wares allow.
             if (citadelTime) Citadel();
+        }
+
+        /// <summary>
+        /// Upgrades one harvester at a time when the wares are free: the lowest level first, the
+        /// bottleneck raws (stone, log, clay) before the others, then the busiest hex.
+        /// </summary>
+        private void UpgradeHarvester()
+        {
+            if (_harvUpgrading || !ActionsLeft) return;
+            EcoBuilding best = null; int bestScore = int.MinValue;
+            foreach (var b in E.Buildings)
+            {
+                if (b.Faction != Side || b.IsHq || !b.Built || b.Upgrading || b.Paused) continue;
+                var up = b.UpgradeDef;
+                if (up == null || !Afford(up.Cost)) continue;
+                int score = -1000 * b.Level + Tune.PipScore * NumberWeight(S.Board.HexNumber[Math.Max(0, b.Hex)]) / 10;
+                switch (b.Kind) { case BuildingKinds.Quarry: score += 300; break; case BuildingKinds.Woodcutter: score += 200; break; case BuildingKinds.ClayPit: score += 100; break; }
+                if (score > bestScore) { bestScore = score; best = b; }
+            }
+            if (best == null) return;
+            if (Send(new UpgradeBuilding(Side, best.Id), "upgrade " + best.Kind + " " + best.Id + " to " + (best.Level + 1)))
+            {
+                _harvUpgrading = true;
+                Spend(best.UpgradeDef.Cost);
+                _actions++;
+            }
         }
 
         /// <summary>One more harvester of a kind when a hex of its land in reach has none of the faction's yet (placed on such a hex).</summary>
@@ -601,8 +695,8 @@ namespace God.Sim
             return score + ThinkRng.NextInt(5);
         }
 
-        /// <summary>Forest and mountain: without them there are no planks or stone, and the faction stalls.</summary>
-        private static bool Critical(Terrain tt) => tt == Terrain.Forest || tt == Terrain.Mountain;
+        /// <summary>Forest, mountain and hills: without them there are no logs, stone or bricks, and the faction stalls.</summary>
+        private static bool Critical(Terrain tt) => tt == Terrain.Forest || tt == Terrain.Mountain || tt == Terrain.Hills;
 
         private bool GivesMissingCritical(int c)
         {
@@ -616,6 +710,7 @@ namespace God.Sim
             if (_hqDone || _hqSites.Count > 0) return;
             _hqDone = true;
             var cost = EconomyDefs.Hq.Cost;
+            if (_hqHeld) { for (int w = 0; w < Wares.Count; w++) _budget[w] += cost[w]; _hqHeld = false; }
             if (!Afford(cost)) { Spend(cost); return; }
             if (!ActionsLeft) { Spend(cost); return; }
             var cands = new List<(int score, int corner)>();
@@ -623,7 +718,8 @@ namespace God.Sim
                 if (CanReachCorner(c) && (!urgent || GivesMissingCritical(c))) cands.Add((CornerScore(c), c));
             // P11: no corner in reach gives the missing land: the normal expansion later in the want list may still spread
             // towards it (before, this blocked every HQ and the faction stalled on one HQ).
-            if (cands.Count == 0) { if (urgent) _hqDone = false; return; }
+            // Stage 3: its cost stays held (the land it needs may come with any later HQ), and the normal expansion releases it.
+            if (cands.Count == 0) { if (urgent) { _hqDone = false; Spend(cost); _hqHeld = true; } return; }
             cands.Sort((a, b) => a.score != b.score ? b.score.CompareTo(a.score) : a.corner.CompareTo(b.corner));
             var g = G; int tries = 0;
             foreach (var c in cands)
@@ -650,13 +746,13 @@ namespace God.Sim
         private void Citadel()
         {
             if (_upgrading) return;
-            // An army first: a Citadel draws the iron the factories need.
+            // An army first.
             bool war = S.Factions.Enemies(Side).Count > 0;
             if (_mine.Count * 100 < ArmyWanted(war) * Tune.CitadelArmyPercent) return;
             var cost = EconomyDefs.Citadel.Cost;
-            // Iron is not waited for: factories turn to low iron priority during an upgrade, so the Citadel wins the iron.
-            var noIron = (int[])cost.Clone(); noIron[(int)Ware.Iron] = 0;
-            if (!Afford(noIron) || !ActionsLeft) { Spend(cost); return; }
+            // Steel is not waited for: only the Citadel asks for it, so it is carried in as the forge makes it.
+            var noSteel = (int[])cost.Clone(); noSteel[(int)Ware.Steel] = 0;
+            if (!Afford(noSteel) || !ActionsLeft) { Spend(cost); return; }
             Hq best = null; int bestDanger = int.MaxValue;
             foreach (var h in _hqs)
             {

@@ -127,12 +127,14 @@ namespace God.Game.Tests
             Assert.IsNull(_hud.CardOffer(), "the card is gone");
             CollectionAssert.Contains(_hud.TradeLogLines.ToList(), "You accepted Azure's offer: 3 log for 2 brick");
 
-            // A refusal, by the card's other button.
+            // A refusal, by the card's other button (the AIs may refuse trades of their own meanwhile).
+            int refusedBefore = Sim.State.Trade.Refused;
             Assert.IsTrue(Sim.Submit(new OfferTrade(Faction.F2, Faction.F0, new[] { new WareCount(Ware.Plank, 1) }, new[] { new WareCount(Ware.Clay, 1) })).Ok);
-            Assert.IsTrue(RunUntil(3000, () => Sim.State.Trade.PendingFor(Faction.F0).Count == 1));
-            Assert.IsTrue(_hud.AnswerOffer(_hud.CardOffer().Id, false).Ok);
+            Assert.IsTrue(RunUntil(3000, () => Sim.State.Trade.PendingFor(Faction.F0).Any(o => o.From == Faction.F2)));
+            Assert.IsTrue(_hud.AnswerOffer(Sim.State.Trade.PendingFor(Faction.F0).First(o => o.From == Faction.F2).Id, false).Ok);
             Sim.Step(2);
-            Assert.AreEqual(1, Sim.State.Trade.Refused);
+            Assert.GreaterOrEqual(Sim.State.Trade.Refused, refusedBefore + 1);
+            Assert.IsTrue(Sim.State.Trade.History.Any(h => h.From == Faction.F2 && h.To == Faction.F0 && h.Cause == RefusalCause.Declined), "you declined Crimson's offer");
         }
 
         [UnityTest]
@@ -200,9 +202,11 @@ namespace God.Game.Tests
             _hud.ToggleTrade();
 
             // An offer card for an envoy that reached you; two of your trades in the log.
-            Sim.Submit(new OfferTrade(Faction.F0, Faction.F2, new[] { new WareCount(Ware.Clay, 3) }, new[] { new WareCount(Ware.Plank, 2) }));
+            // Stage 3: mortar (which an HQ and a Citadel need) for planks, which Crimson has to spare.
+            Sim.Submit(new OfferTrade(Faction.F0, Faction.F2, new[] { new WareCount(Ware.Mortar, 2) }, new[] { new WareCount(Ware.Plank, 2) }));
             Sim.Submit(new OfferTrade(Faction.F1, Faction.F0, new[] { new WareCount(Ware.Log, 3), new WareCount(Ware.Plank, 1) }, new[] { new WareCount(Ware.Brick, 2) }));
-            Assert.IsTrue(RunUntil(3000, () => Sim.State.Trade.PendingFor(Faction.F0).Count == 1 && Sim.State.Trade.Accepted >= 1));
+            // (Whether Crimson's AI takes the deal depends on what it has spent by then; either answer goes in the log.)
+            Assert.IsTrue(RunUntil(3000, () => Sim.State.Trade.PendingFor(Faction.F0).Count >= 1 && Sim.State.Trade.History.Any(h => h.From == Faction.F0 && h.To == Faction.F2)));
             yield return Frames(3);
             SetCamera(cam, hqPos, 95f);
             yield return Shot("p8_offer.png");

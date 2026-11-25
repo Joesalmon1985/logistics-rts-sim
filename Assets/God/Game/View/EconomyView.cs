@@ -101,6 +101,13 @@ namespace God.Game
                 case BuildingKinds.Kiln: return new Color(0.78f, 0.25f, 0.20f);
                 case BuildingKinds.Smelter: return new Color(0.30f, 0.45f, 0.70f);
                 case BuildingKinds.Barracks: return new Color(0.20f, 0.60f, 0.45f);
+                case BuildingKinds.Bakery: return new Color(0.85f, 0.62f, 0.30f);
+                case BuildingKinds.MortarMill: return new Color(0.82f, 0.80f, 0.72f);
+                case BuildingKinds.Foundry: return new Color(0.80f, 0.52f, 0.20f);
+                case BuildingKinds.Pottery: return new Color(0.72f, 0.42f, 0.30f);
+                case BuildingKinds.Forge: return new Color(0.50f, 0.56f, 0.66f);
+                case BuildingKinds.Tannery: return new Color(0.55f, 0.36f, 0.20f);
+                case BuildingKinds.Weaver: return new Color(0.80f, 0.78f, 0.86f);
                 case BuildingKinds.VehicleWorkshop: return new Color(0.15f, 0.75f, 0.85f);
                 default:
                     {

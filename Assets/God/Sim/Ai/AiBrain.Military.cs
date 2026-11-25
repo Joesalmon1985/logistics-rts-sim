@@ -11,7 +11,7 @@ namespace God.Sim
         {
             Array.Clear(_strength, 0, _strength.Length);
             Array.Clear(_vp, 0, _vp.Length);
-            _mine.Clear(); _inf = 0; _veh = 0;
+            _mine.Clear(); _inf = 0;
             foreach (var u in M.Units)
             {
                 _strength[(int)u.Faction] += UnitStrength(u);
@@ -252,7 +252,7 @@ namespace God.Sim
             foreach (var b in m.Buildings)
             {
                 if (extra >= 2 || b.Faction != best.Faction || b.IsHq) continue;
-                if (b.Kind != BuildingKinds.Barracks && b.Kind != BuildingKinds.VehicleWorkshop) continue;
+                if (b.Kind != BuildingKinds.Barracks) continue;
                 if (Pathing.Dist2(b.X, b.Z, best.X, best.Z) > 60000L * 60000L) continue;
                 if (Send(new MarkTarget(Side, b.Id), "mark " + b.Kind + " " + b.Id)) extra++;
             }

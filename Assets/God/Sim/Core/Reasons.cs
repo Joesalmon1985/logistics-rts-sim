@@ -24,6 +24,12 @@ namespace God.Sim
         public const string WrongTerrain = "wrong_terrain";
         public const string NotAnInput = "not_an_input";
 
+        // Stage 3: harvester upgrades
+        public const string NotAHarvester = "not_a_harvester";
+        public const string MaxLevel = "max_level";
+        public const string NotFinished = "not_finished";
+        public const string AlreadyUpgrading = "already_upgrading";
+
         public static string Sentence(string code, params object[] args)
         {
             switch (code)
@@ -44,6 +50,10 @@ namespace God.Sim
                 case NotOnRoad: return "A flag goes on one of your road nodes.";
                 case WrongTerrain: return "That building needs different land.";
                 case NotAnInput: return "That building does not take that ware.";
+                case NotAHarvester: return "Only a harvester can be upgraded.";
+                case MaxLevel: return "It is already at the top level.";
+                case NotFinished: return "It must be finished first.";
+                case AlreadyUpgrading: return "It is already being upgraded.";
                 default: return code;
             }
         }

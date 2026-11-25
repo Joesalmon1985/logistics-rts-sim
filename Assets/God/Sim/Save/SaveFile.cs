@@ -48,7 +48,8 @@ namespace God.Sim
     /// </summary>
     public sealed class SaveFile
     {
-        public const int CurrentVersion = 1;
+        /// <summary>2 since stage 3 (new wares, harvester levels, kits): stage 2 saves (version 1) are refused.</summary>
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
         public SaveHeader Header;
@@ -104,6 +105,8 @@ namespace God.Sim
             try { f = JsonConvert.DeserializeObject<SaveFile>(json, Settings); }
             catch (Exception e) { throw new SaveException("The save file is damaged.", e); }
             if (f == null) throw new SaveException("The save file is empty.");
+            if (f.Version < CurrentVersion)
+                throw new SaveException("This save is from an older version of the game (save version " + f.Version + ", before the stage 3 economy) and cannot be loaded. Start a new game.");
             if (f.Version != CurrentVersion) throw new SaveException("The save file is from another version (" + f.Version + ").");
             var s = f.State;
             if (s == null || s.Board == null || s.Territory == null || s.Economy == null || s.Military == null || s.Factions == null || s.Setup == null || s.Rng == null)

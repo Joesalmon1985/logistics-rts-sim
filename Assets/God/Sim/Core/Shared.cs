@@ -33,6 +33,7 @@ namespace God.Sim
         public const string Kiln = "kiln";
         public const string Smelter = "smelter";
         public const string Barracks = "barracks";
+        /// <summary>Stage 2 only: no building def since stage 3 (no vehicles are made). Kept for old views until they drop it.</summary>
         public const string VehicleWorkshop = "vehicle_workshop";
 
         // ---- stage 3 processors (one per pair of raws; sawmill, kiln and smelter above are reused) ----

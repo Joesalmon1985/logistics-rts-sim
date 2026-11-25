@@ -391,6 +391,9 @@ namespace God.Game
         /// <summary>Starts the Citadel upgrade of one of your HQs.</summary>
         public CommandResult UpgradeCitadel(int hqId) => Send(new UpgradeToCitadel(Me, hqId));
 
+        /// <summary>Stage 3: starts the next level of one of your harvesters (its wares are carried to it).</summary>
+        public CommandResult UpgradeHarvester(int buildingId) => Send(new UpgradeBuilding(Me, buildingId));
+
         public CommandResult PlaceFlagAt(int node) => Send(new PlaceFlag(Me, node));
 
         public CommandResult RemoveRoadAt(int node)

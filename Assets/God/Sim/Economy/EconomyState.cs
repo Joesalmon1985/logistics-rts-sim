@@ -80,12 +80,34 @@ namespace God.Sim
         public int IdleCarriers;
         public int IdleBuilders;
 
-        // ---- Citadel upgrade (HQ only). While Upgrading, In and Incoming hold the Citadel wares like a site's. ----
+        // ---- upgrades: an HQ to a Citadel, or a harvester one level up. While Upgrading, In and Incoming hold the
+        // upgrade wares like a site's. ----
         public bool Upgrading;
-        /// <summary>Ticks of Citadel work done (starts once every ware is in).</summary>
+        /// <summary>Ticks of upgrade work done (starts once every ware is in).</summary>
         public int UpgradeProgress;
 
+        // ---- stage 3 ----
+        /// <summary>Level 3 harvester: ticks spent with no pile on its hex since its last ware made on its own.</summary>
+        public int TrickleTicks;
+        /// <summary>Barracks: the kit of the last soldier it sent out (Weapon is None before the first).</summary>
+        public Kit LastKit;
+
         public BuildingDef Def => EconomyDefs.DefOf(Kind);
+
+        /// <summary>
+        /// The upgrade under way or next: the Citadel for an HQ, the next level for a harvester below the top level, else
+        /// null. Its <see cref="BuildingDef.Cost"/> is what an upgrade takes and its <see cref="BuildingDef.BuildTicks"/> the work.
+        /// </summary>
+        public BuildingDef UpgradeDef
+        {
+            get
+            {
+                if (IsHq) return EconomyDefs.Citadel;
+                var d = Def;
+                if (d == null || d.Role != BuildingRole.Harvester) return null;
+                return EconomyDefs.HarvesterUpgrade(Level + 1);
+            }
+        }
 
         private static Priority[] NormalPriorities()
         {
@@ -94,10 +116,10 @@ namespace God.Sim
             return p;
         }
 
-        /// <summary>True while it takes wares like a construction site: a site, or an HQ being upgraded to a Citadel.</summary>
+        /// <summary>True while it takes wares like a construction site: a site, or an HQ or harvester being upgraded.</summary>
         public bool SiteLike => !Built || Upgrading;
 
-        /// <summary>Wares this record asks for: the cost for a site or a Citadel upgrade, the cycle inputs for a finished workshop or factory.</summary>
+        /// <summary>Wares this record asks for: the cost for a site or an upgrade, the cycle inputs for a finished workshop or factory.</summary>
         public int[] Wanted
         {
             get
@@ -105,7 +127,7 @@ namespace God.Sim
                 var d = Def;
                 if (d == null) return new int[Wares.Count];
                 if (!Built) return d.Cost;
-                if (Upgrading) return EconomyDefs.Citadel.Cost;
+                if (Upgrading) return UpgradeDef?.Cost ?? new int[Wares.Count];
                 return d.In;
             }
         }
@@ -152,6 +174,8 @@ namespace God.Sim
         // ---- builder: site id. Harvester: hex. ----
         public int Target;
         public int WorkLeft;
+        /// <summary>Harvester: the level of its building when the trip began (sets its pace).</summary>
+        public int Level = 1;
 
         public Ware Cargo => Loaded ? JobWare : Ware.None;
         public int CurrentNode => Path.Length == 0 ? -1 : Path[Index];
@@ -164,7 +188,7 @@ namespace God.Sim
                 {
                     case WalkerKind.Carrier: return EconomyTuning.CarrierStepTicks;
                     case WalkerKind.Builder: return EconomyTuning.BuilderStepTicks;
-                    default: return EconomyTuning.HarvesterStepTicks;
+                    default: return EconomyTuning.HarvesterStepTicks(Level, Index);
                 }
             }
         }
@@ -232,12 +256,13 @@ namespace God.Sim
             return delivered + work;
         }
 
-        /// <summary>Citadel upgrade progress 0..1000 (wares 400, work 600); 0 when the HQ is not being upgraded.</summary>
-        public int UpgradeProgressPermille(int hqId)
+        /// <summary>Upgrade progress 0..1000 of an HQ (Citadel) or a harvester (next level): wares 400, work 600; 0 when not upgrading.</summary>
+        public int UpgradeProgressPermille(int buildingId)
         {
-            var b = Find(hqId);
+            var b = Find(buildingId);
             if (b == null || !b.Upgrading) return 0;
-            var d = EconomyDefs.Citadel;
+            var d = b.UpgradeDef;
+            if (d == null) return 0;
             int total = d.CostTotal, have = 0;
             for (int w = 0; w < Wares.Count; w++) have += System.Math.Min(b.In[w], d.Cost[w]);
             return 400 * have / total + 600 * b.UpgradeProgress / d.BuildTicks;

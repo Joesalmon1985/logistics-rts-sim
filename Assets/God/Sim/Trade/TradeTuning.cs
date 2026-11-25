@@ -24,20 +24,43 @@ namespace God.Sim
         /// <summary>The default judge accepts when the target gets at least this percent of the value it pays.</summary>
         public const int FairPercent = 75;
 
-        /// <summary>Trade value of one unit of a ware, for the default judge.</summary>
+        /// <summary>Raw values: log, clay, grain 2; stone and ore 3 (rock piles, shared by the quarry and the mine).</summary>
+        public const int LogValue = 2, StoneValue = 3;
+        /// <summary>What the armourer's work adds to the value of its two inputs.</summary>
+        public const int GearWorkValue = 2;
+
+        private static int[] _values;
+
+        /// <summary>
+        /// Trade value of one unit of a ware, for the default judge and the AI trader. Raws by the table above; a processed
+        /// ware is worth its two raws (brick 4, plank 5, steel 6...); a piece of gear its two inputs plus
+        /// <see cref="GearWorkValue"/> (sling 11, axe 12, sword 13...). Rock and the unused kindling: 2 and 0.
+        /// </summary>
         public static int ValueOf(Ware w)
         {
-            switch (w)
+            if (_values == null)
             {
-                case Ware.Log: case Ware.Clay: case Ware.Grain: case Ware.Rock: return 2;
-                case Ware.Stone: case Ware.Ore: case Ware.Plank: case Ware.Kindling: return 3;
-                case Ware.Brick: return 4;
-                case Ware.Iron: return 6;
-                default: return 0;
+                var v = new int[Wares.Count];
+                v[(int)Ware.Log] = v[(int)Ware.Clay] = v[(int)Ware.Grain] = v[(int)Ware.Rock] = LogValue;
+                v[(int)Ware.Stone] = v[(int)Ware.Ore] = StoneValue;
+                foreach (var p in Wares.Processed) v[(int)p] = InputsValue(v, p);
+                foreach (var g in Gear.Attack) v[(int)g] = InputsValue(v, g) + GearWorkValue;
+                foreach (var g in Gear.Defence) v[(int)g] = InputsValue(v, g) + GearWorkValue;
+                _values = v;
             }
+            int i = (int)w;
+            return i > 0 && i < _values.Length ? _values[i] : 0;
+        }
+
+        private static int InputsValue(int[] v, Ware w)
+        {
+            var maker = EconomyDefs.MakerOf(w);
+            int n = 0;
+            if (maker != null) for (int i = 0; i < Wares.Count; i++) n += maker.In[i] * v[i];
+            return n;
         }
 
         /// <summary>True for a ware that can sit in an HQ stock and so be traded (Rock never does).</summary>
-        public static bool IsTradable(Ware w) => w != Ware.None && w != Ware.Rock && (int)w > 0 && (int)w < Wares.Count;
+        public static bool IsTradable(Ware w) => w != Ware.None && w != Ware.Rock && w != Ware.Kindling && (int)w > 0 && (int)w < Wares.Count;
     }
 }

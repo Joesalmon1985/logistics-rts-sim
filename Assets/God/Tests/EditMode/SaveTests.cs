@@ -30,8 +30,14 @@ namespace God.Sim.Tests
             }
             var hq3 = t.HqsOf(Faction.F3)[0];
             var rec = e.Find(hq3.Id);
-            foreach (var w in new[] { Ware.Plank, Ware.Stone, Ware.Brick, Ware.Iron }) rec.Stock[(int)w] = 20;
+            foreach (var w in new[] { Ware.Plank, Ware.Mortar, Ware.Brick, Ware.Steel }) rec.Stock[(int)w] = 20;
             Assert.IsTrue(sim.Submit(new UpgradeToCitadel(Faction.F3, hq3.Id)).Ok);
+            // Stage 3: a harvester upgrade under way and a barracks with a kit in the making.
+            var harv = e.Buildings.First(b => b.Faction == Faction.F2 && b.Built && !b.IsHq && b.Def.Role == BuildingRole.Harvester);
+            foreach (var w in new[] { Ware.Plank, Ware.Brick }) e.Find(t.HqsOf(Faction.F2)[0].Id).Stock[(int)w] += 4;
+            Assert.IsTrue(sim.Submit(new UpgradeBuilding(Faction.F2, harv.Id)).Ok);
+            var f4 = e.Find(t.HqsOf(Faction.F4)[0].Id);
+            f4.Stock[(int)Ware.Bread] += 3; f4.Stock[(int)Ware.Spear] += 2; f4.Stock[(int)Ware.Helmet] += 1;
             for (int i = 0; i < 40; i++) { sim.Step(); sim.DrainEvents(); }
             // Left in the queue at save time.
             Assert.IsTrue(sim.Submit(new DeclareWar(Faction.F2, Faction.F4)).Ok);
@@ -59,7 +65,8 @@ namespace God.Sim.Tests
             var straight = BusyGame(seed);
             Assert.Greater(straight.State.Economy.Walkers.Count, 0, "walkers are on the roads");
             Assert.Greater(straight.State.Military.Units.Count, 0, "units are out");
-            Assert.IsTrue(straight.State.Economy.Buildings.Any(b => b.Upgrading), "a Citadel is under way");
+            Assert.IsTrue(straight.State.Economy.Buildings.Any(b => b.Upgrading && b.IsHq), "a Citadel is under way");
+            Assert.IsTrue(straight.State.Economy.Buildings.Any(b => b.Upgrading && !b.IsHq), "a harvester upgrade is under way");
             Assert.AreEqual(1, straight.PendingCommands.Count, "a command is in flight");
 
             var other = BusyGame(seed);
@@ -147,12 +154,24 @@ namespace God.Sim.Tests
         [TestCase("not json at all")]
         [TestCase("{}")]
         [TestCase("{\"Version\":1}")]
+        [TestCase("{\"Version\":2}")]
         [TestCase("{\"Version\":99,\"State\":{}}")]
         [TestCase("[1,2,3]")]
         public void CorruptFiles_AreRefusedCleanly(string text)
         {
             Assert.Throws<SaveException>(() => SaveFile.FromJson(text));
             Assert.IsNull(SaveFile.TryReadHeader(text));
+        }
+
+        [Test]
+        public void AStage2Save_IsRefused_WithAClearMessage()
+        {
+            Assert.AreEqual(2, SaveFile.CurrentVersion);
+            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":2", "\"Version\":1");
+            var ex = Assert.Throws<SaveException>(() => SaveFile.FromJson(json));
+            StringAssert.Contains("older version", ex.Message);
+            StringAssert.Contains("Start a new game", ex.Message);
+            Assert.IsNull(SaveFile.TryReadHeader(json), "not listed as a loadable slot");
         }
 
         [Test]

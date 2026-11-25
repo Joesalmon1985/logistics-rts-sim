@@ -17,17 +17,20 @@ namespace God.Sim
 
         private static void GiveStartStock(EcoBuilding hq)
         {
-            hq.Stock[(int)Ware.Plank] = EconomyTuning.StartPlank;
-            hq.Stock[(int)Ware.Stone] = EconomyTuning.StartStone;
-            hq.Stock[(int)Ware.Brick] = EconomyTuning.StartBrick;
             hq.Stock[(int)Ware.Log] = EconomyTuning.StartLog;
+            hq.Stock[(int)Ware.Stone] = EconomyTuning.StartStone;
             hq.Stock[(int)Ware.Clay] = EconomyTuning.StartClay;
+            hq.Stock[(int)Ware.Grain] = EconomyTuning.StartGrain;
+            hq.Stock[(int)Ware.Plank] = EconomyTuning.StartPlank;
+            hq.Stock[(int)Ware.Brick] = EconomyTuning.StartBrick;
+            hq.Stock[(int)Ware.Mortar] = EconomyTuning.StartMortar;
         }
 
         public static void Install(GodSim sim)
         {
             sim.RegisterHandler(new SetInputPriorityHandler());
             sim.RegisterHandler(new SetPausedHandler());
+            sim.RegisterHandler(new UpgradeBuildingHandler());
             sim.AddSystem(SystemOrder.Economy, new EconomySystem());
         }
 
@@ -79,6 +82,7 @@ namespace God.Sim
             ulong h = 14695981039346656037UL;
             void Add(long v) { unchecked { for (int i = 0; i < 8; i++) { h ^= (ulong)((v >> (i * 8)) & 0xFF); h *= 1099511628211UL; } } }
             void AddArr(int[] a) { Add(a.Length); foreach (int x in a) Add(x); }
+            void AddKit(Kit k) { Add((int)k.Weapon); Add((int)k.Shield); Add((int)k.Head); Add((int)k.Body); }
             Add(s.Tick);
             var t = s.Territory;
             AddArr(t.Piles); Add(t.RollCount); Add(t.WastedPiles); Add(t.NextId);
@@ -93,13 +97,15 @@ namespace God.Sim
                 AddArr(b.In); AddArr(b.Incoming); AddArr(b.Out); AddArr(b.OutReserved); AddArr(b.Stock); AddArr(b.StockReserved);
                 foreach (var p in b.Prio) Add((int)p);
                 Add(b.IdleCarriers); Add(b.IdleBuilders);
+                Add(b.Level); Add(b.TrickleTicks); AddKit(b.LastKit);
             }
             foreach (var w in e.Walkers)
             {
                 Add(w.Id); Add((int)w.Faction); Add((int)w.Kind); Add(w.Home); Add((int)w.Phase); AddArr(w.Path); Add(w.Index); Add(w.Progress);
-                Add((int)w.JobWare); Add(w.Loaded ? 1 : 0); Add(w.SrcId); Add(w.DstId);
+                Add((int)w.JobWare); Add(w.Loaded ? 1 : 0); Add(w.SrcId); Add(w.DstId); Add(w.Level);
             }
-            foreach (var u in s.UnitQueue) { Add((int)u.Faction); Add(u.BuildingId); Add((int)u.Kind); }
+            foreach (var u in s.UnitQueue) { Add((int)u.Faction); Add(u.BuildingId); Add((int)u.Kind); AddKit(u.Kit); }
+            Add(e.ProducedLog.Count);
             AddArr(e.PilesReserved); Add(e.LostWares); Add(e.DeliveredWares);
             return h;
         }

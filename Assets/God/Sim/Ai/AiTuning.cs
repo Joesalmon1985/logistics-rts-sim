@@ -65,7 +65,7 @@ namespace God.Sim
         /// <summary>A Citadel comes before a further HQ once Citadels lag HQs by more than this.</summary>
         public int CitadelLag = 2;
         /// <summary>No Citadel upgrade starts while the army is below this percent of the army wanted.</summary>
-        public int CitadelArmyPercent = 100;
+        public int CitadelArmyPercent = 60;
 
         // ---------------- army ----------------
 
@@ -76,10 +76,16 @@ namespace God.Sim
         public int WarArmyPercent = 220;
         /// <summary>Hard cap on units per faction (factories pause above it; keeps the sim fast).</summary>
         public int ArmyCap = 32;
-        /// <summary>Infantry made per vehicle.</summary>
-        public int InfantryPerVehicle = 2;
-        /// <summary>Strength of one unit in the AI's army sums.</summary>
-        public int InfantryStrength = 2, VehicleStrength = 3;
+        /// <summary>Strength of one soldier in the AI's army sums (stage 3: every unit is a soldier; Q4 weighs kits).</summary>
+        public int InfantryStrength = 2;
+        /// <summary>Free weapons in stock above which the axesmith pauses while the army is at its size.</summary>
+        public int SpareWeapons = 4;
+        /// <summary>While the faction has no harvester of a raw, its processors stop taking that raw below this many free units (kept to build the harvester).</summary>
+        public int KeepRawWithoutHarvester = 4;
+        /// <summary>A processor pauses while the faction has this many free units of its ware (its raws go elsewhere).</summary>
+        public int EnoughProcessed = 10;
+        /// <summary>A processor with at least this many free units of its ware stops taking a raw the want list is short of.</summary>
+        public int KeepProcessed = 4;
 
         /// <summary>Guards on an inner HQ, a border HQ, an HQ facing a faction at war, and the most on a threatened one.</summary>
         public int GuardsInner = 1, GuardsBorder = 2, GuardsFront = 4, GuardsThreatMax = 5;
