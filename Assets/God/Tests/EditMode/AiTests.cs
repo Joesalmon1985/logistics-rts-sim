@@ -327,6 +327,11 @@ namespace God.Sim.Tests
             Assert.AreEqual(6 * 200 / ai.Tuning.ThinkIntervalTicks, ai.Thinks, "each brain thinks every 2 s");
             Assert.AreEqual(1, most, "staggered: never two brains on one tick");
             foreach (var b in ai.Brains) Assert.LessOrEqual(b.ChecksUsed, ai.Tuning.MaxChecksPerThink + 1);
+            ai.Held = true;
+            long held = ai.Thinks;
+            sim.Step(60); sim.DrainEvents();
+            Assert.AreEqual(held, ai.Thinks, "held brains do not think");
+            ai.Held = false;
             Assert.AreEqual(6, AiDirector.NonHuman(sim.State).Count, "watch mode: all six");
             Assert.AreEqual(5, AiDirector.NonHuman(GodSim.Create(new GameSetup(14)).State).Count, "play: all but the human");
         }

@@ -34,6 +34,12 @@ namespace God.Sim
         /// <summary>False stops every brain (a director cannot be removed from a sim, so <see cref="Detach"/> clears this).</summary>
         public bool Enabled = true;
 
+        /// <summary>
+        /// True holds every brain without detaching: ticks pass with no thinking. The game holds the brains for the single
+        /// step it takes while paused to apply a person's command, so a paused game stays paused.
+        /// </summary>
+        public bool Held;
+
         /// <summary>Thinks run so far (for tests and logs; not state).</summary>
         public long Thinks;
 
@@ -75,7 +81,7 @@ namespace God.Sim
 
         public void Tick(GodState s, EventBuffer ev)
         {
-            if (!Enabled || s.IsGameOver) return;
+            if (!Enabled || Held || s.IsGameOver) return;
             int interval = Math.Max(1, Tuning.ThinkIntervalTicks), budget = Tuning.MaxThinksPerTick;
             foreach (var b in _brains)
             {
