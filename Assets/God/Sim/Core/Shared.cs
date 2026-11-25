@@ -15,6 +15,8 @@ namespace God.Sim
         /// <summary>Territory building id of the factory that produced it.</summary>
         public int BuildingId;
         public UnitKind Kind;
+        /// <summary>Stage 3: the gear the barracks put on this soldier (Weapon is None for stage 2 units).</summary>
+        public Kit Kit;
     }
 
     /// <summary>Building kind ids stored in <c>Building.Kind</c>. HQs are <c>Hq</c> objects, not buildings.</summary>
@@ -31,6 +33,32 @@ namespace God.Sim
         public const string Smelter = "smelter";
         public const string Barracks = "barracks";
         public const string VehicleWorkshop = "vehicle_workshop";
+
+        // ---- stage 3 processors (one per pair of raws; sawmill, kiln and smelter above are reused) ----
+        public const string Bakery = "bakery";
+        public const string MortarMill = "mortar_mill";
+        public const string Foundry = "foundry";
+        public const string Pottery = "pottery";
+        public const string Forge = "forge";
+        public const string Tannery = "tannery";
+        public const string Weaver = "weaver";
+
+        // ---- stage 3 armouries (one per piece of gear) ----
+        public const string Swordsmith = "swordsmith";
+        public const string Spearmaker = "spearmaker";
+        public const string Axesmith = "axesmith";
+        public const string Bowyer = "bowyer";
+        public const string Slingmaker = "slingmaker";
+        public const string Shieldwright = "shieldwright";
+        public const string Helmsmith = "helmsmith";
+        public const string Bucklersmith = "bucklersmith";
+        public const string Armourer = "armourer";
+        public const string Leatherworker = "leatherworker";
+
+        /// <summary>Stage 3 groups (for the build bar and the AI).</summary>
+        public static readonly string[] Harvesters = { Woodcutter, ClayPit, Farm, Quarry, Mine };
+        public static readonly string[] Processors = { Sawmill, Kiln, Smelter, Bakery, MortarMill, Foundry, Pottery, Forge, Tannery, Weaver };
+        public static readonly string[] Armouries = { Swordsmith, Spearmaker, Axesmith, Bowyer, Slingmaker, Shieldwright, Helmsmith, Bucklersmith, Armourer, Leatherworker };
     }
 
     /// <summary>System order bands: territory (dice) first, then economy, then military.</summary>

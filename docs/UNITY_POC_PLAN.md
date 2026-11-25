@@ -241,3 +241,147 @@ They also couldn't find how to save or quit.
 | P9 | AI: bot for the economy, expansion, Citadels, army and war; a 6-AI headless game reaching 10 VP. | P7 (trade hooks after P8) |
 | P10 | Menu and save/load/quit, start card and watch mode, standings, war/peace on the enemy card, 6-faction look. | P7 |
 | P11 | Integration: AI trading, balance across seeds, a watch smoke that ends with a winner on the build, play guide. | P8, P9, P10 |
+
+# Stage 3: full economy, gear, duels, tutorial (25 Nov 2026)
+
+The owner's request after stage 2:
+
+> "introduce a tutorial mode which you can start as a new player, where pop ups will guide you through what to do. The player can ignore or skip past these pop ups. ... production buildings for all 5 raw resources ... processing buildings for each combination (there should be 10 different combinations of raw materials). These should be used to 1 upgrade the buildings used to collect raw materials into more efficient versions and 2 to make defensive and offensive weapons. ... 5 different attacking weapons (1. sword, 2 spear, 3 axe, 4 bow, 5 sling) and 5 different defending weapons (1. big shield, 2 helmet, 3 small shield, 4 breast plate, 5 light armour). These are each produced by a different processing building which takes processed materials, which in turn supplies a barracks which creates troops based on the combination of defensive and offensive weapons produced. Come up with a simple combat system ... Random numbers and turn based combat, with weapons having different stats like 'block chance' 'damage reduction' 'attack speed' 'attack range' ... Tweak the balance of the game, and polish the AI until we've got a fun little game ecosystem and economy please."
+
+## Owner decisions (25 Nov, stage 3)
+
+| Question | Answer |
+|---|---|
+| Old chain (kindling, sawmill/kiln/smelter recipes, vehicle workshop, war wagons) | **Replaced** by the new economy. Wagons go. HQ and Citadel costs use the new goods. |
+| Combat | **Live duels in rounds.** Soldiers march and meet on the map; each fight is resolved in rounds of seeded rolls. |
+| What a soldier needs | **Any gear, at least a weapon.** Defence items are optional extras. |
+| Harvester upgrades | **Two levels** (level 1 is the built harvester; it can go to level 2, then level 3). |
+
+## Rules (my defaults; say if any is wrong)
+
+### Raws and harvesters
+- Five hauled raws: log, clay, grain, stone, ore. The dice still drop piles; quarry and mine both take rock piles.
+- Harvesters: woodcutter, clay pit, farm, quarry, mine. They cost raw goods only (2 log, 1 stone), so any start can begin.
+- **Upgrades** (`UpgradeBuilding`), carried to the building like a site's wares; it keeps working meanwhile:
+  - Level 2 costs 2 plank and 2 brick. Each pile gives 5 wares (was 4), and gathering is a third faster.
+  - Level 3 costs 2 mortar, 2 iron and 2 bread. Each pile gives 6 wares, and gathering is twice as fast as level 1. It also makes 1 ware every 40 s on its own when its hex has no pile, so a level 3 harvester never stands idle.
+  - The building looks bigger at each level.
+
+### Processors: one for each pair of raws
+| Building | Takes | Makes |
+|---|---|---|
+| Sawmill | log + stone | plank |
+| Brick kiln | log + clay | brick |
+| Smelter | log + ore | iron |
+| Bakery | log + grain | bread |
+| Mortar mill | clay + stone | mortar |
+| Bronze foundry | clay + ore | bronze |
+| Pottery | clay + grain | pottery |
+| Steel forge | stone + ore | steel |
+| Tannery | grain + stone | leather |
+| Weaver | grain + ore | cloth |
+
+### Armouries: one for each piece of gear
+| Building | Takes | Makes | Slot |
+|---|---|---|---|
+| Swordsmith | steel + leather | sword | weapon |
+| Spearmaker | plank + bronze | spear | weapon |
+| Axesmith | iron + plank | axe | weapon |
+| Bowyer | plank + cloth | bow | weapon (two-handed: no shield) |
+| Slingmaker | leather + pottery | sling | weapon |
+| Shieldwright | plank + leather | big shield | shield |
+| Helmsmith | iron + cloth | helmet | head |
+| Bucklersmith | bronze + leather | small shield | shield |
+| Armourer | steel + cloth | breastplate | body |
+| Leatherworker | leather + cloth | light armour | body |
+
+### Barracks
+- Takes 1 bread and 1 weapon per soldier. It also takes, if it has them, one shield (not with a bow), one helmet and one body item.
+- Weapon choice: the weapon it holds most of (ties by the order sword, spear, axe, bow, sling). The input priorities (Stop/Low/Norm/High) on each gear ware let you steer the mix, as for any input.
+- The soldier walks out wearing its kit (`UnitOrder.Kit`), and the view shows it.
+
+### Building costs
+- Small (harvesters): 2 log, 1 stone.
+- Processors: 2 plank, 1 brick, 1 stone.
+- Armouries and the barracks: 2 plank, 2 brick, 1 mortar.
+- HQ: 3 plank, 2 brick, 2 mortar, 2 stone.
+- Citadel: 4 brick, 4 mortar, 3 plank, 2 steel.
+- Start stock at every HQ: 8 log, 6 stone, 6 clay, 4 grain, 6 plank, 4 brick, 2 mortar.
+
+### Combat: live duels in rounds
+- Every soldier has 100 health. Stats come from its kit.
+- **Weapons**:
+
+| Weapon | Damage | Pierce | Hit % | Rounds between attacks | Range | Vs buildings | Special |
+|---|---|---|---|---|---|---|---|
+| Sword | 12 | 2 | 85 | 8 ticks | 2 m | 100% | parry: +10% block when it has no shield |
+| Spear | 10 | 3 | 80 | 10 ticks | 3.5 m | 75% | first strike: it attacks first when a fight starts in melee |
+| Axe | 16 | 4 | 75 | 12 ticks | 2 m | 200% | shield breaker: halves the target's block chance |
+| Bow | 9 | 1 | 65 | 14 ticks | 25 m | 25% | |
+| Sling | 7 | 0 | 60 | 9 ticks | 18 m | 25% | cheap |
+
+- **Defence**:
+
+| Item | Block % | Armour (damage reduction) | Dodge % | Speed | Special |
+|---|---|---|---|---|---|
+| Big shield | 35 (55 vs bow and sling) | 0 | 0 | -10% | |
+| Small shield | 25 | 0 | +5 | 0 | |
+| Helmet | 0 | 2 | 0 | 0 | stops critical hits |
+| Breastplate | 0 | 5 | -5 | -20% | |
+| Light armour | 0 | 2 | +10 | 0 | |
+| Nothing | 0 | 0 | 5 (base) | 0 | |
+
+- **An attack** (on the attacker's turn: its cooldown is over and the target is in range):
+  1. Roll to hit: `hit% - target dodge%`.
+  2. Roll to block: the target's block %, changed by the axe or the sword parry. A blocked blow does nothing, except an axe, which still does 3.
+  3. Damage = weapon damage, doubled on a 10% critical (none against a helmet), minus `max(0, armour - pierce)`, at least 1.
+- **Turn order:** within a tick, the longer reach acts first, then the lower unit id. All rolls use the sim `Rng`, so a game replays exactly.
+- **Movement:** ranged soldiers stop at their range; melee soldiers close in. Base speed is 3 m/s, changed by the gear's speed.
+- The visible duel: the swing or shot flash, plus a small "blocked" or "miss" puff.
+
+### Tutorial
+- The start card gets **Tutorial**, which starts a fixed island chosen for a rich start (all five raws inside or next to the first area) with `GameSetup.Tutorial = true`.
+- The AIs play normally but never declare war on the human, and they decline human trade only when the trade is unfair.
+- Pop-up cards guide you, one step at a time. Each has **Next** or **Skip step**, **Hide tutorial**, and a goal line that ticks off by itself when you do the thing. An arrow or glow shows where to click, when it can.
+- Steps:
+  1. Welcome and camera.
+  2. Build a woodcutter.
+  3. Make a road.
+  4. Dice and piles.
+  5. Quarry and clay pit.
+  6. Sawmill and brick kiln.
+  7. Farm, mine and bakery.
+  8. Smelter and axesmith.
+  9. Barracks and your first soldier.
+  10. Guards.
+  11. Upgrade a harvester.
+  12. A second HQ.
+  13. Trade.
+  14. War and targets.
+  15. Citadel and 10 VP.
+- The menu has **Tutorial tips on/off**, to bring the cards back.
+
+### HUD
+- The build bar gets tabs: **Gather** (5), **Process** (10), **Arms** (10), **Army** (barracks), **Land** (HQ, road, demolish, trade).
+- The stock bar shows raws, processed goods and gear, in groups.
+- The building card shows an upgrade button with its cost (harvesters) and the kit of the last soldier (barracks).
+- The unit tooltip, or the latest-fight toast, names the kits that fought.
+
+### AI and balance targets
+- The AI builds toward its gear plan: a weapon mix chosen from what its land makes, with defence items added when it can.
+- It upgrades harvesters once processors run, and trades for raws it lacks.
+- Balance target over 12 seeds:
+  - Every game ends with a winner in 30 to 70 game minutes; none ends before 25 minutes.
+  - At least 4 factions reach 4 VP.
+  - Every weapon is used in some game.
+  - No single kit wins over 60% of duels it fights.
+
+## Packages (stage 3)
+
+| # | Package | Depends on |
+|---|---|---|
+| S0 | Seam (me): `Ware` extended (10 processed, 10 gear), `Gear`/`GearSlot`/`Kit`, `UnitOrder.Kit`, new `BuildingKinds` and groups, `UpgradeBuilding` command, `GameSetup.Tutorial`. | - |
+| Q1 | Economy (Opus): new defs and costs, the old chain removed, harvester levels and upgrades, barracks kit assembly, start stock, save version, the AI kept working on the new chain (simple), HUD building card (upgrade, kit), tests. | S0 |
+| Q2 | Combat (Opus): kit stats, duel rounds, block/dodge/crit/armour/pierce, ranged/melee movement, vehicles removed, building damage by weapon, soldier models with kit, duel effects, tests. | S0 |
+| Q3 | Tutorial and HUD (Sonnet): start card Tutorial, tutorial cards and step goals, tabbed build bar, grouped stock bar, models for the 17 new buildings and the harvester levels. | S0 |
+| Q4 | AI and balance (Opus): gear plans, upgrades, trade of processed goods, war with kits, tuning across seeds to the targets, play guide. | Q1, Q2, Q3 |

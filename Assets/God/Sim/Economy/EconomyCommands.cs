@@ -55,3 +55,16 @@ namespace God.Sim
         }
     }
 }
+
+namespace God.Sim
+{
+    /// <summary>
+    /// Stage 3 seam: upgrade a finished harvester one level (1 to 2, 2 to 3). The cost wares are carried to it like a
+    /// site's; it keeps working meanwhile. The handler belongs to the economy package.
+    /// </summary>
+    public sealed class UpgradeBuilding : FactionCommand
+    {
+        public int BuildingId;
+        public UpgradeBuilding(Faction f, int buildingId) : base(f) { BuildingId = buildingId; }
+    }
+}

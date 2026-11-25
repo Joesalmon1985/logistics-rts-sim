@@ -19,6 +19,9 @@ namespace God.Sim
         /// <summary>Factions in the game, 2 to <see cref="FactionInfo.Max"/> (6 by default). Ids run 0 to FactionCount - 1.</summary>
         public int FactionCount = FactionInfo.Max;
 
+        /// <summary>Stage 3 tutorial game: the AIs leave the human alone (no war on them) until the tutorial ends or <c>FactionTuning</c> says otherwise.</summary>
+        public bool Tutorial;
+
         public GameSetup() { }
 
         public GameSetup(ulong seed, int human = 0, int factionCount = FactionInfo.Max)
