@@ -58,7 +58,36 @@ namespace God.Sim
             }
             if (m != null && s.Factions != null)
                 foreach (var u in m.Units) if (s.Factions.IsEliminated(u.Faction)) bad.Add("eliminated faction still has unit " + u.Id);
+            CheckTrade(s, bad);
             return bad;
+        }
+
+        /// <summary>Trade: ledger (goods in transit are exactly what left stocks and has not arrived or been lost), offers match envoys, no dead owners.</summary>
+        private static void CheckTrade(GodState s, List<string> bad)
+        {
+            var tr = s.Trade;
+            if (tr == null) return;
+            for (int w = 1; w < Wares.Count; w++)
+            {
+                int transit = 0;
+                foreach (var env in tr.Envoys) { if (env.Cargo[w] < 0) bad.Add("envoy " + env.Id + " has negative cargo"); transit += env.Cargo[w]; }
+                if (tr.Departed[w] - tr.Arrived[w] - tr.Lost[w] != transit) bad.Add("ware " + Wares.Name((Ware)w) + " is not conserved: left " + tr.Departed[w] + ", arrived " + tr.Arrived[w] + ", lost " + tr.Lost[w] + ", in packs " + transit);
+            }
+            int lastId = 0;
+            foreach (var env in tr.Envoys)
+            {
+                if (env.Id <= lastId) bad.Add("envoy ids are not ascending at " + env.Id);
+                lastId = env.Id;
+                if (env.Cargo.Length != Wares.Count || env.CargoTotal > TradeTuning.MaxWaresPerSide) bad.Add("envoy " + env.Id + " carries " + env.CargoTotal);
+                if (env.Health <= 0) bad.Add("dead envoy " + env.Id + " is still walking");
+                if (s.Factions != null && s.Factions.IsEliminated(env.Faction)) bad.Add("eliminated faction still has envoy " + env.Id);
+                var o = tr.OfferById(env.Id);
+                bool unresolved = env.Stage != EnvoyStage.Homeward;
+                if (unresolved != (o != null)) bad.Add("envoy " + env.Id + " and its offer disagree");
+                if (o != null && (o.Stage == OfferStage.Pending) != (env.Stage == EnvoyStage.Waiting)) bad.Add("offer " + o.Id + " stage does not match its envoy");
+                if (o != null && (o.From != env.Faction || o.To != env.Target)) bad.Add("offer " + o.Id + " parties do not match its envoy");
+            }
+            foreach (var o in tr.Offers) if (tr.EnvoyById(o.Id) == null) bad.Add("offer " + o.Id + " has no envoy");
         }
     }
 }

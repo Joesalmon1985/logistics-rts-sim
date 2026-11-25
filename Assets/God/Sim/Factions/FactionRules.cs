@@ -202,6 +202,7 @@ namespace God.Sim
             fs.Eliminated[(int)f] = true;
             fs.EliminatedTick[(int)f] = s.Tick;
 
+            TradeRules.OnEliminated(s, f, ev);
             if (e != null)
             {
                 foreach (var w in e.Walkers) if (w.Faction == f) EconomySystem.Recall(e, w);

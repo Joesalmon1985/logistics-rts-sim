@@ -50,15 +50,17 @@ namespace God.Sim
             TerritoryModule.StartGame(s);
             MilitaryModule.StartGame(s);
             EconomyModule.StartGame(s);
+            TradeModule.StartGame(s);
             var sim = new GodSim(s);
             TerritoryModule.Install(sim);
             EconomyModule.Install(sim);
             MilitaryModule.Install(sim);
+            TradeModule.Install(sim);
             FactionsModule.Install(sim);
             return sim;
         }
 
-        /// <summary>One hash over the whole state the modules drive (territory, economy, military, factions). Equal for equal setup and commands.</summary>
+        /// <summary>One hash over the whole state the modules drive (territory, economy, military, factions, trade). Equal for equal setup and commands.</summary>
         public ulong StateHash() => StateHashOf(State);
 
         public static ulong StateHashOf(GodState s)
@@ -68,6 +70,7 @@ namespace God.Sim
                 ulong h = EconomyModule.StateHash(s);
                 h = h * 1099511628211UL ^ s.Military.Hash(s);
                 h = h * 1099511628211UL ^ FactionsModule.Hash(s);
+                h = h * 1099511628211UL ^ TradeModule.Hash(s);
                 return h;
             }
         }
