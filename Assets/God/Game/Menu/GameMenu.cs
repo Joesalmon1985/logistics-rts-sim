@@ -141,6 +141,7 @@ namespace God.Game
         {
             if (Boot == null || Page == MenuPage.None) return;
             GUI.depth = -10;
+            GUI.enabled = true;
             var st = HudStyle.Get();
             if (_field == null) MakeStyles(st);
             float s = Boot.Hud != null ? Boot.Hud.Scale : 1f;
@@ -148,7 +149,8 @@ namespace God.Game
             float vw = Screen.width / s, vh = Screen.height / s;
             var full = new Rect(0, 0, vw, vh);
             if (Event.current.type == EventType.Repaint) GUI.DrawTexture(full, st.Dim);
-            GUI.Button(full, GUIContent.none, GUIStyle.none); // eats clicks meant for the HUD below
+            // No full-screen click-eater here: IMGUI gives clicks to plain controls before window contents, so it ate
+            // every click on the card. The HUD disables its own controls while the menu blocks (GodHud.OnGUI).
 
             float w = Page == MenuPage.Start ? 380f : Page == MenuPage.Main ? 300f : 460f;
             float h = _rect.height > 1f ? _rect.height : 200f;

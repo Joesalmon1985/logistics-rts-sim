@@ -18,6 +18,9 @@ namespace God.Game
         private GUIStyle _tiny, _pill, _bold;
         private float _scale = 1f;
 
+        /// <summary>False while the start card or the menu holds the game: HUD controls show but take no clicks.</summary>
+        private bool HudOn => !(Boot != null && Boot.Menu != null && Boot.Menu.Blocking);
+
         /// <summary>HUD scale: 1 at 900 px high (and at least 1500 virtual units wide), so a small window still fits the strip.</summary>
         public float Scale => Mathf.Clamp(Mathf.Min(Screen.height / 900f, Screen.width / 1500f), 0.5f, 3f);
 
@@ -52,6 +55,8 @@ namespace God.Game
             }
             _scale = Scale;
             GUI.matrix = Matrix4x4.Scale(new Vector3(_scale, _scale, 1f));
+            // While the start card or the menu holds the game, the HUD shows but takes no clicks (windows keep this state).
+            GUI.enabled = HudOn;
             float vw = Screen.width / _scale, vh = Screen.height / _scale;
             bool repaint = Event.current.type == EventType.Repaint;
             if (repaint) _ui.Clear();
@@ -147,11 +152,11 @@ namespace God.Game
             if (repaint) { GUI.DrawTexture(strip, st.Strip, ScaleMode.StretchToFill, true); _ui.Add(new Rect(0, 0, vw, stripH * 0.78f)); }
             float y = 8f, h = stripH * 0.60f - 6f, w = 64f, x = 18f;
             bool playing = CanAct;
-            GUI.enabled = playing;
+            GUI.enabled = HudOn && (playing);
             // Watch mode: no build tools, no stock of yours; just the clock controls.
             if (Watching)
             {
-                GUI.enabled = true;
+                GUI.enabled = HudOn;
                 GUI.Label(new Rect(x, y + 12f, 190f, 24f), "Watching six AIs play", _bold);
                 x += 200f;
                 DrawWatchJumps(st, x, y, repaint);
@@ -174,7 +179,7 @@ namespace God.Game
                 x += w + 5f;
             }
             x = DrawTradeTile(st, x, y, w, h, repaint);
-            GUI.enabled = true;
+            GUI.enabled = HudOn;
 
             // Stock of your wares: small counts with a colour swatch.
             x += 18f;
@@ -484,9 +489,9 @@ namespace God.Game
                 if (GUILayout.Button(order > 0 ? "Untarget" : "Target", order > 0 ? st.BtnSel : st.Btn, GUILayout.Height(26f))) ToggleTarget(b.Id);
                 bool offered = fs.HasOfferedPeace(Me, b.Faction), theyOffer = fs.HasOfferedPeace(b.Faction, Me);
                 string label = offered ? "Peace offered" : theyOffer ? "Accept their peace" : "Offer peace";
-                GUI.enabled = !offered;
+                GUI.enabled = HudOn && (!offered);
                 if (GUILayout.Button(label, st.Btn, GUILayout.Height(24f))) OfferPeaceTo(b.Faction);
-                GUI.enabled = true;
+                GUI.enabled = HudOn;
             }
             else
             {

@@ -116,9 +116,9 @@ namespace God.Game
                 var f = (Faction)i;
                 var r = new Rect(x + i * 40f, y + 4f, 36f, 38f);
                 bool out_ = Sim.State.Factions.IsEliminated(f);
-                GUI.enabled = !out_;
+                GUI.enabled = HudOn && (!out_);
                 if (GUI.Button(r, new GUIContent((i + 1).ToString(), "Fly to " + FactionLook.Name(f) + "'s HQ (key " + (i + 1) + ")"), st.Tile) && wc != null) wc.JumpToFaction(f);
-                GUI.enabled = true;
+                GUI.enabled = HudOn;
                 if (repaint) GUI.DrawTexture(new Rect(r.x + 7f, r.y + 5f, r.width - 14f, 13f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, FactionLook.Colour(f) * (out_ ? 0.4f : 1f), Vector4.zero, new Vector4(5, 5, 5, 5));
             }
             if (GUI.Button(new Rect(x + n * 40f + 4f, y + 8f, 50f, 30f), new GUIContent("Fight", "Fly to the latest capture or fight (Tab)"), st.Btn) && wc != null) wc.NextHotSpot();

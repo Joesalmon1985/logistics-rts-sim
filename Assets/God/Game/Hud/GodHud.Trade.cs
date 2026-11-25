@@ -339,9 +339,9 @@ namespace God.Game
 
             bool any = TradeGiveTotal > 0 && TradeWantTotal > 0 && TradeTo.HasValue;
             GUILayout.Label(any ? TradeSummary() : "Pick what you give and what you want.", any ? st.Label : st.Small);
-            GUI.enabled = any;
+            GUI.enabled = HudOn && (any);
             if (GUILayout.Button(new GUIContent("Send envoy", "The goods leave your HQ at once. The envoy walks over land; enemy soldiers may kill it."), st.BtnSel, GUILayout.Height(28f))) SendTrade();
-            GUI.enabled = true;
+            GUI.enabled = HudOn;
         }
 
         private void TradeColumn(HudStyle st, bool give)
@@ -415,9 +415,9 @@ namespace God.Game
                 }
                 if (!canPay) GUILayout.Label("You do not have " + WaresText(offer.Want) + " free in your stores.", st.Small);
                 GUILayout.BeginHorizontal();
-                GUI.enabled = canPay;
+                GUI.enabled = HudOn && (canPay);
                 if (GUILayout.Button("Accept", st.BtnSel, GUILayout.Height(28f))) AnswerOffer(offer.Id, true);
-                GUI.enabled = true;
+                GUI.enabled = HudOn;
                 if (GUILayout.Button("Refuse", st.Btn, GUILayout.Height(28f))) AnswerOffer(offer.Id, false);
                 GUILayout.EndHorizontal();
                 int more = PendingOffers().Count - 1;
