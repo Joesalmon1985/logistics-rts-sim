@@ -5,7 +5,7 @@ namespace God.Game
 {
     /// <summary>
     /// P4b effects, all in two dynamic meshes rebuilt each frame (one draw each): lit smoke and dust puffs that rise,
-    /// swell and shrink away; unlit tracers (javelins, bolts, heavy bolts on an arc), muzzle flashes, sparks, and small
+    /// swell and shrink away; unlit tracers (arrows, sling stones, heavy shots on an arc), blow impacts (hit, crit, block, miss), muzzle flashes, sparks, and small
     /// billboard health bars. Other layers queue into it during their LateUpdate; it builds last. View code only; time is
     /// wall-clock animation time, never sim state.
     /// </summary>
@@ -15,7 +15,10 @@ namespace God.Game
         public static FxLayer Instance { get; private set; }
 
         private struct Puff { public Vector3 P, V; public float Age, Life, Size; public Color C; public float Twist; }
-        private struct Shot { public Vector3 From, To; public float Age, Life, Arc, Len, Width; public Color C; public bool Heavy; }
+        private struct Shot { public Vector3 From, To; public float Age, Life, Arc, Len, Width; public Color C; public bool Heavy; public Impact Hit; }
+
+        /// <summary>How a blow or missile ends where it lands (from <see cref="God.Sim.AttackOutcome"/>).</summary>
+        public enum Impact { None = 0, Hit = 1, Crit = 2, Blocked = 3, Miss = 4, Building = 5 }
         private struct Bar { public Vector3 P; public float W, F; }
         private struct Flash { public Vector3 P; public float Age, Life, Size; public Color C; }
 
@@ -34,6 +37,23 @@ namespace God.Game
         public int PuffsDrawn { get; private set; }
         /// <summary>Shots started since the layer was made (for tests).</summary>
         public int ShotsFired { get; private set; }
+        /// <summary>Impacts shown since the layer was made, by kind (for tests): misses, blocks, crits.</summary>
+        public int MissesShown { get; private set; }
+        public int BlocksShown { get; private set; }
+        public int CritsShown { get; private set; }
+
+        public static Impact ImpactOf(God.Sim.AttackOutcome o)
+        {
+            switch (o)
+            {
+                case God.Sim.AttackOutcome.Miss: return Impact.Miss;
+                case God.Sim.AttackOutcome.Blocked: return Impact.Blocked;
+                case God.Sim.AttackOutcome.Crit: return Impact.Crit;
+                case God.Sim.AttackOutcome.Building: return Impact.Building;
+                case God.Sim.AttackOutcome.Hit: return Impact.Hit;
+                default: return Impact.None;
+            }
+        }
 
         public static FxLayer Ensure(Transform parent)
         {
@@ -83,6 +103,48 @@ namespace God.Game
             ShotsFired++;
         }
 
+        /// <summary>
+        /// A quick missile: an arrow (a thin pale streak on a low arc) or a sling stone (a short dark streak on a higher
+        /// arc). Where it lands it shows its <paramref name="hit"/>: a miss falls short beside the target in a little puff.
+        /// </summary>
+        public void Missile(Vector3 from, Vector3 to, bool stone, Impact hit)
+        {
+            if (_shots.Count >= MaxShots) return;
+            if (hit == Impact.Miss) to += new Vector3(_rnd.Range(-1.2f, 1.2f), -1.1f, _rnd.Range(-1.2f, 1.2f));
+            float dist = (to - from).magnitude;
+            _shots.Add(new Shot
+            {
+                From = from, To = to, Life = Mathf.Clamp(dist / (stone ? 40f : 55f), 0.12f, 0.6f), Arc = dist * (stone ? 0.12f : 0.07f),
+                Len = stone ? 0.35f : 1.1f, Width = stone ? 0.2f : 0.09f, C = stone ? new Color(0.42f, 0.40f, 0.38f) : new Color(0.95f, 0.88f, 0.66f), Hit = hit,
+            });
+            ShotsFired++;
+        }
+
+        /// <summary>
+        /// Where a blow or missile lands: a hit flashes, a crit flashes big and red-hot, a block clangs (a steel spark and
+        /// a small pale puff), a miss raises a small grey puff.
+        /// </summary>
+        public void Strike(Vector3 at, Impact hit)
+        {
+            switch (hit)
+            {
+                case Impact.Hit: Spark(at, 0.55f, new Color(1f, 0.92f, 0.7f), 0.1f); break;
+                case Impact.Crit:
+                    CritsShown++;
+                    Spark(at, 1.1f, new Color(1f, 0.42f, 0.2f), 0.18f); Spark(at + Vector3.up * 0.2f, 0.6f, new Color(1f, 0.95f, 0.8f), 0.1f); break;
+                case Impact.Blocked:
+                    BlocksShown++;
+                    Spark(at, 0.7f, new Color(0.85f, 0.92f, 1f), 0.14f);
+                    if (_puffs.Count < MaxPuffs) _puffs.Add(new Puff { P = at, V = Vector3.up * 0.8f, Life = 0.6f, Size = 0.35f, C = new Color(0.9f, 0.9f, 0.86f), Twist = _rnd.Range(0f, 6f) });
+                    break;
+                case Impact.Miss:
+                    MissesShown++;
+                    if (_puffs.Count < MaxPuffs) _puffs.Add(new Puff { P = at, V = Vector3.up * 0.6f + ModelKit.Dir(_rnd.Range(0f, 360f)) * 0.5f, Life = 0.7f, Size = 0.4f, C = new Color(0.62f, 0.6f, 0.56f), Twist = _rnd.Range(0f, 6f) });
+                    break;
+                case Impact.Building: Spark(at, 0.6f, new Color(1f, 0.8f, 0.5f), 0.12f); Dust(at, 0.6f, 2, new Color(0.6f, 0.55f, 0.46f)); break;
+            }
+        }
+
         public void Spark(Vector3 p, float size, Color c, float life = 0.12f) => _flashes.Add(new Flash { P = p, Life = life, Size = size, C = c });
 
         /// <summary>A health bar this frame (call every frame while it should show).</summary>
@@ -117,7 +179,8 @@ namespace God.Game
                 s.Age += dt;
                 if (s.Age >= s.Life)
                 {
-                    if (s.Heavy) { Dust(s.To, 1.2f, 5, new Color(0.62f, 0.55f, 0.44f)); Spark(s.To + Vector3.up * 0.4f, 1.1f, new Color(1f, 0.7f, 0.3f), 0.14f); }
+                    if (s.Hit != Impact.None) Strike(s.To, s.Hit);
+                    else if (s.Heavy) { Dust(s.To, 1.2f, 5, new Color(0.62f, 0.55f, 0.44f)); Spark(s.To + Vector3.up * 0.4f, 1.1f, new Color(1f, 0.7f, 0.3f), 0.14f); }
                     else Spark(s.To + Vector3.up * 0.2f, 0.4f, new Color(1f, 0.9f, 0.6f), 0.08f);
                     _shots.RemoveAt(i); continue;
                 }

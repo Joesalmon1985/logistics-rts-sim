@@ -123,7 +123,7 @@ namespace God.Game
             switch (d.Role)
             {
                 case BuildingRole.Harvester: takes = "piles of " + Wares.Name(Wares.OfRaw(d.Harvests)) + " from its " + TerrainWord(d.Harvests); gives = Wares.Name(d.HarvestWare); break;
-                case BuildingRole.Factory: takes = WareList(d.In); gives = d.Unit == UnitKind.Vehicle ? "a vehicle" : "an infantry soldier"; break;
+                case BuildingRole.Factory: takes = WareList(d.In); gives = "a soldier"; break;
                 default: takes = WareList(d.In); gives = WareList(d.Out); break;
             }
             return d.Label + "\nCost: " + CostText(d) + "\nTakes: " + takes + "\nGives: " + gives;
@@ -226,12 +226,12 @@ namespace God.Game
             var m = Sim.State.Military;
             if (Watching) return "Watch mode: units " + m.Units.Count;
             if (!MeAlive) return "Your faction is out of the game";
-            int inf = 0, veh = 0, guards = 0;
-            foreach (var u in m.Units) if (u.Faction == Me) { if (u.Kind == UnitKind.Vehicle) veh++; else inf++; }
+            int melee = 0, ranged = 0, guards = 0;
+            foreach (var u in m.Units) if (u.Faction == Me) { if (Gear.IsRanged(u.Kit.Weapon)) ranged++; else melee++; }
             foreach (var f in m.Defends) if (f.Faction == Me) guards += f.Guards;
             var foes = Sim.State.Factions.Enemies(Me);
             string war = foes.Count == 0 ? "at peace" : "at war with " + string.Join(", ", foes.ConvertAll(FactionLook.Name));
-            return "Infantry " + inf + "    Vehicles " + veh + "    Guards " + guards + "    " + war;
+            return "Soldiers " + (melee + ranged) + " (" + ranged + " ranged)    Guards " + guards + "    " + war;
         }
 
         /// <summary>The standings line: VP per faction, most first (minimal; P10 styles it).</summary>

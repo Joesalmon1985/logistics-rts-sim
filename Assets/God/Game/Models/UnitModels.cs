@@ -4,113 +4,143 @@ using UnityEngine;
 namespace God.Game
 {
     /// <summary>
-    /// P4b soldiers and war wagons, small and readable in the OpenRA manner. Infantry: a villager skeleton in a padded
-    /// tunic and helmet, a round shield in the faction colour; the player's spearmen throw javelins, the enemy's carry a
-    /// crossbow. Vehicles: a four-wheeled war wagon with pavise boards in the faction colour, a mounted bolt thrower that
-    /// turns to its target, and a pennant. Local space, feet (or wheels) at y = 0, facing +Z. View code only.
+    /// Stage 3 soldiers, small and readable in the OpenRA manner, built from the kit they wear: a villager skeleton in a
+    /// tunic (warm for timber factions, grey for stone ones) with a belt and tabard in the faction colour; a metal helmet
+    /// with a crest in the faction colour (or a cap in the faction colour without one); a grey breastplate or a brown
+    /// studded leather jerkin; the weapon in the right hand (sword, spear, axe, bow or sling); a tall painted shield or a
+    /// small round buckler on the left forearm. Local space, feet at y = 0, facing +Z; arms hang along -Y from the
+    /// shoulder with the hand at (0, -0.64, 0). Meshes are cached per faction and piece. View code only.
     /// </summary>
     public static class UnitModels
     {
-        public static Mesh InfantryBody(Faction f) => ModelKit.Cached("inf/body/" + (int)f, mb =>
+        public const float BarWidth = 1.6f, BarHeight = 3.2f;
+
+        private static bool Warm(Faction f) => !FactionLook.Stone(f);
+        private static Color Tunic(Faction f) => Warm(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f);
+        private static Color Team(Faction f) => ModelKit.Accent(ModelKit.FactionColour(f));
+        private static readonly Color Steel = new Color(0.66f, 0.68f, 0.72f), Leather = new Color(0.50f, 0.33f, 0.19f), Bone = new Color(0.92f, 0.86f, 0.70f);
+
+        /// <summary>Torso and head with the head and body items worn.</summary>
+        public static Mesh Body(Faction f, Ware head, Ware body) => ModelKit.Cached("sol/body/" + (int)f + "/" + (int)head + "/" + (int)body, mb =>
         {
-            bool p = !FactionLook.Stone(f);
-            var tunic = p ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f);
-            var helm = p ? new Color(0.48f, 0.34f, 0.20f) : ModelKit.Metal * 0.85f;
-            PeopleModels.Torso(mb, tunic, helm);
-            // Helmet with a crest or a nasal, and a sash in the faction colour.
-            if (p) mb.Box(new Vector3(0, 2.06f, -0.02f), new Vector3(0.1f, 0.18f, 0.44f), ModelKit.Accent(ModelKit.FactionColour(f)));
-            else { mb.Cone(new Vector3(0, 1.96f, 0), 0.3f, 0.32f, 4, helm); mb.Box(new Vector3(0, 1.7f, 0.21f), new Vector3(0.07f, 0.22f, 0.04f), helm); }
-            mb.Box(new Vector3(0, 1.1f, 0.0f), new Vector3(0.68f, 0.1f, 0.42f), ModelKit.Accent(ModelKit.FactionColour(f)), 0f);
+            var team = Team(f);
+            bool helm = head == Ware.Helmet;
+            PeopleModels.Torso(mb, Tunic(f), helm ? Steel * 0.9f : team);
+            switch (body)
+            {
+                case Ware.Breastplate:
+                    // A steel cuirass with shoulder plates and a stripe of the faction colour down the front.
+                    mb.Box(new Vector3(0, 1.17f, 0), new Vector3(0.72f, 0.6f, 0.46f), Steel);
+                    mb.Box(new Vector3(0, 1.17f, 0.235f), new Vector3(0.14f, 0.56f, 0.02f), team);
+                    mb.Box(new Vector3(-0.38f, 1.4f, 0), new Vector3(0.22f, 0.12f, 0.4f), Steel * 0.85f);
+                    mb.Box(new Vector3(0.38f, 1.4f, 0), new Vector3(0.22f, 0.12f, 0.4f), Steel * 0.85f);
+                    mb.Box(new Vector3(0, 0.86f, 0), new Vector3(0.72f, 0.16f, 0.46f), Steel * 0.75f);
+                    break;
+                case Ware.LightArmour:
+                    // A studded leather jerkin over the tunic, the tabard showing below.
+                    mb.Box(new Vector3(0, 1.15f, 0), new Vector3(0.69f, 0.58f, 0.43f), Leather);
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 2; j++)
+                            mb.Box(new Vector3(-0.16f + j * 0.32f, 1.0f + i * 0.17f, 0.22f), new Vector3(0.06f, 0.06f, 0.03f), Bone * 0.9f);
+                    mb.Box(new Vector3(0, 0.84f, 0.2f), new Vector3(0.3f, 0.26f, 0.05f), team);
+                    break;
+                default:
+                    // A tabard in the faction colour.
+                    mb.Box(new Vector3(0, 1.08f, 0.2f), new Vector3(0.36f, 0.6f, 0.03f), team);
+                    break;
+            }
+            mb.Box(new Vector3(0, 0.95f, 0), new Vector3(0.74f, 0.08f, 0.47f), team * 0.8f);
+            if (helm)
+            {
+                // A rounded steel helmet with a nasal, cheek guards and a crest in the faction colour.
+                mb.Cylinder(new Vector3(0, 1.8f, 0), 0.27f, 0.26f, 0.16f, 8, Steel);
+                mb.Cone(new Vector3(0, 1.96f, 0), 0.26f, 0.18f, 8, Steel * 1.05f);
+                mb.Box(new Vector3(0, 1.7f, 0.22f), new Vector3(0.06f, 0.2f, 0.04f), Steel * 0.85f);
+                mb.Box(new Vector3(-0.22f, 1.66f, 0.08f), new Vector3(0.04f, 0.2f, 0.16f), Steel * 0.85f);
+                mb.Box(new Vector3(0.22f, 1.66f, 0.08f), new Vector3(0.04f, 0.2f, 0.16f), Steel * 0.85f);
+                mb.Box(new Vector3(0, 2.18f, -0.03f), new Vector3(0.09f, 0.2f, 0.46f), team);
+            }
         });
 
-        public static Mesh Leg(Faction f) => ModelKit.Cached("inf/leg/" + (int)f, mb => PeopleModels.Leg(mb, !FactionLook.Stone(f) ? new Color(0.40f, 0.32f, 0.22f) : new Color(0.22f, 0.21f, 0.23f)));
+        public static Mesh Leg(Faction f) => ModelKit.Cached("inf/leg/" + (int)f, mb => PeopleModels.Leg(mb, Warm(f) ? new Color(0.40f, 0.32f, 0.22f) : new Color(0.22f, 0.21f, 0.23f)));
 
-        /// <summary>The weapon arm: a spear (player) or a crossbow (enemy) in the hand.</summary>
-        public static Mesh WeaponArm(Faction f) => ModelKit.Cached("inf/warm/" + (int)f, mb =>
+        /// <summary>The right arm with its weapon in the hand.</summary>
+        public static Mesh WeaponArm(Faction f, Ware weapon) => ModelKit.Cached("sol/warm/" + (int)f + "/" + (int)weapon, mb =>
         {
-            PeopleModels.Arm(mb, !FactionLook.Stone(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
+            PeopleModels.Arm(mb, Tunic(f));
             var hand = new Vector3(0, -0.64f, 0);
-            if (!FactionLook.Stone(f))
+            switch (weapon)
             {
-                ModelKit.Beam(mb, hand + new Vector3(0, -0.6f, -0.05f), hand + new Vector3(0, 1.9f, 0.15f), 0.04f, ModelKit.Wood);
-                mb.Cone(hand + new Vector3(0, 1.9f, 0.15f), 0.08f, 0.4f, 4, ModelKit.Metal);
-            }
-            else
-            {
-                // A crossbow held forward: stock, prod, string.
-                // Modelled along the arm (-Y): the view raises the arm to aim it forward.
-                mb.Box(hand + new Vector3(0, -0.3f, 0.08f), new Vector3(0.1f, 0.95f, 0.12f), ModelKit.DarkWood);
-                mb.Box(hand + new Vector3(0, -0.72f, 0.08f), new Vector3(0.95f, 0.08f, 0.08f), ModelKit.Metal * 0.8f);
+                case Ware.Spear:
+                    // A long ash shaft and a leaf blade.
+                    ModelKit.Beam(mb, hand + new Vector3(0, -0.7f, -0.05f), hand + new Vector3(0, 2.1f, 0.15f), 0.035f, ModelKit.Wood);
+                    mb.Cone(hand + new Vector3(0, 2.1f, 0.15f), 0.08f, 0.45f, 4, Steel);
+                    break;
+                case Ware.Axe:
+                    // A short haft with a broad bearded head.
+                    ModelKit.Beam(mb, hand + new Vector3(0, -0.15f, 0), hand + new Vector3(0, 0.95f, 0.05f), 0.04f, ModelKit.DarkWood);
+                    mb.Box(hand + new Vector3(0, 0.8f, 0.2f), new Vector3(0.06f, 0.36f, 0.32f), Steel);
+                    mb.Box(hand + new Vector3(0, 0.7f, 0.38f), new Vector3(0.05f, 0.5f, 0.08f), Steel * 1.1f);
+                    break;
+                case Ware.Bow:
+                    // A bow held out across the arm: when the arm is raised forward the stave stands upright.
+                    ModelKit.Beam(mb, hand + new Vector3(0, 0.05f, -0.78f), hand + new Vector3(0, -0.2f, -0.3f), 0.035f, ModelKit.Wood);
+                    ModelKit.Beam(mb, hand + new Vector3(0, -0.2f, -0.3f), hand + new Vector3(0, -0.24f, 0.3f), 0.04f, ModelKit.DarkWood);
+                    ModelKit.Beam(mb, hand + new Vector3(0, -0.24f, 0.3f), hand + new Vector3(0, 0.05f, 0.78f), 0.035f, ModelKit.Wood);
+                    ModelKit.Beam(mb, hand + new Vector3(0, 0.05f, -0.78f), hand + new Vector3(0, 0.05f, 0.78f), 0.008f, Bone);
+                    break;
+                case Ware.Sling:
+                    // Two cords hanging from the hand with a stone pouch.
+                    ModelKit.Beam(mb, hand, hand + new Vector3(0.03f, -0.55f, 0.02f), 0.012f, Leather * 1.2f);
+                    ModelKit.Beam(mb, hand, hand + new Vector3(-0.03f, -0.55f, -0.02f), 0.012f, Leather * 1.2f);
+                    mb.Box(hand + new Vector3(0, -0.6f, 0), new Vector3(0.12f, 0.1f, 0.14f), Leather);
+                    mb.Box(hand + new Vector3(0, -0.62f, 0), new Vector3(0.08f, 0.08f, 0.08f), ModelKit.Rock);
+                    break;
+                default:
+                    // A straight sword: grip, cross-guard, blade.
+                    mb.Box(hand + new Vector3(0, 0.02f, 0), new Vector3(0.06f, 0.2f, 0.06f), ModelKit.DarkWood);
+                    mb.Box(hand + new Vector3(0, 0.14f, 0), new Vector3(0.06f, 0.05f, 0.3f), Steel * 0.8f);
+                    mb.Box(hand + new Vector3(0, 0.55f, 0), new Vector3(0.04f, 0.78f, 0.11f), Steel * 1.1f);
+                    mb.Cone(hand + new Vector3(0, 0.94f, 0), 0.06f, 0.14f, 4, Steel * 1.1f);
+                    break;
             }
         });
 
-        public static Mesh ShieldArm(Faction f) => ModelKit.Cached("inf/sarm/" + (int)f, mb =>
+        /// <summary>The left arm with a big painted shield, a small round buckler, or nothing.</summary>
+        public static Mesh ShieldArm(Faction f, Ware shield) => ModelKit.Cached("sol/sarm/" + (int)f + "/" + (int)shield, mb =>
         {
-            PeopleModels.Arm(mb, !FactionLook.Stone(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
-            // A round shield on the outside of the forearm, painted in the faction colour with a pale boss.
-            var col = ModelKit.Accent(ModelKit.FactionColour(f));
-            var c = new Vector3(-0.16f, -0.4f, 0.05f);
-            int n = 10; float r = 0.46f;
-            for (int i = 0; i < n; i++)
+            PeopleModels.Arm(mb, Tunic(f));
+            var team = Team(f);
+            if (shield == Ware.BigShield)
             {
-                float a0 = i * Mathf.PI * 2f / n, a1 = (i + 1) * Mathf.PI * 2f / n;
-                var p0 = c + new Vector3(0, Mathf.Sin(a0) * r, Mathf.Cos(a0) * r); var p1 = c + new Vector3(0, Mathf.Sin(a1) * r, Mathf.Cos(a1) * r);
-                ModelKit.T2(mb, c + new Vector3(-0.06f, 0, 0), p0, p1, col);
-                ModelKit.Beam(mb, p0, p1, 0.04f, col * 0.65f);
-            }
-            mb.Box(c + new Vector3(-0.08f, 0, 0), new Vector3(0.1f, 0.16f, 0.16f), new Color(0.92f, 0.86f, 0.70f));
-        });
-
-        // ---------------------------------------------------------------- vehicle
-
-        public const float WagonWheelR = 0.62f;
-
-        public static Mesh WagonBody(Faction f) => ModelKit.Cached("veh/body/" + (int)f, mb =>
-        {
-            var st = ModelStyle.Of(f);
-            var wood = !FactionLook.Stone(f) ? ModelKit.Wood : new Color(0.30f, 0.26f, 0.24f);
-            // Bed and axles.
-            mb.Box(new Vector3(0, 0.95f, 0), new Vector3(1.9f, 0.35f, 3.4f), wood);
-            mb.Box(new Vector3(0, 0.62f, 1.1f), new Vector3(2.3f, 0.16f, 0.16f), ModelKit.DarkWood);
-            mb.Box(new Vector3(0, 0.62f, -1.1f), new Vector3(2.3f, 0.16f, 0.16f), ModelKit.DarkWood);
-            // Pavise boards along the sides in the faction colour, with pale bosses; a plank front.
-            var col = st.Accent;
-            foreach (int side in new[] { -1, 1 })
-                for (int i = 0; i < 3; i++)
+                // A tall curved shield, painted in the faction colour, with a rim, a boss and a pale band.
+                var c = new Vector3(-0.17f, -0.35f, 0.08f);
+                const float h = 0.68f, w = 0.4f;
+                for (int i = -1; i <= 1; i += 2)
                 {
-                    var p = new Vector3(side * 1.0f, 1.45f, -1.0f + i * 1.0f);
-                    mb.Box(p, new Vector3(0.1f, 0.75f, 0.9f), i == 1 ? col : col * 0.8f);
-                    mb.Box(p + new Vector3(side * 0.06f, 0, 0), new Vector3(0.06f, 0.18f, 0.18f), new Color(0.92f, 0.86f, 0.70f));
+                    var a = c + new Vector3(0, -h, i * w * 0.5f); var b = c + new Vector3(0, h, i * w * 0.5f);
+                    var a2 = c + new Vector3(0.1f, -h, i * w * 1.1f); var b2 = c + new Vector3(0.1f, h, i * w * 1.1f);
+                    ModelKit.Q2(mb, a, b, b2, a2, team * 0.92f);
+                    ModelKit.Beam(mb, a2, b2, 0.03f, team * 0.6f);
                 }
-            mb.Box(new Vector3(0, 1.4f, 1.68f), new Vector3(1.9f, 0.6f, 0.12f), wood * 1.1f);
-            mb.Box(new Vector3(0, 1.4f, -1.68f), new Vector3(1.9f, 0.6f, 0.12f), wood * 1.1f);
-            // A tow pole at the front, a pennant at the back.
-            ModelKit.Beam(mb, new Vector3(0, 0.9f, 1.7f), new Vector3(0, 0.6f, 2.6f), 0.07f, ModelKit.DarkWood);
-            mb.Cylinder(new Vector3(-0.75f, 1.1f, -1.5f), 0.06f, 0.05f, 2.6f, 5, ModelKit.DarkWood);
-            mb.Quad(new Vector3(-0.75f, 3.6f, -1.5f), new Vector3(-0.75f, 3.0f, -1.5f), new Vector3(-0.75f, 3.25f, -2.6f), new Vector3(-0.75f, 3.5f, -2.5f), col);
-            mb.Quad(new Vector3(-0.75f, 3.6f, -1.5f), new Vector3(-0.75f, 3.5f, -2.5f), new Vector3(-0.75f, 3.25f, -2.6f), new Vector3(-0.75f, 3.0f, -1.5f), col * 0.85f);
-            // The crew: a small figure sitting at the back.
-            mb.Box(new Vector3(0.45f, 1.55f, -1.0f), new Vector3(0.5f, 0.6f, 0.4f), !FactionLook.Stone(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
-            mb.Box(new Vector3(0.45f, 2.0f, -1.0f), new Vector3(0.34f, 0.34f, 0.34f), ModelKit.Skin);
-            mb.Box(new Vector3(0.45f, 2.2f, -1.0f), new Vector3(0.38f, 0.1f, 0.38f), col);
+                ModelKit.Q2(mb, c + new Vector3(0, -h, -w * 0.5f), c + new Vector3(0, h, -w * 0.5f), c + new Vector3(0, h, w * 0.5f), c + new Vector3(0, -h, w * 0.5f), team);
+                mb.Box(c + new Vector3(-0.02f, 0, 0), new Vector3(0.04f, 0.12f, w * 2.1f), Bone * 0.9f);
+                mb.Box(c + new Vector3(-0.06f, 0, 0), new Vector3(0.1f, 0.18f, 0.18f), Steel);
+            }
+            else if (shield == Ware.SmallShield)
+            {
+                // A small round buckler: a steel rim, the faction colour inside, a steel boss.
+                var c = new Vector3(-0.15f, -0.48f, 0.05f);
+                int n = 10; float r = 0.27f;
+                for (int i = 0; i < n; i++)
+                {
+                    float a0 = i * Mathf.PI * 2f / n, a1 = (i + 1) * Mathf.PI * 2f / n;
+                    var p0 = c + new Vector3(0, Mathf.Sin(a0) * r, Mathf.Cos(a0) * r); var p1 = c + new Vector3(0, Mathf.Sin(a1) * r, Mathf.Cos(a1) * r);
+                    ModelKit.T2(mb, c + new Vector3(-0.05f, 0, 0), p0, p1, team);
+                    ModelKit.Beam(mb, p0, p1, 0.03f, Steel * 0.85f);
+                }
+                mb.Box(c + new Vector3(-0.07f, 0, 0), new Vector3(0.08f, 0.12f, 0.12f), Steel);
+            }
         });
-
-        public static Mesh WagonWheel() => ModelKit.Cached("veh/wheel", mb => ModelKit.Wheel(mb, WagonWheelR, 0.18f, ModelKit.DarkWood, ModelKit.Wood, 6));
-
-        /// <summary>The bolt thrower on its turntable (pivot at the turntable, facing +Z).</summary>
-        public static Mesh Thrower(Faction f) => ModelKit.Cached("veh/thrower/" + (int)f, mb =>
-        {
-            var wood = !FactionLook.Stone(f) ? ModelKit.Wood * 1.1f : new Color(0.36f, 0.32f, 0.30f);
-            mb.Cylinder(Vector3.zero, 0.5f, 0.45f, 0.25f, 8, ModelKit.DarkWood);
-            mb.Box(new Vector3(0, 0.45f, 0.2f), new Vector3(0.3f, 0.25f, 1.9f), wood);
-            mb.Box(new Vector3(0, 0.5f, 0.95f), new Vector3(1.7f, 0.16f, 0.2f), wood * 0.9f);
-            ModelKit.Beam(mb, new Vector3(-0.85f, 0.5f, 0.95f), new Vector3(0, 0.55f, -0.55f), 0.02f, new Color(0.9f, 0.86f, 0.74f));
-            ModelKit.Beam(mb, new Vector3(0.85f, 0.5f, 0.95f), new Vector3(0, 0.55f, -0.55f), 0.02f, new Color(0.9f, 0.86f, 0.74f));
-            ModelKit.Beam(mb, new Vector3(0, 0.62f, -0.3f), new Vector3(0, 0.62f, 1.4f), 0.04f, ModelKit.Metal);
-        });
-
-        /// <summary>A corpse-free death: the body mesh tips over; the view uses the live parts. Health bar sizes per kind.</summary>
-        public static float BarWidth(UnitKind k) => k == UnitKind.Vehicle ? 2.6f : 1.6f;
-        public static float BarHeight(UnitKind k) => k == UnitKind.Vehicle ? 4.2f : 3.2f;
     }
 }

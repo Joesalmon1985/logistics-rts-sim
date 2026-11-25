@@ -4,8 +4,9 @@ using God.Sim;
 namespace God.Game
 {
     /// <summary>
-    /// The military view. Since P4b it is drawn by models: <see cref="UnitLayer"/> (soldiers and war wagons that face
-    /// their movement, fire tracers, show a small bar only when damaged and fall when they die), <see cref="OverlayLayer"/>
+    /// The military view. Since P4b it is drawn by models: <see cref="UnitLayer"/> (soldiers dressed in their kit that face
+    /// their movement, strike or shoot by weapon, show how each blow ended, show a small bar only when damaged and fall
+    /// when they die), <see cref="OverlayLayer"/>
     /// (numbered war standards on marked enemy buildings, defend standards with a guard count) and the shared
     /// <see cref="FxLayer"/>. Building damage, rubble and collapse are drawn by <see cref="BuildingLayer"/>. View only:
     /// it reads <see cref="MilitaryState"/> and never changes it.
@@ -21,7 +22,7 @@ namespace God.Game
         public OverlayLayer Overlay => _overlay;
         /// <summary>Units drawn now (for tests).</summary>
         public int UnitsDrawn => _units.Count;
-        /// <summary>Shots in flight last frame (for tests).</summary>
+        /// <summary>Arrows and stones in flight last frame (for tests).</summary>
         public int TracersDrawn => FxLayer.Instance != null ? FxLayer.Instance.ShotsDrawn : 0;
 
         public static MilitaryView Create(GodSim sim, Transform parent)

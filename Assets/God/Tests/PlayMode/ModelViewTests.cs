@@ -11,7 +11,7 @@ namespace God.Game.Tests
 {
     /// <summary>
     /// P4b: buildings, carriers and units drawn as models. Runs the F2 chain (a bot per faction) and then the dev fight in the real
-    /// scene and checks that every building kind on the island has its model, sites and carriers show, every unit kind is
+    /// scene and checks that every building kind on the island has its model, sites and carriers show, every weapon kind is
     /// drawn, shots fly and a destroyed building leaves rubble. Writes screenshots when <c>GOD_SHOTS</c> names a folder
     /// (else to LocalData, which is not committed).
     /// </summary>
@@ -141,20 +141,26 @@ namespace God.Game.Tests
             Shot(cam, "p4b_enemy.png");
 
             // The fight at the nearest other faction's town.
+            int firstFightId = s.Military.NextUnitId;
             boot.DebugFight();
             var foe = s.Factions.Enemies(Faction.F0)[0];
             ehq = s.Territory.HqsOf(foe)[0];
+            // Stage 3 soldiers duel in melee and the siege wagons are gone: the foe's chain army (a dozen or more by now)
+            // would swallow the dev raid before it razes anything. This is a drawing test, so the raid meets only the
+            // three defenders it spawned, and its marked buildings are already battered.
+            s.Military.Units.RemoveAll(u => u.Faction == foe && u.Id < firstFightId);
+            foreach (int id in s.Military.MarkedOf(Faction.F0)) { var r = s.Military.BuildingById(id); if (r != null && !r.IsHq) r.Health = System.Math.Min(r.Health, 60); }
             boot.Running = true;
             boot.Speed = 3f;
             Time.captureFramerate = 30;
             int rubbleSeen = 0, shotsSeen = 0, barsSeen = 0, deaths = 0;
-            bool pInf = false, pVeh = false, eInf = false, battleShot = false;
+            bool pInf = false, pRanged = false, eInf = false, battleShot = false;
             frames = 0;
             while (frames++ < 9000)
             {
                 yield return null;
                 pInf |= mil.Units.CountOf(UnitKind.Infantry, Faction.F0) > 0;
-                pVeh |= mil.Units.CountOf(UnitKind.Vehicle, Faction.F0) > 0;
+                pRanged |= mil.Units.CountOf(Ware.Bow, Faction.F0) > 0;
                 eInf |= mil.Units.CountOf(UnitKind.Infantry, foe) > 0;
                 rubbleSeen = Mathf.Max(rubbleSeen, eco.Buildings.RubbleCount);
                 shotsSeen = Mathf.Max(shotsSeen, mil.TracersDrawn);
@@ -176,12 +182,36 @@ namespace God.Game.Tests
             }
             Time.captureFramerate = 0;
             if (!battleShot) { Aim(cam, At(g, ehq.Node), 85f, 52f); yield return null; Shot(cam, "p4b_battle.png"); }
-            Assert.IsTrue(pInf && pVeh && eInf, "player infantry and vehicles and enemy infantry drawn");
-            Assert.Greater(shotsSeen, 0, "shots drawn");
+            Assert.IsTrue(pInf && pRanged && eInf, "player soldiers and archers and enemy soldiers drawn");
+            Assert.Greater(shotsSeen, 0, "arrows and stones drawn");
+            Assert.Greater(mil.Units.StrikesSoFar, 0, "blows and shots drawn");
+            Assert.Greater(FxLayer.Instance.MissesShown + FxLayer.Instance.BlocksShown, 0, "a miss or block puff shown");
             Assert.Greater(barsSeen, 0, "health bars drawn when damaged");
-            Assert.Greater(rubbleSeen, 0, "a destroyed building left rubble");
+            Assert.Greater(rubbleSeen, 0, "a destroyed building left rubble; tick " + s.Tick + ", units mine " + s.Military.CountUnits(Faction.F0) + " foe " + s.Military.CountUnits(foe) + ", deaths drawn " + deaths + ", strikes " + mil.Units.StrikesSoFar);
             Assert.Greater(eco.Buildings.CollapsedSoFar, 0, "a building collapsed");
-            Debug.Log("P4b fight: deaths " + deaths + " rubble " + rubbleSeen + " tick " + s.Tick);
+            Debug.Log("P4b fight: deaths " + deaths + " rubble " + rubbleSeen + " tick " + s.Tick + " strikes " + mil.Units.StrikesSoFar + " misses " + FxLayer.Instance.MissesShown + " blocks " + FxLayer.Instance.BlocksShown + " crits " + FxLayer.Instance.CritsShown);
+        }
+
+        /// <summary>Kits shown in the gallery and the load test: every weapon, every defence item.</summary>
+        internal static readonly Kit[] GalleryKits =
+        {
+            new Kit(Ware.Sword, Ware.SmallShield, Ware.Helmet),
+            new Kit(Ware.Spear, Ware.BigShield, Ware.None, Ware.Breastplate),
+            new Kit(Ware.Axe, Ware.None, Ware.Helmet, Ware.LightArmour),
+            new Kit(Ware.Bow, Ware.None, Ware.Helmet, Ware.LightArmour),
+            new Kit(Ware.Sling, Ware.SmallShield),
+            new Kit(Ware.Sword),
+        };
+
+        /// <summary>A standing soldier figure in a kit, from the unit models (view objects only).</summary>
+        internal static GameObject Soldier(Transform parent, Faction f, Kit k, Vector3 at, float armPitch)
+        {
+            var inf = ModelKit.Part("soldier " + k, parent, UnitModels.Body(f, k.Head, k.Body));
+            inf.transform.position = at; inf.transform.localScale = Vector3.one * 1.2f; inf.transform.rotation = Quaternion.Euler(0, 200f, 0);
+            var arm = ModelKit.Part("arm", inf.transform, UnitModels.ShieldArm(f, k.Shield)); arm.transform.localPosition = new Vector3(-PeopleModels.ShoulderX, PeopleModels.Shoulder, 0); arm.transform.localRotation = Quaternion.Euler(-35f, 0, 0);
+            var arm2 = ModelKit.Part("arm2", inf.transform, UnitModels.WeaponArm(f, k.Weapon)); arm2.transform.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0); arm2.transform.localRotation = Quaternion.Euler(armPitch, 0, 0);
+            foreach (int side in new[] { -1, 1 }) { var l = ModelKit.Part("leg", inf.transform, UnitModels.Leg(f)); l.transform.localPosition = new Vector3(side * PeopleModels.LegX, PeopleModels.Hip, 0); }
+            return inf;
         }
 
         /// <summary>A gallery of every building model in both styles, sites and figures, laid out off the coast (view objects only).</summary>
@@ -215,15 +245,9 @@ namespace God.Game.Tests
                     go.transform.position = o + new Vector3(k * 13f - 25f, 0, -40f);
                     go.transform.rotation = Quaternion.Euler(0, 160f, 0);
                 }
-                // Soldiers and a wagon.
+                // Soldiers, one per weapon, each in a different kit.
                 var uo = origin + new Vector3(f == Faction.F0 ? -6f : 6f, 0, 26f);
-                var inf = ModelKit.Part("inf", root.transform, UnitModels.InfantryBody(f)); inf.transform.position = uo + new Vector3(-3f, 0, 4f); inf.transform.localScale = Vector3.one * 1.2f; inf.transform.rotation = Quaternion.Euler(0, 200f, 0);
-                var arm = ModelKit.Part("arm", inf.transform, UnitModels.ShieldArm(f)); arm.transform.localPosition = new Vector3(-PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
-                var arm2 = ModelKit.Part("arm2", inf.transform, UnitModels.WeaponArm(f)); arm2.transform.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0); arm2.transform.localRotation = Quaternion.Euler(f == Faction.F0 ? -15f : -80f, 0, 0);
-                foreach (int side in new[] { -1, 1 }) { var l = ModelKit.Part("leg", inf.transform, UnitModels.Leg(f)); l.transform.localPosition = new Vector3(side * PeopleModels.LegX, PeopleModels.Hip, 0); }
-                var wag = ModelKit.Part("wagon", root.transform, UnitModels.WagonBody(f)); wag.transform.position = uo; wag.transform.rotation = Quaternion.Euler(0, 230f, 0);
-                var th = ModelKit.Part("thrower", wag.transform, UnitModels.Thrower(f)); th.transform.localPosition = new Vector3(0, 1.15f, 0.2f);
-                foreach (float z in new[] { 1.1f, -1.1f }) foreach (float x in new[] { -1.15f, 1.15f }) { var w = ModelKit.Part("w", wag.transform, UnitModels.WagonWheel()); w.transform.localPosition = new Vector3(x, UnitModels.WagonWheelR, z); }
+                for (int i = 0; i < GalleryKits.Length; i++) Soldier(root.transform, f, GalleryKits[i], uo + new Vector3((i % 3) * 2.2f - 2.2f, 0, (i / 3) * 2.6f), i == 3 ? -85f : -20f);
             }
             // Raw piles.
             var mb = new MeshBuilder();
@@ -291,8 +315,7 @@ namespace God.Game.Tests
             var c0 = new Vector3((float)g.X(t.HqsOf(Faction.F0)[0].Node), 0, (float)g.Z(t.HqsOf(Faction.F0)[0].Node));
             for (int i = 0; i < 40; i++)
             {
-                var kind = i % 4 == 0 ? UnitKind.Vehicle : UnitKind.Infantry;
-                var u = new MilUnit { Id = id++, Faction = (Faction)(i % FactionInfo.Max), Kind = kind, MaxHealth = 100, Health = 40 + i, Activity = UnitActivity.Fighting };
+                var u = new MilUnit { Id = id++, Faction = (Faction)(i % FactionInfo.Max), Kind = UnitKind.Infantry, Kit = GalleryKits[i % GalleryKits.Length], MaxHealth = 100, Health = 40 + i, Activity = UnitActivity.Fighting, LastOutcome = (AttackOutcome)(1 + i % 4) };
                 units.Add(u); m.Units.Add(u);
             }
             for (int i = 0; i < units.Count; i++) { units[i].TargetKind = TargetKind.Unit; units[i].TargetId = units[(i + 1) % units.Count].Id; }
@@ -333,6 +356,62 @@ namespace God.Game.Tests
             Assert.GreaterOrEqual(maxW, 55, "about 60 walkers drawn");
             Assert.GreaterOrEqual(maxU, 40, "40 units drawn");
             Assert.Less(avg, 0.1f, "frames stay well under 100 ms in the editor");
+        }
+
+        /// <summary>
+        /// Stage 3: soldiers are drawn in their kit (weapon, shield, helmet and body named on the figure), a duel between
+        /// a melee and a ranged soldier draws strikes, flying missiles and miss or block puffs, and the dead fall.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Soldiers_WearTheirKit_AndDuelsShowStrikesAndPuffs()
+        {
+            yield return SceneManager.LoadSceneAsync("Assets/God/Scenes/Main.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+            var boot = GodBootstrap.Instance;
+            boot.Running = false;
+            var sim = boot.Sim; var s = sim.State; var g = s.Territory.Grid; var mil = boot.Military;
+            var hq = s.Territory.HqsOf(Faction.F0)[0];
+            var foe = s.Territory.Hqs.First(h => h.Faction != Faction.F0).Faction;
+            if (!s.Factions.AtWar(Faction.F0, foe)) { Assert.IsTrue(sim.Submit(new DeclareWar(Faction.F0, foe)).Ok); sim.Step(); }
+            int node = g.FlagNodeOf(hq.Node);
+            int id0 = s.Military.NextUnitId;
+            var kits = new[]
+            {
+                new Kit(Ware.Bow, Ware.None, Ware.Helmet, Ware.LightArmour),
+                new Kit(Ware.Axe, Ware.BigShield, Ware.None, Ware.Breastplate),
+                new Kit(Ware.Sling, Ware.SmallShield),
+                new Kit(Ware.Spear, Ware.SmallShield, Ware.Helmet),
+            };
+            for (int i = 0; i < kits.Length; i++) Assert.IsTrue(sim.Submit(DevSpawnUnit.WithKit(i % 2 == 0 ? Faction.F0 : foe, kits[i], node)).Ok);
+            sim.Step(); sim.DrainEvents();
+            yield return null;
+            for (int i = 0; i < kits.Length; i++)
+            {
+                var fig = mil.Units.FigureOf(id0 + i);
+                Assert.IsNotNull(fig, "unit " + i + " drawn");
+                var k = kits[i];
+                Assert.IsNotNull(fig.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == "Weapon arm " + Wares.Name(k.Weapon)), "holds a " + Wares.Name(k.Weapon));
+                Assert.IsNotNull(fig.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == "Shield arm " + Wares.Name(k.Shield)), "shield " + Wares.Name(k.Shield));
+                Assert.IsNotNull(fig.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == "Torso " + Wares.Name(k.Head) + " " + Wares.Name(k.Body)), "head and body " + k);
+            }
+            Assert.AreEqual(2, mil.Units.CountOf(Ware.Bow, Faction.F0) + mil.Units.CountOf(Ware.Sling, Faction.F0));
+            var cam = boot.GodCamera;
+            Aim(cam, At(g, node), 30f, 45f);
+            int strikes0 = mil.Units.StrikesSoFar, puffs0 = FxLayer.Instance.MissesShown + FxLayer.Instance.BlocksShown, maxShots = 0, deaths0 = mil.Units.DeathsSoFar;
+            bool shot = false;
+            for (int f = 0; f < 1200 && s.Military.Units.Count(u => u.Id >= id0) > 2; f++)
+            {
+                sim.Step(); sim.DrainEvents();
+                yield return null;
+                maxShots = Mathf.Max(maxShots, FxLayer.Instance.ShotsDrawn);
+                if (!shot && FxLayer.Instance.ShotsDrawn > 0 && mil.Units.StrikesSoFar > strikes0 + 4) { shot = true; Shot(cam, "q2_duel.png"); }
+            }
+            for (int i = 0; i < 5; i++) yield return null;
+            Assert.Greater(mil.Units.StrikesSoFar, strikes0 + 4, "strikes drawn");
+            Assert.Greater(maxShots, 0, "an arrow or stone in flight");
+            Assert.Greater(FxLayer.Instance.MissesShown + FxLayer.Instance.BlocksShown, puffs0, "a miss or block puff");
+            Assert.Greater(mil.Units.DeathsSoFar, deaths0, "someone fell");
+            Debug.Log("Q2 duel: strikes " + (mil.Units.StrikesSoFar - strikes0) + " misses " + FxLayer.Instance.MissesShown + " blocks " + FxLayer.Instance.BlocksShown + " crits " + FxLayer.Instance.CritsShown + " tick " + s.Tick);
         }
 
         [UnityTest]

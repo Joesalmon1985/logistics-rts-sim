@@ -292,7 +292,7 @@ namespace God.Game
 
         /// <summary>
         /// Dev (-godfight): a ready-made fight. The human faction (F0 in watch mode) declares war on the faction whose HQ is
-        /// nearest, spawns five units by that HQ, marks the buildings round it and then the HQ, and puts two guards on its own HQ; the enemy gets three infantry.
+        /// nearest, spawns seven kitted soldiers (two archers, two heavy axemen) by that HQ, marks the buildings round it and then the HQ, and puts two guards on its own HQ; the enemy gets three infantry.
         /// </summary>
         public void DebugFight()
         {
@@ -305,9 +305,12 @@ namespace God.Game
             if (eh == null) return;
             if (!s.Factions.AtWar(me, eh.Faction)) { Sim.Submit(new DeclareWar(me, eh.Faction)); Sim.Step(); Sim.DrainEvents(); }
             int at(int di, int dj) { int n = g.Id(g.I(eh.Node) + di, g.J(eh.Node) + dj); return n >= 0 && g.IsLand(n) ? n : eh.Node; }
-            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(me, UnitKind.Infantry, at(-5 + i, 2)));
-            for (int i = 0; i < 2; i++) Sim.Submit(new DevSpawnUnit(me, UnitKind.Vehicle, at(-6, i)));
-            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(eh.Faction, UnitKind.Infantry, at(-1 - i, 3)));
+            var mineKits = new[] { new Kit(Ware.Sword, Ware.SmallShield, Ware.Helmet, Ware.LightArmour), new Kit(Ware.Spear, Ware.BigShield, Ware.Helmet, Ware.Breastplate), new Kit(Ware.Axe, Ware.SmallShield, Ware.Helmet, Ware.Breastplate) };
+            var foeKits = new[] { new Kit(Ware.Sword), new Kit(Ware.Bow, Ware.None, Ware.Helmet), new Kit(Ware.Sling, Ware.SmallShield) };
+            for (int i = 0; i < 3; i++) Sim.Submit(DevSpawnUnit.WithKit(me, mineKits[i], at(-5 + i, 2)));
+            for (int i = 0; i < 2; i++) Sim.Submit(DevSpawnUnit.WithKit(me, new Kit(Ware.Bow, Ware.None, Ware.Helmet, Ware.LightArmour), at(-6, i)));
+            for (int i = 0; i < 2; i++) Sim.Submit(DevSpawnUnit.WithKit(me, new Kit(Ware.Axe, Ware.BigShield, Ware.Helmet, Ware.Breastplate), at(-5 + i, 1)));
+            for (int i = 0; i < 3; i++) Sim.Submit(DevSpawnUnit.WithKit(eh.Faction, foeKits[i], at(-1 - i, 3)));
             foreach (var b in t.Buildings) if (b.Faction == eh.Faction && b.Size != BuildingSize.Hq && g.Distance(b.Node, eh.Node) <= g.CircleRadiusSteps) Sim.Submit(new MarkTarget(me, b.Id));
             Sim.Submit(new MarkTarget(me, eh.Id));
             Sim.Submit(SetDefend.OnBuilding(me, mine.Id, 2));

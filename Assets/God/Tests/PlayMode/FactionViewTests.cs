@@ -94,7 +94,7 @@ namespace God.Game.Tests
             Assert.IsTrue(sim.Submit(new DeclareWar(x, Faction.F0)).Ok);
             sim.Step();
             int flag = g.FlagNodeOf(hq.Node);
-            for (int i = 0; i < 4; i++) sim.Submit(new DevSpawnUnit(x, i % 2 == 0 ? UnitKind.Vehicle : UnitKind.Infantry, flag));
+            for (int i = 0; i < 4; i++) sim.Submit(DevSpawnUnit.WithKit(x, i % 2 == 0 ? new Kit(Ware.Axe, Ware.BigShield, Ware.Helmet) : new Kit(Ware.Bow), flag));
             sim.Submit(new MarkTarget(x, hq.Id));
             sim.Step();
             s.Military.BuildingById(hq.Id).Health = 400;

@@ -5,10 +5,13 @@ using UnityEngine;
 namespace God.Game
 {
     /// <summary>
-    /// P4b units: small soldiers (spear and javelins for the player, crossbows for the enemy, shields in the faction
-    /// colour) and four-wheeled war wagons with a turning bolt thrower. They face their movement (soldiers turn to their
-    /// target while shooting), walk or roll smoothly between sim ticks, fire tracers with a muzzle flash, show a small
-    /// health bar only when damaged, and on death fall over and sink away. Figures are pooled. Reads the sim only.
+    /// Stage 3 units: small soldiers dressed in their kit (<see cref="UnitModels"/>: the weapon in hand, a big or small
+    /// shield, a helmet, a breastplate or leather jerkin, all marked in the faction colour). They face their movement
+    /// (and their foe while fighting), walk smoothly between sim ticks, and strike in the manner of their weapon: a chop
+    /// for sword and axe, a thrust for the spear, an aimed draw for the bow, a whirl for the sling. Bows and slings loose a
+    /// quick arrow or stone; every blow or missile shows how it ended (a flash, a big red-hot flash for a crit, a clang
+    /// and pale puff for a block, a grey puff for a miss). A small health bar shows only when damaged; on death they fall
+    /// over and sink away. Figures are pooled per faction and kit. Reads the sim only.
     /// </summary>
     public sealed class UnitLayer : MonoBehaviour
     {
@@ -16,24 +19,31 @@ namespace God.Game
 
         private sealed class Fig
         {
-            public GameObject Root; public Transform Body, LegL, LegR, ArmL, ArmR, Thrower; public Transform[] Wheels;
-            public UnitKind Kind; public Faction Faction;
+            public GameObject Root; public Transform Body, LegL, LegR, ArmL, ArmR;
+            public Kit Kit; public Faction Faction;
             public Vector3 Pos; public float Yaw, Phase, Roll; public bool Placed;
             public int LastCooldown; public bool LastFiring;
-            public float DeathT = -1f; public float Fall;
+            public float DeathT = -1f;
         }
 
         private GodSim _sim;
         private readonly Dictionary<int, Fig> _figs = new Dictionary<int, Fig>();
         private readonly List<Fig> _dying = new List<Fig>();
-        private readonly Dictionary<int, Stack<Fig>> _pool = new Dictionary<int, Stack<Fig>>();
+        private readonly Dictionary<long, Stack<Fig>> _pool = new Dictionary<long, Stack<Fig>>();
         private readonly HashSet<int> _alive = new HashSet<int>();
         private readonly List<int> _gone = new List<int>();
 
         public int Count => _figs.Count;
         public int DyingNow => _dying.Count;
         public int DeathsSoFar { get; private set; }
-        public int CountOf(UnitKind k, Faction f) { int n = 0; foreach (var x in _figs.Values) if (x.Kind == k && x.Faction == f) n++; return n; }
+        /// <summary>Strikes drawn since the layer was made (melee and missiles), for tests.</summary>
+        public int StrikesSoFar { get; private set; }
+        /// <summary>Soldiers drawn now of a faction (every unit is infantry since stage 3).</summary>
+        public int CountOf(UnitKind k, Faction f) { int n = 0; foreach (var x in _figs.Values) if (x.Faction == f) n++; return n; }
+        /// <summary>Soldiers drawn now of a faction holding a weapon.</summary>
+        public int CountOf(Ware weapon, Faction f) { int n = 0; foreach (var x in _figs.Values) if (x.Faction == f && x.Kit.Weapon == weapon) n++; return n; }
+        /// <summary>The figure of a unit, or null (for tests: its parts are named after the kit).</summary>
+        public GameObject FigureOf(int unitId) => _figs.TryGetValue(unitId, out var f) ? f.Root : null;
 
         public static UnitLayer Create(GodSim sim, Transform parent)
         {
@@ -45,15 +55,15 @@ namespace God.Game
             return l;
         }
 
-        private static int PoolKey(UnitKind k, Faction f) => (int)k * FactionInfo.Max + (int)f;
+        private static long PoolKey(Kit k, Faction f) => ((((long)k.Weapon * 32 + (int)k.Shield) * 32 + (int)k.Head) * 32 + (int)k.Body) * 8 + (int)f;
 
-        private Fig Take(UnitKind k, Faction f)
+        private Fig Take(Kit k, Faction f)
         {
             Fig fig = null;
             if (_pool.TryGetValue(PoolKey(k, f), out var st) && st.Count > 0) fig = st.Pop();
-            if (fig == null) fig = k == UnitKind.Infantry ? BuildInfantry(f) : BuildWagon(f);
-            fig.Placed = false; fig.DeathT = -1f; fig.Fall = 0f;
-            fig.Root.transform.localScale = Vector3.one * (k == UnitKind.Infantry ? InfantryScale : 1f);
+            if (fig == null) fig = Build(k, f);
+            fig.Placed = false; fig.DeathT = -1f; fig.Roll = 0f;
+            fig.Root.transform.localScale = Vector3.one * InfantryScale;
             fig.Body.localRotation = Quaternion.identity; fig.Body.localPosition = Vector3.zero;
             fig.Root.SetActive(true);
             return fig;
@@ -62,41 +72,21 @@ namespace God.Game
         private void Release(Fig f)
         {
             f.Root.SetActive(false);
-            int key = PoolKey(f.Kind, f.Faction);
+            long key = PoolKey(f.Kit, f.Faction);
             if (!_pool.TryGetValue(key, out var st)) _pool[key] = st = new Stack<Fig>();
             st.Push(f);
         }
 
-        private Fig BuildInfantry(Faction fa)
+        private Fig Build(Kit k, Faction fa)
         {
-            var f = new Fig { Kind = UnitKind.Infantry, Faction = fa, Root = new GameObject("Infantry " + fa) };
+            var f = new Fig { Kit = k, Faction = fa, Root = new GameObject("Soldier " + fa + " " + k) };
             f.Root.transform.SetParent(transform, false);
             var body = new GameObject("Body"); body.transform.SetParent(f.Root.transform, false); f.Body = body.transform;
-            ModelKit.Part("Torso", f.Body, UnitModels.InfantryBody(fa));
+            ModelKit.Part("Torso " + Wares.Name(k.Head) + " " + Wares.Name(k.Body), f.Body, UnitModels.Body(fa, k.Head, k.Body));
             f.LegL = ModelKit.Part("LegL", f.Body, UnitModels.Leg(fa)).transform; f.LegL.localPosition = new Vector3(-PeopleModels.LegX, PeopleModels.Hip, 0);
             f.LegR = ModelKit.Part("LegR", f.Body, UnitModels.Leg(fa)).transform; f.LegR.localPosition = new Vector3(PeopleModels.LegX, PeopleModels.Hip, 0);
-            f.ArmL = ModelKit.Part("Shield arm", f.Body, UnitModels.ShieldArm(fa)).transform; f.ArmL.localPosition = new Vector3(-PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
-            f.ArmR = ModelKit.Part("Weapon arm", f.Body, UnitModels.WeaponArm(fa)).transform; f.ArmR.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
-            return f;
-        }
-
-        private Fig BuildWagon(Faction fa)
-        {
-            var f = new Fig { Kind = UnitKind.Vehicle, Faction = fa, Root = new GameObject("Wagon " + fa) };
-            f.Root.transform.SetParent(transform, false);
-            var body = new GameObject("Body"); body.transform.SetParent(f.Root.transform, false); f.Body = body.transform;
-            ModelKit.Part("Bed", f.Body, UnitModels.WagonBody(fa));
-            f.Wheels = new Transform[4];
-            int i = 0;
-            foreach (float z in new[] { 1.1f, -1.1f })
-                foreach (float x in new[] { -1.15f, 1.15f })
-                {
-                    var w = ModelKit.Part("Wheel", f.Body, UnitModels.WagonWheel()).transform;
-                    w.localPosition = new Vector3(x, UnitModels.WagonWheelR, z);
-                    f.Wheels[i++] = w;
-                }
-            f.Thrower = ModelKit.Part("Thrower", f.Body, UnitModels.Thrower(fa)).transform;
-            f.Thrower.localPosition = new Vector3(0, 1.15f, 0.2f);
+            f.ArmL = ModelKit.Part("Shield arm " + Wares.Name(k.Shield), f.Body, UnitModels.ShieldArm(fa, k.Shield)).transform; f.ArmL.localPosition = new Vector3(-PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
+            f.ArmR = ModelKit.Part("Weapon arm " + Wares.Name(k.Weapon), f.Body, UnitModels.WeaponArm(fa, k.Weapon)).transform; f.ArmR.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
             return f;
         }
 
@@ -112,7 +102,7 @@ namespace God.Game
                 foreach (var u in m.Units)
                 {
                     _alive.Add(u.Id);
-                    if (!_figs.TryGetValue(u.Id, out var f)) { f = Take(u.Kind, u.Faction); f.LastCooldown = u.Cooldown; f.LastFiring = u.IsFiring; _figs[u.Id] = f; }
+                    if (!_figs.TryGetValue(u.Id, out var f)) { f = Take(u.Kit, u.Faction); f.LastCooldown = u.Cooldown; f.LastFiring = u.IsFiring; _figs[u.Id] = f; }
                     Animate(f, u, m, dt, fx);
                 }
             _gone.Clear();
@@ -122,11 +112,7 @@ namespace God.Game
                 var f = _figs[id]; _figs.Remove(id);
                 f.DeathT = 0f; DeathsSoFar++;
                 _dying.Add(f);
-                if (fx != null)
-                {
-                    fx.Dust(f.Pos, f.Kind == UnitKind.Vehicle ? 1.6f : 0.6f, f.Kind == UnitKind.Vehicle ? 8 : 3, new Color(0.6f, 0.55f, 0.46f));
-                    if (f.Kind == UnitKind.Vehicle) fx.Spark(f.Pos + Vector3.up * 1.4f, 1.6f, new Color(1f, 0.6f, 0.2f), 0.3f);
-                }
+                if (fx != null) fx.Dust(f.Pos, 0.6f, 3, new Color(0.6f, 0.55f, 0.46f));
             }
             for (int i = _dying.Count - 1; i >= 0; i--)
             {
@@ -135,10 +121,8 @@ namespace God.Game
                 // A quick fall, then it sinks into the ground and is gone.
                 float fall = Mathf.Clamp01(f.DeathT / 0.35f);
                 float sink = Mathf.Clamp01((f.DeathT - 0.9f) / 1.1f);
-                if (f.Kind == UnitKind.Infantry) f.Body.localRotation = Quaternion.Euler(0, 0, 88f * fall * fall);
-                else f.Body.localRotation = Quaternion.Euler(14f * fall, 0, 18f * fall);
+                f.Body.localRotation = Quaternion.Euler(0, 0, 88f * fall * fall);
                 f.Root.transform.position = f.Pos + Vector3.down * (sink * 1.8f);
-                if (fx != null && f.Kind == UnitKind.Vehicle && f.DeathT < 1.5f && fx.Rand(0f, 1f) < 0.4f) fx.Smoke(f.Pos + Vector3.up * 1.2f, new Color(0.22f, 0.21f, 0.2f), 0.7f, 1.8f, 2f);
                 if (sink >= 1f) { _dying.RemoveAt(i); Release(f); }
             }
         }
@@ -158,60 +142,83 @@ namespace God.Game
             float dist = moved.magnitude;
             float speed = dist / Mathf.Max(dt, 1e-4f);
 
-            // Aim: where its target stands.
+            // Aim: where its target stands (chest height of a soldier, a wall of a building).
             Vector3? aim = null;
             if (u.HasTarget)
             {
-                if (u.TargetKind == TargetKind.Unit) { var tu = m.UnitById(u.TargetId); if (tu != null) aim = Ground(tu.X, tu.Z, tu.Kind == UnitKind.Vehicle ? 1.4f : 1.4f); }
+                if (u.TargetKind == TargetKind.Unit) { var tu = m.UnitById(u.TargetId); if (tu != null) aim = Ground(tu.X, tu.Z, 1.4f); }
                 else { var tb = m.BuildingById(u.TargetId); if (tb != null) aim = Ground(tb.X, tb.Z, tb.IsHq ? 4f : 2.5f); }
             }
 
             float wantYaw = (u.FaceX == 0 && u.FaceZ == 0) ? f.Yaw : Mathf.Atan2(u.FaceX, u.FaceZ) * Mathf.Rad2Deg;
             if (dist > 0.01f) wantYaw = ModelKit.Yaw(moved);
-            if (f.Kind == UnitKind.Infantry && aim.HasValue && speed < 0.6f) wantYaw = ModelKit.Yaw(aim.Value - f.Pos);
+            if (aim.HasValue && speed < 0.6f) wantYaw = ModelKit.Yaw(aim.Value - f.Pos);
             f.Yaw = Mathf.LerpAngle(f.Yaw, wantYaw, 1f - Mathf.Exp(-dt * 9f));
             f.Root.transform.SetPositionAndRotation(f.Pos, Quaternion.Euler(0, f.Yaw, 0));
 
             bool fired = u.Cooldown > f.LastCooldown || (u.IsFiring && !f.LastFiring);
             f.LastCooldown = u.Cooldown; f.LastFiring = u.IsFiring;
 
-            if (f.Kind == UnitKind.Infantry)
-            {
-                float walk = Mathf.Clamp01(speed / 1.5f);
-                f.Phase += speed * dt * 2.6f;
-                float swing = Mathf.Sin(f.Phase) * 34f * walk;
-                f.LegL.localRotation = Quaternion.Euler(swing, 0, 0);
-                f.LegR.localRotation = Quaternion.Euler(-swing, 0, 0);
-                f.Body.localPosition = Vector3.up * (Mathf.Abs(Mathf.Cos(f.Phase)) * 0.07f * walk);
-                f.ArmL.localRotation = Quaternion.Euler(-35f, 0, 0);
-                if (fired) f.Roll = 1f;
-                f.Roll = Mathf.MoveTowards(f.Roll, 0f, dt * 4f);
-                // The throw: the weapon arm goes back, then snaps forward.
-                float arm = !FactionLook.Stone(f.Faction) ? Mathf.Lerp(-15f - swing * 0.4f, -125f, f.Roll) : Mathf.Lerp(-80f, -95f, f.Roll);
-                f.ArmR.localRotation = Quaternion.Euler(arm, 0, 0);
-            }
-            else
-            {
-                f.Phase += dist / UnitModels.WagonWheelR * Mathf.Rad2Deg;
-                foreach (var w in f.Wheels) w.localRotation = Quaternion.Euler(f.Phase, 0, 0);
-                f.Body.localRotation = Quaternion.Euler(Mathf.Sin(Time.time * 9f) * 0.8f * Mathf.Clamp01(speed / 3f), 0, 0);
-                float turretYaw = 0f;
-                if (aim.HasValue) turretYaw = Mathf.DeltaAngle(f.Yaw, ModelKit.Yaw(aim.Value - f.Pos));
-                f.Thrower.localRotation = Quaternion.Slerp(f.Thrower.localRotation, Quaternion.Euler(0, turretYaw, 0), 1f - Mathf.Exp(-dt * 8f));
-            }
+            float walk = Mathf.Clamp01(speed / 1.5f);
+            f.Phase += speed * dt * 2.6f;
+            float swing = Mathf.Sin(f.Phase) * 34f * walk;
+            f.LegL.localRotation = Quaternion.Euler(swing, 0, 0);
+            f.LegR.localRotation = Quaternion.Euler(-swing, 0, 0);
+            f.Body.localPosition = Vector3.up * (Mathf.Abs(Mathf.Cos(f.Phase)) * 0.07f * walk);
+            if (fired) f.Roll = 1f;
+            f.Roll = Mathf.MoveTowards(f.Roll, 0f, dt * 4f);
+            bool fighting = u.Activity == UnitActivity.Fighting && speed < 0.6f;
+            Pose(f, swing, fighting);
 
             if (fired && aim.HasValue && fx != null)
             {
-                Vector3 from;
-                if (f.Kind == UnitKind.Infantry) from = f.Root.transform.TransformPoint(new Vector3(0.4f, 1.9f, 0.6f));
-                else from = f.Thrower.TransformPoint(new Vector3(0, 0.6f, 1.5f));
-                bool heavy = f.Kind == UnitKind.Vehicle;
-                var col = heavy ? new Color(1f, 0.72f, 0.32f) : !FactionLook.Stone(f.Faction) ? new Color(1f, 0.92f, 0.62f) : new Color(1f, 0.80f, 0.55f);
-                fx.Shoot(from, aim.Value, heavy, col);
+                StrikesSoFar++;
+                var hit = FxLayer.ImpactOf(u.LastOutcome);
+                if (Gear.IsRanged(f.Kit.Weapon))
+                {
+                    var from = f.Root.transform.TransformPoint(new Vector3(0.4f, 1.9f, 0.6f));
+                    fx.Missile(from, aim.Value, f.Kit.Weapon == Ware.Sling, hit);
+                }
+                else
+                {
+                    // The blow lands at once: a swing flash on the foe (or the wall) by how it ended.
+                    var at = aim.Value - ModelKit.Dir(f.Yaw) * (u.TargetKind == TargetKind.Unit ? 0.3f : 0f);
+                    fx.Strike(at, hit == FxLayer.Impact.None ? FxLayer.Impact.Hit : hit);
+                }
             }
 
             if (u.Health < u.MaxHealth && fx != null)
-                fx.HealthBar(f.Pos + Vector3.up * UnitModels.BarHeight(u.Kind), UnitModels.BarWidth(u.Kind), u.HealthFraction);
+                fx.HealthBar(f.Pos + Vector3.up * UnitModels.BarHeight, UnitModels.BarWidth, u.HealthFraction);
+        }
+
+        /// <summary>Arm poses by weapon: <c>Roll</c> runs 1 to 0 after a strike.</summary>
+        private static void Pose(Fig f, float swing, bool fighting)
+        {
+            float r = f.Roll;
+            float shield = f.Kit.Shield != Ware.None ? (fighting ? -55f : -35f) : -10f - swing * 0.4f;
+            float arm;
+            switch (f.Kit.Weapon)
+            {
+                case Ware.Spear:
+                    // Held upright on the march, levelled in a fight, thrust forward on a strike.
+                    arm = fighting ? Mathf.Lerp(-70f, -100f, Mathf.Sin(r * Mathf.PI)) : -15f - swing * 0.4f;
+                    break;
+                case Ware.Bow:
+                    // Raised and aimed while fighting; the off hand draws.
+                    arm = fighting ? Mathf.Lerp(-88f, -78f, r) : -10f - swing * 0.4f;
+                    shield = fighting ? Mathf.Lerp(-85f, -60f, r) : shield;
+                    break;
+                case Ware.Sling:
+                    // A whirl overhead that snaps forward on the throw.
+                    arm = fighting ? (r > 0f ? Mathf.Lerp(-80f, -170f, r) : -150f + Mathf.Sin(Time.time * 18f) * 20f) : -10f - swing * 0.4f;
+                    break;
+                default:
+                    // Sword and axe: raised, then chopped down.
+                    arm = fighting ? Mathf.Lerp(-40f, -140f, r) : -15f - swing * 0.4f;
+                    break;
+            }
+            f.ArmR.localRotation = Quaternion.Euler(arm, 0, 0);
+            f.ArmL.localRotation = Quaternion.Euler(shield, 0, 0);
         }
     }
 }
