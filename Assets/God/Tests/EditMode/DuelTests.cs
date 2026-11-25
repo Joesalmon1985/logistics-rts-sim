@@ -30,34 +30,37 @@ namespace God.Sim.Tests
                 var s = MilitaryTuning.WeaponOf(w);
                 Assert.AreEqual(new[] { dmg, pierce, hit, cd, range, bld, (int)sp }, new[] { s.Damage, s.Pierce, s.HitPct, s.CooldownTicks, s.RangeMm, s.BuildingPct, (int)s.Special }, Wares.Name(w));
             }
-            W(Ware.Sword, 12, 2, 85, 8, 2000, 100, WeaponSpecial.Parry);
-            W(Ware.Spear, 10, 3, 80, 10, 3500, 75, WeaponSpecial.FirstStrike);
-            W(Ware.Axe, 16, 4, 75, 12, 2000, 200, WeaponSpecial.ShieldBreaker);
-            W(Ware.Bow, 9, 1, 65, 14, 25000, 25, WeaponSpecial.None);
-            W(Ware.Sling, 7, 0, 60, 9, 18000, 25, WeaponSpecial.Cheap);
+            // Q4 balance (plan stage 3, "Combat" table as tuned): fast parrying sword, piercing first-strike spear, heavy
+            // shield-breaking axe, long-range bow, quick cheap sling.
+            W(Ware.Sword, 11, 1, 80, 9, 2000, 100, WeaponSpecial.Parry);
+            W(Ware.Spear, 11, 4, 90, 10, 3500, 75, WeaponSpecial.FirstStrike);
+            W(Ware.Axe, 19, 3, 75, 13, 2000, 200, WeaponSpecial.ShieldBreaker);
+            W(Ware.Bow, 8, 2, 65, 13, 23000, 25, WeaponSpecial.None);
+            W(Ware.Sling, 6, 1, 75, 8, 16000, 25, WeaponSpecial.Cheap);
 
             void D(Ware w, int block, int vsRanged, int armour, int dodge, int speed, bool crits)
             {
                 var s = MilitaryTuning.DefenceOf(w);
                 Assert.AreEqual(new[] { block, vsRanged, armour, dodge, speed, crits ? 1 : 0 }, new[] { s.BlockPct, s.BlockVsRangedPct, s.Armour, s.DodgePct, s.SpeedPct, s.StopsCrits ? 1 : 0 }, Wares.Name(w));
             }
-            D(Ware.BigShield, 35, 55, 0, 0, -10, false);
-            D(Ware.SmallShield, 25, 25, 0, 5, 0, false);
+            D(Ware.BigShield, 25, 45, 0, 0, -10, false);
+            D(Ware.SmallShield, 15, 15, 0, 3, 0, false);
             D(Ware.Helmet, 0, 0, 2, 0, 0, true);
-            D(Ware.Breastplate, 0, 0, 5, -5, -20, false);
-            D(Ware.LightArmour, 0, 0, 2, 10, 0, false);
+            D(Ware.Breastplate, 0, 0, 4, -5, -15, false);
+            D(Ware.LightArmour, 0, 0, 1, 5, 0, false);
 
             var bare = St(Ware.Sword);
             Assert.AreEqual(100, bare.MaxHealth); Assert.AreEqual(300, bare.SpeedMmPerTick); Assert.AreEqual(5, bare.DodgePct, "base dodge");
             Assert.AreEqual(0, bare.Armour); Assert.AreEqual(0, bare.BlockPct);
             var full = St(Ware.Spear, Ware.SmallShield, Ware.Helmet, Ware.LightArmour);
-            Assert.AreEqual(20, full.DodgePct); Assert.AreEqual(4, full.Armour); Assert.AreEqual(25, full.BlockPct); Assert.IsTrue(full.StopsCrits);
+            Assert.AreEqual(13, full.DodgePct); Assert.AreEqual(3, full.Armour); Assert.AreEqual(15, full.BlockPct); Assert.IsTrue(full.StopsCrits);
             Assert.AreEqual(0, St(Ware.Axe, Ware.None, Ware.None, Ware.Breastplate).DodgePct, "5 base - 5");
-            Assert.AreEqual(25000, St(Ware.Bow).SightMm, "a bow sees as far as it shoots");
+            Assert.AreEqual(23000, St(Ware.Bow).SightMm, "a bow sees as far as it shoots");
+            Assert.AreEqual(23000, MilitaryTuning.SightMm, "and so does everyone: no one is shot by a bow it cannot see");
             Assert.AreEqual(MilitaryTuning.SightMm, St(Ware.Sword).SightMm);
-            Assert.AreEqual(12, MilitaryTuning.BuildingDamage(Ware.Sword));
-            Assert.AreEqual(32, MilitaryTuning.BuildingDamage(Ware.Axe));
-            Assert.AreEqual(7, MilitaryTuning.BuildingDamage(Ware.Spear));
+            Assert.AreEqual(11, MilitaryTuning.BuildingDamage(Ware.Sword));
+            Assert.AreEqual(38, MilitaryTuning.BuildingDamage(Ware.Axe));
+            Assert.AreEqual(8, MilitaryTuning.BuildingDamage(Ware.Spear));
             Assert.AreEqual(2, MilitaryTuning.BuildingDamage(Ware.Bow));
             Assert.AreEqual(1, MilitaryTuning.BuildingDamage(Ware.Sling));
         }
@@ -77,26 +80,57 @@ namespace God.Sim.Tests
         [Test]
         public void ArmourAndPierce_Math()
         {
-            Assert.AreEqual(12, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword), false));
-            Assert.AreEqual(24, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword), true), "crit doubles");
-            Assert.AreEqual(9, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.None, Ware.Breastplate), false), "12 - (5 - 2)");
-            Assert.AreEqual(21, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.None, Ware.Breastplate), true), "24 - 3");
-            Assert.AreEqual(12, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.Helmet), false), "armour 2 - pierce 2 = 0");
-            Assert.AreEqual(13, Duel.HitDamage(St(Ware.Axe), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "16 - (7 - 4)");
-            Assert.AreEqual(10, Duel.HitDamage(St(Ware.Spear), St(Ware.Sword, Ware.None, Ware.None, Ware.LightArmour), false), "pierce 3 beats armour 2: no bonus");
-            Assert.AreEqual(8, Duel.HitDamage(St(Ware.Bow), St(Ware.Sword, Ware.None, Ware.None, Ware.LightArmour), false), "9 - (2 - 1)");
-            Assert.AreEqual(1, Duel.HitDamage(St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "7 - 7 = 0, at least 1");
+            Assert.AreEqual(11, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword), false));
+            Assert.AreEqual(22, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword), true), "crit doubles");
+            Assert.AreEqual(8, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.None, Ware.Breastplate), false), "11 - (4 - 1)");
+            Assert.AreEqual(19, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.None, Ware.Breastplate), true), "22 - 3");
+            Assert.AreEqual(10, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.Helmet), false), "armour 2 - pierce 1 = 1");
+            Assert.AreEqual(16, Duel.HitDamage(St(Ware.Axe), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "19 - (6 - 3)");
+            Assert.AreEqual(9, Duel.HitDamage(St(Ware.Spear), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "11 - (6 - 4): the spear pierces armour best");
+            Assert.AreEqual(6, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "11 - (6 - 1): the sword does not");
+            Assert.AreEqual(8, Duel.HitDamage(St(Ware.Bow), St(Ware.Sword, Ware.None, Ware.None, Ware.LightArmour), false), "pierce 2 beats armour 1: no bonus");
+            Assert.AreEqual(1, Duel.HitDamage(St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "6 - (6 - 1)");
+            int min = MilitaryTuning.MinDamage;
+            try { MilitaryTuning.MinDamage = 3; Assert.AreEqual(3, Duel.HitDamage(St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "at least the minimum"); }
+            finally { MilitaryTuning.MinDamage = min; }
         }
 
         [Test]
         public void HitChance_IsHitMinusDodge()
         {
-            Assert.AreEqual(80, Duel.HitChance(St(Ware.Sword), St(Ware.Sword)));
-            Assert.AreEqual(70, Duel.HitChance(St(Ware.Sword), St(Ware.Axe, Ware.None, Ware.None, Ware.LightArmour)), "85 - 15");
-            Assert.AreEqual(85, Duel.HitChance(St(Ware.Sword), St(Ware.Axe, Ware.None, Ware.None, Ware.Breastplate)), "breastplate takes the base dodge away");
-            Assert.AreEqual(40, Duel.HitChance(St(Ware.Sling), St(Ware.Axe, Ware.SmallShield, Ware.None, Ware.LightArmour)), "60 - 20");
+            Assert.AreEqual(75, Duel.HitChance(St(Ware.Sword), St(Ware.Sword)));
+            Assert.AreEqual(70, Duel.HitChance(St(Ware.Sword), St(Ware.Axe, Ware.None, Ware.None, Ware.LightArmour)), "80 - 10");
+            Assert.AreEqual(80, Duel.HitChance(St(Ware.Sword), St(Ware.Axe, Ware.None, Ware.None, Ware.Breastplate)), "breastplate takes the base dodge away");
+            Assert.AreEqual(62, Duel.HitChance(St(Ware.Sling), St(Ware.Axe, Ware.SmallShield, Ware.None, Ware.LightArmour)), "75 - 13");
             var misses = Many(St(Ware.Sling), St(Ware.Axe, Ware.SmallShield, Ware.None, Ware.LightArmour), 4000).Count(r => r.Outcome == AttackOutcome.Miss);
-            Assert.That(misses, Is.InRange(2200, 2600), "about 60% miss");
+            Assert.That(misses, Is.InRange(1380, 1660), "about 38% miss");
+        }
+
+        [Test]
+        public void CloseQuarters_ABowOrSlingWithAFoeAtHandHitsHalfAsOften()
+        {
+            Assert.AreEqual(70, Duel.HitChance(St(Ware.Sling), St(Ware.Axe)));
+            Assert.AreEqual(35, Duel.HitChance(St(Ware.Sling), St(Ware.Axe), true), "half in close quarters");
+            Assert.AreEqual(30, Duel.HitChance(St(Ware.Bow), St(Ware.Axe), true), "60 / 2");
+            Assert.AreEqual(75, Duel.HitChance(St(Ware.Sword), St(Ware.Axe), true), "melee is not affected");
+            var far = Many(St(Ware.Bow), St(Ware.Axe), 4000).Count(r => r.Outcome != AttackOutcome.Miss);
+            var rng = new Rng(11);
+            int near = 0;
+            for (int i = 0; i < 4000; i++) if (Duel.Resolve(St(Ware.Bow), St(Ware.Axe), rng, true).Outcome != AttackOutcome.Miss) near++;
+            Assert.That(near * 100 / far, Is.InRange(42, 58), "about half the arrows land at close quarters");
+
+            // On the map: a bow shooting an axe that stands next to it uses the close-quarters chance.
+            var b = new Bed();
+            var (start, _) = b.LandLine(b.PlayerHq, 1);
+            var bow = b.Spawn(Faction.F0, new Kit(Ware.Bow), start);
+            var axe = b.Spawn(Faction.F1, new Kit(Ware.Axe), start);
+            axe.Health = 100000; bow.Health = 100000;
+            b.Log.Clear();
+            b.Step(1300);
+            var shots = b.Events<UnitFired>().Where(e => e.AttackerId == bow.Id).ToList();
+            Assert.Greater(shots.Count, 80);
+            int landed = shots.Count(e => e.Outcome != AttackOutcome.Miss);
+            Assert.That(landed * 100 / shots.Count, Is.InRange(18, 42), "about 30% land (60% halved)");
         }
 
         [Test]
@@ -104,7 +138,7 @@ namespace God.Sim.Tests
         {
             Assert.AreEqual(10, Duel.BlockChance(St(Ware.Spear), St(Ware.Sword)));
             Assert.AreEqual(0, Duel.BlockChance(St(Ware.Spear), St(Ware.Spear)), "no parry with a spear");
-            Assert.AreEqual(25, Duel.BlockChance(St(Ware.Spear), St(Ware.Sword, Ware.SmallShield)), "with a shield: the shield only");
+            Assert.AreEqual(15, Duel.BlockChance(St(Ware.Spear), St(Ware.Sword, Ware.SmallShield)), "with a shield: the shield only");
             Assert.AreEqual(5, Duel.BlockChance(St(Ware.Axe), St(Ware.Sword)), "an axe halves the parry too");
             var r = Many(St(Ware.Spear), St(Ware.Sword), 4000);
             int landed = r.Count(x => x.Outcome != AttackOutcome.Miss);
@@ -117,15 +151,15 @@ namespace God.Sim.Tests
         public void Special_ShieldBreaker_HalvesBlock_AndChipsThrough()
         {
             var big = St(Ware.Sword, Ware.BigShield);
-            Assert.AreEqual(35, Duel.BlockChance(St(Ware.Sword), big));
-            Assert.AreEqual(17, Duel.BlockChance(St(Ware.Axe), big));
+            Assert.AreEqual(25, Duel.BlockChance(St(Ware.Sword), big));
+            Assert.AreEqual(12, Duel.BlockChance(St(Ware.Axe), big));
             var axe = Many(St(Ware.Axe), big, 4000);
             var sword = Many(St(Ware.Sword), big, 4000);
             Assert.IsTrue(axe.Where(x => x.Outcome == AttackOutcome.Blocked).All(x => x.Damage == 3), "a blocked axe still does 3");
             Assert.IsTrue(sword.Where(x => x.Outcome == AttackOutcome.Blocked).All(x => x.Damage == 0));
             int axeLanded = axe.Count(x => x.Outcome != AttackOutcome.Miss), swordLanded = sword.Count(x => x.Outcome != AttackOutcome.Miss);
-            Assert.That(axe.Count(x => x.Outcome == AttackOutcome.Blocked) * 100 / axeLanded, Is.InRange(14, 20));
-            Assert.That(sword.Count(x => x.Outcome == AttackOutcome.Blocked) * 100 / swordLanded, Is.InRange(31, 39));
+            Assert.That(axe.Count(x => x.Outcome == AttackOutcome.Blocked) * 100 / axeLanded, Is.InRange(9, 15));
+            Assert.That(sword.Count(x => x.Outcome == AttackOutcome.Blocked) * 100 / swordLanded, Is.InRange(21, 29));
         }
 
         [Test]
@@ -133,13 +167,13 @@ namespace God.Sim.Tests
         {
             var big = St(Ware.Axe, Ware.BigShield);
             var small = St(Ware.Axe, Ware.SmallShield);
-            Assert.AreEqual(55, Duel.BlockChance(St(Ware.Bow), big));
-            Assert.AreEqual(55, Duel.BlockChance(St(Ware.Sling), big));
-            Assert.AreEqual(35, Duel.BlockChance(St(Ware.Spear), big));
-            Assert.AreEqual(25, Duel.BlockChance(St(Ware.Bow), small), "the small shield is the same against both");
+            Assert.AreEqual(45, Duel.BlockChance(St(Ware.Bow), big));
+            Assert.AreEqual(45, Duel.BlockChance(St(Ware.Sling), big));
+            Assert.AreEqual(25, Duel.BlockChance(St(Ware.Spear), big));
+            Assert.AreEqual(15, Duel.BlockChance(St(Ware.Bow), small), "the small shield is the same against both");
             var r = Many(St(Ware.Bow), big, 4000);
             int landed = r.Count(x => x.Outcome != AttackOutcome.Miss);
-            Assert.That(r.Count(x => x.Outcome == AttackOutcome.Blocked) * 100 / landed, Is.InRange(51, 59));
+            Assert.That(r.Count(x => x.Outcome == AttackOutcome.Blocked) * 100 / landed, Is.InRange(41, 49));
         }
 
         [Test]
@@ -149,7 +183,7 @@ namespace God.Sim.Tests
             var helm = Many(St(Ware.Sword), St(Ware.Spear, Ware.None, Ware.Helmet), 4000);
             int hits = bare.Count(x => x.Outcome == AttackOutcome.Hit || x.Outcome == AttackOutcome.Crit);
             Assert.That(bare.Count(x => x.Outcome == AttackOutcome.Crit) * 100 / hits, Is.InRange(8, 12), "about 10% crits");
-            Assert.IsTrue(bare.Where(x => x.Outcome == AttackOutcome.Crit).All(x => x.Damage == 24));
+            Assert.IsTrue(bare.Where(x => x.Outcome == AttackOutcome.Crit).All(x => x.Damage == 22));
             Assert.AreEqual(0, helm.Count(x => x.Outcome == AttackOutcome.Crit), "never a crit against a helmet");
             Assert.Greater(helm.Count(x => x.Outcome == AttackOutcome.Hit), 2000);
         }
@@ -281,8 +315,9 @@ namespace God.Sim.Tests
         };
 
         /// <summary>
-        /// 200 seeded duels per pairing, starting 25 m apart (a bow's range). Prints the win-rate table (row's wins in
-        /// percent against the column). Sanity bounds only; the plan's 60% target across a real game is package Q4's.
+        /// 200 seeded duels per pairing, starting 25 m apart (just beyond a bow's range). Prints the win-rate table (row's
+        /// wins in percent against the column). Sanity bounds; the plan's 60% target is about real games (see the Q4 balance
+        /// report in the play guide), where soldiers fight in crowds and ranged ones stand behind the melee.
         /// </summary>
         [Test]
         public void MatchupTable_NoKitBeatsEveryOtherByAWideMargin()
@@ -328,6 +363,62 @@ namespace God.Sim.Tests
             }
             // Defence gear is worth making: each kitted soldier beats the bare one with its weapon.
             for (int i = 0; i < 5; i++) Assert.Greater(pct[i + 5, i], 50, Kits[i + 5].name + " against " + Kits[i].name);
+            // Among the bare melee weapons none dominates: each wins 30 to 70% against the other two.
+            for (int i = 0; i < 3; i++) for (int j = 0; j < 3; j++) if (i != j) Assert.That(pct[i, j], Is.InRange(30, 70), Kits[i].name + " against " + Kits[j].name);
+            // One on one, a bare bow or sling loses to bare melee: ranged soldiers belong behind a melee line.
+            for (int i = 0; i < 3; i++) for (int j = 3; j < 5; j++) Assert.Less(pct[j, i], 50, Kits[j].name + " against " + Kits[i].name);
+        }
+
+        // ---------------- group battles ----------------
+
+        private static Kit[] Rep(Ware w, int n) => Enumerable.Repeat(new Kit(w), n).ToArray();
+        private static Kit[] Mix(Ware melee, int m, Ware ranged, int r) => Rep(melee, m).Concat(Rep(ranged, r)).ToArray();
+
+        /// <summary>
+        /// Five against five on a real island with the real military tick (<see cref="GroupBattle"/>): melee in front, ranged
+        /// one step behind. Prints the table. Bounds: no bare melee weapon routs another (20 to 80%); a mixed line (three
+        /// melee, two ranged) against five of the same melee still costs the five at least one and a half soldiers on
+        /// average. In a straight line-up of equal numbers the all-melee side wins most battles: bows and slings earn their
+        /// keep in real games, where they shoot from behind guards and busy melee (the Q4 balance report counts them as
+        /// the kits with the best duel records there).
+        /// </summary>
+        [Test]
+        public void GroupBattles_FiveAgainstFive_RangedBehindMelee()
+        {
+            const int N = 24;
+            var sb = new StringBuilder();
+            sb.AppendLine("Group battles, " + N + " each on islands 100.." + (100 + N - 1) + ": A's wins / B's wins / draws, soldiers left A / B (sum)");
+            (int pa, double lostA) Run(string name, Kit[] a, Kit[] b)
+            {
+                var r = GroupBattle.Series(a, b, N, 100);
+                sb.AppendLine("  " + name.PadRight(34) + (r.aWins * 100 / N).ToString().PadLeft(4) + "% /" + (r.bWins * 100 / N).ToString().PadLeft(4) + "% / " + r.draws
+                    + "   left " + r.leftA + " / " + r.leftB);
+                return ((r.aWins * 100 + r.draws * 50) / N, a.Length - (double)r.leftA / N);
+            }
+            var melee = new[] { Ware.Sword, Ware.Spear, Ware.Axe };
+            var ranged = new[] { Ware.Bow, Ware.Sling };
+            var duel = new List<(string, int)>();
+            for (int i = 0; i < 3; i++) for (int j = i + 1; j < 3; j++)
+                duel.Add(("5 " + melee[i] + " vs 5 " + melee[j], Run("5 " + melee[i] + " vs 5 " + melee[j], Rep(melee[i], 5), Rep(melee[j], 5)).pa));
+            var cost = new List<double>();
+            foreach (var m in melee) foreach (var r in ranged)
+            {
+                cost.Add(Run("5 " + m + " vs 3 " + m + " + 2 " + r, Rep(m, 5), Mix(m, 3, r, 2)).lostA);
+                Run("5 " + m + " vs 5 " + r, Rep(m, 5), Rep(r, 5));
+            }
+            Run("5 bow vs 5 sling", Rep(Ware.Bow, 5), Rep(Ware.Sling, 5));
+            TestContext.WriteLine(sb.ToString());
+            foreach (var (name, pa) in duel) Assert.That(pa, Is.InRange(20, 80), name);
+            Assert.GreaterOrEqual(cost.Average(), 1.5, "a mixed line costs five melee soldiers at least one and a half on average");
+        }
+
+        [Test]
+        public void GroupBattle_IsDeterministic()
+        {
+            var a = GroupBattle.Fight(Mix(Ware.Axe, 3, Ware.Bow, 2), Rep(Ware.Spear, 5), 7);
+            var b = GroupBattle.Fight(Mix(Ware.Axe, 3, Ware.Bow, 2), Rep(Ware.Spear, 5), 7);
+            Assert.AreEqual(a.Winner, b.Winner); Assert.AreEqual(a.Ticks, b.Ticks); Assert.AreEqual(a.LeftA, b.LeftA); Assert.AreEqual(a.LeftB, b.LeftB);
+            Assert.AreNotEqual(GroupBattle.Winner.Draw, a.Winner, "someone wins a five-a-side");
         }
     }
 }

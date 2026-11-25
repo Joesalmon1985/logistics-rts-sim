@@ -122,9 +122,9 @@ namespace God.Sim.Tests
         public void BuildingHealth_StartsFull_ByHqAndSize_AndNewBuildingsAreRegistered()
         {
             var b = new Bed();
-            Assert.AreEqual(1500, b.M.BuildingHealth(b.EnemyHq.Id));
-            Assert.AreEqual(1500, b.M.BuildingHealth(b.PlayerHq.Id));
-            foreach (var h in b.T.Hqs) Assert.AreEqual(1500, b.M.BuildingHealth(h.Id), "every faction HQ");
+            Assert.AreEqual(3000, b.M.BuildingHealth(b.EnemyHq.Id));
+            Assert.AreEqual(3000, b.M.BuildingHealth(b.PlayerHq.Id));
+            foreach (var h in b.T.Hqs) Assert.AreEqual(3000, b.M.BuildingHealth(h.Id), "every faction HQ");
             Assert.AreEqual(6, b.T.Buildings.Count, "only the six HQs at the start");
 
             int node = b.Node(b.PlayerHq, -3, 0);
@@ -173,7 +173,7 @@ namespace God.Sim.Tests
             var bare = b.Spawn(Faction.F0, new Kit(Ware.Sword), start);
             var heavy = b.Spawn(Faction.F0, new Kit(Ware.Sword, Ware.BigShield, Ware.None, Ware.Breastplate), start);
             Assert.AreEqual(300, MilitaryTuning.Of(bare.Kit).SpeedMmPerTick);
-            Assert.AreEqual(210, MilitaryTuning.Of(heavy.Kit).SpeedMmPerTick, "big shield -10%, breastplate -20%");
+            Assert.AreEqual(225, MilitaryTuning.Of(heavy.Kit).SpeedMmPerTick, "big shield -10%, breastplate -15%");
             int gx = Pathing.NodeMmX(b.G, b.Walk(start, dir, 8)), gz = Pathing.NodeMmZ(b.G, b.Walk(start, dir, 8));
             b.Do(new DevMoveUnit(bare.Id, gx, gz)); b.Do(new DevMoveUnit(heavy.Id, gx, gz));
             b.Step(20);
@@ -249,8 +249,8 @@ namespace God.Sim.Tests
                 switch (e.Outcome)
                 {
                     case AttackOutcome.Miss: case AttackOutcome.Blocked: Assert.AreEqual(0, e.Damage, "a sword blocked or missed does nothing"); break;
-                    case AttackOutcome.Hit: Assert.AreEqual(12, e.Damage); break;
-                    case AttackOutcome.Crit: Assert.AreEqual(24, e.Damage); break;
+                    case AttackOutcome.Hit: Assert.AreEqual(11, e.Damage); break;
+                    case AttackOutcome.Crit: Assert.AreEqual(22, e.Damage); break;
                     default: Assert.Fail("outcome " + e.Outcome); break;
                 }
                 Assert.LessOrEqual(Pathing.Dist(e.FromX, e.FromZ, e.ToX, e.ToZ), 2000, "melee: closed to 2 m");
@@ -258,7 +258,7 @@ namespace God.Sim.Tests
             foreach (var who in new[] { a, c })
             {
                 var mine = shots.Where(e => e.AttackerId == who.Id).ToList();
-                for (int i = 1; i < mine.Count; i++) Assert.AreEqual(8, mine[i].Tick - mine[i - 1].Tick, "8 ticks between sword blows");
+                for (int i = 1; i < mine.Count; i++) Assert.AreEqual(9, mine[i].Tick - mine[i - 1].Tick, "9 ticks between sword blows");
             }
             Assert.IsTrue(shots.Any(e => e.Outcome == AttackOutcome.Blocked), "a sword without a shield parries now and then");
             var dead = b.Events<UnitDied>().Single();
@@ -325,7 +325,7 @@ namespace God.Sim.Tests
             // They take whatever enemy building is nearest; hold the others up so only the woodcutter dies first.
             foreach (var r in b.M.Buildings) if (r.Id != target.Id) r.Health = r.MaxHealth = 1000000;
             Assert.IsTrue(b.RunUntil(600, () => b.T.BuildingById(target.Id) == null), "the woodcutter falls");
-            foreach (var e in b.Events<UnitFired>()) { Assert.AreEqual(AttackOutcome.Building, e.Outcome); Assert.AreEqual(32, e.Damage, "axe: 16 x 200% on buildings"); }
+            foreach (var e in b.Events<UnitFired>()) { Assert.AreEqual(AttackOutcome.Building, e.Outcome); Assert.AreEqual(38, e.Damage, "axe: 19 x 200% on buildings"); }
 
             var d = b.Events<BuildingDestroyed>().Single();
             Assert.AreEqual(target.Id, d.BuildingId); Assert.AreEqual(node, d.Node); Assert.IsFalse(d.IsHq);

@@ -29,8 +29,16 @@ namespace God.Sim
     /// </summary>
     public static class Duel
     {
-        /// <summary>Hit chance in percent: the weapon's hit % minus the target's dodge, clamped to 0..100.</summary>
-        public static int HitChance(in SoldierStats a, in SoldierStats t) => Clamp(a.W.HitPct - t.DodgePct);
+        /// <summary>
+        /// Hit chance in percent: the weapon's hit % minus the target's dodge, clamped to 0..100. A bow or sling shooting at
+        /// a foe in close quarters (<paramref name="close"/>: within <see cref="MilitaryTuning.CloseQuartersMm"/>) keeps only
+        /// <see cref="MilitaryTuning.CloseQuartersHitPct"/> percent of it: archers belong behind the melee line.
+        /// </summary>
+        public static int HitChance(in SoldierStats a, in SoldierStats t, bool close = false)
+        {
+            int hit = Clamp(a.W.HitPct - t.DodgePct);
+            return close && a.Ranged ? hit * MilitaryTuning.CloseQuartersHitPct / 100 : hit;
+        }
 
         /// <summary>
         /// Block chance in percent: the target's shield block (its ranged block against a bow or sling), plus the sword
@@ -53,9 +61,9 @@ namespace God.Sim
             return d < MilitaryTuning.MinDamage ? MilitaryTuning.MinDamage : d;
         }
 
-        public static AttackResult Resolve(in SoldierStats a, in SoldierStats t, Rng rng)
+        public static AttackResult Resolve(in SoldierStats a, in SoldierStats t, Rng rng, bool close = false)
         {
-            if (rng.NextInt(100) >= HitChance(a, t)) return new AttackResult(AttackOutcome.Miss, 0);
+            if (rng.NextInt(100) >= HitChance(a, t, close)) return new AttackResult(AttackOutcome.Miss, 0);
             int block = BlockChance(a, t);
             if (block > 0 && rng.NextInt(100) < block)
                 return new AttackResult(AttackOutcome.Blocked, a.W.Special == WeaponSpecial.ShieldBreaker ? MilitaryTuning.AxeChipDamage : 0);

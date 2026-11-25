@@ -5,7 +5,7 @@ namespace God.Sim
     /// <summary>
     /// A one-on-one duel on a straight line, off the map, with the same rules as the military tick: the soldiers walk
     /// towards each other at their kit's speed until each is within its own reach (ranged ones stop there), a spear's wait
-    /// is cut to 0 when a fight starts within its reach, attacks resolve with <see cref="Duel.Resolve(in SoldierStats, in SoldierStats, Rng)"/>
+    /// is cut to 0 when a fight starts within its reach, attacks resolve with <see cref="Duel.Resolve(in SoldierStats, in SoldierStats, Rng, bool)"/> (a bow or sling within close quarters at half its hit chance)
     /// in turn order (longer reach first, then the first soldier), and a soldier killed earlier in the tick does not strike.
     /// For balancing (package Q4) and tests; the game itself never calls it.
     /// </summary>
@@ -34,7 +34,7 @@ namespace God.Sim
                 {
                     var o = s == sa ? sb : sa;
                     if (s.Health <= 0 || o.Health <= 0) continue;
-                    var r = Duel.Resolve(s.St, o.St, rng);
+                    var r = Duel.Resolve(s.St, o.St, rng, System.Math.Abs(o.Pos - s.Pos) <= MilitaryTuning.CloseQuartersMm);
                     o.Health -= r.Damage;
                     s.Cooldown = s.St.CooldownTicks;
                 }

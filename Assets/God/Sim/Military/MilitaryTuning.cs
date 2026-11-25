@@ -82,18 +82,18 @@ namespace God.Sim
     {
         // ---------------- gear (plan stage 3 tables) ----------------
         // Weapon:        damage, pierce, hit %, ticks between attacks, range mm, vs buildings %, special
-        public static WeaponStats Sword = new WeaponStats(12, 2, 85, 8, 2000, 100, WeaponSpecial.Parry);
-        public static WeaponStats Spear = new WeaponStats(10, 3, 80, 10, 3500, 75, WeaponSpecial.FirstStrike);
-        public static WeaponStats Axe = new WeaponStats(16, 4, 75, 12, 2000, 200, WeaponSpecial.ShieldBreaker);
-        public static WeaponStats Bow = new WeaponStats(9, 1, 65, 14, 25000, 25, WeaponSpecial.None);
-        public static WeaponStats Sling = new WeaponStats(7, 0, 60, 9, 18000, 25, WeaponSpecial.Cheap);
+        public static WeaponStats Sword = new WeaponStats(11, 1, 80, 9, 2000, 100, WeaponSpecial.Parry);
+        public static WeaponStats Spear = new WeaponStats(11, 4, 90, 10, 3500, 75, WeaponSpecial.FirstStrike);
+        public static WeaponStats Axe = new WeaponStats(19, 3, 75, 13, 2000, 200, WeaponSpecial.ShieldBreaker);
+        public static WeaponStats Bow = new WeaponStats(8, 2, 65, 13, 23000, 25, WeaponSpecial.None);
+        public static WeaponStats Sling = new WeaponStats(6, 1, 75, 8, 16000, 25, WeaponSpecial.Cheap);
 
         // Defence:              block %, block vs ranged %, armour, dodge %, speed %, stops crits
-        public static DefenceStats BigShield = new DefenceStats(35, 55, 0, 0, -10, false);
-        public static DefenceStats SmallShield = new DefenceStats(25, 25, 0, 5, 0, false);
+        public static DefenceStats BigShield = new DefenceStats(25, 45, 0, 0, -10, false);
+        public static DefenceStats SmallShield = new DefenceStats(15, 15, 0, 3, 0, false);
         public static DefenceStats Helmet = new DefenceStats(0, 0, 2, 0, 0, true);
-        public static DefenceStats Breastplate = new DefenceStats(0, 0, 5, -5, -20, false);
-        public static DefenceStats LightArmour = new DefenceStats(0, 0, 2, 10, 0, false);
+        public static DefenceStats Breastplate = new DefenceStats(0, 0, 4, -5, -15, false);
+        public static DefenceStats LightArmour = new DefenceStats(0, 0, 1, 5, 0, false);
 
         /// <summary>Every soldier's health.</summary>
         public static int SoldierHealth = 100;
@@ -110,6 +110,10 @@ namespace God.Sim
         /// <summary>Shield breaker: the target's block is divided by this.</summary>
         public static int ShieldBreakerDivisor = 2;
         public static int MinDamage = 1;
+        /// <summary>Close quarters: a foe within this distance of a bow or sling (centre to centre)...</summary>
+        public static int CloseQuartersMm = 4000;
+        /// <summary>...leaves the shooter this percent of its hit chance.</summary>
+        public static int CloseQuartersHitPct = 50;
 
         /// <summary>Soldiers strike envoys from at least this far (an envoy is no fighter: no rolls, the weapon's damage).</summary>
         public static int EnvoyReachMm = 12000;
@@ -184,15 +188,16 @@ namespace God.Sim
             return d < MinDamage ? MinDamage : d;
         }
 
-        /// <summary>Sight of every unit: 20 m (a bow sees as far as it shoots).</summary>
-        public const int SightMm = 20000;
+        /// <summary>Sight of every unit: 23 m, as far as a bow shoots (Q4: before, a bow could shoot soldiers that could not see it).</summary>
+        public const int SightMm = 23000;
 
         // Buildings.
         public const int SmallHealth = 400;
         public const int MediumHealth = 700;
-        public const int HqHealth = 1500;
+        /// <summary>Q4: HQs and Citadels are sturdier than in stage 2 (1500 and 3000), so one big army cannot sweep a weak neighbour in minutes.</summary>
+        public const int HqHealth = 3000;
         /// <summary>Health of an HQ upgraded to a Citadel.</summary>
-        public const int CitadelHealth = 3000;
+        public const int CitadelHealth = 5000;
 
         public static int HealthOf(BuildingSize s) => s == BuildingSize.Hq ? HqHealth : s == BuildingSize.Medium ? MediumHealth : SmallHealth;
 

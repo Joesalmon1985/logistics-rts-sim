@@ -113,8 +113,9 @@ namespace God.Sim
                     if (tx != u.X || tz != u.Z) { u.FaceX = tx - u.X; u.FaceZ = tz - u.Z; }
                     if (tk == TargetKind.Unit)
                     {
-                        // A new foe within reach starts a fight: the spear strikes first.
-                        if (u.EngagedId != tid && !st.Ranged && st.W.Special == WeaponSpecial.FirstStrike) u.Cooldown = 0;
+                        // A fight starts (nobody was within reach the tick before): the spear strikes first. Switching from one
+                        // foe to the next within a melee is no new fight (else a spear in a crowd would strike every tick).
+                        if (u.EngagedId == 0 && !st.Ranged && st.W.Special == WeaponSpecial.FirstStrike) u.Cooldown = 0;
                         u.EngagedId = tid;
                     }
                     else u.EngagedId = 0;
@@ -254,7 +255,8 @@ namespace God.Sim
                 if (a.Kind == TargetKind.Unit)
                 {
                     if (!byId.TryGetValue(a.Id, out var t) || t.Health <= 0) continue;
-                    res = Duel.Resolve(st, MilitaryTuning.Of(t.Kit), m.Rng);
+                    bool close = st.Ranged && Pathing.Dist2(u.X, u.Z, t.X, t.Z) <= (long)MilitaryTuning.CloseQuartersMm * MilitaryTuning.CloseQuartersMm;
+                    res = Duel.Resolve(st, MilitaryTuning.Of(t.Kit), m.Rng, close);
                     t.Health -= res.Damage;
                     if (t.Health <= 0) killer[t.Id] = u.Id;
                 }
