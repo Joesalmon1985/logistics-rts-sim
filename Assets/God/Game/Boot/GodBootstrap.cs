@@ -117,6 +117,7 @@ namespace God.Game
                 // A script or a flag chose already: the AIs play (the smoke too: it watches six brains; not the dev runs).
                 if (flagged && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
             }
+            if (SkipStartCard && loaded == null) startAi = true; // tests skip the card: the game starts as after Play
             ShowStartCard = !SkipStartCard && !flagged && !startAi && loaded == null;
             BoardSpace.Topo = Sim.State.Board.Topology;
             if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)

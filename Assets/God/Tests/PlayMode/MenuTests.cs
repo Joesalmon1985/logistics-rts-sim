@@ -96,11 +96,11 @@ namespace God.Game.Tests
             yield return Load();
             Boot.StartAi();
             Boot.Running = false;
-            for (int i = 0; i < 900; i++) { Sim.Step(); if (i % 20 == 0) Boot.ThinkChains(); }
+            int before = Sim.State.Territory.Buildings.Count;
+            for (int i = 0; i < 900; i++) Sim.Step(); // the AI brains think inside Step
             Sim.DrainEvents();
             long tick = Sim.State.Tick; ulong hash = Sim.StateHash(); ulong seed = Boot.Seed;
-            var placed = Boot.Chains.Select(c => c.Placed.Count).ToArray();
-            Assert.Greater(placed.Sum(), 0, "the bots have built something");
+            Assert.Greater(Sim.State.Territory.Buildings.Count, before, "the AIs have built something");
 
             Boot.Menu.Open();
             Assert.IsTrue(Boot.Menu.Save(2));
@@ -116,8 +116,8 @@ namespace God.Game.Tests
             Assert.AreEqual(seed, Boot.Seed);
             Assert.IsFalse(Boot.Running, "a loaded game waits for the player");
             Assert.IsFalse(Boot.Menu.IsOpen);
-            Assert.AreEqual(5, Boot.Chains.Count, "the AIs of the other five factions are restarted by StartAi");
-            CollectionAssert.AreEqual(placed, Boot.Chains.Select(c => c.Placed.Count).ToArray(), "and know what they built");
+            Assert.AreSame(Sim, AiHost.Director.Sim, "the AIs are restarted on the loaded game");
+            Assert.AreEqual(5, AiHost.Director.Brains.Count, "one brain for each of the other five factions");
         }
 
         [UnityTest]
@@ -188,7 +188,7 @@ namespace God.Game.Tests
             Boot.Menu.SeedText = Boot.Seed.ToString();
             Boot.Menu.StartPlay();
             Assert.IsFalse(Boot.Menu.Blocking, "Play with the same seed just starts");
-            Assert.AreEqual(5, Boot.Chains.Count, "five AIs");
+            Assert.AreEqual(5, AiHost.Director.Brains.Count, "five AIs");
             yield return new WaitForSeconds(0.5f);
             Assert.Greater(Sim.State.Tick, tick);
 
@@ -209,7 +209,7 @@ namespace God.Game.Tests
             Assert.AreEqual(4242UL, Boot.Seed);
             Assert.IsTrue(Boot.Hud.Watching);
             Assert.IsFalse(Boot.ShowStartCard, "a restart does not ask again");
-            Assert.AreEqual(6, Boot.Chains.Count);
+            Assert.AreEqual(6, AiHost.Director.Brains.Count);
         }
 
         // ---------------------------------------------------------------- watch mode
