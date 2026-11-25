@@ -1,8 +1,8 @@
 namespace God.Sim
 {
     /// <summary>
-    /// The trade seam of the faction AI. P9 has no trade (P8 builds envoys, <c>OfferTrade</c> and <c>ITradeJudge</c> in
-    /// parallel); P11 plugs an implementation in through <see cref="AiDirector.Attach"/> or <see cref="AiBrain.Trader"/>.
+    /// The trade seam of the faction AI. P11's <see cref="AiTrader"/> is the implementation the game uses, plugged in
+    /// through <see cref="AiDirector.Attach"/> (or <see cref="AiBrain.Trader"/>); <see cref="NoTrade"/> is the default.
     /// Every hook runs inside a brain's think, on sim ticks, and must stay deterministic: read <see cref="GodState"/>,
     /// send commands through <see cref="AiBrain.Sim"/> only, and use <see cref="AiBrain.ThinkRng"/> for any randomness.
     /// Ware arrays are indexed by <c>(int)Ware</c>, <see cref="Wares.Count"/> long.

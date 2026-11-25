@@ -15,6 +15,10 @@ namespace God.Sim.Tests
             public ulong Seed;
             public long Ticks;
             public int Wars, Peaces, Captures, Eliminations, Citadels, HqsPlaced, UnitsMade, InvariantChecks;
+            /// <summary>Trades: offers sent, accepted, refused, envoys killed (P11).</summary>
+            public int Offered, Accepted, Refused, Killed;
+            /// <summary>Highest VP each faction reached during the game.</summary>
+            public readonly int[] MaxVp = new int[FactionInfo.Max];
             public readonly List<string> Lines = new List<string>();
             public double Minutes => Ticks / 600.0;
         }
@@ -32,10 +36,10 @@ namespace God.Sim.Tests
         }
 
         /// <summary>Six brains (watch mode) until game over or the cap, invariants every 500 ticks.</summary>
-        public static (GodSim sim, AiDirector ai, GameLog log) Play(ulong seed, long maxTicks, int logEvery = 0, Action<GodSim> each = null)
+        public static (GodSim sim, AiDirector ai, GameLog log) Play(ulong seed, long maxTicks, int logEvery = 0, Action<GodSim> each = null, IAiTrader trader = null)
         {
             var sim = GodSim.Create(GameSetup.Watch(seed));
-            var ai = AiDirector.Attach(sim, sim.State.Setup.Factions);
+            var ai = AiDirector.Attach(sim, sim.State.Setup.Factions, null, trader);
             var log = new GameLog { Seed = seed };
             var s = sim.State;
             while (!s.IsGameOver && s.Tick < maxTicks)
@@ -52,8 +56,14 @@ namespace God.Sim.Tests
                         case CitadelCompleted _: log.Citadels++; break;
                         case HqPlaced _: log.HqsPlaced++; break;
                         case UnitProduced _: log.UnitsMade++; break;
+                        case TradeOffered _: log.Offered++; break;
+                        case TradeAccepted _: log.Accepted++; break;
+                        case TradeRefused _: log.Refused++; break;
+                        case EnvoyKilled _: log.Killed++; break;
                     }
                 }
+                if (s.Tick % 100 == 0)
+                    for (int i = 0; i < s.FactionCount; i++) log.MaxVp[i] = Math.Max(log.MaxVp[i], FactionRules.VictoryPoints(s, (Faction)i));
                 if (s.Tick % 500 == 0)
                 {
                     var bad = SimInvariants.Check(s);
@@ -68,6 +78,7 @@ namespace God.Sim.Tests
                 each?.Invoke(sim);
             }
             log.Ticks = s.Tick;
+            for (int i = 0; i < s.FactionCount; i++) log.MaxVp[i] = Math.Max(log.MaxVp[i], FactionRules.VictoryPoints(s, (Faction)i));
             return (sim, ai, log);
         }
 

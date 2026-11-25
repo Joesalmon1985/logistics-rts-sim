@@ -124,5 +124,21 @@ namespace God.Sim
         /// <summary>A faction is losing badly against an enemy whose units at its HQs are at least this percent of its own army plus <see cref="LosingSlack"/>.</summary>
         public int LosingPercent = 200;
         public int LosingSlack = 6;
+
+        // ---------------- trade (P11, AiTrader) ----------------
+
+        /// <summary>A brain sends at most one new offer per this many ticks (300 = 30 s).</summary>
+        public int TradeIntervalTicks = 300;
+        /// <summary>An offer refused by a partner is not sent to it again (same wares) for this many ticks (1200 = 2 min).</summary>
+        public int TradeRefusedMemoryTicks = 1200;
+        /// <summary>A deal is fair when what the judge receives is worth at least this percent of what it pays.</summary>
+        public int TradeFairPercent = 75;
+        /// <summary>Most units of one ware asked for in one offer.</summary>
+        public int TradeMaxWant = 4;
+        /// <summary>
+        /// A ware the faction could make itself is still traded for when it has at least this many free units of surplus
+        /// to pay with (trade for target builds and to shed surplus); wares it lacks the land for are traded for at once.
+        /// </summary>
+        public int TradeShedSurplus = 10;
     }
 }

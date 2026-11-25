@@ -10,7 +10,7 @@ namespace God.Sim
     /// <item>look: a snapshot of its HQs, buildings, free wares, road network, armies and VP;</item>
     /// <item>diplomacy: war and peace by the owner rules (<see cref="Diplomacy"/>);</item>
     /// <item>army: guards on every HQ, factory pause and ratio, attack marks (<see cref="Army"/>);</item>
-    /// <item>trade hooks (<see cref="IAiTrader"/>, no-op until P11);</item>
+    /// <item>trade hooks (<see cref="IAiTrader"/>: answer offers first, propose trades last; <see cref="AiTrader"/> since P11);</item>
     /// <item>economy: input priorities, then up to <see cref="AiTuning.BuildsPerThink"/> builds from an ordered want list
     /// (chain, expansion, Citadels, growth) with ware reservations, then road repairs.</item>
     /// </list>
@@ -22,7 +22,7 @@ namespace God.Sim
         public readonly GodSim Sim;
         public readonly Faction Side;
         public readonly AiTuning Tune;
-        /// <summary>The trade seam; <see cref="NoTrade"/> until P11 plugs in P8's envoys.</summary>
+        /// <summary>The trade seam (<see cref="NoTrade"/> unless a trader is given; the game gives <see cref="AiTrader"/>).</summary>
         public IAiTrader Trader;
 
         /// <summary>Seeded per faction and tick (stateless): the only source of randomness of a think.</summary>
@@ -288,15 +288,18 @@ namespace God.Sim
             for (int w = 0; w < Wares.Count; w++) _budget[w] -= cost[w];
         }
 
-        /// <summary>Wares the faction is short of for its next builds and Citadel (for the trader): positive counts.</summary>
+        /// <summary>
+        /// Wares the faction is short of for its open sites, its next HQ and a Citadel (for the trader): positive counts.
+        /// The mirror of <see cref="WareSurplus"/>: a ware is needed below that reserve and surplus above it.
+        /// </summary>
         public int[] WareNeeds()
         {
             var need = new int[Wares.Count];
             if (S.Territory == null) return need;
             Look();
             for (int w = 0; w < Wares.Count; w++) if (_budget[w] < 0) need[w] = -_budget[w];
-            var citadel = EconomyDefs.Citadel.Cost;
-            for (int w = 0; w < Wares.Count; w++) need[w] = Math.Max(need[w], citadel[w] - Math.Max(0, _budget[w]));
+            var citadel = EconomyDefs.Citadel.Cost; var hq = EconomyDefs.Hq.Cost;
+            for (int w = 0; w < Wares.Count; w++) need[w] = Math.Max(need[w], citadel[w] + hq[w] - Math.Max(0, _budget[w]));
             return need;
         }
 
@@ -310,6 +313,28 @@ namespace God.Sim
             for (int w = 0; w < Wares.Count; w++) keep[w] = EconomyDefs.Citadel.Cost[w] + EconomyDefs.Hq.Cost[w];
             for (int w = 1; w < Wares.Count; w++) have[w] = Math.Max(0, _budget[w] - keep[w]);
             return have;
+        }
+
+        /// <summary>True when one of the faction's finished HQ areas touches land of this terrain (as of the last look).</summary>
+        public bool HasLand(Terrain tt) => _lands.Contains(tt);
+
+        /// <summary>
+        /// True when the faction cannot make this ware itself: a land its chain needs is in none of its HQ areas (stone and
+        /// ore need mountain; logs, planks and kindling forest; clay hills; grain fields; bricks hills and forest; iron
+        /// mountain and forest). Uses the last look (call <see cref="WareNeeds"/> first).
+        /// </summary>
+        public bool LacksLandFor(Ware w)
+        {
+            switch (w)
+            {
+                case Ware.Log: case Ware.Plank: case Ware.Kindling: return !HasLand(Terrain.Forest);
+                case Ware.Clay: return !HasLand(Terrain.Hills);
+                case Ware.Grain: return !HasLand(Terrain.Fields);
+                case Ware.Rock: case Ware.Stone: case Ware.Ore: return !HasLand(Terrain.Mountain);
+                case Ware.Brick: return !HasLand(Terrain.Hills) || !HasLand(Terrain.Forest);
+                case Ware.Iron: return !HasLand(Terrain.Mountain) || !HasLand(Terrain.Forest);
+                default: return false;
+            }
         }
 
         // ---------------- input priorities and factories ----------------
@@ -596,7 +621,9 @@ namespace God.Sim
             var cands = new List<(int score, int corner)>();
             foreach (int c in Topo.Corners)
                 if (CanReachCorner(c) && (!urgent || GivesMissingCritical(c))) cands.Add((CornerScore(c), c));
-            if (cands.Count == 0) return;
+            // P11: no corner in reach gives the missing land: the normal expansion later in the want list may still spread
+            // towards it (before, this blocked every HQ and the faction stalled on one HQ).
+            if (cands.Count == 0) { if (urgent) _hqDone = false; return; }
             cands.Sort((a, b) => a.score != b.score ? b.score.CompareTo(a.score) : a.corner.CompareTo(b.corner));
             var g = G; int tries = 0;
             foreach (var c in cands)

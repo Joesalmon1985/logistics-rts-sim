@@ -50,7 +50,8 @@ namespace God.Sim
 
         /// <summary>
         /// Gives each listed faction a brain and installs the director as a sim system. Factions not in the game are skipped;
-        /// duplicates are ignored. Optional trader (default <see cref="NoTrade"/>).
+        /// duplicates are ignored. Optional trader (default <see cref="NoTrade"/>); any other trader also becomes the
+        /// game's trade judge (<see cref="AiTradeJudge"/>), and an <see cref="AiTrader"/> is bound to this director.
         /// </summary>
         public static AiDirector Attach(GodSim sim, IEnumerable<Faction> factions, AiTuning tuning = null, IAiTrader trader = null)
         {
@@ -60,6 +61,9 @@ namespace God.Sim
             if (factions != null) foreach (var f in factions) if (sim.State.Setup.InGame((int)f)) seen.Add((int)f);
             foreach (int f in seen) d._brains.Add(new AiBrain(sim, (Faction)f, d.Tuning, trader));
             sim.AddSystem(SystemOrder, d);
+            // P11: an AI trader answers offers to its brains through the trade judge (not saved: set again on every start).
+            if (trader is AiTrader at) at.Director = d;
+            if (trader != null && !(trader is NoTrade) && sim.State.Trade != null) sim.State.Trade.Judge = new AiTradeJudge(d, trader);
             return d;
         }
 

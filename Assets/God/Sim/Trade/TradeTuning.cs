@@ -18,7 +18,7 @@ namespace God.Sim
         /// <summary>An envoy that cannot move for this many ticks gives up (refused, or its goods lost when homeward).</summary>
         public const int StuckTicks = 50;
         /// <summary>Completed trades kept in the history.</summary>
-        public const int HistorySize = 24;
+        public const int HistorySize = 64;
         /// <summary>System order: after the military (units shoot envoys), before the faction system.</summary>
         public const int SystemOrder = 350;
         /// <summary>The default judge accepts when the target gets at least this percent of the value it pays.</summary>
