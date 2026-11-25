@@ -80,7 +80,8 @@ namespace God.Game.Tests
         [UnityTest]
         public IEnumerator Screenshots_MidGameIsland_AndAWarFront()
         {
-            yield return LoadWatch(1);
+            // Seed 5: since the AIs trade (P11), seed 1 ends by minute 18 before a big front forms; seed 5 runs 40 minutes.
+            yield return LoadWatch(5);
             var boot = GodBootstrap.Instance;
             var sim = boot.Sim; var s = sim.State; var g = s.Territory.Grid;
             var cam = boot.GodCamera;
