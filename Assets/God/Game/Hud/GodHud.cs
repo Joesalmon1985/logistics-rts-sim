@@ -86,9 +86,12 @@ namespace God.Game
         /// <summary>1x, 2x or 4x. Choosing a speed also resumes a paused game.</summary>
         public void SetSpeed(float speed) { Boot.Speed = speed; Boot.Running = true; }
 
+        /// <summary>The speeds on offer: 1x, 2x, 4x; watch mode adds 8x and 16x.</summary>
+        public float[] Speeds => Watching ? new[] { 1f, 2f, 4f, 8f, 16f } : new[] { 1f, 2f, 4f };
+
         public void StepSpeed(int dir)
         {
-            float[] s = { 1f, 2f, 4f };
+            float[] s = Speeds;
             int i = 0;
             for (int k = 0; k < s.Length; k++) if (Boot.Speed >= s[k] - 0.01f) i = k;
             SetSpeed(s[Mathf.Clamp(i + dir, 0, s.Length - 1)]);
@@ -151,6 +154,18 @@ namespace God.Game
             if (Mode == HudMode.Road && RoadNodes.Count > 0) { ClearRoad(); return; }
             if (Mode != HudMode.Normal) { Mode = HudMode.Normal; PlaceKind = null; ClearRoad(); return; }
             ClearSelection();
+        }
+
+        /// <summary>
+        /// Esc: first it puts down the tool in hand (or the road being laid), then it closes an open card; only with neither does
+        /// it open the menu. Inside the menu it steps back or closes it. The end card and the start card ignore it.
+        /// </summary>
+        public void PressEscape()
+        {
+            var menu = Boot.Menu;
+            if (menu != null && menu.IsOpen) { menu.Back(); return; }
+            if (Mode != HudMode.Normal || SelectedBuilding != 0 || SelectedNode >= 0) { Cancel(); return; }
+            if (Outcome == GameOutcome.Playing) menu?.Open();
         }
 
         public void ClearSelection() { SelectedBuilding = 0; SelectedNode = -1; }
@@ -391,10 +406,11 @@ namespace God.Game
             var mouse = DebugCursor ?? (Vector2)Input.mousePosition;
             if (Time.unscaledTime > _helpUntil) HelpVisible = false;
 
+            if (Input.GetKeyDown(KeyCode.Escape)) PressEscape();
+            if (Boot.Menu != null && Boot.Menu.Blocking) { HoverNode = -1; return; } // the menu or the start card holds the game
             if (Input.GetKeyDown(KeyCode.Space)) TogglePause();
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus)) StepSpeed(1);
             if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus)) StepSpeed(-1);
-            if (Input.GetKeyDown(KeyCode.Escape)) Cancel();
 
             bool over = IsOverUi(mouse);
             HoverNode = -1;

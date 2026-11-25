@@ -50,6 +50,36 @@ namespace God.Game
         public ChainBot Chain => Chains.Find(c => c.Side == FactionLook.Viewer(Sim.State));
         /// <summary>The setup for the next scene load (watch mode, another human faction); consumed by the next bootstrap.</summary>
         public static GameSetup PendingSetup;
+        /// <summary>
+        /// A game read from a save, for the next scene load (set by <see cref="LoadSlot"/>); consumed by the next bootstrap, which
+        /// uses its sim as it is instead of dealing a new island.
+        /// </summary>
+        public static LoadedGame PendingLoad;
+        /// <summary>Set by restarts and loads: the next bootstrap skips the start card and starts the AIs.</summary>
+        public static bool PendingStartAi;
+        /// <summary>Tests: never show the start card (it also pauses the game until a choice is made).</summary>
+        public static bool SkipStartCard;
+        /// <summary>True when this bootstrap shows the start card first.</summary>
+        public bool ShowStartCard { get; private set; }
+        /// <summary>Esc menu, start card and watch-mode controls (P10).</summary>
+        public GameMenu Menu { get; private set; }
+        /// <summary>Toasts for big events (P10).</summary>
+        public ToastFeed Toasts { get; private set; }
+        /// <summary>Tall faction standards over every HQ and Citadel (P10).</summary>
+        public StandardLayer Standards { get; private set; }
+        /// <summary>Watch-mode camera keys (P10).</summary>
+        public WatchCamera WatchCam { get; private set; }
+        /// <summary>Raised for every sim event the bootstrap drains each frame (toasts, effects). Tests may call <see cref="PumpEvents"/>.</summary>
+        public event System.Action<SimEvent> SimEventRaised;
+        private readonly System.Collections.Generic.List<ISaveExtra> _saveExtras = new System.Collections.Generic.List<ISaveExtra>();
+
+        /// <summary>A save read and turned into a sim, waiting for the scene to reload.</summary>
+        public sealed class LoadedGame
+        {
+            public SaveFile File;
+            public GodSim Sim;
+        }
+
         /// <summary>The human faction, or null in watch mode (<c>-godwatch</c>).</summary>
         public Faction? Human => FactionLook.Human(Sim.State);
         private long _lastThink;
@@ -58,15 +88,36 @@ namespace God.Game
         private float _framedAspect = -1f;
         private float _acc;
 
+        private static bool HasArg(string name) => System.Array.IndexOf(System.Environment.GetCommandLineArgs(), name) >= 0;
+
+        /// <summary>Command-line flags that skip the start card: the player (or a script) has already chosen.</summary>
+        private static readonly string[] SkipCardFlags = { "-godseed", "-godwatch", "-godplay", "-godsmoke", "-godsample", "-godfight", "-godrun" };
+
         private void Awake()
         {
             Instance = this;
-            seed = SeedFromCommandLine(seed);
-            if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
-            var setup = PendingSetup ?? new GameSetup(seed, System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godwatch") >= 0 ? GameSetup.NoHuman : 0);
-            PendingSetup = null;
-            setup.Seed = seed;
-            Sim = GodSim.Create(setup);
+            bool flagged = false;
+            foreach (var f in SkipCardFlags) if (HasArg(f)) flagged = true;
+            var loaded = PendingLoad; PendingLoad = null;
+            bool startAi = PendingStartAi; PendingStartAi = false;
+            if (loaded != null)
+            {
+                Sim = loaded.Sim;
+                seed = Sim.State.Seed;
+                startAi = true;
+            }
+            else
+            {
+                seed = SeedFromCommandLine(seed);
+                if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
+                var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") ? GameSetup.NoHuman : 0);
+                PendingSetup = null;
+                setup.Seed = seed;
+                Sim = GodSim.Create(setup);
+                // A script or a flag chose already: the AIs play (not in the smoke and dev runs, which bring their own bots).
+                if (flagged && !HasArg("-godsmoke") && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
+            }
+            ShowStartCard = !SkipStartCard && !flagged && !startAi && loaded == null;
             BoardSpace.Topo = Sim.State.Board.Topology;
             if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)
                 LegacyIsland = HexDressingView.Create(Sim.State.Board, transform);
@@ -76,8 +127,17 @@ namespace God.Game
             Territory.Built = () => { int n = 0; foreach (var eb in Sim.State.Economy.Buildings) if (eb.Built) n++; return n; };
             Economy = EconomyView.Create(Sim, transform);
             Military = MilitaryView.Create(Sim, transform);
+            Standards = StandardLayer.Create(Sim, transform);
             ReadRunArgs();
             SmokeRun.StartIfAsked(this);
+            _saveExtras.Add(new ChainBotsSave(this));
+            if (startAi) StartAi();
+            if (loaded != null)
+            {
+                // A loaded game waits for the player: Space (or Play) goes on.
+                foreach (var x in _saveExtras) if (loaded.File.Extras.TryGetValue(x.SaveKey, out var data)) x.LoadState(data);
+                Running = false;
+            }
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.62f, 0.70f, 0.82f);
@@ -98,6 +158,72 @@ namespace God.Game
             Rig = GodCameraRig.Attach(GodCamera);
             if (Island != null) Rig.HeightAt = (x, z) => Island.HeightAt(new Vector3(x, 0f, z));
             Hud = GodHud.Create(this, Rig);
+            Toasts = ToastFeed.Create(this);
+            Menu = GameMenu.Create(this);
+            WatchCam = WatchCamera.Create(this);
+            if (loaded != null) Hud.Toast("Game loaded. Press Space to go on.");
+        }
+
+        // ---------------------------------------------------------------- save, load, bots (P10)
+
+        /// <summary>Systems outside the sim that put their state into a save (see <see cref="ISaveExtra"/>). The faction AI registers here.</summary>
+        public System.Collections.Generic.IReadOnlyList<ISaveExtra> SaveExtras => _saveExtras;
+
+        public void RegisterSaveExtra(ISaveExtra extra)
+        {
+            if (extra == null) return;
+            _saveExtras.RemoveAll(x => x.SaveKey == extra.SaveKey);
+            _saveExtras.Add(extra);
+        }
+
+        /// <summary>
+        /// Starts the AI for every faction without a human (all six in watch mode): for now the scripted economy builders;
+        /// the faction AI replaces them here. Called for a new game and after every load, so a loaded game's bots play on.
+        /// </summary>
+        public void StartAi()
+        {
+            Chains.Clear();
+            var s = Sim.State;
+            foreach (var f in s.Setup.Factions)
+                if (!FactionLook.IsHuman(s, f) && !s.Factions.IsEliminated(f)) Chains.Add(new ChainBot(Sim, f));
+            _lastThink = s.Tick;
+        }
+
+        /// <summary>Snapshot of the running game: the sim, what is queued, and every registered extra.</summary>
+        public SaveFile MakeSave() => SaveFile.From(Sim, System.DateTime.UtcNow.ToString("o"), _saveExtras);
+
+        public void SaveToSlot(int slot) { SaveStore.Write(slot, MakeSave()); }
+
+        /// <summary>Reads a slot and reloads the scene into it. Throws <see cref="SaveException"/> when it cannot be read; the game goes on then.</summary>
+        public void LoadSlot(int slot) { LoadGame(SaveStore.Read(slot)); }
+
+        public void LoadGame(SaveFile file)
+        {
+            var sim = file.ToSim(); // throws before anything changes
+            PendingLoad = new LoadedGame { File = file, Sim = sim };
+            ReloadScene();
+        }
+
+        private static void ReloadScene() =>
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+
+        /// <summary>A fresh seed for a new island (view side: any value will do).</summary>
+        public static ulong RandomSeed() => (ulong)(System.Guid.NewGuid().GetHashCode() & 0x7FFFFFFF) % 1000000000UL + 1UL;
+
+        /// <summary>Starts another game on the next scene load: a seed, play (human faction 0) or watch.</summary>
+        public static void StartNew(ulong seed, bool watch)
+        {
+            PendingSeed = seed;
+            PendingSetup = new GameSetup(seed, watch ? GameSetup.NoHuman : 0);
+            PendingStartAi = true;
+            ReloadScene();
+        }
+
+        /// <summary>Hands the frame's sim events to listeners (toasts). The bootstrap calls it every frame; tests may too.</summary>
+        public void PumpEvents()
+        {
+            var list = Sim.DrainEvents();
+            if (SimEventRaised != null) foreach (var e in list) SimEventRaised(e);
         }
 
         /// <summary>The seed the next game uses: the same one, or a fresh one for a new island. Sets <see cref="PendingSeed"/>.</summary>
@@ -112,6 +238,7 @@ namespace God.Game
             }
             PendingSeed = next;
             PendingSetup = new GameSetup(next, Sim.State.Setup.Human, Sim.State.Setup.FactionCount);
+            PendingStartAi = true;
             return next;
         }
 
@@ -119,7 +246,7 @@ namespace God.Game
         public void Restart(bool newIsland)
         {
             PrepareRestart(newIsland);
-            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+            ReloadScene();
         }
 
         private void Update()
@@ -131,15 +258,16 @@ namespace God.Game
             if (Input.GetKeyDown(KeyCode.F3)) Running = !Running;
             if (Input.GetKeyDown(KeyCode.F4)) Speed = Mathf.Min(Speed * 2f, 64f);
             if (Input.GetKeyDown(KeyCode.F5)) Speed = Mathf.Max(Speed * 0.5f, 0.25f);
-            if (Sim.State.IsGameOver) return;
+            if (Menu != null && Menu.Blocking) return; // the menu or the start card holds the game
+            if (Sim.State.IsGameOver) { PumpEvents(); return; }
             // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
-            if (!Running) { if (Sim.PendingCommands.Count > 0) { Sim.Step(); Sim.DrainEvents(); } return; }
+            if (!Running) { if (Sim.PendingCommands.Count > 0) { Sim.Step(); PumpEvents(); } return; }
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
             if (steps > 0) Sim.Step(steps);
             if (Chains.Count > 0 && Sim.State.Tick - _lastThink >= 20) { _lastThink = Sim.State.Tick; ThinkChains(); }
-            Sim.DrainEvents();
+            PumpEvents();
         }
 
         /// <summary>One decision of every chain bot (the eliminated ones say nothing).</summary>

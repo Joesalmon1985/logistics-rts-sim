@@ -15,6 +15,10 @@ Stage 2 (P7, 25 Nov): the island has 30 hexes and **six factions** (Amber, Azure
 | Pause | Space, or the Play/Pause button on the cloud |
 | Speed | `+` and `-`, or the 1x / 2x / 4x buttons |
 | Cancel a tool | Right-click or Esc |
+| Menu: save, load, new island, watch, quit | Esc with no tool in hand (it pauses the game). Three save slots. |
+| Watch mode only | 1 to 6 fly to a faction's HQ, Tab to the latest capture or fight, speeds up to 16x |
+
+A small card at the start offers **Play** (you are Amber), **Watch** (six AIs), a seed with a dice button, and **Load**. Saves are in the game's data folder, `saves/slot1.json` to `slot3.json`.
 
 ## Build
 

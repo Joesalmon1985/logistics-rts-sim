@@ -31,7 +31,7 @@ namespace God.Game
     /// wheelwright's shed with a big door. The faction colour shows only on the ridge cap, eave band and banner.
     /// Local space, feet at y = 0, the door (+Z) faces the building's flag. View code only.
     /// </summary>
-    public static class BuildingModels
+    public static partial class BuildingModels
     {
         /// <summary>Kinds with their own model (the HQ uses <see cref="TerritoryTuning.HqKind"/>).</summary>
         public static readonly string[] Kinds =
@@ -88,6 +88,7 @@ namespace God.Game
             switch (kind)
             {
                 case TerritoryTuning.HqKind: Hq(mb, st, rig); break;
+                case CitadelKind: Citadel(mb, st, rig); break;
                 case BuildingKinds.Woodcutter: Woodcutter(mb, st, rig); break;
                 case BuildingKinds.ClayPit: ClayPit(mb, st, rig); break;
                 case BuildingKinds.Quarry: Quarry(mb, st, rig); break;

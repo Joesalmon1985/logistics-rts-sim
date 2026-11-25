@@ -27,6 +27,7 @@ namespace God.Game
         /// <summary>True when a screen point (pixels, origin bottom-left) is over a HUD panel.</summary>
         public bool IsOverUi(Vector2 screen)
         {
+            if (Boot != null && Boot.Menu != null && Boot.Menu.Blocking) return true;
             float s = Scale;
             var p = new Vector2(screen.x / s, (Screen.height - screen.y) / s);
             foreach (var r in _ui) if (r.Contains(p)) return true;
@@ -151,8 +152,10 @@ namespace God.Game
             if (Watching)
             {
                 GUI.enabled = true;
-                GUI.Label(new Rect(x, y + 12f, 300f, 24f), "Watching six bots play", _bold);
-                x += 320f;
+                GUI.Label(new Rect(x, y + 12f, 190f, 24f), "Watching six AIs play", _bold);
+                x += 200f;
+                DrawWatchJumps(st, x, y, repaint);
+                x += 6 * 40f + 70f;
                 DrawClock(st, x, y);
                 return;
             }
@@ -194,12 +197,12 @@ namespace God.Game
             var pr = new Rect(x, y + 8f, 54f, 30f);
             if (GUI.Button(pr, new GUIContent(Paused ? "Play" : "Pause", "Space"), Paused ? st.BtnSel : st.Btn)) TogglePause();
             x += 58f;
-            float[] speeds = { 1f, 2f, 4f };
+            float[] speeds = Speeds;
             foreach (float sp in speeds)
             {
                 bool on = !Paused && Mathf.Approximately(Boot.Speed, sp);
-                if (GUI.Button(new Rect(x, y + 8f, 36f, 30f), new GUIContent(sp + "x", "Speed: + and -"), on ? st.BtnSel : st.Btn)) SetSpeed(sp);
-                x += 38f;
+                if (GUI.Button(new Rect(x, y + 8f, 38f, 30f), new GUIContent(sp + "x", "Speed: + and -"), on ? st.BtnSel : st.Btn)) SetSpeed(sp);
+                x += 40f;
             }
             x += 12f;
             float k = Mathf.Clamp01(1f - (Time.unscaledTime - _rollTime) / 0.9f);
@@ -244,25 +247,10 @@ namespace God.Game
             var r = new Rect(14f, stripH + 2f, size.x + 30f, size.y + 12f);
             GUI.Box(r, c, _pill);
             if (repaint) _ui.Add(r);
-            DrawStandings(r.yMax + 4f, repaint);
+            DrawStandings(stripH + 2f, repaint);
         }
 
-        private void DrawStandings(float y, bool repaint)
-        {
-            var list = FactionRules.Standings(Sim.State);
-            float x = 14f, rowH = 20f;
-            var box = new Rect(x, y, 128f, 12f + rowH * list.Count);
-            GUI.Box(box, GUIContent.none, _pill);
-            if (repaint) _ui.Add(box);
-            for (int i = 0; i < list.Count; i++)
-            {
-                var stg = list[i];
-                float ry = y + 6f + i * rowH;
-                if (repaint) GUI.DrawTexture(new Rect(x + 12f, ry + 5f, 10f, 10f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, FactionLook.Colour(stg.Faction), Vector4.zero, new Vector4(3, 3, 3, 3));
-                string me = !Watching && stg.Faction == Me ? " (you)" : "";
-                GUI.Label(new Rect(x + 28f, ry, 96f, rowH), FactionLook.Name(stg.Faction) + me + "  " + (stg.Eliminated ? "out" : stg.VictoryPoints.ToString()), HudStyle.Get().Small);
-            }
-        }
+        // (DrawStandings and the watch-mode jump buttons are in GodHud.Standings.cs)
 
         private void DrawToastAndHelp(HudStyle st, float vw, float vh, float stripH, bool repaint)
         {
@@ -276,7 +264,7 @@ namespace God.Game
                 GUI.Box(r, c, _pill);
                 GUI.color = old;
             }
-            if (HelpVisible && Outcome == GameOutcome.Playing)
+            if (HelpVisible && Outcome == GameOutcome.Playing && !Watching)
             {
                 const string text = "Pick a building above and click your land. Right-drag pans, the wheel zooms, Space pauses.";
                 float a = Mathf.Clamp01((_helpUntil - Time.unscaledTime) / 2f);
@@ -528,27 +516,63 @@ namespace God.Game
 
         // ---------------------------------------------------------------- win and lose
 
+        public Rect EndCardRect => _endRect;
+
         private void DrawEnd(HudStyle st, float vw, float vh, bool repaint)
         {
             GUI.DrawTexture(new Rect(0, 0, vw, vh), st.Dim);
-            var r = new Rect((vw - 320f) * 0.5f, vh * 0.5f - 90f, 320f, 0f);
-            _endRect = GUILayout.Window(WinEnd, r, id => EndCard(st), GUIContent.none, st.Window, GUILayout.Width(320f));
+            float h = _endRect.height > 1f ? _endRect.height : 300f;
+            var r = new Rect((vw - 360f) * 0.5f, Mathf.Max(10f, (vh - h) * 0.5f), 360f, 0f);
+            _endRect = GUILayout.Window(WinEnd, r, id => EndCard(st), GUIContent.none, st.Window, GUILayout.Width(360f));
             if (repaint) _ui.Add(new Rect(0, 0, vw, vh));
+        }
+
+        /// <summary>The headline of the end card: "Victory", "Defeat" or, in watch mode, who won.</summary>
+        public string EndTitle()
+        {
+            var fs = Sim.State.Factions;
+            string winner = fs.Winner >= 0 ? FactionLook.Name((Faction)fs.Winner) : "Nobody";
+            return Watching ? winner + " wins" : Outcome == GameOutcome.Won ? "Victory" : "Defeat";
+        }
+
+        /// <summary>Why the game ended, in a sentence.</summary>
+        public string EndReasonText()
+        {
+            var fs = Sim.State.Factions;
+            string winner = fs.Winner >= 0 ? FactionLook.Name((Faction)fs.Winner) : "Nobody";
+            return fs.EndReason == GameEndReason.VictoryPoints ? winner + " reached " + FactionTuning.VictoryPoints + " victory points."
+                : fs.Winner >= 0 ? winner + " is the last faction standing." : "Every faction fell.";
         }
 
         private void EndCard(HudStyle st)
         {
             var fs = Sim.State.Factions;
-            bool won = Outcome == GameOutcome.Won;
-            string winner = fs.Winner >= 0 ? FactionLook.Name((Faction)fs.Winner) : "Nobody";
-            string title = Watching ? winner + " wins" : won ? "Victory" : "Defeat";
-            GUILayout.Label(title, new GUIStyle(st.Title) { fontSize = 26, alignment = TextAnchor.MiddleCenter });
-            string why = fs.EndReason == GameEndReason.VictoryPoints ? winner + " reached " + FactionTuning.VictoryPoints + " VP." : winner + " is the last faction standing.";
-            GUILayout.Label(why, st.Centered);
-            foreach (var stg in fs.FinalStandings) GUILayout.Label(stg.ToString(), st.Small);
+            GUILayout.Label(EndTitle(), new GUIStyle(st.Title) { fontSize = 26, alignment = TextAnchor.MiddleCenter });
+            GUILayout.Label(EndReasonText(), st.Centered);
+            GUILayout.Space(6f);
+            foreach (var stg in fs.FinalStandings)
+            {
+                GUILayout.BeginHorizontal();
+                var sw = GUILayoutUtility.GetRect(14f, 18f, GUILayout.Width(14f));
+                if (Event.current.type == EventType.Repaint)
+                    GUI.DrawTexture(new Rect(sw.x, sw.y + 3f, 12f, 12f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, FactionLook.Colour(stg.Faction), Vector4.zero, new Vector4(4, 4, 4, 4));
+                string line = stg.Rank + ". " + FactionLook.Name(stg.Faction) + "   " + stg.VictoryPoints + " VP   "
+                    + stg.Hqs + (stg.Hqs == 1 ? " HQ" : " HQs") + (stg.Citadels > 0 ? ", " + stg.Citadels + (stg.Citadels == 1 ? " Citadel" : " Citadels") : "") + (stg.Eliminated ? "   out" : "");
+                var old = GUI.color; if (stg.Eliminated) GUI.color = new Color(1, 1, 1, 0.5f);
+                GUILayout.Label(line, st.Row);
+                GUI.color = old;
+                GUILayout.EndHorizontal();
+            }
             GUILayout.Space(10f);
-            if (GUILayout.Button("Play again", st.BtnSel, GUILayout.Height(34f))) Restart(false);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Watching ? "Watch again" : "Play again", st.BtnSel, GUILayout.Height(34f))) Restart(false);
             if (GUILayout.Button("New island", st.Btn, GUILayout.Height(34f))) Restart(true);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            if (Watching) { if (GUILayout.Button("Play yourself", st.Btn, GUILayout.Height(30f))) GodBootstrap.StartNew(Boot.Seed, false); }
+            else if (GUILayout.Button("Watch", st.Btn, GUILayout.Height(30f))) GodBootstrap.StartNew(Boot.Seed, true);
+            if (GUILayout.Button("Quit", st.Btn, GUILayout.Height(30f))) Boot.Menu?.Quit();
+            GUILayout.EndHorizontal();
         }
     }
 }
