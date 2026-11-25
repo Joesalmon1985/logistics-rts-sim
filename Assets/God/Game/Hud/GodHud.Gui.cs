@@ -80,8 +80,8 @@ namespace God.Game
         {
             var l = new List<Tool>();
             string[] kinds = { BuildingKinds.Woodcutter, BuildingKinds.ClayPit, BuildingKinds.Quarry, BuildingKinds.Mine, BuildingKinds.Farm,
-                BuildingKinds.Sawmill, BuildingKinds.Kiln, BuildingKinds.Smelter, BuildingKinds.Barracks, BuildingKinds.VehicleWorkshop };
-            string[] labels = { "Woodcutter", "Clay pit", "Quarry", "Mine", "Farm", "Sawmill", "Kiln", "Smelter", "Barracks", "Vehicle\nworkshop" };
+                BuildingKinds.Sawmill, BuildingKinds.Kiln, BuildingKinds.Smelter, BuildingKinds.Barracks, BuildingKinds.Axesmith };
+            string[] labels = { "Woodcutter", "Clay pit", "Quarry", "Mine", "Farm", "Sawmill", "Kiln", "Smelter", "Barracks", "Axesmith" };
             for (int i = 0; i < kinds.Length; i++)
             {
                 var d = EconomyDefs.Get(kinds[i]);
@@ -123,7 +123,7 @@ namespace God.Game
             switch (d.Role)
             {
                 case BuildingRole.Harvester: takes = "piles of " + Wares.Name(Wares.OfRaw(d.Harvests)) + " from its " + TerrainWord(d.Harvests); gives = Wares.Name(d.HarvestWare); break;
-                case BuildingRole.Factory: takes = WareList(d.In); gives = d.Unit == UnitKind.Vehicle ? "a vehicle" : "an infantry soldier"; break;
+                case BuildingRole.Factory: takes = "1 bread and a weapon; a shield (not with a bow), helmet and body armour when it has them"; gives = "a soldier in that kit"; break;
                 default: takes = WareList(d.In); gives = WareList(d.Out); break;
             }
             return d.Label + "\nCost: " + CostText(d) + "\nTakes: " + takes + "\nGives: " + gives;
@@ -417,15 +417,22 @@ namespace God.Game
                     }
                     WareLine("Wares", e.In, def.Cost);
                 }
+                else if (def.Role == BuildingRole.Harvester)
+                {
+                    var o = new int[Wares.Count]; o[(int)def.HarvestWare] = e.Out[(int)def.HarvestWare]; WareLine("Out", o, null);
+                    HarvesterLevelRows(st, e, b.Id);
+                }
                 else
                 {
-                    WareLine("In", e.In, def.In);
-                    if (def.Role == BuildingRole.Harvester) { var o = new int[Wares.Count]; o[(int)def.HarvestWare] = e.Out[(int)def.HarvestWare]; WareLine("Out", o, null); }
-                    else WareLine("Out", e.Out, null);
+                    // The barracks lists every piece of gear as an input: show only what it holds.
+                    WareLine("In", e.In, def.Role == BuildingRole.Factory ? null : def.In);
+                    WareLine("Out", e.Out, null);
+                    if (def.Role == BuildingRole.Factory)
+                        GUILayout.Label(e.LastKit.IsArmed ? "Last soldier: " + e.LastKit : "No soldier yet: needs 1 bread and a weapon", st.Small);
                 }
 
-                // Priority of each input ware: what the site still wants, or what the workshop consumes.
-                var wanted = e.Wanted;
+                // Priority of each input ware: what the site still wants, or what the workshop consumes (not a harvester's upgrade wares).
+                var wanted = e.Built && e.Upgrading ? new int[Wares.Count] : e.Wanted;
                 for (int w = 1; w < Wares.Count; w++)
                 {
                     if (wanted[w] <= 0) continue;
@@ -461,6 +468,25 @@ namespace God.Game
             GUILayout.EndHorizontal();
 
             if (b.Size != BuildingSize.Hq && GUILayout.Button("Demolish", st.Btn, GUILayout.Height(24f))) DemolishBuilding(b.Id);
+        }
+
+        /// <summary>Stage 3: a harvester's level, and its upgrade button (with the cost) or the upgrade under way.</summary>
+        private void HarvesterLevelRows(HudStyle st, EcoBuilding e, int id)
+        {
+            int per = EconomyTuning.WaresPerPileAt(e.Level);
+            GUILayout.Label("Level " + e.Level + ": " + per + " wares per pile" + (e.Level >= EconomyTuning.MaxHarvesterLevel ? ", never idle" : ""), st.Small);
+            var up = e.UpgradeDef;
+            if (up == null) return;
+            if (e.Upgrading)
+            {
+                GUILayout.Label("Upgrading to level " + (e.Level + 1) + "  " + (Sim.State.Economy.UpgradeProgressPermille(id) / 10) + "%", st.Small);
+                WareLine("Wares", e.In, up.Cost);
+            }
+            else if (GUILayout.Button(new GUIContent("Upgrade (level " + e.Level + "→" + (e.Level + 1) + "): " + CostText(up),
+                         "Level " + (e.Level + 1) + ": " + EconomyTuning.WaresPerPileAt(e.Level + 1) + " wares per pile, faster gathering"
+                         + (e.Level + 1 >= EconomyTuning.MaxHarvesterLevel ? ", and 1 ware every 40 s when its hex has no pile" : "") + "."),
+                         st.Btn, GUILayout.Height(24f)))
+                UpgradeHarvester(id);
         }
 
         private void EnemyCard(HudStyle st, Building b)

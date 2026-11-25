@@ -65,6 +65,25 @@ namespace God.Game
                 case Ware.Kindling: return new Color(0.98f, 0.55f, 0.12f);
                 case Ware.Brick: return new Color(0.70f, 0.20f, 0.18f);
                 case Ware.Iron: return new Color(0.30f, 0.45f, 0.62f);
+                // Stage 3 processed wares.
+                case Ware.Bread: return new Color(0.85f, 0.62f, 0.30f);
+                case Ware.Mortar: return new Color(0.88f, 0.86f, 0.78f);
+                case Ware.Bronze: return new Color(0.80f, 0.52f, 0.20f);
+                case Ware.Pottery: return new Color(0.72f, 0.42f, 0.30f);
+                case Ware.Steel: return new Color(0.62f, 0.68f, 0.76f);
+                case Ware.Leather: return new Color(0.55f, 0.36f, 0.20f);
+                case Ware.Cloth: return new Color(0.90f, 0.88f, 0.92f);
+                // Stage 3 gear: weapons warm, defence cool.
+                case Ware.Sword: return new Color(0.85f, 0.85f, 0.90f);
+                case Ware.Spear: return new Color(0.70f, 0.55f, 0.35f);
+                case Ware.Axe: return new Color(0.55f, 0.58f, 0.62f);
+                case Ware.Bow: return new Color(0.62f, 0.42f, 0.22f);
+                case Ware.Sling: return new Color(0.60f, 0.48f, 0.38f);
+                case Ware.BigShield: return new Color(0.35f, 0.45f, 0.75f);
+                case Ware.Helmet: return new Color(0.50f, 0.55f, 0.65f);
+                case Ware.SmallShield: return new Color(0.45f, 0.60f, 0.80f);
+                case Ware.Breastplate: return new Color(0.58f, 0.62f, 0.70f);
+                case Ware.LightArmour: return new Color(0.50f, 0.42f, 0.30f);
                 default: return Color.magenta;
             }
         }
@@ -82,8 +101,18 @@ namespace God.Game
                 case BuildingKinds.Kiln: return new Color(0.78f, 0.25f, 0.20f);
                 case BuildingKinds.Smelter: return new Color(0.30f, 0.45f, 0.70f);
                 case BuildingKinds.Barracks: return new Color(0.20f, 0.60f, 0.45f);
+                case BuildingKinds.Bakery: return new Color(0.85f, 0.62f, 0.30f);
+                case BuildingKinds.MortarMill: return new Color(0.82f, 0.80f, 0.72f);
+                case BuildingKinds.Foundry: return new Color(0.80f, 0.52f, 0.20f);
+                case BuildingKinds.Pottery: return new Color(0.72f, 0.42f, 0.30f);
+                case BuildingKinds.Forge: return new Color(0.50f, 0.56f, 0.66f);
+                case BuildingKinds.Tannery: return new Color(0.55f, 0.36f, 0.20f);
+                case BuildingKinds.Weaver: return new Color(0.80f, 0.78f, 0.86f);
                 case BuildingKinds.VehicleWorkshop: return new Color(0.15f, 0.75f, 0.85f);
-                default: return Color.white;
+                default:
+                    // Stage 3 armouries take the colour of the gear they make.
+                    var d = EconomyDefs.Get(kind);
+                    return d != null && d.Armoury ? WareColour(d.Makes) : Color.white;
             }
         }
 
