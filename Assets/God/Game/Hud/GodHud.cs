@@ -414,6 +414,7 @@ namespace God.Game
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus)) StepSpeed(1);
             if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus)) StepSpeed(-1);
 
+            HandleTabKeys();
             bool over = IsOverUi(mouse);
             HoverNode = -1;
             if (!over && Outcome == GameOutcome.Playing && Rig.GroundPoint(mouse, out var gp)) HoverNode = NodeAt(gp);

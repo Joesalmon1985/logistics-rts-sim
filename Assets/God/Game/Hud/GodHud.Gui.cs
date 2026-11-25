@@ -9,8 +9,15 @@ namespace God.Game
     public sealed partial class GodHud
     {
         private const int WinBuilding = 101, WinEnemy = 102, WinGround = 103, WinEnd = 104;
-        private static readonly Ware[] StockWares =
-            { Ware.Log, Ware.Clay, Ware.Grain, Ware.Stone, Ware.Ore, Ware.Plank, Ware.Kindling, Ware.Brick, Ware.Iron };
+        /// <summary>The wares the trade panel lists: raws and processed goods (gear is not traded).</summary>
+        private static readonly Ware[] StockWares = BuildTradeWares();
+
+        private static Ware[] BuildTradeWares()
+        {
+            var l = new List<Ware>(Wares.Raws); l.AddRange(Wares.Processed);
+            return l.ToArray();
+        }
+
         private static readonly string[] PrioNames = { "Stop", "Low", "Norm", "High" };
 
         private readonly List<Rect> _ui = new List<Rect>();
@@ -19,13 +26,16 @@ namespace God.Game
         private float _scale = 1f;
 
         /// <summary>False while the start card or the menu holds the game: HUD controls show but take no clicks.</summary>
-        private bool HudOn => !(Boot != null && Boot.Menu != null && Boot.Menu.Blocking);
+        internal bool HudOn => !(Boot != null && Boot.Menu != null && Boot.Menu.Blocking);
 
         /// <summary>HUD scale: 1 at 900 px high (and at least 1500 virtual units wide), so a small window still fits the strip.</summary>
         public float Scale => Mathf.Clamp(Mathf.Min(Screen.height / 900f, Screen.width / 1500f), 0.5f, 3f);
 
         /// <summary>Panel rectangles from the last repaint, in HUD units (top-left origin).</summary>
         public IReadOnlyList<Rect> PanelRects => _ui;
+
+        /// <summary>Panels drawn by other components (the tutorial card), in HUD units. They set it each repaint; clicks on them do not reach the map.</summary>
+        public readonly List<Rect> External = new List<Rect>();
 
         /// <summary>True when a screen point (pixels, origin bottom-left) is over a HUD panel.</summary>
         public bool IsOverUi(Vector2 screen)
@@ -34,6 +44,7 @@ namespace God.Game
             float s = Scale;
             var p = new Vector2(screen.x / s, (Screen.height - screen.y) / s);
             foreach (var r in _ui) if (r.Contains(p)) return true;
+            foreach (var r in External) if (r.Contains(p)) return true;
             return false;
         }
 
@@ -65,39 +76,13 @@ namespace God.Game
             DrawStrip(st, vw, stripH, repaint);
             DrawArmy(st, stripH, repaint);
             DrawToastAndHelp(st, vw, vh, stripH, repaint);
+            DrawTutorialPointers(vw, vh, repaint);
             if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); }
             else DrawEnd(st, vw, vh, repaint);
             DrawTooltip(st, vw, vh);
         }
 
         // ---------------------------------------------------------------- strip
-
-        private struct Tool { public string Label; public string Tip; public HudMode Mode; public string Kind; public Color Col; public Color Dot; }
-
-        private static readonly List<Tool> Tools = BuildTools();
-
-        private static List<Tool> BuildTools()
-        {
-            var l = new List<Tool>();
-            string[] kinds = { BuildingKinds.Woodcutter, BuildingKinds.ClayPit, BuildingKinds.Quarry, BuildingKinds.Mine, BuildingKinds.Farm,
-                BuildingKinds.Sawmill, BuildingKinds.Kiln, BuildingKinds.Smelter, BuildingKinds.Barracks, BuildingKinds.VehicleWorkshop };
-            string[] labels = { "Woodcutter", "Clay pit", "Quarry", "Mine", "Farm", "Sawmill", "Kiln", "Smelter", "Barracks", "Vehicle\nworkshop" };
-            for (int i = 0; i < kinds.Length; i++)
-            {
-                var d = EconomyDefs.Get(kinds[i]);
-                Ware dot = d.Role == BuildingRole.Harvester ? d.HarvestWare : FirstOut(d);
-                l.Add(new Tool
-                {
-                    Label = labels[i], Tip = KindTip(d), Mode = HudMode.Place, Kind = kinds[i],
-                    Col = EconomyView.KindColour(kinds[i]), Dot = dot == Ware.None ? Color.white : EconomyView.WareColour(dot),
-                });
-            }
-            var hq = EconomyDefs.Hq;
-            l.Add(new Tool { Label = "HQ", Tip = "HQ\nCost: " + CostText(hq) + "\nGrows your land: put it on a legal corner two corners from one of yours.", Mode = HudMode.PlaceHq, Col = new Color(0.86f, 0.70f, 0.36f), Dot = Color.white });
-            l.Add(new Tool { Label = "Road", Tip = "Road\nClick one of your flags, then the ground or another flag. Click a flag, or the end again, to finish. Click a road to put a flag on it.", Mode = HudMode.Road, Col = new Color(0.86f, 0.72f, 0.42f), Dot = Color.white });
-            l.Add(new Tool { Label = "Demolish", Tip = "Demolish\nClick one of your buildings or roads to remove it. The HQ stays.", Mode = HudMode.Demolish, Col = new Color(0.85f, 0.35f, 0.30f), Dot = Color.white });
-            return l;
-        }
 
         private static Ware FirstOut(BuildingDef d)
         {
@@ -164,35 +149,10 @@ namespace God.Game
                 DrawClock(st, x, y);
                 return;
             }
-            foreach (var tool in Tools)
-            {
-                var r = new Rect(x, y, w, h);
-                bool sel = Mode == tool.Mode && PlaceKind == tool.Kind;
-                if (GUI.Button(r, new GUIContent(tool.Label, tool.Tip), sel ? st.TileSel : st.Tile)) ToggleTool(tool.Mode, tool.Kind);
-                if (repaint)
-                {
-                    var sw = new Rect(r.x + 9, r.y + 6, r.width - 18, r.height * 0.40f);
-                    GUI.DrawTexture(sw, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, tool.Col, Vector4.zero, new Vector4(7, 7, 7, 7));
-                    float dd = sw.height * 0.5f;
-                    GUI.DrawTexture(new Rect(sw.center.x - dd * 0.5f, sw.center.y - dd * 0.5f, dd, dd), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, tool.Dot, Vector4.zero, new Vector4(dd, dd, dd, dd));
-                }
-                x += w + 5f;
-            }
-            x = DrawTradeTile(st, x, y, w, h, repaint);
+            DrawBuildBar(st, y, h, repaint);
             GUI.enabled = HudOn;
-
-            // Stock of your wares: small counts with a colour swatch.
-            x += 18f;
-            var eco = Sim.State.Economy;
-            for (int i = 0; i < StockWares.Length; i++)
-            {
-                float cx = x + (i % 5) * 58f, cy = y + 4f + (i / 5) * (h * 0.5f);
-                var ware = StockWares[i];
-                if (repaint) GUI.DrawTexture(new Rect(cx, cy + 3f, 11f, 11f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, EconomyView.WareColour(ware), Vector4.zero, new Vector4(4, 4, 4, 4));
-                GUI.Label(new Rect(cx + 15f, cy - 3f, 40f, 18f), eco.TotalStock(Me, ware).ToString(), _bold);
-                GUI.Label(new Rect(cx + 15f, cy + 11f, 44f, 12f), Wares.Name(ware), _tiny);
-            }
-            x += 5 * 58f + 22f;
+            DrawStockBar(StockLeft, y + 2f, h, repaint);
+            x = StockLeft + StockBarWidth + 14f;
             DrawClock(st, x, y);
         }
 
@@ -288,8 +248,9 @@ namespace God.Game
 
         private void DrawTooltip(HudStyle st, float vw, float vh)
         {
-            if (string.IsNullOrEmpty(GUI.tooltip)) return;
-            var c = new GUIContent(GUI.tooltip);
+            string tipText = string.IsNullOrEmpty(GUI.tooltip) ? _manualTip : GUI.tooltip;
+            if (string.IsNullOrEmpty(tipText)) return;
+            var c = new GUIContent(tipText);
             const float wd = 270f;
             float ht = st.TipBox.CalcHeight(c, wd);
             var m = Event.current.mousePosition;

@@ -61,6 +61,8 @@ namespace God.Game
         public static bool SkipStartCard;
         /// <summary>True when this bootstrap shows the start card first.</summary>
         public bool ShowStartCard { get; private set; }
+        /// <summary>The tutorial cards (null unless this is a tutorial game).</summary>
+        public TutorialCards Tutorial { get; private set; }
         /// <summary>Esc menu, start card and watch-mode controls (P10).</summary>
         public GameMenu Menu { get; private set; }
         /// <summary>Toasts for big events (P10).</summary>
@@ -132,6 +134,7 @@ namespace God.Game
             ReadRunArgs();
             SmokeRun.StartIfAsked(this);
             _saveExtras.Add(new ChainBotsSave(this));
+            if (Sim.State.Setup.Tutorial) { Tutorial = TutorialCards.Create(this); _saveExtras.Add(Tutorial); }
             if (startAi) StartAi();
             if (loaded != null)
             {
@@ -219,6 +222,18 @@ namespace God.Game
             ReloadScene();
         }
 
+        /// <summary>
+        /// Starts the tutorial on the next scene load: the fixed island (<see cref="TutorialIsland.Seed"/>), you as Amber,
+        /// the AIs at peace with you, and the pop-up cards. The setup carries <c>Tutorial</c>, so a save keeps it.
+        /// </summary>
+        public static void StartTutorial()
+        {
+            PendingSeed = TutorialIsland.Seed;
+            PendingSetup = TutorialIsland.Setup();
+            PendingStartAi = true;
+            ReloadScene();
+        }
+
         /// <summary>Hands the frame's sim events to listeners (toasts). The bootstrap calls it every frame; tests may too.</summary>
         public void PumpEvents()
         {
@@ -230,14 +245,15 @@ namespace God.Game
         public ulong PrepareRestart(bool newIsland)
         {
             ulong next = seed;
-            if (newIsland)
+            bool tutorial = Sim.State.Setup.Tutorial; // the tutorial island never changes
+            if (newIsland && !tutorial)
             {
                 // View-side only (not sim state): any fresh seed will do.
                 next = (ulong)System.DateTime.UtcNow.Ticks * 6364136223846793005UL + 1442695040888963407UL + seed;
                 next %= 1000000000UL; if (next == seed) next++;
             }
             PendingSeed = next;
-            PendingSetup = new GameSetup(next, Sim.State.Setup.Human, Sim.State.Setup.FactionCount);
+            PendingSetup = new GameSetup(next, Sim.State.Setup.Human, Sim.State.Setup.FactionCount) { Tutorial = tutorial };
             PendingStartAi = true;
             return next;
         }
