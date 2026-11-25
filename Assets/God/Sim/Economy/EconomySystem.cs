@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace God.Sim
 {
     public sealed class BuildingCompleted : SimEvent { public Faction Faction; public int BuildingId; public string Kind; }
-    public sealed class UnitProduced : SimEvent { public Faction Faction; public int BuildingId; public UnitKind Kind; }
+    public sealed class UnitProduced : SimEvent { public Faction Faction; public int BuildingId; public UnitKind Kind; public Kit Kit; }
     /// <summary>An HQ disappeared (destroyed): its stock and carriers are gone.</summary>
     public sealed class HqLost : SimEvent { public Faction Faction; public int HqId; }
 
@@ -126,12 +126,15 @@ namespace God.Sim
 
         internal static void RemoveRecalled(EconomyState e) => e.Walkers.RemoveAll(w => w.Id < 0);
 
-        /// <summary>Starts a Citadel upgrade on a finished HQ record (the command has checked it).</summary>
-        internal static void StartUpgrade(EcoBuilding hq)
+        /// <summary>
+        /// Starts an upgrade on a finished record (the command has checked it): a Citadel for an HQ, the next level for a
+        /// harvester. Harvesters take no inputs, so In and Incoming are free to hold the upgrade wares.
+        /// </summary>
+        internal static void StartUpgrade(EcoBuilding b)
         {
-            hq.Upgrading = true; hq.UpgradeProgress = 0;
-            Array.Clear(hq.In, 0, hq.In.Length);
-            Array.Clear(hq.Incoming, 0, hq.Incoming.Length);
+            b.Upgrading = true; b.UpgradeProgress = 0;
+            Array.Clear(b.In, 0, b.In.Length);
+            Array.Clear(b.Incoming, 0, b.Incoming.Length);
         }
 
         /// <summary>Marks the walker for removal and frees what it held. Cargo is lost.</summary>
@@ -241,6 +244,7 @@ namespace God.Sim
                     continue;
                 }
                 if (b.Paused) { b.Status = BuildStatus.Paused; continue; }
+                if (b.Upgrading) UpgradeTick(s, b, ev);
                 if (d.Role == BuildingRole.Harvester) HarvestStart(s, e, t, b, d);
                 else if (d.Role == BuildingRole.Workshop || d.Role == BuildingRole.Factory) Cycle(s, e, b, d, ev);
             }
@@ -265,29 +269,43 @@ namespace God.Sim
         }
 
         /// <summary>
-        /// One tick of a Citadel upgrade: the HQ's own free stock goes straight in (it is already there), the rest is
-        /// carried in by the matching like a site's; once every ware is in, the work runs for the Citadel's build time.
+        /// One tick of an upgrade. A Citadel: the HQ's own free stock goes straight in (it is already there). A harvester
+        /// level: everything is carried in. The rest comes by the matching like a site's; once every ware is in, the work
+        /// runs for the upgrade's build time. The building keeps working meanwhile.
         /// </summary>
         private static void UpgradeTick(GodState s, EcoBuilding b, EventBuffer ev)
         {
-            var cost = EconomyDefs.Citadel.Cost;
+            var up = b.UpgradeDef;
+            if (up == null) { b.Upgrading = false; return; }
+            var cost = up.Cost;
             bool all = true;
             for (int w = 0; w < Wares.Count; w++)
             {
-                int need = cost[w] - b.In[w] - b.Incoming[w];
-                int free = b.Stock[w] - b.StockReserved[w];
-                int take = Math.Min(need, free);
-                if (take > 0) { b.Stock[w] -= take; b.In[w] += take; }
+                if (b.IsHq)
+                {
+                    int need = cost[w] - b.In[w] - b.Incoming[w];
+                    int free = b.Stock[w] - b.StockReserved[w];
+                    int take = Math.Min(need, free);
+                    if (take > 0) { b.Stock[w] -= take; b.In[w] += take; }
+                }
                 if (b.In[w] < cost[w]) all = false;
             }
             if (!all) return;
-            if (++b.UpgradeProgress < EconomyDefs.Citadel.BuildTicks) return;
+            if (++b.UpgradeProgress < up.BuildTicks) return;
             b.Upgrading = false; b.UpgradeProgress = 0;
             Array.Clear(b.In, 0, b.In.Length);
             Array.Clear(b.Incoming, 0, b.Incoming.Length);
-            var hq = s.Territory.HqOf(b.Id);
-            if (hq != null) hq.Citadel = true;
-            ev?.Add(new CitadelCompleted { Faction = b.Faction, HqId = b.Id });
+            if (b.IsHq)
+            {
+                var hq = s.Territory.HqOf(b.Id);
+                if (hq != null) hq.Citadel = true;
+                ev?.Add(new CitadelCompleted { Faction = b.Faction, HqId = b.Id });
+            }
+            else
+            {
+                b.Level++;
+                ev?.Add(new BuildingUpgraded { Faction = b.Faction, BuildingId = b.Id, Kind = b.Kind, Level = b.Level });
+            }
         }
 
         internal static void Complete(GodState s, EconomyState e, TerritoryState t, EcoBuilding b, EventBuffer ev)
@@ -316,21 +334,32 @@ namespace God.Sim
             if (b.HarvestWalker != 0) { b.Status = BuildStatus.Working; return; }
             int hex = b.Hex;
             if (hex < 0 || RawKinds.OfTerrain(s.Board.HexTerrain[hex]) != d.Harvests) { b.Status = BuildStatus.WrongTerrain; return; }
-            if (b.Out[(int)d.HarvestWare] + EconomyTuning.WaresPerPile > EconomyTuning.OutputCap) { b.Status = BuildStatus.OutputFull; return; }
-            if (t.Piles[hex] - e.PilesReserved[hex] <= 0) { b.Status = BuildStatus.NoPiles; return; }
+            if (b.Out[(int)d.HarvestWare] + EconomyTuning.WaresPerPileAt(b.Level) > EconomyTuning.HarvesterOutputCap) { b.Status = BuildStatus.OutputFull; return; }
+            if (t.Piles[hex] - e.PilesReserved[hex] <= 0)
+            {
+                b.Status = BuildStatus.NoPiles;
+                // Level 3 never stands idle: with no pile on its hex it makes one ware on its own every 40 s.
+                if (b.Level >= EconomyTuning.MaxHarvesterLevel && ++b.TrickleTicks >= EconomyTuning.TrickleTicks)
+                {
+                    b.TrickleTicks = 0;
+                    b.Out[(int)d.HarvestWare]++;
+                    b.Status = BuildStatus.Working;
+                }
+                return;
+            }
             // Sharing a hex: the harvester with the fewest trips so far goes first, ties to the lower id.
             foreach (var o in e.Buildings)
             {
                 if (o == b || o.IsHq || !o.Built || o.Paused || o.Hex != hex || o.HarvestWalker != 0) continue;
                 var od = o.Def;
                 if (od.Role != BuildingRole.Harvester || od.Harvests != d.Harvests) continue;
-                if (o.Out[(int)od.HarvestWare] + EconomyTuning.WaresPerPile > EconomyTuning.OutputCap) continue;
+                if (o.Out[(int)od.HarvestWare] + EconomyTuning.WaresPerPileAt(o.Level) > EconomyTuning.HarvesterOutputCap) continue;
                 if (o.Claims < b.Claims || (o.Claims == b.Claims && o.Id < b.Id)) { b.Status = BuildStatus.NoPiles; return; }
             }
             b.Claims++;
             var g = t.Grid;
             var path = StraightPath(g, b.Node, g.HexCentreNode(hex));
-            var w = new Walker { Id = e.NextWalkerId++, Kind = WalkerKind.Harvester, Faction = b.Faction, Home = b.Id, Phase = WalkerPhase.Outbound, Path = path, Target = hex };
+            var w = new Walker { Id = e.NextWalkerId++, Kind = WalkerKind.Harvester, Faction = b.Faction, Home = b.Id, Phase = WalkerPhase.Outbound, Path = path, Target = hex, Level = b.Level };
             e.Walkers.Add(w);
             e.PilesReserved[hex]++;
             b.HarvestWalker = w.Id;
@@ -371,13 +400,23 @@ namespace God.Sim
                 for (int w = 0; w < Wares.Count; w++) b.Out[w] += d.Out[w];
                 if (d.Role == BuildingRole.Factory)
                 {
-                    var order = new UnitOrder { Faction = b.Faction, BuildingId = b.Id, Kind = d.Unit };
+                    // The kit was taken from the inputs when the cycle began (LastKit); the soldier walks out wearing it.
+                    var order = new UnitOrder { Faction = b.Faction, BuildingId = b.Id, Kind = d.Unit, Kit = b.LastKit };
                     s.UnitQueue.Add(order);
                     e.ProducedLog.Add(order);
                     e.UnitsProduced++;
-                    ev.Add(new UnitProduced { Faction = b.Faction, BuildingId = b.Id, Kind = d.Unit });
+                    ev.Add(new UnitProduced { Faction = b.Faction, BuildingId = b.Id, Kind = d.Unit, Kit = b.LastKit });
                 }
                 b.Status = BuildStatus.Idle;
+                return;
+            }
+            if (d.Role == BuildingRole.Factory)
+            {
+                // The barracks: a bread and a weapon make a soldier; defence items are added when held.
+                if (!BarracksRules.CanAssemble(b.In)) { b.Status = BuildStatus.MissingInputs; return; }
+                b.LastKit = BarracksRules.Assemble(b.In);
+                b.Working = true; b.WorkLeft = d.CycleTicks;
+                b.Status = BuildStatus.Working;
                 return;
             }
             for (int w = 0; w < Wares.Count; w++)
@@ -602,12 +641,12 @@ namespace God.Sim
             switch (w.Kind)
             {
                 case WalkerKind.Harvester:
-                    if (w.Phase == WalkerPhase.Outbound) { w.Phase = WalkerPhase.Working; w.WorkLeft = EconomyTuning.GatherTicks; }
+                    if (w.Phase == WalkerPhase.Outbound) { w.Phase = WalkerPhase.Working; w.WorkLeft = EconomyTuning.GatherTicksAt(w.Level); }
                     else if (w.Phase == WalkerPhase.Returning)
                     {
                         if (home != null)
                         {
-                            home.Out[(int)w.JobWare] += EconomyTuning.WaresPerPile;
+                            home.Out[(int)w.JobWare] += EconomyTuning.WaresPerPileAt(home.Level);
                             home.Produced++;
                             home.HarvestWalker = 0;
                         }

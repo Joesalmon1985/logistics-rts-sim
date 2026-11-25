@@ -68,3 +68,39 @@ namespace God.Sim
         public UpgradeBuilding(Faction f, int buildingId) : base(f) { BuildingId = buildingId; }
     }
 }
+
+namespace God.Sim
+{
+    /// <summary>A harvester upgrade began: its wares are now carried to it.</summary>
+    public sealed class BuildingUpgradeStarted : SimEvent { public Faction Faction; public int BuildingId; public string Kind; public int ToLevel; }
+    /// <summary>A harvester reached a new level (the view makes it bigger).</summary>
+    public sealed class BuildingUpgraded : SimEvent { public Faction Faction; public int BuildingId; public string Kind; public int Level; }
+
+    public sealed class UpgradeBuildingHandler : CommandHandler<UpgradeBuilding>
+    {
+        public static CommandResult Check(GodState s, UpgradeBuilding c)
+        {
+            if (!c.ValidIn(s)) return CommandResult.RejectDefault(Reasons.NotOwner);
+            var b = s.Economy?.Find(c.BuildingId);
+            if (b == null) return CommandResult.RejectDefault(Reasons.NoSuchThing);
+            if (b.Faction != c.Faction) return CommandResult.RejectDefault(Reasons.NotOwner);
+            if (b.IsHq || b.Def == null || b.Def.Role != BuildingRole.Harvester) return CommandResult.RejectDefault(Reasons.NotAHarvester);
+            if (!b.Built) return CommandResult.RejectDefault(Reasons.NotFinished);
+            if (b.Upgrading) return CommandResult.RejectDefault(Reasons.AlreadyUpgrading);
+            if (b.Level >= EconomyTuning.MaxHarvesterLevel) return CommandResult.RejectDefault(Reasons.MaxLevel);
+            return CommandResult.Accept();
+        }
+
+        protected override CommandResult Validate(GodState s, UpgradeBuilding c) => Check(s, c);
+
+        protected override CommandResult Apply(GodState s, UpgradeBuilding c, EventBuffer ev)
+        {
+            var r = Check(s, c);
+            if (!r.Ok) return r;
+            var b = s.Economy.Find(c.BuildingId);
+            EconomySystem.StartUpgrade(b);
+            ev.Add(new BuildingUpgradeStarted { Faction = b.Faction, BuildingId = b.Id, Kind = b.Kind, ToLevel = b.Level + 1 });
+            return r;
+        }
+    }
+}

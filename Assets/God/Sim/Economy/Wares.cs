@@ -5,7 +5,8 @@ namespace God.Sim
     /// pile kind that is never hauled: the quarry turns it into stone and the mine into ore on the spot.
     /// Stage 3: the five hauled raws are log, clay, grain, stone and ore. Each pair of raws makes one processed ware
     /// (ten in all, see <see cref="Wares.Processed"/>), and processed wares make the ten pieces of gear (five attack,
-    /// five defence, see <see cref="Gear"/>). <see cref="Kindling"/> is from stage 2 and goes away in stage 3.
+    /// five defence, see <see cref="Gear"/>). <see cref="Kindling"/> is from stage 2: no building makes or takes it any more
+    /// (the value stays so ware numbers and arrays keep their size).
     /// </summary>
     public enum Ware
     {
@@ -20,7 +21,7 @@ namespace God.Sim
         // ---- processed (one per pair of raws) ----
         /// <summary>Log + stone (sawmill).</summary>
         Plank = 7,
-        /// <summary>Stage 2 only; not made in stage 3.</summary>
+        /// <summary>Stage 2 only: unused since stage 3 (nothing makes or takes it). Kept so the numbers of the other wares stay.</summary>
         Kindling = 8,
         /// <summary>Log + clay (brick kiln).</summary>
         Brick = 9,

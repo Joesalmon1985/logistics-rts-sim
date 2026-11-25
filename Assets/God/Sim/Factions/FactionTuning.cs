@@ -11,8 +11,8 @@ namespace God.Sim
         /// <summary>VP of a Citadel (an upgraded HQ).</summary>
         public const int CitadelVp = 2;
 
-        // ---- Citadel upgrade ----
-        public const int CitadelPlank = 3, CitadelBrick = 4, CitadelStone = 4, CitadelIron = 3;
+        // ---- Citadel upgrade (stage 3: 4 brick, 4 mortar, 3 plank, 2 steel) ----
+        public const int CitadelBrick = 4, CitadelMortar = 4, CitadelPlank = 3, CitadelSteel = 2;
         /// <summary>Ticks of work once every Citadel ware is in: 30 s.</summary>
         public const int CitadelBuildTicks = 300;
 
