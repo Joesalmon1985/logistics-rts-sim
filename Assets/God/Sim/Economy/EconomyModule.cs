@@ -58,7 +58,7 @@ namespace God.Sim
         }
 
         /// <summary>
-        /// For scripted set-ups (the enemy base, tests): makes a placed building finished at once, without carrying wares.
+        /// For scripted set-ups (tests, dev tools): makes a placed building finished at once, without carrying wares.
         /// Returns false when the building is unknown.
         /// </summary>
         public static bool CompleteInstantly(GodState s, int buildingId)
@@ -82,20 +82,21 @@ namespace God.Sim
             Add(s.Tick);
             var t = s.Territory;
             AddArr(t.Piles); Add(t.RollCount); Add(t.WastedPiles); Add(t.NextId);
-            foreach (var b in t.Buildings) { Add(b.Id); Add(b.Node); Add(b.FlagId); }
-            foreach (var r in t.Roads) { Add(r.Id); AddArr(r.Nodes); }
-            foreach (var hq in t.Hqs) { Add(hq.Id); Add(hq.Site ? 1 : 0); }
+            foreach (var b in t.Buildings) { Add(b.Id); Add(b.Node); Add(b.FlagId); Add((int)b.Faction); }
+            foreach (var r in t.Roads) { Add(r.Id); Add((int)r.Faction); AddArr(r.Nodes); }
+            foreach (var f in t.Flags) { Add(f.Id); Add((int)f.Faction); }
+            foreach (var hq in t.Hqs) { Add(hq.Id); Add((int)hq.Faction); Add(hq.Site ? 1 : 0); Add(hq.Citadel ? 1 : 0); }
             var e = s.Economy;
             foreach (var b in e.Buildings)
             {
-                Add(b.Id); Add(b.Built ? 1 : 0); Add(b.Paused ? 1 : 0); Add(b.BuildProgress); Add(b.WorkLeft); Add(b.Produced);
+                Add(b.Id); Add((int)b.Faction); Add(b.Upgrading ? 1 : 0); Add(b.UpgradeProgress); Add(b.Built ? 1 : 0); Add(b.Paused ? 1 : 0); Add(b.BuildProgress); Add(b.WorkLeft); Add(b.Produced);
                 AddArr(b.In); AddArr(b.Incoming); AddArr(b.Out); AddArr(b.OutReserved); AddArr(b.Stock); AddArr(b.StockReserved);
                 foreach (var p in b.Prio) Add((int)p);
                 Add(b.IdleCarriers); Add(b.IdleBuilders);
             }
             foreach (var w in e.Walkers)
             {
-                Add(w.Id); Add((int)w.Kind); Add(w.Home); Add((int)w.Phase); AddArr(w.Path); Add(w.Index); Add(w.Progress);
+                Add(w.Id); Add((int)w.Faction); Add((int)w.Kind); Add(w.Home); Add((int)w.Phase); AddArr(w.Path); Add(w.Index); Add(w.Progress);
                 Add((int)w.JobWare); Add(w.Loaded ? 1 : 0); Add(w.SrcId); Add(w.DstId);
             }
             foreach (var u in s.UnitQueue) { Add((int)u.Faction); Add(u.BuildingId); Add((int)u.Kind); }

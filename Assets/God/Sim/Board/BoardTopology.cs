@@ -16,6 +16,8 @@ namespace God.Sim
     /// VertexNeighbours, EdgeVertexA, EdgeBetween, FindPath, Distance, ...) are the FINE graph:
     /// "vertex" = flag, "edge" = segment. Coarse members say Corner/HexEdge in their name.
     ///
+    /// The land is a hexagon of a radius, or a mask inside one (<see cref="BoardShape"/>).
+    ///
     /// Ids are plain ints; -1 = none. Ordering is stable and deterministic:
     ///   hexes by (R, Q);
     ///   flags: corners first, ids 0..CornerCount-1, sorted south to north then west to east (Z, X);
@@ -86,31 +88,50 @@ namespace God.Sim
         private readonly int[][] _distCache;
         private readonly int[][] _cornerDistCache;
 
-        private static readonly Dictionary<int, BoardTopology> Cache = new Dictionary<int, BoardTopology>();
+        private static readonly Dictionary<(int, BoardShape), BoardTopology> Cache = new Dictionary<(int, BoardShape), BoardTopology>();
 
-        /// <summary>Shared cached topology for a radius (thread-safe).</summary>
-        public static BoardTopology Get(int radius)
+        /// <summary>The shape of the land: a full hexagon of the radius, or a mask inside it (see <see cref="BoardShape"/>).</summary>
+        public BoardShape Shape { get; }
+
+        /// <summary>Shared cached topology for a radius and shape (thread-safe).</summary>
+        public static BoardTopology Get(int radius, BoardShape shape = BoardShape.Hexagon)
         {
             lock (Cache)
             {
-                if (!Cache.TryGetValue(radius, out var t))
+                if (!Cache.TryGetValue((radius, shape), out var t))
                 {
-                    t = new BoardTopology(radius);
-                    Cache.Add(radius, t);
+                    t = new BoardTopology(radius, shape);
+                    Cache.Add((radius, shape), t);
                 }
                 return t;
             }
         }
 
-        public BoardTopology(int radius)
+        /// <summary>
+        /// True when the hex at (q, r) is part of a board of this radius and shape. <see cref="BoardShape.SixPlayer"/> keeps
+        /// rows of 3/4/5/6/5/4/3 hexes (radius 3): row r holds 6 - |r| hexes from q = (2 - n - r) / 2, so every row is
+        /// centred half a hex east of the origin.
+        /// </summary>
+        public static bool InShape(int q, int r, int radius, BoardShape shape)
+        {
+            if (Math.Abs(q) > radius || Math.Abs(r) > radius || Math.Abs(q + r) > radius) return false;
+            if (shape == BoardShape.Hexagon) return true;
+            int n = 2 * radius - Math.Abs(r);
+            int qMin = (2 - n - r) / 2;
+            return q >= qMin && q < qMin + n;
+        }
+
+        public BoardTopology(int radius, BoardShape shape = BoardShape.Hexagon)
         {
             if (radius < 0) throw new ArgumentOutOfRangeException(nameof(radius));
+            if (shape == BoardShape.SixPlayer && radius != 3) throw new ArgumentException("The six-player island has radius 3.", nameof(radius));
             Radius = radius;
+            Shape = shape;
 
             var hexes = new List<HexCoord>();
             for (int r = -radius; r <= radius; r++)
                 for (int q = -radius; q <= radius; q++)
-                    if (Math.Abs(q + r) <= radius) hexes.Add(new HexCoord(q, r));
+                    if (InShape(q, r, radius, shape)) hexes.Add(new HexCoord(q, r));
             _hexes = hexes.ToArray();
             for (int i = 0; i < _hexes.Length; i++) _hexIndex.Add(_hexes[i], i);
 

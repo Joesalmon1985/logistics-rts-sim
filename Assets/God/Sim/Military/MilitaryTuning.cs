@@ -48,8 +48,12 @@ namespace God.Sim
         public const int SmallHealth = 400;
         public const int MediumHealth = 700;
         public const int HqHealth = 1500;
+        /// <summary>Health of an HQ upgraded to a Citadel.</summary>
+        public const int CitadelHealth = 3000;
 
         public static int HealthOf(BuildingSize s) => s == BuildingSize.Hq ? HqHealth : s == BuildingSize.Medium ? MediumHealth : SmallHealth;
+
+        public static int HqMaxHealth(bool citadel) => citadel ? CitadelHealth : HqHealth;
 
         /// <summary>Radius of a building's footprint in mm: weapon range and sight are measured to its edge.</summary>
         public static int FootprintMm(BuildingSize s) => s == BuildingSize.Hq ? 5000 : s == BuildingSize.Medium ? 3500 : 2000;
@@ -72,13 +76,6 @@ namespace God.Sim
 
         /// <summary>A shot shows for this many ticks.</summary>
         public const int FireFlashTicks = 3;
-
-        // Enemy waves.
-        /// <summary>A grace period before the first wave, so a new player can build up (24 Nov smoke: at 90 s a passive town fell by 6.5 min).</summary>
-        public const int FirstWaveTicks = 4800;         // 8 min
-        public const int WaveIntervalTicks = 1200;      // 2 min
-        public const int FirstWaveInfantry = 2;
-        public const int FirstVehicleWave = 3;
 
         /// <summary>Units come out of a flag with a small spread so they do not stack: offsets in mm cycled by unit id.</summary>
         public static readonly int[] SpawnSpreadX = { 0, 1500, -1500, 0, 1500, -1500, 2500, -2500 };

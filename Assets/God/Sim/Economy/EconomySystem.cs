@@ -17,8 +17,7 @@ namespace God.Sim
     {
         // Route cache, valid while the road network is unchanged. Not part of the state.
         private readonly Dictionary<(int, int), FlagRoute> _routes = new Dictionary<(int, int), FlagRoute>();
-        private int _sigNext = -1, _sigRoads = -1, _sigFlags = -1;
-        private Faction _routeFaction;
+        private int _sigNext = -1, _sigRoads = -1, _sigFlags = -1, _sigVersion = -1;
 
         public void Tick(GodState s, EventBuffer ev)
         {
@@ -36,10 +35,10 @@ namespace God.Sim
 
         private FlagRoute Route(TerritoryState t, Faction f, int a, int b)
         {
-            if (_sigNext != t.NextId || _sigRoads != t.Roads.Count || _sigFlags != t.Flags.Count)
+            if (_sigNext != t.NextId || _sigRoads != t.Roads.Count || _sigFlags != t.Flags.Count || _sigVersion != t.Version)
             {
                 _routes.Clear();
-                _sigNext = t.NextId; _sigRoads = t.Roads.Count; _sigFlags = t.Flags.Count;
+                _sigNext = t.NextId; _sigRoads = t.Roads.Count; _sigFlags = t.Flags.Count; _sigVersion = t.Version;
             }
             // Faction rides in the key via the flags themselves (a flag belongs to one faction).
             var key = (a, b);
@@ -105,6 +104,34 @@ namespace God.Sim
                 }
             }
             e.Walkers.RemoveAll(w => w.Id < 0);
+        }
+
+        /// <summary>
+        /// Removes a walker at once (a capture or an elimination): frees what it held, loses its cargo, and puts a carrier
+        /// or builder back into its home HQ's store whoever owns it now, so carriers are never lost or duplicated. The
+        /// walker is only marked; call <see cref="RemoveRecalled"/> after a batch.
+        /// </summary>
+        internal static void Recall(EconomyState e, Walker w)
+        {
+            if (w.Id < 0) return;
+            ReleaseJob(e, w);
+            if (w.Loaded) e.LostWares++;
+            if (e.Find(w.Home) is EcoBuilding home && home.IsHq && home.Built)
+            {
+                if (w.Kind == WalkerKind.Carrier) home.IdleCarriers++;
+                else if (w.Kind == WalkerKind.Builder) home.IdleBuilders++;
+            }
+            w.Id = -w.Id - 1;
+        }
+
+        internal static void RemoveRecalled(EconomyState e) => e.Walkers.RemoveAll(w => w.Id < 0);
+
+        /// <summary>Starts a Citadel upgrade on a finished HQ record (the command has checked it).</summary>
+        internal static void StartUpgrade(EcoBuilding hq)
+        {
+            hq.Upgrading = true; hq.UpgradeProgress = 0;
+            Array.Clear(hq.In, 0, hq.In.Length);
+            Array.Clear(hq.Incoming, 0, hq.Incoming.Length);
         }
 
         /// <summary>Marks the walker for removal and frees what it held. Cargo is lost.</summary>
@@ -201,7 +228,12 @@ namespace God.Sim
             var g = t.Grid;
             foreach (var b in e.Buildings)
             {
-                if (b.IsHq && b.Built) { b.Status = BuildStatus.Idle; continue; }
+                if (b.IsHq && b.Built)
+                {
+                    b.Status = BuildStatus.Idle;
+                    if (b.Upgrading) UpgradeTick(s, b, ev);
+                    continue;
+                }
                 var d = b.Def;
                 if (!b.Built)
                 {
@@ -230,6 +262,32 @@ namespace God.Sim
             foreach (var hq in e.Buildings)
                 if (hq.IsHq && hq.Built && hq.Faction == b.Faction && hq.Id != b.Id && Route(t, b.Faction, hq.FlagId, b.FlagId) != null) { connected = true; break; }
             b.Status = connected ? BuildStatus.SiteWaitingWares : BuildStatus.SiteNoRoad;
+        }
+
+        /// <summary>
+        /// One tick of a Citadel upgrade: the HQ's own free stock goes straight in (it is already there), the rest is
+        /// carried in by the matching like a site's; once every ware is in, the work runs for the Citadel's build time.
+        /// </summary>
+        private static void UpgradeTick(GodState s, EcoBuilding b, EventBuffer ev)
+        {
+            var cost = EconomyDefs.Citadel.Cost;
+            bool all = true;
+            for (int w = 0; w < Wares.Count; w++)
+            {
+                int need = cost[w] - b.In[w] - b.Incoming[w];
+                int free = b.Stock[w] - b.StockReserved[w];
+                int take = Math.Min(need, free);
+                if (take > 0) { b.Stock[w] -= take; b.In[w] += take; }
+                if (b.In[w] < cost[w]) all = false;
+            }
+            if (!all) return;
+            if (++b.UpgradeProgress < EconomyDefs.Citadel.BuildTicks) return;
+            b.Upgrading = false; b.UpgradeProgress = 0;
+            Array.Clear(b.In, 0, b.In.Length);
+            Array.Clear(b.Incoming, 0, b.Incoming.Length);
+            var hq = s.Territory.HqOf(b.Id);
+            if (hq != null) hq.Citadel = true;
+            ev?.Add(new CitadelCompleted { Faction = b.Faction, HqId = b.Id });
         }
 
         internal static void Complete(GodState s, EconomyState e, TerritoryState t, EcoBuilding b, EventBuffer ev)
@@ -346,8 +404,9 @@ namespace God.Sim
 
         private void Match(EconomyState e, TerritoryState t)
         {
-            foreach (Faction f in new[] { Faction.Player, Faction.Enemy })
+            for (int fi = 0; fi < FactionInfo.Max; fi++)
             {
+                var f = (Faction)fi;
                 bool anyCarrier = false;
                 foreach (var hq in e.Buildings) if (hq.IsHq && hq.Built && hq.Faction == f && hq.IdleCarriers > 0) { anyCarrier = true; break; }
                 if (!anyCarrier) continue;
@@ -356,14 +415,13 @@ namespace God.Sim
                 var reqs = new List<Request>();
                 foreach (var c in e.Buildings)
                 {
-                    if ((c.IsHq && c.Built) || c.Faction != f || c.Paused) continue;
+                    if ((c.IsHq && c.Built && !c.Upgrading) || c.Faction != f || c.Paused) continue;
                     var want = c.Wanted;
                     for (int w = 1; w < Wares.Count; w++)
                     {
                         if (want[w] <= 0 || c.Prio[w] == Priority.Stop) continue;
-                        int cap = c.Built ? Math.Max(EconomyTuning.InputBuffer, want[w]) : want[w];
+                        int cap = c.SiteLike ? want[w] : Math.Max(EconomyTuning.InputBuffer, want[w]);
                         int missing = cap - c.In[w] - c.Incoming[w];
-                        if (!c.Built) missing = want[w] - c.In[w] - c.Incoming[w];
                         for (int k = 0; k < missing; k++)
                         {
                             int len = BestLen(e, t, f, c, (Ware)w);
@@ -382,7 +440,7 @@ namespace God.Sim
                 foreach (var r in reqs)
                 {
                     var c = r.Consumer;
-                    int cap = c.Built ? Math.Max(EconomyTuning.InputBuffer, c.Wanted[(int)r.Ware]) : c.Wanted[(int)r.Ware];
+                    int cap = c.SiteLike ? c.Wanted[(int)r.Ware] : Math.Max(EconomyTuning.InputBuffer, c.Wanted[(int)r.Ware]);
                     if (c.In[(int)r.Ware] + c.Incoming[(int)r.Ware] >= cap) continue;
                     TryAssign(e, t, f, r);
                 }

@@ -47,10 +47,19 @@ namespace God.Sim
         /// <summary>The def used for an HQ site (cost only).</summary>
         public static readonly BuildingDef Hq;
 
+        /// <summary>The Citadel upgrade of a finished HQ: its cost and work time (see <see cref="UpgradeToCitadel"/>).</summary>
+        public static readonly BuildingDef Citadel;
+
+        /// <summary>Kind string of a Citadel upgrade (never a territory building kind: the building stays an HQ).</summary>
+        public const string CitadelKind = "citadel";
+
         static EconomyDefs()
         {
             Hq = new BuildingDef { Kind = TerritoryTuning.HqKind, Label = "HQ", Role = BuildingRole.Hq, Size = BuildingSize.Hq, BuildTicks = EconomyTuning.BuildTicksHq };
             Hq.Cost[(int)Ware.Plank] = EconomyTuning.HqPlank; Hq.Cost[(int)Ware.Stone] = EconomyTuning.HqStone;
+            Citadel = new BuildingDef { Kind = CitadelKind, Label = "Citadel", Role = BuildingRole.Hq, Size = BuildingSize.Hq, BuildTicks = FactionTuning.CitadelBuildTicks };
+            Citadel.Cost[(int)Ware.Plank] = FactionTuning.CitadelPlank; Citadel.Cost[(int)Ware.Brick] = FactionTuning.CitadelBrick;
+            Citadel.Cost[(int)Ware.Stone] = FactionTuning.CitadelStone; Citadel.Cost[(int)Ware.Iron] = FactionTuning.CitadelIron;
 
             Harvester(BuildingKinds.Woodcutter, "Woodcutter", RawKind.Log, Ware.Log);
             Harvester(BuildingKinds.ClayPit, "Clay pit", RawKind.Clay, Ware.Clay);

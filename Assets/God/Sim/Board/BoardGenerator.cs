@@ -4,34 +4,45 @@ using System.Collections.Generic;
 namespace God.Sim
 {
     /// <summary>
-    /// The island deal. A Catan-shaped island of radius 2 (19 hexes): 5 Forest, 5 Fields, 4 Hills, 4 Mountain and one
-    /// Desert, dealt with the seed; the 18 numbers of the classic game (2, 12 once; 3 to 6 and 8 to 11 twice) are dealt
-    /// on the other hexes, reshuffled until no 6 or 8 touches another. Pure and deterministic from the seed. The numbers
-    /// stay hidden from the player: the view shows richness only.
+    /// The island deal. A six-player Catan island of 30 hexes in rows of 3/4/5/6/5/4/3 (radius 3, <see
+    /// cref="BoardShape.SixPlayer"/>): 8 Forest, 6 Hills, 7 Fields, 7 Mountain and 2 Desert, dealt with the seed; the 28
+    /// number tokens of the five-to-six-player game (2 and 12 twice; 3 to 6 and 8 to 11 three times) are dealt on the other
+    /// hexes, reshuffled until no 6 or 8 touches another. Pure and deterministic from the seed. The numbers stay hidden
+    /// from the player: the view shows richness only.
     /// </summary>
     public static partial class BoardGenerator
     {
-        /// <summary>Radius of the island (19 hexes).</summary>
-        public const int IslandRadius = 2;
+        /// <summary>Radius of the island's bounding hexagon.</summary>
+        public const int IslandRadius = 3;
+
+        /// <summary>Shape of the island inside that radius.</summary>
+        public const BoardShape IslandShape = BoardShape.SixPlayer;
+
+        /// <summary>Land hexes of the island.</summary>
+        public const int IslandHexCount = 30;
+
+        /// <summary>The island's topology.</summary>
+        public static BoardTopology IslandTopology => BoardTopology.Get(IslandRadius, IslandShape);
 
         /// <summary>Most number reshuffles per deal before giving up on the 6/8 rule (never reached in practice).</summary>
         public const int NumberShuffleLimit = 100000;
 
-        /// <summary>Terrain dealt over the 19 hexes.</summary>
-        public static readonly Terrain[] IslandTerrainPool =
-        {
-            Terrain.Forest, Terrain.Forest, Terrain.Forest, Terrain.Forest, Terrain.Forest,
-            Terrain.Fields, Terrain.Fields, Terrain.Fields, Terrain.Fields, Terrain.Fields,
-            Terrain.Hills, Terrain.Hills, Terrain.Hills, Terrain.Hills,
-            Terrain.Mountain, Terrain.Mountain, Terrain.Mountain, Terrain.Mountain,
-            Terrain.Desert,
-        };
+        /// <summary>Terrain dealt over the 30 hexes.</summary>
+        public static readonly Terrain[] IslandTerrainPool = Pool(
+            (Terrain.Forest, 8), (Terrain.Hills, 6), (Terrain.Fields, 7), (Terrain.Mountain, 7), (Terrain.Desert, 2));
 
-        /// <summary>Numbers dealt over the 18 resource hexes (one 2, one 12, two of every other number but 7).</summary>
+        /// <summary>Numbers dealt over the 28 resource hexes: 2 and 12 twice, every other number but 7 three times.</summary>
         public static readonly int[] IslandNumberPool =
         {
-            2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12,
+            2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12,
         };
+
+        private static Terrain[] Pool(params (Terrain t, int n)[] parts)
+        {
+            var l = new List<Terrain>();
+            foreach (var (t, n) in parts) for (int i = 0; i < n; i++) l.Add(t);
+            return l.ToArray();
+        }
 
         /// <summary>Pips of a number (2/12 = 1 ... 6/8 = 5; 0 for anything else).</summary>
         public static int Pips(int number) => number < 2 || number > 12 || number == 7 ? 0 : 6 - Math.Abs(7 - number);
@@ -39,14 +50,15 @@ namespace God.Sim
         /// <summary>True for a 6 or an 8.</summary>
         public static bool IsRed(int number) => number == 6 || number == 8;
 
-        /// <summary>The island for a seed: 19 hexes, terrain and hidden numbers dealt.</summary>
+        /// <summary>The island for a seed: 30 hexes, terrain and hidden numbers dealt.</summary>
         public static Board CreateIslandBoard(ulong seed)
         {
-            var topo = BoardTopology.Get(IslandRadius);
+            var topo = IslandTopology;
             var rng = new Rng(seed).Fork("board.island");
             var b = new Board
             {
                 Radius = IslandRadius,
+                Shape = IslandShape,
                 HexTerrain = new Terrain[topo.HexCount],
                 HexNumber = new int[topo.HexCount],
             };
@@ -59,6 +71,7 @@ namespace God.Sim
             var resource = new List<int>();
             for (int h = 0; h < topo.HexCount; h++) if (TerrainInfo.IsResource(b.HexTerrain[h])) resource.Add(h);
             var numbers = new List<int>(IslandNumberPool);
+            if (numbers.Count != resource.Count) throw new InvalidOperationException("The number pool must cover the resource hexes.");
             for (int n = 0; n < NumberShuffleLimit; n++)
             {
                 rng.Shuffle(numbers);

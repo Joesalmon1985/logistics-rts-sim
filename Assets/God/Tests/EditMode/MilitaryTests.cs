@@ -5,7 +5,10 @@ using NUnit.Framework;
 
 namespace God.Sim.Tests
 {
-    /// <summary>Shared helpers of the military tests.</summary>
+    /// <summary>
+    /// Shared helpers of the military tests. F0 plays the old player and F1 the old enemy; unless <c>war</c> is false they
+    /// declare war on each other first (one tick). The other factions stay at peace with both.
+    /// </summary>
     internal sealed class Bed
     {
         public readonly GodSim Sim;
@@ -16,13 +19,37 @@ namespace God.Sim.Tests
         public readonly List<SimEvent> Log = new List<SimEvent>();
         public readonly Hq PlayerHq, EnemyHq;
 
-        public Bed(ulong seed = 3, bool waves = false)
+        public Bed(ulong seed = 3, bool war = true, int factions = FactionInfo.Max)
         {
-            Sim = GodSim.Create(seed);
+            Sim = GodSim.Create(new GameSetup(seed, 0, factions));
             S = Sim.State; T = S.Territory; G = T.Grid; M = S.Military;
-            PlayerHq = T.HqsOf(Faction.Player).Single();
-            EnemyHq = T.HqsOf(Faction.Enemy).Single();
-            M.WavesEnabled = waves;
+            PlayerHq = T.HqsOf(Faction.F0).Single();
+            EnemyHq = T.HqsOf(Faction.F1).Single();
+            if (war) Assert.IsTrue(Do(new DeclareWar(Faction.F0, Faction.F1)).Ok);
+        }
+
+        private readonly List<Building> _enemySmall = new List<Building>();
+
+        /// <summary>
+        /// The i-th small finished F1 building beside the F1 HQ (placed on first use, at least 3 steps from the others), so
+        /// tests have enemy buildings besides the HQ now that there is no pre-placed enemy base.
+        /// </summary>
+        public Building EnemySmall(int i)
+        {
+            while (_enemySmall.Count <= i)
+            {
+                int pick = -1;
+                foreach (int n in T.BuildableNodes(Faction.F1))
+                {
+                    if (G.Distance(n, EnemyHq.Node) < 3 || _enemySmall.Any(x => G.Distance(x.Node, n) < 3)) continue;
+                    if (!Sim.Check(new PlaceBuilding(Faction.F1, n, BuildingSize.Small)).Ok) continue;
+                    pick = n; break;
+                }
+                Assert.GreaterOrEqual(pick, 0, "room for an enemy building");
+                Assert.IsTrue(Do(new PlaceBuilding(Faction.F1, pick, BuildingSize.Small)).Ok);
+                _enemySmall.Add(T.BuildingAtNode(pick));
+            }
+            return _enemySmall[i];
         }
 
         public void Step(int n = 1)
@@ -59,8 +86,6 @@ namespace God.Sim.Tests
 
         public int Node(Hq hq, int di, int dj) => G.Id(G.I(hq.Node) + di, G.J(hq.Node) + dj);
 
-        public Building EnemyKind(string kind) => T.Buildings.First(b => b.Faction == Faction.Enemy && b.Kind == kind);
-
         /// <summary>A run of land nodes in one lattice direction from some node inside a circle, as a start node and direction.</summary>
         public (int start, int dir) LandLine(Hq hq, int steps)
         {
@@ -86,42 +111,29 @@ namespace God.Sim.Tests
     public class MilitaryBaseTests
     {
         [Test]
-        public void EnemyBase_IsPlacedAtStart_ForEverySeed()
-        {
-            for (ulong seed = 1; seed <= 60; seed++)
-            {
-                var b = new Bed(seed);
-                var circle = b.T.CircleOf(b.EnemyHq);
-                var theirs = b.T.Buildings.Where(x => x.Faction == Faction.Enemy && x.Size != BuildingSize.Hq).ToList();
-                Assert.AreEqual(5, theirs.Count, "seed " + seed);
-                foreach (string kind in new[] { BuildingKinds.Barracks, BuildingKinds.VehicleWorkshop, BuildingKinds.Woodcutter, BuildingKinds.Sawmill, BuildingKinds.Quarry })
-                    Assert.AreEqual(1, theirs.Count(x => x.Kind == kind), kind + " seed " + seed);
-                foreach (var x in theirs)
-                {
-                    Assert.IsTrue(b.G.InCircle(b.EnemyHq.Node, x.Node), "inside the build circle");
-                    Assert.IsNotNull(b.T.FlagAtNode(x.FlagNode), "has a flag");
-                }
-                Assert.AreEqual(0, b.T.Buildings.Count(x => x.Faction == Faction.Player && x.Size != BuildingSize.Hq));
-            }
-        }
-
-        [Test]
         public void BuildingHealth_StartsFull_ByHqAndSize_AndNewBuildingsAreRegistered()
         {
             var b = new Bed();
             Assert.AreEqual(1500, b.M.BuildingHealth(b.EnemyHq.Id));
             Assert.AreEqual(1500, b.M.BuildingHealth(b.PlayerHq.Id));
-            foreach (var x in b.T.Buildings.Where(x => x.Size == BuildingSize.Medium)) Assert.AreEqual(700, b.M.BuildingHealth(x.Id));
-            foreach (var x in b.T.Buildings.Where(x => x.Size == BuildingSize.Small)) Assert.AreEqual(400, b.M.BuildingHealth(x.Id));
+            foreach (var h in b.T.Hqs) Assert.AreEqual(1500, b.M.BuildingHealth(h.Id), "every faction HQ");
+            Assert.AreEqual(6, b.T.Buildings.Count, "only the six HQs at the start");
 
             int node = b.Node(b.PlayerHq, -3, 0);
-            Assert.IsTrue(b.Do(new PlaceBuilding(Faction.Player, node, BuildingSize.Small)).Ok);
+            Assert.IsTrue(b.Do(new PlaceBuilding(Faction.F0, node, BuildingSize.Small)).Ok);
             var nb = b.T.BuildingAtNode(node);
             Assert.AreEqual(400, b.M.BuildingHealth(nb.Id));
             Assert.AreEqual(1f, b.M.BuildingHealthFraction(nb.Id));
-            Assert.IsTrue(b.Do(new RemoveBuilding(Faction.Player, nb.Id)).Ok);
+            Assert.IsTrue(b.Do(new RemoveBuilding(Faction.F0, nb.Id)).Ok);
             b.Step();
             Assert.AreEqual(-1, b.M.BuildingHealth(nb.Id), "record dropped with the building");
+            foreach (int n in b.T.BuildableNodes(Faction.F0))
+                if (b.Sim.Check(new PlaceBuilding(Faction.F0, n, BuildingSize.Medium)).Ok)
+                {
+                    Assert.IsTrue(b.Do(new PlaceBuilding(Faction.F0, n, BuildingSize.Medium)).Ok);
+                    Assert.AreEqual(700, b.M.BuildingHealth(b.T.BuildingAtNode(n).Id));
+                    break;
+                }
         }
     }
 
@@ -132,7 +144,7 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             var (start, dir) = b.LandLine(b.PlayerHq, 8);
-            var u = b.Spawn(Faction.Player, UnitKind.Infantry, start);
+            var u = b.Spawn(Faction.F0, UnitKind.Infantry, start);
             int gx = Pathing.NodeMmX(b.G, b.Walk(start, dir, 8)), gz = Pathing.NodeMmZ(b.G, b.Walk(start, dir, 8));
             int startX = u.X, startZ = u.Z;
             int dist = Pathing.Dist(u.X, u.Z, gx, gz);
@@ -150,8 +162,8 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             var (start, dir) = b.LandLine(b.PlayerHq, 8);
-            var a = b.Spawn(Faction.Player, UnitKind.Infantry, start);
-            var v = b.Spawn(Faction.Player, UnitKind.Vehicle, start);
+            var a = b.Spawn(Faction.F0, UnitKind.Infantry, start);
+            var v = b.Spawn(Faction.F0, UnitKind.Vehicle, start);
             int gx = Pathing.NodeMmX(b.G, b.Walk(start, dir, 8)), gz = Pathing.NodeMmZ(b.G, b.Walk(start, dir, 8));
             b.Do(new DevMoveUnit(a.Id, gx, gz)); b.Do(new DevMoveUnit(v.Id, gx, gz));
             b.Step(20);
@@ -178,7 +190,7 @@ namespace God.Sim.Tests
                     a = coast[i]; c = coast[j]; break;
                 }
             Assert.GreaterOrEqual(a, 0, "the coast has a notch the straight line cannot cross");
-            var u = b.Spawn(Faction.Player, UnitKind.Vehicle, a);
+            var u = b.Spawn(Faction.F0, UnitKind.Vehicle, a);
             int gx = Pathing.NodeMmX(b.G, c), gz = Pathing.NodeMmZ(b.G, c);
             int straight = Pathing.Dist(u.X, u.Z, gx, gz);
             Assert.IsTrue(b.Do(new DevMoveUnit(u.Id, gx, gz)).Ok);
@@ -233,8 +245,8 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             var (start, dir) = b.LandLine(b.PlayerHq, 3);
-            var inf = b.Spawn(Faction.Enemy, UnitKind.Infantry, start);
-            var veh = b.Spawn(Faction.Player, UnitKind.Vehicle, b.Walk(start, dir, 3)); // 15 m apart: vehicle in range, infantry not
+            var inf = b.Spawn(Faction.F1, UnitKind.Infantry, start);
+            var veh = b.Spawn(Faction.F0, UnitKind.Vehicle, b.Walk(start, dir, 3)); // 15 m apart: vehicle in range, infantry not
             Assert.IsTrue(b.RunUntil(400, () => !b.M.Units.Contains(inf)), "the infantry dies");
 
             var vehShots = b.Events<UnitFired>().Where(e => e.AttackerId == veh.Id).ToList();
@@ -255,8 +267,8 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             var (start, dir) = b.LandLine(b.PlayerHq, 2);
-            var a = b.Spawn(Faction.Player, UnitKind.Infantry, start);
-            var e = b.Spawn(Faction.Enemy, UnitKind.Infantry, b.Walk(start, dir, 2)); // 10 m, in range of both
+            var a = b.Spawn(Faction.F0, UnitKind.Infantry, start);
+            var e = b.Spawn(Faction.F1, UnitKind.Infantry, b.Walk(start, dir, 2)); // 10 m, in range of both
             b.Step(7);
             Assert.AreEqual(100 - 12 - 12, a.Health, "two volleys of 12 within 7 ticks");
             Assert.AreEqual(100 - 12 - 12, e.Health);
@@ -266,11 +278,11 @@ namespace God.Sim.Tests
         public void Units_PreferEnemyUnits_ToBuildings()
         {
             var b = new Bed();
-            var eb = b.EnemyKind(BuildingKinds.Woodcutter);
+            var eb = b.EnemySmall(0);
             int ebX = Pathing.NodeMmX(b.G, eb.Node);
             var rec = b.M.BuildingById(eb.Id);
-            var veh = b.Spawn(Faction.Player, UnitKind.Vehicle, b.Node(b.EnemyHq, 0, 0));
-            var inf = b.Spawn(Faction.Enemy, UnitKind.Infantry, b.Node(b.EnemyHq, 0, 0));
+            var veh = b.Spawn(Faction.F0, UnitKind.Vehicle, b.Node(b.EnemyHq, 0, 0));
+            var inf = b.Spawn(Faction.F1, UnitKind.Infantry, b.Node(b.EnemyHq, 0, 0));
             b.Step();
             Assert.AreEqual(TargetKind.Unit, veh.TargetKind, "enemy unit before any building");
             Assert.AreEqual(inf.Id, veh.TargetId);
@@ -281,10 +293,10 @@ namespace God.Sim.Tests
         public void Building_IsDestroyed_LeavesRubble30s_AndTheNodeCanBeBuiltOnAgain()
         {
             var b = new Bed();
-            var target = b.EnemyKind(BuildingKinds.Woodcutter);
+            var target = b.EnemySmall(0);
             int node = target.Node;
-            b.Spawn(Faction.Player, UnitKind.Vehicle, b.G.FlagNodeOf(node));
-            b.Spawn(Faction.Player, UnitKind.Vehicle, b.G.FlagNodeOf(node));
+            b.Spawn(Faction.F0, UnitKind.Vehicle, b.G.FlagNodeOf(node));
+            b.Spawn(Faction.F0, UnitKind.Vehicle, b.G.FlagNodeOf(node));
             // They take whatever enemy building is nearest; hold the others up so only the woodcutter dies first.
             foreach (var r in b.M.Buildings) if (r.Id != target.Id) r.Health = r.MaxHealth = 1000000;
             Assert.IsTrue(b.RunUntil(600, () => b.T.BuildingById(target.Id) == null), "the woodcutter falls");
@@ -293,31 +305,15 @@ namespace God.Sim.Tests
             Assert.AreEqual(target.Id, d.BuildingId); Assert.AreEqual(node, d.Node); Assert.IsFalse(d.IsHq);
             Assert.AreEqual(1, b.M.Rubbles.Count);
             var rub = b.M.Rubbles[0];
-            Assert.AreEqual(node, rub.Node); Assert.AreEqual(BuildingKinds.Woodcutter, rub.Kind);
+            Assert.AreEqual(node, rub.Node); Assert.AreEqual(target.Kind, rub.Kind);
             Assert.That(rub.TicksLeft, Is.InRange(290, 300));
             Assert.AreEqual(0, b.T.NodeBuilding[node], "the node is free");
-            Assert.IsTrue(b.Sim.Check(new PlaceBuilding(Faction.Enemy, node, BuildingSize.Small)).Ok, "and can be built on");
+            Assert.IsTrue(b.Sim.Check(new PlaceBuilding(Faction.F1, node, BuildingSize.Small)).Ok, "and can be built on");
             Assert.AreEqual(-1, b.M.BuildingHealth(target.Id));
 
             b.Step(300);
             Assert.AreEqual(0, b.M.Rubbles.Count, "rubble gone after 30 s");
             Assert.AreEqual(1, b.Events<RubbleExpired>().Count());
-        }
-
-        [Test]
-        public void LosingTheLastHq_LeavesHqRubble_AndEndsTheGame()
-        {
-            var b = new Bed();
-            var rec = b.M.BuildingById(b.PlayerHq.Id);
-            rec.Health = 1;
-            // Enemy infantry on top of the player HQ.
-            b.Spawn(Faction.Enemy, UnitKind.Vehicle, b.Node(b.PlayerHq, 0, 0));
-            Assert.IsTrue(b.RunUntil(100, () => b.M.IsGameOver));
-            Assert.AreEqual(GameOutcome.Lost, b.M.Outcome);
-            Assert.AreEqual(1, b.M.Rubbles.Count);
-            Assert.IsTrue(b.M.Rubbles[0].Size == BuildingSize.Hq);
-            Assert.AreEqual(0, b.T.Hqs.Count(h => h.Faction == Faction.Player));
-            Assert.AreEqual(0, b.T.NodeBuilding[b.PlayerHq.Node]);
         }
     }
 
@@ -328,10 +324,10 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             int node = b.Node(b.PlayerHq, -3, 0);
-            Assert.IsTrue(b.Do(new PlaceBuilding(Faction.Player, node, BuildingSize.Medium) { Kind = BuildingKinds.Barracks }).Ok);
+            Assert.IsTrue(b.Do(new PlaceBuilding(Faction.F0, node, BuildingSize.Medium) { Kind = BuildingKinds.Barracks }).Ok);
             var fac = b.T.BuildingAtNode(node);
-            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.Player, BuildingId = fac.Id, Kind = UnitKind.Infantry });
-            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.Player, BuildingId = fac.Id, Kind = UnitKind.Vehicle });
+            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Infantry });
+            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Vehicle });
             b.Step();
             Assert.AreEqual(0, b.S.UnitQueue.Count);
             Assert.AreEqual(2, b.M.Units.Count);
@@ -346,11 +342,11 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             int node = b.Node(b.PlayerHq, -3, 0);
-            b.Do(new PlaceBuilding(Faction.Player, node, BuildingSize.Medium) { Kind = BuildingKinds.Barracks });
+            b.Do(new PlaceBuilding(Faction.F0, node, BuildingSize.Medium) { Kind = BuildingKinds.Barracks });
             var fac = b.T.BuildingAtNode(node);
             b.Step();
-            Assert.IsTrue(b.Do(new RemoveBuilding(Faction.Player, fac.Id)).Ok);
-            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.Player, BuildingId = fac.Id, Kind = UnitKind.Infantry });
+            Assert.IsTrue(b.Do(new RemoveBuilding(Faction.F0, fac.Id)).Ok);
+            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = fac.Id, Kind = UnitKind.Infantry });
             b.Step();
             Assert.AreEqual(1, b.M.Units.Count);
             var hqFlag = b.T.BuildingById(b.PlayerHq.Id).FlagNode;
@@ -361,7 +357,7 @@ namespace God.Sim.Tests
         public void UnitQueue_WhenTheFactoryIsGoneAndTheFactionHasNoHq_IsDropped()
         {
             var b = new Bed();
-            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.Player, BuildingId = 9999, Kind = UnitKind.Infantry });
+            b.S.UnitQueue.Add(new UnitOrder { Faction = Faction.F0, BuildingId = 9999, Kind = UnitKind.Infantry });
             MilitaryTerritory.Remove(b.S, b.PlayerHq.Id, null);
             b.Step();
             Assert.AreEqual(0, b.M.Units.Count);
@@ -372,8 +368,8 @@ namespace God.Sim.Tests
         public void DevSpawn_NeedsLand()
         {
             var b = new Bed();
-            Assert.IsFalse(b.Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, 0)).Ok);
-            Assert.IsTrue(b.Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, b.PlayerHq.Node)).Ok);
+            Assert.IsFalse(b.Sim.Submit(new DevSpawnUnit(Faction.F0, UnitKind.Infantry, 0)).Ok);
+            Assert.IsTrue(b.Sim.Submit(new DevSpawnUnit(Faction.F0, UnitKind.Infantry, b.PlayerHq.Node)).Ok);
         }
     }
 
@@ -383,28 +379,31 @@ namespace God.Sim.Tests
         public void MarkTarget_KeepsMarkOrder_AndValidates()
         {
             var b = new Bed();
-            var w = b.EnemyKind(BuildingKinds.Woodcutter); var q = b.EnemyKind(BuildingKinds.Quarry);
-            Assert.IsFalse(b.Sim.Submit(new MarkTarget(b.PlayerHq.Id)).Ok, "not an enemy");
-            Assert.IsFalse(b.Sim.Submit(new MarkTarget(99999)).Ok);
-            Assert.IsTrue(b.Do(new MarkTarget(q.Id)).Ok);
-            Assert.IsTrue(b.Do(new MarkTarget(w.Id)).Ok);
-            Assert.IsFalse(b.Sim.Submit(new MarkTarget(q.Id)).Ok, "twice");
-            Assert.IsTrue(b.Do(new MarkTarget(b.EnemyHq.Id)).Ok);
-            CollectionAssert.AreEqual(new[] { q.Id, w.Id, b.EnemyHq.Id }, b.M.MarkedTargets);
-            Assert.AreEqual(2, b.M.MarkOrder(w.Id));
-            Assert.IsTrue(b.Do(new UnmarkTarget(w.Id)).Ok);
-            CollectionAssert.AreEqual(new[] { q.Id, b.EnemyHq.Id }, b.M.MarkedTargets);
-            Assert.IsFalse(b.Sim.Submit(new UnmarkTarget(w.Id)).Ok);
+            var w = b.EnemySmall(0); var q = b.EnemySmall(1);
+            var F0 = Faction.F0;
+            Assert.IsFalse(b.Sim.Submit(new MarkTarget(F0, b.PlayerHq.Id)).Ok, "not an enemy");
+            Assert.IsFalse(b.Sim.Submit(new MarkTarget(F0, 99999)).Ok);
+            Assert.IsTrue(b.Do(new MarkTarget(F0, q.Id)).Ok);
+            Assert.IsTrue(b.Do(new MarkTarget(F0, w.Id)).Ok);
+            Assert.IsFalse(b.Sim.Submit(new MarkTarget(F0, q.Id)).Ok, "twice");
+            Assert.IsTrue(b.Do(new MarkTarget(F0, b.EnemyHq.Id)).Ok);
+            CollectionAssert.AreEqual(new[] { q.Id, w.Id, b.EnemyHq.Id }, b.M.MarkedOf(F0));
+            Assert.AreEqual(2, b.M.MarkOrder(F0, w.Id));
+            Assert.IsTrue(b.Do(new UnmarkTarget(F0, w.Id)).Ok);
+            CollectionAssert.AreEqual(new[] { q.Id, b.EnemyHq.Id }, b.M.MarkedOf(F0));
+            Assert.IsFalse(b.Sim.Submit(new UnmarkTarget(F0, w.Id)).Ok);
+            Assert.AreEqual(0, b.M.MarkedOf(Faction.F1).Count, "marks are per faction");
         }
 
         [Test]
         public void Targets_AreAttackedInTheOrderMarked()
         {
             var b = new Bed();
-            var first = b.EnemyKind(BuildingKinds.Quarry);
-            var second = b.EnemyKind(BuildingKinds.Woodcutter);
-            b.Do(new MarkTarget(first.Id)); b.Do(new MarkTarget(second.Id));
-            for (int i = 0; i < 4; i++) b.Spawn(Faction.Player, UnitKind.Vehicle, b.EnemyHq.Node);
+            var first = b.EnemySmall(1);
+            var second = b.EnemySmall(0);
+            b.Do(new MarkTarget(Faction.F0, first.Id)); b.Do(new MarkTarget(Faction.F0, second.Id));
+            // Next to target 1, so it is in sight from the start (an unseen mark would let them shoot the HQ instead).
+            for (int i = 0; i < 4; i++) b.Spawn(Faction.F0, UnitKind.Vehicle, first.FlagNode);
             bool secondTouched = false;
             bool firstDone = false;
             for (int i = 0; i < 1500 && b.M.BuildingById(second.Id) != null; i++)
@@ -418,26 +417,26 @@ namespace God.Sim.Tests
             Assert.IsNull(b.M.BuildingById(second.Id), "then target 2 fell");
             var order = b.Events<BuildingDestroyed>().Select(e => e.BuildingId).ToList();
             Assert.Less(order.IndexOf(first.Id), order.IndexOf(second.Id));
-            Assert.AreEqual(0, b.M.Marked.Count, "destroyed targets leave the list");
+            Assert.AreEqual(0, b.M.MarkedOf(Faction.F0).Count, "destroyed targets leave the list");
         }
 
         [Test]
         public void Defend_Validates_AndUpdatesAnExistingFlag()
         {
             var b = new Bed();
-            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(b.PlayerHq.Id, 6)).Ok, "0 to 5 guards");
-            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(b.PlayerHq.Id, -1)).Ok);
-            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(b.EnemyHq.Id, 1)).Ok, "own buildings only");
-            Assert.IsFalse(b.Sim.Submit(SetDefend.OnNode(0, 1)).Ok, "land only");
-            Assert.IsTrue(b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 2)).Ok);
-            Assert.IsTrue(b.Do(SetDefend.OnNode(b.Node(b.PlayerHq, -3, 0), 1)).Ok);
+            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 6)).Ok, "0 to 5 guards");
+            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, -1)).Ok);
+            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(Faction.F0, b.EnemyHq.Id, 1)).Ok, "own buildings only");
+            Assert.IsFalse(b.Sim.Submit(SetDefend.OnNode(Faction.F0, 0, 1)).Ok, "land only");
+            Assert.IsTrue(b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 2)).Ok);
+            Assert.IsTrue(b.Do(SetDefend.OnNode(Faction.F0, b.Node(b.PlayerHq, -3, 0), 1)).Ok);
             Assert.AreEqual(2, b.M.Defends.Count);
-            Assert.IsTrue(b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 4)).Ok);
+            Assert.IsTrue(b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 4)).Ok);
             Assert.AreEqual(2, b.M.Defends.Count, "same anchor, same flag");
             Assert.AreEqual(4, b.M.DefendAtBuilding(b.PlayerHq.Id).Guards);
-            var flag = b.M.DefendAtNode(b.Node(b.PlayerHq, -3, 0));
-            Assert.IsTrue(b.Do(new RemoveDefend(flag.Id)).Ok);
-            Assert.IsFalse(b.Sim.Submit(new RemoveDefend(flag.Id)).Ok);
+            var flag = b.M.DefendAtNode(Faction.F0, b.Node(b.PlayerHq, -3, 0));
+            Assert.IsTrue(b.Do(new RemoveDefend(Faction.F0, flag.Id)).Ok);
+            Assert.IsFalse(b.Sim.Submit(new RemoveDefend(Faction.F0, flag.Id)).Ok);
             Assert.AreEqual(1, b.M.Defends.Count);
         }
 
@@ -446,11 +445,11 @@ namespace God.Sim.Tests
         {
             var b = new Bed();
             int node = b.Node(b.PlayerHq, -3, 0);
-            b.Do(new PlaceBuilding(Faction.Player, node, BuildingSize.Small));
+            b.Do(new PlaceBuilding(Faction.F0, node, BuildingSize.Small));
             var bl = b.T.BuildingAtNode(node);
-            b.Do(SetDefend.OnBuilding(bl.Id, 1));
+            b.Do(SetDefend.OnBuilding(Faction.F0, bl.Id, 1));
             Assert.AreEqual(1, b.M.Defends.Count);
-            b.Do(new RemoveBuilding(Faction.Player, bl.Id));
+            b.Do(new RemoveBuilding(Faction.F0, bl.Id));
             b.Step();
             Assert.AreEqual(0, b.M.Defends.Count);
             Assert.AreEqual(1, b.Events<DefendRemoved>().Count(e => e.AnchorLost));
@@ -460,27 +459,27 @@ namespace God.Sim.Tests
         public void GuardCounts_AreFilledBeforeAnythingAttacks()
         {
             var b = new Bed();
-            b.Do(new MarkTarget(b.EnemyKind(BuildingKinds.Quarry).Id));
-            var u1 = b.Spawn(Faction.Player, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
-            var u2 = b.Spawn(Faction.Player, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 1));
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 2));
+            b.Do(new MarkTarget(Faction.F0, b.EnemySmall(0).Id));
+            var u1 = b.Spawn(Faction.F0, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
+            var u2 = b.Spawn(Faction.F0, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 1));
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 2));
             b.Step(3);
             var flag = b.M.DefendAtBuilding(b.PlayerHq.Id);
             Assert.AreEqual(2, b.M.GuardCount(flag.Id), "both units guard");
             Assert.AreNotEqual(UnitActivity.Marching, u1.Activity);
             Assert.AreNotEqual(UnitActivity.Marching, u2.Activity);
 
-            var u3 = b.Spawn(Faction.Player, UnitKind.Infantry, b.Node(b.PlayerHq, 1, 0));
+            var u3 = b.Spawn(Faction.F0, UnitKind.Infantry, b.Node(b.PlayerHq, 1, 0));
             b.Step(3);
             Assert.AreEqual(2, b.M.GuardCount(flag.Id));
             Assert.AreEqual(0, u3.GuardFlagId);
             Assert.AreEqual(UnitActivity.Marching, u3.Activity, "the rest march on the marked target");
 
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 3));
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 3));
             b.Step(3);
             Assert.AreEqual(3, b.M.GuardCount(flag.Id), "a free unit joins a flag that grew");
             Assert.AreNotEqual(UnitActivity.Marching, u3.Activity);
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 1));
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 1));
             b.Step(3);
             Assert.AreEqual(1, b.M.GuardCount(flag.Id), "extra guards are released");
         }
@@ -489,13 +488,13 @@ namespace God.Sim.Tests
         public void OldestFlagIsFilledFirst_ByTheNearestFreeUnit()
         {
             var b = new Bed();
-            var far = b.Spawn(Faction.Player, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
+            var far = b.Spawn(Faction.F0, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
             int n1 = b.Node(b.PlayerHq, -4, 0);
-            b.Do(SetDefend.OnNode(n1, 1));           // oldest
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 1));
+            b.Do(SetDefend.OnNode(Faction.F0, n1, 1));           // oldest
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 1));
             b.Step(2);
-            Assert.AreEqual(b.M.DefendAtNode(n1).Id, far.GuardFlagId, "the only unit goes to the oldest flag");
-            var near = b.Spawn(Faction.Player, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
+            Assert.AreEqual(b.M.DefendAtNode(Faction.F0, n1).Id, far.GuardFlagId, "the only unit goes to the oldest flag");
+            var near = b.Spawn(Faction.F0, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
             b.Step(2);
             Assert.AreEqual(b.M.DefendAtBuilding(b.PlayerHq.Id).Id, near.GuardFlagId, "the next unit fills the next flag");
         }
@@ -504,7 +503,7 @@ namespace God.Sim.Tests
         public void WithNoTarget_FreeUnitsWaitNearTheirHq_AndStayPut()
         {
             var b = new Bed();
-            var u = b.Spawn(Faction.Player, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
+            var u = b.Spawn(Faction.F0, UnitKind.Infantry, b.Node(b.PlayerHq, 0, 0));
             b.Step(200);
             var hq = b.M.BuildingById(b.PlayerHq.Id);
             Assert.Less(Pathing.Dist(u.X, u.Z, hq.X, hq.Z), 14000);
@@ -518,8 +517,8 @@ namespace God.Sim.Tests
         public void Guard_ReturnsToItsAnchor_AfterBeingPulledAway()
         {
             var b = new Bed();
-            var g1 = b.Spawn(Faction.Player, UnitKind.Infantry, b.PlayerHq.Node);
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 1));
+            var g1 = b.Spawn(Faction.F0, UnitKind.Infantry, b.PlayerHq.Node);
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 1));
             b.Step(5);
             Assert.AreEqual(1, b.M.GuardCount(b.M.Defends[0].Id));
             // Walk it 12 m away with a dev order, then let the brain take over again.
@@ -546,9 +545,9 @@ namespace God.Sim.Tests
         public void Guards_ChaseAnAttacker_ThenReturn()
         {
             var b = new Bed();
-            var g1 = b.Spawn(Faction.Player, UnitKind.Infantry, b.PlayerHq.Node);
-            var g2 = b.Spawn(Faction.Player, UnitKind.Infantry, b.PlayerHq.Node);
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 2));
+            var g1 = b.Spawn(Faction.F0, UnitKind.Infantry, b.PlayerHq.Node);
+            var g2 = b.Spawn(Faction.F0, UnitKind.Infantry, b.PlayerHq.Node);
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 2));
             b.Step(60);
             var anchor = b.M.Defends[0];
             // An enemy infantry about 14 m from the anchor, beyond a guard's 12 m range.
@@ -560,7 +559,7 @@ namespace God.Sim.Tests
                 if (ok) { en = m; }
             }
             Assert.GreaterOrEqual(en, 0);
-            var enemy = b.Spawn(Faction.Enemy, UnitKind.Infantry, en);
+            var enemy = b.Spawn(Faction.F1, UnitKind.Infantry, en);
             int maxOut = 0;
             Assert.IsTrue(b.RunUntil(400, () =>
             {
@@ -579,146 +578,18 @@ namespace God.Sim.Tests
         }
     }
 
-    public class MilitaryWaveTests
-    {
-        private static Bed Fortified()
-        {
-            var b = new Bed(3, waves: true);
-            var hq = b.M.BuildingById(b.PlayerHq.Id);
-            hq.Health = hq.MaxHealth = 100000000;
-            return b;
-        }
-
-        [Test]
-        public void Waves_ComeOnTheirClock_WithTheRightComposition()
-        {
-            var b = Fortified();
-            b.Step(MilitaryTuning.FirstWaveTicks - 1);
-            Assert.AreEqual(0, b.M.WaveNumber);
-            Assert.AreEqual(1, b.M.TicksToNextWave(b.S.Tick));
-            b.Step(1);
-            Assert.AreEqual(1, b.M.WaveNumber);
-            b.Step(MilitaryTuning.WaveIntervalTicks * 3);
-            var waves = b.Events<WaveSpawned>().ToList();
-            Assert.AreEqual(4, waves.Count);
-            CollectionAssert.AreEqual(new long[] { MilitaryTuning.FirstWaveTicks, MilitaryTuning.FirstWaveTicks + MilitaryTuning.WaveIntervalTicks, MilitaryTuning.FirstWaveTicks + 2 * MilitaryTuning.WaveIntervalTicks, MilitaryTuning.FirstWaveTicks + 3 * MilitaryTuning.WaveIntervalTicks }, waves.Select(w => w.Tick).ToArray());
-            CollectionAssert.AreEqual(new[] { 2, 3, 4, 5 }, waves.Select(w => w.Infantry).ToArray());
-            CollectionAssert.AreEqual(new[] { 0, 0, 1, 2 }, waves.Select(w => w.Vehicles).ToArray());
-
-            var spawned = b.Events<UnitSpawned>().Where(e => e.Faction == Faction.Enemy).ToList();
-            Assert.AreEqual(2 + 3 + 5 + 7, spawned.Count);
-            foreach (var e in spawned.Where(e => e.Tick == MilitaryTuning.FirstWaveTicks)) Assert.AreEqual(UnitKind.Infantry, e.Kind);
-            Assert.AreEqual(1, spawned.Count(e => e.Tick == MilitaryTuning.FirstWaveTicks + 2 * MilitaryTuning.WaveIntervalTicks && e.Kind == UnitKind.Vehicle));
-            var barracks = b.T.Buildings.First(x => x.Kind == BuildingKinds.Barracks);
-            var shop = b.T.Buildings.First(x => x.Kind == BuildingKinds.VehicleWorkshop);
-            foreach (var e in spawned)
-            {
-                int node = e.Kind == UnitKind.Infantry ? barracks.FlagNode : shop.FlagNode;
-                Assert.Less(Pathing.Dist(e.X, e.Z, Pathing.NodeMmX(b.G, node), Pathing.NodeMmZ(b.G, node)), 3500);
-            }
-        }
-
-        [Test]
-        public void Wave_TargetsThePlayerBuildingNearestTheEnemyHq()
-        {
-            var b = Fortified();
-            Assert.IsTrue(b.Do(new PlaceBuilding(Faction.Player, b.Node(b.PlayerHq, -3, 0), BuildingSize.Small)).Ok);
-            b.Step(MilitaryTuning.FirstWaveTicks);
-            var grp = b.M.WaveGroups.Single(g => g.Id != 0);
-            var home = b.M.BuildingById(b.EnemyHq.Id);
-            long best = long.MaxValue; int bestId = 0;
-            foreach (var r in b.M.Buildings.Where(r => r.Faction == Faction.Player))
-            {
-                long d = Pathing.Dist2(home.X, home.Z, r.X, r.Z);
-                if (d < best) { best = d; bestId = r.Id; }
-            }
-            Assert.AreEqual(TargetKind.Building, grp.TargetKind);
-            Assert.AreEqual(bestId, grp.TargetId);
-            var wave = b.M.Units.Where(u => u.WaveId == grp.Id).ToList();
-            Assert.AreEqual(2, wave.Count);
-            b.Step(50);
-            foreach (var u in wave) Assert.AreEqual(UnitActivity.Marching, u.Activity);
-        }
-
-        [Test]
-        public void Waves_Stop_WhenTheEnemyFactoriesAreDestroyed()
-        {
-            var b = new Bed(3, waves: true);
-            b.Do(new RemoveBuilding(Faction.Enemy, b.EnemyKind(BuildingKinds.Barracks).Id));
-            b.Do(new RemoveBuilding(Faction.Enemy, b.EnemyKind(BuildingKinds.VehicleWorkshop).Id));
-            b.Step(MilitaryTuning.FirstWaveTicks);
-            Assert.IsTrue(b.M.WavesStopped);
-            Assert.AreEqual(0, b.M.WaveNumber);
-            Assert.AreEqual(-1, b.M.TicksToNextWave(b.S.Tick));
-            b.Step(2 * MilitaryTuning.WaveIntervalTicks);
-            Assert.AreEqual(0, b.M.Units.Count);
-            Assert.AreEqual(1, b.Events<WavesStopped>().Count());
-        }
-
-        [Test]
-        public void OneFactoryLeft_StillSendsItsOwnKind()
-        {
-            var b = new Bed(3, waves: true);
-            b.Do(new RemoveBuilding(Faction.Enemy, b.EnemyKind(BuildingKinds.VehicleWorkshop).Id));
-            b.M.BuildingById(b.PlayerHq.Id).Health = b.M.BuildingById(b.PlayerHq.Id).MaxHealth = 100000000;
-            b.Step(MilitaryTuning.FirstWaveTicks + 2 * MilitaryTuning.WaveIntervalTicks);
-            Assert.AreEqual(3, b.M.WaveNumber);
-            Assert.AreEqual(0, b.Events<UnitSpawned>().Count(e => e.Kind == UnitKind.Vehicle));
-        }
-    }
-
     public class MilitaryGameTests
     {
-        [Test]
-        public void Battle_SixVehiclesMarkedOnTheEnemyHq_WinTheGame()
-        {
-            var b = new Bed(3, waves: true);
-            for (int i = 0; i < 6; i++) b.Spawn(Faction.Player, UnitKind.Vehicle, b.PlayerHq.Node);
-            Assert.IsTrue(b.Do(new MarkTarget(b.EnemyHq.Id)).Ok);
-            Assert.IsTrue(b.RunUntil(9000, () => b.M.IsGameOver), "the game ends");
-            Assert.AreEqual(GameOutcome.Won, b.M.Outcome);
-            var over = b.Events<GameOver>().Single();
-            Assert.IsTrue(over.Won);
-            Assert.AreEqual(0, b.T.Hqs.Count(h => h.Faction == Faction.Enemy));
-            Assert.AreEqual(1, b.Events<BuildingDestroyed>().Count(e => e.IsHq && e.Faction == Faction.Enemy));
-            Assert.Greater(b.M.GameOverTick, 0);
-
-            // Over: waves, orders and units stop.
-            int wave = b.M.WaveNumber; int units = b.M.Units.Count;
-            b.Step(2000);
-            Assert.AreEqual(wave, b.M.WaveNumber);
-            Assert.AreEqual(units, b.M.Units.Count);
-            Assert.IsFalse(b.Sim.Submit(new MarkTarget(1)).Ok);
-            Assert.IsFalse(b.Sim.Submit(SetDefend.OnBuilding(b.PlayerHq.Id, 1)).Ok);
-            Assert.IsFalse(b.Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, b.PlayerHq.Node)).Ok);
-            Assert.AreEqual(1, b.Events<GameOver>().Count());
-        }
-
-        [Test]
-        public void Wave_DestroysAnUndefendedPlayerHq_AndTheGameIsLost()
-        {
-            var b = new Bed(3, waves: true);
-            Assert.IsTrue(b.RunUntil(20000, () => b.M.IsGameOver), "the player loses");
-            Assert.AreEqual(GameOutcome.Lost, b.M.Outcome);
-            Assert.IsFalse(b.Events<GameOver>().Single().Won);
-            Assert.AreEqual(0, b.T.Hqs.Count(h => h.Faction == Faction.Player));
-            Assert.IsTrue(b.M.Rubbles.Any(r => r.Size == BuildingSize.Hq));
-            Assert.Greater(b.M.WaveNumber, 0);
-            int n = b.M.WaveNumber;
-            b.Step(2000);
-            Assert.AreEqual(n, b.M.WaveNumber, "waves stop at game over");
-        }
-
         private static ulong Play(ulong seed, int ticks)
         {
-            var b = new Bed(seed, waves: true);
-            for (int i = 0; i < 3; i++) b.Spawn(Faction.Player, UnitKind.Infantry, b.PlayerHq.Node);
-            for (int i = 0; i < 2; i++) b.Spawn(Faction.Player, UnitKind.Vehicle, b.PlayerHq.Node);
-            b.Do(SetDefend.OnBuilding(b.PlayerHq.Id, 2));
-            b.Do(new MarkTarget(b.EnemyKind(BuildingKinds.Barracks).Id));
-            b.Do(new MarkTarget(b.EnemyHq.Id));
+            var b = new Bed(seed);
+            for (int i = 0; i < 3; i++) b.Spawn(Faction.F0, UnitKind.Infantry, b.PlayerHq.Node);
+            for (int i = 0; i < 2; i++) b.Spawn(Faction.F0, UnitKind.Vehicle, b.PlayerHq.Node);
+            b.Do(SetDefend.OnBuilding(Faction.F0, b.PlayerHq.Id, 2));
+            b.Do(new MarkTarget(Faction.F0, b.EnemySmall(0).Id));
+            b.Do(new MarkTarget(Faction.F0, b.EnemyHq.Id));
             b.Step(ticks);
-            return b.M.Hash(b.S);
+            return b.Sim.StateHash();
         }
 
         [Test]

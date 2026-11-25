@@ -78,6 +78,11 @@ namespace God.Sim
         public int IdleCarriers;
         public int IdleBuilders;
 
+        // ---- Citadel upgrade (HQ only). While Upgrading, In and Incoming hold the Citadel wares like a site's. ----
+        public bool Upgrading;
+        /// <summary>Ticks of Citadel work done (starts once every ware is in).</summary>
+        public int UpgradeProgress;
+
         public BuildingDef Def => EconomyDefs.DefOf(Kind);
 
         private static Priority[] NormalPriorities()
@@ -87,7 +92,10 @@ namespace God.Sim
             return p;
         }
 
-        /// <summary>Wares this record asks for: the cost for a site, the cycle inputs for a finished workshop or factory.</summary>
+        /// <summary>True while it takes wares like a construction site: a site, or an HQ being upgraded to a Citadel.</summary>
+        public bool SiteLike => !Built || Upgrading;
+
+        /// <summary>Wares this record asks for: the cost for a site or a Citadel upgrade, the cycle inputs for a finished workshop or factory.</summary>
         public int[] Wanted
         {
             get
@@ -95,6 +103,7 @@ namespace God.Sim
                 var d = Def;
                 if (d == null) return new int[Wares.Count];
                 if (!Built) return d.Cost;
+                if (Upgrading) return EconomyDefs.Citadel.Cost;
                 return d.In;
             }
         }
@@ -221,10 +230,28 @@ namespace God.Sim
             return delivered + work;
         }
 
+        /// <summary>Citadel upgrade progress 0..1000 (wares 400, work 600); 0 when the HQ is not being upgraded.</summary>
+        public int UpgradeProgressPermille(int hqId)
+        {
+            var b = Find(hqId);
+            if (b == null || !b.Upgrading) return 0;
+            var d = EconomyDefs.Citadel;
+            int total = d.CostTotal, have = 0;
+            for (int w = 0; w < Wares.Count; w++) have += System.Math.Min(b.In[w], d.Cost[w]);
+            return 400 * have / total + 600 * b.UpgradeProgress / d.BuildTicks;
+        }
+
         public int CarriersOut(int hqId)
         {
             int n = 0;
             foreach (var w in Walkers) if (w.Kind == WalkerKind.Carrier && w.Home == hqId) n++;
+            return n;
+        }
+
+        public int BuildersOut(int hqId)
+        {
+            int n = 0;
+            foreach (var w in Walkers) if (w.Kind == WalkerKind.Builder && w.Home == hqId) n++;
             return n;
         }
     }

@@ -5,13 +5,11 @@ namespace God.Sim
 {
     public sealed partial class GodState
     {
-        /// <summary>Units, building health, marks, defend flags, waves and the game result (P3). Null until <see cref="MilitaryModule.StartGame"/>.</summary>
+        /// <summary>Units, building health, marks and defend flags (P3). Null until <see cref="MilitaryModule.StartGame"/>.</summary>
         public MilitaryState Military;
     }
 
     public enum TargetKind { None = 0, Unit = 1, Building = 2 }
-
-    public enum GameOutcome { Playing = 0, Won = 1, Lost = 2 }
 
     /// <summary>What a unit is doing now (its current order as the brain resolved it).</summary>
     public enum UnitActivity
@@ -21,7 +19,7 @@ namespace God.Sim
         Moving = 1,
         /// <summary>Shooting or closing on a target in sight.</summary>
         Fighting = 2,
-        /// <summary>Walking to the first marked target (player) or the wave target (enemy).</summary>
+        /// <summary>Walking to its faction's first marked target.</summary>
         Marching = 3,
         /// <summary>Standing at its defend anchor.</summary>
         Guarding = 4,
@@ -53,8 +51,6 @@ namespace God.Sim
         public int GuardFlagId;
         /// <summary>True while a guard walks back to its anchor (hysteresis).</summary>
         public bool Returning;
-        /// <summary>Enemy wave group this unit belongs to (0 = none).</summary>
-        public int WaveId;
         /// <summary>Dev move order goal (mm), valid while HasGoal.</summary>
         public int GoalX, GoalZ;
         public bool HasGoal;
@@ -102,23 +98,17 @@ namespace God.Sim
         public int TicksLeft;
     }
 
-    /// <summary>A player defend flag: an anchor (own building or HQ, or a land node) and a guard count 0..5.</summary>
+    /// <summary>A faction's defend flag: an anchor (own building or HQ, or a land node) and a guard count 0..5.</summary>
     public sealed class DefendFlag
     {
         public int Id;
+        /// <summary>The faction whose units guard it.</summary>
+        public Faction Faction;
         /// <summary>Building or HQ id of the anchor, 0 when it is a bare node.</summary>
         public int AnchorBuildingId;
         public int Node;
         public int X, Z;
         public int Guards;
-    }
-
-    /// <summary>One enemy wave: its members attack the target (a player building or unit) and re-pick when it dies.</summary>
-    public sealed class WaveGroup
-    {
-        public int Id;
-        public TargetKind TargetKind;
-        public int TargetId;
     }
 
     /// <summary>Military state (P3). Plain data plus read-only queries: this is the snapshot API for views.</summary>
@@ -132,24 +122,11 @@ namespace God.Sim
         public List<Rubble> Rubbles = new List<Rubble>();
         public int NextRubbleId = 1;
 
-        /// <summary>Marked enemy buildings or HQs, in the order they were marked.</summary>
-        public List<int> Marked = new List<int>();
+        /// <summary>Per faction id: the buildings or HQs it has marked as targets, in the order they were marked.</summary>
+        public List<int>[] MarkedBy = NewMarks();
         /// <summary>Defend flags, oldest first.</summary>
         public List<DefendFlag> Defends = new List<DefendFlag>();
         public int NextDefendId = 1;
-
-        // Waves.
-        public int WaveNumber;
-        /// <summary>Tick the next wave spawns at.</summary>
-        public long NextWaveTick = MilitaryTuning.FirstWaveTicks;
-        public bool WavesStopped;
-        /// <summary>Dev switch for tests: false holds the wave clock without ending it for good.</summary>
-        public bool WavesEnabled = true;
-        public List<WaveGroup> WaveGroups = new List<WaveGroup>();
-        public int NextWaveGroupId = 1;
-
-        public GameOutcome Outcome;
-        public long GameOverTick;
 
         /// <summary>Last known node and faction of every building ever seen, by id (for orders whose factory is gone).</summary>
         public Dictionary<int, (Faction faction, int node)> Known = new Dictionary<int, (Faction, int)>();
@@ -157,11 +134,6 @@ namespace God.Sim
         private readonly Dictionary<int, BuildingRecord> _byId = new Dictionary<int, BuildingRecord>();
 
         // ---------------- snapshot API ----------------
-
-        public bool IsGameOver => Outcome != GameOutcome.Playing;
-
-        /// <summary>Ticks until the next wave, or -1 when waves have stopped.</summary>
-        public long TicksToNextWave(long tick) => WavesStopped ? -1 : Math.Max(0, NextWaveTick - tick);
 
         public MilUnit UnitById(int id) { foreach (var u in Units) if (u.Id == id) return u; return null; }
 
@@ -172,14 +144,26 @@ namespace God.Sim
 
         public float BuildingHealthFraction(int id) => BuildingById(id)?.HealthFraction ?? 0f;
 
-        public IReadOnlyList<int> MarkedTargets => Marked;
+        private static List<int>[] NewMarks()
+        {
+            var a = new List<int>[FactionInfo.Max];
+            for (int i = 0; i < a.Length; i++) a[i] = new List<int>();
+            return a;
+        }
 
-        /// <summary>1-based position in the marked list, or 0 when it is not marked.</summary>
-        public int MarkOrder(int buildingId) => Marked.IndexOf(buildingId) + 1;
+        /// <summary>The targets a faction has marked, in order (do not modify; use the commands).</summary>
+        public IReadOnlyList<int> MarkedOf(Faction f) => MarkedBy[(int)f];
+
+        /// <summary>True when <paramref name="by"/> has marked the building.</summary>
+        public bool IsMarked(Faction by, int buildingId) => MarkedBy[(int)by].Contains(buildingId);
+
+        /// <summary>1-based position in <paramref name="by"/>'s marked list, or 0 when it is not marked.</summary>
+        public int MarkOrder(Faction by, int buildingId) => MarkedBy[(int)by].IndexOf(buildingId) + 1;
 
         public DefendFlag DefendById(int id) { foreach (var f in Defends) if (f.Id == id) return f; return null; }
         public DefendFlag DefendAtBuilding(int buildingId) { foreach (var f in Defends) if (f.AnchorBuildingId == buildingId && buildingId != 0) return f; return null; }
-        public DefendFlag DefendAtNode(int node) { foreach (var f in Defends) if (f.AnchorBuildingId == 0 && f.Node == node) return f; return null; }
+        /// <summary><paramref name="by"/>'s defend flag on a bare node, or null.</summary>
+        public DefendFlag DefendAtNode(Faction by, int node) { foreach (var f in Defends) if (f.AnchorBuildingId == 0 && f.Node == node && f.Faction == by) return f; return null; }
 
         /// <summary>Guards currently assigned to a flag.</summary>
         public int GuardCount(int flagId)
@@ -188,8 +172,6 @@ namespace God.Sim
             foreach (var u in Units) if (u.GuardFlagId == flagId) n++;
             return n;
         }
-
-        public WaveGroup WaveById(int id) { foreach (var w in WaveGroups) if (w.Id == id) return w; return null; }
 
         public int CountUnits(Faction f)
         {
@@ -221,24 +203,22 @@ namespace God.Sim
             foreach (var u in Units)
             {
                 Mix(u.Id); Mix((int)u.Faction); Mix((int)u.Kind); Mix(u.X); Mix(u.Z); Mix(u.Health); Mix(u.Cooldown);
-                Mix(u.FaceX); Mix(u.FaceZ); Mix((int)u.Activity); Mix((int)u.TargetKind); Mix(u.TargetId); Mix(u.GuardFlagId); Mix(u.WaveId);
+                Mix(u.FaceX); Mix(u.FaceZ); Mix((int)u.Activity); Mix((int)u.TargetKind); Mix(u.TargetId); Mix(u.GuardFlagId);
             }
             Mix(-1);
-            foreach (var b in Buildings) { Mix(b.Id); Mix(b.Health); }
+            foreach (var b in Buildings) { Mix(b.Id); Mix((int)b.Faction); Mix(b.Health); Mix(b.MaxHealth); }
             Mix(-2);
             foreach (var r in Rubbles) { Mix(r.Id); Mix(r.Node); Mix(r.TicksLeft); }
             Mix(-3);
-            foreach (int m in Marked) Mix(m);
+            foreach (var list in MarkedBy) { foreach (int m in list) Mix(m); Mix(-6); }
             Mix(-4);
-            foreach (var d in Defends) { Mix(d.Id); Mix(d.AnchorBuildingId); Mix(d.Node); Mix(d.Guards); }
+            foreach (var d in Defends) { Mix(d.Id); Mix((int)d.Faction); Mix(d.AnchorBuildingId); Mix(d.Node); Mix(d.Guards); }
             Mix(-5);
-            Mix(WaveNumber); Mix(NextWaveTick); Mix(WavesStopped ? 1 : 0); Mix((int)Outcome); Mix(GameOverTick);
-            foreach (var w in WaveGroups) { Mix(w.Id); Mix((int)w.TargetKind); Mix(w.TargetId); }
             var t = s.Territory;
             if (t != null)
             {
                 Mix(t.NextId); Mix(t.Hqs.Count); Mix(t.Buildings.Count); Mix(t.Flags.Count); Mix(t.Roads.Count);
-                foreach (var b in t.Buildings) { Mix(b.Id); Mix(b.Node); }
+                foreach (var b in t.Buildings) { Mix(b.Id); Mix(b.Node); Mix((int)b.Faction); }
             }
             return h;
         }

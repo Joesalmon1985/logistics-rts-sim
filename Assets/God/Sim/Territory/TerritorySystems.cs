@@ -70,34 +70,6 @@ namespace God.Sim
         }
     }
 
-    // ---------------- start corners ----------------
-
-    public static class StartCorners
-    {
-        /// <summary>
-        /// Two land corners as far apart as possible on the corner graph (hex edges). Among all pairs at the greatest
-        /// distance one is picked with a stream forked from the seed, and the seed also decides which side gets which.
-        /// </summary>
-        public static void Pick(Board board, ulong seed, out int player, out int enemy)
-        {
-            var topo = board.Topology;
-            var land = BoardGenerator.LandCorners(board, topo);
-            int best = -1;
-            var pairs = new List<(int, int)>();
-            for (int i = 0; i < land.Count; i++)
-                for (int j = i + 1; j < land.Count; j++)
-                {
-                    int d = topo.CornerDistance(land[i], land[j]);
-                    if (d > best) { best = d; pairs.Clear(); }
-                    if (d == best) pairs.Add((land[i], land[j]));
-                }
-            var rng = new Rng(seed).Fork("start.corners");
-            var pick = pairs[rng.NextInt(pairs.Count)];
-            if (rng.NextInt(2) == 0) { player = pick.Item1; enemy = pick.Item2; }
-            else { player = pick.Item2; enemy = pick.Item1; }
-        }
-    }
-
     // ---------------- install ----------------
 
     public static class TerritoryModule
@@ -117,13 +89,12 @@ namespace God.Sim
             sim.AddSystem(DiceOrder, new DiceSystem());
         }
 
-        /// <summary>Creates the territory state and puts the two starting HQs down.</summary>
+        /// <summary>Creates the territory state and puts one finished HQ per faction on its start corner (<see cref="StartCorners.Pick"/>).</summary>
         public static void StartGame(GodState s)
         {
-            s.Territory = TerritoryState.Create(s.Board.Radius);
-            StartCorners.Pick(s.Board, s.Seed, out int p, out int e);
-            TerritoryRules.AddHq(s, Faction.Player, p, null);
-            TerritoryRules.AddHq(s, Faction.Enemy, e, null);
+            s.Territory = TerritoryState.Create(s.Board.Radius, s.Board.Shape);
+            var starts = StartCorners.Pick(s.Board, s.Seed, s.FactionCount);
+            for (int i = 0; i < starts.Length; i++) TerritoryRules.AddHq(s, (Faction)i, starts[i], null);
         }
     }
 }

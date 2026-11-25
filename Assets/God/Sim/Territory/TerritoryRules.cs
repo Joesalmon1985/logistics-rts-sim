@@ -226,6 +226,19 @@ namespace God.Sim
             return road;
         }
 
+        /// <summary>
+        /// Elimination: removes every road of a faction (emitting <see cref="RoadRemoved"/>) and then every flag of it that no
+        /// building uses. Buildings must already be gone or have changed hands.
+        /// </summary>
+        public static void ClearFaction(GodState s, Faction f, EventBuffer ev)
+        {
+            var t = s.Territory;
+            foreach (var road in t.Roads.ToArray())
+                if (road.Faction == f) DoRemoveRoad(s, f, road.Id, ev);
+            foreach (var flag in t.Flags.ToArray())
+                if (flag.Faction == f && flag.BuildingId == 0) DropFlagIfSpare(t, flag);
+        }
+
         // ---------------- roads ----------------
 
         public static CommandResult CheckRoad(GodState s, Faction f, int[] nodes)

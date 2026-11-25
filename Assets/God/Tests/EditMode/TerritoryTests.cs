@@ -8,40 +8,6 @@ namespace God.Sim.Tests
     public class StartAndDiceTests
     {
         [Test]
-        public void StartCorners_AreDeterministic_Legal_AndAsFarApartAsPossible()
-        {
-            for (ulong seed = 1; seed <= 30; seed++)
-            {
-                var a = GodSim.Create(seed).State;
-                var b = GodSim.Create(seed).State;
-                var topo = a.Board.Topology;
-                var p = a.Territory.HqsOf(Faction.Player).Single();
-                var e = a.Territory.HqsOf(Faction.Enemy).Single();
-                Assert.AreEqual(p.Corner, b.Territory.HqsOf(Faction.Player).Single().Corner, "deterministic");
-                Assert.AreEqual(e.Corner, b.Territory.HqsOf(Faction.Enemy).Single().Corner, "deterministic");
-                var land = BoardGenerator.LandCorners(a.Board, topo);
-                CollectionAssert.Contains(land, p.Corner);
-                CollectionAssert.Contains(land, e.Corner);
-                int max = 0;
-                foreach (int x in land) foreach (int y in land) max = Math.Max(max, topo.CornerDistance(x, y));
-                Assert.AreEqual(max, topo.CornerDistance(p.Corner, e.Corner), "as far apart as possible");
-                Assert.GreaterOrEqual(max, 4);
-            }
-        }
-
-        [Test]
-        public void StartCorners_VaryWithTheSeed()
-        {
-            var set = new HashSet<(int, int)>();
-            for (ulong seed = 1; seed <= 30; seed++)
-            {
-                var t = GodSim.Create(seed).State.Territory;
-                set.Add((t.HqsOf(Faction.Player).Single().Corner, t.HqsOf(Faction.Enemy).Single().Corner));
-            }
-            Assert.Greater(set.Count, 1);
-        }
-
-        [Test]
         public void Dice_AreDeterministic_AndRollEverySixSeconds()
         {
             var a = GodSim.Create(5); var b = GodSim.Create(5);
@@ -129,7 +95,7 @@ namespace God.Sim.Tests
 
     public class NodeGridTests
     {
-        private static readonly NodeGrid G = NodeGrid.Get(BoardGenerator.IslandRadius);
+        private static readonly NodeGrid G = NodeGrid.Get(BoardGenerator.IslandRadius, BoardGenerator.IslandShape);
 
         [Test]
         public void Spacing_IsATwelfthOfTheEdge_WithSixNodesAcrossTheCircleRadius()
@@ -209,18 +175,18 @@ namespace God.Sim.Tests
         public void LegalHq_AtTwoCornerSteps_BecomesASiteAtTheNextTick_AndAnHqWhenCompleted()
         {
             var sim = GodSim.Create(3); var s = sim.State;
-            var p = s.Territory.HqsOf(Faction.Player).Single();
-            var c = CornersAtDistance(s, p.Corner, 2).First(x => !s.Territory.HqNearCorner(x) && sim.Check(new PlaceHq(Faction.Player, x)).Ok);
-            Assert.IsTrue(sim.Submit(new PlaceHq(Faction.Player, c)).Ok);
-            Assert.AreEqual(1, s.Territory.HqsOf(Faction.Player).Count);
+            var p = s.Territory.HqsOf(Faction.F0).Single();
+            var c = CornersAtDistance(s, p.Corner, 2).First(x => !s.Territory.HqNearCorner(x) && sim.Check(new PlaceHq(Faction.F0, x)).Ok);
+            Assert.IsTrue(sim.Submit(new PlaceHq(Faction.F0, c)).Ok);
+            Assert.AreEqual(1, s.Territory.HqsOf(Faction.F0).Count);
             sim.Step();
             // P2: the HQ is now a construction site (no circle, no reach) until the economy carries its wares.
-            Assert.AreEqual(2, s.Territory.Hqs.Count(h => h.Faction == Faction.Player));
-            Assert.AreEqual(1, s.Territory.HqsOf(Faction.Player).Count, "a site is not a finished HQ");
+            Assert.AreEqual(2, s.Territory.Hqs.Count(h => h.Faction == Faction.F0));
+            Assert.AreEqual(1, s.Territory.HqsOf(Faction.F0).Count, "a site is not a finished HQ");
             Assert.IsTrue(s.Territory.Hqs.Single(h => h.Corner == c).Site);
             Assert.IsTrue(sim.DrainEvents().OfType<BuildingPlaced>().Any(e => e.Size == BuildingSize.Hq));
             TerritoryRules.CompleteHq(s, s.Territory.Hqs.Single(h => h.Corner == c).Id, null);
-            Assert.AreEqual(2, s.Territory.HqsOf(Faction.Player).Count);
+            Assert.AreEqual(2, s.Territory.HqsOf(Faction.F0).Count);
             Assert.AreEqual(1, s.Territory.Buildings.Count(b => b.Node == s.Territory.Grid.CornerNode(c)));
             Assert.AreNotEqual(0, s.Territory.NodeFlag[s.Territory.Grid.FlagNodeOf(s.Territory.Grid.CornerNode(c))], "the new HQ has a flag");
         }
@@ -229,51 +195,51 @@ namespace God.Sim.Tests
         public void Refusals_WaterCorner_Distance_Reach_Occupied()
         {
             var sim = GodSim.Create(3); var s = sim.State; var topo = s.Board.Topology;
-            var p = s.Territory.HqsOf(Faction.Player).Single();
+            var p = s.Territory.HqsOf(Faction.F0).Single();
             int water = topo.Corners.First(c => topo.VertexHexes(c).Count < 3);
-            Assert.AreEqual(Reasons.NotLandCorner, Why(sim, new PlaceHq(Faction.Player, water)));
-            Assert.AreEqual(Reasons.NotLandCorner, Why(sim, new PlaceHq(Faction.Player, -5)));
-            Assert.AreEqual(Reasons.HqTooClose, Why(sim, new PlaceHq(Faction.Player, p.Corner)));
+            Assert.AreEqual(Reasons.NotLandCorner, Why(sim, new PlaceHq(Faction.F0, water)));
+            Assert.AreEqual(Reasons.NotLandCorner, Why(sim, new PlaceHq(Faction.F0, -5)));
+            Assert.AreEqual(Reasons.HqTooClose, Why(sim, new PlaceHq(Faction.F0, p.Corner)));
             foreach (int n in topo.CornerNeighbours(p.Corner))
-                if (topo.VertexHexes(n).Count == 3) Assert.AreEqual(Reasons.HqTooClose, Why(sim, new PlaceHq(Faction.Player, n)));
+                if (topo.VertexHexes(n).Count == 3) Assert.AreEqual(Reasons.HqTooClose, Why(sim, new PlaceHq(Faction.F0, n)));
             foreach (int far in topo.Corners.Where(c => topo.VertexHexes(c).Count == 3 && topo.CornerDistance(p.Corner, c) >= 3))
-                if (!s.Territory.HqNearCorner(far)) Assert.AreEqual(Reasons.HqOutOfReach, Why(sim, new PlaceHq(Faction.Player, far)), "corner " + far);
+                if (!s.Territory.HqNearCorner(far)) Assert.AreEqual(Reasons.HqOutOfReach, Why(sim, new PlaceHq(Faction.F0, far)), "corner " + far);
             // Next to the enemy HQ is too close for the player as well.
-            var e = s.Territory.HqsOf(Faction.Enemy).Single();
+            var e = s.Territory.HqsOf(Faction.F1).Single();
             foreach (int n in topo.CornerNeighbours(e.Corner))
-                if (topo.VertexHexes(n).Count == 3) Assert.AreEqual(Reasons.HqTooClose, Why(sim, new PlaceHq(Faction.Player, n)));
+                if (topo.VertexHexes(n).Count == 3) Assert.AreEqual(Reasons.HqTooClose, Why(sim, new PlaceHq(Faction.F0, n)));
         }
 
         [Test]
         public void Reach_IsPerFaction()
         {
             var sim = GodSim.Create(3); var s = sim.State;
-            var e = s.Territory.HqsOf(Faction.Enemy).Single();
-            var pc = s.Territory.HqsOf(Faction.Player).Single().Corner;
-            var nearEnemy = CornersAtDistance(s, e.Corner, 2).First(x => sim.Check(new PlaceHq(Faction.Enemy, x)).Ok && s.Board.Topology.CornerDistance(pc, x) != 2);
-            Assert.AreEqual(Reasons.HqOutOfReach, Why(sim, new PlaceHq(Faction.Player, nearEnemy)));
-            Assert.IsTrue(sim.Submit(new PlaceHq(Faction.Enemy, nearEnemy)).Ok);
+            var e = s.Territory.HqsOf(Faction.F1).Single();
+            var pc = s.Territory.HqsOf(Faction.F0).Single().Corner;
+            var nearEnemy = CornersAtDistance(s, e.Corner, 2).First(x => sim.Check(new PlaceHq(Faction.F1, x)).Ok && s.Board.Topology.CornerDistance(pc, x) != 2);
+            Assert.AreEqual(Reasons.HqOutOfReach, Why(sim, new PlaceHq(Faction.F0, nearEnemy)));
+            Assert.IsTrue(sim.Submit(new PlaceHq(Faction.F1, nearEnemy)).Ok);
         }
 
         [Test]
         public void FlagOnTheHqFlagSite_RefusesTheHq()
         {
             var sim = GodSim.Create(3); var s = sim.State; var t = s.Territory; var g = t.Grid;
-            var p = t.HqsOf(Faction.Player).Single();
-            int target = CornersAtDistance(s, p.Corner, 2).First(x => sim.Check(new PlaceHq(Faction.Player, x)).Ok);
+            var p = t.HqsOf(Faction.F0).Single();
+            int target = CornersAtDistance(s, p.Corner, 2).First(x => sim.Check(new PlaceHq(Faction.F0, x)).Ok);
             int flagSite = g.FlagNodeOf(g.CornerNode(target));
             var path = t.FindRoadPath(t.FlagAtNode(g.FlagNodeOf(p.Node)).Node, flagSite);
             Assert.NotNull(path);
-            Assert.IsTrue(sim.Submit(new BuildRoad(Faction.Player, path)).Ok);
+            Assert.IsTrue(sim.Submit(new BuildRoad(Faction.F0, path)).Ok);
             sim.Step();
-            Assert.AreEqual(Reasons.Occupied, sim.Check(new PlaceHq(Faction.Player, target)).Reason);
+            Assert.AreEqual(Reasons.Occupied, sim.Check(new PlaceHq(Faction.F0, target)).Reason);
         }
 
         [Test]
         public void Circles_NeverOverlap_ForAnyLegalPairOfHqs()
         {
             var board = BoardGenerator.CreateIslandBoard(9);
-            var topo = board.Topology; var g = NodeGrid.Get(board.Radius);
+            var topo = board.Topology; var g = NodeGrid.Get(board.Radius, board.Shape);
             var land = BoardGenerator.LandCorners(board, topo);
             int pairs = 0;
             foreach (int a in land)
@@ -296,7 +262,7 @@ namespace God.Sim.Tests
         {
             var t = GodSim.Create(3).State.Territory;
             foreach (var c in t.Circles()) Assert.AreEqual(30.0, c.Radius, 1e-9);
-            Assert.AreEqual(2, t.Circles().Count);
+            Assert.AreEqual(6, t.Circles().Count, "one per faction");
         }
     }
 
@@ -313,7 +279,7 @@ namespace God.Sim.Tests
         {
             _sim = GodSim.Create(3);
             _s = _sim.State; _t = _s.Territory; _g = _t.Grid;
-            _hq = _t.HqsOf(Faction.Player).Single();
+            _hq = _t.HqsOf(Faction.F0).Single();
         }
 
         private int N(int di, int dj) => _g.Id(_g.I(_hq.Node) + di, _g.J(_hq.Node) + dj);
@@ -337,11 +303,11 @@ namespace God.Sim.Tests
         [Test]
         public void Buildable_IsLandInsideTheFactionsCircles()
         {
-            Assert.IsTrue(_t.IsBuildable(Faction.Player, N(0, 0)));
-            Assert.IsTrue(_t.IsBuildable(Faction.Player, N(6, 0)));
-            Assert.IsFalse(_t.IsBuildable(Faction.Player, N(7, 0)));
-            Assert.IsFalse(_t.IsBuildable(Faction.Enemy, N(0, 0)));
-            var list = _t.BuildableNodes(Faction.Player);
+            Assert.IsTrue(_t.IsBuildable(Faction.F0, N(0, 0)));
+            Assert.IsTrue(_t.IsBuildable(Faction.F0, N(6, 0)));
+            Assert.IsFalse(_t.IsBuildable(Faction.F0, N(7, 0)));
+            Assert.IsFalse(_t.IsBuildable(Faction.F1, N(0, 0)));
+            var list = _t.BuildableNodes(Faction.F0);
             Assert.AreEqual(_g.CircleNodes(_hq.Node).Count(_g.IsLand), list.Count);
             Assert.Greater(list.Count, 100);
         }
@@ -349,7 +315,7 @@ namespace God.Sim.Tests
         [Test]
         public void Small_PlacesWithAnAutoFlagOnTheSouthEast()
         {
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Small)).Ok);
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Small)).Ok);
             var b = _t.BuildingAtNode(N(-3, 0));
             Assert.NotNull(b);
             Assert.AreEqual(BuildingSize.Small, b.Size);
@@ -361,29 +327,29 @@ namespace God.Sim.Tests
         [Test]
         public void Small_Refusals()
         {
-            Assert.AreEqual(Reasons.NotBuildable, _sim.Check(new PlaceBuilding(Faction.Player, N(8, 0), BuildingSize.Small)).Reason);
-            Assert.AreEqual(Reasons.NotBuildable, _sim.Check(new PlaceBuilding(Faction.Player, N(6, 0), BuildingSize.Small)).Reason, "its flag node is outside the circle");
-            Assert.AreEqual(Reasons.NotBuildable, _sim.Check(new PlaceBuilding(Faction.Enemy, N(-3, 0), BuildingSize.Small)).Reason);
-            Assert.AreEqual(Reasons.Occupied, _sim.Check(new PlaceBuilding(Faction.Player, N(0, 0), BuildingSize.Small)).Reason);
-            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new PlaceBuilding(Faction.Player, N(-1, 0), BuildingSize.Small)).Reason, "next to the HQ");
-            Assert.AreEqual(Reasons.InvalidSite, _sim.Check(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Hq)).Reason);
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Small)).Ok);
-            Assert.AreEqual(Reasons.Occupied, _sim.Check(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Small)).Reason);
-            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new PlaceBuilding(Faction.Player, N(-4, 0), BuildingSize.Small)).Reason, "neighbouring building");
+            Assert.AreEqual(Reasons.NotBuildable, _sim.Check(new PlaceBuilding(Faction.F0, N(8, 0), BuildingSize.Small)).Reason);
+            Assert.AreEqual(Reasons.NotBuildable, _sim.Check(new PlaceBuilding(Faction.F0, N(6, 0), BuildingSize.Small)).Reason, "its flag node is outside the circle");
+            Assert.AreEqual(Reasons.NotBuildable, _sim.Check(new PlaceBuilding(Faction.F1, N(-3, 0), BuildingSize.Small)).Reason);
+            Assert.AreEqual(Reasons.Occupied, _sim.Check(new PlaceBuilding(Faction.F0, N(0, 0), BuildingSize.Small)).Reason);
+            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new PlaceBuilding(Faction.F0, N(-1, 0), BuildingSize.Small)).Reason, "next to the HQ");
+            Assert.AreEqual(Reasons.InvalidSite, _sim.Check(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Hq)).Reason);
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Small)).Ok);
+            Assert.AreEqual(Reasons.Occupied, _sim.Check(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Small)).Reason);
+            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new PlaceBuilding(Faction.F0, N(-4, 0), BuildingSize.Small)).Reason, "neighbouring building");
         }
 
         [Test]
         public void Small_FlagMustKeepItsDistanceFromOtherFlags()
         {
             // A plain road flag at (3,-1); a building at (2,1) would put its flag at (3,0), right next to it.
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, new[] { N(1, -1), N(2, -1), N(3, -1) })).Ok);
-            Assert.AreEqual(Reasons.FlagTooClose, _sim.Check(new PlaceBuilding(Faction.Player, N(2, 1), BuildingSize.Small)).Reason);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, new[] { N(1, -1), N(2, -1), N(3, -1) })).Ok);
+            Assert.AreEqual(Reasons.FlagTooClose, _sim.Check(new PlaceBuilding(Faction.F0, N(2, 1), BuildingSize.Small)).Reason);
         }
 
         [Test]
         public void Medium_NeedsSixClearNeighbours_ExceptItsOwnFlag()
         {
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(0, 4), BuildingSize.Medium)).Ok);
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(0, 4), BuildingSize.Medium)).Ok);
             var b = _t.BuildingAtNode(N(0, 4));
             Assert.AreEqual(BuildingSize.Medium, b.Size);
             Assert.AreEqual(N(1, 3), b.FlagNode);
@@ -395,11 +361,11 @@ namespace God.Sim.Tests
         {
             var f = _t.FlagAtNode(N(1, -1));
             var road = new[] { N(1, -1), N(2, -1), N(3, -1), N(4, -1), N(5, -1), N(6, -1) };
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, road)).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, road)).Ok);
             // (3,0): its neighbour (3,-1) is a road node. (4,-1) too.
-            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new PlaceBuilding(Faction.Player, N(3, 0), BuildingSize.Medium)).Reason);
+            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new PlaceBuilding(Faction.F0, N(3, 0), BuildingSize.Medium)).Reason);
             // The same spot is fine for a Small (its flag node (4,-1) is a road node, split needs a free gap: (4,-1) is 3 from the ends).
-            Assert.IsTrue(_sim.Check(new PlaceBuilding(Faction.Player, N(3, 0), BuildingSize.Small)).Ok);
+            Assert.IsTrue(_sim.Check(new PlaceBuilding(Faction.F0, N(3, 0), BuildingSize.Small)).Ok);
             Assert.NotNull(f);
         }
 
@@ -407,8 +373,8 @@ namespace God.Sim.Tests
         public void Small_OnARoad_SplitsItAtItsFlag()
         {
             var road = new[] { N(1, -1), N(2, -1), N(3, -1), N(4, -1), N(5, -1), N(6, -1) };
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, road)).Ok);
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(3, 0), BuildingSize.Small)).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, road)).Ok);
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(3, 0), BuildingSize.Small)).Ok);
             Assert.AreEqual(2, _t.Roads.Count);
             Assert.AreEqual(0, _t.NodeRoad[N(4, -1)]);
             Assert.NotNull(_t.FlagAtNode(N(4, -1)));
@@ -417,34 +383,34 @@ namespace God.Sim.Tests
         [Test]
         public void RoadsAndFlags_KeepClearOfAMediumBuilding()
         {
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(0, 4), BuildingSize.Medium)).Ok); // flag (1,3)
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(0, 4), BuildingSize.Medium)).Ok); // flag (1,3)
             var flag = _t.FlagAtNode(N(1, 3));
             // A road from the medium's flag that brushes the building's neighbour (0,3) is refused; going away is fine.
-            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new BuildRoad(Faction.Player, new[] { N(1, 3), N(1, 2), N(0, 3), N(-1, 3) })).Reason);
-            Assert.IsTrue(_sim.Check(new BuildRoad(Faction.Player, new[] { N(1, 3), N(2, 2), N(3, 1) })).Ok);
+            Assert.AreEqual(Reasons.TooCrowded, _sim.Check(new BuildRoad(Faction.F0, new[] { N(1, 3), N(1, 2), N(0, 3), N(-1, 3) })).Reason);
+            Assert.IsTrue(_sim.Check(new BuildRoad(Faction.F0, new[] { N(1, 3), N(2, 2), N(3, 1) })).Ok);
             Assert.NotNull(flag);
         }
 
         [Test]
         public void RemoveBuilding_FreesTheNodes_AndTheSpareFlag()
         {
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Small)).Ok);
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Small)).Ok);
             int id = _t.BuildingAtNode(N(-3, 0)).Id;
-            Assert.AreEqual(Reasons.NotOwner, _sim.Check(new RemoveBuilding(Faction.Enemy, id)).Reason);
-            Assert.AreEqual(Reasons.CannotRemove, _sim.Check(new RemoveBuilding(Faction.Player, _hq.Id)).Reason);
-            Assert.AreEqual(Reasons.NoSuchThing, _sim.Check(new RemoveBuilding(Faction.Player, 9999)).Reason);
-            Assert.IsTrue(Do(new RemoveBuilding(Faction.Player, id)).Ok);
+            Assert.AreEqual(Reasons.NotOwner, _sim.Check(new RemoveBuilding(Faction.F1, id)).Reason);
+            Assert.AreEqual(Reasons.CannotRemove, _sim.Check(new RemoveBuilding(Faction.F0, _hq.Id)).Reason);
+            Assert.AreEqual(Reasons.NoSuchThing, _sim.Check(new RemoveBuilding(Faction.F0, 9999)).Reason);
+            Assert.IsTrue(Do(new RemoveBuilding(Faction.F0, id)).Ok);
             Assert.AreEqual(0, _t.NodeBuilding[N(-3, 0)]);
             Assert.AreEqual(0, _t.NodeFlag[N(-2, -1)]);
-            Assert.IsTrue(_sim.Check(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Small)).Ok);
+            Assert.IsTrue(_sim.Check(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Small)).Ok);
         }
 
         [Test]
         public void RemoveBuilding_KeepsAFlagThatARoadStillUses()
         {
-            Assert.IsTrue(Do(new PlaceBuilding(Faction.Player, N(-3, 0), BuildingSize.Small)).Ok); // flag (-2,-1)
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, new[] { N(-2, -1), N(-2, -2), N(-2, -3), N(-2, -4) })).Ok);
-            Assert.IsTrue(Do(new RemoveBuilding(Faction.Player, _t.BuildingAtNode(N(-3, 0)).Id)).Ok);
+            Assert.IsTrue(Do(new PlaceBuilding(Faction.F0, N(-3, 0), BuildingSize.Small)).Ok); // flag (-2,-1)
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, new[] { N(-2, -1), N(-2, -2), N(-2, -3), N(-2, -4) })).Ok);
+            Assert.IsTrue(Do(new RemoveBuilding(Faction.F0, _t.BuildingAtNode(N(-3, 0)).Id)).Ok);
             var f = _t.FlagAtNode(N(-2, -1));
             Assert.NotNull(f);
             Assert.AreEqual(0, f.BuildingId);
@@ -464,7 +430,7 @@ namespace God.Sim.Tests
         {
             _sim = GodSim.Create(3);
             _s = _sim.State; _t = _s.Territory; _g = _t.Grid;
-            _hq = _t.HqsOf(Faction.Player).Single();
+            _hq = _t.HqsOf(Faction.F0).Single();
         }
 
         private int N(int di, int dj) => _g.Id(_g.I(_hq.Node) + di, _g.J(_hq.Node) + dj);
@@ -482,82 +448,82 @@ namespace God.Sim.Tests
         [Test]
         public void Road_MustBeAdjacentNodes_FromAFlag_OnLand()
         {
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((1, -1), (3, -1), (4, -1)))), "gap");
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((2, -1), (3, -1), (4, -1)))), "not from a flag");
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((1, -1)))), "too short");
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, null)));
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Enemy, P((1, -1), (2, -1), (3, -1)))), "someone else's flag");
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, new[] { N(1, -1), N(2, -1), N(1, -1) })), "loop back");
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, new[] { N(1, -1), -4 })), "bad id");
-            Assert.IsTrue(_sim.Check(new BuildRoad(Faction.Player, P((1, -1), (2, -1), (3, -1)))).Ok);
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((1, -1), (3, -1), (4, -1)))), "gap");
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((2, -1), (3, -1), (4, -1)))), "not from a flag");
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((1, -1)))), "too short");
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, null)));
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F1, P((1, -1), (2, -1), (3, -1)))), "someone else's flag");
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, new[] { N(1, -1), N(2, -1), N(1, -1) })), "loop back");
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, new[] { N(1, -1), -4 })), "bad id");
+            Assert.IsTrue(_sim.Check(new BuildRoad(Faction.F0, P((1, -1), (2, -1), (3, -1)))).Ok);
         }
 
         [Test]
         public void Road_MayNotPassThroughABuilding()
         {
             // Around the HQ node: (1,-1) -> (1,0) -> (0,... ) cannot step onto (0,0).
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((1, -1), (1, 0), (0, 0), (-1, 0), (-1, 1)))));
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((1, -1), (1, 0), (0, 0), (-1, 0), (-1, 1)))));
         }
 
         [Test]
         public void Road_NewEndFlagKeepsItsDistance_AndRoadsMayEndOnAnExistingFlag()
         {
-            Assert.AreEqual(Reasons.FlagTooClose, Why(new BuildRoad(Faction.Player, P((1, -1), (2, -1)))));
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((1, -1), (2, -1), (3, -1)))).Ok);
+            Assert.AreEqual(Reasons.FlagTooClose, Why(new BuildRoad(Faction.F0, P((1, -1), (2, -1)))));
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((1, -1), (2, -1), (3, -1)))).Ok);
             var end = _t.FlagAtNode(N(3, -1));
             Assert.NotNull(end);
             Assert.AreEqual(0, end.BuildingId);
             Assert.AreEqual(1, _t.Roads.Count);
             Assert.AreEqual(_t.FlagAtNode(N(1, -1)).Id, _t.Roads[0].FlagA);
             // End on an existing flag: a second road round the HQ flag's other side.
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((3, -1), (3, 0), (2, 0), (1, 0), (1, -1)))).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((3, -1), (3, 0), (2, 0), (1, 0), (1, -1)))).Ok);
             Assert.AreEqual(2, _t.Roads.Count);
-            Assert.AreEqual(2, _t.Flags.Count(f => f.Faction == Faction.Player));
+            Assert.AreEqual(2, _t.Flags.Count(f => f.Faction == Faction.F0));
         }
 
         [Test]
         public void Road_CannotCrossAnotherRoadExceptAtFlags()
         {
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1)))).Ok);
-            Assert.IsTrue(Do(new PlaceFlag(Faction.Player, N(4, -1))).Ok);
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((4, -1), (4, 0), (4, 1), (4, 2)))).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1)))).Ok);
+            Assert.IsTrue(Do(new PlaceFlag(Faction.F0, N(4, -1))).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((4, -1), (4, 0), (4, 1), (4, 2)))).Ok);
             // A road from (4,2) that runs into the first road at (5,-1).
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((4, 2), (5, 1), (5, 0), (5, -1), (5, -2)))));
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((4, 2), (4, 1)))), "through its own road");
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((4, 2), (5, 1), (5, 0), (5, -1), (5, -2)))));
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((4, 2), (4, 1)))), "through its own road");
             // Ending on the other road's interior node is refused too (put a flag there first).
-            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.Player, P((4, 2), (5, 1), (5, 0), (5, -1)))));
+            Assert.AreEqual(Reasons.BadRoad, Why(new BuildRoad(Faction.F0, P((4, 2), (5, 1), (5, 0), (5, -1)))));
         }
 
         [Test]
         public void PlaceFlag_SplitsTheRoad_AndFlagsStayTwoApart()
         {
             var nodes = P((1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1), (7, -1));
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, nodes)).Ok);
-            Assert.AreEqual(Reasons.FlagTooClose, Why(new PlaceFlag(Faction.Player, N(2, -1))), "next to the first flag");
-            Assert.AreEqual(Reasons.FlagTooClose, Why(new PlaceFlag(Faction.Player, N(6, -1))), "next to the last flag");
-            Assert.AreEqual(Reasons.NotOnRoad, Why(new PlaceFlag(Faction.Player, N(2, 3))));
-            Assert.AreEqual(Reasons.NotOwner, Why(new PlaceFlag(Faction.Enemy, N(4, -1))));
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, nodes)).Ok);
+            Assert.AreEqual(Reasons.FlagTooClose, Why(new PlaceFlag(Faction.F0, N(2, -1))), "next to the first flag");
+            Assert.AreEqual(Reasons.FlagTooClose, Why(new PlaceFlag(Faction.F0, N(6, -1))), "next to the last flag");
+            Assert.AreEqual(Reasons.NotOnRoad, Why(new PlaceFlag(Faction.F0, N(2, 3))));
+            Assert.AreEqual(Reasons.NotOwner, Why(new PlaceFlag(Faction.F1, N(4, -1))));
             int flags = _t.Flags.Count;
-            Assert.IsTrue(Do(new PlaceFlag(Faction.Player, N(4, -1))).Ok);
+            Assert.IsTrue(Do(new PlaceFlag(Faction.F0, N(4, -1))).Ok);
             Assert.AreEqual(flags + 1, _t.Flags.Count);
             Assert.AreEqual(2, _t.Roads.Count);
             Assert.AreEqual(3, _t.Roads[0].Length);
             Assert.AreEqual(3, _t.Roads[1].Length);
             Assert.AreEqual(0, _t.NodeRoad[N(4, -1)]);
             Assert.AreEqual(_t.Roads[0].FlagB, _t.Roads[1].FlagA);
-            Assert.AreEqual(Reasons.FlagTooClose, Why(new PlaceFlag(Faction.Player, N(5, -1))), "next to the new flag");
+            Assert.AreEqual(Reasons.FlagTooClose, Why(new PlaceFlag(Faction.F0, N(5, -1))), "next to the new flag");
             // Flags exactly two apart are fine.
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((4, -1), (4, 0), (4, 1)))).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((4, -1), (4, 0), (4, 1)))).Ok);
         }
 
         [Test]
         public void RemoveRoad_FreesItsNodes_AndDropsSpareFlags()
         {
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((1, -1), (2, -1), (3, -1)))).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((1, -1), (2, -1), (3, -1)))).Ok);
             int id = _t.Roads[0].Id;
-            Assert.AreEqual(Reasons.NotOwner, Why(new RemoveRoad(Faction.Enemy, id)));
-            Assert.AreEqual(Reasons.NoSuchThing, Why(new RemoveRoad(Faction.Player, 4242)));
-            Assert.IsTrue(Do(new RemoveRoad(Faction.Player, id)).Ok);
+            Assert.AreEqual(Reasons.NotOwner, Why(new RemoveRoad(Faction.F1, id)));
+            Assert.AreEqual(Reasons.NoSuchThing, Why(new RemoveRoad(Faction.F0, 4242)));
+            Assert.IsTrue(Do(new RemoveRoad(Faction.F0, id)).Ok);
             Assert.AreEqual(0, _t.Roads.Count);
             Assert.AreEqual(0, _t.NodeRoad[N(2, -1)]);
             Assert.IsNull(_t.FlagAtNode(N(3, -1)), "the spare end flag is gone");
@@ -593,57 +559,57 @@ namespace God.Sim.Tests
         public void RoadJoinsTwoHqCircles_AndRoutesBetweenTheirFlags()
         {
             var topo = _s.Board.Topology;
-            int target = topo.Corners.First(c => topo.VertexHexes(c).Count == 3 && topo.CornerDistance(_hq.Corner, c) == 2 && _sim.Check(new PlaceHq(Faction.Player, c)).Ok);
-            Assert.IsTrue(Do(new PlaceHq(Faction.Player, target)).Ok);
-            var hq2 = _t.Hqs.Single(h => h.Faction == Faction.Player && h.Corner == target);
+            int target = topo.Corners.First(c => topo.VertexHexes(c).Count == 3 && topo.CornerDistance(_hq.Corner, c) == 2 && _sim.Check(new PlaceHq(Faction.F0, c)).Ok);
+            Assert.IsTrue(Do(new PlaceHq(Faction.F0, target)).Ok);
+            var hq2 = _t.Hqs.Single(h => h.Faction == Faction.F0 && h.Corner == target);
             var a = _t.FlagAtNode(_g.FlagNodeOf(_hq.Node));
             var b = _t.FlagAtNode(_g.FlagNodeOf(hq2.Node));
             var path = _t.FindRoadPath(a.Node, b.Node);
             Assert.NotNull(path);
             Assert.IsTrue(path.Any(n => !_g.InCircle(_hq.Node, n) && !_g.InCircle(hq2.Node, n)), "the road leaves the circles");
-            Assert.IsTrue(_sim.Check(new BuildRoad(Faction.Player, path)).Ok);
+            Assert.IsTrue(_sim.Check(new BuildRoad(Faction.F0, path)).Ok);
             // Flags on the way every 3 nodes would be needed for carriers; one road is enough for the route.
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, path)).Ok);
-            var route = _t.RouteBetweenFlags(Faction.Player, a.Id, b.Id);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, path)).Ok);
+            var route = _t.RouteBetweenFlags(Faction.F0, a.Id, b.Id);
             Assert.NotNull(route);
             CollectionAssert.AreEqual(new[] { a.Id, b.Id }, route.Flags);
             CollectionAssert.AreEqual(path, route.Nodes);
-            var back = _t.RouteBetweenFlags(Faction.Player, b.Id, a.Id);
+            var back = _t.RouteBetweenFlags(Faction.F0, b.Id, a.Id);
             CollectionAssert.AreEqual(path.AsEnumerable().Reverse().ToArray(), back.Nodes);
-            Assert.IsNull(_t.RouteBetweenFlags(Faction.Enemy, a.Id, b.Id));
+            Assert.IsNull(_t.RouteBetweenFlags(Faction.F1, a.Id, b.Id));
         }
 
         [Test]
         public void Routing_PicksTheShorterWay_WithDeterministicTies()
         {
             // Flags A=(1,-1), B=(4,-1) (after a split), C=(7,-1) in a line; a longer detour A->C also exists.
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, P((1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1), (7, -1)))).Ok);
-            Assert.IsTrue(Do(new PlaceFlag(Faction.Player, N(4, -1))).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, P((1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1), (7, -1)))).Ok);
+            Assert.IsTrue(Do(new PlaceFlag(Faction.F0, N(4, -1))).Ok);
             int a = _t.FlagAtNode(N(1, -1)).Id, b = _t.FlagAtNode(N(4, -1)).Id, c = _t.FlagAtNode(N(7, -1)).Id;
-            var r = _t.RouteBetweenFlags(Faction.Player, a, c);
+            var r = _t.RouteBetweenFlags(Faction.F0, a, c);
             CollectionAssert.AreEqual(new[] { a, b, c }, r.Flags);
             Assert.AreEqual(6, r.Length);
             Assert.AreEqual(7, r.Nodes.Length);
             // A detour A -> C over the north side is longer, so it is not chosen.
             var detour = P((1, -1), (1, 0), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 0), (7, -1));
-            Assert.IsTrue(Do(new BuildRoad(Faction.Player, detour)).Ok);
+            Assert.IsTrue(Do(new BuildRoad(Faction.F0, detour)).Ok);
             Assert.AreEqual(3, _t.Roads.Count);
-            CollectionAssert.AreEqual(new[] { a, b, c }, _t.RouteBetweenFlags(Faction.Player, a, c).Flags);
+            CollectionAssert.AreEqual(new[] { a, b, c }, _t.RouteBetweenFlags(Faction.F0, a, c).Flags);
             // Remove the short way: the detour is used.
-            foreach (var road in _t.Roads.Where(x => x.Length == 3).ToList()) Assert.IsTrue(Do(new RemoveRoad(Faction.Player, road.Id)).Ok);
-            var viaDetour = _t.RouteBetweenFlags(Faction.Player, a, c);
+            foreach (var road in _t.Roads.Where(x => x.Length == 3).ToList()) Assert.IsTrue(Do(new RemoveRoad(Faction.F0, road.Id)).Ok);
+            var viaDetour = _t.RouteBetweenFlags(Faction.F0, a, c);
             Assert.AreEqual(8, viaDetour.Length);
             // Same flag, and an unconnected flag.
-            Assert.AreEqual(0, _t.RouteBetweenFlags(Faction.Player, a, a).Length);
-            Assert.IsNull(_t.RouteBetweenFlags(Faction.Player, a, 99999));
+            Assert.AreEqual(0, _t.RouteBetweenFlags(Faction.F0, a, a).Length);
+            Assert.IsNull(_t.RouteBetweenFlags(Faction.F0, a, 99999));
         }
 
         private static int ViaOf(bool yFirst, out int x, out int y)
         {
             var sim = GodSim.Create(3);
-            var t = sim.State.Territory; var g = t.Grid; var hq = t.HqsOf(Faction.Player).Single();
+            var t = sim.State.Territory; var g = t.Grid; var hq = t.HqsOf(Faction.F0).Single();
             Func<int, int, int> n = (di, dj) => g.Id(g.I(hq.Node) + di, g.J(hq.Node) + dj);
-            Action<int[]> road = nodes => { Assert.IsTrue(sim.Submit(new BuildRoad(Faction.Player, nodes)).Ok); sim.Step(); };
+            Action<int[]> road = nodes => { Assert.IsTrue(sim.Submit(new BuildRoad(Faction.F0, nodes)).Ok); sim.Step(); };
             var ax = new[] { n(1, -1), n(1, 0), n(1, 1) };      // A -> X
             var ay = new[] { n(1, -1), n(2, -1), n(3, -1) };    // A -> Y
             if (yFirst) { road(ay); road(ax); } else { road(ax); road(ay); }
@@ -651,7 +617,7 @@ namespace God.Sim.Tests
             road(new[] { n(3, -1), n(3, 0), n(3, 1) });         // Y -> D
             int a = t.FlagAtNode(n(1, -1)).Id, d = t.FlagAtNode(n(3, 1)).Id;
             x = t.FlagAtNode(n(1, 1)).Id; y = t.FlagAtNode(n(3, -1)).Id;
-            var r = t.RouteBetweenFlags(Faction.Player, a, d);
+            var r = t.RouteBetweenFlags(Faction.F0, a, d);
             Assert.AreEqual(4, r.Length);
             Assert.AreEqual(3, r.Flags.Length);
             return r.Flags[1];

@@ -20,9 +20,10 @@ namespace God.Sim
         public const int SouthEast = 2;
 
         private static readonly object Lock = new object();
-        private static readonly Dictionary<int, NodeGrid> Cache = new Dictionary<int, NodeGrid>();
+        private static readonly Dictionary<(int, BoardShape), NodeGrid> Cache = new Dictionary<(int, BoardShape), NodeGrid>();
 
         public int Radius { get; }
+        public BoardShape Shape { get; }
         public BoardTopology Topology { get; }
         public int IMin { get; }
         public int JMin { get; }
@@ -43,19 +44,20 @@ namespace God.Sim
         private readonly int[] _cornerNode;
         private readonly int[] _hexCentreNode;
 
-        public static NodeGrid Get(int radius)
+        public static NodeGrid Get(int radius, BoardShape shape = BoardShape.Hexagon)
         {
             lock (Lock)
             {
-                if (!Cache.TryGetValue(radius, out var g)) Cache[radius] = g = new NodeGrid(radius);
+                if (!Cache.TryGetValue((radius, shape), out var g)) Cache[(radius, shape)] = g = new NodeGrid(radius, shape);
                 return g;
             }
         }
 
-        private NodeGrid(int radius)
+        private NodeGrid(int radius, BoardShape shape)
         {
             Radius = radius;
-            Topology = BoardTopology.Get(radius);
+            Shape = shape;
+            Topology = BoardTopology.Get(radius, shape);
             double per = BoardTopology.HexEdgeLength / Lattice.Step;
             NodesPerHexEdge = (int)Math.Round(per);
             if (Math.Abs(per - NodesPerHexEdge) > 1e-9 || NodesPerHexEdge % 2 != 0)

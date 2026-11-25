@@ -3,13 +3,14 @@ using System.Collections.Generic;
 namespace God.Sim
 {
     /// <summary>
-    /// The military tick: sync building health, spawn from the unit queue, run the wave clock, keep defend flags
-    /// staffed, run every unit's brain (move and fire, all shots resolved together at the end of the tick), apply damage,
-    /// destroy buildings, age rubble, then check win and lose. After the game is over nothing runs.
+    /// The military tick: sync building health, spawn from the unit queue, keep defend flags staffed, run every unit's
+    /// brain (move and fire, all shots resolved together at the end of the tick), apply damage, capture HQs and destroy
+    /// other buildings, then age rubble. Units fight only factions theirs is at war with. After the game is over nothing
+    /// runs (the faction system decides the end).
     /// </summary>
     public sealed class MilitarySystem : ISimSystem
     {
-        private struct Hit { public TargetKind Kind; public int Id; public int Amount; }
+        private struct Hit { public TargetKind Kind; public int Id; public int Amount; public Faction By; }
 
         private static readonly int[] RingCos = { 1000, 866, 500, 0, -500, -866, -1000, -866, -500, 0, 500, 866 };
         private static readonly int[] RingSin = { 0, 500, 866, 1000, 866, 500, 0, -500, -866, -1000, -866, -500 };
@@ -18,13 +19,10 @@ namespace God.Sim
         {
             var m = s.Military;
             if (m == null) return;
-            if (m.IsGameOver) { s.UnitQueue.Clear(); return; }
+            if (s.IsGameOver) { s.UnitQueue.Clear(); return; }
 
             MilitaryRules.SyncBuildings(s, ev);
             MilitaryRules.DrainQueue(s, ev);
-            MilitaryRules.TickWaves(s, ev);
-            PruneWaveGroups(m);
-            MilitaryRules.ResolveWaveTargets(s);
             StaffDefends(s);
 
             var hits = new List<Hit>();
@@ -33,22 +31,9 @@ namespace God.Sim
 
             ApplyHits(s, hits, ev);
             MilitaryRules.TickRubble(s, ev);
-            CheckGameOver(s, ev);
         }
 
         // ---------------- groups and defend flags ----------------
-
-        private static void PruneWaveGroups(MilitaryState m)
-        {
-            for (int i = m.WaveGroups.Count - 1; i >= 0; i--)
-            {
-                var gr = m.WaveGroups[i];
-                if (gr.Id == 0) continue;
-                bool any = false;
-                foreach (var u in m.Units) if (u.WaveId == gr.Id) { any = true; break; }
-                if (!any) m.WaveGroups.RemoveAt(i);
-            }
-        }
 
         /// <summary>Releases surplus guards and fills flags short of guards, oldest flag first, with the nearest free unit (ties: lowest id).</summary>
         private static void StaffDefends(GodState s)
@@ -84,7 +69,7 @@ namespace God.Sim
                     MilUnit best = null; long bd = long.MaxValue;
                     foreach (var u in m.Units)
                     {
-                        if (u.Faction != Faction.Player || u.GuardFlagId != 0 || u.HasGoal || u.TargetKind != TargetKind.None) continue;
+                        if (u.Faction != f.Faction || u.GuardFlagId != 0 || u.HasGoal || u.TargetKind != TargetKind.None) continue;
                         long d = Pathing.Dist2(u.X, u.Z, f.X, f.Z);
                         if (d < bd) { bd = d; best = u; }
                     }
@@ -130,28 +115,14 @@ namespace God.Sim
 
             if (flag != null) { Guard(s, u, flag); return; }
 
-            if (u.Faction == Faction.Player)
+            // Rule 3: march on the faction's first marked target.
+            var marks = m.MarkedOf(u.Faction);
+            if (marks.Count > 0)
             {
-                if (m.Marked.Count > 0)
-                {
-                    var b = m.BuildingById(m.Marked[0]);
-                    if (b != null) { u.Activity = UnitActivity.Marching; Pathing.MoveToward(g, u, b.X, b.Z); return; }
-                }
-                Wait(s, u);
-                return;
+                var b = m.BuildingById(marks[0]);
+                if (b != null) { u.Activity = UnitActivity.Marching; Pathing.MoveToward(g, u, b.X, b.Z); return; }
             }
-
-            // Enemy: advance on the wave target.
-            var grp = m.WaveById(u.WaveId);
-            if (grp != null && grp.TargetKind != TargetKind.None)
-            {
-                int gx, gz;
-                if (grp.TargetKind == TargetKind.Building) { var b = m.BuildingById(grp.TargetId); gx = b.X; gz = b.Z; }
-                else { var tu = m.UnitById(grp.TargetId); gx = tu.X; gz = tu.Z; }
-                u.Activity = UnitActivity.Marching;
-                Pathing.MoveToward(g, u, gx, gz);
-            }
-            else u.Activity = UnitActivity.Idle;
+            Wait(s, u);
         }
 
         private static void Fire(GodState s, MilUnit u, TargetKind tk, int tid, int tx, int tz, List<Hit> hits, EventBuffer ev)
@@ -163,12 +134,12 @@ namespace God.Sim
             int dmg = MilitaryTuning.ShotDamage(u.Kind, cls);
             u.Cooldown = MilitaryTuning.Of(u.Kind).CooldownTicks;
             u.FireFlash = MilitaryTuning.FireFlashTicks;
-            hits.Add(new Hit { Kind = tk, Id = tid, Amount = dmg });
+            hits.Add(new Hit { Kind = tk, Id = tid, Amount = dmg, By = u.Faction });
             ev.Add(new UnitFired { AttackerId = u.Id, Faction = u.Faction, Kind = u.Kind, TargetKind = tk, TargetId = tid, FromX = u.X, FromZ = u.Z, ToX = tx, ToZ = tz, Damage = dmg });
         }
 
         /// <summary>
-        /// Rule 1: an enemy within sight. Enemy units first (nearest, lowest id), else enemy buildings (a marked one first,
+        /// Rule 1: an enemy (a faction at war with the unit's) within sight; everyone else is walked past. Enemy units first (nearest, lowest id), else enemy buildings (a marked one first,
         /// in marked order, else the nearest, lowest id). A guard only takes targets within 15 m of its anchor, or ones it can
         /// already shoot from where it stands. <paramref name="edge"/> is the distance to the target's edge.
         /// </summary>
@@ -179,12 +150,13 @@ namespace God.Sim
             long sight2 = (long)sight * sight;
             long chase2 = (long)MilitaryTuning.GuardChaseMm * MilitaryTuning.GuardChaseMm;
             kind = TargetKind.None; id = 0; tx = tz = 0; edge = 0;
-            var enemy = u.Faction == Faction.Player ? Faction.Enemy : Faction.Player;
+            var fs = s.Factions;
+            bool Hostile(Faction o) => fs != null && fs.AtWar(u.Faction, o);
 
             long bestD = long.MaxValue;
             foreach (var e in m.Units)
             {
-                if (e.Faction != enemy || e.Health <= 0) continue;
+                if (e.Health <= 0 || !Hostile(e.Faction)) continue;
                 long d = Pathing.Dist2(u.X, u.Z, e.X, e.Z);
                 if (d > sight2 || d >= bestD) continue;
                 if (flag != null && Pathing.Dist2(e.X, e.Z, flag.X, flag.Z) > chase2 && d > (long)range * range) continue;
@@ -201,20 +173,17 @@ namespace God.Sim
                 if (flag != null && Pathing.Dist2(b.X, b.Z, flag.X, flag.Z) > chase2 && edgeMm > range) return false;
                 return true;
             }
-            if (u.Faction == Faction.Player)
+            foreach (int mid in m.MarkedOf(u.Faction))
             {
-                foreach (int mid in m.Marked)
-                {
-                    var b = m.BuildingById(mid);
-                    if (b != null && Visible(b, out int em)) { pick = b; pickEdge = em; break; }
-                }
+                var b = m.BuildingById(mid);
+                if (b != null && Hostile(b.Faction) && Visible(b, out int em)) { pick = b; pickEdge = em; break; }
             }
             if (pick == null)
             {
                 int bestEdge = int.MaxValue;
                 foreach (var b in m.Buildings)
                 {
-                    if (b.Faction != enemy) continue;
+                    if (!Hostile(b.Faction)) continue;
                     if (Visible(b, out int em) && em < bestEdge) { bestEdge = em; pick = b; pickEdge = em; }
                 }
             }
@@ -268,10 +237,19 @@ namespace God.Sim
             var m = s.Military;
             var byId = new Dictionary<int, MilUnit>();
             foreach (var u in m.Units) byId[u.Id] = u;
+            // The faction whose shot took each building to zero (the first such shot in fire order).
+            var fellTo = new Dictionary<int, Faction>();
             foreach (var h in hits)
             {
                 if (h.Kind == TargetKind.Unit) { if (byId.TryGetValue(h.Id, out var u)) u.Health -= h.Amount; }
-                else { var b = m.BuildingById(h.Id); if (b != null) b.Health -= h.Amount; }
+                else
+                {
+                    var b = m.BuildingById(h.Id);
+                    if (b == null) continue;
+                    bool wasUp = b.Health > 0;
+                    b.Health -= h.Amount;
+                    if (wasUp && b.Health <= 0) fellTo[b.Id] = h.By;
+                }
             }
 
             for (int i = 0; i < m.Units.Count; i++)
@@ -283,19 +261,14 @@ namespace God.Sim
             }
             var dead = new List<BuildingRecord>();
             foreach (var b in m.Buildings) if (b.Health <= 0) dead.Add(b);
-            foreach (var b in dead) MilitaryRules.Destroy(s, b, ev);
-        }
-
-        private static void CheckGameOver(GodState s, EventBuffer ev)
-        {
-            var m = s.Military; var t = s.Territory;
-            bool enemyHq = false, playerHq = false;
-            foreach (var h in t.Hqs) { if (h.Faction == Faction.Enemy) enemyHq = true; else playerHq = true; }
-            if (enemyHq && playerHq) return;
-            m.Outcome = enemyHq ? GameOutcome.Lost : GameOutcome.Won;
-            m.GameOverTick = s.Tick;
-            foreach (var u in m.Units) { u.Activity = UnitActivity.Idle; u.TargetKind = TargetKind.None; u.TargetId = 0; u.HasGoal = false; }
-            ev.Add(new GameOver { Won = m.Outcome == GameOutcome.Won });
+            foreach (var b in dead)
+            {
+                if (m.BuildingById(b.Id) != b || b.Health > 0) continue;
+                var hq = b.IsHq ? s.Territory.HqOf(b.Id) : null;
+                // A finished HQ or Citadel is captured by the faction whose units brought it down; everything else burns.
+                if (hq != null && !hq.Site && fellTo.TryGetValue(b.Id, out var by) && by != hq.Faction) FactionRules.CaptureHq(s, hq.Id, by, ev);
+                else MilitaryRules.Destroy(s, b, ev);
+            }
         }
     }
 
@@ -313,12 +286,10 @@ namespace God.Sim
             sim.AddSystem(SystemOrder.Military, new MilitarySystem());
         }
 
-        /// <summary>Creates the military state, pre-places the enemy base and starts the wave clock (90 s to wave 1).</summary>
+        /// <summary>Creates the military state with a full health record for every building that exists at the start (the HQs).</summary>
         public static void StartGame(GodState s)
         {
             s.Military = new MilitaryState();
-            s.Military.WaveGroups.Add(new WaveGroup { Id = 0 });
-            MilitaryRules.PlaceEnemyBase(s);
             MilitaryRules.SyncBuildings(s, new EventBuffer());
         }
     }

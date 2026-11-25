@@ -38,6 +38,8 @@ namespace God.Sim
     {
         public const int Economy = 200;
         public const int Military = 300;
+        /// <summary>The faction system (eliminations, game end), see <see cref="FactionTuning.SystemOrder"/>.</summary>
+        public const int Factions = FactionTuning.SystemOrder;
     }
 
     public sealed partial class GodState

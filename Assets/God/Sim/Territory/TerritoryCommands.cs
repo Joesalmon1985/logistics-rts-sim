@@ -1,11 +1,18 @@
 namespace God.Sim
 {
-    /// <summary>Base of the territory commands: the faction rides in <see cref="Command.PlayerId"/>.</summary>
+    /// <summary>Base of every command a faction sends: the faction rides in <see cref="Command.PlayerId"/>.</summary>
     public abstract class FactionCommand : Command
     {
         public Faction Faction => (Faction)PlayerId;
         protected FactionCommand(Faction f) { PlayerId = (int)f; }
-        public bool ValidFaction => PlayerId == (int)Faction.Player || PlayerId == (int)Faction.Enemy;
+
+        /// <summary>True when the sender is a faction of this game that is not eliminated.</summary>
+        public bool ValidIn(GodState s)
+        {
+            int n = s.Setup?.FactionCount ?? FactionInfo.Max;
+            if (PlayerId < 0 || PlayerId >= n) return false;
+            return s.Factions == null || !s.Factions.IsEliminated(Faction);
+        }
     }
 
     public sealed class PlaceHq : FactionCommand
@@ -55,58 +62,58 @@ namespace God.Sim
 
     internal static class TerritoryHandlers
     {
-        public static CommandResult Bad(FactionCommand c) => c.ValidFaction ? CommandResult.Accept() : CommandResult.RejectDefault(Reasons.NotOwner);
+        public static CommandResult Bad(FactionCommand c) => CommandResult.RejectDefault(Reasons.NotOwner);
     }
 
     public sealed class PlaceHqHandler : CommandHandler<PlaceHq>
     {
         protected override CommandResult Validate(GodState s, PlaceHq c) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckHq(s, c.Faction, c.Corner);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckHq(s, c.Faction, c.Corner);
         protected override CommandResult Apply(GodState s, PlaceHq c, EventBuffer ev) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceHq(s, c.Faction, c.Corner, ev);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceHq(s, c.Faction, c.Corner, ev);
     }
 
     public sealed class PlaceBuildingHandler : CommandHandler<PlaceBuilding>
     {
         protected override CommandResult Validate(GodState s, PlaceBuilding c)
         {
-            if (!c.ValidFaction) return TerritoryHandlers.Bad(c);
+            if (!c.ValidIn(s)) return TerritoryHandlers.Bad(c);
             var r = TerritoryRules.CheckBuilding(s, c.Faction, c.Node, c.Size);
             return r.Ok ? EconomyRules.CheckKind(s, c.Kind, c.Size, c.Node) : r;
         }
         protected override CommandResult Apply(GodState s, PlaceBuilding c, EventBuffer ev) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceBuilding(s, c.Faction, c.Node, c.Size, c.Kind, ev);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceBuilding(s, c.Faction, c.Node, c.Size, c.Kind, ev);
     }
 
     public sealed class RemoveBuildingHandler : CommandHandler<RemoveBuilding>
     {
         protected override CommandResult Validate(GodState s, RemoveBuilding c) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckRemoveBuilding(s, c.Faction, c.BuildingId);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckRemoveBuilding(s, c.Faction, c.BuildingId);
         protected override CommandResult Apply(GodState s, RemoveBuilding c, EventBuffer ev) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoRemoveBuilding(s, c.Faction, c.BuildingId, ev);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.DoRemoveBuilding(s, c.Faction, c.BuildingId, ev);
     }
 
     public sealed class BuildRoadHandler : CommandHandler<BuildRoad>
     {
         protected override CommandResult Validate(GodState s, BuildRoad c) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckRoad(s, c.Faction, c.Nodes);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckRoad(s, c.Faction, c.Nodes);
         protected override CommandResult Apply(GodState s, BuildRoad c, EventBuffer ev) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoBuildRoad(s, c.Faction, c.Nodes, ev);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.DoBuildRoad(s, c.Faction, c.Nodes, ev);
     }
 
     public sealed class RemoveRoadHandler : CommandHandler<RemoveRoad>
     {
         protected override CommandResult Validate(GodState s, RemoveRoad c) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckRemoveRoad(s, c.Faction, c.RoadId);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckRemoveRoad(s, c.Faction, c.RoadId);
         protected override CommandResult Apply(GodState s, RemoveRoad c, EventBuffer ev) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoRemoveRoad(s, c.Faction, c.RoadId, ev);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.DoRemoveRoad(s, c.Faction, c.RoadId, ev);
     }
 
     public sealed class PlaceFlagHandler : CommandHandler<PlaceFlag>
     {
         protected override CommandResult Validate(GodState s, PlaceFlag c) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckFlag(s, c.Faction, c.Node);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.CheckFlag(s, c.Faction, c.Node);
         protected override CommandResult Apply(GodState s, PlaceFlag c, EventBuffer ev) =>
-            !c.ValidFaction ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceFlag(s, c.Faction, c.Node, ev);
+            !c.ValidIn(s) ? TerritoryHandlers.Bad(c) : TerritoryRules.DoPlaceFlag(s, c.Faction, c.Node, ev);
     }
 }

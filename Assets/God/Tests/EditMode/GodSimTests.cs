@@ -25,7 +25,7 @@ namespace God.Sim.Tests
         public void Create_DealsTheIsland_FromTheSeed()
         {
             var sim = GodSim.Create(11);
-            Assert.AreEqual(19, sim.State.Board.Topology.HexCount);
+            Assert.AreEqual(30, sim.State.Board.Topology.HexCount);
             CollectionAssert.AreEqual(BoardGenerator.CreateIslandBoard(11).HexTerrain, sim.State.Board.HexTerrain);
         }
 

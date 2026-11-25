@@ -14,6 +14,8 @@ namespace God.Sim
         public int Node;
         /// <summary>True while the HQ is only a construction site (P2): it has no build circle and gives no reach yet.</summary>
         public bool Site;
+        /// <summary>True once the HQ has been upgraded to a Citadel (2 VP, more health).</summary>
+        public bool Citadel;
     }
 
     public sealed class Building
@@ -94,7 +96,13 @@ namespace God.Sim
     public sealed class TerritoryState
     {
         public int Radius;
+        public BoardShape Shape;
         public int NextId = 1;
+        /// <summary>
+        /// Bumped whenever ownership changes without ids or counts changing (a capture), so caches keyed on the road network
+        /// (the economy's route cache) know to drop their entries.
+        /// </summary>
+        public int Version;
 
         public List<Hq> Hqs = new List<Hq>();
         public List<Building> Buildings = new List<Building>();
@@ -116,12 +124,12 @@ namespace God.Sim
         /// <summary>Piles dropped because a hex was full.</summary>
         public int WastedPiles;
 
-        [JsonIgnore] public NodeGrid Grid => NodeGrid.Get(Radius);
-        [JsonIgnore] public BoardTopology Topology => BoardTopology.Get(Radius);
+        [JsonIgnore] public NodeGrid Grid => NodeGrid.Get(Radius, Shape);
+        [JsonIgnore] public BoardTopology Topology => BoardTopology.Get(Radius, Shape);
 
-        public static TerritoryState Create(int radius)
+        public static TerritoryState Create(int radius, BoardShape shape = BoardShape.Hexagon)
         {
-            var t = new TerritoryState { Radius = radius };
+            var t = new TerritoryState { Radius = radius, Shape = shape };
             int n = t.Grid.Count;
             t.NodeBuilding = new int[n];
             t.NodeFlag = new int[n];
@@ -159,6 +167,9 @@ namespace God.Sim
             foreach (var h in Hqs) if (h.Faction == f && !h.Site) l.Add(h);
             return l;
         }
+
+        /// <summary>True when a node lies inside the build circle of an HQ (land or not).</summary>
+        public bool InArea(Hq h, int node) => Grid.InCircle(h.Node, node);
 
         /// <summary>The build circle of an HQ.</summary>
         public HqCircle CircleOf(Hq h)
@@ -310,7 +321,7 @@ namespace God.Sim
                     else if (road.FlagB == Flags[u].Id) other = road.FlagA;
                     else continue;
                     int v = index[other];
-                    if (done[v]) continue;
+                    if (done[v] || Flags[v].Faction != f) continue;
                     int nd = dist[u] + road.Length;
                     bool better = nd < dist[v]
                         || (nd == dist[v] && Flags[u].Id < Flags[prev[v]].Id)

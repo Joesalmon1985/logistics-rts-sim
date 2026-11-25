@@ -31,22 +31,45 @@ namespace God.Sim
             State = state ?? throw new ArgumentNullException(nameof(state));
         }
 
-        /// <summary>A new game: the island dealt from the seed, no systems registered yet.</summary>
-        public static GodSim Create(ulong seed)
+        /// <summary>A new six-faction game from a seed, faction 0 human (see <see cref="Create(GameSetup)"/>).</summary>
+        public static GodSim Create(ulong seed) => Create(new GameSetup(seed));
+
+        /// <summary>
+        /// A new game: the 30-hex island dealt from the setup's seed, one HQ with the start stock per faction on spread-out
+        /// start corners, everyone at peace, every module installed.
+        /// </summary>
+        public static GodSim Create(GameSetup setup)
         {
-            var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim") };
+            if (setup == null) throw new ArgumentNullException(nameof(setup));
+            if (setup.FactionCount < 2 || setup.FactionCount > FactionInfo.Max) throw new ArgumentOutOfRangeException(nameof(setup), "2 to 6 factions.");
+            if (setup.HasHuman && !setup.InGame(setup.Human)) throw new ArgumentOutOfRangeException(nameof(setup), "The human faction is not in the game.");
+            ulong seed = setup.Seed;
+            var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim"), Setup = setup };
             s.Board = BoardGenerator.CreateIslandBoard(seed);
+            FactionsModule.StartGame(s);
             TerritoryModule.StartGame(s);
-            // Military first: it pre-places the enemy base, which the economy then records as already built.
             MilitaryModule.StartGame(s);
             EconomyModule.StartGame(s);
-            foreach (var b in s.Territory.Buildings.ToArray())
-                if (b.Faction == Faction.Enemy && b.Size != BuildingSize.Hq) EconomyModule.CompleteInstantly(s, b.Id);
             var sim = new GodSim(s);
             TerritoryModule.Install(sim);
             EconomyModule.Install(sim);
             MilitaryModule.Install(sim);
+            FactionsModule.Install(sim);
             return sim;
+        }
+
+        /// <summary>One hash over the whole state the modules drive (territory, economy, military, factions). Equal for equal setup and commands.</summary>
+        public ulong StateHash() => StateHashOf(State);
+
+        public static ulong StateHashOf(GodState s)
+        {
+            unchecked
+            {
+                ulong h = EconomyModule.StateHash(s);
+                h = h * 1099511628211UL ^ s.Military.Hash(s);
+                h = h * 1099511628211UL ^ FactionsModule.Hash(s);
+                return h;
+            }
         }
 
         public IReadOnlyList<Command> PendingCommands => _pending;
@@ -79,10 +102,11 @@ namespace God.Sim
 
         public bool HasHandler(Type commandType) => _handlers.ContainsKey(commandType);
 
-        /// <summary>Validate without queuing (for UI previews). Never mutates state.</summary>
+        /// <summary>Validate without queuing (for UI previews). Never mutates state. Everything is refused once the game is over.</summary>
         public CommandResult Check(Command c)
         {
             if (c == null) throw new ArgumentNullException(nameof(c));
+            if (State.IsGameOver) return CommandResult.Reject(MilitaryReasons.GameOver, "The game is over.");
             if (!_handlers.TryGetValue(c.GetType(), out var h))
                 return CommandResult.Reject(Reasons.Disabled, "That action is not available.");
             return h.Validate(State, c);
@@ -97,11 +121,13 @@ namespace God.Sim
         }
 
         /// <summary>
-        /// One tick: Tick += 1, apply queued commands in submission order (each re-checked), then run systems in
+        /// One tick (none once the game is over): Tick += 1, apply queued commands in submission order (each re-checked), then run systems in
         /// order. Events are stamped with the new Tick value.
         /// </summary>
         public void Step()
         {
+            // The game is over: the sim stops (no tick, no commands, no systems).
+            if (State.IsGameOver) { _pending.Clear(); return; }
             State.Tick++;
             _events.CurrentTick = State.Tick;
 

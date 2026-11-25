@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace God.Sim
 {
     /// <summary>
-    /// A scripted builder that sends the same commands a player would: it picks a node, places a building, lays a road
+    /// A scripted builder for one faction (<see cref="Side"/>) that sends the same commands a player would: it picks a node, places a building, lays a road
     /// to the road network and puts flags along it. Used by the tests and the debug sample. It steps the sim once per
     /// command (a queued command applies at the next tick), so the sim moves a little while it works.
     /// </summary>
@@ -14,13 +14,14 @@ namespace God.Sim
         public readonly Faction Side;
         public readonly List<string> Log = new List<string>();
 
-        public EconomyBot(GodSim sim, Faction side = Faction.Player) { Sim = sim; Side = side; }
+        public EconomyBot(GodSim sim, Faction side) { Sim = sim; Side = side; }
 
         protected GodState S => Sim.State;
         protected TerritoryState T => Sim.State.Territory;
 
         protected bool Send(Command c)
         {
+            if (S.IsGameOver || S.Factions.IsEliminated(Side)) return false;
             var r = Sim.Submit(c);
             if (!r.Ok) return false;
             Sim.Step();
@@ -125,7 +126,8 @@ namespace God.Sim
         public readonly Dictionary<string, int> Placed = new Dictionary<string, int>();
         public readonly HashSet<string> Skipped = new HashSet<string>();
 
-        public ChainBot(GodSim sim, Faction side = Faction.Player) : base(sim, side) { }
+        /// <summary>A chain script for one faction. Any faction can be driven; each bot sends only that faction's commands.</summary>
+        public ChainBot(GodSim sim, Faction side) : base(sim, side) { }
 
         public bool Done => Placed.Count + Skipped.Count == Wants.Count;
 

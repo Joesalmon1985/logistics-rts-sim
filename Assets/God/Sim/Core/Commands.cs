@@ -2,7 +2,7 @@ using System;
 
 namespace God.Sim
 {
-    /// <summary>Base of every player and enemy action. Modules define subclasses (plain data).</summary>
+    /// <summary>Base of every faction action. Modules define subclasses (plain data); most derive from <see cref="FactionCommand"/>.</summary>
     public abstract class Command
     {
         public int PlayerId;

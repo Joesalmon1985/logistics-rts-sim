@@ -20,7 +20,7 @@ namespace God.Sim
     {
         private static CommandResult Check(GodState s, SetInputPriority c)
         {
-            if (!c.ValidFaction) return CommandResult.RejectDefault(Reasons.NotOwner);
+            if (!c.ValidIn(s)) return CommandResult.RejectDefault(Reasons.NotOwner);
             var b = s.Economy?.Find(c.BuildingId);
             if (b == null || b.IsHq) return CommandResult.RejectDefault(Reasons.NoSuchThing);
             if (b.Faction != c.Faction) return CommandResult.RejectDefault(Reasons.NotOwner);
@@ -40,7 +40,7 @@ namespace God.Sim
     {
         private static CommandResult Check(GodState s, SetPaused c)
         {
-            if (!c.ValidFaction) return CommandResult.RejectDefault(Reasons.NotOwner);
+            if (!c.ValidIn(s)) return CommandResult.RejectDefault(Reasons.NotOwner);
             var b = s.Economy?.Find(c.BuildingId);
             if (b == null || b.IsHq) return CommandResult.RejectDefault(Reasons.NoSuchThing);
             if (b.Faction != c.Faction) return CommandResult.RejectDefault(Reasons.NotOwner);
