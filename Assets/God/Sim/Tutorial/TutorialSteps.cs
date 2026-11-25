@@ -179,8 +179,9 @@ namespace God.Sim
             new TutorialStep
             {
                 Id = "citadel", Title = "Citadel and ten points",
-                Lines = new[] { "The first faction to 10 victory points wins. Buildings, a second HQ and a Citadel all count.",
-                    "Click your HQ and press Upgrade to Citadel. It needs bricks, mortar, planks and steel." },
+                Lines = new[] { "The first faction to 10 victory points wins. Each HQ is worth 1 point and each Citadel 2.",
+                    "Click your HQ and press Upgrade to Citadel. It needs bricks, mortar, planks and steel.",
+                    "Steel comes from a steel forge (Process tab), which takes stone and ore." },
                 Goal = "Start the Citadel upgrade.",
                 Done = c =>
                 {
