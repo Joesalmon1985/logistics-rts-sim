@@ -55,13 +55,16 @@ namespace God.Game
             var rot = Quaternion.Euler(0, camYaw, 0);
             var right = rot * Vector3.right; var back = rot * Vector3.back;
             int ti = 0, di = 0;
-            if (m != null)
+            // Only the human faction's own orders are drawn (none in watch mode).
+            var human = FactionLook.Human(s);
+            if (m != null && human.HasValue)
             {
-                for (int i = 0; i < m.Marked.Count; i++)
+                var marked = m.MarkedOf(human.Value);
+                for (int i = 0; i < marked.Count; i++)
                 {
-                    var b = m.BuildingById(m.Marked[i]);
+                    var b = m.BuildingById(marked[i]);
                     if (b == null) continue;
-                    var mk = Get(_targets, ti++, PropModels.TargetStandard(), new Vector3(0, 6.0f, -0.9f), 0.2f, new Color(0.18f, 0.12f, 0.08f));
+                    var mk = Get(_targets, ti++, PropModels.TargetStandard(human.Value), new Vector3(0, 6.0f, -0.9f), 0.2f, new Color(0.18f, 0.12f, 0.08f));
                     float r = RadiusOf(b.Size);
                     var p = new Vector3(b.X / 1000f, 0, b.Z / 1000f) - right * r * 0.8f + back * r * 0.6f;
                     mk.Go.transform.SetPositionAndRotation(ModelKit.OnGround(p.x, p.z), rot);
@@ -70,9 +73,10 @@ namespace God.Game
                 }
                 foreach (var f in m.Defends)
                 {
+                    if (f.Faction != human.Value) continue;
                     float r = 2f;
                     if (f.AnchorBuildingId != 0) { var b = m.BuildingById(f.AnchorBuildingId); if (b != null) r = RadiusOf(b.Size); }
-                    var mk = Get(_defends, di++, PropModels.DefendStandard(), new Vector3(0, 6.4f, -0.6f), 0.12f, new Color(0.98f, 0.95f, 0.85f));
+                    var mk = Get(_defends, di++, PropModels.DefendStandard(human.Value), new Vector3(0, 6.4f, -0.6f), 0.12f, new Color(0.98f, 0.95f, 0.85f));
                     var p = new Vector3(f.X / 1000f, 0, f.Z / 1000f) + right * r * 0.85f + back * r * 0.5f;
                     mk.Go.transform.SetPositionAndRotation(ModelKit.OnGround(p.x, p.z), rot);
                     mk.Text.text = m.GuardCount(f.Id) + "/" + f.Guards;

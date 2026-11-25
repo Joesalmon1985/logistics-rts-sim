@@ -24,12 +24,30 @@ namespace God.Game.Tests
             _boot = GodBootstrap.Instance;
             _hud = _boot.Hud;
             Assert.IsNotNull(_hud, "the bootstrap builds the HUD");
-            _boot.Sim.State.Military.WavesEnabled = false; // these tests are about the HUD, not the war
             _boot.Running = pause ? false : _boot.Running; // paused: a queued command is applied by the bootstrap within one frame
         }
 
+        /// <summary>A small building of F1 beside its HQ, placed through the sim (there is no pre-placed enemy base any more).</summary>
+        private Building EnemySmall()
+        {
+            var hq = T.HqsOf(Faction.F1)[0]; var g = T.Grid;
+            int node = T.BuildableNodes(Faction.F1).First(n => g.Distance(n, hq.Node) >= 3 && Sim.Check(new PlaceBuilding(Faction.F1, n, BuildingSize.Small)).Ok);
+            Assert.IsTrue(Sim.Submit(new PlaceBuilding(Faction.F1, node, BuildingSize.Small)).Ok);
+            Sim.Step();
+            return T.BuildingAtNode(node);
+        }
+
+        /// <summary>Ends the game with one faction left: every other HQ is destroyed by the sim (test set-up).</summary>
+        private void LeaveOnly(Faction survivor)
+        {
+            var s = Sim.State;
+            foreach (var h in T.Hqs.ToList())
+                if (h.Faction != survivor) MilitaryRules.Destroy(s, s.Military.BuildingById(h.Id), new EventBuffer());
+            Sim.Step(2);
+        }
+
         private int LegalNode(string kind) =>
-            T.BuildableNodes(Faction.Player).FirstOrDefault(n => Sim.Check(new PlaceBuilding(Faction.Player, n, kind)).Ok);
+            T.BuildableNodes(Faction.F0).FirstOrDefault(n => Sim.Check(new PlaceBuilding(Faction.F0, n, kind)).Ok);
 
         /// <summary>A woodcutter when the start circle touches forest, else the first harvester kind its land allows.</summary>
         private string Harvester()
@@ -71,7 +89,7 @@ namespace God.Game.Tests
             _hud.BeginPlace(kind);
             Assert.AreEqual(HudMode.Place, _hud.Mode);
             yield return Frames(2);
-            int legal = T.BuildableNodes(Faction.Player).Count(n => Sim.Check(new PlaceBuilding(Faction.Player, n, kind)).Ok);
+            int legal = T.BuildableNodes(Faction.F0).Count(n => Sim.Check(new PlaceBuilding(Faction.F0, n, kind)).Ok);
             Assert.AreEqual(legal, _hud.LegalSpotCount, "the markers are exactly the spots the rules allow");
             Assert.Greater(_hud.Overlay.SpotVertices, 0);
             Assert.IsTrue(_boot.Territory.OverlayVisible == true, "the circles and dots show while placing");
@@ -122,21 +140,21 @@ namespace God.Game.Tests
             yield return Load();
             _hud.BeginHq();
             yield return Frames(2);
-            int legal = Enumerable.Range(0, T.Topology.CornerCount).Count(c => Sim.Check(new PlaceHq(Faction.Player, c)).Ok);
+            int legal = Enumerable.Range(0, T.Topology.CornerCount).Count(c => Sim.Check(new PlaceHq(Faction.F0, c)).Ok);
             Assert.Greater(legal, 0);
             Assert.AreEqual(legal, _hud.LegalSpotCount);
-            int corner = Enumerable.Range(0, T.Topology.CornerCount).First(c => Sim.Check(new PlaceHq(Faction.Player, c)).Ok);
+            int corner = Enumerable.Range(0, T.Topology.CornerCount).First(c => Sim.Check(new PlaceHq(Faction.F0, c)).Ok);
             var r = _hud.WorldClick(T.Grid.CornerNode(corner), 0);
             Assert.IsTrue(r.Ok, r.ToString());
             yield return Frames(3);
-            Assert.IsTrue(T.Hqs.Any(h => h.Faction == Faction.Player && h.Corner == corner && h.Site), "an HQ site stands on the corner");
+            Assert.IsTrue(T.Hqs.Any(h => h.Faction == Faction.F0 && h.Corner == corner && h.Site), "an HQ site stands on the corner");
         }
 
         [UnityTest]
         public IEnumerator RoadTool_BuildsARoadBetweenTwoFlags_AndPlacesAFlagOnARoad()
         {
             yield return Load();
-            var hq = T.HqsOf(Faction.Player)[0];
+            var hq = T.HqsOf(Faction.F0)[0];
             var hqFlag = T.Buildings.First(b => b.Id == hq.Id).FlagNode;
             int node = LegalNode(BuildingKinds.Sawmill);
             _hud.BeginPlace(BuildingKinds.Sawmill);
@@ -159,7 +177,7 @@ namespace God.Game.Tests
             Assert.IsTrue(road.Nodes.Contains(hqFlag) && road.Nodes.Contains(site.FlagNode));
 
             // A flag on the new road, three or more steps from the other flags.
-            int mid = road.Nodes.Skip(2).Take(road.Nodes.Length - 4).FirstOrDefault(n => Sim.Check(new PlaceFlag(Faction.Player, n)).Ok);
+            int mid = road.Nodes.Skip(2).Take(road.Nodes.Length - 4).FirstOrDefault(n => Sim.Check(new PlaceFlag(Faction.F0, n)).Ok);
             if (mid > 0)
             {
                 int flags = T.Flags.Count;
@@ -173,11 +191,11 @@ namespace God.Game.Tests
         public IEnumerator RoadTool_ExtendsStepByStep_AndTheFreeEndFinishes()
         {
             yield return Load();
-            var hq = T.HqsOf(Faction.Player)[0];
+            var hq = T.HqsOf(Faction.F0)[0];
             int hqFlag = T.Buildings.First(b => b.Id == hq.Id).FlagNode;
             var g = T.Grid;
             // Two free nodes a few steps away on land inside the circle.
-            var free = T.BuildableNodes(Faction.Player).Where(n => T.NodeAt(n).IsFree && g.Distance(hqFlag, n) >= 3).ToList();
+            var free = T.BuildableNodes(Faction.F0).Where(n => T.NodeAt(n).IsFree && g.Distance(hqFlag, n) >= 3).ToList();
             int far = free.First(n => g.Distance(hqFlag, n) == 4);
             _hud.BeginRoad();
             _hud.WorldClick(hqFlag, 0);
@@ -212,7 +230,7 @@ namespace God.Game.Tests
             _hud.WorldClick(node, 0);
             yield return Frames(3);
             _hud.BeginDemolish();
-            var hq = T.HqsOf(Faction.Player)[0];
+            var hq = T.HqsOf(Faction.F0)[0];
             Assert.IsFalse(_hud.WorldClick(hq.Node, hq.Id).Ok, "the HQ stays");
             Assert.AreEqual(Reasons.Sentence(Reasons.CannotRemove), _hud.ToastText);
             Assert.IsTrue(_hud.WorldClick(node, T.BuildingAtNode(node).Id).Ok);
@@ -246,25 +264,35 @@ namespace God.Game.Tests
         }
 
         [UnityTest]
-        public IEnumerator EnemyCard_MarksAndUnmarksATarget()
+        public IEnumerator EnemyCard_DeclaresWar_ThenMarksAndUnmarksATarget_ThenMakesPeace()
         {
             yield return Load();
-            var m = Sim.State.Military;
-            var enemy = T.Buildings.First(b => b.Faction == Faction.Enemy && b.Size != BuildingSize.Hq);
+            var m = Sim.State.Military; var fs = Sim.State.Factions; var me = Faction.F0;
+            var enemy = EnemySmall();
             _hud.WorldClick(enemy.Node, enemy.Id);
             Assert.AreEqual(enemy.Id, _hud.SelectedBuilding);
+            Assert.IsFalse(_hud.ToggleTarget(enemy.Id).Ok, "no target without a war");
+            Assert.IsTrue(_hud.DeclareWarOn(Faction.F1).Ok);
+            yield return Frames(3);
+            Assert.IsTrue(fs.AtWar(me, Faction.F1));
+            Assert.IsTrue(_hud.ArmyText().Contains("at war with Azure"), _hud.ArmyText());
             Assert.IsTrue(_hud.ToggleTarget(enemy.Id).Ok);
             yield return Frames(3);
-            Assert.AreEqual(1, m.MarkOrder(enemy.Id), "marked, with its order number");
-            var hqE = T.HqsOf(Faction.Enemy)[0];
+            Assert.AreEqual(1, m.MarkOrder(me, enemy.Id), "marked, with its order number");
+            var hqE = T.HqsOf(Faction.F1)[0];
             Assert.IsTrue(_hud.ToggleTarget(hqE.Id).Ok);
             yield return Frames(3);
-            Assert.AreEqual(2, m.MarkOrder(hqE.Id));
+            Assert.AreEqual(2, m.MarkOrder(me, hqE.Id));
             Assert.IsTrue(_hud.ToggleTarget(enemy.Id).Ok);
             yield return Frames(3);
-            Assert.AreEqual(0, m.MarkOrder(enemy.Id));
-            Assert.AreEqual(1, m.MarkOrder(hqE.Id));
-            Assert.IsFalse(_hud.ToggleTarget(T.HqsOf(Faction.Player)[0].Id).Ok, "your own buildings cannot be targets");
+            Assert.AreEqual(0, m.MarkOrder(me, enemy.Id));
+            Assert.AreEqual(1, m.MarkOrder(me, hqE.Id));
+            Assert.IsTrue(_hud.OfferPeaceTo(Faction.F1).Ok);
+            Sim.Submit(new OfferPeace(Faction.F1, me));
+            yield return Frames(3);
+            Assert.IsFalse(fs.AtWar(me, Faction.F1), "both offered: peace");
+            Assert.AreEqual(0, m.MarkOrder(me, hqE.Id), "peace drops the marks");
+            Assert.IsFalse(_hud.ToggleTarget(T.HqsOf(Faction.F0)[0].Id).Ok, "your own buildings cannot be targets");
         }
 
         [UnityTest]
@@ -272,7 +300,7 @@ namespace God.Game.Tests
         {
             yield return Load();
             var m = Sim.State.Military;
-            var hq = T.HqsOf(Faction.Player)[0];
+            var hq = T.HqsOf(Faction.F0)[0];
             Assert.IsTrue(_hud.SetGuards(hq.Id, 3).Ok);
             yield return Frames(3);
             Assert.AreEqual(3, m.DefendAtBuilding(hq.Id).Guards);
@@ -283,24 +311,22 @@ namespace God.Game.Tests
             yield return Frames(3);
             Assert.IsNull(m.DefendAtBuilding(hq.Id), "0 guards takes the flag away");
 
-            int node = T.BuildableNodes(Faction.Player).First(n => T.NodeAt(n).IsFree);
+            int node = T.BuildableNodes(Faction.F0).First(n => T.NodeAt(n).IsFree);
             _hud.WorldClick(node, 0);
             Assert.AreEqual(node, _hud.SelectedNode, "clicking ground opens the Defend here card");
             Assert.IsTrue(_hud.SetGuardsAt(node, 2).Ok);
             yield return Frames(3);
-            Assert.AreEqual(2, m.DefendAtNode(node).Guards);
+            Assert.AreEqual(2, m.DefendAtNode(Faction.F0, node).Guards);
             Assert.IsFalse(_hud.SetGuardsAt(node, 9).Ok);
         }
 
         [UnityTest]
-        public IEnumerator WinCard_AppearsWhenTheEnemyHqFalls_AndPlayAgainKeepsTheSeed()
+        public IEnumerator WinCard_AppearsWhenYoureLastStanding_AndPlayAgainKeepsTheSeed()
         {
             yield return Load();
             Assert.AreEqual(GameOutcome.Playing, _hud.Outcome);
             var s = Sim.State;
-            var rec = s.Military.BuildingById(T.HqsOf(Faction.Enemy)[0].Id);
-            MilitaryRules.Destroy(s, rec, new EventBuffer()); // the sim, not the HUD, destroys it
-            Sim.Step(2);
+            LeaveOnly(Faction.F0); // the sim, not the HUD, destroys them
             yield return Frames(5);
             Assert.AreEqual(GameOutcome.Won, _hud.Outcome);
             yield return new WaitForEndOfFrame();
@@ -320,8 +346,12 @@ namespace God.Game.Tests
         {
             yield return Load();
             var s = Sim.State;
-            MilitaryRules.Destroy(s, s.Military.BuildingById(T.HqsOf(Faction.Player)[0].Id), new EventBuffer());
+            MilitaryRules.Destroy(s, s.Military.BuildingById(T.HqsOf(Faction.F0)[0].Id), new EventBuffer());
             Sim.Step(2);
+            yield return Frames(3);
+            Assert.AreEqual(GameOutcome.Playing, _hud.Outcome, "five factions play on");
+            Assert.IsFalse(_hud.CanAct, "but you are out");
+            LeaveOnly(Faction.F1);
             yield return Frames(5);
             Assert.AreEqual(GameOutcome.Lost, _hud.Outcome);
         }
@@ -348,7 +378,7 @@ namespace God.Game.Tests
             Assert.AreEqual(p0.x + 40f, cam.transform.position.x, 0.5f);
             rig.PanBy(new Vector3(5000f, 0f, 5000f));
             Assert.IsTrue(rig.GroundPoint(centre, out var c));
-            Assert.Less(new Vector2(c.x, c.z).magnitude, rig.IslandRadius + 1f, "the island stays in view");
+            Assert.Less(new Vector2(c.x - rig.IslandCentre.x, c.z - rig.IslandCentre.z).magnitude, rig.IslandRadius + 1f, "the island stays in view");
             Assert.IsTrue(rig.GroundPoint(centre, out var gp));
             Assert.IsTrue(_hud.NodeAt(gp) >= -1);
         }
@@ -376,7 +406,7 @@ namespace God.Game.Tests
             Directory.CreateDirectory(dir);
             _boot.Running = false;
             var cam = _boot.GodCamera; _boot.Rig.InputEnabled = false;
-            var hq = T.HqsOf(Faction.Player)[0];
+            var hq = T.HqsOf(Faction.F0)[0];
             var g = T.Grid;
             var hqPos = new Vector3((float)g.X(hq.Node), 0f, (float)g.Z(hq.Node));
 
@@ -387,7 +417,7 @@ namespace God.Game.Tests
             _hud.BeginPlace(kind); _hud.WorldClick(LegalNode(kind), 0);
             yield return Frames(2);
             int hqFlag = T.Buildings.First(b => b.Id == hq.Id).FlagNode;
-            foreach (var b in T.Buildings.Where(b => b.Faction == Faction.Player && b.Id != hq.Id).ToList())
+            foreach (var b in T.Buildings.Where(b => b.Faction == Faction.F0 && b.Id != hq.Id).ToList())
             {
                 _hud.BeginRoad(); _hud.WorldClick(hqFlag, 0); _hud.WorldClick(b.Node, b.Id);
                 yield return Frames(2);
@@ -399,22 +429,23 @@ namespace God.Game.Tests
 
             // 1. Placing: the legal spots and the ghost.
             _hud.BeginPlace(BuildingKinds.Kiln);
-            var spots = T.BuildableNodes(Faction.Player).Where(n => Sim.Check(new PlaceBuilding(Faction.Player, n, BuildingKinds.Kiln)).Ok).ToList();
+            var spots = T.BuildableNodes(Faction.F0).Where(n => Sim.Check(new PlaceBuilding(Faction.F0, n, BuildingKinds.Kiln)).Ok).ToList();
             int hover = spots.OrderBy(n => (new Vector3((float)g.X(n), 0, (float)g.Z(n)) - hqPos).magnitude).Skip(spots.Count / 3).First();
             ForceHover(hover);
             yield return Shot(Path.Combine(dir, "p5_build_menu.png"));
 
             // 2. A building card with priorities.
             _hud.Cancel();
-            var kiln = T.Buildings.First(b => b.Faction == Faction.Player && b.Kind == BuildingKinds.Sawmill);
+            var kiln = T.Buildings.First(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Sawmill);
             _hud.ClearToast();
             _hud.SelectBuilding(kiln.Id);
-            Sim.Submit(new SetInputPriority(Faction.Player, kiln.Id, Ware.Log, Priority.High)); Sim.Step(2);
+            Sim.Submit(new SetInputPriority(Faction.F0, kiln.Id, Ware.Log, Priority.High)); Sim.Step(2);
             yield return Shot(Path.Combine(dir, "p5_card.png"));
 
             // 3. An enemy card with a target.
             _hud.Cancel();
-            var enemy = T.Buildings.First(b => b.Faction == Faction.Enemy && b.Size != BuildingSize.Hq);
+            var enemy = EnemySmall();
+            _hud.DeclareWarOn(Faction.F1); Sim.Step(1);
             _hud.ToggleTarget(enemy.Id); Sim.Step(2);
             var ep = new Vector3((float)g.X(enemy.Node), 0f, (float)g.Z(enemy.Node));
             SetCamera(cam, ep, 95f);
@@ -423,9 +454,8 @@ namespace God.Game.Tests
 
             // 4. The win card.
             _hud.Cancel();
-            MilitaryRules.Destroy(Sim.State, Sim.State.Military.BuildingById(T.HqsOf(Faction.Enemy)[0].Id), new EventBuffer());
-            Sim.Step(2);
-            _boot.Rig.Reframe(BoardSpace.BoardRadius + 40f);
+            LeaveOnly(Faction.F0);
+            _boot.Rig.Reframe(BoardSpace.FrameRadius + 40f, BoardSpace.BoardCentre);
             yield return Shot(Path.Combine(dir, "p5_win.png"));
         }
 

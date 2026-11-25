@@ -189,11 +189,11 @@ namespace God.Game
 
         // ---------------------------------------------------------------- standards
 
-        /// <summary>The war standard on a marked enemy building: a tall pole, crossbar and a long player banner with a pale disc where the number goes.</summary>
-        public static Mesh TargetStandard()
-            => ModelKit.Cached("standard/target", mb =>
+        /// <summary>The war standard on a marked enemy building: a tall pole, crossbar and a long banner in the marking faction's colour with a pale disc where the number goes.</summary>
+        public static Mesh TargetStandard(Faction by)
+            => ModelKit.Cached("standard/target/" + (int)by, mb =>
             {
-                var col = ModelKit.Accent(TerritoryView.PlayerColour);
+                var col = ModelKit.Accent(FactionLook.Colour(by));
                 mb.Cylinder(Vector3.zero, 0.16f, 0.12f, 7.2f, 6, ModelKit.DarkWood);
                 mb.Cone(new Vector3(0, 7.2f, 0), 0.22f, 0.6f, 4, ModelKit.Metal);
                 mb.Box(new Vector3(0, 6.9f, 0), new Vector3(2.6f, 0.14f, 0.14f), ModelKit.DarkWood);
@@ -209,11 +209,11 @@ namespace God.Game
                 mb.Box(new Vector3(1.25f, 6.4f, -0.05f), new Vector3(0.12f, 0.8f, 0.12f), ModelKit.Straw);
             });
 
-        /// <summary>The defend standard: a pole with a square player banner bearing a shield, stones round its foot.</summary>
-        public static Mesh DefendStandard()
-            => ModelKit.Cached("standard/defend", mb =>
+        /// <summary>The defend standard: a pole with a square banner in the faction's colour bearing a shield, stones round its foot.</summary>
+        public static Mesh DefendStandard(Faction by)
+            => ModelKit.Cached("standard/defend/" + (int)by, mb =>
             {
-                var col = ModelKit.Accent(TerritoryView.PlayerColour);
+                var col = ModelKit.Accent(FactionLook.Colour(by));
                 for (int i = 0; i < 6; i++) mb.Rock(ModelKit.Dir(i * 60f) * 0.55f, 0.3f, ModelKit.Rock, () => 0.5f);
                 mb.Cylinder(Vector3.zero, 0.14f, 0.11f, 5.4f, 6, ModelKit.DarkWood);
                 mb.Cone(new Vector3(0, 5.4f, 0), 0.22f, 0.45f, 6, ModelKit.Straw);

@@ -112,9 +112,9 @@ namespace God.Game.Tests
 
             // A free buildable node with a visible item right on it.
             int node = -1, item = -1;
-            foreach (int n in t.BuildableNodes(Faction.Player))
+            foreach (int n in t.BuildableNodes(Faction.F0))
             {
-                if (!t.NodeAt(n).IsFree || !sim.Check(new PlaceBuilding(Faction.Player, n, BuildingSize.Small)).Ok) continue;
+                if (!t.NodeAt(n).IsFree || !sim.Check(new PlaceBuilding(Faction.F0, n, BuildingSize.Small)).Ok) continue;
                 float x = (float)g.X(n), z = (float)g.Z(n);
                 for (int i = 0; i < v.Items.Count && item < 0; i++)
                 {
@@ -128,7 +128,7 @@ namespace God.Game.Tests
             int visibleBefore = v.VisibleCount;
             int refreshes = v.Refreshes;
 
-            Assert.IsTrue(sim.Submit(new PlaceBuilding(Faction.Player, node, BuildingSize.Small)).Ok);
+            Assert.IsTrue(sim.Submit(new PlaceBuilding(Faction.F0, node, BuildingSize.Small)).Ok);
             sim.Step();
             yield return null; // LateUpdate sees the new territory and culls
             yield return null;

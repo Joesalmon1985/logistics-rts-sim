@@ -13,24 +13,24 @@ namespace God.Game
     {
         public static Mesh InfantryBody(Faction f) => ModelKit.Cached("inf/body/" + (int)f, mb =>
         {
-            bool p = f == Faction.Player;
+            bool p = !FactionLook.Stone(f);
             var tunic = p ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f);
             var helm = p ? new Color(0.48f, 0.34f, 0.20f) : ModelKit.Metal * 0.85f;
             PeopleModels.Torso(mb, tunic, helm);
             // Helmet with a crest or a nasal, and a sash in the faction colour.
-            if (p) mb.Box(new Vector3(0, 2.06f, -0.02f), new Vector3(0.1f, 0.18f, 0.44f), ModelKit.Accent(TerritoryView.PlayerColour));
+            if (p) mb.Box(new Vector3(0, 2.06f, -0.02f), new Vector3(0.1f, 0.18f, 0.44f), ModelKit.Accent(ModelKit.FactionColour(f)));
             else { mb.Cone(new Vector3(0, 1.96f, 0), 0.3f, 0.32f, 4, helm); mb.Box(new Vector3(0, 1.7f, 0.21f), new Vector3(0.07f, 0.22f, 0.04f), helm); }
             mb.Box(new Vector3(0, 1.1f, 0.0f), new Vector3(0.68f, 0.1f, 0.42f), ModelKit.Accent(ModelKit.FactionColour(f)), 0f);
         });
 
-        public static Mesh Leg(Faction f) => ModelKit.Cached("inf/leg/" + (int)f, mb => PeopleModels.Leg(mb, f == Faction.Player ? new Color(0.40f, 0.32f, 0.22f) : new Color(0.22f, 0.21f, 0.23f)));
+        public static Mesh Leg(Faction f) => ModelKit.Cached("inf/leg/" + (int)f, mb => PeopleModels.Leg(mb, !FactionLook.Stone(f) ? new Color(0.40f, 0.32f, 0.22f) : new Color(0.22f, 0.21f, 0.23f)));
 
         /// <summary>The weapon arm: a spear (player) or a crossbow (enemy) in the hand.</summary>
         public static Mesh WeaponArm(Faction f) => ModelKit.Cached("inf/warm/" + (int)f, mb =>
         {
-            PeopleModels.Arm(mb, f == Faction.Player ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
+            PeopleModels.Arm(mb, !FactionLook.Stone(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
             var hand = new Vector3(0, -0.64f, 0);
-            if (f == Faction.Player)
+            if (!FactionLook.Stone(f))
             {
                 ModelKit.Beam(mb, hand + new Vector3(0, -0.6f, -0.05f), hand + new Vector3(0, 1.9f, 0.15f), 0.04f, ModelKit.Wood);
                 mb.Cone(hand + new Vector3(0, 1.9f, 0.15f), 0.08f, 0.4f, 4, ModelKit.Metal);
@@ -46,7 +46,7 @@ namespace God.Game
 
         public static Mesh ShieldArm(Faction f) => ModelKit.Cached("inf/sarm/" + (int)f, mb =>
         {
-            PeopleModels.Arm(mb, f == Faction.Player ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
+            PeopleModels.Arm(mb, !FactionLook.Stone(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
             // A round shield on the outside of the forearm, painted in the faction colour with a pale boss.
             var col = ModelKit.Accent(ModelKit.FactionColour(f));
             var c = new Vector3(-0.16f, -0.4f, 0.05f);
@@ -68,7 +68,7 @@ namespace God.Game
         public static Mesh WagonBody(Faction f) => ModelKit.Cached("veh/body/" + (int)f, mb =>
         {
             var st = ModelStyle.Of(f);
-            var wood = f == Faction.Player ? ModelKit.Wood : new Color(0.30f, 0.26f, 0.24f);
+            var wood = !FactionLook.Stone(f) ? ModelKit.Wood : new Color(0.30f, 0.26f, 0.24f);
             // Bed and axles.
             mb.Box(new Vector3(0, 0.95f, 0), new Vector3(1.9f, 0.35f, 3.4f), wood);
             mb.Box(new Vector3(0, 0.62f, 1.1f), new Vector3(2.3f, 0.16f, 0.16f), ModelKit.DarkWood);
@@ -90,7 +90,7 @@ namespace God.Game
             mb.Quad(new Vector3(-0.75f, 3.6f, -1.5f), new Vector3(-0.75f, 3.0f, -1.5f), new Vector3(-0.75f, 3.25f, -2.6f), new Vector3(-0.75f, 3.5f, -2.5f), col);
             mb.Quad(new Vector3(-0.75f, 3.6f, -1.5f), new Vector3(-0.75f, 3.5f, -2.5f), new Vector3(-0.75f, 3.25f, -2.6f), new Vector3(-0.75f, 3.0f, -1.5f), col * 0.85f);
             // The crew: a small figure sitting at the back.
-            mb.Box(new Vector3(0.45f, 1.55f, -1.0f), new Vector3(0.5f, 0.6f, 0.4f), f == Faction.Player ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
+            mb.Box(new Vector3(0.45f, 1.55f, -1.0f), new Vector3(0.5f, 0.6f, 0.4f), !FactionLook.Stone(f) ? new Color(0.58f, 0.46f, 0.30f) : new Color(0.32f, 0.31f, 0.33f));
             mb.Box(new Vector3(0.45f, 2.0f, -1.0f), new Vector3(0.34f, 0.34f, 0.34f), ModelKit.Skin);
             mb.Box(new Vector3(0.45f, 2.2f, -1.0f), new Vector3(0.38f, 0.1f, 0.38f), col);
         });
@@ -100,7 +100,7 @@ namespace God.Game
         /// <summary>The bolt thrower on its turntable (pivot at the turntable, facing +Z).</summary>
         public static Mesh Thrower(Faction f) => ModelKit.Cached("veh/thrower/" + (int)f, mb =>
         {
-            var wood = f == Faction.Player ? ModelKit.Wood * 1.1f : new Color(0.36f, 0.32f, 0.30f);
+            var wood = !FactionLook.Stone(f) ? ModelKit.Wood * 1.1f : new Color(0.36f, 0.32f, 0.30f);
             mb.Cylinder(Vector3.zero, 0.5f, 0.45f, 0.25f, 8, ModelKit.DarkWood);
             mb.Box(new Vector3(0, 0.45f, 0.2f), new Vector3(0.3f, 0.25f, 1.9f), wood);
             mb.Box(new Vector3(0, 0.5f, 0.95f), new Vector3(1.7f, 0.16f, 0.2f), wood * 0.9f);

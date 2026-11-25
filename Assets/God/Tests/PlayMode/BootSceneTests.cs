@@ -17,9 +17,9 @@ namespace God.Game.Tests
 
             var boot = GodBootstrap.Instance;
             Assert.IsNotNull(boot, "the scene has a GodBootstrap");
-            Assert.AreEqual(19, boot.Sim.State.Board.Topology.HexCount);
+            Assert.AreEqual(30, boot.Sim.State.Board.Topology.HexCount);
             Assert.IsNotNull(boot.Island, "the island view was built");
-            Assert.AreEqual(19, boot.Island.ItemCounts.Length);
+            Assert.AreEqual(30, boot.Island.ItemCounts.Length);
 
             var cam = boot.GodCamera;
             Assert.IsNotNull(cam);

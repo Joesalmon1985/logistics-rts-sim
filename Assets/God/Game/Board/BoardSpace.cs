@@ -19,7 +19,7 @@ namespace God.Game
         /// <summary>The topology that views convert ids with. Set by the bootstrap from the sim's board; defaults to the island.</summary>
         public static BoardTopology Topo
         {
-            get => _topo ?? BoardTopology.Get(BoardGenerator.IslandRadius);
+            get => _topo ?? BoardGenerator.IslandTopology;
             set => _topo = value;
         }
 
@@ -232,6 +232,29 @@ namespace God.Game
                 _radius = r; _radiusTopo = t;
                 return r;
             }
+        }
+
+        private static Vector3 _centre; private static float _frameRadius = -1f; private static BoardTopology _centreTopo;
+
+        /// <summary>
+        /// The middle of the land (mean of the hex centres). The six-player island is not centred on the origin: its rows
+        /// sit half a hex east of it. The camera frames round this point.
+        /// </summary>
+        public static Vector3 BoardCentre { get { Measure(); return _centre; } }
+
+        /// <summary>Radius (m) round <see cref="BoardCentre"/> that holds every corner of the board.</summary>
+        public static float FrameRadius { get { Measure(); return _frameRadius; } }
+
+        private static void Measure()
+        {
+            var t = Topo;
+            if (_centreTopo == t && _frameRadius > 0) return;
+            double x = 0, z = 0;
+            for (int h = 0; h < t.HexCount; h++) { x += t.HexX(h); z += t.HexZ(h); }
+            _centre = new Vector3((float)(x / t.HexCount), GroundY, (float)(z / t.HexCount));
+            float r = 0;
+            foreach (int v in t.Corners) r = Mathf.Max(r, new Vector2((float)t.VertexX(v) - _centre.x, (float)t.VertexZ(v) - _centre.z).magnitude);
+            _frameRadius = r; _centreTopo = t;
         }
 
         /// <summary>Radius of the island (board plus a wooded rim and beach); the sea starts beyond it.</summary>

@@ -7,7 +7,8 @@ namespace God.Game
     public enum HudMode { Normal, Place, PlaceHq, Road, Demolish }
 
     /// <summary>
-    /// The god HUD and input (P5), logic half: the tool the player holds (place a building, place an HQ, lay a road,
+    /// The god HUD and input (P5; six factions in P7), logic half. It acts for the human faction of the game setup
+    /// (<see cref="Me"/>); in watch mode (no human) the build tools are off and the cards only inform. The tool the player holds (place a building, place an HQ, lay a road,
     /// demolish), what is selected, and every action as a public method that only sends sim commands (it never changes
     /// sim state). The mouse and keyboard drive these methods from <see cref="Update"/>; the drawing is in GodHud.Gui.cs;
     /// tests call the methods directly.
@@ -42,7 +43,20 @@ namespace God.Game
 
         public bool Placing => Mode == HudMode.Place || Mode == HudMode.PlaceHq;
         public bool Paused => !Boot.Running;
-        public GameOutcome Outcome => Sim.State.Military == null ? GameOutcome.Playing : Sim.State.Military.Outcome;
+
+        /// <summary>The faction the HUD acts for: the human one (F0 stands in, inactive, in watch mode).</summary>
+        public Faction Me => FactionLook.Viewer(Sim.State);
+        /// <summary>True in watch mode: no human faction, so no build tools and no orders.</summary>
+        public bool Watching => !FactionLook.Human(Sim.State).HasValue;
+        /// <summary>True while the human faction is still in the game.</summary>
+        public bool MeAlive => !Watching && !Sim.State.Factions.IsEliminated(Me);
+
+        /// <summary>Playing until the game ends; then Won if the human faction won, else Lost (always Lost in watch mode).</summary>
+        public GameOutcome Outcome => Sim.State.Factions == null ? GameOutcome.Playing
+            : Watching ? (Sim.State.IsGameOver ? GameOutcome.Lost : GameOutcome.Playing) : Sim.State.Factions.OutcomeFor(Me);
+
+        /// <summary>True when the build tools and orders may be used: a living human faction and a game still on.</summary>
+        public bool CanAct => Outcome == GameOutcome.Playing && MeAlive;
 
         private float _toastUntil, _helpUntil;
         private float _rollTime = -10f;
@@ -92,28 +106,28 @@ namespace God.Game
 
         public void BeginPlace(string kind)
         {
-            if (Outcome != GameOutcome.Playing || EconomyDefs.Get(kind) == null) return;
+            if (!CanAct || EconomyDefs.Get(kind) == null) return;
             ClearSelection(); ClearRoad();
             Mode = HudMode.Place; PlaceKind = kind;
         }
 
         public void BeginHq()
         {
-            if (Outcome != GameOutcome.Playing) return;
+            if (!CanAct) return;
             ClearSelection(); ClearRoad();
             Mode = HudMode.PlaceHq; PlaceKind = null;
         }
 
         public void BeginRoad()
         {
-            if (Outcome != GameOutcome.Playing) return;
+            if (!CanAct) return;
             ClearSelection(); ClearRoad();
             Mode = HudMode.Road; PlaceKind = null;
         }
 
         public void BeginDemolish()
         {
-            if (Outcome != GameOutcome.Playing) return;
+            if (!CanAct) return;
             ClearSelection(); ClearRoad();
             Mode = HudMode.Demolish; PlaceKind = null;
         }
@@ -151,6 +165,7 @@ namespace God.Game
         public CommandResult WorldClick(int node, int buildingId, bool keepTool = false)
         {
             if (Outcome != GameOutcome.Playing) return CommandResult.Accept();
+            if (!CanAct && Mode != HudMode.Normal) { Mode = HudMode.Normal; PlaceKind = null; }
             switch (Mode)
             {
                 case HudMode.Place: return node < 0 ? Refuse(Reasons.NotBuildable) : ClickPlace(node, keepTool);
@@ -184,7 +199,7 @@ namespace God.Game
         /// <summary>Places the chosen building kind on a node. The tool is put down after a success unless <paramref name="keepTool"/> (shift).</summary>
         public CommandResult ClickPlace(int node, bool keepTool = false)
         {
-            var r = Send(new PlaceBuilding(Faction.Player, node, PlaceKind));
+            var r = Send(new PlaceBuilding(Me, node, PlaceKind));
             if (r.Ok && !keepTool) { Mode = HudMode.Normal; PlaceKind = null; }
             return r;
         }
@@ -199,7 +214,7 @@ namespace God.Game
             {
                 int d = g.Distance(g.CornerNode(c), node);
                 if (d > maxSteps) continue;
-                bool legal = Sim.Check(new PlaceHq(Faction.Player, c)).Ok;
+                bool legal = Sim.Check(new PlaceHq(Me, c)).Ok;
                 if ((legal && !bestLegal) || (legal == bestLegal && d < bestD)) { best = c; bestD = d; bestLegal = legal; }
             }
             return best;
@@ -209,7 +224,7 @@ namespace God.Game
         {
             int corner = CornerNear(node);
             if (corner < 0) return Refuse(Reasons.NotLandCorner);
-            var r = Send(new PlaceHq(Faction.Player, corner));
+            var r = Send(new PlaceHq(Me, corner));
             if (r.Ok) { Mode = HudMode.Normal; PlaceKind = null; }
             return r;
         }
@@ -248,7 +263,7 @@ namespace God.Game
             if (buildingId != 0)
             {
                 var b = t.BuildingById(buildingId);
-                if (b != null && b.Faction == Faction.Player) return b.FlagNode;
+                if (b != null && b.Faction == Me) return b.FlagNode;
             }
             int f = FlagNear(node);
             return f >= 0 ? f : node;
@@ -268,9 +283,9 @@ namespace God.Game
             if (RoadNodes.Count == 0)
             {
                 var f = t.FlagAtNode(target);
-                if (f != null && f.Faction == Faction.Player) { RoadNodes.Add(target); return CommandResult.Accept(); }
+                if (f != null && f.Faction == Me) { RoadNodes.Add(target); return CommandResult.Accept(); }
                 int rn = RoadNodeNear(node);
-                if (rn >= 0) return Send(new PlaceFlag(Faction.Player, rn));
+                if (rn >= 0) return Send(new PlaceFlag(Me, rn));
                 return Refuse(Reasons.BadRoad, "A road starts at one of your flags.");
             }
 
@@ -285,7 +300,7 @@ namespace God.Game
         /// <summary>Sends the road laid so far. A refusal keeps it, so it can be mended with another click.</summary>
         public CommandResult FinishRoad()
         {
-            var r = Send(new BuildRoad(Faction.Player, RoadNodes.ToArray()));
+            var r = Send(new BuildRoad(Me, RoadNodes.ToArray()));
             if (r.Ok) ClearRoad();
             return r;
         }
@@ -306,7 +321,7 @@ namespace God.Game
             var b = node >= 0 ? t.BuildingAtNode(node) : null;
             if (b != null) return DemolishBuilding(b.Id);
             int rn = RoadNodeNear(node);
-            if (rn >= 0) return Send(new RemoveRoad(Faction.Player, t.NodeRoad[rn]));
+            if (rn >= 0) return Send(new RemoveRoad(Me, t.NodeRoad[rn]));
             return Refuse(Reasons.NoSuchThing);
         }
 
@@ -314,48 +329,58 @@ namespace God.Game
 
         public CommandResult DemolishBuilding(int id)
         {
-            var r = Send(new RemoveBuilding(Faction.Player, id));
+            var r = Send(new RemoveBuilding(Me, id));
             if (r.Ok && SelectedBuilding == id) ClearSelection();
             return r;
         }
 
-        public CommandResult SetPriority(int buildingId, Ware ware, Priority p) => Send(new SetInputPriority(Faction.Player, buildingId, ware, p));
+        public CommandResult SetPriority(int buildingId, Ware ware, Priority p) => Send(new SetInputPriority(Me, buildingId, ware, p));
 
         public CommandResult TogglePaused(int buildingId)
         {
             var e = Sim.State.Economy.Find(buildingId);
-            return Send(new SetPaused(Faction.Player, buildingId, e == null || !e.Paused));
+            return Send(new SetPaused(Me, buildingId, e == null || !e.Paused));
         }
 
         /// <summary>Guards 0..5 on one of your buildings: 0 takes the flag away.</summary>
         public CommandResult SetGuards(int buildingId, int guards)
         {
             var f = Sim.State.Military.DefendAtBuilding(buildingId);
-            if (guards <= 0) return f == null ? CommandResult.Accept() : Send(new RemoveDefend(f.Id));
-            return Send(SetDefend.OnBuilding(buildingId, guards));
+            if (guards <= 0) return f == null ? CommandResult.Accept() : Send(new RemoveDefend(Me, f.Id));
+            return Send(SetDefend.OnBuilding(Me, buildingId, guards));
         }
 
         /// <summary>Guards 0..5 on a bare ground node ("Defend here").</summary>
         public CommandResult SetGuardsAt(int node, int guards)
         {
-            var f = Sim.State.Military.DefendAtNode(node);
-            if (guards <= 0) return f == null ? CommandResult.Accept() : Send(new RemoveDefend(f.Id));
-            return Send(SetDefend.OnNode(node, guards));
+            var f = Sim.State.Military.DefendAtNode(Me, node);
+            if (guards <= 0) return f == null ? CommandResult.Accept() : Send(new RemoveDefend(Me, f.Id));
+            return Send(SetDefend.OnNode(Me, node, guards));
         }
 
+        /// <summary>Marks or unmarks a building of another faction. Marking needs war with its owner.</summary>
         public CommandResult ToggleTarget(int buildingId)
         {
-            bool marked = Sim.State.Military.Marked.Contains(buildingId);
-            return Send(marked ? (Command)new UnmarkTarget(buildingId) : new MarkTarget(buildingId));
+            bool marked = Sim.State.Military.IsMarked(Me, buildingId);
+            return Send(marked ? (Command)new UnmarkTarget(Me, buildingId) : new MarkTarget(Me, buildingId));
         }
 
-        public CommandResult PlaceFlagAt(int node) => Send(new PlaceFlag(Faction.Player, node));
+        /// <summary>Declares war on another faction (at once).</summary>
+        public CommandResult DeclareWarOn(Faction other) => Send(new DeclareWar(Me, other));
+
+        /// <summary>Offers peace to a faction at war with you; peace follows once they offer too.</summary>
+        public CommandResult OfferPeaceTo(Faction other) => Send(new OfferPeace(Me, other));
+
+        /// <summary>Starts the Citadel upgrade of one of your HQs.</summary>
+        public CommandResult UpgradeCitadel(int hqId) => Send(new UpgradeToCitadel(Me, hqId));
+
+        public CommandResult PlaceFlagAt(int node) => Send(new PlaceFlag(Me, node));
 
         public CommandResult RemoveRoadAt(int node)
         {
             var t = Sim.State.Territory;
             if (node < 0 || t.NodeRoad[node] == 0) return Refuse(Reasons.NoSuchThing);
-            return Send(new RemoveRoad(Faction.Player, t.NodeRoad[node]));
+            return Send(new RemoveRoad(Me, t.NodeRoad[node]));
         }
 
         // ---------------------------------------------------------------- input
@@ -423,7 +448,7 @@ namespace God.Game
             var t = Sim.State.Territory;
             if (t.LastRollTick != _seenRoll) { _seenRoll = t.LastRollTick; _rollTime = Time.unscaledTime; }
             if (SelectedBuilding != 0 && t.BuildingById(SelectedBuilding) == null) SelectedBuilding = 0;
-            if (Outcome != GameOutcome.Playing && Mode != HudMode.Normal) Cancel();
+            if (!CanAct && Mode != HudMode.Normal) Cancel();
             // Only on a change, so other callers (tests, dev tools) may show the glow too.
             if (Boot.Territory != null && Placing != _overlayWasPlacing) { _overlayWasPlacing = Placing; Boot.Territory.OverlayVisible = Placing; }
             RefreshSpots(t);
@@ -466,9 +491,9 @@ namespace God.Game
             if (Mode == HudMode.Place)
             {
                 var inner = new Color(1f, 0.93f, 0.62f, 0.85f); var edge = new Color(1f, 0.82f, 0.40f, 0.10f);
-                foreach (int node in t.BuildableNodes(Faction.Player))
+                foreach (int node in t.BuildableNodes(Me))
                 {
-                    if (!Sim.Check(new PlaceBuilding(Faction.Player, node, PlaceKind)).Ok) continue;
+                    if (!Sim.Check(new PlaceBuilding(Me, node, PlaceKind)).Ok) continue;
                     soft.Disc(NodePos(node), 1.6f, inner, edge);
                     n++;
                 }
@@ -479,7 +504,7 @@ namespace God.Game
                 var g = t.Grid;
                 for (int c = 0; c < t.Topology.CornerCount; c++)
                 {
-                    if (!Sim.Check(new PlaceHq(Faction.Player, c)).Ok) continue;
+                    if (!Sim.Check(new PlaceHq(Me, c)).Ok) continue;
                     var p = NodePos(g.CornerNode(c));
                     soft.Disc(p, 4.5f, inner, edge, 20);
                     soft.Ring(p, 4.6f, 0.5f, new Color(1f, 0.78f, 0.30f, 0.8f), 24);
@@ -514,7 +539,7 @@ namespace God.Game
                     case HudMode.Place:
                         {
                             var def = EconomyDefs.Get(PlaceKind);
-                            bool ok = Sim.Check(new PlaceBuilding(Faction.Player, hover, PlaceKind)).Ok;
+                            bool ok = Sim.Check(new PlaceBuilding(Me, hover, PlaceKind)).Ok;
                             float s = def.Size == BuildingSize.Medium ? 6.5f : 3.6f, hgt = def.Size == BuildingSize.Medium ? 4.4f : 3.2f;
                             var col = Color.Lerp(EconomyView.KindColour(PlaceKind), ok ? green : red, 0.65f); col.a = 0.7f;
                             d.Box(NodePos(hover, hgt * 0.5f), new Vector3(s, hgt, s), col);
@@ -527,9 +552,9 @@ namespace God.Game
                             int c = CornerNear(hover);
                             if (c >= 0)
                             {
-                                bool ok = Sim.Check(new PlaceHq(Faction.Player, c)).Ok;
+                                bool ok = Sim.Check(new PlaceHq(Me, c)).Ok;
                                 var p = NodePos(g.CornerNode(c));
-                                var col = Color.Lerp(TerritoryView.PlayerColour, ok ? green : red, 0.5f); col.a = 0.6f;
+                                var col = Color.Lerp(FactionLook.Colour(Me), ok ? green : red, 0.5f); col.a = 0.6f;
                                 d.Box(p + Vector3.up * 3f, new Vector3(9f, 6f, 9f), col);
                                 if (ok) d.Ring(p, (float)g.CircleRadius, 0.8f, new Color(1f, 0.82f, 0.36f, 0.7f), 60);
                             }
@@ -557,7 +582,7 @@ namespace God.Game
                 {
                     var full = new List<int>(RoadNodes);
                     for (int i = 1; i < pre.Length; i++) full.Add(pre[i]);
-                    bool ok = Sim.Check(new BuildRoad(Faction.Player, full.ToArray())).Ok;
+                    bool ok = Sim.Check(new BuildRoad(Me, full.ToArray())).Ok;
                     var col = ok ? green : new Color(0.95f, 0.62f, 0.45f, 0.75f);
                     for (int i = 1; i < pre.Length; i++) d.Line(NodePos(pre[i - 1]), NodePos(pre[i]), 1.1f, col);
                 }

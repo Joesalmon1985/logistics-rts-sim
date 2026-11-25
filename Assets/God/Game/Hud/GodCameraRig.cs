@@ -26,6 +26,8 @@ namespace God.Game
 
         public float MaxHeight { get; private set; } = 400f;
         public float IslandRadius { get; private set; } = 500f;
+        /// <summary>The ground point the home view looks at; panning is clamped round it.</summary>
+        public Vector3 IslandCentre { get; private set; }
         /// <summary>True while the last right/middle press moved past the click slop (a pan, so no click).</summary>
         public bool Dragged { get; private set; }
 
@@ -42,10 +44,14 @@ namespace God.Game
         }
 
         /// <summary>Frames the whole island (the home view) and makes it the zoom-out limit.</summary>
-        public void Reframe(float islandRadius)
+        public void Reframe(float islandRadius) => Reframe(islandRadius, Vector3.zero);
+
+        /// <summary>Frames a circle round a centre (the home view) and makes it the zoom-out limit.</summary>
+        public void Reframe(float islandRadius, Vector3 centre)
         {
             IslandRadius = islandRadius;
-            IslandCamera.Frame(Cam, islandRadius);
+            IslandCentre = new Vector3(centre.x, 0f, centre.z);
+            IslandCamera.Frame(Cam, islandRadius, IslandCentre);
             MaxHeight = Cam.transform.position.y;
         }
 
@@ -101,7 +107,7 @@ namespace God.Game
             if (!GroundPoint(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f), out var c)) return;
             float t = Mathf.Clamp01((MaxHeight - pos.y) / Mathf.Max(1f, MaxHeight - MinHeight));
             float allowed = 30f + (IslandRadius * 0.85f) * t;
-            var flat = new Vector2(c.x, c.z);
+            var flat = new Vector2(c.x - IslandCentre.x, c.z - IslandCentre.z);
             if (flat.magnitude > allowed)
             {
                 var shift = flat * (1f - allowed / flat.magnitude);

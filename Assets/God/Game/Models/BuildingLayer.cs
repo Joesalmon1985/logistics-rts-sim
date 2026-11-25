@@ -16,7 +16,7 @@ namespace God.Game
     {
         private sealed class BView
         {
-            public int Id, Node; public string Kind; public Faction Faction; public BuildingSize Size;
+            public int Id, Node; public string Kind; public Faction Faction; public BuildingSize Size; public bool Citadel;
             public GameObject Root, Model, Site, SiteWares, Worker, Glow, Icon;
             public Transform Banner, Wheel;
             public BuildingRig Rig;
@@ -47,6 +47,14 @@ namespace God.Game
             return n;
         }
         public int WorkingNow { get; private set; }
+        /// <summary>Views rebuilt because their building changed hands (a capture) or became a Citadel.</summary>
+        public int Restyled { get; private set; }
+
+        /// <summary>The faction a building is drawn for right now (null when it has no view), for tests.</summary>
+        public Faction? DrawnFaction(int buildingId) => _views.TryGetValue(buildingId, out var v) ? v.Faction : (Faction?)null;
+
+        /// <summary>The model object of a building (null while it is a site or has no view), for tests.</summary>
+        public GameObject ModelOf(int buildingId) => _views.TryGetValue(buildingId, out var v) ? v.Model : null;
 
         public static BuildingLayer Create(GodSim sim, Transform parent)
         {
@@ -72,7 +80,13 @@ namespace God.Game
             foreach (var b in t.Buildings)
             {
                 _alive.Add(b.Id);
-                if (!_views.TryGetValue(b.Id, out var v)) v = Make(b, g);
+                bool citadel = b.Size == BuildingSize.Hq && t.HqOf(b.Id)?.Citadel == true;
+                if (_views.TryGetValue(b.Id, out var v) && (v.Faction != b.Faction || v.Citadel != citadel))
+                {
+                    // Captured (or upgraded): rebuild in the new owner's style and colour.
+                    Destroy(v.Root); _views.Remove(b.Id); v = null; Restyled++;
+                }
+                if (v == null) v = Make(b, g);
                 var eco = e?.Find(b.Id);
                 bool built;
                 if (eco != null) built = eco.Built;
@@ -104,6 +118,7 @@ namespace God.Game
         private BView Make(Building b, NodeGrid g)
         {
             var v = new BView { Id = b.Id, Node = b.Node, Kind = KindOf(b), Faction = b.Faction, Size = b.Size, Seed = (b.Id * 0.618f) % 1f };
+            v.Citadel = b.Size == BuildingSize.Hq && _sim.State.Territory.HqOf(b.Id)?.Citadel == true;
             v.Root = new GameObject("Building " + v.Kind + " " + b.Id);
             v.Root.transform.SetParent(transform, false);
             var p = ModelKit.Node(g, b.Node);
@@ -136,6 +151,8 @@ namespace God.Game
             var rig = v.Rig; var tr = v.Root.transform;
             v.Model = ModelKit.Part("Model", tr, BuildingModels.MeshOf(v.Kind, v.Faction));
             var mt = v.Model.transform;
+            // A Citadel is drawn as a bigger HQ for now (P10 gives it its own model).
+            if (v.Citadel) mt.localScale = Vector3.one * 1.3f;
             var banner = ModelKit.Part("Banner", mt, BuildingModels.BannerMesh(v.Faction));
             banner.transform.localPosition = rig.BannerTop;
             banner.transform.localRotation = Quaternion.Euler(0, 180f, 0);
@@ -221,7 +238,7 @@ namespace God.Game
             var rig = v.Rig; var tr = v.Model.transform;
             bool working = eco != null && (eco.Working || eco.Status == BuildStatus.Working);
             bool paused = eco != null && (eco.Paused || eco.Status == BuildStatus.Paused);
-            bool missing = eco != null && eco.Status == BuildStatus.MissingInputs && v.Faction == Faction.Player;
+            bool missing = eco != null && eco.Status == BuildStatus.MissingInputs && FactionLook.IsHuman(_sim.State, v.Faction);
             if (working) WorkingNow++;
 
             // Banner: lowered to half mast when paused; a gentle sway.

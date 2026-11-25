@@ -38,7 +38,7 @@ namespace God.Game
         private GameObject _roads, _flags, _piles, _glow;
         private int _roadSig = int.MinValue, _pileSig = int.MinValue, _glowSig = int.MinValue;
         private bool _showBuildable;
-        private Faction _buildableFor = Faction.Player;
+        private Faction _buildableFor = Faction.F0;
         private float[] _scratch;
 
         public int RoadRebuilds { get; private set; }
@@ -56,7 +56,7 @@ namespace God.Game
             return l;
         }
 
-        public void ShowBuildable(bool on, Faction f = Faction.Player)
+        public void ShowBuildable(bool on, Faction f)
         {
             if (on == _showBuildable && f == _buildableFor) return;
             _showBuildable = on; _buildableFor = f; _glowSig = int.MinValue;

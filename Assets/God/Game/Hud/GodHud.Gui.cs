@@ -87,7 +87,7 @@ namespace God.Game
                 });
             }
             var hq = EconomyDefs.Hq;
-            l.Add(new Tool { Label = "HQ", Tip = "HQ\nCost: " + CostText(hq) + "\nGrows your land: put it on a legal corner two corners from one of yours.", Mode = HudMode.PlaceHq, Col = TerritoryView.PlayerColour, Dot = Color.white });
+            l.Add(new Tool { Label = "HQ", Tip = "HQ\nCost: " + CostText(hq) + "\nGrows your land: put it on a legal corner two corners from one of yours.", Mode = HudMode.PlaceHq, Col = new Color(0.86f, 0.70f, 0.36f), Dot = Color.white });
             l.Add(new Tool { Label = "Road", Tip = "Road\nClick one of your flags, then the ground or another flag. Click a flag, or the end again, to finish. Click a road to put a flag on it.", Mode = HudMode.Road, Col = new Color(0.86f, 0.72f, 0.42f), Dot = Color.white });
             l.Add(new Tool { Label = "Demolish", Tip = "Demolish\nClick one of your buildings or roads to remove it. The HQ stays.", Mode = HudMode.Demolish, Col = new Color(0.85f, 0.35f, 0.30f), Dot = Color.white });
             return l;
@@ -145,8 +145,17 @@ namespace God.Game
             var strip = new Rect(0, 0, vw, stripH);
             if (repaint) { GUI.DrawTexture(strip, st.Strip, ScaleMode.StretchToFill, true); _ui.Add(new Rect(0, 0, vw, stripH * 0.78f)); }
             float y = 8f, h = stripH * 0.60f - 6f, w = 64f, x = 18f;
-            bool playing = Outcome == GameOutcome.Playing;
+            bool playing = CanAct;
             GUI.enabled = playing;
+            // Watch mode: no build tools, no stock of yours; just the clock controls.
+            if (Watching)
+            {
+                GUI.enabled = true;
+                GUI.Label(new Rect(x, y + 12f, 300f, 24f), "Watching six bots play", _bold);
+                x += 320f;
+                DrawClock(st, x, y);
+                return;
+            }
             foreach (var tool in Tools)
             {
                 var r = new Rect(x, y, w, h);
@@ -171,12 +180,17 @@ namespace God.Game
                 float cx = x + (i % 5) * 58f, cy = y + 4f + (i / 5) * (h * 0.5f);
                 var ware = StockWares[i];
                 if (repaint) GUI.DrawTexture(new Rect(cx, cy + 3f, 11f, 11f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, EconomyView.WareColour(ware), Vector4.zero, new Vector4(4, 4, 4, 4));
-                GUI.Label(new Rect(cx + 15f, cy - 3f, 40f, 18f), eco.TotalStock(Faction.Player, ware).ToString(), _bold);
+                GUI.Label(new Rect(cx + 15f, cy - 3f, 40f, 18f), eco.TotalStock(Me, ware).ToString(), _bold);
                 GUI.Label(new Rect(cx + 15f, cy + 11f, 44f, 12f), Wares.Name(ware), _tiny);
             }
             x += 5 * 58f + 22f;
+            DrawClock(st, x, y);
+        }
 
-            // Speed, pause, and the dice tick.
+        /// <summary>Speed, pause, and the dice tick.</summary>
+        private void DrawClock(HudStyle st, float x, float y)
+        {
+            bool repaint = Event.current.type == EventType.Repaint;
             var pr = new Rect(x, y + 8f, 54f, 30f);
             if (GUI.Button(pr, new GUIContent(Paused ? "Play" : "Pause", "Space"), Paused ? st.BtnSel : st.Btn)) TogglePause();
             x += 58f;
@@ -197,15 +211,30 @@ namespace God.Game
 
         // ---------------------------------------------------------------- readout, toast, help
 
+        /// <summary>The army line: your soldiers, wagons and guards, and who you are at war with.</summary>
         public string ArmyText()
         {
             var m = Sim.State.Military;
+            if (Watching) return "Watch mode: units " + m.Units.Count;
+            if (!MeAlive) return "Your faction is out of the game";
             int inf = 0, veh = 0, guards = 0;
-            foreach (var u in m.Units) if (u.Faction == Faction.Player) { if (u.Kind == UnitKind.Vehicle) veh++; else inf++; }
-            foreach (var f in m.Defends) guards += f.Guards;
-            long ticks = m.TicksToNextWave(Sim.State.Tick);
-            string wave = ticks < 0 ? "no more waves" : "wave in " + (ticks / 10 / 60) + ":" + ((ticks / 10) % 60).ToString("00");
-            return "Infantry " + inf + "    Vehicles " + veh + "    Guards " + guards + "    " + wave;
+            foreach (var u in m.Units) if (u.Faction == Me) { if (u.Kind == UnitKind.Vehicle) veh++; else inf++; }
+            foreach (var f in m.Defends) if (f.Faction == Me) guards += f.Guards;
+            var foes = Sim.State.Factions.Enemies(Me);
+            string war = foes.Count == 0 ? "at peace" : "at war with " + string.Join(", ", foes.ConvertAll(FactionLook.Name));
+            return "Infantry " + inf + "    Vehicles " + veh + "    Guards " + guards + "    " + war;
+        }
+
+        /// <summary>The standings line: VP per faction, most first (minimal; P10 styles it).</summary>
+        public string StandingsText()
+        {
+            var sb = new StringBuilder();
+            foreach (var st in FactionRules.Standings(Sim.State))
+            {
+                if (sb.Length > 0) sb.Append("   ");
+                sb.Append(FactionLook.Name(st.Faction)).Append(' ').Append(st.Eliminated ? "out" : st.VictoryPoints + " VP");
+            }
+            return sb.ToString();
         }
 
         private void DrawArmy(HudStyle st, float stripH, bool repaint)
@@ -215,6 +244,24 @@ namespace God.Game
             var r = new Rect(14f, stripH + 2f, size.x + 30f, size.y + 12f);
             GUI.Box(r, c, _pill);
             if (repaint) _ui.Add(r);
+            DrawStandings(r.yMax + 4f, repaint);
+        }
+
+        private void DrawStandings(float y, bool repaint)
+        {
+            var list = FactionRules.Standings(Sim.State);
+            float x = 14f, rowH = 20f;
+            var box = new Rect(x, y, 128f, 12f + rowH * list.Count);
+            GUI.Box(box, GUIContent.none, _pill);
+            if (repaint) _ui.Add(box);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var stg = list[i];
+                float ry = y + 6f + i * rowH;
+                if (repaint) GUI.DrawTexture(new Rect(x + 12f, ry + 5f, 10f, 10f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, FactionLook.Colour(stg.Faction), Vector4.zero, new Vector4(3, 3, 3, 3));
+                string me = !Watching && stg.Faction == Me ? " (you)" : "";
+                GUI.Label(new Rect(x + 28f, ry, 96f, rowH), FactionLook.Name(stg.Faction) + me + "  " + (stg.Eliminated ? "out" : stg.VictoryPoints.ToString()), HudStyle.Get().Small);
+            }
         }
 
         private void DrawToastAndHelp(HudStyle st, float vw, float vh, float stripH, bool repaint)
@@ -277,7 +324,7 @@ namespace God.Game
                 if (b != null)
                 {
                     var pos = new Vector3((float)g.X(b.Node), 3f, (float)g.Z(b.Node));
-                    if (b.Faction == Faction.Player)
+                    if (b.Faction == Me && !Watching)
                     {
                         var r = CardRect(pos, _buildingRect, 262f, stripH, vw, vh);
                         _buildingRect = GUILayout.Window(WinBuilding, r, id => BuildingCard(st, b), GUIContent.none, st.Window, GUILayout.Width(262f));
@@ -400,7 +447,15 @@ namespace God.Game
                 }
                 if (e.Built && GUILayout.Button(e.Paused ? "Paused  (resume)" : "Pause", e.Paused ? st.BtnSel : st.Btn, GUILayout.Height(24f))) TogglePaused(b.Id);
             }
-            else GUILayout.Label("Your headquarters", st.Small);
+            else
+            {
+                var hq = Sim.State.Territory.HqOf(b.Id);
+                bool site = hq != null && hq.Site;
+                GUILayout.Label(site ? "Your new HQ (site)" : hq != null && hq.Citadel ? "Your Citadel (2 VP)" : "Your headquarters (1 VP)", st.Small);
+                if (e != null && e.Upgrading) GUILayout.Label("Becoming a Citadel  " + (Sim.State.Economy.UpgradeProgressPermille(b.Id) / 10) + "%", st.Small);
+                else if (hq != null && !site && !hq.Citadel && GUILayout.Button(new GUIContent("Upgrade to Citadel", "Cost: " + CostText(EconomyDefs.Citadel) + ". Worth 2 VP, 3000 health."), st.Btn, GUILayout.Height(24f)))
+                    UpgradeCitadel(b.Id);
+            }
 
             // Defend flag and guards.
             var flag = Sim.State.Military.DefendAtBuilding(b.Id);
@@ -416,8 +471,10 @@ namespace God.Game
 
         private void EnemyCard(HudStyle st, Building b)
         {
-            var m = Sim.State.Military;
-            CardHead(st, "Enemy " + KindLabel(b.Kind));
+            var m = Sim.State.Military; var fs = Sim.State.Factions;
+            var hqOf = Sim.State.Territory.HqOf(b.Id);
+            string kind = hqOf != null && hqOf.Citadel ? "Citadel" : KindLabel(b.Kind);
+            CardHead(st, FactionLook.Name(b.Faction) + " " + kind);
             var rec = m.BuildingById(b.Id);
             if (rec != null)
             {
@@ -429,9 +486,24 @@ namespace God.Game
                     GUI.DrawTexture(new Rect(bar.x, bar.y, Mathf.Max(6f, bar.width * rec.HealthFraction), bar.height), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, HudStyle.Bad, Vector4.zero, new Vector4(4, 4, 4, 4));
                 }
             }
-            int order = m.MarkOrder(b.Id);
-            GUILayout.Label(order > 0 ? "Target number " + order : "Not a target", order > 0 ? st.Label : st.Small);
-            if (GUILayout.Button(order > 0 ? "Untarget" : "Target", order > 0 ? st.BtnSel : st.Btn, GUILayout.Height(26f))) ToggleTarget(b.Id);
+            if (Watching || !MeAlive) { GUILayout.Label(FactionRules.VictoryPoints(Sim.State, b.Faction) + " VP", st.Small); return; }
+            bool war = fs.AtWar(Me, b.Faction);
+            int order = m.MarkOrder(Me, b.Id);
+            if (war)
+            {
+                GUILayout.Label(order > 0 ? "At war. Target number " + order : "At war. Not a target", order > 0 ? st.Label : st.Small);
+                if (GUILayout.Button(order > 0 ? "Untarget" : "Target", order > 0 ? st.BtnSel : st.Btn, GUILayout.Height(26f))) ToggleTarget(b.Id);
+                bool offered = fs.HasOfferedPeace(Me, b.Faction), theyOffer = fs.HasOfferedPeace(b.Faction, Me);
+                string label = offered ? "Peace offered" : theyOffer ? "Accept their peace" : "Offer peace";
+                GUI.enabled = !offered;
+                if (GUILayout.Button(label, st.Btn, GUILayout.Height(24f))) OfferPeaceTo(b.Faction);
+                GUI.enabled = true;
+            }
+            else
+            {
+                GUILayout.Label("At peace: declare war to target it.", st.Small);
+                if (GUILayout.Button("Declare war", st.Btn, GUILayout.Height(26f))) DeclareWarOn(b.Faction);
+            }
         }
 
         private void GroundCard(HudStyle st)
@@ -439,7 +511,8 @@ namespace God.Game
             var t = Sim.State.Territory; var m = Sim.State.Military;
             bool road = t.NodeRoad[SelectedNode] != 0;
             CardHead(st, road ? "Road" : "Ground");
-            var flag = m.DefendAtNode(SelectedNode);
+            if (Watching || !MeAlive) { GUILayout.Label("Watching", st.Small); return; }
+            var flag = m.DefendAtNode(Me, SelectedNode);
             int cur = flag?.Guards ?? 0;
             GUILayout.Label(flag == null ? "Defend here" : "Defend here  (" + m.GuardCount(flag.Id) + " on guard)", st.Small);
             GUILayout.BeginHorizontal();
@@ -448,7 +521,7 @@ namespace God.Game
             GUILayout.EndHorizontal();
             if (road)
             {
-                if (Sim.Check(new PlaceFlag(Faction.Player, SelectedNode)).Ok && GUILayout.Button("Place a flag here", st.Btn, GUILayout.Height(24f))) PlaceFlagAt(SelectedNode);
+                if (Sim.Check(new PlaceFlag(Me, SelectedNode)).Ok && GUILayout.Button("Place a flag here", st.Btn, GUILayout.Height(24f))) PlaceFlagAt(SelectedNode);
                 if (GUILayout.Button("Remove this road", st.Btn, GUILayout.Height(24f))) { RemoveRoadAt(SelectedNode); ClearSelection(); }
             }
         }
@@ -465,9 +538,14 @@ namespace God.Game
 
         private void EndCard(HudStyle st)
         {
+            var fs = Sim.State.Factions;
             bool won = Outcome == GameOutcome.Won;
-            GUILayout.Label(won ? "Victory" : "Defeat", new GUIStyle(st.Title) { fontSize = 26, alignment = TextAnchor.MiddleCenter });
-            GUILayout.Label(won ? "The enemy HQ has fallen." : "Your HQ has fallen.", st.Centered);
+            string winner = fs.Winner >= 0 ? FactionLook.Name((Faction)fs.Winner) : "Nobody";
+            string title = Watching ? winner + " wins" : won ? "Victory" : "Defeat";
+            GUILayout.Label(title, new GUIStyle(st.Title) { fontSize = 26, alignment = TextAnchor.MiddleCenter });
+            string why = fs.EndReason == GameEndReason.VictoryPoints ? winner + " reached " + FactionTuning.VictoryPoints + " VP." : winner + " is the last faction standing.";
+            GUILayout.Label(why, st.Centered);
+            foreach (var stg in fs.FinalStandings) GUILayout.Label(stg.ToString(), st.Small);
             GUILayout.Space(10f);
             if (GUILayout.Button("Play again", st.BtnSel, GUILayout.Height(34f))) Restart(false);
             if (GUILayout.Button("New island", st.Btn, GUILayout.Height(34f))) Restart(true);

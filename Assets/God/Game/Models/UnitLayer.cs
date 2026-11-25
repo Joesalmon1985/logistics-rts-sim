@@ -45,7 +45,7 @@ namespace God.Game
             return l;
         }
 
-        private static int PoolKey(UnitKind k, Faction f) => (int)k * 2 + (int)f;
+        private static int PoolKey(UnitKind k, Faction f) => (int)k * FactionInfo.Max + (int)f;
 
         private Fig Take(UnitKind k, Faction f)
         {
@@ -187,7 +187,7 @@ namespace God.Game
                 if (fired) f.Roll = 1f;
                 f.Roll = Mathf.MoveTowards(f.Roll, 0f, dt * 4f);
                 // The throw: the weapon arm goes back, then snaps forward.
-                float arm = f.Faction == Faction.Player ? Mathf.Lerp(-15f - swing * 0.4f, -125f, f.Roll) : Mathf.Lerp(-80f, -95f, f.Roll);
+                float arm = !FactionLook.Stone(f.Faction) ? Mathf.Lerp(-15f - swing * 0.4f, -125f, f.Roll) : Mathf.Lerp(-80f, -95f, f.Roll);
                 f.ArmR.localRotation = Quaternion.Euler(arm, 0, 0);
             }
             else
@@ -206,7 +206,7 @@ namespace God.Game
                 if (f.Kind == UnitKind.Infantry) from = f.Root.transform.TransformPoint(new Vector3(0.4f, 1.9f, 0.6f));
                 else from = f.Thrower.TransformPoint(new Vector3(0, 0.6f, 1.5f));
                 bool heavy = f.Kind == UnitKind.Vehicle;
-                var col = heavy ? new Color(1f, 0.72f, 0.32f) : f.Faction == Faction.Player ? new Color(1f, 0.92f, 0.62f) : new Color(1f, 0.80f, 0.55f);
+                var col = heavy ? new Color(1f, 0.72f, 0.32f) : !FactionLook.Stone(f.Faction) ? new Color(1f, 0.92f, 0.62f) : new Color(1f, 0.80f, 0.55f);
                 fx.Shoot(from, aim.Value, heavy, col);
             }
 

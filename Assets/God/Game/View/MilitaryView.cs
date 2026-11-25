@@ -35,6 +35,6 @@ namespace God.Game
             return v;
         }
 
-        public static Color FactionColour(Faction f) => f == Faction.Player ? TerritoryView.PlayerColour : TerritoryView.EnemyColour;
+        public static Color FactionColour(Faction f) => FactionLook.Colour(f);
     }
 }

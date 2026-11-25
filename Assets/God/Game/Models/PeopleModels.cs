@@ -24,7 +24,7 @@ namespace God.Game
                 case WalkerKind.Harvester: c = new Color(0.46f, 0.54f, 0.34f); break;
                 default: c = new Color(0.86f, 0.80f, 0.64f); break;
             }
-            return f == Faction.Player ? c : c * 0.7f;
+            return FactionLook.Stone(f) ? c * 0.7f : c;
         }
 
         public static void Torso(MeshBuilder mb, Color tunic, Color cap, bool apron = false)

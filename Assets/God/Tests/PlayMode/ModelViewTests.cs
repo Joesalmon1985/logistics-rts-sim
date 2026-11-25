@@ -10,7 +10,7 @@ using UnityEngine.TestTools;
 namespace God.Game.Tests
 {
     /// <summary>
-    /// P4b: buildings, carriers and units drawn as models. Runs the F2 chain (waves off) and then the F9 fight in the real
+    /// P4b: buildings, carriers and units drawn as models. Runs the F2 chain (a bot per faction) and then the dev fight in the real
     /// scene and checks that every building kind on the island has its model, sites and carriers show, every unit kind is
     /// drawn, shots fly and a destroyed building leaves rubble. Writes screenshots when <c>GOD_SHOTS</c> names a folder
     /// (else to LocalData, which is not committed).
@@ -62,12 +62,11 @@ namespace God.Game.Tests
             var boot = GodBootstrap.Instance;
             var s = boot.Sim.State; var g = s.Territory.Grid;
             var cam = boot.GodCamera;
-            s.Military.WavesEnabled = false;
             var eco = boot.Economy; var mil = boot.Military;
 
             // Every kind builds a mesh in both styles.
             foreach (var kind in BuildingModels.Kinds)
-                foreach (Faction f in new[] { Faction.Player, Faction.Enemy })
+                foreach (Faction f in FactionInfo.All)
                     Assert.Greater(BuildingModels.MeshOf(kind, f).vertexCount, 200, kind + " " + f + " has a model");
 
             boot.DebugSample();
@@ -75,6 +74,7 @@ namespace God.Game.Tests
             Time.captureFramerate = 30;
             int maxWalkers = 0, maxSites = 0, maxCarrying = 0, maxTools = 0;
             bool townShot = false; int townScore = 0;
+            var builtBefore = new System.Collections.Generic.HashSet<int>();
             int frames = 0;
             while (s.Tick < 9000 && frames++ < 12000)
             {
@@ -83,16 +83,20 @@ namespace God.Game.Tests
                 maxSites = Mathf.Max(maxSites, eco.Buildings.SiteCount);
                 maxCarrying = Mathf.Max(maxCarrying, eco.Walkers.CarryingNow);
                 maxTools = Mathf.Max(maxTools, eco.Walkers.WithToolNow);
-                // Every finished building has its model.
+                // Every finished building has its model (one that finished during this frame's sim steps is drawn in this
+                // frame's LateUpdate, after this coroutine, so only those already finished at the last check count).
                 if (frames % 60 == 0)
-                    foreach (var b in s.Economy.Buildings.Where(b => b.Built))
+                {
+                    foreach (var b in s.Economy.Buildings.Where(b => b.Built && builtBefore.Contains(b.Id)))
                         Assert.Greater(eco.Buildings.CountBuilt(b.IsHq ? TerritoryTuning.HqKind : b.Kind, b.Faction), 0, b.Kind + " " + b.Id + " drawn");
+                    builtBefore = new System.Collections.Generic.HashSet<int>(s.Economy.Buildings.Where(b => b.Built).Select(b => b.Id));
+                }
                 // The town picture: retaken whenever a better moment comes (a site going up, carriers loaded near it, town round it).
                 if (s.Tick > 2500 && frames % 15 == 0)
                 {
-                    var pts = s.Economy.Buildings.Where(b => b.Faction == Faction.Player && b.Built).Select(b => At(g, b.Node)).ToList();
-                    var loaded = s.Economy.Walkers.Where(w => w.Loaded && w.CurrentNode >= 0 && w.Faction == Faction.Player).Select(w => At(g, w.CurrentNode)).ToList();
-                    foreach (var x in s.Economy.Buildings.Where(b => !b.Built && !b.IsHq && b.Faction == Faction.Player))
+                    var pts = s.Economy.Buildings.Where(b => b.Faction == Faction.F0 && b.Built).Select(b => At(g, b.Node)).ToList();
+                    var loaded = s.Economy.Walkers.Where(w => w.Loaded && w.CurrentNode >= 0 && w.Faction == Faction.F0).Select(w => At(g, w.CurrentNode)).ToList();
+                    foreach (var x in s.Economy.Buildings.Where(b => !b.Built && !b.IsHq && b.Faction == Faction.F0))
                     {
                         var sp = At(g, x.Node);
                         int score = pts.Count(p => (p - sp).magnitude < 30f) * 2 + loaded.Count(p => (p - sp).magnitude < 30f) * 3 + (s.Economy.SiteProgressPermille(x.Id) >= 450 ? 4 : 0);
@@ -115,11 +119,11 @@ namespace God.Game.Tests
             var builtKinds = s.Economy.Buildings.Where(b => b.Built && !b.IsHq).Select(b => b.Kind).Distinct().ToList();
             Debug.Log("P4b built kinds: " + string.Join(", ", builtKinds) + " at tick " + s.Tick);
             Assert.GreaterOrEqual(builtKinds.Count, 6, "the chain built most kinds");
-            Assert.Greater(eco.Buildings.CountBuilt(TerritoryTuning.HqKind, Faction.Player), 0);
-            Assert.Greater(eco.Buildings.CountBuilt(TerritoryTuning.HqKind, Faction.Enemy), 0);
+            Assert.Greater(eco.Buildings.CountBuilt(TerritoryTuning.HqKind, Faction.F0), 0);
+            Assert.Greater(eco.Buildings.CountBuilt(TerritoryTuning.HqKind, Faction.F1), 0);
             if (!townShot)
             {
-                var hq0 = s.Territory.HqsOf(Faction.Player)[0];
+                var hq0 = s.Territory.HqsOf(Faction.F0)[0];
                 Aim(cam, At(g, hq0.Node), 95f, 52f);
                 yield return null;
                 Shot(cam, "p4b_town.png");
@@ -127,17 +131,19 @@ namespace God.Game.Tests
 
             // The whole island, then the enemy base.
             boot.Running = false;
-            IslandCamera.Frame(cam, BoardSpace.BoardRadius + 40f);
+            IslandCamera.Frame(cam, BoardSpace.FrameRadius + 40f, BoardSpace.BoardCentre);
             for (int i = 0; i < 3; i++) yield return null;
             Shot(cam, "p4b_island.png", 1920, 1080);
-            var ehq = s.Territory.HqsOf(Faction.Enemy)[0];
-            var epts = s.Territory.Buildings.Where(b => b.Faction == Faction.Enemy).Select(b => At(g, b.Node)).ToList();
+            var ehq = s.Territory.HqsOf(Faction.F1)[0];
+            var epts = s.Territory.Buildings.Where(b => b.Faction == Faction.F1).Select(b => At(g, b.Node)).ToList();
             Aim(cam, epts.Aggregate(Vector3.zero, (q, p) => q + p) / epts.Count, 78f, 50f);
             for (int i = 0; i < 3; i++) yield return null;
             Shot(cam, "p4b_enemy.png");
 
-            // The fight at the enemy base.
+            // The fight at the nearest other faction's town.
             boot.DebugFight();
+            var foe = s.Factions.Enemies(Faction.F0)[0];
+            ehq = s.Territory.HqsOf(foe)[0];
             boot.Running = true;
             boot.Speed = 3f;
             Time.captureFramerate = 30;
@@ -147,9 +153,9 @@ namespace God.Game.Tests
             while (frames++ < 9000)
             {
                 yield return null;
-                pInf |= mil.Units.CountOf(UnitKind.Infantry, Faction.Player) > 0;
-                pVeh |= mil.Units.CountOf(UnitKind.Vehicle, Faction.Player) > 0;
-                eInf |= mil.Units.CountOf(UnitKind.Infantry, Faction.Enemy) > 0;
+                pInf |= mil.Units.CountOf(UnitKind.Infantry, Faction.F0) > 0;
+                pVeh |= mil.Units.CountOf(UnitKind.Vehicle, Faction.F0) > 0;
+                eInf |= mil.Units.CountOf(UnitKind.Infantry, foe) > 0;
                 rubbleSeen = Mathf.Max(rubbleSeen, eco.Buildings.RubbleCount);
                 shotsSeen = Mathf.Max(shotsSeen, mil.TracersDrawn);
                 barsSeen = Mathf.Max(barsSeen, FxLayer.Instance.BarsDrawn);
@@ -166,7 +172,7 @@ namespace God.Game.Tests
                     Shot(cam, "p4b_battle.png");
                 }
                 if (battleShot && rubbleSeen > 0 && frames > 600) break;
-                if (s.Military.IsGameOver) break;
+                if (s.IsGameOver) break;
             }
             Time.captureFramerate = 0;
             if (!battleShot) { Aim(cam, At(g, ehq.Node), 85f, 52f); yield return null; Shot(cam, "p4b_battle.png"); }
@@ -188,9 +194,9 @@ namespace God.Game.Tests
             var cam = boot.GodCamera;
             var root = new GameObject("Gallery");
             var origin = new Vector3(0, 0, -520f);
-            foreach (Faction f in new[] { Faction.Player, Faction.Enemy })
+            foreach (Faction f in new[] { Faction.F0, Faction.F1 })
             {
-                var o = origin + new Vector3(f == Faction.Player ? -60f : 60f, 0, 0);
+                var o = origin + new Vector3(f == Faction.F0 ? -60f : 60f, 0, 0);
                 for (int i = 0; i < BuildingModels.Kinds.Length; i++)
                 {
                     var kind = BuildingModels.Kinds[i];
@@ -210,10 +216,10 @@ namespace God.Game.Tests
                     go.transform.rotation = Quaternion.Euler(0, 160f, 0);
                 }
                 // Soldiers and a wagon.
-                var uo = origin + new Vector3(f == Faction.Player ? -6f : 6f, 0, 26f);
+                var uo = origin + new Vector3(f == Faction.F0 ? -6f : 6f, 0, 26f);
                 var inf = ModelKit.Part("inf", root.transform, UnitModels.InfantryBody(f)); inf.transform.position = uo + new Vector3(-3f, 0, 4f); inf.transform.localScale = Vector3.one * 1.2f; inf.transform.rotation = Quaternion.Euler(0, 200f, 0);
                 var arm = ModelKit.Part("arm", inf.transform, UnitModels.ShieldArm(f)); arm.transform.localPosition = new Vector3(-PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
-                var arm2 = ModelKit.Part("arm2", inf.transform, UnitModels.WeaponArm(f)); arm2.transform.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0); arm2.transform.localRotation = Quaternion.Euler(f == Faction.Player ? -15f : -80f, 0, 0);
+                var arm2 = ModelKit.Part("arm2", inf.transform, UnitModels.WeaponArm(f)); arm2.transform.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0); arm2.transform.localRotation = Quaternion.Euler(f == Faction.F0 ? -15f : -80f, 0, 0);
                 foreach (int side in new[] { -1, 1 }) { var l = ModelKit.Part("leg", inf.transform, UnitModels.Leg(f)); l.transform.localPosition = new Vector3(side * PeopleModels.LegX, PeopleModels.Hip, 0); }
                 var wag = ModelKit.Part("wagon", root.transform, UnitModels.WagonBody(f)); wag.transform.position = uo; wag.transform.rotation = Quaternion.Euler(0, 230f, 0);
                 var th = ModelKit.Part("thrower", wag.transform, UnitModels.Thrower(f)); th.transform.localPosition = new Vector3(0, 1.15f, 0.2f);
@@ -250,7 +256,6 @@ namespace God.Game.Tests
             yield return null;
             var boot = GodBootstrap.Instance;
             var s = boot.Sim.State; var t = s.Territory; var g = t.Grid; var m = s.Military;
-            m.WavesEnabled = false;
             boot.DebugSample();
             boot.Speed = 48f;
             Time.captureFramerate = 30;
@@ -270,7 +275,7 @@ namespace God.Game.Tests
                 if (used.Any(u => g.Distance(u, n) < 4)) continue;
                 used.Add(n);
                 var kind = kinds[1 + id % (kinds.Length - 1)];
-                t.Buildings.Add(new Building { Id = id++, Faction = id % 2 == 0 ? Faction.Player : Faction.Enemy, Node = n, Size = BuildingSize.Medium, Kind = kind, FlagNode = g.FlagNodeOf(n) });
+                t.Buildings.Add(new Building { Id = id++, Faction = (Faction)(id % FactionInfo.Max), Node = n, Size = BuildingSize.Medium, Kind = kind, FlagNode = g.FlagNodeOf(n) });
             }
             var walkers = new System.Collections.Generic.List<Walker>();
             for (int n = 11; n < g.Count && walkers.Count < 60; n += 53)
@@ -279,21 +284,21 @@ namespace God.Game.Tests
                 int dir = walkers.Count % 6;
                 while (path.Count < 14) { int nx = g.Neighbour(path[path.Count - 1], dir); if (!g.IsValid(nx) || !g.IsLand(nx)) break; path.Add(nx); }
                 if (path.Count < 6 || !g.IsLand(n)) continue;
-                var w = new Walker { Id = id++, Kind = (WalkerKind)(walkers.Count % 2 == 0 ? 0 : 1), Faction = Faction.Player, Path = path.ToArray(), Loaded = walkers.Count % 2 == 0, JobWare = (Ware)(1 + walkers.Count % 10), Phase = WalkerPhase.Carrying };
+                var w = new Walker { Id = id++, Kind = (WalkerKind)(walkers.Count % 2 == 0 ? 0 : 1), Faction = Faction.F0, Path = path.ToArray(), Loaded = walkers.Count % 2 == 0, JobWare = (Ware)(1 + walkers.Count % 10), Phase = WalkerPhase.Carrying };
                 walkers.Add(w); s.Economy.Walkers.Add(w);
             }
             var units = new System.Collections.Generic.List<MilUnit>();
-            var c0 = new Vector3((float)g.X(t.HqsOf(Faction.Player)[0].Node), 0, (float)g.Z(t.HqsOf(Faction.Player)[0].Node));
+            var c0 = new Vector3((float)g.X(t.HqsOf(Faction.F0)[0].Node), 0, (float)g.Z(t.HqsOf(Faction.F0)[0].Node));
             for (int i = 0; i < 40; i++)
             {
                 var kind = i % 4 == 0 ? UnitKind.Vehicle : UnitKind.Infantry;
-                var u = new MilUnit { Id = id++, Faction = i % 2 == 0 ? Faction.Player : Faction.Enemy, Kind = kind, MaxHealth = 100, Health = 40 + i, Activity = UnitActivity.Fighting };
+                var u = new MilUnit { Id = id++, Faction = (Faction)(i % FactionInfo.Max), Kind = kind, MaxHealth = 100, Health = 40 + i, Activity = UnitActivity.Fighting };
                 units.Add(u); m.Units.Add(u);
             }
             for (int i = 0; i < units.Count; i++) { units[i].TargetKind = TargetKind.Unit; units[i].TargetId = units[(i + 1) % units.Count].Id; }
 
             var eco = boot.Economy; var mil = boot.Military;
-            IslandCamera.Frame(boot.GodCamera, BoardSpace.BoardRadius + 40f);
+            IslandCamera.Frame(boot.GodCamera, BoardSpace.FrameRadius + 40f, BoardSpace.BoardCentre);
             float t0 = 0f; int measured = 0; float worst = 0f;
             int maxB = 0, maxW = 0, maxU = 0, shots = 0;
             for (int f = 0; f < 360; f++)

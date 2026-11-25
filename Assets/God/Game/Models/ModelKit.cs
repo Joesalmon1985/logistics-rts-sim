@@ -4,7 +4,10 @@ using UnityEngine;
 
 namespace God.Game
 {
-    /// <summary>The two building styles: the player's warm timber and thatch, the enemy's dark stone and slate.</summary>
+    /// <summary>
+    /// The two building styles, warm timber and thatch or dark stone and slate, each in a faction's colour. Factions
+    /// alternate between them by id for now (<see cref="FactionLook.Stone"/>).
+    /// </summary>
     public sealed class ModelStyle
     {
         public bool Stone;
@@ -16,7 +19,7 @@ namespace God.Game
             Wall = new Color(0.84f, 0.76f, 0.62f), Frame = new Color(0.36f, 0.24f, 0.14f),
             Roof = new Color(0.66f, 0.51f, 0.31f), RoofEdge = new Color(0.50f, 0.37f, 0.22f),
             Plinth = new Color(0.55f, 0.52f, 0.47f), Door = new Color(0.30f, 0.20f, 0.12f),
-            Accent = ModelKit.Accent(TerritoryView.PlayerColour), AccentDark = ModelKit.Accent(TerritoryView.PlayerColour) * 0.7f,
+            Accent = ModelKit.Accent(FactionLook.Colour(Faction.F0)), AccentDark = ModelKit.Accent(FactionLook.Colour(Faction.F0)) * 0.7f,
             Cloth = new Color(0.62f, 0.50f, 0.36f),
         };
 
@@ -26,11 +29,26 @@ namespace God.Game
             Wall = new Color(0.44f, 0.42f, 0.41f), Frame = new Color(0.24f, 0.21f, 0.19f),
             Roof = new Color(0.22f, 0.23f, 0.27f), RoofEdge = new Color(0.16f, 0.17f, 0.20f),
             Plinth = new Color(0.30f, 0.29f, 0.28f), Door = new Color(0.16f, 0.12f, 0.10f),
-            Accent = ModelKit.Accent(TerritoryView.EnemyColour), AccentDark = ModelKit.Accent(TerritoryView.EnemyColour) * 0.7f,
+            Accent = ModelKit.Accent(FactionLook.Colour(Faction.F1)), AccentDark = ModelKit.Accent(FactionLook.Colour(Faction.F1)) * 0.7f,
             Cloth = new Color(0.30f, 0.27f, 0.25f),
         };
 
-        public static ModelStyle Of(Faction f) => f == Faction.Player ? Timber : Slate;
+        private static readonly ModelStyle[] ByFaction = new ModelStyle[FactionInfo.Max];
+
+        /// <summary>The style of a faction: its family (timber or stone) with the faction colour as the accent.</summary>
+        public static ModelStyle Of(Faction f)
+        {
+            int i = (int)f;
+            if (i < 0 || i >= ByFaction.Length) return Timber;
+            if (ByFaction[i] != null) return ByFaction[i];
+            var b = FactionLook.Stone(f) ? Slate : Timber;
+            var acc = ModelKit.Accent(FactionLook.Colour(f));
+            return ByFaction[i] = new ModelStyle
+            {
+                Stone = b.Stone, Wall = b.Wall, Frame = b.Frame, Roof = b.Roof, RoofEdge = b.RoofEdge, Plinth = b.Plinth, Door = b.Door,
+                Accent = acc, AccentDark = acc * 0.7f, Cloth = b.Cloth,
+            };
+        }
     }
 
     /// <summary>
@@ -54,7 +72,7 @@ namespace God.Game
         /// <summary>The faction colour as an accent: slightly richer so it reads against thatch and stone.</summary>
         public static Color Accent(Color c) { var a = Color.Lerp(c, c * 1.12f, 0.5f); a.a = 1f; return a; }
 
-        public static Color FactionColour(Faction f) => f == Faction.Player ? TerritoryView.PlayerColour : TerritoryView.EnemyColour;
+        public static Color FactionColour(Faction f) => FactionLook.Colour(f);
 
         /// <summary>Ground height of the island at a world point (0 without the organic island).</summary>
         public static float GroundY(float x, float z)

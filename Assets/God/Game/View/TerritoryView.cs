@@ -12,8 +12,6 @@ namespace God.Game
     /// </summary>
     public sealed class TerritoryView : MonoBehaviour
     {
-        public static readonly Color PlayerColour = new Color(0.20f, 0.45f, 0.95f);
-        public static readonly Color EnemyColour = new Color(0.92f, 0.25f, 0.22f);
 
         private const float DotY = 0.25f, RingY = 0.34f;
         private const float TickSeconds = 0.9f;
@@ -35,18 +33,18 @@ namespace God.Game
         public GroundLayer Ground => _ground;
 
         /// <summary>Shows (placing mode) or hides the soft glow on the spots where a building can go.</summary>
-        public void ShowBuildable(bool on) => _ground.ShowBuildable(on, Faction.Player);
+        public void ShowBuildable(bool on) => _ground.ShowBuildable(on, FactionLook.Viewer(_sim.State));
         public void ShowBuildable(bool on, Faction f) => _ground.ShowBuildable(on, f);
         public bool BuildableShown => _ground.BuildableShown;
 
         /// <summary>The tiny dice tick drawn by this view; the HUD draws its own and turns this off.</summary>
         public bool ShowDiceTick = true;
 
-        /// <summary>The HUD's placing-mode switch (P5): shows the soft glow on the player's buildable spots.</summary>
+        /// <summary>The HUD's placing-mode switch (P5): shows the soft glow on the human faction's buildable spots.</summary>
         public bool OverlayVisible
         {
             get => BuildableShown;
-            set => ShowBuildable(value, Faction.Player);
+            set => ShowBuildable(value, FactionLook.Viewer(_sim.State));
         }
 
         /// <summary>Debug only: the P1 build circles and the dots on buildable nodes. Off by default.</summary>
@@ -109,7 +107,7 @@ namespace God.Game
             HexDressingView.Pulse(hexes);
         }
 
-        private static Color FactionColour(Faction f) => f == Faction.Player ? PlayerColour : EnemyColour;
+        private static Color FactionColour(Faction f) => FactionLook.Colour(f);
 
         private static Vector3 P(NodeGrid g, int node, float y) => new Vector3((float)g.X(node), y, (float)g.Z(node));
 
@@ -140,7 +138,7 @@ namespace God.Game
                         flat.Strip(p0, p1, 0.7f, col);
                     }
                 }
-                foreach (Faction f in new[] { Faction.Player, Faction.Enemy })
+                foreach (Faction f in s.Setup.Factions)
                 {
                     var dot = Color.Lerp(FactionColour(f), Color.white, 0.75f);
                     foreach (int n in t.BuildableNodes(f))

@@ -126,7 +126,7 @@ namespace God.Game
             }
             if (!ShowStock) return;
             _sb.Length = 0;
-            foreach (var hq in e.HqsOf(Faction.Player))
+            foreach (var hq in e.HqsOf(FactionLook.Viewer(s)))
             {
                 _sb.Append("HQ ").Append(hq.Id).Append("  carriers ").Append(hq.IdleCarriers).Append('/').Append(EconomyTuning.CarriersPerHq).Append('\n');
                 for (int w = 1; w < Wares.Count; w++)

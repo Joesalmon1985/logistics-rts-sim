@@ -22,7 +22,6 @@ namespace God.Game.Tests
             yield return null;
             var boot = GodBootstrap.Instance;
             Assert.IsNotNull(boot.Economy, "the scene builds the economy view");
-            boot.Sim.State.Military.WavesEnabled = false; // this test measures the economy view, not the war
             boot.DebugSample();
             boot.Speed = 48f;
             Time.captureFramerate = 30; // fixed 1/30 s per frame, so the sim speed does not depend on how fast the machine renders
@@ -44,7 +43,7 @@ namespace God.Game.Tests
             boot.Running = false;
             var cam = boot.GodCamera;
             var s = boot.Sim.State; var g = s.Territory.Grid;
-            var pts = s.Economy.Buildings.Where(b => b.Faction == Faction.Player && !b.IsHq).Select(b => new Vector3((float)g.X(b.Node), 0f, (float)g.Z(b.Node))).ToList();
+            var pts = s.Economy.Buildings.Where(b => b.Faction == Faction.F0 && !b.IsHq).Select(b => new Vector3((float)g.X(b.Node), 0f, (float)g.Z(b.Node))).ToList();
             // Zoom on the densest cluster of buildings.
             var best = pts.OrderByDescending(q => pts.Count(p => (p - q).magnitude < 55f)).First();
             pts = pts.Where(p => (p - best).magnitude < 55f).ToList();

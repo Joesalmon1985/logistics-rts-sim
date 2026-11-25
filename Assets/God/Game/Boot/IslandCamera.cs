@@ -13,7 +13,10 @@ namespace God.Game
         public const float FieldOfView = 30f;
 
         /// <summary>Places a camera so a circle of the given radius (m) round the origin fits the view.</summary>
-        public static void Frame(Camera cam, float islandRadius)
+        public static void Frame(Camera cam, float islandRadius) => Frame(cam, islandRadius, Vector3.zero);
+
+        /// <summary>Places a camera so a circle of the given radius (m) round <paramref name="centre"/> fits the view.</summary>
+        public static void Frame(Camera cam, float islandRadius, Vector3 centre)
         {
             float aspect = cam.aspect > 0.01f ? cam.aspect : 16f / 9f;
             cam.fieldOfView = FieldOfView;
@@ -26,7 +29,7 @@ namespace God.Game
             float needH = islandRadius * Mathf.Sin(pitch) / Mathf.Tan(vHalf) + islandRadius * Mathf.Cos(pitch) * 0.5f;
             float dist = Mathf.Max(needW, needH) * 1.04f;
             var dir = new Vector3(0f, Mathf.Sin(pitch), -Mathf.Cos(pitch));
-            cam.transform.position = dir * dist;
+            cam.transform.position = new Vector3(centre.x, 0f, centre.z) + dir * dist;
             cam.transform.rotation = Quaternion.LookRotation(-dir, Vector3.up);
             cam.nearClipPlane = 5f;
             cam.farClipPlane = dist + islandRadius * 4f;

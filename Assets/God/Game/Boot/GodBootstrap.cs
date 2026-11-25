@@ -6,7 +6,7 @@ namespace God.Game
     /// <summary>
     /// P0 proof that sim to view works: deals the island from a seed in <see cref="GodSim"/>, builds it with the
     /// copied terrain view and shows it from the tilted god camera, in day light. It only reads the sim.
-    /// Pass <c>-godseed N</c> on the command line to deal another island.
+    /// Pass <c>-godseed N</c> on the command line to deal another island, <c>-godwatch</c> for six bots and no human.
     /// </summary>
     public sealed class GodBootstrap : MonoBehaviour
     {
@@ -44,8 +44,14 @@ namespace God.Game
         /// <summary>The seed the island was dealt (and dressed) from.</summary>
         public ulong Seed => seed;
 
-        /// <summary>The scripted builder started by F2 (dev): it sends the commands of the full economy chain.</summary>
-        public ChainBot Chain { get; private set; }
+        /// <summary>The scripted builders started by F2 (dev): one per faction, each sending the commands of the full economy chain.</summary>
+        public readonly System.Collections.Generic.List<ChainBot> Chains = new System.Collections.Generic.List<ChainBot>();
+        /// <summary>The human faction's chain bot (F0's in watch mode), or null before F2.</summary>
+        public ChainBot Chain => Chains.Find(c => c.Side == FactionLook.Viewer(Sim.State));
+        /// <summary>The setup for the next scene load (watch mode, another human faction); consumed by the next bootstrap.</summary>
+        public static GameSetup PendingSetup;
+        /// <summary>The human faction, or null in watch mode (<c>-godwatch</c>).</summary>
+        public Faction? Human => FactionLook.Human(Sim.State);
         private long _lastThink;
         public float Speed = 1f;
 
@@ -57,7 +63,10 @@ namespace God.Game
             Instance = this;
             seed = SeedFromCommandLine(seed);
             if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
-            Sim = GodSim.Create(seed);
+            var setup = PendingSetup ?? new GameSetup(seed, System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godwatch") >= 0 ? GameSetup.NoHuman : 0);
+            PendingSetup = null;
+            setup.Seed = seed;
+            Sim = GodSim.Create(setup);
             BoardSpace.Topo = Sim.State.Board.Topology;
             if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)
                 LegacyIsland = HexDressingView.Create(Sim.State.Board, transform);
@@ -102,6 +111,7 @@ namespace God.Game
                 next %= 1000000000UL; if (next == seed) next++;
             }
             PendingSeed = next;
+            PendingSetup = new GameSetup(next, Sim.State.Setup.Human, Sim.State.Setup.FactionCount);
             return next;
         }
 
@@ -114,81 +124,65 @@ namespace God.Game
 
         private void Update()
         {
-            // Debug keys: F2 starts the full economy chain script, F3 runs or pauses the sim, F4 doubles its speed (F5 halves it),
-            // F10 lays out the P1 territory sample; F6-F9 are the military keys.
+            // Dev keys: F2 starts a chain bot for every faction, F3 runs or pauses the sim, F4 doubles its speed (F5 halves
+            // it), F10 lays out the P1 territory sample for the human faction. (The old F6-F9 military keys are gone.)
             if (Input.GetKeyDown(KeyCode.F2)) DebugSample();
             if (Input.GetKeyDown(KeyCode.F10)) TerritorySample.Apply(Sim);
             if (Input.GetKeyDown(KeyCode.F3)) Running = !Running;
             if (Input.GetKeyDown(KeyCode.F4)) Speed = Mathf.Min(Speed * 2f, 64f);
             if (Input.GetKeyDown(KeyCode.F5)) Speed = Mathf.Max(Speed * 0.5f, 0.25f);
-            if (Input.GetKeyDown(KeyCode.F6)) DebugSpawnSquad();
-            if (Input.GetKeyDown(KeyCode.F7)) DebugMarkNearestEnemy();
-            if (Input.GetKeyDown(KeyCode.F8)) DebugDefendHq();
-            if (Input.GetKeyDown(KeyCode.F9)) DebugFight();
-            if (Sim.State.Military != null && Sim.State.Military.IsGameOver) return;
+            if (Sim.State.IsGameOver) return;
             // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
             if (!Running) { if (Sim.PendingCommands.Count > 0) { Sim.Step(); Sim.DrainEvents(); } return; }
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
             if (steps > 0) Sim.Step(steps);
-            if (Chain != null && Sim.State.Tick - _lastThink >= 20) { _lastThink = Sim.State.Tick; Chain.Think(); }
+            if (Chains.Count > 0 && Sim.State.Tick - _lastThink >= 20) { _lastThink = Sim.State.Tick; ThinkChains(); }
             Sim.DrainEvents();
         }
 
+        /// <summary>One decision of every chain bot (the eliminated ones say nothing).</summary>
+        public void ThinkChains()
+        {
+            foreach (var c in Chains) if (!Sim.State.IsGameOver && !Sim.State.Factions.IsEliminated(c.Side)) c.Think();
+        }
+
         /// <summary>
-        /// Dev: starts the scripted full chain (sawmill, quarry, woodcutter, kiln, clay pit, mine, smelter, farm, barracks,
-        /// vehicle workshop, with HQs and roads as needed), sending the same commands a player would, and runs the sim.
-        /// Returns the bot's log (empty at the start).
+        /// Dev (F2): starts the scripted economy chain (sawmill, quarry, woodcutter, kiln, clay pit, mine, smelter, farm,
+        /// barracks, vehicle workshop, with HQs and roads as needed) for every faction, each sending the same commands a
+        /// player would, and runs the sim. Returns the log of the human faction's bot (F0's in watch mode).
         /// </summary>
         public System.Collections.Generic.List<string> DebugSample()
         {
-            Chain = new ChainBot(Sim);
+            Chains.Clear();
+            foreach (var f in Sim.State.Setup.Factions) if (!Sim.State.Factions.IsEliminated(f)) Chains.Add(new ChainBot(Sim, f));
             _lastThink = Sim.State.Tick;
             Running = true;
-            return Chain.Log;
+            return Chain?.Log ?? new System.Collections.Generic.List<string>();
         }
 
-        /// <summary>Dev (F6): three infantry and two vehicles for the player, at the player HQ.</summary>
-        public void DebugSpawnSquad()
-        {
-            var hq = Sim.State.Territory.HqsOf(Faction.Player)[0];
-            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, hq.Node));
-            for (int i = 0; i < 2; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Vehicle, hq.Node));
-        }
-
-        /// <summary>Dev (F7): marks the enemy building nearest the player HQ, after the ones already marked.</summary>
-        public void DebugMarkNearestEnemy()
-        {
-            var t = Sim.State.Territory; var m = Sim.State.Military; var g = t.Grid;
-            var hq = t.HqsOf(Faction.Player)[0];
-            Building best = null; int bd = int.MaxValue;
-            foreach (var b in t.Buildings)
-            {
-                if (b.Faction != Faction.Enemy || m.Marked.Contains(b.Id)) continue;
-                int d = g.Distance(b.Node, hq.Node);
-                if (d < bd) { bd = d; best = b; }
-            }
-            if (best != null) Sim.Submit(new MarkTarget(best.Id));
-        }
-
-        /// <summary>Dev (F8): a defend flag with two guards on the player HQ.</summary>
-        public void DebugDefendHq()
-        {
-            Sim.Submit(SetDefend.OnBuilding(Sim.State.Territory.HqsOf(Faction.Player)[0].Id, 2));
-        }
-
-        /// <summary>Dev (F9): a ready-made fight at the enemy base: five player units, three enemy infantry, all enemy buildings marked.</summary>
+        /// <summary>
+        /// Dev (-godfight): a ready-made fight. The human faction (F0 in watch mode) declares war on the faction whose HQ is
+        /// nearest, spawns five units by that HQ, marks the buildings round it and then the HQ, and puts two guards on its own HQ; the enemy gets three infantry.
+        /// </summary>
         public void DebugFight()
         {
-            var t = Sim.State.Territory; var g = t.Grid;
-            var eh = t.HqsOf(Faction.Enemy)[0];
-            int at(int di, int dj) { int n = g.Id(g.I(eh.Node) + di, g.J(eh.Node) + dj); return g.IsLand(n) ? n : eh.Node; }
-            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Infantry, at(-5 + i, 2)));
-            for (int i = 0; i < 2; i++) Sim.Submit(new DevSpawnUnit(Faction.Player, UnitKind.Vehicle, at(-6, i)));
-            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(Faction.Enemy, UnitKind.Infantry, at(-1 - i, 3)));
-            foreach (var b in t.Buildings) if (b.Faction == Faction.Enemy) Sim.Submit(new MarkTarget(b.Id));
-            DebugDefendHq();
+            var s = Sim.State; var t = s.Territory; var g = t.Grid;
+            var me = FactionLook.Viewer(s);
+            var mine = t.HqsOf(me)[0];
+            Hq eh = null; int best = int.MaxValue;
+            foreach (var h in t.Hqs)
+                if (h.Faction != me && !h.Site && g.Distance(h.Node, mine.Node) < best) { best = g.Distance(h.Node, mine.Node); eh = h; }
+            if (eh == null) return;
+            if (!s.Factions.AtWar(me, eh.Faction)) { Sim.Submit(new DeclareWar(me, eh.Faction)); Sim.Step(); Sim.DrainEvents(); }
+            int at(int di, int dj) { int n = g.Id(g.I(eh.Node) + di, g.J(eh.Node) + dj); return n >= 0 && g.IsLand(n) ? n : eh.Node; }
+            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(me, UnitKind.Infantry, at(-5 + i, 2)));
+            for (int i = 0; i < 2; i++) Sim.Submit(new DevSpawnUnit(me, UnitKind.Vehicle, at(-6, i)));
+            for (int i = 0; i < 3; i++) Sim.Submit(new DevSpawnUnit(eh.Faction, UnitKind.Infantry, at(-1 - i, 3)));
+            foreach (var b in t.Buildings) if (b.Faction == eh.Faction && b.Size != BuildingSize.Hq && g.Distance(b.Node, eh.Node) <= g.CircleRadiusSteps) Sim.Submit(new MarkTarget(me, b.Id));
+            Sim.Submit(new MarkTarget(me, eh.Id));
+            Sim.Submit(SetDefend.OnBuilding(me, mine.Id, 2));
         }
 
         private void ReadRunArgs()
@@ -208,8 +202,8 @@ namespace God.Game
             if (GodCamera != null && !Mathf.Approximately(_framedAspect, GodCamera.aspect))
             {
                 _framedAspect = GodCamera.aspect;
-                if (Rig != null) Rig.Reframe(BoardSpace.BoardRadius + 40f);
-                else IslandCamera.Frame(GodCamera, BoardSpace.BoardRadius + 40f);
+                if (Rig != null) Rig.Reframe(BoardSpace.FrameRadius + 40f, BoardSpace.BoardCentre);
+                else IslandCamera.Frame(GodCamera, BoardSpace.FrameRadius + 40f, BoardSpace.BoardCentre);
             }
         }
 
