@@ -15,6 +15,8 @@ The proof of concept is playable (24 Nov 2026). Packages P0 to P5 are merged on 
 - models;
 - the god HUD.
 
+Stage 2 package P7 (branch `unity/p7-factions`) makes it six factions on a 30-hex island, with war and peace, victory points, Citadels, capture and elimination. The static enemy base and its waves are gone. P8 (trade), P9 (AI) and P10 (menu, save, watch mode) build on it.
+
 How to play: [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
 
 ## Layout
@@ -50,4 +52,4 @@ Run `Builds/Windows/GodOfTheIsland.exe`, or open `Main.unity` and press Play. Se
 
 ## Smoke
 
-`GodOfTheIsland.exe -batchmode -nographics -godsmoke 15000 -logFile smoke.log` plays 25 sim-minutes headless with the chain bot, logs `SMOKE` lines and quits with exit code 0 on success.
+`GodOfTheIsland.exe -batchmode -nographics -godsmoke 15000 -logFile smoke.log` plays 25 sim-minutes headless with a chain bot per faction, logs `SMOKE` lines and quits with exit code 0 on success (no exception, every faction built at least 3 kinds, invariants hold).

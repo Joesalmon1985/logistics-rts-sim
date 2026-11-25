@@ -1,8 +1,10 @@
 # How to play the proof of concept
 
-Run `Builds\Windows\GodOfTheIsland.exe`. To get a different island, add `-godseed 1234`.
+Run `Builds\Windows\GodOfTheIsland.exe`. To get a different island, add `-godseed 1234`. Add `-godwatch` to watch with no human faction (the build tools are hidden).
 
-You and the enemy each start with an HQ on opposite sides of the island. The enemy's first wave comes after **8 minutes**. After that a wave comes every 2 minutes, and each one is bigger. **You win by destroying the enemy HQ, and you lose if your last HQ falls.**
+Stage 2 (P7, 25 Nov): the island has 30 hexes and **six factions** (Amber, Azure, Crimson, Jade, Violet and Ivory), each starting with one HQ, spread round the coast. You play Amber. Everyone starts at peace. There are no enemy waves any more, and the other factions have no military AI yet (that is P9): press **F2** to start a chain bot that builds the economy of every faction, yours included.
+
+**Victory points:** a finished HQ is worth 1 VP and a Citadel 2 VP. The first faction to **10 VP** wins; so does the last faction left. A faction with no HQ is out.
 
 ## Controls
 
@@ -44,24 +46,28 @@ Click one of your buildings to open its card:
 - **Defend here** keeps 0 to 5 guards at it.
 - **Demolish** removes it.
 
-## War
+## War and peace
 
-- Click an enemy building and press **Target**. Units attack targets in the order you marked them.
+- Click a building of another faction to open its card. At peace, it offers **Declare war**; war starts at once.
+- At war, press **Target**. Units attack targets in the order you marked them. **Offer peace** ends the war once they offer too.
+- Units fight only factions you are at war with and walk past everyone else.
 - New units first fill any defend spots, then go after the first target.
+- An HQ brought to zero by units is **captured**, at half health, with every building, site, flag and road in its area and its stock. Other buildings burn.
+- Click your HQ for **Upgrade to Citadel** (3 plank, 4 brick, 4 stone, 3 iron; 30 s of work).
 - You can't move units yourself; you only give god orders.
-- The line under the cloud shows your soldiers, wagons and guards, and when the next wave comes.
+- The line under the cloud shows your soldiers, wagons and guards and who you are at war with; below it, the VP of every faction.
 
-## A good first 8 minutes
+## A good start
 
 1. Build a woodcutter, a quarry and a sawmill near the HQ, and give each one a road.
 2. Add a clay pit and a kiln for bricks, which the medium buildings need.
 3. Add a mine, a smelter and a farm, then a barracks.
-4. Before the first wave, click your HQ and set **Defend here** to 2 or 3. Soldiers from the barracks will then guard it.
+4. Click your HQ and set **Defend here** to 2 or 3. Soldiers from the barracks will then guard it.
 
 ## Not in yet
 
-- No enemy economy.
-- No saving.
+- No military AI or trade yet (P8, P9); the F2 chain bots only build economies.
+- No saving (P10).
 - No sound.
 - No tutorial.
 - Unit selection isn't planned.
