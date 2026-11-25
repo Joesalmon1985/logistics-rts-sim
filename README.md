@@ -1,6 +1,6 @@
 # God of the Island
 
-A Unity 6000.3.28f1 proof of concept (branch `unity/poc`). You are a god looking down on an island. You never control a person directly. You place buildings, and the people build them. You set which buildings get wares first. Raw materials appear on the land when the hidden Catan dice roll a tile's number. Harvesters collect them, and carriers walk them along roads. Workshops turn them into finer wares, or split them into two. Two factories turn wares into soldiers and light vehicles. These leave on their own to attack the enemy buildings you have marked, or to guard the places you have flagged.
+A Unity 6000.3.28f1 proof of concept (branch `unity/poc`). You are a god looking down on an island. You never control a person directly. You place buildings, and the people build them. You set which buildings get wares first. Raw materials appear on the land when the hidden Catan dice roll a tile's number. Harvesters collect them, and carriers walk them along roads. Ten processors turn pairs of raws into finer wares. Ten armouries turn those into five weapons and five pieces of armour. A barracks arms soldiers with whatever kit it holds. They leave on their own to attack the enemy buildings you have marked, or to guard the places you have flagged, and fight in duels of seeded rolls.
 
 The full plan, rules and package order are in [`docs/UNITY_POC_PLAN.md`](docs/UNITY_POC_PLAN.md). That file is the current plan. Everything else in `docs/` mostly describes the older Godot version of this project (settlement logistics and RTS rules, kept as design history and as a source of names and decisions). The Godot code itself is gone from this branch.
 
@@ -22,7 +22,16 @@ Stage 2 (25 Nov 2026) is merged as packages P7 to P11:
 - P10: the start card, Esc menu, three save slots, watch mode and standings;
 - P11: AI trade (`AiTrader`: the AIs offer spare goods for wares they lack the land for, and answer offers by their own needs), balance across seeds, and a watch smoke that ends with a winner on the build.
 
-How to play: [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
+Stage 3 (25-26 Nov 2026) is merged as packages Q1 to Q4:
+- Q1, the economy: five raws, ten processors, ten armouries, harvester levels 2 and 3, and barracks kits.
+- Q2, combat: gear stats, and duels with block, dodge, crits, armour and pierce.
+- Q3, the tutorial and HUD: a tutorial of 15 cards on a fixed island, a tabbed build bar, and models for the new buildings.
+- Q4, AI and balance:
+  - The AIs plan weapons from their land and arm with a melee/ranged mix. They upgrade harvesters, trade for what their land lacks, and keep a 15-minute opening truce.
+  - Combat and economy are retuned against duels, five-a-side group battles and 12-seed watch games.
+  - A scripted player completes the tutorial end to end.
+
+How to play, including the chain tables, gear, kits and the balance report: [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
 
 ## Layout
 
@@ -36,13 +45,18 @@ How to play: [`docs/PLAY_GUIDE.md`](docs/PLAY_GUIDE.md).
 | `DotNet/` | `God.Sim` and its tests compiled outside Unity (the `.cs` files are linked by glob). |
 | `AgentScripts/` | Scripts for the Unity CLI (`unity command script run`). |
 
+Balancing tools in the sim:
+- `DuelSim`: one-on-one duels.
+- `GroupBattle`: five-a-side fights on a real island with the real military tick.
+- `AiTradeTests.BalanceReport_Seeds1To12`: run it by name.
+
 ## Open
 
 Install Unity 6000.3.28f1, then open this folder as a project (Unity Hub, or `unity open .` with the Unity CLI). Open `Assets/God/Scenes/Main.unity`.
 
 ## Test
 
-- Outside Unity (fast): `dotnet test DotNet`
+- Outside Unity (fast): `dotnet test DotNet -c Release`
 - EditMode, with the Unity CLI: `unity command test run --mode editor`
 - PlayMode: `unity command test run --mode playmode --async-tests`, then poll `unity command test status`
 - Or use Window > General > Test Runner in the Editor.

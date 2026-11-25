@@ -270,7 +270,7 @@ The owner's request after stage 2:
 ### Processors: one for each pair of raws
 | Building | Takes | Makes |
 |---|---|---|
-| Sawmill | log + stone | plank |
+| Sawmill | log + stone | plank (Q4: 2 planks per cycle) |
 | Brick kiln | log + clay | brick |
 | Smelter | log + ore | iron |
 | Bakery | log + grain | bread |
@@ -306,30 +306,34 @@ The owner's request after stage 2:
 - Armouries and the barracks: 2 plank, 2 brick, 1 mortar.
 - HQ: 3 plank, 2 brick, 2 mortar, 2 stone.
 - Citadel: 4 brick, 4 mortar, 3 plank, 2 steel.
-- Start stock at every HQ: 8 log, 6 stone, 6 clay, 4 grain, 6 plank, 4 brick, 2 mortar.
+- Start stock at every HQ: 8 log, 8 stone, 6 clay, 4 grain, 8 plank, 8 brick, 6 mortar (Q4; was 8/6/6/4/6/4/2). This is enough for two HQs toward a land the start lacks.
 
 ### Combat: live duels in rounds
 - Every soldier has 100 health. Stats come from its kit.
-- **Weapons**:
+- **Weapons** (Q4 final numbers; the first stage 3 draft is in git history):
 
 | Weapon | Damage | Pierce | Hit % | Rounds between attacks | Range | Vs buildings | Special |
 |---|---|---|---|---|---|---|---|
-| Sword | 12 | 2 | 85 | 8 ticks | 2 m | 100% | parry: +10% block when it has no shield |
-| Spear | 10 | 3 | 80 | 10 ticks | 3.5 m | 75% | first strike: it attacks first when a fight starts in melee |
-| Axe | 16 | 4 | 75 | 12 ticks | 2 m | 200% | shield breaker: halves the target's block chance |
-| Bow | 9 | 1 | 65 | 14 ticks | 25 m | 25% | |
-| Sling | 7 | 0 | 60 | 9 ticks | 18 m | 25% | cheap |
+| Sword | 11 | 1 | 80 | 9 ticks | 2 m | 100% | parry: +10% block when it has no shield |
+| Spear | 11 | 4 | 90 | 10 ticks | 3.5 m | 75% | first strike: it attacks first when a fight starts in melee (not on every change of foe in a crowd) |
+| Axe | 19 | 3 | 75 | 13 ticks | 2 m | 200% | shield breaker: halves the target's block chance |
+| Bow | 8 | 2 | 65 | 13 ticks | 23 m | 25% | |
+| Sling | 6 | 1 | 75 | 8 ticks | 16 m | 25% | cheap |
 
-- **Defence**:
+- **Defence** (Q4 final numbers):
 
 | Item | Block % | Armour (damage reduction) | Dodge % | Speed | Special |
 |---|---|---|---|---|---|
-| Big shield | 35 (55 vs bow and sling) | 0 | 0 | -10% | |
-| Small shield | 25 | 0 | +5 | 0 | |
+| Big shield | 25 (45 vs bow and sling) | 0 | 0 | -10% | |
+| Small shield | 15 | 0 | +3 | 0 | |
 | Helmet | 0 | 2 | 0 | 0 | stops critical hits |
-| Breastplate | 0 | 5 | -5 | -20% | |
-| Light armour | 0 | 2 | +10 | 0 | |
+| Breastplate | 0 | 4 | -5 | -15% | |
+| Light armour | 0 | 1 | +5 | 0 | |
 | Nothing | 0 | 0 | 5 (base) | 0 | |
+
+- **Close quarters (Q4):** a bow or sling shooting at a foe within 4 m has half its hit chance.
+- **Sight (Q4):** everyone sees 23 m, as far as a bow shoots. Before, it was 20 m, and a bow could shoot soldiers that could not see it.
+- **Buildings (Q4):** HQ 3000 health, Citadel 5000 (were 1500 and 3000).
 
 - **An attack** (on the attacker's turn: its cooldown is over and the target is in range):
   1. Roll to hit: `hit% - target dodge%`.
@@ -375,6 +379,39 @@ The owner's request after stage 2:
   - At least 4 factions reach 4 VP.
   - Every weapon is used in some game.
   - No single kit wins over 60% of duels it fights.
+
+### Q4 result (26 Nov)
+
+**AI.**
+- **Gear plan:** a melee and a ranged weapon by land and a per-faction taste. A second melee weapon and defence items come later. The barracks is steered 60/40 melee/ranged by input priorities.
+- **Opening:** land-aware. Processors it cannot feed are skipped, and HQs (stepping stones if needed) go toward missing land first.
+- **Trade:** it trades for raws and armoury inputs it has no land for, and sheds gluts.
+- **War:**
+  - Strength counts kits.
+  - No AI declares war in the first 15 minutes.
+  - A faction boxed in builds steel first.
+  - A faction that cannot grow in peace arms to the cap and may start a war even as leader.
+  - Coalition, peace and the tutorial truce are unchanged.
+- **Tutorial trades:** the AIs take any fair trade from the tutorial player that they can pay.
+
+**Economy.**
+- A sawmill makes 2 planks per cycle.
+- Start stock is larger (see above).
+- Dice stay at 6 s. Harvester levels and HarvesterOutputCap are unchanged.
+
+**Results over seeds 1 to 12** (`docs/PLAY_GUIDE.md` has the per-seed table):
+
+| Target | Result | Met? |
+|---|---|---|
+| Every game ends with a winner | 12 of 12 | yes |
+| Winner in 30 to 70 minutes | 9 of 12. Seeds 3 and 11 end at 24.9 and 24.4 minutes, and seed 1 at 72.6. Over 36 seeds, 30 of 36. | no |
+| At least 4 factions reach 4 VP | 5 of 12 games (20 of 36). Most other games have 2 or 3. | no |
+| Every weapon is used in some game | swords in 10, spears and axes in 12, bows and slings in 11 | yes |
+| No kit wins over 60% of its duels | Duel = a death against the foe that dealt most of the damage. Bare kits: spear 53%, bow 58%, sling 53%, axe 44%, sword 33%. Bow with helmet: 73% over 60 duels. | all but one |
+
+**Group check.** In straight five-a-side line-ups, an all-melee five beats three melee plus two ranged.
+
+**Tutorial.** A scripted player follows all 15 cards on seed 40 and finishes at minute 13, with its first soldier at minute 12.3 (`TutorialEndToEndTests`).
 
 ## Packages (stage 3)
 
