@@ -119,9 +119,11 @@ namespace God.Sim.Tests
             Assert.IsFalse(trader.JudgeIncoming(ai.BrainOf(Faction.F1), Faction.F4, W(Ware.Plank, 8), W(Ware.Stone, 1)), "the leader's offer is refused");
             Assert.IsFalse(trader.JudgeIncoming(ai.BrainOf(Faction.F3), Faction.F2, W(Ware.Plank, 8), W(Ware.Stone, 1)), "an enemy's offer is refused");
             Assert.IsTrue(trader.JudgeIncoming(ai.BrainOf(Faction.F1), Faction.F2, W(Ware.Plank, 8), W(Ware.Stone, 1)), "the same offer from anyone else is taken");
-            // With only the leader and the enemy holding stone, nothing is offered.
+            // With only the leader and the enemy holding stone, no stone is asked for (Q4: other raws it lacks may be).
             SetStock(s, Faction.F1, Ware.Stone, 0);
-            Assert.IsNull(trader.Plan(ai.BrainOf(Faction.F2)));
+            var later = trader.Plan(ai.BrainOf(Faction.F2));
+            Assert.IsTrue(later == null || later.Want.All(w => w.Ware != Ware.Stone));
+            if (later != null) Assert.AreNotEqual(Faction.F4, later.To, "never the leader");
         }
 
         [Test]
@@ -137,8 +139,12 @@ namespace God.Sim.Tests
             Assert.IsFalse(trader.JudgeIncoming(azure, Faction.F2, W(Ware.Plank, 1), W(Ware.Stone, 4)), "unfair: 5 for 12");
             Assert.IsFalse(trader.JudgeIncoming(azure, Faction.F2, W(Ware.Log, 1), W(Ware.Stone, 4)), "unfair: 2 for 12");
             Assert.IsFalse(trader.JudgeIncoming(azure, Faction.F2, W(Ware.Plank, 40), W(Ware.Stone, 30)), "never more than its surplus");
-            SetStock(s, Faction.F1, Ware.Plank, 40);
+            SetStock(s, Faction.F1, Ware.Plank, 40); SetStock(s, Faction.F1, Ware.Stone, 12);
             Assert.IsFalse(trader.JudgeIncoming(azure, Faction.F2, W(Ware.Plank, 4), W(Ware.Stone, 4)), "planks it does not need do not help");
+            // Q4: shedding a glut helps too: with 30 stone (far beyond what it keeps) the same deal is taken.
+            SetStock(s, Faction.F1, Ware.Stone, 30);
+            Assert.IsTrue(trader.JudgeIncoming(azure, Faction.F2, W(Ware.Plank, 4), W(Ware.Stone, 4)), "a glut of stone goes for any fair payment");
+            SetStock(s, Faction.F1, Ware.Plank, 0);
             // Through the sim: an unfair offer reaching an AI is refused by the judge.
             Assert.IsInstanceOf<AiTradeJudge>(s.Trade.Judge, "brains with a trader set the judge");
             SetStock(s, Faction.F1, Ware.Plank, 0);

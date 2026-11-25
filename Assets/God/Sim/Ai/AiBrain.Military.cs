@@ -23,8 +23,8 @@ namespace God.Sim
                 if (!S.Factions.IsEliminated((Faction)i)) _vp[i] = FactionRules.VictoryPoints(S, (Faction)i);
         }
 
-        /// <summary>Stage 3: a soldier's strength grows with its kit (one point per two defence pieces). Q4 refines this.</summary>
-        private int UnitStrength(MilUnit u) => Tune.InfantryStrength + MilitaryTuning.DefencePieces(u.Kit) / 2;
+        /// <summary>A soldier's strength by its kit (<see cref="KitStrength"/>): a bare sword counts <see cref="AiTuning.InfantryStrength"/>.</summary>
+        private int UnitStrength(MilUnit u) => KitStrength(u.Kit, Tune.InfantryStrength);
 
         /// <summary>Army strength of a faction (sum over its units), as the AI counts it.</summary>
         public int StrengthOf(Faction f)
@@ -137,14 +137,24 @@ namespace God.Sim
             if (x == Side || !Neighbour(x)) return false;
             int me = _strength[(int)Side], him = _strength[(int)x];
             if (keep) return me * 100 >= him * Tune.OpportunistKeepPercent && me * 2 >= Tune.OpportunistMinStrength;
-            // The leader does not pick fights (it is the one the others gang up on); it only fights back.
-            if (Tune.LeaderStaysOut) { var b = Leaders(); if (_vp[(int)Side] == b.Top) return false; }
+            // The leader does not pick fights (it is the one the others gang up on); it only fights back. Q4: unless it can
+            // no longer grow in peace (no corner to take, every HQ a Citadel): then a capture is its only way to 10 VP, and
+            // without this a peaceful island stalls at 8 VP.
+            if (Tune.LeaderStaysOut) { var b = Leaders(); if (_vp[(int)Side] == b.Top && CanGrowInPeace()) return false; }
             if (me < Tune.OpportunistMinStrength || me * 100 < him * Tune.OpportunistPercent) return false;
             foreach (var o in S.Factions.Enemies(Side)) if (o != x) return false; // one opportunistic front at a time
             NearestEnemyHq(x, out var hq);
             var rec = hq != null ? M.BuildingById(hq.Id) : null;
             if (rec == null) return false;
             return me * 100 >= DefenceAt(rec, x) * Tune.AttackPercent + Tune.AttackMinStrength * 100;
+        }
+
+        /// <summary>True while the faction can still gain VP without war: a corner to take, or an HQ not yet a Citadel.</summary>
+        private bool CanGrowInPeace()
+        {
+            if (_hqSites.Count > 0 || CountExpansionCorners() > 0) return true;
+            foreach (var h in _hqs) if (!h.Citadel) return true;
+            return false;
         }
 
         private void Diplomacy()

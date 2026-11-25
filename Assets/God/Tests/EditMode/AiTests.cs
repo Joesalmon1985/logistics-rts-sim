@@ -141,34 +141,83 @@ namespace God.Sim.Tests
 
         // ---------------- economy, expansion, Citadels ----------------
 
-        /// <summary>The stage 3 army chain of the simple AI (Q1): raws, planks, bricks, mortar, bread, iron, axes and the barracks.</summary>
-        private static readonly string[] ArmyChain =
+        /// <summary>The basics every AI economy builds before its army (Q4): raws, planks, bricks, bread and a barracks.</summary>
+        private static readonly string[] Basics =
         {
-            BuildingKinds.Woodcutter, BuildingKinds.Quarry, BuildingKinds.Sawmill, BuildingKinds.ClayPit, BuildingKinds.Kiln, BuildingKinds.MortarMill,
-            BuildingKinds.Farm, BuildingKinds.Mine, BuildingKinds.Bakery, BuildingKinds.Smelter, BuildingKinds.Axesmith, BuildingKinds.Barracks,
+            BuildingKinds.Woodcutter, BuildingKinds.Quarry, BuildingKinds.Sawmill, BuildingKinds.ClayPit, BuildingKinds.Kiln,
+            BuildingKinds.Farm, BuildingKinds.Bakery, BuildingKinds.Barracks,
         };
 
-        // Stage 3: seeds where F0's start lands let a lone brain (no trade) reach the barracks (seed scan, 25 Nov).
+        /// <summary>
+        /// Q4 gear plan, a lone brain (no trade) on starts with all four lands near: it builds the basics, the armoury of its
+        /// planned melee weapon and the barracks, and arms soldiers with planned weapons within 30 minutes. Seeds: every
+        /// seed of 1..8 where Amber's start reaches forest, hills, mountain and fields alone.
+        /// </summary>
         [TestCase(1UL)]
         [TestCase(2UL)]
         [TestCase(4UL)]
         [TestCase(5UL)]
-        public void Brain_BuildsTheWholeChain_AndAnArmy(ulong seed)
+        public void Brain_BuildsItsGearPlanChain_AndAnArmy(ulong seed)
         {
-            var sim = Solo(seed, Faction.F0, out _);
-            var s = sim.State;
-            StepUntil(sim, 30 * 600, () => ArmyChain.All(k => s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Built && b.Kind == k))
-                && s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Barracks && b.Produced > 0)
-                && s.Military.CountUnits(Faction.F0) > 0);
+            var sim = Solo(seed, Faction.F0, out var ai);
+            var s = sim.State; var brain = ai.BrainOf(Faction.F0);
+            bool Built(string k) => s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Built && b.Kind == k);
+            StepUntil(sim, 30 * 600, () => Basics.All(Built) && s.Military.CountUnits(Faction.F0) >= 3);
             var kinds = s.Economy.Buildings.Where(b => b.Faction == Faction.F0 && b.Built && !b.IsHq).Select(b => b.Kind).Distinct().ToList();
-            CollectionAssert.IsSubsetOf(ArmyChain, kinds, "seed " + seed + " built " + string.Join(",", kinds) + " by tick " + s.Tick);
-            Assert.IsTrue(s.Economy.Buildings.Any(b => b.Faction == Faction.F0 && b.Kind == BuildingKinds.Barracks && b.Produced > 0), "soldiers made");
-            Assert.IsTrue(s.Economy.ProducedLog.Where(u => u.Faction == Faction.F0).All(u => u.Kit.Weapon == Ware.Axe), "the simple AI arms them with axes");
-            Assert.Greater(s.Military.CountUnits(Faction.F0), 0, "an army");
+            string why = "seed " + seed + " built " + string.Join(",", kinds) + " by tick " + s.Tick + "; plan " + string.Join(",", brain.PlannedWeapons);
+            CollectionAssert.IsSubsetOf(Basics, kinds, why);
+            Assert.AreEqual(2, brain.PlannedWeapons.Count(w => w != Ware.None) >= 2 ? 2 : -1, "a melee and a ranged weapon planned: " + why);
+            Assert.IsFalse(Gear.IsRanged(brain.PlannedWeapons[0]), "melee first");
+            Assert.IsTrue(Gear.IsRanged(brain.PlannedWeapons[1]), "then ranged");
+            Assert.IsTrue(Built(AiBrain.ArmouryOf(brain.PlannedWeapons[0])), "the first weapon's armoury: " + why);
+            Assert.GreaterOrEqual(s.Military.CountUnits(Faction.F0), 3, "an army: " + why);
+            var made = s.Economy.ProducedLog.Where(u => u.Faction == Faction.F0).ToList();
+            Assert.IsTrue(made.All(u => u.Kit.IsArmed && brain.PlannedWeapons.Contains(u.Kit.Weapon)), "armed with planned weapons: " + string.Join(",", made.Select(u => u.Kit.Weapon)));
             foreach (var b in s.Economy.Buildings.Where(b => b.Faction == Faction.F0 && !b.IsHq))
                 Assert.AreNotEqual(BuildStatus.SiteNoRoad, b.Status, "joined by road: " + b.Kind + " " + b.Id);
             // The other factions had no brain and sent nothing.
             Assert.IsTrue(s.Territory.Buildings.Where(b => b.Faction != Faction.F0).All(b => b.Size == BuildingSize.Hq));
+        }
+
+        /// <summary>
+        /// Q4: over a whole six-brain game a faction arms with at least two weapon kinds and adds defence items once its
+        /// economy runs; factions on the same island plan different weapons.
+        /// </summary>
+        [Test]
+        public void GearPlans_TwoWeaponsPerFaction_DefenceLater_AndVariety()
+        {
+            var (sim, ai, _) = Play(5, 60 * 600, 0, null, new AiTrader());
+            var s = sim.State;
+            var made = s.Economy.ProducedLog;
+            int twoKinds = 0, withDefence = 0, armies = 0;
+            var firstWeapons = new HashSet<Ware>();
+            foreach (var f in s.Setup.Factions)
+            {
+                var mine = made.Where(u => u.Faction == f).ToList();
+                if (mine.Count > 0) armies++;
+                if (mine.Select(u => u.Kit.Weapon).Distinct().Count() >= 2) twoKinds++;
+                if (mine.Any(u => MilitaryTuning.DefencePieces(u.Kit) > 0)) withDefence++;
+                var b = ai.BrainOf(f);
+                if (!s.Factions.IsEliminated(f)) { b.WareNeeds(); firstWeapons.Add(b.PlannedWeapons[0]); }
+            }
+            TestContext.WriteLine("armies " + armies + ", two weapon kinds " + twoKinds + ", defence " + withDefence + ", first weapons " + string.Join(",", firstWeapons));
+            Assert.GreaterOrEqual(armies, 5, "nearly every faction gets an army");
+            Assert.GreaterOrEqual(twoKinds, 4, "most armies carry two weapon kinds or more");
+            Assert.GreaterOrEqual(withDefence, 3, "defence items once the economy runs");
+            Assert.GreaterOrEqual(firstWeapons.Count, 2, "not everyone plans the same melee weapon");
+            Assert.IsTrue(made.Any(u => Gear.IsRanged(u.Kit.Weapon)), "bows or slings are made");
+        }
+
+        [Test]
+        public void KitStrength_GrowsWithGear_ABareSwordIsTheBase()
+        {
+            Assert.AreEqual(2, AiBrain.KitStrength(new Kit(Ware.Sword), 2));
+            Assert.AreEqual(100, AiBrain.KitStrength(new Kit(Ware.Sword), 100));
+            int bare = AiBrain.KitStrength(new Kit(Ware.Axe), 100);
+            int full = AiBrain.KitStrength(new Kit(Ware.Axe, Ware.SmallShield, Ware.Helmet, Ware.LightArmour), 100);
+            Assert.Greater(full, bare * 12 / 10, "a full kit counts clearly more");
+            Assert.Less(AiBrain.KitStrength(new Kit(Ware.Bow), 100), 100, "a bare bow counts less than a bare sword in a straight fight");
+            Assert.IsTrue(new[] { Ware.Sword, Ware.Spear, Ware.Axe }.All(w => AiBrain.KitStrength(new Kit(w), 100) is int v && v > 70 && v < 140), "bare melee weapons count about the same");
         }
 
         [Test]

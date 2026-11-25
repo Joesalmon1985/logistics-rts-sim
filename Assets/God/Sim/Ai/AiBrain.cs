@@ -193,6 +193,7 @@ namespace God.Sim
             Array.Copy(_budget, _free, Wares.Count);
             BuildNetwork();
             LookArmies();
+            PlanGear();
         }
 
         private int Have(string kind) => _have.TryGetValue(kind, out int n) ? n : 0;
@@ -312,17 +313,32 @@ namespace God.Sim
             for (int w = 0; w < Wares.Count; w++) if (_budget[w] < 0) need[w] = -_budget[w];
             var citadel = EconomyDefs.Citadel.Cost; var hq = EconomyDefs.Hq.Cost;
             for (int w = 0; w < Wares.Count; w++) need[w] = Math.Max(need[w], citadel[w] + hq[w] - Math.Max(0, _budget[w]));
+            // Q4: raws the faction has no land for (a faction without mountain buys stone and ore all game long)...
+            foreach (var r in Wares.Raws)
+                if (!_lands.Contains(LandOf(r))) need[(int)r] = Math.Max(need[(int)r], Tune.TradeLackingRaws - Math.Max(0, _budget[(int)r]));
+            // ...and inputs of the planned armouries it has no land for (it trades for them, a few at a time).
+            foreach (var g in Planned())
+            {
+                var arm = EconomyDefs.MakerOf(g);
+                if (Have(arm.Kind) == 0) continue;
+                for (int w = 1; w < Wares.Count; w++)
+                    if (arm.In[w] > 0 && LacksLandFor((Ware)w)) need[w] = Math.Max(need[w], Tune.TradeGearInputs - Math.Max(0, _budget[w]));
+            }
+            if (Have(BuildingKinds.Barracks) > 0 && LacksLandFor(Ware.Bread)) need[(int)Ware.Bread] = Math.Max(need[(int)Ware.Bread], Tune.TradeGearInputs - Math.Max(0, _budget[(int)Ware.Bread]));
             return need;
         }
 
-        /// <summary>Free wares above what a Citadel and an HQ would need (for the trader to pay with).</summary>
+        /// <summary>Free wares above what an HQ (and later a Citadel) would need (for the trader to pay with).</summary>
         public int[] WareSurplus()
         {
             var have = new int[Wares.Count];
             if (S.Territory == null) return have;
             Look();
+            // Q4: an HQ's worth is kept back; a Citadel's too only once Citadels are near (early on, bricks and planks spare
+            // beyond one HQ are worth more to a neighbour without hills or forest, and its payment helps).
             var keep = new int[Wares.Count];
-            for (int w = 0; w < Wares.Count; w++) keep[w] = EconomyDefs.Citadel.Cost[w] + EconomyDefs.Hq.Cost[w];
+            bool citadelsNear = _hqs.Count >= Tune.CitadelFromHqs - 1;
+            for (int w = 0; w < Wares.Count; w++) keep[w] = (citadelsNear ? EconomyDefs.Citadel.Cost[w] : 0) + EconomyDefs.Hq.Cost[w];
             for (int w = 1; w < Wares.Count; w++) have[w] = Math.Max(0, _budget[w] - keep[w]);
             return have;
         }
@@ -371,9 +387,17 @@ namespace God.Sim
             if (b.Paused != paused) Send(new SetPaused(Side, b.Id, paused), (paused ? "pause " : "resume ") + b.Kind);
         }
 
+        /// <summary>The planned gear, weapons first.</summary>
+        private IEnumerable<Ware> Planned()
+        {
+            foreach (var w in _weapons) yield return w;
+            foreach (var w in _defence) yield return w;
+        }
+
         /// <summary>
-        /// Steers scarce wares (simple stage 3 version): the barracks pauses when the army is big enough, and so does the
-        /// axesmith once axes pile up; planks go to the axesmith at low priority while a Citadel is upgrading in peace.
+        /// Steers scarce wares: a processor pauses with enough of its ware in stock; an armoury pauses when its gear is not
+        /// in the plan, or piles up while the army is at its size; armouries take planks at low priority while a Citadel is
+        /// upgrading in peace; the barracks pauses when the army is big enough and is steered to the planned weapon mix.
         /// </summary>
         private void Priorities()
         {
@@ -381,23 +405,23 @@ namespace God.Sim
             int units = _mine.Count;
             int wanted = ArmyWanted(war);
             bool capped = units >= Math.Min(Tune.ArmyCap, wanted + (war ? 6 : 0)) && !(war && units < Tune.ArmyCap);
-            int weapons = 0;
-            foreach (var g in Gear.Attack) weapons += _free[(int)g];
             foreach (var b in E.Buildings)
             {
                 if (b.Faction != Side || b.IsHq || !b.Built) continue;
                 var d = b.Def;
                 // Enough of its ware in stock: a processor pauses and leaves its raws to the other processors and sites.
                 if (d.Processor) SetPause(b, _free[(int)d.Makes] >= Tune.EnoughProcessed);
-                switch (b.Kind)
+                else if (d.Armoury)
                 {
-                    case BuildingKinds.Barracks:
-                        SetPause(b, capped);
-                        break;
-                    case BuildingKinds.Axesmith:
-                        SetPrio(b, Ware.Plank, _upgrading && !war ? Priority.Low : Priority.Normal);
-                        SetPause(b, capped && weapons >= Tune.SpareWeapons);
-                        break;
+                    bool planned = _weapons.Contains(d.Makes) || _defence.Contains(d.Makes);
+                    int spare = _free[(int)d.Makes] + b.Out[(int)d.Makes];
+                    SetPause(b, !planned || spare >= Tune.SpareWeapons * (capped ? 1 : 2));
+                    if (d.In[(int)Ware.Plank] > 0) SetPrio(b, Ware.Plank, _upgrading && !war ? Priority.Low : Priority.Normal);
+                }
+                else if (b.Kind == BuildingKinds.Barracks)
+                {
+                    SetPause(b, capped);
+                    SteerBarracks(b);
                 }
             }
         }
@@ -441,6 +465,9 @@ namespace God.Sim
 
         private int ArmyWanted(bool war)
         {
+            // Q4: a faction that can no longer grow in peace (no corner, every HQ a Citadel) arms to the cap: its next VP
+            // must be captured.
+            if (!CanGrowInPeace()) return Tune.ArmyCap;
             int peace = Tune.ArmyBase + Tune.ArmyPerHq * _hqs.Count;
             return Math.Min(Tune.ArmyCap, war ? peace * Tune.WarArmyPercent / 100 : peace);
         }
@@ -460,15 +487,17 @@ namespace God.Sim
             int maxSites = Tune.MaxOpenSitesBase + hqs / 2;
             bool missingLand = !_lands.Contains(Terrain.Forest) || !_lands.Contains(Terrain.Mountain) || !_lands.Contains(Terrain.Hills);
 
-            // Stage 3 chain (simple; Q4 refines it): logs and stone first (every building needs them), the sawmill for planks,
-            // then an urgent HQ toward missing forest, mountain or hills, then clay for bricks and mortar.
+            // The opening (Q4): logs and stone first (every building needs them), the sawmill for planks, then an urgent HQ
+            // toward missing forest, mountain or hills (a step toward it when no corner in reach has it), then clay for
+            // bricks and mortar. A processor whose raws the faction has no land for is not built: it would stand idle and
+            // its planks and brick are worth more as an HQ toward that land.
             Want(BuildingKinds.Woodcutter, 1, maxSites, true);
             Want(BuildingKinds.Quarry, 1, maxSites, true);
-            Want(BuildingKinds.Sawmill, 1, maxSites, true);
+            if (OwnLandFor(BuildingKinds.Sawmill)) Want(BuildingKinds.Sawmill, 1, maxSites, true);
             if (missingLand) Expand(true);
             Want(BuildingKinds.ClayPit, 1, maxSites, true);
-            Want(BuildingKinds.Kiln, 1, maxSites);
-            Want(BuildingKinds.MortarMill, 1, maxSites);
+            if (OwnLandFor(BuildingKinds.Kiln)) Want(BuildingKinds.Kiln, 1, maxSites);
+            if (OwnLandFor(BuildingKinds.MortarMill)) Want(BuildingKinds.MortarMill, 1, maxSites);
             // A short ware gets a harvester on every hex of its land in reach first (one harvester per hex: piles are shared).
             if (_free[(int)Ware.Stone] < Tune.ScarceWare) Cover(BuildingKinds.Quarry, maxSites);
             if (_free[(int)Ware.Log] < Tune.ScarceWare || _free[(int)Ware.Plank] < Tune.ScarceWare) Cover(BuildingKinds.Woodcutter, maxSites);
@@ -488,27 +517,34 @@ namespace God.Sim
             bool developed = builtTotal >= Tune.BuildingsPerHqBeforeExpand * (hqs - 1);
             if (developed && (hqs < Tune.TargetHqs || !_lands.Contains(Terrain.Hills) || !_lands.Contains(Terrain.Fields))) Expand(false);
 
-            // The army: bread (farm, bakery) and axes (mine, smelter, axesmith) for the barracks; steel (forge) for Citadels.
-            Want(BuildingKinds.Farm, 1, maxSites);
-            Want(BuildingKinds.Mine, 1, maxSites);
-            Want(BuildingKinds.Bakery, 1, maxSites);
-            Want(BuildingKinds.Smelter, 1, maxSites);
-            Want(BuildingKinds.Axesmith, 1, maxSites);
+            // The army (Q4 gear plan): bread for the barracks, the chain of the first planned weapon, the barracks, the
+            // ranged weapon; steel (forge) for Citadels and iron (smelter) for level 3 harvesters; then the rest of the plan.
+            // Not before the basics run and the faction has reached the land it lacks (or tried with three HQs): the start
+            // stock pays for HQs toward that land first, not for armouries that would stand idle.
+            bool basicsUp = (Built(BuildingKinds.Sawmill) > 0 || !OwnLandFor(BuildingKinds.Sawmill))
+                && (Built(BuildingKinds.Kiln) > 0 || !OwnLandFor(BuildingKinds.Kiln));
+            bool armyTime = basicsUp && (!missingLand || hqs >= Tune.ArmyDespiteMissingLandHqs || corners == 0);
+            if (!armyTime) { if (citadelTime) Citadel(); return; }
+            if (_lands.Contains(Terrain.Fields)) Want(BuildingKinds.Farm, 1, maxSites);
+            if (OwnLandFor(BuildingKinds.Bakery)) Want(BuildingKinds.Bakery, 1, maxSites);
+            if (_weapons.Count > 0) WantGear(_weapons[0], maxSites);
             Want(BuildingKinds.Barracks, 1, maxSites);
-            Want(BuildingKinds.Forge, 1, maxSites);
+            if (_weapons.Count > 1) WantGear(_weapons[1], maxSites);
+            if (_lands.Contains(Terrain.Mountain)) { Want(BuildingKinds.Mine, 1, maxSites); Want(BuildingKinds.Forge, 1, maxSites); }
             if (!citadelFirst && citadelTime) Citadel();
+            if (_lands.Contains(Terrain.Mountain) && _lands.Contains(Terrain.Forest)) Want(BuildingKinds.Smelter, 1, maxSites);
+            for (int i = 2; i < _weapons.Count; i++) WantGear(_weapons[i], maxSites);
+            foreach (var g in _defence) WantGear(g, maxSites);
 
             Cover(BuildingKinds.Quarry, maxSites);
             Cover(BuildingKinds.Woodcutter, maxSites);
             Want(BuildingKinds.ClayPit, 1 + hqs / 3, maxSites);
             Want(BuildingKinds.Mine, 1 + hqs / 3, maxSites);
-            Want(BuildingKinds.Sawmill, 1 + hqs / 3, maxSites);
+            if (OwnLandFor(BuildingKinds.Sawmill)) Want(BuildingKinds.Sawmill, 1 + hqs / 3, maxSites);
             Want(BuildingKinds.Farm, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.Kiln, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.MortarMill, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.Bakery, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.Smelter, 1 + hqs / 4, maxSites);
-            Want(BuildingKinds.Axesmith, 1 + hqs / 4, maxSites);
+            if (OwnLandFor(BuildingKinds.Kiln)) Want(BuildingKinds.Kiln, 1 + hqs / 4, maxSites);
+            if (OwnLandFor(BuildingKinds.MortarMill)) Want(BuildingKinds.MortarMill, 1 + hqs / 4, maxSites);
+            if (OwnLandFor(BuildingKinds.Bakery)) Want(BuildingKinds.Bakery, 1 + hqs / 4, maxSites);
             Want(BuildingKinds.Barracks, 1 + hqs / 5, maxSites);
             // Late game: more Citadels whenever wares allow.
             if (citadelTime) Citadel();
@@ -538,6 +574,18 @@ namespace God.Sim
                 Spend(best.UpgradeDef.Cost);
                 _actions++;
             }
+        }
+
+        /// <summary>
+        /// True when the faction can feed a processor: every raw it takes comes from the faction's own land, or lies in its
+        /// stock from trade (at least <see cref="AiTuning.TradeFedRaw"/> free units).
+        /// </summary>
+        private bool OwnLandFor(string kind)
+        {
+            var d = EconomyDefs.Get(kind);
+            for (int r = 1; r < Wares.Count; r++)
+                if (d.In[r] > 0 && Wares.IsRaw((Ware)r) && !_lands.Contains(LandOf((Ware)r)) && _free[r] < Tune.TradeFedRaw) return false;
+            return true;
         }
 
         /// <summary>One more harvester of a kind when a hex of its land in reach has none of the faction's yet (placed on such a hex).</summary>
@@ -695,6 +743,21 @@ namespace God.Sim
             return score + ThinkRng.NextInt(5);
         }
 
+        /// <summary>Distance in metres from a corner to the nearest hex of a critical land the faction lacks; 0 when none is missing.</summary>
+        private int MissingLandMetres(int c)
+        {
+            long best = long.MaxValue;
+            int cx = (int)(Topo.VertexX(c) * 1000), cz = (int)(Topo.VertexZ(c) * 1000);
+            for (int hex = 0; hex < Topo.HexCount; hex++)
+            {
+                var tt = S.Board.HexTerrain[hex];
+                if (!Critical(tt) || _lands.Contains(tt)) continue;
+                long d = Pathing.Dist2(cx, cz, (int)(Topo.HexX(hex) * 1000), (int)(Topo.HexZ(hex) * 1000));
+                if (d < best) best = d;
+            }
+            return best == long.MaxValue ? 0 : Pathing.ISqrt(best) / 1000;
+        }
+
         /// <summary>Forest, mountain and hills: without them there are no logs, stone or bricks, and the faction stalls.</summary>
         private static bool Critical(Terrain tt) => tt == Terrain.Forest || tt == Terrain.Mountain || tt == Terrain.Hills;
 
@@ -716,10 +779,12 @@ namespace God.Sim
             var cands = new List<(int score, int corner)>();
             foreach (int c in Topo.Corners)
                 if (CanReachCorner(c) && (!urgent || GivesMissingCritical(c))) cands.Add((CornerScore(c), c));
-            // P11: no corner in reach gives the missing land: the normal expansion later in the want list may still spread
-            // towards it (before, this blocked every HQ and the faction stalled on one HQ).
-            // Stage 3: its cost stays held (the land it needs may come with any later HQ), and the normal expansion releases it.
-            if (cands.Count == 0) { if (urgent) { _hqDone = false; Spend(cost); _hqHeld = true; } return; }
+            // Q4: no corner in reach gives the missing land: a stepping stone now, the corner in reach nearest to that land
+            // (before, the cost was held for a later normal expansion, which the cheaper wants starved).
+            if (cands.Count == 0 && urgent)
+                foreach (int c in Topo.Corners)
+                    if (CanReachCorner(c)) cands.Add((CornerScore(c) - Tune.StepTowardMissingPerMetre * MissingLandMetres(c), c));
+            if (cands.Count == 0) return;
             cands.Sort((a, b) => a.score != b.score ? b.score.CompareTo(a.score) : a.corner.CompareTo(b.corner));
             var g = G; int tries = 0;
             foreach (var c in cands)

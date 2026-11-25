@@ -55,6 +55,8 @@ namespace God.Sim
         public int CornerPipScore = 8;
         /// <summary>A hex already inside one of the faction's build areas counts this percent.</summary>
         public int CoveredHexPercent = 40;
+        /// <summary>A stepping-stone HQ (no corner in reach has the missing land) loses this much score per metre from that land.</summary>
+        public int StepTowardMissingPerMetre = 4;
         /// <summary>Corner score lost per enemy HQ within <see cref="NeighbourCornerDistance"/> corners; doubled when that faction is stronger.</summary>
         public int EnemyNearPenalty = 45;
 
@@ -76,10 +78,29 @@ namespace God.Sim
         public int WarArmyPercent = 220;
         /// <summary>Hard cap on units per faction (factories pause above it; keeps the sim fast).</summary>
         public int ArmyCap = 32;
-        /// <summary>Strength of one soldier in the AI's army sums (stage 3: every unit is a soldier; Q4 weighs kits).</summary>
+        /// <summary>Strength of a soldier with a bare sword in the AI's army sums; other kits scale by <see cref="AiBrain.KitStrength"/>.</summary>
         public int InfantryStrength = 2;
-        /// <summary>Free weapons in stock above which the axesmith pauses while the army is at its size.</summary>
+        /// <summary>Free pieces of one kind of gear in stock above which its armoury pauses while the army is at its size.</summary>
         public int SpareWeapons = 4;
+
+        // ---------------- gear plan (Q4) ----------------
+
+        /// <summary>Gear score lost per raw of its chain whose land the faction has none of (it would have to trade for it).</summary>
+        public int GearMissingLandPenalty = 400;
+        /// <summary>Gear score for an armoury of it already placed (a plan sticks once started).</summary>
+        public int GearArmouryBonus = 2000;
+        /// <summary>Gear score per input processor already placed (shared chains are cheaper).</summary>
+        public int GearProcessorBonus = 120;
+        /// <summary>A faction still short of forest, mountain or hills starts its army chain once it has this many HQs anyway.</summary>
+        public int ArmyDespiteMissingLandHqs = 3;
+        /// <summary>Range of the fixed per-faction taste added to every gear score (so factions on the same land arm differently).</summary>
+        public int GearTaste = 300;
+        /// <summary>Percent of the army the barracks arms with ranged weapons.</summary>
+        public int RangedSharePercent = 40;
+        /// <summary>A second melee weapon joins the plan once both first armouries stand and the faction has this many HQs.</summary>
+        public int ThirdWeaponFromHqs = 3;
+        /// <summary>A second defence item joins the plan from this many HQs.</summary>
+        public int SecondDefenceFromHqs = 3;
         /// <summary>While the faction has no harvester of a raw, its processors stop taking that raw below this many free units (kept to build the harvester).</summary>
         public int KeepRawWithoutHarvester = 4;
         /// <summary>A processor pauses while the faction has this many free units of its ware (its raws go elsewhere).</summary>
@@ -97,7 +118,7 @@ namespace God.Sim
         // ---------------- attack ----------------
 
         /// <summary>The free army attacks when its strength is at least this percent of the defence at the target plus <see cref="AttackMinStrength"/>.</summary>
-        public int AttackPercent = 160;
+        public int AttackPercent = 120;
         public int AttackMinStrength = 14;
         /// <summary>It calls the attack off when its strength falls below this percent of the defence, or below <see cref="RetreatMinStrength"/>.</summary>
         public int RetreatPercent = 60;
@@ -124,7 +145,7 @@ namespace God.Sim
         /// <summary>A faction at the top of the VP table starts no opportunistic war.</summary>
         public bool LeaderStaysOut = true;
         /// <summary>...and at least this strong...</summary>
-        public int OpportunistMinStrength = 20;
+        public int OpportunistMinStrength = 30;
         /// <summary>...and the war is kept while the own army stays at least this percent of the neighbour's (and half that minimum strength).</summary>
         public int OpportunistKeepPercent = 100;
         /// <summary>A faction is losing badly against an enemy whose units at its HQs are at least this percent of its own army plus <see cref="LosingSlack"/>.</summary>
@@ -146,5 +167,11 @@ namespace God.Sim
         /// to pay with (trade for target builds and to shed surplus); wares it lacks the land for are traded for at once.
         /// </summary>
         public int TradeShedSurplus = 10;
+        /// <summary>Units of an armoury input (or bread) the faction keeps asking for when it has no land to make it (Q4).</summary>
+        public int TradeGearInputs = 4;
+        /// <summary>Free units of a raw the faction keeps asking for while none of its HQ areas has that raw's land (Q4).</summary>
+        public int TradeLackingRaws = 8;
+        /// <summary>A processor whose raw has no land of the faction's is still built with this many free units of it (traded in).</summary>
+        public int TradeFedRaw = 4;
     }
 }

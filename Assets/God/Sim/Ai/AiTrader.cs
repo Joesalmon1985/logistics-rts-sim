@@ -111,7 +111,22 @@ namespace God.Sim
             for (int w = 1; w < Wares.Count; w++) if (want[w] > surplus[w]) return false;
             var needs = brain.WareNeeds();
             for (int w = 1; w < Wares.Count; w++) if (give[w] > 0 && needs[w] > 0) return true;
-            return false;
+            // Q4: shedding a glut also helps: every ware asked for lies far above what it keeps (a mountain faction sitting
+            // on a heap of stone sells it to one without mountain for any fair payment).
+            return Sheds(brain.Tune, surplus, want);
+        }
+
+        /// <summary>True when every wanted ware is surplus by at least <see cref="AiTuning.TradeShedSurplus"/> beyond the ask.</summary>
+        public static bool Sheds(AiTuning tune, int[] surplus, int[] want)
+        {
+            bool any = false;
+            for (int w = 1; w < Wares.Count; w++)
+            {
+                if (want[w] <= 0) continue;
+                if (surplus[w] < want[w] + tune.TradeShedSurplus) return false;
+                any = true;
+            }
+            return any;
         }
 
         public static int[] Counts(WareCount[] list)
@@ -178,12 +193,13 @@ namespace God.Sim
                         if (p.vp > pickVp) break;
                         int theirs = surplusOf[p.f][wi];
                         if (theirs <= 0 || RecentlyRefused(s, me, p.f, ware, tune.TradeRefusedMemoryTicks)) continue;
-                        if (Pay(s, me, mySurplus, needsOf[p.f], ware, Math.Min(ask, theirs), out _, out _) == null) continue;
+                        bool sheds = theirs >= Math.Min(ask, theirs) + tune.TradeShedSurplus;
+                        if (Pay(s, me, mySurplus, needsOf[p.f], ware, Math.Min(ask, theirs), sheds, out _, out _) == null) continue;
                         if (pick == null || theirs > pickSpare) { pick = p.f; pickVp = p.vp; pickSpare = theirs; }
                     }
                     if (pick == null) continue;
                     int n = Math.Min(ask, pickSpare);
-                    var give = Pay(s, me, mySurplus, needsOf[pick.Value], ware, n, out int hqId, out n);
+                    var give = Pay(s, me, mySurplus, needsOf[pick.Value], ware, n, pickSpare >= n + tune.TradeShedSurplus, out int hqId, out n);
                     var cmd = new OfferTrade(me, pick.Value, give, new[] { new WareCount(ware, n) }, hqId);
                     if (brain.Sim.Check(cmd).Ok) return cmd;
                 }
@@ -205,10 +221,11 @@ namespace God.Sim
 
         /// <summary>
         /// The payment for <paramref name="count"/> of <paramref name="ware"/> (the count may drop to what can be paid for):
-        /// surplus wares, the ones the partner needs most first (at least one of them needed), worth at least the ask (rounded
-        /// up in the partner's favour), from the first HQ by id that can pay it all. Null when no payment works.
+        /// surplus wares, the ones the partner needs most first (at least one of them needed, unless the partner
+        /// <paramref name="sheds"/> a glut of the ware), worth at least the ask (rounded up in the partner's favour), from the
+        /// first HQ by id that can pay it all. Null when no payment works.
         /// </summary>
-        private static WareCount[] Pay(GodState s, Faction me, int[] mySurplus, int[] theirNeeds, Ware ware, int count, out int hqId, out int asked)
+        private static WareCount[] Pay(GodState s, Faction me, int[] mySurplus, int[] theirNeeds, Ware ware, int count, bool sheds, out int hqId, out int asked)
         {
             hqId = 0; asked = count;
             for (int n = count; n >= 1; n--)
@@ -227,7 +244,7 @@ namespace God.Sim
                         avail.Add((theirNeeds[w], c, (Ware)w));
                         if (theirNeeds[w] > 0) helps = true;
                     }
-                    if (!helps) continue;
+                    if (!helps && !sheds) continue;
                     avail.Sort((a, b) => a.need != b.need ? b.need.CompareTo(a.need) : a.spare != b.spare ? b.spare.CompareTo(a.spare) : ((int)a.w).CompareTo((int)b.w));
                     var give = new int[Wares.Count];
                     int got = 0, units = 0;
