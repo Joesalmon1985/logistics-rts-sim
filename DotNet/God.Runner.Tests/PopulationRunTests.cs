@@ -38,7 +38,9 @@ namespace God.Runner.Tests
                 Assert.AreEqual(0, r[2 * i].ExitCode, r[2 * i].Error + " " + string.Join("; ", r[2 * i].Messages));
                 CollectionAssert.AreEqual(TestUtil.Seq(r[2 * i]), TestUtil.Seq(r[2 * i + 1]), "seed " + (i + 1));
                 finals.Add(r[2 * i].FinalHash);
-                Assert.AreEqual(10, r[2 * i].Sim.StateHashParts().Length, "population, cognition and learning are hashed");
+                // M5 (SHARED_CONTRACTS 9.3): "household" and "social" are appended while their states exist
+                var st0 = r[2 * i].Sim.State;
+                Assert.AreEqual(10 + (st0.Households != null ? 1 : 0) + (st0.Social != null ? 1 : 0), r[2 * i].Sim.StateHashParts().Length, "population, cognition and learning are hashed");
             }
             Assert.AreEqual(4, finals.Count);
         }

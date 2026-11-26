@@ -53,7 +53,8 @@ namespace God.Sim.Tests
             Assert.AreEqual(120, p.Npcs.Count);
             Assert.AreEqual(120, p.Stats.Founders);
             Assert.Greater(p.Sources.Count, 30);
-            Assert.AreEqual(GodSim.HashPartNames.Count + 3, sim.StateHashParts().Length);
+            // M5 (SHARED_CONTRACTS 9.3): "household" and "social" are appended while their states exist
+            Assert.AreEqual(GodSim.HashPartNames.Count + 3 + (sim.State.Households != null ? 1 : 0) + (sim.State.Social != null ? 1 : 0), sim.StateHashParts().Length);
             foreach (var f in sim.State.Setup.Factions) Assert.AreEqual(20, p.AliveOf(f));
             Assert.IsEmpty(SimInvariants.Check(sim.State));
         }
