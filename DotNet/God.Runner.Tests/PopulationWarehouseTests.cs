@@ -41,7 +41,8 @@ namespace God.Runner.Tests
         private static long Q(string db, string sql) { using (var d = WarehouseDb.OpenRead(db)) return Convert.ToInt64(d.Scalar(sql) ?? 0L); }
 
         private const long Ticks = 3 * 1200 + 5;   // three full sim days and a little
-        private const string AllTicks = "ticks_idle + ticks_eat + ticks_forage + ticks_sleep + ticks_rest + ticks_explore + ticks_gather + ticks_build + ticks_flee + ticks_carry + ticks_other";
+        // M4: care ticks are counted from M4 (F0's two NpcDay v2 columns, Activity.Care and Activity.Social, are part of the day)
+        private const string AllTicks = "ticks_idle + ticks_eat + ticks_forage + ticks_sleep + ticks_rest + ticks_explore + ticks_gather + ticks_build + ticks_flee + ticks_carry + ticks_other + ticks_care + ticks_social";
 
         [Test]
         public void Full_Reconciles_PersonsDeathsPersonDaysProductionAndLearning_WithTheEventStream()
@@ -52,12 +53,13 @@ namespace God.Runner.Tests
             Assert.AreEqual(120, spawned.Count);
             Assert.Greater(days.Count, 200, "person-days were produced");
 
-            // persons
-            Assert.AreEqual(spawned.Count, Q(db, "SELECT COUNT(*) FROM dim_person"));
+            // persons (M4: every person has one origin event, a founder's NpcSpawned or a birth's NpcBorn)
+            var born = ev.OfType<God.Sim.Population.Households.NpcBorn>().ToList();
+            Assert.AreEqual(spawned.Count + born.Count, Q(db, "SELECT COUNT(*) FROM dim_person WHERE npc_id > 0")); // npc 0: the sim's own goods removals (M3 mapper; contract note)
             Assert.AreEqual(spawned.Count, Q(db, "SELECT COUNT(*) FROM dim_person WHERE is_founder = 1 AND spawn_tick IS NOT NULL"));
-            Assert.AreEqual(spawned.Select(s => s.Npc).Distinct().Count(), Q(db, "SELECT COUNT(DISTINCT npc_id) FROM dim_person"));
+            Assert.AreEqual(spawned.Select(s => s.Npc).Concat(born.Select(b => b.Npc)).Distinct().Count(), Q(db, "SELECT COUNT(DISTINCT npc_id) FROM dim_person WHERE npc_id > 0"));
             foreach (var f in Enumerable.Range(0, 6))
-                Assert.AreEqual(spawned.Count(s => (int)s.Faction == f), Q(db, "SELECT COUNT(*) FROM dim_person p JOIN dim_faction x ON x.faction_key = p.faction_key WHERE x.faction_id = " + f), "faction " + f);
+                Assert.AreEqual(spawned.Count(s => (int)s.Faction == f) + born.Count(b => (int)b.Faction == f), Q(db, "SELECT COUNT(*) FROM dim_person p JOIN dim_faction x ON x.faction_key = p.faction_key WHERE x.faction_id = " + f), "faction " + f);
 
             // deaths, by cause, and the person dimension agrees
             Assert.AreEqual(died.Count, Q(db, "SELECT COUNT(*) FROM fact_death"));
@@ -139,7 +141,9 @@ namespace God.Runner.Tests
                 Q(db, "SELECT COUNT(*) FROM dim_party WHERE party_kind_code = 1 AND person_key IS NOT NULL"));
             Assert.AreEqual(prod.Sum(p => (long)p.Lot), Q(db, "SELECT COALESCE(SUM(lot_id), 0) FROM fact_production WHERE direction = 1 AND person_key IS NOT NULL"));
             Assert.AreEqual(cons.Sum(p => (long)p.Lot), Q(db, "SELECT COALESCE(SUM(lot_id), 0) FROM fact_production WHERE direction = -1"));
-            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_social_day"), "nothing fills the social day before M4 and M5");
+            // M4: care acts fill the social day aggregate (ChildFed 134, CareGiven 136), exactly, before any sampling
+            Assert.AreEqual(ev.OfType<God.Sim.Population.Households.ChildFed>().Count() + ev.OfType<God.Sim.Population.Households.CareGiven>().Count(),
+                Q(db, "SELECT COALESCE(SUM(events), 0) FROM fact_social_day"), "the social day holds exactly the care acts (M5 adds its own kinds)");
 
             // none of these events also lands in fact_event; counts by code agree with fact_event_day
             Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_event WHERE event_code IN (100, 101, 104, 200, 201, 206, 330, 331, 332, 333, 334)"));
@@ -148,7 +152,7 @@ namespace God.Runner.Tests
             using (var d = WarehouseDb.OpenRead(db))
             {
                 Assert.AreEqual(0, WarehouseRecorder.ForeignKeyViolations(d));
-                Assert.AreEqual(9, d.Count("meta_table_grain"));
+                Assert.AreEqual(9 + HouseholdMappings.Grains.Length, d.Count("meta_table_grain")); // M4: its seven tables add their grains
                 foreach (var t in new[] { "dim_person", "fact_death", "fact_person_day", "fact_production", "fact_learning", "fact_decision", "dim_party", "fact_ownership", "fact_social_day" })
                     Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM meta_table_grain WHERE table_name = '" + t + "'"), t);
                 Assert.AreEqual("fact_person_day", (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = 104"));
@@ -163,7 +167,7 @@ namespace God.Runner.Tests
         {
             var (_, db, cap) = Run("summary", 3, Ticks, RecordingLevel.Summary);
             var ev = cap.Events;
-            Assert.AreEqual(ev.OfType<NpcSpawned>().Count(), Q(db, "SELECT COUNT(*) FROM dim_person"));
+            Assert.AreEqual(ev.OfType<NpcSpawned>().Count() + ev.OfType<God.Sim.Population.Households.NpcBorn>().Count(), Q(db, "SELECT COUNT(*) FROM dim_person WHERE npc_id > 0")); // M4: founders and births (npc 0: the sim's own removals)
             Assert.AreEqual(ev.OfType<NpcDied>().Count(), Q(db, "SELECT COUNT(*) FROM fact_death"));
             Assert.AreEqual(ev.OfType<NpcDay>().Count(), Q(db, "SELECT COUNT(*) FROM fact_person_day"));
             Assert.AreEqual(ev.OfType<ConjunctionRecruited>().Count(), Q(db, "SELECT COUNT(*) FROM fact_learning WHERE kind_code = 2"));
@@ -191,7 +195,9 @@ namespace God.Runner.Tests
             foreach (var g in died.GroupBy(d => (int)d.Cause)) Assert.AreEqual(g.Count(), Q(db, "SELECT COUNT(*) FROM fact_death WHERE cause_code = " + g.Key), "cause " + g.Key);
             Assert.AreEqual(cap.Events.OfType<NpcDay>().Count(), Q(db, "SELECT COUNT(*) FROM fact_person_day"));
             Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_person_day f JOIN dim_person p ON p.person_key = f.person_key WHERE p.death_date_key IS NOT NULL AND f.date_key > p.death_date_key"));
-            Assert.AreEqual(cap.Events.OfType<NpcSpawned>().Count() - died.Count, Q(db, "SELECT COUNT(*) FROM dim_person WHERE death_tick IS NULL"));
+            // M4: the living are the founders and the born (and arrivals) less the dead
+            Assert.AreEqual(cap.Events.OfType<NpcSpawned>().Count() + cap.Events.OfType<God.Sim.Population.Households.NpcBorn>().Count()
+                + cap.Events.OfType<God.Sim.Population.Households.NpcImmigrated>().Count() - died.Count, Q(db, "SELECT COUNT(*) FROM dim_person WHERE death_tick IS NULL AND npc_id > 0"));
         }
 
         [Test]
