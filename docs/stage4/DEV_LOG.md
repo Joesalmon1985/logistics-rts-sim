@@ -278,3 +278,195 @@ The EditMode test `Inspector_ShowsOptionsWithScoreTerms_RecentExperiences_AndThe
 | Twin divergence (set by the M3 agent) | The first single decision differs in ≥ 45/50 pairs | 25/50: one draw is decided by exploration noise, since A's learned gap is about 70 against a noise range of 150 | Distribution over 200 identical draws: choices differ in every pair whose lives differed (49/49); B − A ≥ 20 points in ≥ 80% of them (41/49); the learned term carries the difference in every such pair |
 
 The design-doc criteria not met (LS1 per seed, L2, L3 filler, L5 entries, L8 pairs, L13 80%, LS3, LS4) are listed in the M3 report with their evidence. They sit in the `[Explicit]` category `M3-open`, unweakened.
+
+**M3b update (below):** LS4's useless-axe control is now met. The other criteria stay open, each with a proposed amendment.
+
+### M3b (branch `unity/m3b`, 26 Nov 2026): credit for goods, LS3/LS4, open criteria, performance, decision trace
+Run by the M3b agent on top of `d3aa9fb` (unity/poc with M3). Commits: `408cd19` founders and People card, `72d0365` `DecisionMade`, `3e88503` credit for goods, `2640cb2` performance, then this docs commit. Bench machine as above (Ryzen 7 5800X).
+
+#### 1. Learning lowered island survival: the credit mechanism
+**Diagnosis, checked before the fix.**
+- Spoilage was never credited to foraging: it was a plain reward at the next day start, so it reached whatever the NPC did then.
+- After the fix below, 409 of 410 spoiled carried lots (seed 4) reached the decisions that gained them, about 5 decisions per lot.
+- The people who starve are not choosing badly. In their last 300 thinks, 99.8% of the hungry thinks of the starved (seeds 4 and 6) had no food in sight; not one offered something to eat. They walk out to explore and die where the commons ran out (days 17–29).
+- So the survival gap is local over-harvest: learners took more food from the wild and wasted more of it.
+
+**The fix: goods are worth what they realise** (`SimTuning.Learning.Goods`, default `Realised`; NPC_LEARNING 4.4 and 4.7).
+- A decision that puts food into the carry (`ForageAt`, `PickUp`) or takes up a tool (`Equip`) waits for that lot: an episode keyed by the carried lot, as `Build` is keyed by its hut.
+- Nothing is paid when food or a tool is taken.
+- Each meal from the lot pays its hunger relief back to the decisions that gained it.
+- Spoilage closes them with the loss.
+- Each log gathered with an axe pays the axe's share of the work to the decision that took it up.
+- `LotEpisodes` (fixed worth at once, spoilage booked back) and `Immediate` (the M3 rule) remain as ablation arms.
+
+**Two defects found and fixed on the way:**
+- Under TD, an outcome that reached a trace still live went into a return that TD never reads. A builder who finished its own hut never learned the bed.
+- A full episode list closed its oldest episode first, so forage lots could push out the `Build` episode. It now closes the oldest of the incoming verb first.
+
+No reward value was changed.
+
+**Bootstrapping (`GammaPermille`) was tried and rejected.** It is now applied per elapsed think (semi-Markov). At 950 it made LS3 (0.5%) and LS4 (0% axe) worse, so it stays 0.
+
+**Island control, 6 factions × 20 founders, 30 days, seeds 1–6, 720 founders per arm** (`Island_LearningOn_VsFrozen_VsOff_Control`). Founders now start in sight of food (section 6), so Frozen and Off are 675, not 679. Alive per seed is the mean with a t-interval (n = 6).
+
+| Arm | Alive | Per seed (mean ± 95% CI) | Starved | Meals per person-day | Mean hunger | Mean tiredness | Nutrition | Hungry person-days | With a bed | Huts | Learning changed the choice | Exploration won |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **On (realised value)** | **666/720** | 111.0 ± 6.9 | 54 | 3.19 | 238 | 258 | 938 | 9.3% | 452 | 238 | 17.8% | 24.9% |
+| On, lot episodes only | 656/720 | 109.3 ± 9.6 | 64 | 3.12 | 259 | 263 | 917 | 11.9% | 451 | 234 | 19.9% | 24.4% |
+| On, M3 goods credit | 644/720 | 107.3 ± 9.4 | 76 | 3.12 | 259 | 263 | 920 | 11.7% | 442 | 239 | 20.4% | 24.2% |
+| Trained 10 days, then Frozen | 663/720 | 110.5 ± 6.8 | 57 | 3.19 | 249 | 265 | 921 | 11.2% | 451 | 244 | 15.2% | 28.6% |
+| Frozen from birth | 675/720 | 112.5 ± 9.8 | 45 | 3.19 | 264 | 285 | 922 | 12.0% | 361 | 188 | 0.0% | 28.0% |
+| Off | 675/720 | 112.5 ± 9.8 | 45 | 3.19 | 264 | 285 | 922 | 12.0% | 361 | 188 | 0.0% | 28.0% |
+
+Commons at day 30:
+
+| Arm | Food taken from the wild | Spoiled | Meals | Food sources empty |
+|---|---|---|---|---|
+| On (realised) | 74,306 | 7,910 | 67,912 | 303/744 |
+| Lot episodes only | 74,982 | 10,234 | 66,280 | 341/744 |
+| M3 credit | 75,041 | 10,584 | 65,984 | 353/744 |
+| Trained, then Frozen | 74,128 | 7,882 | 67,846 | 316/744 |
+| Frozen / Off | 71,791 | 5,593 | 67,938 | 335/744 |
+
+Time allocation (% of person-day ticks; walking is repeated in the last column):
+
+| Arm | Idle | Eat | Forage | Sleep | Rest | Explore | Gather | Build | Flee | Walking |
+|---|---|---|---|---|---|---|---|---|---|---|
+| On (realised) | 13.9 | 7.8 | 7.5 | 29.4 | 33.3 | 5.7 | 0.7 | 0.3 | 1.2 | 12.6 |
+| On, M3 credit | 14.0 | 7.4 | 8.6 | 29.5 | 31.4 | 6.7 | 0.6 | 0.3 | 1.4 | 14.6 |
+| Frozen / Off | 16.4 | 8.0 | 6.7 | 28.7 | 32.9 | 5.0 | 0.5 | 0.4 | 1.5 | 11.5 |
+
+**What the fix changes.**
+- The gap to Frozen narrows from 31 to 9 deaths. The M3 credit gives 644 alive on this tree, the fix 666, against 675.
+- With the fix, learners eat as many meals as Frozen. They are less hungry (9.3% hungry person-days against 12.0%) and better fed (nutrition 938 against 922).
+- They build a quarter more huts and bed 91 more people.
+
+**What it does not change: On still loses 9 people, and spoils 41% more food than Frozen.**
+- The difference lies inside the seed spread: the intervals overlap, and 2 of 6 seeds favour On.
+- Its cause is the same over-harvest. Learners take 3.5% more food from the wild. Even realised value pays foraging whenever the food is later eaten, and the commons are shared: nothing in an individual's reward sees the regrowth it costs its neighbours.
+- A diagnostic ablation (M3 credit with food worth 0, not adopted) gave 667 alive. So the remaining gap is not the fixed food worth.
+- This is recorded as found, not tuned away. Collective depletion of a commons by individually rewarded harvesting is a genuine outcome of this model, and M7–M12 (norms, property, institutions) are where it can be addressed.
+
+**The control design (L7, M3.27).**
+- `Frozen` from birth equals `Off` exactly, because an empty store gives a learned term of 0 and the same novelty everywhere. That is the intended "nothing learned" baseline of the LS scenarios (4.17: "`Frozen`-from-birth").
+- NPC_LEARNING 4.16 defines `Frozen` as "as loaded", so the trained-then-frozen arm was added: 663 alive. Most of the learning effect is in the habits learned by day 10, not in learning after day 10. The doc now says this (4.16).
+
+#### 2. LS3 and LS4
+
+**LS3, tired near shelter (M3.21).** Learner 0.5% hut sleeps on days 4–5, against Frozen 1.3%. Better by ≥ 20 points in 1 of 50 seeds (needs 45). The control (no hut within 10 nodes, no wasted walk) is met: 50 of 50.
+- **Diagnosis: a scenario and ecology defect against the design's own reward rule, not a learning defect.** The drive rule (4.4) pays the amount of relief, not its rate, so a faster sleep in a hut earns the same as a slow one in the open.
+- At the default `ColdNightPerDay` 1600, a sleeper in the open ends near the cold comfort level (cold 200–310 on waking), so the hut's warmth pays almost nothing. Meanwhile the walk to it is a cost.
+- The trace shows the learner tries the hut (4 of its first 6 sleeps in seed 1) and learns nearly equal values for both sleeps: 134–186 vp in the open, 142–176 in the hut. It is right not to prefer the hut.
+- **Genuine attempts:** semi-Markov bootstrapping (above) made it worse. A cold-night arm (`ColdNightPerDay` 4000, now printed by `LS3_TiredNearShelter`) gives learner 31.3% against Frozen 1.3%, but better by ≥ 20 points in only 20 of 50 seeds, because each seed has about 4 sleeps in the window.
+- **Proposed amendment, not applied:** run LS3 where shelter matters to the reward (nights cold enough that sleeping out costs: `ColdNightPerDay` ≥ 4000). Judge it on the mean (learner ≥ 20 points above Frozen; measured +30.0) and on ≥ 90% of seeds over a longer window (days 4–10) so each seed has enough sleeps. Alternatively, the owner decides that rest has a time value; that is a change to the reward rule of 4.4, not a tuning.
+
+**LS4, gathering wood with an axe (M3.22).**
+
+| Measure | M3 | M3b |
+|---|---|---|
+| Axe taken on gathering trips, learner | 19.2% | **38.4%** |
+| Frozen | 14.0% | 14.0% |
+| Seeds ≥ 20 points better (needs 45 of 50) | 16 | 27 |
+| Seeds better at all | – | 34 |
+| Useless-axe control: gain over Frozen (needs ±10 points) | +12.3 | **+9.6, met** |
+| Conjunction with the log source by day 8 (needs 40 of 50) | 22 | 16 |
+
+- **Diagnosis: a learning defect, fixed.** With a fixed tool worth paid on pick-up, the learner took a useless axe as often as a useful one (18.9% against 19.2%). Without bootstrapping, the decision to take up the axe never saw what the axe did.
+- With realised value, the tool's share of each log reaches the `Equip` decision. A useless axe earns nothing, and the useful one is taken twice as often as Frozen takes it. The control is now asserted in `LS4_GatheringWithAnAxe`.
+- **Per-seed criterion still open.** Each seed has about 15 trips in the window, so a per-seed difference carries about 16 points of sampling noise.
+- **Conjunction criterion still open, and inconsistent with the design.** The scenario names `ObjClass(LogPile) & Self(carrying tool)`, a pair without a drive, which recruitment (4.11, M3) cannot form. The test accepts any drive pair with the wood class.
+- **Proposed amendments, not applied:**
+  - per seed: judge over days 6–12 (about 30 trips per seed), keeping ≥ 20 points in ≥ 90% of seeds;
+  - conjunction: either allow non-drive pairs in recruitment (a design change to 4.11), or name a drive pair (`DriveBand(Fatigue) & ObjClass(WoodStand)`).
+
+#### 3. The other open design numbers
+Each stays `[Explicit]` in category `M3-open` with its number unweakened; the reasons are updated in the test attributes. Values are on M3b's tree.
+
+| Criterion | Published | M3b measured | Finding | Proposed amendment (not applied) |
+|---|---|---|---|---|
+| LS1/L1 per seed (M3.1) | ≥ 95% of hungry probes in ≥ 95 of 100 seeds | 90.4% of 1,074 probes overall; 37 seeds ≥ 95%, 70 ≥ 90%, 90 ≥ 80%, 99 ≥ 70% (M3 credit: 92.5%, 41 seeds) | About 11 probes per seed: one slow probe drops a seed to 91%. Not a defect | ≥ 90% of probes overall, and ≥ 80% in ≥ 90% of seeds (measured 90.4% and 90), or keep 95% per seed with ≥ 30 probes per seed |
+| LS1 Frozen (M3.20) | ≤ 40% | 64.7% | A frozen naive NPC picks at random among about 4 options, so it eats within 5 thinks by chance. The bound measures the option count, not learning | Learner minus Frozen ≥ 20 points (measured 25.7), plus mean thinks to eat at most half of Frozen's (2.47 against 4.88) |
+| L2 (M3.2) | ≤ 15% | 17.7% (Frozen 30.6%; M3 credit 18.8%) | Eating when full costs only a small frustration, so exploration noise still picks it. The learner halves Frozen's rate | ≤ 20% and at most two thirds of Frozen's rate |
+| L3 filler (M3.3) | filler mean Q within ± 100 vp | +222 vp | A verb between an action and its delayed reward shares the reward under eligibility traces; that is 4.5's own example (432/1024 of the credit 3 thinks later). A stored-value criterion | Behavioural: the filler is chosen no more often than in the traces-off arm |
+| L5 (M3.5) | `PlaceRef(A)` `Ltw ≤ 0` or evicted by day 40 | 37 of 40 seeds (the amended floor test: 40 of 40); trips to A 0.6% on days 8–10 | Unchanged from M3 | As M3 |
+| L8 (M3.7) | ≥ 30 points in ≥ 95% of 50 pairs | means 45.8% against 1.7%; 30 pairs ≥ 30 points, 32 ≥ 20, 41 > 0 | Each pair is judged on 6 meal choices: 30 points is two choices | Judge each pair on ≥ 20 choices, or on the pooled difference with a per-pair sign test |
+| L13 (M3.11) | first `Eat` on fish within 3 thinks in ≥ 80% | 71% (M3 credit: 77%); control 1%; conjunction 100% | Realised value makes "forage the fish, then eat it" compete with "eat it at the spot". The count takes only `Eat` at the fish spot | Count the first fish meal, from the spot or from the carry, within 6 thinks |
+| M3.19 share | learning ≤ 25% of NPC update time | 37.5% at 500 NPCs, 33.9% at 1000 | See section 4 | Keep the absolute budget (≤ 20 µs per think; met at 3.1 µs) and drop the share, which mostly measures how cheap the rest of the NPC update is |
+
+#### 4. Performance (M3.19, M3.24)
+**Exact optimisations.** The state hashes after 6 island days are the same before and after on seeds 1–3.
+- The update rule computes each key's salience once, and its familiarity check comes from its own loop.
+- Sorted key lists are searched from the previous key's place on.
+- The score terms count familiar target keys in the same pass as Q.
+- The trace's prediction is Q alone.
+- No heap allocation was added (stackalloc only).
+
+**New measurement** (`bench`, `populationPhases`). The population update is timed by phase with a host profiler, On and Off. Learning counts as:
+- the learning-only phases (credit and close, the update, consolidation);
+- plus the extra cognition and decision time that On spends over Off.
+
+Results, 6000 ticks, recording off:
+
+| Case | Ticks/s | NPC decisions/s | NPC update per think | Learning per think | Share | Whole sim, On minus Off | Consolidation | Memory per NPC | Store bytes per NPC | Allocated per tick | Save | Load | Path searches per tick |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `bench_npc_500` (504) | 3,185 | 108,128 | 8.11 µs | 3.05 µs | **37.5%** | 3.20 µs (34.6%) | 1.5 ms per sim day | 16,425 B | 9,920 | 24.6 KB | 4.67 MB in 224 ms | 298 ms | 3.9 |
+| `bench_npc_1000` (1002, new) | 1,511 | 104,557 | 9.10 µs | 3.09 µs | **33.9%** | 3.04 µs (31.8%) | 3.0 ms per sim day | 14,828 B | 9,920 | 24.6 KB | 9.66 MB in 348 ms | 485 ms | 13.9 |
+
+**Before the optimisations** (same 6000-tick measure): 500 NPCs, 3.69 µs and 37.9%; 1000 NPCs, 3.77 µs and 36.7%. Both by the old whole-sim On-minus-Off measure; the M3 record's 42% was measured on the M3 tree.
+
+**Phase split at 500 NPCs**, µs per think, On against Off:
+
+| Phase | On | Off |
+|---|---|---|
+| Learning update | 1.73 | 0.18 |
+| Decide | 1.37 | 0.48 |
+| Cognition | 2.14 | 1.80 |
+| Senses | 1.46 | 1.31 |
+| Credit and close | 0.18 | 0.17 |
+
+**Status:**
+- ≤ 20 µs per think: met.
+- ≤ 5 ms consolidation per sim day: met.
+- No allocation in the score or the update: met.
+- ≤ 25% share: **not met**.
+
+**What the share is made of.** Most of the learning cost is TD(λ) itself: each think updates every live trace, up to 12 at the design's `TraceShift`, over about 20 keys. Skipping updates too small to change a weight saved 0.3 µs (34.5%), but it changes `Use` and the "touched" flags, and so the results. It was not kept.
+
+#### 5. `DecisionMade`
+- Code 334, domain Learning, table `fact_decision`, high volume. One event per chosen intent, carrying:
+  - the verb, target and total score;
+  - the terms: instinct, need, learned, social, culture, personality, cost and explore;
+  - the candidate count and whether learning or exploration changed the winner;
+  - whether the intent was continued, and the runner-up.
+- It is built only when `EventBuffer.TraceDecisions` is set: a host setting, neither saved nor hashed. The runner sets it when the learning domain records at Full.
+- The EditMode test checks that the terms sum to the total, that nothing is emitted otherwise, and that the state hash is the same traced and untraced.
+- The warehouse mapping is left to `unity/m3-wh`.
+
+#### 6. Small fixes
+- **The familiar food's learned value drifting negative: not a defect.** Over island days 5–20 (seed 1), the `Class(food) → Eat` entries average −10 to −19 vp. They learn mostly from the about 195,000 sated eating options, where eating earns nothing, and from the variety rule (the n-th meal of the same food relieves less).
+  - When hungry, eating is still chosen at the spot in 46–61% of options. The learned term for Eat when hungry is positive for berries (+57) and fish (+24) and negative for roots (−193): roots are the founders' familiar food, and the variety rule makes another meal of them worth less.
+  - That is the variety preference the economy intends, not a learning error.
+- **Founders without food in sight: fixed.** A founder now takes the first candidate node (same draws) with a wild food source within day sight. Result: 720 of 720 founders on seeds 1–6. The M3 record found about 1 in 6 without.
+- **The People card's horizontal scrollbar: fixed.** The drive bars took a fixed 380 px, wider than the scroll view. They now use the available width, and the scroll view has no horizontal bar. Not yet seen in a screenshot.
+
+#### Criteria status after M3b
+- **Met:**
+  - LS4 useless-axe control (+9.6, now asserted);
+  - LS3 contextual control (50/50);
+  - L4, L6, L7, L9–L12;
+  - the owner's extra acceptance (twins, contextual, reversal, exploration, generalisation, delayed reward, save/load);
+  - M3.19's absolute budgets;
+  - M3.29's person-day grain.
+- **Open, with the amendments proposed above:** LS1 per seed and LS1 Frozen, L2, L3 filler, L8 pairs, L13 80%, LS3 20 points, LS4 20 points and its conjunction, M3.19 share.
+- **Amended in M3b: none.**
+- **M3.27: done.** Recorded with intervals, five learning arms and Off. The mechanism check (decision streams differ) is unchanged.
+
+#### Test runs
+- `dotnet test DotNet -c Release` (at `2640cb2`): God.Sim.Tests 402/402; God.Runner.Tests 136/138. The two failures are the warehouse tests named as belonging to `unity/m3-wh` (`Dimensions_AreFilled_AndFactionHistoryIsHalfOpen`, `EveryEventType_MapsToATable`).
+- Baseline at `d3aa9fb`: 396/396 and 136/138, the same two.
+- Unity EditMode (at `2640cb2`): 406/406.
+- Unity PlayMode (at `2640cb2`): 78/78.
+- Windows build: OK (87 MB, 0 errors).
+- Player smoke, stage 3, seed 2: Crimson wins at tick 20161 with `4bd54b271857a803`, as before; invariants ok, 0 exceptions.
+- Player population smoke (`-godpopulation`, seed 2, 60,000 ticks): OK, end hash `b57dcdd8b1837358`, invariants ok, 0 exceptions. A 12,000-tick population smoke ends "FAIL" only because the verdict wants a capture or a game over, which a 10-day sandbox does not reach.
+- The editor was closed afterwards.

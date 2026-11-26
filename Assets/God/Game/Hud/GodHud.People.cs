@@ -83,7 +83,8 @@ namespace God.Game
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("x", st.Btn, GUILayout.Width(28f))) { ClearNpc(); GUILayout.EndHorizontal(); return; }
             GUILayout.EndHorizontal();
-            _personScroll = GUILayout.BeginScrollView(_personScroll, GUILayout.Height(height - 60f));
+            // vertical scrolling only: the content is laid out to the card's width (wrapped labels, flexible drive bars)
+            _personScroll = GUILayout.BeginScrollView(_personScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(height - 60f));
             GUILayout.Label((c.Founder ? "Founder, age " : "Age ") + c.HudAge, st.Small);
             GUILayout.Label("Doing: " + (c.Doing.Length > 0 ? c.Doing : "nothing"), st.Label);
             GUILayout.Label("Health " + c.Health / 10 + "%   nutrition " + c.Nutrition / 10 + "%" + (c.Injury > 0 ? "   injury " + c.Injury / 10 + "%" : "")
@@ -131,9 +132,10 @@ namespace God.Game
 
         private static void DriveBar(HudStyle st, string name, int permille)
         {
-            var r = GUILayoutUtility.GetRect(380f, 16f);
+            // as wide as the card allows (a fixed 380 px rect was wider than the scroll view and showed a horizontal scrollbar)
+            var r = GUILayoutUtility.GetRect(GUIContent.none, st.Small, GUILayout.Height(16f), GUILayout.ExpandWidth(true));
             GUI.Label(new Rect(r.x, r.y - 1f, 90f, 18f), name, st.Small);
-            var bar = new Rect(r.x + 92f, r.y + 3f, 240f, 10f);
+            var bar = new Rect(r.x + 92f, r.y + 3f, Mathf.Max(60f, r.width - 92f - 56f), 10f);
             GUI.DrawTexture(bar, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, new Color(0f, 0f, 0f, 0.15f), 0, 0);
             var fill = new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(permille / 1000f), bar.height);
             var col = permille < 300 ? HudStyle.Good : permille < 550 ? HudStyle.Gold : HudStyle.Bad;

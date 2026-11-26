@@ -35,6 +35,9 @@ namespace God.Sim.Learning
     /// </summary>
     public static class Learner
     {
+        /// <summary>The episode key of an item lot (M3b lot episodes); hut ids are used as they are, so lots take bit 30.</summary>
+        public static int LotEpisodeKey(int lotId) => (1 << 30) | lotId;
+
         // ---------------- reward ----------------
 
         /// <summary>Adds signed value points to the reward collected since the last think (4.4).</summary>
@@ -93,7 +96,7 @@ namespace God.Sim.Learning
         /// that happens to follow it (M3 finding, DEV_LOG). <paramref name="qNew"/> is the raw learned value (sum of fast
         /// weights) of the decision just made, 0 when there is none. No-op under Monte Carlo credit.
         /// </summary>
-        public static void Step(AssociationStore st, LearningTuning tu, in LearnTraits tr, int qNew, int today, ILearningSink sink)
+        public static void Step(AssociationStore st, LearningTuning tu, in LearnTraits tr, int qNew, int today, ILearningSink sink, int elapsedThinks = 1)
         {
             if (tu.Credit != CreditRule.TdLambda) return;
             int r = st.RewardAcc;
@@ -101,7 +104,7 @@ namespace God.Sim.Learning
             if (st.RingCount == 0) return;
             int last = st.RingCount - 1;
             int qPrev = st.SumStw(st.TraceKeys, last * AssociationStore.MaxKeys, st.Ring[last].KeyCount, st.Ring[last].Verb, out _);
-            int delta = Fx.Clamp(r + Fx.MulDiv(qNew, tu.GammaPermille, 1000) - qPrev, -4000, 4000);
+            int delta = Fx.Clamp(r + Discount(qNew, tu.GammaPermille, elapsedThinks) - qPrev, -4000, 4000);
             // online (backward-view) TD: every live trace learns now, in proportion to its eligibility, so repeated
             // decisions never stack stale corrections
             for (int i = 0; i < st.RingCount; i++)
@@ -112,6 +115,19 @@ namespace God.Sim.Learning
                 if (d != 0 || newest)
                     Update(st, tu, tr, st.TraceKeys, i * AssociationStore.MaxKeys, st.Ring[i].KeyCount, st.Ring[i].Verb, d, today, newest ? sink : null, newest);
             }
+        }
+
+        /// <summary>
+        /// <c>q gamma^k</c> (semi-Markov discount: the next decision's value is discounted by the thinks that passed since the
+        /// previous decision, so a long sleep or walk is worth less than a short one with the same outcome). k is capped at 64.
+        /// </summary>
+        public static int Discount(int q, int gammaPermille, int k)
+        {
+            if (q == 0 || gammaPermille == 0) return 0;
+            if (k < 1) k = 1;
+            if (k > 64) k = 64;
+            for (int i = 0; i < k && q != 0; i++) q = Fx.MulDiv(q, gammaPermille, 1000);
+            return q;
         }
 
         /// <summary>Spreads the pending reward over the live traces as it is (Monte Carlo credit; before consolidation under either rule).</summary>
@@ -170,8 +186,15 @@ namespace God.Sim.Learning
             int keyOff = i * AssociationStore.MaxKeys;
             if (tu.EpisodesOn && t.EpisodeKey != 0 && VerbTable.IsDeferred(t.Verb) && st.Open.Length > 0)
             {
-                // A long-delayed outcome may still come: keep the trace open as an episode (4.7).
-                if (st.OpenCount >= st.Open.Length) CloseEpisode(st, tu, tr, 0, 0, today, sink);
+                // A long-delayed outcome may still come: keep the trace open as an episode (4.7). When the list is full the
+                // oldest episode of the same verb closes first (else the oldest), so many small forage lots never push out
+                // the one Build episode waiting for its hut (M3b).
+                if (st.OpenCount >= st.Open.Length)
+                {
+                    int old = 0;
+                    for (int j = 0; j < st.OpenCount; j++) if (st.Open[j].T.Verb == t.Verb) { old = j; break; }
+                    CloseEpisode(st, tu, tr, old, 0, today, sink);
+                }
                 int at = st.OpenCount++;
                 t.Flags |= Trace.EpisodeBit;
                 t.Flags &= unchecked((ushort)~Trace.OngoingBit);
@@ -190,20 +213,92 @@ namespace God.Sim.Learning
         /// every live trace with this key receives the reward, an episode discounted by half per two days elapsed; the
         /// episodes then close through the normal update.
         /// </summary>
-        public static void Outcome(AssociationStore st, LearningTuning tu, in LearnTraits tr, int episodeKey, int reward, int today, ILearningSink sink)
+        public static int Outcome(AssociationStore st, LearningTuning tu, in LearnTraits tr, int episodeKey, int reward, int today, ILearningSink sink) =>
+            Outcome(st, tu, tr, episodeKey, reward, today, sink, false);
+
+        /// <summary>
+        /// The outcome of <paramref name="episodeKey"/> reaches the decisions waiting for it. A live trace learns it at once (under
+        /// TD the late outcome is news: it is applied as its own error, M3b fix; before, a live trace's share was added to a
+        /// return TD never reads, so the builder who finished a hut never learned the bed). An open episode closes with it,
+        /// discounted by half per two days elapsed (4.7). <paramref name="shared"/>: the reward is one amount owed by all the
+        /// matching decisions together (a lot's spoilage), so it is split evenly between them and not discounted (it corrects
+        /// a goods reward already paid, ECONOMY A3; M3b lot episodes). Returns how many decisions it reached; 0 means nobody
+        /// waited for it (the caller may then book it as an ordinary reward).
+        /// </summary>
+        public static int Outcome(AssociationStore st, LearningTuning tu, in LearnTraits tr, int episodeKey, int reward, int today, ILearningSink sink, bool shared)
         {
-            if (episodeKey == 0) return;
+            if (episodeKey == 0) return 0;
+            int n = 0;
+            for (int i = 0; i < st.RingCount; i++) if (st.Ring[i].EpisodeKey == episodeKey) n++;
+            for (int i = 0; i < st.OpenCount; i++) if (st.Open[i].T.EpisodeKey == episodeKey) n++;
+            if (n == 0) return 0;
+            int each = shared ? reward / n : reward;
             for (int i = 0; i < st.RingCount; i++)
-                if (st.Ring[i].EpisodeKey == episodeKey) { st.Ring[i].Return += reward; st.Ring[i].EpisodeKey = 0; }
+            {
+                if (st.Ring[i].EpisodeKey != episodeKey) continue;
+                st.Ring[i].EpisodeKey = 0;
+                st.Ring[i].Return += each;
+                if (tu.Credit == CreditRule.TdLambda && each != 0)
+                    Update(st, tu, tr, st.TraceKeys, i * AssociationStore.MaxKeys, st.Ring[i].KeyCount, st.Ring[i].Verb, each, today, sink, true);
+            }
             for (int i = 0; i < st.OpenCount;)
             {
                 if (st.Open[i].T.EpisodeKey == episodeKey)
                 {
                     int days = today - st.Open[i].OpenedDay;
                     if (days < 0) days = 0;
-                    CloseEpisode(st, tu, tr, i, Fx.Shr(reward, days / 2), today, sink);
+                    CloseEpisode(st, tu, tr, i, shared ? each : Fx.Shr(each, days / 2), today, sink);
                 }
                 else i++;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// Part of a long-delayed outcome arrives, and more may follow (each meal from a food lot, each log gathered with a
+        /// tool; M3b realised goods value): every live trace and open episode waiting for <paramref name="episodeKey"/> learns
+        /// it at once as news (under TD), without closing; an open episode's share is discounted by half per two days elapsed
+        /// (4.7). <paramref name="reward"/> is split evenly between them. Returns how many it reached.
+        /// </summary>
+        public static int Accrue(AssociationStore st, LearningTuning tu, in LearnTraits tr, int episodeKey, int reward, int today, ILearningSink sink)
+        {
+            if (episodeKey == 0 || reward == 0) return 0;
+            int n = 0;
+            for (int i = 0; i < st.RingCount; i++) if (st.Ring[i].EpisodeKey == episodeKey) n++;
+            for (int i = 0; i < st.OpenCount; i++) if (st.Open[i].T.EpisodeKey == episodeKey) n++;
+            if (n == 0) return 0;
+            int each = reward / n;
+            for (int i = 0; i < st.RingCount; i++)
+            {
+                if (st.Ring[i].EpisodeKey != episodeKey) continue;
+                st.Ring[i].Return += each;
+                if (tu.Credit == CreditRule.TdLambda && each != 0)
+                    Update(st, tu, tr, st.TraceKeys, i * AssociationStore.MaxKeys, st.Ring[i].KeyCount, st.Ring[i].Verb, each, today, sink, true);
+            }
+            for (int i = 0; i < st.OpenCount; i++)
+            {
+                if (st.Open[i].T.EpisodeKey != episodeKey) continue;
+                int days = today - st.Open[i].OpenedDay;
+                int d = Fx.Shr(each, (days < 0 ? 0 : days) / 2);
+                st.Open[i].T.Return += d;
+                if (tu.Credit == CreditRule.TdLambda && d != 0)
+                    Update(st, tu, tr, st.OpenKeys, i * AssociationStore.MaxKeys, st.Open[i].T.KeyCount, st.Open[i].T.Verb, d, today, sink, true);
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// Goods just gained by the decision in progress will have a later fate (food spoils or is eaten): the newest trace of
+        /// <paramref name="verb"/> that waits for nothing yet now waits for <paramref name="episodeKey"/> (M3b lot episodes,
+        /// as Build waits for its hut). It becomes an episode when its eligibility runs out, if its verb is deferred.
+        /// </summary>
+        public static void AwaitOutcome(AssociationStore st, byte verb, int episodeKey)
+        {
+            for (int i = st.RingCount - 1; i >= 0; i--)
+            {
+                if (st.Ring[i].Verb != verb) continue;
+                if (st.Ring[i].EpisodeKey == 0) st.Ring[i].EpisodeKey = episodeKey;
+                return;
             }
         }
 
@@ -251,30 +346,42 @@ namespace God.Sim.Learning
         {
             if (st.Mode != LearningMode.On || n <= 0) return;
             int delta = Fx.Clamp(error, -4000, 4000);
+            if (n > AssociationStore.MaxKeys) n = AssociationStore.MaxKeys;
             // Rescorla-Wagner cue salience: the error is shared out in proportion to each key's salience (drives and
-            // conjunctions, then what was acted on, then the situation), not equally (M3 finding; DEV_LOG).
+            // conjunctions, then what was acted on, then the situation), not equally (M3 finding; DEV_LOG). Each key's
+            // salience is computed once (M3b performance).
+            Span<int> sal = stackalloc int[AssociationStore.MaxKeys];
             int sumSal = 0;
-            for (int k = 0; k < n; k++) sumSal += Salience(tu, keys[off + k]);
+            for (int k = 0; k < n; k++) { sal[k] = Salience(tu, keys[off + k]); sumSal += sal[k]; }
             int share = Fx.MulDiv(Fx.Shr(delta, tr.AlphaShift), tr.LearnRate, 1000);
             ushort day = (ushort)today;
+            long evictionsBefore = st.Evictions;
+            bool anyEntry = false;
+            int lo = 0; uint prevKey = 0; // the keys are sorted: each search starts after the previous key's place
             for (int k = 0; k < n; k++)
             {
                 uint key = keys[off + k];
-                int dFast = Fx.MulDiv(share, Salience(tu, key), sumSal);
+                int dFast = Fx.MulDiv(share, sal[k], sumSal);
                 int absD = Fx.Abs(dFast);
-                int at = st.Find(key, verb);
+                if (key <= prevKey) lo = 0;
+                prevKey = key;
+                int at = st.FindFrom(key, verb, lo);
                 if (at < 0)
                 {
+                    lo = ~at;
                     if (absD < tu.MinInsertDelta) continue;
                     if (st.Count >= st.Entries.Length)
                     {
                         EvictOne(st, today);
+                        lo = 0;
                         at = st.Find(key, verb);
                         if (at >= 0) goto found;
                     }
                     at = st.InsertAt(~at, key, verb, day, Origin.Own);
                 }
             found:
+                lo = at + 1;
+                anyEntry = true;
                 ref var e = ref st.Entries[at];
                 e.Stw = Fx.Clamp16(e.Stw + dFast);
                 e.Ltw = Fx.Clamp16(e.Ltw + Fx.Shr(dFast, 3));
@@ -298,8 +405,9 @@ namespace God.Sim.Learning
             int absAll = Fx.Abs(share);
             // A verb tried here with no notable outcome is still no longer untried: if no key holds an entry for it, the first
             // target key (else the first key) gets a zero entry, so the novelty bonus (4.2) stops (M3 finding; DEV_LOG).
-            bool familiar = false;
-            for (int k = 0; k < n && !familiar; k++) if (st.Find(keys[off + k], verb) >= 0) familiar = true;
+            // every key that reached an entry above still has one unless an eviction in this loop removed it (then look again)
+            bool familiar = anyEntry && st.Evictions == evictionsBefore;
+            if (!familiar) for (int k = 0; k < n && !familiar; k++) if (st.Find(keys[off + k], verb) >= 0) familiar = true;
             if (!familiar)
             {
                 uint mark = keys[off];

@@ -380,7 +380,7 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             }
             var names = cases.Split(',');
             foreach (var n in names)
-                if (n != "bench_stage3_watch6" && !n.StartsWith("bench_npc_")) throw new UsageException("bench cases: bench_stage3_watch6, bench_npc_120, bench_npc_300, bench_npc_500 (comma-separated)");
+                if (n != "bench_stage3_watch6" && !n.StartsWith("bench_npc_")) throw new UsageException("bench cases: bench_stage3_watch6, bench_npc_120, bench_npc_300, bench_npc_500, bench_npc_1000 (comma-separated)");
             long ticks = a.Long("ticks", 0), parTicks = a.Long("parallel-ticks", 0);
             ulong seed = a.ULong("seed") ?? 1;
             string workers = a.Str("workers");

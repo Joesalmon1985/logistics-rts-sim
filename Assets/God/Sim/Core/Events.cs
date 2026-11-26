@@ -29,6 +29,12 @@ namespace God.Sim
         /// <summary>Tick stamped onto added events (set by GodSim at the start of each Step).</summary>
         public long CurrentTick;
 
+        /// <summary>
+        /// A host setting, never state (not saved or hashed): systems also emit the per-decision trace
+        /// (<c>Learning.DecisionMade</c>). The runner sets it for Full recording of the learning domain; off, nothing is built.
+        /// </summary>
+        public bool TraceDecisions;
+
         public IReadOnlyList<SimEvent> Items => _items;
         public int Count => _items.Count;
 

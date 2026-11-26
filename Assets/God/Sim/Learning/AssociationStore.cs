@@ -165,6 +165,25 @@ namespace God.Sim.Learning
             return ~lo;
         }
 
+        /// <summary>
+        /// As <see cref="Find"/>, searching only from index <paramref name="lo"/> on: for walking a sorted key list, where each
+        /// key's entry cannot lie before the previous key's (M3b performance; the answer is the same as Find's whenever every
+        /// entry before <paramref name="lo"/> orders below (key, verb)).
+        /// </summary>
+        public int FindFrom(uint key, byte verb, int lo)
+        {
+            long want = Ord(key, verb);
+            int hi = Count - 1;
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) >> 1;
+                long o = Ord(Entries[mid].Key, Entries[mid].Verb);
+                if (o == want) return mid;
+                if (o < want) lo = mid + 1; else hi = mid - 1;
+            }
+            return ~lo;
+        }
+
         /// <summary>Inserts a zero entry at the insertion point (the caller evicted first if full). Returns its index.</summary>
         public int InsertAt(int at, uint key, byte verb, ushort day, Origin origin)
         {
@@ -185,11 +204,35 @@ namespace God.Sim.Learning
         /// <summary>The sum of the fast weights of a context's keys for a verb, and how many of them have an entry.</summary>
         public int SumStw(uint[] keys, int offset, int n, byte verb, out int familiar)
         {
-            int q = 0; familiar = 0;
+            int q = 0, lo = 0; familiar = 0;
+            uint prev = 0;
             for (int i = 0; i < n; i++)
             {
-                int at = Find(keys[offset + i], verb);
-                if (at >= 0) { q += Entries[at].Stw; familiar++; }
+                uint key = keys[offset + i];
+                if (key <= prev) lo = 0; // not ascending: search everything
+                prev = key;
+                int at = FindFrom(key, verb, lo);
+                if (at >= 0) { q += Entries[at].Stw; familiar++; lo = at + 1; }
+                else lo = ~at;
+            }
+            return q;
+        }
+
+        /// <summary>As <see cref="SumStw"/>, also counting the target-kind keys (class, category, state, place) that have an entry.</summary>
+        public int SumStwTargets(uint[] keys, int offset, int n, byte verb, out int familiar, out int familiarTarget)
+        {
+            int q = 0, lo = 0; familiar = 0; familiarTarget = 0;
+            uint prev = 0;
+            for (int i = 0; i < n; i++)
+            {
+                uint key = keys[offset + i];
+                if (key <= prev) lo = 0;
+                prev = key;
+                int at = FindFrom(key, verb, lo);
+                if (at < 0) { lo = ~at; continue; }
+                lo = at + 1;
+                q += Entries[at].Stw; familiar++;
+                if (Feature.IsTargetKind(Feature.KindOf(key))) familiarTarget++;
             }
             return q;
         }

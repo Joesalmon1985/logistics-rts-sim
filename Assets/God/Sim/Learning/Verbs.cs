@@ -36,7 +36,7 @@ namespace God.Sim.Learning
         public readonly string Name;
         public readonly VerbGroup Group;
         public readonly NpcVerb Intent;
-        /// <summary>A long-delayed outcome may close its trace later (an episode, 4.7). M3: <see cref="Verb.Build"/> (the bed right arrives when the hut is finished).</summary>
+        /// <summary>A long-delayed outcome may close its trace later (an episode, 4.7). M3: <see cref="Verb.Build"/> (the bed right arrives when the hut is finished); M3b: <see cref="Verb.ForageAt"/> and <see cref="Verb.PickUp"/> (the fate of a food lot: eaten or spoiled), <see cref="Verb.Equip"/> (what a tool adds to the work).</summary>
         public readonly bool Deferred;
 
         public VerbInfo(byte id, string name, VerbGroup group, NpcVerb intent, bool deferred = false)
@@ -55,10 +55,10 @@ namespace God.Sim.Learning
             new VerbInfo(Verb.Flee, "flee", VerbGroup.SurvivalAvoid, NpcVerb.Flee),
             new VerbInfo(Verb.SeekShelter, "seek shelter", VerbGroup.SurvivalSeek, NpcVerb.SeekShelter),
             new VerbInfo(Verb.Gather, "gather", VerbGroup.Gathering, NpcVerb.Gather),
-            new VerbInfo(Verb.ForageAt, "forage", VerbGroup.Gathering, NpcVerb.ForageAt),
+            new VerbInfo(Verb.ForageAt, "forage", VerbGroup.Gathering, NpcVerb.ForageAt, deferred: true),
             new VerbInfo(Verb.Build, "build", VerbGroup.Production, NpcVerb.Build, deferred: true),
-            new VerbInfo(Verb.PickUp, "pick up", VerbGroup.Equipment, NpcVerb.PickUp),
-            new VerbInfo(Verb.Equip, "take up", VerbGroup.Equipment, NpcVerb.Equip),
+            new VerbInfo(Verb.PickUp, "pick up", VerbGroup.Equipment, NpcVerb.PickUp, deferred: true),
+            new VerbInfo(Verb.Equip, "take up", VerbGroup.Equipment, NpcVerb.Equip, deferred: true),
             new VerbInfo(Verb.Explore, "explore", VerbGroup.Search, NpcVerb.Explore),
             new VerbInfo(Verb.TestA, "test A", VerbGroup.Lab, NpcVerb.LabAct),
             new VerbInfo(Verb.TestB, "test B", VerbGroup.Lab, NpcVerb.LabAct),

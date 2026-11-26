@@ -65,8 +65,8 @@ namespace God.Sim.Policy
             r.Need = InstinctTable.NeedPrior(_sc.Instincts, _sc.Keys, c.KeyOffset, c.KeyCount, c.Verb);
             if (st.Mode != LearningMode.Off)
             {
-                int q = st.SumStw(_sc.Keys, c.KeyOffset, c.KeyCount, c.Verb, out r.Familiar);
-                st.SumStw(_sc.TargetKeys, c.TargetOffset, c.TargetCount, c.Verb, out r.FamiliarTarget);
+                // one pass: the target keys are exactly the target-kind keys of the full context (M3b performance)
+                int q = st.SumStwTargets(_sc.Keys, c.KeyOffset, c.KeyCount, c.Verb, out r.Familiar, out r.FamiliarTarget);
                 if (c.TargetCount == 0) r.FamiliarTarget = r.Familiar;
                 r.Learned = (int)((long)q * _sc.LearningTuning.LearnGain >> 10);
                 r.StrongestOrigin = StrongestOrigin(st, c);

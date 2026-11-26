@@ -44,6 +44,9 @@ namespace God.Sim.Population
         /// <summary>A read-only hook for tests and tools: called with the NPC id and the think's scratch after Cognition, before the policy decides. It must not change anything.</summary>
         public Action<int, ThinkScratch> Inspect;
 
+        /// <summary>A host profiler (the bench): told where each phase of the update ends. Not state; null in games.</summary>
+        public IPopulationProfiler Profiler;
+
         public PopulationSystem()
         {
             _policies[Policies.Associative] = _assoc;
@@ -139,8 +142,10 @@ namespace God.Sim.Population
                 foreach (var n in p.Npcs) if (n.Founder) ev.Add(new NpcSpawned { Npc = n.Id, Faction = n.Faction, Node = n.Node, Founder = true });
                 p.FoundersAnnounced = true;
             }
+            Profiler?.Begin();
             if (day > p.DayDone) DayStart(s, ev, (int)day);
             if (p.IndexDirty) RebuildIndex(p);
+            Profiler?.Mark(PopPhase.Day);
             var tu = s.Tuning.Population;
             for (int i = 0; i < p.Npcs.Count; i++)
             {
@@ -162,6 +167,7 @@ namespace God.Sim.Population
                     if (s.Tick >= npc.Action.BusyUntil) FinishBusy(s, ev, npc);
                     else continue;
                 }
+                Profiler?.Mark(PopPhase.Body);
                 if ((s.Tick + npc.Id) % tu.ThinkEvery == 0)
                 {
                     if (p.IndexDirty) RebuildIndex(p);
@@ -169,6 +175,7 @@ namespace God.Sim.Population
                 }
                 if (npc.Alive && !npc.Action.Asleep && npc.Action.BusyUntil == 0) Act(s, ev, npc, (int)day);
                 if (p.IndexDirty) RebuildIndex(p);
+                Profiler?.Mark(PopPhase.Act);
             }
         }
 
@@ -228,7 +235,13 @@ namespace God.Sim.Population
                     if (l.Empty || l.SpoilDay < 0 || l.SpoilDay >= day) continue;
                     p.Ledger.Consume(ConsumeReason.Spoiled, l.Ware, l.Count);
                     ev.Add(new Consumed { Npc = npc.Id, Ware = l.Ware, Count = l.Count, Reason = ConsumeReason.Spoiled });
-                    Learner.AddReward(npc.Mind.Store, -Worth(s, npc, l.Ware) * l.Count); // goods lost
+                    // goods lost: booked against the decisions that gained this lot (M3b lot episodes), else as a plain reward
+                    int loss = -Worth(s, npc, l.Ware) * l.Count;
+                    bool lotCredit = lt.Goods != GoodsCredit.Immediate;
+                    if (lotCredit) _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, lt.SampleEvery));
+                    if (!lotCredit || Learner.Outcome(npc.Mind.Store, lt, TraitsOf(s, npc), Learner.LotEpisodeKey(l.Id), loss, day, _sink, true) == 0)
+                        Learner.AddReward(npc.Mind.Store, loss);
+                    else CountReward(npc.Mind.Store, loss);
                     npc.Carry[i] = default;
                 }
                 // the mind's day: beliefs age, the shares roll over
@@ -381,10 +394,12 @@ namespace God.Sim.Population
             var tr = TraitsOf(s, npc);
             if (collapsed) Learner.EndOngoing(st); // nothing was chosen: no decision takes the night's relief
             _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, s.Tuning.Learning.SampleEvery));
+            Profiler?.Mark(PopPhase.Act);
             Learner.Consolidate(st, s.Tuning.Learning, tr, day, DecayScale(s), _recruit, _sink);
+            Profiler?.Mark(PopPhase.Consolidate);
             // sleeping sets tools down beside the sleeper
             for (int i = 0; i < npc.Carry.Length; i++)
-                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == Ware.Axe) { PopulationModule.Drop(s, npc.Node, npc.Carry[i]); npc.Carry[i] = default; }
+                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == Ware.Axe) { ToolGone(s, ev, npc, npc.Carry[i].Id, day); PopulationModule.Drop(s, npc.Node, npc.Carry[i]); npc.Carry[i] = default; }
             npc.Path = null; npc.PathGoal = -1;
             npc.Action = new NpcAction { Verb = Verb.Sleep, TargetKind = hut != 0 ? IntentTarget.Hut : IntentTarget.Node, TargetId = hut, TargetNode = npc.Node, Asleep = true, SleepHut = hut, Since = s.Tick };
             s.Population.Stats.Sleeps++;
@@ -616,6 +631,7 @@ namespace God.Sim.Population
             // 2.1-2.2: reward since the last think, credit, close
             Settle(s, npc);
             Learner.BeginThink(st, lt, tr, day, _sink);
+            Profiler?.Mark(PopPhase.Credit);
 
             // senses and fear
             int sight = TimeOf(SimCalendar.Of(s), s.Tick) == TimeOfDay.Night ? tu.SightNight : tu.SightDay;
@@ -626,6 +642,7 @@ namespace God.Sim.Population
 
             // cognition (pure)
             FillSelf(s, npc, day, sight);
+            Profiler?.Mark(PopPhase.Sense);
             _sc.Mind = mind;
             _sc.Instincts = InstinctTable.Of(npc.Instincts);
             _sc.Traits = npc.Traits;
@@ -635,6 +652,7 @@ namespace God.Sim.Population
             _sc.Grid = _g;
             Thinker.Think(_sc);
             Inspect?.Invoke(npc.Id, _sc);
+            Profiler?.Mark(PopPhase.Cognition);
 
             // decide: the policy sees only the observation and its own mind
             var obs = MindViews.Observe(_sc, npc.Id, s.Tick);
@@ -646,6 +664,7 @@ namespace God.Sim.Population
             if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
             else { intent = policy.Decide(obs, view, ref rng); mind.OpportunityCount = 0; }
             IntentRules.Require(PolicyLevel.Civilian, policy.Name, intent);
+            Profiler?.Mark(PopPhase.Decide);
             p.Stats.Decisions++;
             mind.Decisions++;
             if (intent.Verb == NpcVerb.None) { Experience(mind, st, s.Tick, prev); Learner.Step(st, lt, tr, 0, day, _sink); EndAction(npc); Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr)); return; }
@@ -683,15 +702,32 @@ namespace God.Sim.Population
             // decision: credit the decisions before it with this one's value (TD), act on it, then open its trace (Build
             // carries its hut as the episode key).
             bool travelling = cand.IsRunning && npc.Path != null && npc.PathIdx < npc.Path.Length;
+            if (ev.TraceDecisions) TraceDecision(ev, npc.Id, why, travelling);
             if (travelling) { Start(s, ev, npc, cand, day); return; }
             Experience(mind, st, s.Tick, prev);
-            Learner.Step(st, lt, tr, NextValue(st, lt, cand, why), day, _sink);
+            int elapsed = st.RingCount > 0 ? (int)((s.Tick - st.Ring[st.RingCount - 1].Tick) / tu.ThinkEvery) : 1;
+            Learner.Step(st, lt, tr, NextValue(st, lt, cand, why), day, _sink, elapsed);
+            Profiler?.Mark(PopPhase.LearnUpdate);
             Start(s, ev, npc, cand, day);
-            int q = view.Terms(ci).Learned;
+            Profiler?.Mark(PopPhase.Act);
+            // the learned value predicted for this decision (the Learned term, now; only Q, not the whole term set)
+            int q = st.Mode == LearningMode.Off ? 0 : (int)((long)st.SumStw(_sc.Keys, cand.KeyOffset, cand.KeyCount, cand.Verb, out _) * lt.LearnGain >> 10);
             int episodeKey = cand.Verb == Verb.Build ? (npc.SiteHut != 0 ? npc.SiteHut : cand.TargetId) : 0;
             Learner.OpenTrace(st, lt, tr, (int)s.Tick, cand.Verb, _sc.Keys, cand.KeyOffset, cand.KeyCount, q, episodeKey, day, _sink);
             Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr));
+            Profiler?.Mark(PopPhase.LearnUpdate);
         }
+
+        /// <summary>The decision trace (<see cref="DecisionMade"/>, Full recording only): one row per chosen intent with its terms.</summary>
+        private static void TraceDecision(EventBuffer ev, int npc, in DecisionRecord w, bool continued) =>
+            ev.Add(new DecisionMade
+            {
+                Npc = npc, Verb = w.Verb, TargetKind = w.TargetKind, TargetId = w.TargetId, TargetNode = w.TargetNode, TargetClass = w.TargetClass,
+                Total = w.Total, Instinct = w.Instinct, Need = w.Need, Learned = w.Learned, Social = w.Social, Culture = w.Culture,
+                Personality = w.Personality, Cost = w.Cost, Explore = w.Explore, Candidates = w.Candidates,
+                LearnedChangedWinner = w.LearnedChangedWinner, ExploreWon = w.ExploreWon, Continued = continued,
+                SecondVerb = w.SecondVerb, SecondTotal = w.SecondTotal,
+            });
 
         /// <summary>The reward the previous decision earned (consumed by the next TD step), remembered as an experience when not zero.</summary>
         private static void Experience(NpcMind mind, AssociationStore st, long tick, in DecisionRecord prev)
@@ -858,7 +894,8 @@ namespace God.Sim.Population
                     p.Stats.Foraged += yield;
                     ev.Add(new Produced { Npc = npc.Id, Source = src.Id, Ware = ware, Count = yield, Reason = ProduceReason.Foraged });
                     ev.Add(new Foraged { Npc = npc.Id, Source = src.Id, Ware = ware, Count = yield, StockAfter = src.Stock });
-                    Learner.AddReward(npc.Mind.Store, Worth(s, npc, ware) * yield);
+                    if (s.Tuning.Learning.Goods != GoodsCredit.Realised) Learner.AddReward(npc.Mind.Store, Worth(s, npc, ware) * yield);
+                    AwaitLot(s, npc, Verb.ForageAt, ware);
                     if (PopulationModule.Room(s, npc, ware) <= 0 || src.Stock <= 0) EndAction(npc);
                     return;
                 }
@@ -882,8 +919,16 @@ namespace God.Sim.Population
                     p.Stats.LogsGathered++;
                     ev.Add(new Produced { Npc = npc.Id, Source = src?.Id ?? 0, Ware = Ware.Log, Count = 1, Reason = ProduceReason.HandGathered, WithTool = axe >= 0 });
                     Learner.AddReward(npc.Mind.Store, Worth(s, npc, Ware.Log));
+                    // realised value of a tool (M3b): the decision that took it up learns the tool's share of this log
+                    if (axe >= 0 && s.Tuning.Learning.Goods == GoodsCredit.Realised && tu.AxeSpeedPermille > 1000)
+                    {
+                        _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, s.Tuning.Learning.SampleEvery));
+                        Learner.Accrue(npc.Mind.Store, s.Tuning.Learning, TraitsOf(s, npc), Learner.LotEpisodeKey(npc.Carry[axe].Id),
+                            Fx.MulDiv(Worth(s, npc, Ware.Log), tu.AxeSpeedPermille - 1000, tu.AxeSpeedPermille), day, _sink);
+                    }
                     if (axe >= 0 && --npc.Carry[axe].Uses <= 0)
                     {
+                        ToolGone(s, ev, npc, npc.Carry[axe].Id, day);
                         p.Ledger.Consume(ConsumeReason.Wear, Ware.Axe, 1);
                         ev.Add(new Consumed { Npc = npc.Id, Ware = Ware.Axe, Count = 1, Reason = ConsumeReason.Wear });
                         npc.Carry[axe] = default;
@@ -906,7 +951,9 @@ namespace God.Sim.Population
                     else { p.Lots.RemoveAt(li); }
                     p.IndexDirty = true;
                     if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("pick up: no room after the room check");
-                    Learner.AddReward(npc.Mind.Store, Worth(s, npc, lot.Ware) * take);
+                    bool realised = s.Tuning.Learning.Goods == GoodsCredit.Realised && (Wares.IsFood(lot.Ware) || lot.Ware == Ware.Axe);
+                    if (!realised) Learner.AddReward(npc.Mind.Store, Worth(s, npc, lot.Ware) * take);
+                    AwaitLot(s, npc, a.Verb, lot.Ware);
                     EndAction(npc);
                     return;
                 }
@@ -979,8 +1026,20 @@ namespace God.Sim.Population
                 for (int i = 0; i < npc.Carry.Length; i++) if (npc.Carry[i].Id == a.TargetId && !npc.Carry[i].Empty) { slot = i; break; }
                 if (slot < 0) { Frustrate(s, npc); return; }
                 var ware = npc.Carry[slot].Ware;
-                if (--npc.Carry[slot].Count <= 0) npc.Carry[slot] = default;
-                Eat(s, ev, npc, ware, true, day);
+                int lotId = npc.Carry[slot].Id;
+                bool eatenUp = --npc.Carry[slot].Count <= 0;
+                if (eatenUp) npc.Carry[slot] = default;
+                int relief = Eat(s, ev, npc, ware, true, day);
+                var lt = s.Tuning.Learning;
+                if (lt.Goods != GoodsCredit.Immediate)
+                {
+                    int key = Learner.LotEpisodeKey(lotId);
+                    _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, lt.SampleEvery));
+                    // realised value: the decisions that gained this food learn what the meal relieved
+                    if (lt.Goods == GoodsCredit.Realised) Learner.Accrue(npc.Mind.Store, lt, TraitsOf(s, npc), key, relief, day, _sink);
+                    // eaten up: they wait for nothing more
+                    if (eatenUp) Learner.Outcome(npc.Mind.Store, lt, TraitsOf(s, npc), key, 0, day, _sink, true);
+                }
                 EndAction(npc);
                 return;
             }
@@ -999,9 +1058,14 @@ namespace God.Sim.Population
             }
         }
 
-        /// <summary>Eats one unit: hunger falls by its nutrition under the variety rule (the n-th unit of a food in a day relieves <c>1000 / (1000 + 250 (n - 1))</c> of the first; ECONOMY A4); nightshade hurts.</summary>
-        private void Eat(GodState s, EventBuffer ev, Npc npc, Ware ware, bool fromCarry, int day)
+        /// <summary>
+        /// Eats one unit: hunger falls by its nutrition under the variety rule (the n-th unit of a food in a day relieves
+        /// <c>1000 / (1000 + 250 (n - 1))</c> of the first; ECONOMY A4); nightshade hurts. Returns the hunger relief as the
+        /// drive rule pays it (vp; 0 below comfort).
+        /// </summary>
+        private int Eat(GodState s, EventBuffer ev, Npc npc, Ware ware, bool fromCarry, int day)
         {
+            int hungerBefore = npc.Drives[Drive.Hunger];
             var p = s.Population;
             if (npc.EatenDay != day) { Array.Clear(npc.EatenToday, 0, npc.EatenToday.Length); npc.EatenDay = day; }
             int k = ware == Ware.Berries ? 0 : ware == Ware.Roots ? 1 : ware == Ware.Fish ? 2 : 3;
@@ -1020,6 +1084,36 @@ namespace God.Sim.Population
             npc.DayMeals++;
             ev.Add(new Consumed { Npc = npc.Id, Ware = ware, Count = 1, Reason = ConsumeReason.Eaten });
             ev.Add(new Ate { Npc = npc.Id, Ware = ware, Node = npc.Node, FromCarry = fromCarry, Relief = relief, HungerAfter = npc.DriveOf(Drive.Hunger) });
+            return Learner.DriveReward(s.Tuning.Learning.WHunger, Thinker.Comfort(s.Tuning.Population, Drive.Hunger) * 1000, hungerBefore, npc.Drives[Drive.Hunger]) / 1000;
+        }
+
+        /// <summary>A tool left the carry (worn out, or set down to sleep): the decision that took it up waits for nothing more.</summary>
+        private void ToolGone(GodState s, EventBuffer ev, Npc npc, int lotId, int day)
+        {
+            var lt = s.Tuning.Learning;
+            if (lt.Goods != GoodsCredit.Realised || npc.Mind == null) return;
+            _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, lt.SampleEvery));
+            Learner.Outcome(npc.Mind.Store, lt, TraitsOf(s, npc), Learner.LotEpisodeKey(lotId), 0, day, _sink, true);
+        }
+
+        /// <summary>
+        /// Lot episodes (M3b): the decision that just put food into the carry waits for that lot's fate. Merged lots share the
+        /// carried lot's id, so every forage that fed one lot shares its spoilage.
+        /// </summary>
+        private static void AwaitLot(GodState s, Npc npc, byte verb, Ware ware)
+        {
+            var g = s.Tuning.Learning.Goods;
+            if (g == GoodsCredit.Immediate) return;
+            if (!Wares.IsFood(ware) && !(ware == Ware.Axe && g == GoodsCredit.Realised)) return;
+            // the carried lot it went into (food merges into one lot per ware; a tool is its own lot, the newest of its ware)
+            for (int i = npc.Carry.Length - 1; i >= 0; i--)
+                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == ware) { Learner.AwaitOutcome(npc.Mind.Store, verb, Learner.LotEpisodeKey(npc.Carry[i].Id)); return; }
+        }
+
+        /// <summary>Counts a reward that was delivered straight to an episode in the day's reward and punishment sums.</summary>
+        private static void CountReward(AssociationStore st, int vp)
+        {
+            if (vp > 0) st.RewardSumDay += vp; else st.PunishSumDay -= vp;
         }
 
         public static int VarietyRelief(int nutrition, int nth) => nutrition * 1000 / (1000 + 250 * (nth - 1));

@@ -372,7 +372,7 @@ This is the **full catalogue** of domain events (the conventions, section 8, nam
 | **Summary** | all dimensions; all spells (H) and accumulating (A) facts; all low-volume events (births, deaths, migration, tax, ownership, inheritance, policy, KPI, commands, crime and justice, military service); daily snapshots; high-volume events (transaction lines, social interactions, production, combat) as **daily aggregates plus a 1-in-`sampleEvery` sample** | normal analysis, 200-year runs |
 | **Full** | every event in every table, the analytics-only truth fields, plus `events.jsonl.gz` if asked | short runs, debugging, re-recording a replay |
 
-The **decision trace** (`fact_decision`, [AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md)) is an optional add-on to any level (`--record-decisions`), off by default.
+The **decision trace** (`fact_decision`, [AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md)) is an optional add-on to any level (`--record-decisions`), off by default. **As built (M3b, 26 Nov 2026):** the event `DecisionMade` (code 334, one per chosen intent with the term split) exists and is in the catalogue mapped to `fact_decision`; the runner builds it only when the learning domain records at Full. The `--record-decisions` switch for lower levels is not built yet.
 
 - **Per-domain switches:**
   - `record.domains` sets any domain (section 3.1 list) to `off`, `metrics`, `summary` or `full`, overriding the level;

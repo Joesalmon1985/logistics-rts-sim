@@ -48,6 +48,9 @@ namespace God.Sim
         /// </summary>
         public bool InStep { get; private set; }
 
+        /// <summary>A host setting (not state): emit one <c>Learning.DecisionMade</c> per chosen intent (Full recording only).</summary>
+        public bool TraceDecisions { get => _events.TraceDecisions; set => _events.TraceDecisions = value; }
+
         /// <summary>
         /// Raised for every command accepted by <see cref="Submit"/> while <see cref="InStep"/> is false: what a replay
         /// recorder logs. A host hook; it must never touch state.

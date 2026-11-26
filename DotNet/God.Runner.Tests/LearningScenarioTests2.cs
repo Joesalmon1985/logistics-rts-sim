@@ -353,9 +353,9 @@ namespace God.Runner.Tests
 
         // ---------------------------------------------------------------- LS3: tired near shelter
 
-        public static (double hutShareDays45, int farWalks, int sleeps) Shelter(ulong seed, LearningMode mode, int hutDistance)
+        public static (double hutShareDays45, int farWalks, int sleeps) Shelter(ulong seed, LearningMode mode, int hutDistance, int coldNightPerDay = 0)
         {
-            var sim = LearningFixtures.Empty(seed);
+            var sim = LearningFixtures.Empty(seed, t => { if (coldNightPerDay > 0) t.Population.ColdNightPerDay = coldNightPerDay; });
             int glade = LearningFixtures.Glade(sim, 9);
             var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, mode, hunger: 200, fatigue: 400);
             int hutNode = LearningFixtures.Step(sim, glade, 1, hutDistance);
@@ -388,6 +388,13 @@ namespace God.Runner.Tests
             int noWaste = farOn.Count(r => r.sleeps == 0 || (double)r.farWalks / r.sleeps <= 0.05);
             TestContext.WriteLine($"LS3 seeds 1-50: sleeps in the hut on days 4-5: learner {on.Average(r => r.hutShareDays45):P1}, frozen {frozen.Average(r => r.hutShareDays45):P1}; >= 20 points better in {better} of 50 seeds; hut 15 nodes away: no wasted walk in {noWaste} of 50 seeds (far-hut sleeps {farOn.Sum(r => r.farWalks)} of {farOn.Sum(r => r.sleeps)})");
             Assert.GreaterOrEqual(noWaste, 48, "LS3: with no hut within 10 nodes it sleeps where it is (no wasted walk in >= 95%)");
+            // M3b evidence for the open criterion: at the default nights a sleeper in the open ends near the cold comfort level,
+            // so the hut pays nothing the drive rule sees and costs a walk. With nights cold enough to matter (4000/day), the
+            // learner comes to prefer the hut; Frozen cannot.
+            var onCold = Watch.Seeds(1, 50, s => Shelter(s, LearningMode.On, 3, 4000));
+            var frozenCold = Watch.Seeds(1, 50, s => Shelter(s, LearningMode.Frozen, 3, 4000));
+            int betterCold = Enumerable.Range(0, 50).Count(i => onCold[i].hutShareDays45 - frozenCold[i].hutShareDays45 >= 0.20);
+            TestContext.WriteLine($"LS3 with cold nights (ColdNightPerDay 4000): learner {onCold.Average(r => r.hutShareDays45):P1}, frozen {frozenCold.Average(r => r.hutShareDays45):P1}; >= 20 points better in {betterCold} of 50 seeds");
         }
 
         // ---------------------------------------------------------------- LS4: gathering wood with an axe
@@ -434,6 +441,9 @@ namespace God.Runner.Tests
             double gainUseless = onUseless.Average(r => r.axeShare) - frozenUseless.Average(r => r.axeShare);
             TestContext.WriteLine($"LS4 seeds 1-50, days 6-8: gathering trips started with the axe: learner {on.Average(r => r.axeShare):P1} (mean trips {on.Average(r => r.trips):F1}), frozen {frozen.Average(r => r.axeShare):P1}; >= 20 points better in {better} of 50 seeds; conjunction with the log source recruited in {conj} of 50; useless axe: learner {onUseless.Average(r => r.axeShare):P1} vs frozen {frozenUseless.Average(r => r.axeShare):P1} (gain {gainUseless * 100:F1} points)");
             Assert.Greater(on.Average(r => r.trips), 5, "the learner keeps gathering logs for its hut (the scenario is live)");
+            // M3b: the axe's worth is what it adds to the work (realised value), so a useless axe teaches nothing
+            Assert.LessOrEqual(Math.Abs(gainUseless), 0.10, "LS4 control: with a useless axe, no gain over Frozen (+-10 points)");
+            Assert.Greater(on.Average(r => r.axeShare) - frozen.Average(r => r.axeShare), gainUseless + 0.10, "the learner takes up the useful axe more than the useless one");
         }
     }
 
@@ -445,35 +455,35 @@ namespace God.Runner.Tests
     [Category("M3-open")]
     public class LearningCriteriaOpen
     {
-        [Test, Explicit("LS1/L1 absolute: the learner reaches about 92-95% of hungry probes within 5 thinks on average, but only 40-52 of 100 seeds individually reach 95%; see the M3 report")]
+        [Test, Explicit("LS1/L1 per seed (M3b: 90.4% of probes, 37 of 100 seeds at >= 95%): each seed has only about 11 probes, so one slow probe drops a seed below 95%; see DEV_LOG M3 record")]
         public void LS1_PerSeed95()
         {
             var on = Watch.Seeds(1, 100, s => LearningScenarioTests.ForagerProbes(s, LearningMode.On, InstinctSet.None, 2, 5));
             Assert.GreaterOrEqual(on.Count(x => x.Probes > 0 && 100.0 * x.Within5 / x.Probes >= 95), 95);
         }
 
-        [Test, Explicit("LS1 frozen baseline: a frozen-from-birth naive NPC beside a bush chooses at random among about 4 options, so it eats within 5 thinks in about 64% of probes; <= 40% depends on the candidate count, not on learning")]
+        [Test, Explicit("LS1 frozen baseline (M3b: 64.7%): a frozen-from-birth naive NPC beside a bush chooses at random among about 4 options, so it eats within 5 thinks by chance; <= 40% depends on the candidate count, not on learning")]
         public void LS1_FrozenBaseline40()
         {
             var fr = Watch.Seeds(1, 100, s => LearningScenarioTests.ForagerProbes(s, LearningMode.Frozen, InstinctSet.None, 2, 5));
             Assert.LessOrEqual(Watch.Pct(fr.Sum(x => x.Within5), fr.Sum(x => x.Probes)), 40.0);
         }
 
-        [Test, Explicit("L2: eating below comfort is free and unrewarded, so with ExploreBase 150 the learner eats in about 18% of thinks below comfort (frozen about 31%); <= 15% is not reached")]
+        [Test, Explicit("L2 (M3b: 17.7%, frozen 30.6%): eating below comfort is unrewarded but its only cost is a small frustration, so exploration noise (ExploreBase 150) still picks it; <= 15% is not reached")]
         public void L2_Below15()
         {
             var nat = Watch.Seeds(1, 100, s => LearningScenarioTests.Natural(s, LearningMode.On));
             Assert.LessOrEqual(Watch.Pct(nat.Sum(x => x.FullEats), nat.Sum(x => x.FullThinks)), 15.0);
         }
 
-        [Test, Explicit("L3 filler: a filler between TestA and its reward learns the reward that reliably follows it (about +220 vp); within +-100 contradicts eligibility-trace credit")]
+        [Test, Explicit("L3 filler (M3b: +222 vp): a filler between TestA and its reward learns the reward that reliably follows it; within +-100 contradicts eligibility-trace credit")]
         public void L3_FillerWithin100()
         {
             var on = Watch.Seeds(1, 100, s => LearningScenarioTests2.DelayedReward(s, 2));
             Assert.LessOrEqual(Math.Abs(on.Average(r => r.fillerQ)), 100);
         }
 
-        [Test, Explicit("L8 pairs: mean rates differ by about 40 points but only about 29 of 50 pairs differ by >= 30 points")]
+        [Test, Explicit("L8 pairs (M3b: means 45.8% vs 1.7%, 30 of 50 pairs >= 30 points): each pair is judged on 6 meal choices, so a 30-point per-pair gap is two choices")]
         public void L8_Pairs30()
         {
             var rich = Watch.Seeds(1, 50, s => LearningScenarioTests2.Nurture(s, false));
@@ -481,14 +491,14 @@ namespace God.Runner.Tests
             Assert.GreaterOrEqual(Enumerable.Range(0, 50).Count(i => rich[i].shadeShare - bitter[i].shadeShare >= 0.30), 48);
         }
 
-        [Test, Explicit("L13: 77-88% of seeds eat the new fish within 3 thinks depending on tuning; >= 80% is borderline")]
+        [Test, Explicit("L13 (M3b: 71%, 77% under the M3 goods credit; control 1%): with realised goods value, foraging the new fish into the carry competes with eating it on the spot; the count only takes Eat at the fish spot")]
         public void L13_Fish80()
         {
             var raised = Watch.Seeds(1, 100, s => LearningScenarioTests2.Generalise(s, true));
             Assert.GreaterOrEqual(raised.Count(r => r.thinksToFish <= 3), 80);
         }
 
-        [Test, Explicit("LS3: the drive-relief rule pays the same total for faster sleep, so the hut's only advantage is warmth at night; the hut is rarely tried and the learner does not come to prefer it")]
+        [Test, Explicit("LS3 (M3b: 0.5% vs 1.3%): the drive-relief rule pays the amount of relief, not its rate, and at default nights a sleeper in the open ends near cold comfort, so the hut pays nothing the reward sees and costs a walk. With colder nights the learner prefers the hut (31% vs 1%)")]
         public void LS3_Hut20Points()
         {
             var on = Watch.Seeds(1, 50, s => LearningScenarioTests2.Shelter(s, LearningMode.On, 3));
@@ -496,20 +506,12 @@ namespace God.Runner.Tests
             Assert.GreaterOrEqual(Enumerable.Range(0, 50).Count(i => on[i].hutShareDays45 - frozen[i].hutShareDays45 >= 0.20), 45);
         }
 
-        [Test, Explicit("LS4: per-think credit values the axe's faster gathering in the gather decisions, but taking up the axe gets little of that value without bootstrapping; the learner takes the axe in about 19-21% of trips against about 14-19% frozen")]
+        [Test, Explicit("LS4 per seed (M3b realised tool value: 38.4% vs 14.0% frozen, >= 20 points in 27 of 50 seeds): about 15 trips per seed, so per-seed differences carry about 16 points of sampling noise")]
         public void LS4_Axe20Points()
         {
             var on = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.On, true));
             var frozen = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.Frozen, true));
             Assert.GreaterOrEqual(Enumerable.Range(0, 50).Count(i => on[i].axeShare - frozen[i].axeShare >= 0.20), 45);
-        }
-
-        [Test, Explicit("LS4 control: taking up a tool has an immediate goods worth, so the learner takes up even a useless axe about 12 points more than frozen")]
-        public void LS4_UselessAxeControl()
-        {
-            var on = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.On, false));
-            var frozen = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.Frozen, false));
-            Assert.LessOrEqual(Math.Abs(on.Average(r => r.axeShare) - frozen.Average(r => r.axeShare)), 0.10);
         }
     }
 }

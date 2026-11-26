@@ -88,6 +88,7 @@ namespace God.Sim.Population
             var g = s.Territory.Grid;
             var tu = s.Tuning.Population;
             int ci = g.I(hqNode), cj = g.J(hqNode);
+            int fallback = -1;
             for (int tries = 0; tries < 200; tries++)
             {
                 int di = r.NextRange(-tu.FounderSpreadNodes, tu.FounderSpreadNodes + 1);
@@ -97,9 +98,19 @@ namespace God.Sim.Population
                 int d = g.Distance(n, hqNode);
                 if (d <= g.CircleRadiusSteps || d > tu.FounderSpreadNodes) continue;
                 if (s.Territory.NodeBuilding[n] != 0 || s.Territory.NodeFlag[n] != 0) continue;
-                return n;
+                // a founder arrives where it can see something to eat (M3b: about 1 in 6 founders used to start with none in sight)
+                if (FoodInSight(s, n, tu.SightDay)) return n;
+                if (fallback < 0) fallback = n;
             }
-            return hqNode;
+            return fallback >= 0 ? fallback : hqNode;
+        }
+
+        private static bool FoodInSight(GodState s, int node, int sight)
+        {
+            var g = s.Territory.Grid;
+            foreach (var src in s.Population.Sources)
+                if (src.Kind != SourceKind.Wood && src.Kind != SourceKind.Nightshade && src.Stock > 0 && g.Distance(node, src.Node) <= sight) return true;
+            return false;
         }
 
         private static void GiveFounderPack(GodState s, Npc npc, Rng r)
