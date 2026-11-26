@@ -34,7 +34,7 @@ namespace God.Game
         private void OnEvent(SimEvent e)
         {
             if (!(e is HqCaptured c)) return;
-            var t = _boot.Sim.State.Territory;
+            var t = _boot.View.Map;
             var hq = t.HqOf(c.HqId);
             if (hq == null) return;
             var g = t.Grid;
@@ -53,7 +53,7 @@ namespace God.Game
         /// <summary>The point of a faction's main HQ (its first finished one, else any), or null when it has none left.</summary>
         public Vector3? HqPoint(Faction f)
         {
-            var t = _boot.Sim.State.Territory; var g = t.Grid;
+            var t = _boot.View.Map; var g = t.Grid;
             Hq best = null;
             foreach (var h in t.Hqs) if (h.Faction == f && (best == null || (best.Site && !h.Site))) best = h;
             return best == null ? (Vector3?)null : new Vector3((float)g.X(best.Node), 0f, (float)g.Z(best.Node));
@@ -62,7 +62,7 @@ namespace God.Game
         /// <summary>Flies the camera to a faction's main HQ. Returns false when the faction has no HQ.</summary>
         public bool JumpToFaction(Faction f, bool instant = false)
         {
-            if (!_boot.Sim.State.Setup.InGame((int)f)) return false;
+            if (!_boot.View.InGame(f)) return false;
             var p = HqPoint(f);
             if (p == null) return false;
             _boot.Rig.FocusOn(p.Value, FocusHeight, instant);
@@ -74,7 +74,7 @@ namespace God.Game
         {
             var l = new List<Vector3>(_captures);
             var cells = new Dictionary<(int, int), (Vector3 sum, int n)>();
-            foreach (var u in _boot.Sim.State.Military.Units)
+            foreach (var u in _boot.View.Military.VisibleUnits)
             {
                 if (u.Activity != UnitActivity.Fighting) continue;
                 var key = (Mathf.FloorToInt((float)u.PosX / 40f), Mathf.FloorToInt((float)u.PosZ / 40f));
@@ -95,7 +95,7 @@ namespace God.Game
             _tab++;
             if (spots.Count > 0) { _boot.Rig.FocusOn(spots[_tab % spots.Count], FocusHeight, instant); return; }
             for (int k = 0; k < FactionInfo.Max; k++)
-                if (JumpToFaction((Faction)((_tab + k) % _boot.Sim.State.FactionCount), instant)) return;
+                if (JumpToFaction((Faction)((_tab + k) % _boot.View.FactionCount), instant)) return;
         }
     }
 }

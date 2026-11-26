@@ -56,8 +56,8 @@ namespace God.Game
         {
             var l = new List<Faction>();
             if (Watching) return l;
-            var fs = Sim.State.Factions;
-            for (int i = 0; i < Sim.State.FactionCount; i++)
+            var fs = View.Diplomacy;
+            for (int i = 0; i < View.FactionCount; i++)
             {
                 var f = (Faction)i;
                 if (f == Me || fs.IsEliminated(f) || fs.AtWar(Me, f)) continue;
@@ -81,9 +81,7 @@ namespace God.Game
         /// <summary>The most of a ware one of your HQs has free to send (an offer leaves from one HQ).</summary>
         public int MaxGive(Ware w)
         {
-            int best = 0;
-            foreach (var hq in Sim.State.Economy.HqsOf(Me)) best = Mathf.Max(best, TradeRules.FreeStock(hq, w));
-            return best;
+            return View.Own.MostFreeAtOneHq(w);
         }
 
         public int TradeGiveTotal { get { int n = 0; foreach (int c in TradeGive) n += c; return n; } }
@@ -152,12 +150,12 @@ namespace God.Game
         }
 
         /// <summary>Offers waiting for your answer, oldest first.</summary>
-        public List<TradeOffer> PendingOffers() => Watching ? new List<TradeOffer>() : Sim.State.Trade.PendingFor(Me);
+        public List<TradeOffer> PendingOffers() => Watching ? new List<TradeOffer>() : View.Trade.PendingForMe();
 
         /// <summary>The offer the offer card shows: the clicked envoy's when it is waiting for you, else the oldest waiting one, else null.</summary>
         public TradeOffer CardOffer()
         {
-            var tr = Sim.State.Trade;
+            var tr = View.Trade;
             if (SelectedEnvoy != 0)
             {
                 var o = tr.OfferById(SelectedEnvoy);
@@ -170,7 +168,7 @@ namespace God.Game
         /// <summary>Opens the card of an envoy (clicking it in the world). The card answers it when it waits for you.</summary>
         public void SelectEnvoy(int id)
         {
-            if (Sim.State.Trade.EnvoyById(id) == null) return;
+            if (View.Trade.EnvoyById(id) == null) return;
             ClearSelection(); SelectedEnvoy = id;
         }
 
@@ -180,7 +178,7 @@ namespace God.Game
         public int PickEnvoy(Vector2 mouse)
         {
             int best = 0; float bestD = float.MaxValue;
-            foreach (var e in Sim.State.Trade.Envoys)
+            foreach (var e in View.Trade.VisibleEnvoys)
             {
                 var p = ModelKit.OnGround(e.X / 1000f, e.Z / 1000f, 1.6f);
                 var sp = Cam.WorldToScreenPoint(p);
@@ -232,8 +230,8 @@ namespace God.Game
         private void RefreshTradeLog()
         {
             if (Watching) return;
-            var tr = Sim.State.Trade;
-            foreach (var r in tr.History)
+            var tr = View.Trade;
+            foreach (var r in tr.MyHistory())
             {
                 if (!_logged.Add(r.OfferId)) continue;
                 string text = LogText(r, Me);
@@ -294,11 +292,11 @@ namespace God.Game
             }
 
             var offer = CardOffer();
-            var env = offer == null && SelectedEnvoy != 0 ? Sim.State.Trade.EnvoyById(SelectedEnvoy) : null;
+            var env = offer == null && SelectedEnvoy != 0 ? View.Trade.EnvoyById(SelectedEnvoy) : null;
             if (offer != null || env != null)
             {
                 Rect r;
-                var e2 = offer != null ? Sim.State.Trade.EnvoyById(offer.Id) : env;
+                var e2 = offer != null ? View.Trade.EnvoyById(offer.Id) : env;
                 if (SelectedEnvoy != 0 && e2 != null && e2.Id == SelectedEnvoy)
                     r = CardRect(ModelKit.OnGround(e2.X / 1000f, e2.Z / 1000f, 3f), _offerRect, 300f, stripH, vw, vh);
                 else
@@ -403,7 +401,7 @@ namespace God.Game
                 GUILayout.Label(FactionLook.Name(offer.From) + " offers " + WaresText(offer.Give) + " for " + WaresText(offer.Want), st.Label);
                 WareCountsRow("Gives", offer.Give);
                 WareCountsRow("Wants", offer.Want);
-                bool canPay = TradeRules.CanPay(Sim.State, Me, offer.Want);
+                bool canPay = View.Own.CanPay(offer.Want);
                 float left = Mathf.Max(0f, offer.TicksLeft) / (float)GodSim.TicksPerSecond;
                 GUILayout.Label("Answer in " + Mathf.CeilToInt(left) + " s, or it is refused.", st.Small);
                 var bar = GUILayoutUtility.GetRect(10f, 8f, GUILayout.ExpandWidth(true));
@@ -427,7 +425,7 @@ namespace God.Game
             {
                 GUILayout.Label(StageText(env.Stage, env.CarriesPayment), st.Small);
                 WareCountsRow("Carries", env.CargoList().ToArray());
-                var o = Sim.State.Trade.OfferById(env.Id);
+                var o = View.Trade.OfferById(env.Id);
                 if (o != null && o.From == Me) GUILayout.Label("Your offer to " + FactionLook.Name(o.To) + ": " + WaresText(o.Give) + " for " + WaresText(o.Want), st.Small);
                 if (env.Health < TradeTuning.EnvoyHealth) GUILayout.Label("Health " + env.Health + " / " + TradeTuning.EnvoyHealth, st.Small);
             }

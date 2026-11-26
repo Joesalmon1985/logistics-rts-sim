@@ -79,6 +79,7 @@ namespace God.Game
             DrawTutorialPointers(vw, vh, repaint);
             if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); }
             else DrawEnd(st, vw, vh, repaint);
+            DrawTrueState(st, vw, vh, repaint);
             DrawTooltip(st, vw, vh);
         }
 
@@ -157,12 +158,12 @@ namespace God.Game
         }
 
         /// <summary>The sim calendar as the cloud strip shows it: "Day 3, year 1" (M0, <see cref="SimCalendar"/>).</summary>
-        public string CalendarText() => SimCalendar.Of(Sim.State).Label(Sim.State.Tick);
+        public string CalendarText() => View.Calendar.Label(View.AsOfTick);
 
         /// <summary>How far through the day (0 to 1) and which day of the year (0-based), for the strip's calendar bar.</summary>
         public (float dayFraction, int dayOfYear, int daysPerYear) CalendarProgress()
         {
-            var c = SimCalendar.Of(Sim.State); long t = Sim.State.Tick;
+            var c = View.Calendar; long t = View.AsOfTick;
             return (c.DayPermille(t) / 1000f, c.DayOfYear(t), c.DaysPerYear);
         }
 
@@ -172,7 +173,7 @@ namespace God.Game
         /// </summary>
         private void DrawCalendar(float x, float y, bool repaint)
         {
-            GUI.Label(new Rect(x, y + 6f, 120f, 16f), new GUIContent(CalendarText(), "Sim calendar: a day is " + Sim.State.Setup.TicksPerDay / GodSim.TicksPerSecond + " s at 1x"), _bold);
+            GUI.Label(new Rect(x, y + 6f, 120f, 16f), new GUIContent(CalendarText(), "Sim calendar: a day is " + View.TicksPerDay / GodSim.TicksPerSecond + " s at 1x"), _bold);
             if (!repaint) return;
             var (frac, day, days) = CalendarProgress();
             const float w = 112f;
@@ -217,13 +218,13 @@ namespace God.Game
         /// <summary>The army line: your soldiers (melee and ranged), guards, and who you are at war with.</summary>
         public string ArmyText()
         {
-            var m = Sim.State.Military;
-            if (Watching) return "Watch mode: units " + m.Units.Count;
+            var m = View.Military;
+            if (Watching) return "Watch mode: units " + m.VisibleUnits.Count;
             if (!MeAlive) return "Your faction is out of the game";
             int melee = 0, ranged = 0, guards = 0;
-            foreach (var u in m.Units) if (u.Faction == Me) { if (Gear.IsRanged(u.Kit.Weapon)) ranged++; else melee++; }
-            foreach (var f in m.Defends) if (f.Faction == Me) guards += f.Guards;
-            var foes = Sim.State.Factions.Enemies(Me);
+            foreach (var u in m.VisibleUnits) if (u.Faction == Me) { if (Gear.IsRanged(u.Kit.Weapon)) ranged++; else melee++; }
+            foreach (var f in m.OwnDefends()) guards += f.Guards;
+            var foes = View.Diplomacy.Enemies(Me);
             string war = foes.Count == 0 ? "at peace" : "at war with " + string.Join(", ", foes.ConvertAll(FactionLook.Name));
             return "Soldiers " + (melee + ranged) + " (" + ranged + " ranged)    Guards " + guards + "    " + war;
         }
@@ -232,7 +233,7 @@ namespace God.Game
         public string StandingsText()
         {
             var sb = new StringBuilder();
-            foreach (var st in FactionRules.Standings(Sim.State))
+            foreach (var st in View.Diplomacy.Standings())
             {
                 if (sb.Length > 0) sb.Append("   ");
                 sb.Append(FactionLook.Name(st.Faction)).Append(' ').Append(st.Eliminated ? "out" : st.VictoryPoints + " VP");
@@ -306,7 +307,7 @@ namespace God.Game
 
         private void DrawCards(HudStyle st, float vw, float vh, float stripH, bool repaint)
         {
-            var t = Sim.State.Territory; var g = t.Grid;
+            var t = View.Map; var g = t.Grid;
             if (SelectedBuilding != 0)
             {
                 var b = t.BuildingById(SelectedBuilding);
@@ -392,14 +393,14 @@ namespace God.Game
 
         private void BuildingCard(HudStyle st, Building b)
         {
-            var e = Sim.State.Economy.Find(b.Id);
+            var e = View.Own.Building(b.Id);
             var def = e?.Def;
             string name = KindLabel(b.Kind);
             CardHead(st, e != null && !e.Built && !e.IsHq ? name + " (site)" : name);
             if (e != null && !e.IsHq)
             {
                 var old = GUI.contentColor;
-                GUILayout.Label(StatusText(e) + (e.Built ? "" : "  " + (Sim.State.Economy.SiteProgressPermille(b.Id) / 10) + "%"), st.Small);
+                GUILayout.Label(StatusText(e) + (e.Built ? "" : "  " + (View.Own.SiteProgressPermille(b.Id) / 10) + "%"), st.Small);
                 GUI.contentColor = old;
                 if (b.Faction == Me && !FlagHasRoad(b.FlagNode)
                     && GUILayout.Button(new GUIContent("Lay a road from here", "Starts a road at this building's flag. Click one of your flags or roads to join it."), st.Btn, GUILayout.Height(24f)))
@@ -410,7 +411,7 @@ namespace God.Game
                     if (Event.current.type == EventType.Repaint)
                     {
                         GUI.DrawTexture(bar, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, new Color(0.27f, 0.19f, 0.09f, 0.18f), Vector4.zero, new Vector4(4, 4, 4, 4));
-                        var f = new Rect(bar.x, bar.y, Mathf.Max(8f, bar.width * Sim.State.Economy.SiteProgressPermille(b.Id) / 1000f), bar.height);
+                        var f = new Rect(bar.x, bar.y, Mathf.Max(8f, bar.width * View.Own.SiteProgressPermille(b.Id) / 1000f), bar.height);
                         GUI.DrawTexture(f, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, HudStyle.Good, Vector4.zero, new Vector4(4, 4, 4, 4));
                     }
                     WareLine("Wares", e.In, def.Cost);
@@ -448,18 +449,18 @@ namespace God.Game
             }
             else
             {
-                var hq = Sim.State.Territory.HqOf(b.Id);
+                var hq = View.Map.HqOf(b.Id);
                 bool site = hq != null && hq.Site;
                 GUILayout.Label(site ? "Your new HQ (site)" : hq != null && hq.Citadel ? "Your Citadel (2 VP)" : "Your headquarters (1 VP)", st.Small);
-                if (e != null && e.Upgrading) GUILayout.Label("Becoming a Citadel  " + (Sim.State.Economy.UpgradeProgressPermille(b.Id) / 10) + "%", st.Small);
+                if (e != null && e.Upgrading) GUILayout.Label("Becoming a Citadel  " + (View.Own.UpgradeProgressPermille(b.Id) / 10) + "%", st.Small);
                 else if (hq != null && !site && !hq.Citadel && GUILayout.Button(new GUIContent("Upgrade to Citadel", "Cost: " + CostText(EconomyDefs.Citadel) + ". Worth 2 VP, 3000 health."), st.Btn, GUILayout.Height(24f)))
                     UpgradeCitadel(b.Id);
             }
 
             // Defend flag and guards.
-            var flag = Sim.State.Military.DefendAtBuilding(b.Id);
+            var flag = View.Military.DefendAtBuilding(b.Id);
             int cur = flag?.Guards ?? 0;
-            GUILayout.Label(flag == null ? "Defend here" : "Defend here  (" + Sim.State.Military.GuardCount(flag.Id) + " on guard)", st.Small);
+            GUILayout.Label(flag == null ? "Defend here" : "Defend here  (" + View.Military.GuardCount(flag.Id) + " on guard)", st.Small);
             GUILayout.BeginHorizontal();
             for (int n = 0; n <= MilitaryTuning.MaxGuards; n++)
                 if (GUILayout.Button(n.ToString(), cur == n ? st.BtnSel : st.Btn, GUILayout.Width(34f), GUILayout.Height(22f)) && cur != n) SetGuards(b.Id, n);
@@ -477,7 +478,7 @@ namespace God.Game
             if (up == null) return;
             if (e.Upgrading)
             {
-                GUILayout.Label("Upgrading to level " + (e.Level + 1) + "  " + (Sim.State.Economy.UpgradeProgressPermille(id) / 10) + "%", st.Small);
+                GUILayout.Label("Upgrading to level " + (e.Level + 1) + "  " + (View.Own.UpgradeProgressPermille(id) / 10) + "%", st.Small);
                 WareLine("Wares", e.In, up.Cost);
             }
             else if (GUILayout.Button(new GUIContent("Upgrade (level " + e.Level + "â†’" + (e.Level + 1) + "): " + CostText(up),
@@ -489,11 +490,11 @@ namespace God.Game
 
         private void EnemyCard(HudStyle st, Building b)
         {
-            var m = Sim.State.Military; var fs = Sim.State.Factions;
-            var hqOf = Sim.State.Territory.HqOf(b.Id);
+            var m = View.Military; var fs = View.Diplomacy;
+            var hqOf = View.Map.HqOf(b.Id);
             string kind = hqOf != null && hqOf.Citadel ? "Citadel" : KindLabel(b.Kind);
             CardHead(st, FactionLook.Name(b.Faction) + " " + kind);
-            var rec = m.BuildingById(b.Id);
+            var rec = m.VisibleBuilding(b.Id);
             if (rec != null)
             {
                 GUILayout.Label("Health " + rec.Health + " / " + rec.MaxHealth, st.Small);
@@ -504,9 +505,9 @@ namespace God.Game
                     GUI.DrawTexture(new Rect(bar.x, bar.y, Mathf.Max(6f, bar.width * rec.HealthFraction), bar.height), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, HudStyle.Bad, Vector4.zero, new Vector4(4, 4, 4, 4));
                 }
             }
-            if (Watching || !MeAlive) { GUILayout.Label(FactionRules.VictoryPoints(Sim.State, b.Faction) + " VP", st.Small); return; }
+            if (Watching || !MeAlive) { GUILayout.Label(View.Diplomacy.VictoryPoints(b.Faction) + " VP", st.Small); return; }
             bool war = fs.AtWar(Me, b.Faction);
-            int order = m.MarkOrder(Me, b.Id);
+            int order = m.MarkOrder(b.Id);
             if (war)
             {
                 GUILayout.Label(order > 0 ? "At war. Target number " + order : "At war. Not a target", order > 0 ? st.Label : st.Small);
@@ -526,11 +527,11 @@ namespace God.Game
 
         private void GroundCard(HudStyle st)
         {
-            var t = Sim.State.Territory; var m = Sim.State.Military;
-            bool road = t.NodeRoad[SelectedNode] != 0;
+            var t = View.Map; var m = View.Military;
+            bool road = t.RoadIdAt(SelectedNode) != 0;
             CardHead(st, road ? "Road" : "Ground");
             if (Watching || !MeAlive) { GUILayout.Label("Watching", st.Small); return; }
-            var flag = m.DefendAtNode(Me, SelectedNode);
+            var flag = m.DefendAtNode(SelectedNode);
             int cur = flag?.Guards ?? 0;
             GUILayout.Label(flag == null ? "Defend here" : "Defend here  (" + m.GuardCount(flag.Id) + " on guard)", st.Small);
             GUILayout.BeginHorizontal();
@@ -539,7 +540,7 @@ namespace God.Game
             GUILayout.EndHorizontal();
             if (road)
             {
-                if (Sim.Check(new PlaceFlag(Me, SelectedNode)).Ok && GUILayout.Button("Place a flag here", st.Btn, GUILayout.Height(24f))) PlaceFlagAt(SelectedNode);
+                if (Gate.Check(new PlaceFlag(Me, SelectedNode)).Ok && GUILayout.Button("Place a flag here", st.Btn, GUILayout.Height(24f))) PlaceFlagAt(SelectedNode);
                 if (GUILayout.Button("Remove this road", st.Btn, GUILayout.Height(24f))) { RemoveRoadAt(SelectedNode); ClearSelection(); }
             }
         }
@@ -560,7 +561,7 @@ namespace God.Game
         /// <summary>The headline of the end card: "Victory", "Defeat" or, in watch mode, who won.</summary>
         public string EndTitle()
         {
-            var fs = Sim.State.Factions;
+            var fs = View.Diplomacy;
             string winner = fs.Winner >= 0 ? FactionLook.Name((Faction)fs.Winner) : "Nobody";
             return Watching ? winner + " wins" : Outcome == GameOutcome.Won ? "Victory" : "Defeat";
         }
@@ -568,7 +569,7 @@ namespace God.Game
         /// <summary>Why the game ended, in a sentence.</summary>
         public string EndReasonText()
         {
-            var fs = Sim.State.Factions;
+            var fs = View.Diplomacy;
             string winner = fs.Winner >= 0 ? FactionLook.Name((Faction)fs.Winner) : "Nobody";
             return fs.EndReason == GameEndReason.VictoryPoints ? winner + " reached " + FactionTuning.VictoryPoints + " victory points."
                 : fs.Winner >= 0 ? winner + " is the last faction standing." : "Every faction fell.";
@@ -576,7 +577,7 @@ namespace God.Game
 
         private void EndCard(HudStyle st)
         {
-            var fs = Sim.State.Factions;
+            var fs = View.Diplomacy;
             GUILayout.Label(EndTitle(), new GUIStyle(st.Title) { fontSize = 26, alignment = TextAnchor.MiddleCenter });
             GUILayout.Label(EndReasonText(), st.Centered);
             GUILayout.Space(6f);

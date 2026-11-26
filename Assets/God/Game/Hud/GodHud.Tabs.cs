@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using God.Sim;
+using God.Sim.Information;
 
 namespace God.Game
 {
@@ -213,7 +214,7 @@ namespace God.Game
         /// <summary>The stock bar: raws, processed goods and gear in three compact groups, a swatch and a count each (the name is in the tooltip).</summary>
         private void DrawStockBar(float x, float y, float h, bool repaint)
         {
-            var eco = Sim.State.Economy;
+            var eco = View.Own;
             float cell = 33f, rowH = Mathf.Max(20f, (h + 14f) * 0.5f);
             x = DrawStockGroup(eco, StockRaws, x, y, 3, cell, rowH, repaint) + 12f;
             x = DrawStockGroup(eco, StockProcessed, x, y, 5, cell, rowH, repaint) + 12f;
@@ -223,13 +224,13 @@ namespace God.Game
         /// <summary>Width of the stock bar (for the layout of what follows).</summary>
         private static float StockBarWidth => (3 + 5 + 5) * 33f + 24f;
 
-        private float DrawStockGroup(EconomyState eco, Ware[] wares, float x, float y, int cols, float cell, float rowH, bool repaint)
+        private float DrawStockGroup(OwnBooks eco, Ware[] wares, float x, float y, int cols, float cell, float rowH, bool repaint)
         {
             for (int i = 0; i < wares.Length; i++)
             {
                 float cx = x + (i % cols) * cell, cy = y + (i / cols) * rowH;
                 var w = wares[i];
-                int n = eco.TotalStock(Me, w);
+                int n = eco.TotalStock(w);
                 var cr = new Rect(cx, cy, cell, rowH);
                 if (repaint)
                 {
