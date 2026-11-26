@@ -7,7 +7,7 @@ You are a god looking down on an island. Six peoples live there, each with one t
 ## Starting, saving and quitting
 
 - **The start card** appears first.
-  - **Tutorial** starts a fixed island (seed 40) with guiding cards. New players should start here.
+  - **Tutorial** starts a fixed island (seed 111) with guiding cards. New players should start here.
   - **Play** pits you (Amber) against five computer players.
   - **Watch** lets you watch all six play each other.
   - You can type a seed (a number that picks the island) or roll one with the dice button. **Load** opens a saved game.
