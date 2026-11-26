@@ -313,6 +313,7 @@ The owning documents give each system's split between stage 4 minimum and later.
 | [HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md) | Partnership, courtship, households, child-rearing, care of relatives, the kinship graph |
 | [NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md) | Instincts and the associative learning core, delayed reward, generalisation, forgetting, the five learning mechanisms |
 | [COMMUNICATION_AND_COGNITION_DESIGN.md](COMMUNICATION_AND_COGNITION_DESIGN.md) | Perception, attention, beliefs, situation features, the decider, the gesture language |
+| [WORLD_ONTOLOGY.md](WORLD_ONTOLOGY.md) | Physical location, accessibility, perception, communication and interaction ranges, ownership vs possession vs permission (owner D3 §9); hex and node layers; the physical actions (MoveTo, Take, Drop, Give, Store, Withdraw, Consume, Equip, Use, Gather, Inspect); goods states; affordances |
 | [SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md) | Relationships, trust, obligations and promises, reputation, gossip, forgetting |
 | [CULTURAL_TRANSMISSION_DESIGN.md](CULTURAL_TRANSMISSION_DESIGN.md) | Cultural traits and memes, teaching, imitation, conformity, dialects, traditions |
 | [MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md) | Estates, inheritance customs and laws, bequests, dowries and gifts, wealth across generations |
