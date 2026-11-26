@@ -243,6 +243,36 @@ namespace God.Runner.Tests
         }
 
         [Test]
+        public void Fertility_Diagnostics()
+        {
+            foreach (ulong seed in new ulong[] { 1, 2 })
+            {
+                long fertile = 0, partneredMale = 0, bothTrying = 0, pregnant = 0, sameSex = 0, single = 0, lowNut = 0;
+                var r = M4Run.FromScenario("m4_families", seed, 40, onEvent: (sim, e) =>
+                {
+                    if (!(e is NpcDay nd) || nd.Npc != sim.State.Population.Npcs.First(n => n.Alive).Id) return;
+                    var s = sim.State; var cal = SimCalendar.Of(s);
+                    foreach (var n in s.Population.Npcs)
+                    {
+                        if (!n.Alive || n.Life == null || n.Life.Sex != 0 || n.Stage == LifeStage.Child) continue;
+                        long age = cal.AgeMilli(n.BornTick, s.Tick);
+                        if (age > Reproduction.FertileEnd(s.Tuning.Households.Life, n.Life.Pheno.Fertility)) continue;
+                        fertile++;
+                        if (n.Life.PregFather != 0) { pregnant++; continue; }
+                        if (n.NutritionPermille < 600) lowNut++;
+                        var ps = Partnerships.PartnersOf(s, n.Id);
+                        if (ps.Count == 0) { single++; continue; }
+                        var m = s.Population.Find(ps[0]);
+                        if (m.Life.Sex != 1) { sameSex++; continue; }
+                        partneredMale++;
+                        if (n.Life.TryWith == m.Id && n.Life.TryingUntil >= s.Tick && m.Life.TryWith == n.Id && m.Life.TryingUntil >= s.Tick) bothTrying++;
+                    }
+                });
+                TestContext.WriteLine($"seed {seed}: fertile woman-days {fertile}: pregnant {pregnant}, single {single}, same-sex {sameSex}, with a man {partneredMale} (both trying {bothTrying}); nutrition under 600 {lowNut}; births {r.Births}");
+            }
+        }
+
+        [Test]
         public void Band6x20_30Days_Invariants()
         {
             var res = Watch.Seeds(1, 6, s => M4Run.Run(s, 30));
