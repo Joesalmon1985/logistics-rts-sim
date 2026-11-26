@@ -399,6 +399,35 @@ Owner decision D3 §5 ([DEV_LOG](DEV_LOG.md#owner-decisions-d3-26-nov-2026-after
 
 **Manual:** screenshot of a household panel and family tree; owner watches one generation turn over. **Done means:** a population lives, breeds and dies for 15 years without extinction or explosion; inheritances are separate; goods pass to heirs and conservation holds.
 
+#### M4 additions from owner decisions D4 (26 Nov 2026)
+
+| # | Kind | Criterion | Source | Suite |
+|---|---|---|---|---|
+| M4.37 | Hyp | **Ecology scenarios:** `favourable`, `balanced` and `hostile` ecologies are stated scenario files, never tuned per seed. Each runs ≥ 20 seeds for ≥ 5 generations. **Favourable:** sustainable multigenerational populations (never extinct in ≥ 80% of seeds; end population 0.5×–2× of year 3). **Balanced:** a spread of outcomes is reported. **Hostile:** collapse stays possible (at least one extinction or collapse in 20 seeds). No spawning, replenishment or guaranteed survival | Owner D4 §1 | RT, N |
+| M4.38 | Hyp | **One-factor experiments:** fertility, mortality, pairing, founder ages, resource availability and density are each varied alone against the same baseline, ≥ 10 seeds per arm. Each arm's effect on births, deaths by cause and survival is reported with an interval | Owner D4 §1 | RT, N |
+| M4.39 | Inv | **Relationship ontology:** romantic partnership, reproductive relationship, biological parenthood, caregiving, household membership and economic partnership are separate records. Fixtures show each combination can exist apart from the others (for example a same-sex couple raising an adopted child, or an adult with a reproductive partner outside their household). No code forces a person out of a relationship to reproduce, and none restricts same-sex partnerships | Owner D4 §2 | EM |
+| M4.40 | Mech | **Preferences:** individual preferences for companionship, partners, reproduction and children change behaviour measurably (a paired comparison of high- and low-preference NPCs). Reproduction outside the household needs voluntary consent from both adults and respects their stated commitments | Owner D4 §2 | RT |
+| M4.41 | Inv | **Fertility measures:** completed fertility by birth cohort (cohorts that finished their fertile span only), reproductive opportunities, child mortality, age-specific mortality and offspring surviving to adulthood are reported. Completed and censored (incomplete) fertility are reported separately. Under `favourable`, completed fertility per woman is reported against the 3–4 experimental starting point (a reported investigation, not a gate) | Owner D4 §3 | RT |
+| M4.42 | Mech | **Mixed-age founders:** the `established band` founder generator gives households, dependent children each with a caregiver, young adults, mature adults and elders, with spread birth dates. It is the default; the unrelated young-adult band remains a scenario. Founder deaths spread out: no 30-day window holds more than 15% of founder deaths in 10 seeds | Owner D4 §4 | EM, RT |
+| M4.43 | Hyp | **Carrying capacity:** for `band_6x10`, `6x20` and `6x40`, production, regeneration, consumption, spoilage, reachable food, travel distance, density, foraging productivity and household stores are reported. Each starvation regime is classified as real scarcity, distribution, exploration or a scaling fault, with the evidence. Food is never raised merely to remove starvation | Owner D4 §5 | RT, N |
+| M4.44 | Mech | **Care arrangements:** parents, grandparents, adoptive carers, shared households and informal communal care each reduce child mortality against no care, with real time and real food spent. Free-riding on a shared arrangement occurs in at least one seed, and its outcome is reported | Owner D4 §6 | RT |
+| M4.45 | Inv | **Demographic reports:** a headless report gives population over time, births and deaths, causes of death, age structure, completed fertility by cohort, child mortality, caregiving activity, dependency ratios, household size and composition, food availability and consumption, density against carrying capacity, and survival across generations. It runs multi-seed, and every figure reconciles with the warehouse | Owner D4 §10 | RT |
+
+#### M4 acceptance status (owner D4 §7, 26 Nov 2026)
+
+**M4 is implemented and partially accepted; demographic viability is outstanding.** Reaching a third generation is not taken as evidence of stability. The biological foundation is not called complete until M4.37's favourable scenario passes. Numbers are from the M4 run on `unity/m4` and are listed in the M4 record in DEV_LOG.
+
+| Status | Tests |
+|---|---|
+| **Met** | M4.1, M4.2, M4.3, M4.8, M4.9, M4.10, M4.11, M4.14, M4.17, M4.18 (divorce clause untested: divorce not built), M4.19, M4.20, M4.22, M4.25, M4.26, M4.30, M4.32, M4.34, M4.35 |
+| **Met as written, not taken as stability** | M4.36: 17/20 seeds reach generation 3, and care beats no care in 20/20 seeds (child deaths 17.5% vs 54.2% per birth), but the populations fall from 120 to 3–28 in 6 years |
+| **Partly met** | M4.28: cap, voluntariness and the static sex-branch scan met; the 1,000-fixture equality test not built. M4.29: arrangements form in ≥ 10 of 20 seeds; the exploitation clause **fails** (1 of 10 ended), kept as an `[Explicit]` target |
+| **Failed** | M4.5 and M4.6: every default seed goes extinct. M4.27 and M4.33 ran and classified every extinction (they pass as written), but the outcome they record is universal extinction |
+| **Amended (proposed, with evidence)** | M4.31 and MATERIAL 20: "no new ids" conflicts with the exact 4/3/3 split of M4.20; proposed wording allows new ids only as split parts of an original lot, lineage conserved |
+| **Deferred** | M4.21 wills to M8; its first-arrival and contest clauses are checked at I-BS |
+| **Not done** | M4.4, M4.7, M4.12, M4.13, M4.15, M4.16, M4.23, M4.24, and the separate immigration-off `Stable_10Generations` arm |
+| **New, not started (D4)** | M4.37–M4.45 |
+
 ### M5. Social memory, gestures, honest barter and gifts
 
 **Goal:** NPCs remember who is who, communicate by gesture, trade honestly in separate hand-overs and give gifts. Lifetime learning extends to social domains.
@@ -422,6 +451,8 @@ Owner decision D3 §5 ([DEV_LOG](DEV_LOG.md#owner-decisions-d3-26-nov-2026-after
 | M5.15 | Inv | **Owner D2, communication decides nothing by itself:**<br>• no exchange, gift or cooperation happens without a preceding `GestureMade` and the receiver's own decision event;<br>• the receiver's response is chosen by its own policy from its own decoded message and beliefs (no shared deal object decides it);<br>• refusal and counter-offer occur naturally (each is non-zero across 20 seeds);<br>• with gestures disabled, barter falls to zero.<br>Compositional: at least request, offer, accept, refuse, cooperate and warn are composed from the gesture parts, not one gesture per transaction | Owner D2 §3 | RT, EM |
 | M5.16 | Inv | **Owner D2, intention vs belief vs action:**<br>• a communicated intention, the receiver's belief about it, and the actual action are three separate records;<br>• a sender can signal an offer and then not deliver (M5.7), and the receiver's belief updates only from what it perceived | Owner D2 §3 | RT |
 | M5.17 | Inv | **Owner D2, recording:** gestures, decoded messages, barter offers and outcomes, gifts and social interactions reach the warehouse with persistent ids, and reconcile exactly with the sim events | Owner D2 §5 | RT |
+| M5.18 | Inv | **Owner D4, dialogue is a developer overlay:** decoded message text and recipient lines are drawn only when the developer overlay is on (default off in the player). With it off, no NPC text is drawn in normal play, and the sim hash is unchanged either way | Owner D4 §8 | PM |
+| M5.19 | Mech | **Owner D4, non-verbal vocabulary:** request, offer, accept, refuse, give, threaten, warn, cooperate and gratitude each map to a reusable body animation (pose, pointing at a person or object, presenting a held object). Every `GestureMade` plays the animation of its composed parts. Each animation follows the gesture event: no animation is played for a transfer that has no preceding gesture and decision | Owner D4 §8 | PM, EM |
 
 ### I-BS. Integration of biology and society (owner D2 §4; gate after M4 and M5 are merged)
 
@@ -440,8 +471,12 @@ Every scenario uses persistent individuals and actual resource movements, and ea
 | I-BS.9 | **D3:** A child observes another individual's behaviour, and a later choice of the child's reflects it. This applies where the milestone supports observation; otherwise it is recorded as deferred to M7 or M11, never faked. |
 | I-BS.10 | **D3:** An individual acquires a productive tool, uses it, and keeps it for later use (see LS4b). |
 | I-BS.11 | **D3:** Population (start + births + arrivals − deaths − departures = end) and goods conservation (C1–C5 of SHARED_CONTRACTS) hold at every day boundary of every I-BS run. |
+| I-BS.12 | **D4:** A caregiver *physically* obtains food (gathers it or withdraws it from a store, within reach) and gives it to a child, who eats it. Every step is a goods event at the right node and within `Reach`. |
+| I-BS.13 | **D4:** A child requests help (a gesture), and another individual, parent or not, decides whether to help from its own beliefs. Both outcomes, help and no help, occur across seeds. |
+| I-BS.14 | **D4:** Household members share resources from a household store, with ownership and permission checked on every withdrawal. |
+| I-BS.15 | **D4:** Knowledge isolation: no NPC acts on a person, good or store it has not perceived or does not remember. A reflection and event check finds no act at a distance, and every person-directed choice names a perceived or remembered person. |
 
-The recording-neutrality check (Full, Summary and Off give the same hash) runs on all seven scenarios.
+The recording-neutrality check (Full, Summary and Off give the same hash) runs on every I-BS scenario. Every I-BS event reaches the warehouse and reconciles exactly (D4 §9).
 
 **Manual:** screenshot of gesture animation (the view animates sim events and decides nothing). **Done means:** NPCs recognise, remember and gesture; an exchange can be cheated; gifts happen; nothing enforces honesty.
 

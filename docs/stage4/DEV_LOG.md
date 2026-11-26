@@ -11,11 +11,11 @@ Rules for this file:
 
 | Item | Value |
 |---|---|
-| Current milestone | **M3** (NPC core with instincts and lifetime learning) in worktree `wt-lrs-m3`, with the D2 acceptance additions (M3.25–M3.29). In parallel, the **L2 Hawk/Bully/Retaliator investigation** is in `wt-lrs-hb` (branch `unity/lab-hb`). M0, M1 and M2 are done and merged (checkpoint 4A complete). The M13a warehouse core is merged for the stage 3 event set. |
+| Current milestone | **M4 merged** into `unity/poc` (implemented, partially accepted, demographic viability outstanding: D4 §7). **M5** finishing on `unity/m5` (`wt-lrs-m5`). Next: merge M5, combined suites and build, the I-BS integration gate, and the D4 demography workstream in parallel. M0–M3, F0 and M13a (with M13a.5) are merged. |
 | Current checkpoint | **4A Simulation laboratory** (M0–M2) |
 | Next functional release | **First playable new game**: M0–M7 and M9 ([conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)) |
 | Owner questions | None open: all 23 answered on 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)) |
-| Last updated | 27 Nov 2026 (docs update for the owner's answers) |
+| Last updated | 26 Nov 2026 (owner decisions D4; M4 merged locally) |
 
 ## Owner directions D2 (26 Nov 2026)
 
@@ -96,6 +96,46 @@ Given after checkpoint 4A. The criteria live in [ACCEPTANCE_TESTS.md](ACCEPTANCE
     - population and resource conservation hold throughout.
     The warehouse captures all of it.
 
+## Owner decisions D4 (26 Nov 2026, after the M4 report)
+
+1. **Population viability.** Decline and extinction must stay possible, but universal extinction under default conditions is not an acceptable long-term baseline.
+   - Never maintain numbers artificially, spawn replacements or guarantee survival.
+   - Find the causes with controlled demographic experiments: **favourable**, **balanced** and **hostile** ecologies, many seeds, several generations.
+   - Favourable must show sustainable multigenerational populations; balanced allows a variety of outcomes; hostile keeps collapse possible.
+   - Vary one parameter at a time where possible (fertility, mortality, pairing, founder ages, resources, density).
+2. **Relationships and reproduction.** Never fix reproduction by restricting same-sex partnerships or forcing people out of childless relationships.
+   - The ontology separates romantic partnership, reproductive relationship, biological parenthood, caregiving, household membership and economic partnership. They may overlap; they are not the same thing.
+   - Individual preferences cover companionship, partners, reproduction and children. An adult may seek reproduction outside their household arrangement, subject to voluntary adult participation and their relationship commitments.
+   - Adoption, fostering and shared care are supported. Concurrent-relationship architecture may come forward; its mechanics may grow incrementally. No single ideal family structure is hard-coded.
+3. **Fertility.** Investigate parameters giving about 3–4 children per woman under favourable conditions: an experimental starting point, not an individual target. Births depend on age, health, preferences, relationships, resources and circumstances.
+   - Measure completed fertility by birth cohort, reproductive opportunities, child mortality, age-specific mortality and offspring surviving to adulthood. Keep completed and incomplete (censored) fertility apart.
+4. **Founders.** Configurable mixed-age founders with overlapping generations: established households, dependent children with caregivers, young adults, mature adults, elders. No synchronised founder deaths.
+   - An established mixed-age band becomes the **preferred default**; the unrelated young-adult band stays as a controlled scenario.
+5. **Ecology.** Investigate why larger maps starve: production, regeneration, consumption, spoilage, accessibility, travel, density, foraging productivity, household storage.
+   - Separate real scarcity from poor distribution, poor exploration and scaling faults. Never just add food until starvation disappears; keep meaningful carrying capacity, depletion, and room for cooperation and sustainable management.
+6. **Care.** Keep the mechanism (17.5% vs 54.2% child deaths per birth). Test parents, grandparents, adoptive carers, shared households and informal communal care.
+   - Care costs real time and resources and gives real benefits. Free-riding and exploitation stay possible and emerge from individual incentives.
+7. **M4 status:** implemented and **partially accepted, demographic viability outstanding**.
+   - Reaching a third generation is not evidence of stability.
+   - Every uncompleted, failed, amended or deferred test is listed explicitly. M4.29 and the rest stay visible; wills stay in M8. Nothing incomplete is marked passed.
+8. **M5 presentation.** The raised arm, decoded text and recipient lines are acceptable for development only.
+   - Written NPC dialogue is not normal gameplay: the text and lines become **optional developer overlays**.
+   - Normal presentation will use non-verbal animation, pointing, posture, expression and the physical presentation of objects. Establish a small reusable vocabulary: request, offer, accept, refuse, give, threaten, warn, cooperate, gratitude.
+   - Function before polish. NPCs perceive, interpret and respond independently; never animate a transaction that was already decided.
+9. **Integration (I-BS):** complete the scenarios. Demonstrate in particular:
+   - a carer physically obtaining food and giving it to a child;
+   - a child requesting help, and another person deciding whether to give it;
+   - household members sharing resources;
+   - related and unrelated people cooperating;
+   - goods exchanged through communication;
+   - learning about specific partners;
+   - death and inheritance moving actual possessions.
+   Verify interaction ranges, ownership, possession, conservation and knowledge isolation, with the warehouse capturing and reconciling the events.
+10. **Demographic reports (headless, multi-seed):** population over time; births and deaths; causes of death; age structure; completed fertility by cohort; child mortality; caregiving activity; dependency ratios; household size and composition; food availability and consumption; density and carrying capacity; survival across generations.
+11. **Sequencing.** Finish the M4/M5 integration and a new playable Windows build, then continue towards M6 once stable.
+    - The demographic investigation may run as a separate parallel workstream where safe. It does not block development, but the biological foundation is not called complete until a viable favourable-population scenario exists.
+    - Keep every determinism, learning, communication, economic and analytical requirement. Continue autonomously with documented, reversible defaults.
+
 ## Completed milestones
 
 | Milestone | Checkpoint | Completed | Commit | Notes |
@@ -173,6 +213,9 @@ Every temporary compatibility mechanism is listed here with its removal mileston
 | Stage 3 mode (`GameSetup.Population` off) and its tests | Keeps the stage 3 game playable and its tests meaningful while NPC systems arrive (G6.1, G6.4) | M14 (owner decides whether to retire it) |
 | Walkers (carriers, builders, harvesters) beside NPCs | The stage 3 economy runs until NPC labour passes the same tests | M6 |
 | `MilUnit` spawning | Soldiers are spawned units until they are NPCs | M9 |
+| Executor delivery (M4, O4): an estate's goods move to an heir's node in one step | Heirs cannot yet walk to collect an estate as a decision (no Sense seam for bins) | When bin perception lands (M4 contract amendment 2; I-BS or M6) |
+| Person-directed candidates target the actor's own node, with the person's handle as id (M4, M5) | `Thinker.Known` does not yet accept people | The contract amendment for person targets (at the M4 + M5 merge) |
+| Genome instinct gains in `Npc.Traits[12..15]` | `SelfView` does not carry them yet | The `SelfView` amendment (at the M4 + M5 merge) |
 | `AiBrain` behind the `IFactionPolicy` adapter, unchanged. It still reads true state internally, **including a Q21 breach**: `AiTrader` reads other factions' stock and needs. `AiTradeJudge` answers offers inside the trade system, outside the seam. It is the only temporary entry in the policy reflection test. | Seam that preserves behaviour (M1.4) | M14 (rewritten for incentives, reading only the view) |
 | Saves don't record the policy assignment; a loaded game gets its policies from its host | Not built in M1 | M3 (when NPC policies are added) |
 | Non-HUD Unity code (world views, models, boot, menu, tutorial cards) still reads the sim directly | Outside the M1 gate | M14 |
@@ -595,3 +638,32 @@ Test changes:
 - Test helpers gained richer results (`DelayedRewardRun`, `GeneraliseDetail`, `NurtureProbe`, a learning mode for `Moves`); the existing tests use them unchanged.
 
 Test runs (this branch, after the change): `dotnet test DotNet -c Release`: God.Sim.Tests 402/402, God.Runner.Tests 154/154 (baseline at `77fe38e`: 402/402 and 144/144; the 10 new tests are the 5 revised criteria and their 5 controls). The `M3-target` category: 5 run, 5 fail as expected (L5 0 of 36 seeds with a learned place, L2b 43.7% > 25.3%, LS3 1 of 45, LS4 27 of 45, LS4 conjunction 16 of 40). The `M3-evidence` printouts ran. Unity EditMode and PlayMode were not run (no Unity code changed).
+
+## M4 record (branch `unity/m4`, 26 Nov 2026)
+
+Merged into `unity/poc` locally; push after the combined M4 + M5 suites pass. Commits: `5ece45b` sim, `a5aa4a0` EditMode tests and fixtures, `ed24635` warehouse (migration 0005), `0523717` runner tests, scenarios and sweeps, `07fa744` household tab and design docs, `17962f6` fertility diagnostic, `df162e5` meta files, `030552d` PlayMode pick test made robust.
+
+**What ran (the M4 agent):** `dotnet test` Sim 462/462 and Runner 171/171; Unity EditMode 466/466 and PlayMode 78/78 (first run 77/78, a click test that read a figure's old position; fixed); Windows build; stage 3 smoke `4bd54b271857a803` at tick 20161; population smoke `3b85f519b934cfad`, invariants ok. **What I re-ran:** the 11 tests of `M4LifeCycleTests` and `M4WarehouseTests` (neutrality pin, determinism, saves with open estates, warehouse reconciliation and recording neutrality): 11/11.
+
+**Neutrality:** `Households.Enabled = 0` reproduces F0 exactly on `band_6x20`, seeds 1–3, 10 days (`355435285f49d02c`, `8619778f5c1029ae`, `ed46c61909f118ea`).
+
+**Status:** implemented and partially accepted, demographic viability outstanding. The full status table is in [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) under "M4 acceptance status".
+
+**Demographic finding (classified, not tuned):**
+- 15 years: `6x20` 20/20 extinct (per run 67.7 births, 77 starvation deaths, 110 old-age deaths); `6x10` 10/10 extinct; `6x40` 10/10 extinct, starvation-dominated (242 per run).
+- Sweep (33 arms × 3 seeds × 10 years): almost all extinct; only the `LifeScale 50` arms survive, with 2–3 people.
+- `6x40` and `LifeScale 50`: a meaningful outcome, starvation beyond capacity (K ≈ 2N from M3).
+- `6x10` and `6x20`: a bad baseline. Completed fertility is about 1.2 per woman. About 48% of fertile woman-days are single (about 20%) or in a same-sex partnership (about 28%); a partnership is the only route to reproduction; the founding cohort ages out together.
+- Owner D4 answers this: no restriction of partnerships; separate the relationship kinds; mixed-age founders; ecology experiments (M4.37–M4.45).
+
+**Contract amendments proposed by M4** (to settle in SHARED_CONTRACTS at the integration merge):
+1. `Thinker.Known` accepts people in `sc.People`. Workaround: person-directed candidates target the actor's own node with the person's handle as id.
+2. A Sense seam for bins (store contents, estate goods). Until then store use is offered blind and heir collection is a reflex, not a decision.
+3. `SelfView` carries the genome's instinct gains. Workaround: `Npc.Traits[12..15]`; M3 verbs get no gain.
+4. The F0 `Consumed` mapper writes a `dim_person` row for npc 0; M3 tests count `npc_id > 0`.
+5. M3 tests edited by M4, each marked in code: L7 runs with M4 off; hash-part counts; warehouse person counts, grain count, schema version 5, the time-use sum.
+6. Executor delivery (O4) is a temporary cross-node move: added to Temporary mechanisms.
+
+**Calibrations recorded in the docs ("M4 as built" in POPULATION, HOUSEHOLDS_AND_KINSHIP, BIOLOGICAL_INHERITANCE, MATERIAL_INHERITANCE):** Health dominance 1000, the noise half-widths, disease severity scale 400.
+
+**Not built in M4:** emigration; divorce with a store split; expulsion; norm voting; teaching and `ActivityObservable`; elder strength and speed decline; `GeneticsYearly` and the selection metrics; wills (M8); store and estate perception as decisions; learned begging intensity; the 200-year long run.
