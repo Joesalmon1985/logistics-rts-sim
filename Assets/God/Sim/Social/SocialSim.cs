@@ -464,6 +464,8 @@ namespace God.Sim.Social
                     continue;
                 }
                 if (d.MyGiven == 0 && d.TheirGiven == 0 && tick - d.LastTick > tu.DealAbandonTicks) { d.Status = DealStatus.Abandoned; continue; }
+                // they handed over and I kept it all this while: in my own records the deal is over (I took it)
+                if (!iDone && d.TheirGiven > 0 && tick - d.LastTick > tu.DealTimeoutTicks) { d.Status = DealStatus.Abandoned; continue; }
                 if (iDone && theyDone) d.Status = DealStatus.Done;
             }
         }
@@ -714,6 +716,7 @@ namespace God.Sim.Social
             if (!r.Ok) return Frustrate(s, npc);
             int tick = (int)s.Tick;
             d.MyGiven = (byte)Math.Min(255, d.MyGiven + count); d.LastTick = tick;
+            if (d.Partner == 0) d.Partner = target.Id; // close enough to hand over: it knows whom it gave to
             var t = s.Social.Trace(d.DealId);
             int step = 1;
             if (t != null)
@@ -762,6 +765,33 @@ namespace God.Sim.Social
             SocialMemory.BarterCompleted(s.Tuning.Social, ref m.Rel[ri], (int)s.Tick);
             End(ref c, m.Rel[ri]);
             Changed(ev, npc, c, SocialCause.Barter, d.DealId);
+        }
+
+        /// <summary>
+        /// Test fixture (<c>SocialFixtures.Meet</c>): <paramref name="giver"/> gives one of its own lots to an adjacent
+        /// <paramref name="receiver"/> as a gift, through the same path as a decided gift (a gift deal, one
+        /// <c>Goods.Move</c> HandOver, <see cref="GiftGiven"/>, both minds' memories). Not called by the sim.
+        /// </summary>
+        public static bool GiftNow(GodState s, EventBuffer ev, Npc giver, Npc receiver, Ware ware, int count)
+        {
+            var m = MindOf(giver);
+            if (m == null) return false;
+            int tick = (int)s.Tick;
+            int dealId = s.Social.NextDealId++;
+            int di = NewDealSlot(m, tick);
+            m.Deals[di] = new DealMemory
+            {
+                DealId = dealId, Partner = receiver.Id, Handle = receiver.Id, OpenedTick = tick, LastTick = tick, Kind = DealKind.Gift,
+                Status = DealStatus.Agreed, IProposed = true, MyWare = ware, MyCount = (byte)count,
+            };
+            OpenTrace(s, ev, giver, receiver.Id, dealId, DealKind.Gift, 0, ware, count, Ware.None, 0);
+            var saved = giver.Action;
+            giver.Action = new NpcAction { Verb = SocialVerb.Give, TargetKind = IntentTarget.None, TargetId = receiver.Id, TargetNode = receiver.Node, Since = s.Tick };
+            m.Act = new SocialAct { Verb = SocialVerb.Give, Handle = receiver.Id, TargetAs = receiver.Id, DealId = dealId, Ware = ware, Count = count, StartTick = tick };
+            TryAct(s, ev, giver, Day(s));
+            bool ok = m.FindDeal(dealId) >= 0 && m.Deals[m.FindDeal(dealId)].MyGiven >= count;
+            giver.Action = saved;
+            return ok;
         }
 
         // ================================================================ a hand-over, as the receiver perceives it

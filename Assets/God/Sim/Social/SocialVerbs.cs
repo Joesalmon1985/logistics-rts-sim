@@ -55,8 +55,8 @@ namespace God.Sim.Social
         /// <summary>
         /// Innate priors (starting points only; learning outweighs them): answer a good offer with acceptance and a poor one
         /// with refusal or a counter-offer; hand over one's side of an agreement; give to someone who says it needs food;
-        /// promise help to someone who asks for it; ask for food when hungry with none known; warn others of an enemy; flee
-        /// when warned.
+        /// promise help to someone who asks for it; ask for food when hungry with none known (below searching for it, M3's
+        /// explore prior 300: asking is a starting option, what it brings is learned); warn others of an enemy; flee when warned.
         /// </summary>
         public static ReadOnlyArray<Instinct> Instincts()
         {
@@ -74,7 +74,7 @@ namespace God.Sim.Social
                 new Instinct(Feature.MsgAct((int)GestureAct.NeedHelp), 0, SocialVerb.SayCooperate, 250),
                 new Instinct(Feature.MsgAct((int)GestureAct.NeedHelp), 0, SocialVerb.SayRefuse, 100),
                 new Instinct(Feature.MsgAct((int)GestureAct.Warn), 0, Verb.Flee, 300),
-                new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Situation(SituationKind.NoFoodKnown), SocialVerb.SayNeedFood, 300),
+                new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Situation(SituationKind.NoFoodKnown), SocialVerb.SayNeedFood, 200),
                 new Instinct(Feature.DriveActive(Drive.Hunger), 0, SocialVerb.SayNeedFood, 50),
                 new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Situation(SituationKind.NoFoodKnown), SocialVerb.Seek, 150),
                 new Instinct(Feature.State(OfferState.Good), 0, SocialVerb.SayOffer, 150),

@@ -62,6 +62,18 @@ namespace God.Sim.Social
             return -1;
         }
 
+        /// <summary>The carry weight it has free (its own view of its carry).</summary>
+        private static int Free(ThinkScratch sc)
+        {
+            int w = 0;
+            for (int i = 0; i < sc.CarryCount; i++) if (!sc.Carry[i].Empty) w += PopulationModule.Weight(sc.Carry[i].Ware) * sc.Carry[i].Count;
+            return sc.Tuning.CarryWeight - w;
+        }
+
+        /// <summary>Room to take <paramref name="get"/> x g after giving <paramref name="give"/> x q (both ways at once at worst).</summary>
+        private static bool RoomFor(ThinkScratch sc, Ware get, int g, Ware give, int q) =>
+            get == Ware.None || Free(sc) + (give == Ware.None ? 0 : PopulationModule.Weight(give) * q) >= PopulationModule.Weight(get) * g;
+
         private static int Trust(SocialMind m, int other) { int i = m.Find(other); return i < 0 ? 0 : m.Rel[i].Trust; }
 
         private static int Quality(int surplus) => surplus > 30 ? OfferState.Good : surplus >= -30 ? OfferState.Fair : OfferState.Poor;
@@ -83,6 +95,7 @@ namespace God.Sim.Social
                 if (w == except) continue;
                 int h = Held(sc, w);
                 if (w == Ware.Log && !sc.Self.HasBed) continue; // a log is for its own hut first
+                if (w == Ware.Log && h > 0 && best == Ware.None) { best = w; most = Math.Max(most, h); continue; } // with a bed, any log is spare
                 if (h > most) { most = h; best = w; }
             }
             return best;
@@ -200,15 +213,15 @@ namespace God.Sim.Social
             int rounds = di >= 0 ? m.Deals[di].Rounds : 1;
             if (give == Ware.None)
             {
-                // an offered gift: take it or not
-                int s = get == Ware.None ? 0 : Gain(sc, m, get, g);
+                // an offered gift: take it or not (no room: only refuse)
+                int s = get == Ware.None || !RoomFor(sc, get, g, Ware.None, 0) ? -100 : Gain(sc, m, get, g);
                 var a = new PendingCand { Verb = SocialVerb.SayAccept, DealId = msg.DealId, AnswersMessage = msg.MessageId, Surplus = s };
                 Add(sc, m, ref a, pi, act, Quality(s), get);
                 var r = new PendingCand { Verb = SocialVerb.SayRefuse, DealId = msg.DealId, AnswersMessage = msg.MessageId, Surplus = -s };
                 Add(sc, m, ref r, pi, act, Quality(s), get);
                 return;
             }
-            if (Held(sc, give) >= q && get != Ware.None)
+            if (Held(sc, give) >= q && get != Ware.None && RoomFor(sc, get, g, give, q))
             {
                 int surplus = Gain(sc, m, get, g) - Loss(sc, m, give, q);
                 var a = new PendingCand { Verb = SocialVerb.SayAccept, DealId = msg.DealId, AnswersMessage = msg.MessageId, Surplus = surplus };
@@ -252,7 +265,7 @@ namespace God.Sim.Social
             if (msg.Topic.Kind != TopicKind.Ware || msg.Counter.Kind != TopicKind.Ware) return false;
             var give = (Ware)msg.Topic.Id; int q = Math.Max(1, (int)msg.Quantity);
             var get = (Ware)msg.Counter.Id; int g = Math.Max(1, msg.Counter.Sub);
-            if (Held(sc, give) < q) return false;
+            if (Held(sc, give) < q || !RoomFor(sc, get, g, give, q)) return false;
             int surplus = Gain(sc, m, get, g) - Loss(sc, m, give, q);
             if (surplus < -30) return false;
             var a = new PendingCand { Verb = SocialVerb.SayAccept, DealId = msg.DealId, AnswersMessage = msg.MessageId, Surplus = surplus };
@@ -317,22 +330,17 @@ namespace God.Sim.Social
             int ttl = m.CommsTuning != null ? m.CommsTuning.MessageTtlTicks : 60;
             bool hungry = self.Hunger >= tu.BandHigh;
             // ask for food: hungry, carrying none, someone in sight visibly carries food
-            if (hungry && !self.CarryFood)
+            if (hungry && !self.CarryFood && !(m.LastAskMsg != 0 && self.Tick - m.LastAskTick < ttl))
             {
-                int best = -1, bestScore = int.MinValue;
-                for (int i = 0; i < sc.PeopleCount; i++)
+                // whom to ask is the policy's choice: the two nearest who visibly carry food, each a candidate
+                int added = 0;
+                for (int i = 0; i < sc.PeopleCount && added < 2; i++)
                 {
                     var p = sc.People[i];
                     if (p.Asleep || (p.CarryMask & CarryMask.Food) == 0) continue;
-                    if (p.As != 0 && p.As == m.LastAskTarget && self.Tick - m.LastAskTick < ttl) continue; // asked a moment ago
-                    int ri = m.Find(p.As);
-                    int score = (ri >= 0 ? m.Rel[ri].Trust + m.Rel[ri].Affection : 0) - p.Dist;
-                    if (score > bestScore) { bestScore = score; best = i; }
-                }
-                if (best >= 0)
-                {
                     var c = new PendingCand { Verb = SocialVerb.SayNeedFood, Act = GestureAct.NeedFood };
-                    Add(sc, m, ref c, best, 0, 0, Ware.None);
+                    Add(sc, m, ref c, i, 0, 0, Ware.None);
+                    added++;
                 }
             }
             if (child) return;
@@ -398,8 +406,10 @@ namespace God.Sim.Social
                     }
                 }
             }
-            // seek a remembered trading partner: hungry, no food and nobody with food in sight, but goods to trade
-            if (hungry && !self.CarryFood && Surplus(sc, Ware.None, 1) != Ware.None)
+            // seek someone remembered: hungry, no food and nobody with food in sight; a trading partner (with goods to
+            // trade), or someone who gave to it or a friend (to ask)
+            bool goods = Surplus(sc, Ware.None, 1) != Ware.None;
+            if (hungry && !self.CarryFood)
             {
                 bool foodInSight = false;
                 for (int i = 0; i < sc.PeopleCount; i++) if ((sc.People[i].CarryMask & CarryMask.Food) != 0) { foodInSight = true; break; }
@@ -409,7 +419,8 @@ namespace God.Sim.Social
                     for (int r = 0; r < m.RelCount; r++)
                     {
                         var rel = m.Rel[r];
-                        if (rel.LastNode < 0 || rel.DealsDone == 0 && rel.GiftsIn == 0) continue;
+                        bool friend = rel.GiftsIn > 0 || SocialMemory.ClassOf(m, rel) == Cognition.NpcRelClass.Friend;
+                        if (rel.LastNode < 0 || !(goods && rel.DealsDone > 0 || friend)) continue;
                         int d = sc.Grid.Distance(self.Node, rel.LastNode);
                         if (d <= 1 || d > tu.RecallNodes) continue;
                         bool seen = false;
@@ -453,8 +464,12 @@ namespace God.Sim.Social
         private static void Offer(ThinkScratch sc, SocialMind m)
         {
             var self = sc.Self;
-            // one proposal at a time: an offer of mine still waiting for its answer
-            for (int k = 0; k < m.DealCount; k++) if (m.Deals[k].Status == DealStatus.Proposed && m.Deals[k].IProposed) return;
+            // one deal at a time: an offer of mine still waiting for its answer, or an agreement I have not yet kept
+            for (int k = 0; k < m.DealCount; k++)
+            {
+                var d = m.Deals[k];
+                if (d.Status == DealStatus.Proposed && d.IProposed || d.Status == DealStatus.Agreed && d.MyGiven < d.MyCount) return;
+            }
             int best = -1, bestTrust = int.MinValue;
             Ware bestWant = Ware.None, bestGive = Ware.None; int bestK = 0, bestSurplus = 0; bool bestKnown = false;
             for (int i = 0; i < sc.PeopleCount; i++)
@@ -470,7 +485,7 @@ namespace God.Sim.Social
                         if (g > wantGain) { wantGain = g; want = f; }
                     }
                 if (want == Ware.None && !self.HasBed && (p.CarryMask & CarryMask.Raw) != 0 && Held(sc, Ware.Log) == 0) { want = Ware.Log; wantGain = Gain(sc, m, Ware.Log, 1); }
-                if (want == Ware.None || wantGain < MinWant) continue;
+                if (want == Ware.None || wantGain < MinWant || Free(sc) < PopulationModule.Weight(want)) continue;
                 var give = Surplus(sc, want, 2);
                 if (give == Ware.None) continue;
                 int k = GiveCount(sc, m, give, wantGain);

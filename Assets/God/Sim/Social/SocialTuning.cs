@@ -83,11 +83,11 @@ namespace God.Sim.Social
     public sealed class SocialLearnTuning : IOmitWhenDefault
     {
         /// <summary>A deal partner took my goods and did not hand over its side (the agreement broken, NPC_LEARNING 4.4 "promise to me broken").</summary>
-        public int Betrayed = -400;
+        public int Betrayed = -600;
         /// <summary>My offer or request was refused (frustration of a social act).</summary>
         public int Refused = -50;
-        /// <summary>My addressed message expired with no answer.</summary>
-        public int Ignored = -20;
+        /// <summary>My addressed message expired with no answer: a request that failed, valued as a refusal (NPC_LEARNING 4.4 frustration, -50).</summary>
+        public int Ignored = -50;
         /// <summary>A person I gave to gave to me later (reciprocity episode, kind 9).</summary>
         public int Reciprocated = 300;
     }
