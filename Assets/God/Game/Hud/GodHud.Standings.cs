@@ -23,13 +23,13 @@ namespace God.Game
         /// <summary>One row per faction in the game, in rank order (the sim's standings), with the war lines.</summary>
         public List<StandingRow> StandingRows()
         {
-            var s = Sim.State;
+            var d = View.Diplomacy;
             var rows = new List<StandingRow>();
-            foreach (var st in FactionRules.Standings(s))
+            foreach (var st in d.Standings())
                 rows.Add(new StandingRow
                 {
                     Faction = st.Faction, Vp = st.VictoryPoints, Hqs = st.Hqs, Citadels = st.Citadels, Eliminated = st.Eliminated,
-                    AtWarWith = s.Factions.Enemies(st.Faction),
+                    AtWarWith = d.Enemies(st.Faction),
                 });
             return rows;
         }
@@ -110,12 +110,12 @@ namespace God.Game
         private void DrawWatchJumps(HudStyle st, float x, float y, bool repaint)
         {
             var wc = Boot.WatchCam;
-            int n = Sim.State.FactionCount;
+            int n = View.FactionCount;
             for (int i = 0; i < n; i++)
             {
                 var f = (Faction)i;
                 var r = new Rect(x + i * 40f, y + 4f, 36f, 38f);
-                bool out_ = Sim.State.Factions.IsEliminated(f);
+                bool out_ = View.Diplomacy.IsEliminated(f);
                 GUI.enabled = HudOn && (!out_);
                 if (GUI.Button(r, new GUIContent((i + 1).ToString(), "Fly to " + FactionLook.Name(f) + "'s HQ (key " + (i + 1) + ")"), st.Tile) && wc != null) wc.JumpToFaction(f);
                 GUI.enabled = HudOn;

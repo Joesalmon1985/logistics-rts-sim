@@ -58,13 +58,29 @@ namespace God.Game
             GUI.matrix = m;
         }
 
+        /// <summary>
+        /// The first corner where a second HQ may stand that touches a hex of <paramref name="terrain"/>, or -1 (the HUD's copy of
+        /// <see cref="TutorialIsland.SecondHqCornerTouching"/>, read through the view and the command gate).
+        /// </summary>
+        private int SecondHqCornerTouching(God.Sim.Terrain terrain)
+        {
+            var map = View.Map; var topo = map.Topology;
+            for (int c = 0; c < topo.CornerCount; c++)
+            {
+                bool touches = false;
+                foreach (int hex in topo.VertexHexes(c)) if (map.HexTerrain(hex) == terrain) touches = true;
+                if (touches && Gate.Check(new PlaceHq(Me, c)).Ok) return c;
+            }
+            return -1;
+        }
+
         /// <summary>The ring on the map spot of a step (your HQ, or the corner a second HQ can take beside fields).</summary>
         private void DrawTutorialPointers(float vw, float vh, bool repaint)
         {
             if (!repaint) return;
             var step = PointedStep;
             if (step == null || step.Spot == TutorialSpot.None) return;
-            var t = Sim.State.Territory; var g = t.Grid;
+            var t = View.Map; var g = t.Grid;
             int node = -1;
             if (step.Spot == TutorialSpot.Hq)
             {
@@ -77,7 +93,7 @@ namespace God.Game
                 if (_spotStep != idx || _spotCorner < 0)
                 {
                     _spotStep = idx;
-                    _spotCorner = TutorialIsland.SecondHqCornerTouching(Sim, Me, God.Sim.Terrain.Fields);
+                    _spotCorner = SecondHqCornerTouching(God.Sim.Terrain.Fields);
                 }
                 if (_spotCorner >= 0) node = g.CornerNode(_spotCorner);
             }

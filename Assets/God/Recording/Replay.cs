@@ -71,13 +71,14 @@ namespace God.Recording
         }
     }
 
-    public enum ReplayEntryKind { Command = 0, Hold = 1, Checkpoint = 2, End = 3 }
+    /// <summary>The kinds of replay line. (1 was M0's "hold" line for a paused game's held tick, removed at M1: a paused game now steps ordinary ticks.)</summary>
+    public enum ReplayEntryKind { Command = 0, Checkpoint = 2, End = 3 }
 
-    /// <summary>One line after the header: an external command, a held tick, a checkpoint or the end record.</summary>
+    /// <summary>One line after the header: an external command, a checkpoint or the end record.</summary>
     public sealed class ReplayEntry
     {
         public ReplayEntryKind Kind;
-        /// <summary>The tick the command applies at (submitted before the step that reaches it), the held tick, the checkpoint tick or the end tick.</summary>
+        /// <summary>The tick the command applies at (submitted before the step that reaches it), the checkpoint tick or the end tick.</summary>
         public long Tick;
         public string CommandType;
         public string CommandJson;
@@ -121,8 +122,6 @@ namespace God.Recording
                 ["o"] = origin ?? "external",
             });
         }
-
-        public void Hold(long tick) => Line(new JObject { ["t"] = tick, ["hold"] = "ai" });
 
         public void Checkpoint(long tick, ulong hash, ulong[] parts)
         {
@@ -186,7 +185,8 @@ namespace God.Recording
             long t = (long?)o["t"] ?? throw new ReplayException("A replay line has no tick.");
             if (o["c"] is JObject c)
                 return new ReplayEntry { Kind = ReplayEntryKind.Command, Tick = t, CommandType = (string)c["type"], CommandJson = (string)c["json"], Origin = (string)o["o"] };
-            if (o["hold"] != null) return new ReplayEntry { Kind = ReplayEntryKind.Hold, Tick = t };
+            if (o["hold"] != null)
+                throw new ReplayException("The replay has a 'hold' line (tick " + t + "): held ticks were removed at M1 (a paused game now steps ordinary ticks). Record the game again.");
             if (o["h"] != null)
             {
                 var parts = new List<ulong>();

@@ -52,12 +52,20 @@ namespace God.Game.Tests
             Time.captureFramerate = 30;
             while (s.Tick < 1500) yield return null; // brains busy, commands in flight
             boot.Running = false;
-            for (int i = 0; i < 3; i++) yield return null; // the commands queued before the pause apply
+            yield return null;
             long tick = s.Tick;
+            int queued = boot.Sim.PendingCommands.Count; // the brains' commands of the last tick wait for the next one
+            ulong hash = boot.Sim.StateHash();
             for (int i = 0; i < 120; i++) yield return null;
             Time.captureFramerate = 0;
-            Assert.AreEqual(tick, s.Tick, "a paused game stays paused: the brains send nothing while held");
-            Assert.AreEqual(0, boot.Sim.PendingCommands.Count);
+            // M1: no held ticks. A paused game takes no tick at all unless a person sends a command.
+            Assert.AreEqual(tick, s.Tick, "a paused game stays paused: no tick passes without a person's command");
+            Assert.AreEqual(queued, boot.Sim.PendingCommands.Count, "nothing is sent or applied while paused");
+            Assert.AreEqual(hash, boot.Sim.StateHash(), "nothing changes while paused");
+            // A person's command takes exactly one ordinary tick (applying it and whatever the brains queued before).
+            bool sent = boot.Sim.Submit(new DeclareWar(Faction.F0, Faction.F5)).Ok;
+            for (int i = 0; i < 5; i++) yield return null;
+            Assert.AreEqual(sent ? tick + 1 : tick, s.Tick, "exactly one tick for an accepted command");
         }
 
         [UnityTest]
