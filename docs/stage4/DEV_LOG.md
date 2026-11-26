@@ -216,6 +216,27 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
   - **No bug found.** L2's hash is unchanged (`815ddf13e8116bc9`). Added `lab invade` and `lab sweep`.
   - **Not established:** Gale & Eaves (1975) was paywalled and not read.
   - **Open design question for the owner:** should island contests charge retaliation a first-blow cost? The default is no change, per D2 ("don't change the model to match the book").
+- **F0 merged, 26 Nov 2026** (`unity/f0`: `3eaca7e`, `8b9a132`, `286f9c5`, `d9f4000`, `34d4e4f`).
+  - **What it adds:** the shared M4/M5 seams, without changing behaviour:
+    - the goods API, with lot owners, bins, `ItemMoved` and `OwnershipChanged`; M3's goods sites rewritten onto it;
+    - `Reach` (Enter 0, Touch 1, Gather 2, HandOver 1, Store 1), with out-of-reach moves refused;
+    - Equipped = a tool lot in a carry;
+    - a single permission query, `Permits.Believed` (not enforced);
+    - visible holdings, kin and social slots, seeing people, and message data;
+    - the extension dispatch with M4 and M5 stub owners;
+    - save v4 and warehouse schema v4;
+    - `fact_decision`: each `DecisionMade` equals the intent started, and Full recording gives the same hash as Off.
+    It folds in D3 and WORLD_ONTOLOGY A1–A10. The deviations are in SHARED_CONTRACTS rows 12.15–12.30. Lot episodes use kind 64, not 16, to keep the learning hashes; migrations are F0 0004, M4 0005, M5 0006.
+  - **Neutrality, agent's check:** on band_6x20, seeds 1–3, 30 days, every hash part except population matched `cde7e10` at every day boundary, as did decisions, meals, deaths and person-day rows.
+  - **Neutrality, my check:** I re-ran the twin experiment at `cde7e10` and after the merge. The numbers are identical (A 18.1%, B 52.2%, 42/50 pairs, 39.0% differing).
+  - **Results:**
+    - the agent's runs: Unity EditMode 417/417, PlayMode 78/78, build OK, stage 3 smoke `4bd54b271857a803` at tick 20161, population smoke OK at `4af477820883faaa`;
+    - goods conserved (C1–C6) for 30 days and through save and load, with 5,038 lot ids traced;
+    - after merging into `unity/poc`, dotnet 429/429 and 157/157.
+  - **Not done:**
+    - the neutrality comparison is a scratch tool, not a pinned test;
+    - `Affordances.Of` is a stub;
+    - the estate clauses of C4 and C5 are left to M4.
 - **D3 §7 first-blow variant: done, 26 Nov 2026** (`unity/lab-firstblow`: `16ec15b`, `b588920`, `249355b`). See the [investigation, §11](research/HAWK_BULLY_RETALIATOR_INVESTIGATION.md).
   - **The variant:** an optional first-blow cost, `ContestRules.FirstBlow` (`--rule FirstBlow=N` on `lab invade`/`lab sweep`). The default is 0, so L2 and its hash `815ddf13e8116bc9` are unchanged.
   - **Definition:** a side that displays on turn 1 against an escalation pays the cost once. Dove and Retaliator pay against Hawk and Bully.
