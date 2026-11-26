@@ -51,6 +51,11 @@ namespace God.Recording
         public int FactionCount = FactionInfo.Max;
         public int Human = GameSetup.NoHuman;
         public bool Tutorial;
+        /// <summary>M3: the game has a population (founders, wild food, huts) and how many founders each faction gets.</summary>
+        public bool Population;
+        public int StartNpcsPerFaction = 20;
+        /// <summary>Stop at a day end once fewer people than this are alive (0 = never).</summary>
+        public long PopulationBelow;
         public int LifeScale = SimCalendar.DefaultLifeScale;
         public int TicksPerDay = SimCalendar.DefaultTicksPerDay;
         public int DaysPerYear = SimCalendar.DefaultDaysPerYear;
@@ -105,7 +110,7 @@ namespace God.Recording
         {
             var g = new GameSetup(seed, Human, FactionCount)
             {
-                Tutorial = Tutorial, LifeScale = LifeScale, TicksPerDay = TicksPerDay, DaysPerYear = DaysPerYear,
+                Tutorial = Tutorial, Population = Population, StartNpcsPerFaction = StartNpcsPerFaction, LifeScale = LifeScale, TicksPerDay = TicksPerDay, DaysPerYear = DaysPerYear,
                 DecayFollowsLifeScale = DecayFollowsLifeScale, Disease = Disease, FullInformation = FullInformation,
                 Victory = Victory.Select(v => new VictorySpec(v.Kind, v.Target)).ToList(),
             };
@@ -218,8 +223,9 @@ namespace God.Recording
                 sc.Human = (int)Int(s, "human", "setup.", sc.Human);
                 if (sc.Human != GameSetup.NoHuman && (sc.Human < 0 || sc.Human >= sc.FactionCount)) throw new ScenarioException("setup.human must be -1 or a faction of the game");
                 sc.Tutorial = Bool(s, "tutorial", "setup.", false);
-                if (Bool(s, "population", "setup.", false)) throw new ScenarioException("setup.population is not implemented until M3");
-                if (Int(s, "startNpcsPerFaction", "setup.", 0) != 0) throw new ScenarioException("setup.startNpcsPerFaction is not implemented until M3");
+                sc.Population = Bool(s, "population", "setup.", false);
+                sc.StartNpcsPerFaction = (int)Int(s, "startNpcsPerFaction", "setup.", sc.StartNpcsPerFaction);
+                if (sc.StartNpcsPerFaction < 0 || sc.StartNpcsPerFaction > 500) throw new ScenarioException("setup.startNpcsPerFaction must be 0 to 500");
                 sc.LifeScale = (int)Int(s, "lifeScale", "setup.", sc.LifeScale);
                 sc.TicksPerDay = (int)Int(s, "ticksPerDay", "setup.", sc.TicksPerDay);
                 sc.DaysPerYear = (int)Int(s, "daysPerYear", "setup.", sc.DaysPerYear);
@@ -339,7 +345,8 @@ namespace God.Recording
                 sc.MaxTicks = Int(s, "maxTicks", "stop.", 0); sc.MaxDays = Int(s, "maxDays", "stop.", 0); sc.MaxYears = Int(s, "maxYears", "stop.", 0);
                 if (sc.MaxTicks < 0 || sc.MaxDays < 0 || sc.MaxYears < 0) throw new ScenarioException("stop limits must not be negative");
                 sc.StopOnGameOver = Bool(s, "onGameOver", "stop.", true);
-                if (Int(s, "populationBelow", "stop.", 0) != 0) throw new ScenarioException("stop.populationBelow is not implemented until M3");
+                sc.PopulationBelow = Int(s, "populationBelow", "stop.", 0);
+                if (sc.PopulationBelow < 0) throw new ScenarioException("stop.populationBelow must not be negative");
                 sc.WallSeconds = Int(s, "wallSeconds", "stop.", 0);
                 sc.StopWhen = Conditions(s, "when"); sc.Fail = Conditions(s, "fail");
             }
@@ -354,6 +361,10 @@ namespace God.Recording
                     if (!sc.Checks.Contains(name)) sc.Checks.Add(name);
                 }
             }
+            string civ = sc.Policies.DefaultOf(PolicyLevel.Civilian);
+            if (!sc.Population && civ != PolicyRegistry.None) throw new ScenarioException("policies.civilian '" + civ + "' needs people: set setup.population");
+            if (sc.Population && civ == PolicyRegistry.None) sc.Policies.SetDefault(PolicyLevel.Civilian, God.Sim.Population.Policies.Associative);
+            if (!sc.Population && sc.PopulationBelow > 0) throw new ScenarioException("stop.populationBelow needs setup.population");
             return sc;
         }
 
@@ -374,10 +385,9 @@ namespace God.Recording
                 string where = "policies." + p.Name + ".";
                 foreach (var e in lo.Properties())
                 {
-                    if (e.Name == "sample") throw new ScenarioException(where + "sample (benchmark NPC subsets) is not implemented until M3");
+                    if (e.Name == "sample") throw new ScenarioException(where + "sample (benchmark NPC subsets) is not implemented in M3: the benchmark civilian policies arrive with M5 and M7");
                     if (e.Value.Type != JTokenType.String) throw new ScenarioException(where + e.Name + " must be a policy name");
                     string name = (string)e.Value;
-                    if (level == PolicyLevel.Civilian && name != PolicyRegistry.None) throw new ScenarioException(where + e.Name + " '" + name + "': civilian policies need NPCs (not implemented until M3)");
                     if (level == PolicyLevel.Institution && name != PolicyRegistry.None) throw new ScenarioException(where + e.Name + " '" + name + "': institution policies need institutions (not implemented until M12)");
                     if (level == PolicyLevel.Military && name == PolicyRegistry.None) throw new ScenarioException(where + e.Name + ": soldiers must have a policy (none is not allowed)");
                     try { reg.Validate(level, name); }
@@ -500,7 +510,7 @@ namespace God.Recording
                 ["description"] = Description,
                 ["setup"] = new JObject
                 {
-                    ["factionCount"] = FactionCount, ["human"] = Human, ["tutorial"] = Tutorial, ["population"] = false, ["startNpcsPerFaction"] = 0,
+                    ["factionCount"] = FactionCount, ["human"] = Human, ["tutorial"] = Tutorial, ["population"] = Population, ["startNpcsPerFaction"] = StartNpcsPerFaction,
                     ["lifeScale"] = LifeScale, ["ticksPerDay"] = TicksPerDay, ["daysPerYear"] = DaysPerYear,
                     ["decayFollowsLifeScale"] = DecayFollowsLifeScale, ["disease"] = Disease.ToString().ToLowerInvariant(),
                     ["fullInformation"] = FullInformation, ["victory"] = victory,
@@ -516,7 +526,7 @@ namespace God.Recording
                 ["stop"] = new JObject
                 {
                     ["maxTicks"] = MaxTicks, ["maxDays"] = MaxDays, ["maxYears"] = MaxYears, ["onGameOver"] = StopOnGameOver,
-                    ["populationBelow"] = 0, ["wallSeconds"] = WallSeconds, ["when"] = Conds(StopWhen), ["fail"] = Conds(Fail),
+                    ["populationBelow"] = PopulationBelow, ["wallSeconds"] = WallSeconds, ["when"] = Conds(StopWhen), ["fail"] = Conds(Fail),
                 },
                 ["checks"] = new JArray(Checks),
             };

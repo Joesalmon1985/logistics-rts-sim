@@ -250,6 +250,7 @@ namespace God.Runner
                     if (!spec.Quiet && smoke == null) log.WriteLine(cal.Label(s.Tick) + " | " + res.LastStandings);
                     foreach (var c in sc.Fail) if (metrics.Latest.TryGetValue(c.Metric, out long v) && c.Holds(v)) { failed = true; stop = "fail:" + c.Metric; }
                     if (stop == null) foreach (var c in sc.StopWhen) if (metrics.Latest.TryGetValue(c.Metric, out long v) && c.Holds(v)) stop = "when:" + c.Metric;
+                    if (stop == null && sc.PopulationBelow > 0 && s.Population != null && s.Population.AliveCount < sc.PopulationBelow) stop = "populationBelow";
                     if (saveEveryDays > 0 && cal.Day(s.Tick) % saveEveryDays == 0) WriteSave(spec, res, sim, dir, "day_" + cal.Day(s.Tick), ref ioFailed);
                 }
 

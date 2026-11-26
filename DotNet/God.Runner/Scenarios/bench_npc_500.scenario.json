@@ -1,0 +1,14 @@
+{
+  "scenarioVersion": 1,
+  "name": "bench_npc_500",
+  "description": "Benchmark: six AI factions with 84 founders each (504 NPCs), sandbox, learning on, recording off.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 84,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "record": { "level": "off" },
+  "stop": { "maxTicks": 12000 }
+}
