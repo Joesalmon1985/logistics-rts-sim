@@ -423,6 +423,30 @@ Owner decision D3 §5 ([DEV_LOG](DEV_LOG.md#owner-decisions-d3-26-nov-2026-after
 | M5.16 | Inv | **Owner D2, intention vs belief vs action:**<br>• a communicated intention, the receiver's belief about it, and the actual action are three separate records;<br>• a sender can signal an offer and then not deliver (M5.7), and the receiver's belief updates only from what it perceived | Owner D2 §3 | RT |
 | M5.17 | Inv | **Owner D2, recording:** gestures, decoded messages, barter offers and outcomes, gifts and social interactions reach the warehouse with persistent ids, and reconcile exactly with the sim events | Owner D2 §5 | RT |
 
+#### M5 status as built (branch `unity/m5`, 26 Nov 2026)
+Measured by the tests named (EM: `SocialMemoryTests`, `CommsTests`, `SocialIslandTests`; RT: `M5BarterTests`, `M5LearningTests`, `M5NaturalTests`, `M5WarehouseTests`, `M5NeutralityTests`). No criterion is loosened; the two unmet ones are `[Explicit]` tests of category `M5-target` that assert the original numbers.
+
+| # | Status | Measured |
+|---|---|---|
+| M5.1 | Met | 200 meetings: 40 relations, partner, household mate and open deal kept; same evictions in 3 runs; 3136 B per mind (600 minds: 1.9 MB) |
+| M5.2 | Met, with one design number changed | Miss 334 per mille at familiarity 50, 69 at 800, 0 at 1000; a cheat met again after one sighting is missed 339 per mille, after five interactions 21. Needs `FamInteraction` = 180 (SOCIAL 4.1 says 100, which makes the second clause impossible: SOCIAL_MEMORY 8.1) |
+| M5.3 | Met | Grudge 300 at severity 100; after 20 days 246 (vengefulness +100) and 29 (-100); trust gain after grudge 600 is x 0.4; an apology gift of 80 adds 40; three betrayals cost 120 |
+| M5.4 | Met | Seed 4, 2 days, misunderstanding off: 1051 gestures, every perceiving listener's copy (6092) decoded exactly. With it on: 52 of 6513 misread, one field each |
+| M5.5 | Met | 48 of 50 seeds at least 2x (share of the thinks where it could ask, days 1-5); pooled 97% against 16% |
+| M5.6 / L14 | **Not met** (outstanding target) | Pooled over 20 seeds: baseline acceptance 70%, S's next five offers 32% (target at most 20%), recovery 7% (target above 50%). The learned avoidance is too slow and too general: the betrayal's error is spread over all the Accept decision's keys, most of them drive and situation keys, so the person key (`NpcRef`) gets about a tenth of it and the lesson spreads to every offer. The per-person record (trust) learns at once but does not enter the score while `Social.Term` is 0 |
+| M5.7 | Met | 10 of 10 seeds: A holds both goods, B neither, `Defected`, nothing returns, B's trust 400 to 320, a betrayal recorded |
+| M5.8 | Met | 80 of 82 accepted deals completed (97%) over 20 runs; 10 trades at 3:1 give a believed ratio of 2.97 to 3.02 from any start; incremental trade in 79 of 81 multi-unit deals (reported) |
+| M5.9 | **Not done** | Gifts by believed kin need M4's `KinTerm` (SHARED_CONTRACTS 4.2: kin enters the score only there); the hut-mate and stranger parts are not tested yet. To check at I-BS |
+| M5.10 | Met | Reflection: no mind-side, policy, cognition, learning or comms type references `DealTrace`, `SocialState` or true state; no Comms type references `Goods` |
+| M5.11 / L16 | **Partly met** | Relationships (it learns which person helps): 49 of 50 seeds, 88% against Frozen 50%. Communication (ask a friend who answers, against Frozen): 35 of 50 seeds, mean +20 points (outstanding target; asking is close to the instinct default there). Barter and cooperation domains: not built |
+| M5.12 | **Not done** | S2 and S5 need island contests and benchmark custom rules (not built in M5) |
+| M5.13 / LS2 | **Not done** | Logs-for-food exchanges work (M5.11 trader scene), but the gather decision is not credited by the later meal (no episode reaches it) |
+| M5.14 | Met | `LifeScale` 200 gives the same grudge every day; `ScalePermille` 2000 is strictly lower every day with the learning store's hash unchanged; grudge rates 0 leave it at 300 |
+| M5.15 | Met | Every exchange step and gift follows a gesture and the receiver's own decision (EM, 4 seeds); over 20 seeds of band_6x20 (4 days) refusals and 37 counter-offers occur; gestures off gives no deals and no gifts; one grammar composes need, request, offer, accept, refuse, cooperate and warn (warn is composed but did not occur naturally: no enemy came in sight) |
+| M5.16 | Met | The speaker's deal memory, each listener's decoded copy and the goods move are separate records; a listener out of sight perceives and believes nothing; a gesture moves nothing; defection in M5.7 |
+| M5.17 | Met | band_6x20 at Full: every table reconciles with the events (counts by kind, act and outcome, listeners, lot ids, quantities, the soc_ columns); Full, Summary and Off give one hash; truth fields at Full only |
+| Neutrality | Met | `Social.Enabled = 0`: band_6x20 seeds 1-3, 10 days, every day hash equals `6671592` |
+
 ### I-BS. Integration of biology and society (owner D2 §4; gate after M4 and M5 are merged)
 
 Every scenario uses persistent individuals and actual resource movements, and each is asserted from events (Mech, RT, at least 10 seeds, reported per seed):

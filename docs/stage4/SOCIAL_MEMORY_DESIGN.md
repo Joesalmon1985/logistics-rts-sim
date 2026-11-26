@@ -305,6 +305,23 @@ Existing event names from the conventions (`GiftGiven`, `PromiseMade`, `PromiseB
 | **M12** | Elders' mediation reads `Disputed` obligations and `Accuse` histories. |
 | **Later (Stage 5-6)** | Obligations with a `ContractId` enforced by courts; written records and credit registers (layer 4); media reputation (layer 5); learned lexicon for gossip; richer group topics; reputation institutions. |
 
+### 8.1 As built in M5 (branch `unity/m5`, 26 Nov 2026)
+
+The M5 row above is implemented in `Sim/Social` (`SocialMind`, `SocialMemory`, `SocialSim`, `SocialSystem`), with these details decided by the implementation:
+
+| Topic | As built | Why |
+|---|---|---|
+| Relation record | 60 B: the fields of section 3 that M5 needs, plus `LastSeenTick`, `LastNode` (where to look for someone), `LastContactDay`, `GrudgeRem` (the carried fraction of the daily grudge decay, so 20 days at 1% a day is exact), `Holds` (wares it saw the person show or hand over, with `HoldsTick`) and own counts for the card (`DealsDone`, `Cheated`, `GiftsIn`, `GiftsOut`). Contest history, esteem, believed faction and economic cues are not yet built (M7 and later). Tables per mind: 40 relations, inbox 6, deals 6, prices 32, seen ring 8: **3136 B** | Bounded tables; the save packs relations into a blob, as the belief store does |
+| Recognition | At each think tick the observer's people (the nearest 8 in its sight, by distance then id) are recognised once, with the keyed stream `recognise(observer, tick, person)`; decoding a message recognises its speaker with `decode(listener, tick, message)`. A miss leaves the person unplaced (`As = 0`): no relation is read or written. Someone with no record is a new face, and its id becomes the key. **False matches are not built** (M7) | Draws do not depend on who else is seen (G2.10) |
+| Familiarity | +180 per completed interaction (a hand-over given or received), +20 per addressed message, +40 per day of contact, -2 per day without | Section 4.1 says +100 per interaction; with 100, test 5 ("under 3% after 5 interactions") cannot pass (5 x 100 + 40 = 540, a 16% miss). 180 gives 940, a 2.1% miss |
+| New relations | The second sighting on another day within 5 days, or the first interaction; eviction as 4.7 (ties to the lowest slot; a newcomer must be more important) | |
+| Evidence | Gift received or given, barter completed, betrayal (a deal partner took and did not hand over within `DealTimeoutTicks`, 360; severity `clamp(v/2, 20, 255)` of the value given), refused request; trust gains after a betrayal x (1000 - Grudge)/1000 | 4.2 |
+| Forgetting | `SimTuning.Social.Decay` (`ScalePermille`, `FamiliarityPerDay`, `GrudgeBase`/`GrudgeFloor`/`GrudgeCeil`, `TrustDriftPermille`, `FearShift`), never scaled by `LifeScale` | Q1 |
+| Class | The 4.3 priority; `Debtor`/`Creditor` from a deal half done; household mate = shares the household (M4) or, with no households, the hut's sleeping rights | SHARED_CONTRACTS 5 |
+| Use in decisions | The relationship class (`NpcRel`) and the person (`NpcRef`) are target features of every social candidate, so what was learned about a class or a person changes choices (L16 relationships: 49 of 50 seeds). The **raw-number social term** (trust, grudge, affection and a deal's surplus, `Social.Term`) is built but **off by default**: the frozen inspector option row (`OpportunitySlot`) has no Social column, so with the term on the shown terms would not add up (M3.28). Proposed amendment: add `Social` to `OpportunitySlot`, then default `Social.Term` to 1 | Contract freeze |
+| Apology and forgiveness | The scores and effects of 4.5 (`ForgiveScore`, `Forgive`) are tested as units (M5.3); the `Apologise` and `Forgive` acts are not candidates until M7 | M7 scope |
+| Not in M5 | Obligations and promises, hearsay, gossip, group reputation, the event log ring (M7, as in the table above) | |
+
 ## 9. Migration from the existing code
 There is no social memory in stage 3. `AiTrader` keeps its own simple faction-to-faction trade history. That history stays with the faction level (`IFactionPolicy`). NPC social memory is new in `Sim/Social`, added at M5. Save version 3 includes it. `StateHash` covers every table, in index order.
 
