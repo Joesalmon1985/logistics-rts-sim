@@ -21,6 +21,13 @@ namespace God.Sim
         /// <summary>Forgetting rates for the social memory and learning stores of later milestones (M3, M5). Unused in M0.</summary>
         public DecayTuning Decay = new DecayTuning();
 
+        /// <summary>M3: bodies, drives, movement, work and huts of the population. Written to JSON only when changed (stage 3 hashes stay).</summary>
+        public Population.PopulationTuning Population = new Population.PopulationTuning();
+        /// <summary>M3: the ecological rules of wild sources (Q11). Written only when changed.</summary>
+        public Population.EcologyTuning Ecology = new Population.EcologyTuning();
+        /// <summary>M3: the associative learning core (NPC_LEARNING). Written only when changed.</summary>
+        public Learning.LearningTuning Learning = new Learning.LearningTuning();
+
         /// <summary>A deep, independent copy (through the save format, so every saved field is copied).</summary>
         public SimTuning Clone()
         {
@@ -115,6 +122,12 @@ namespace God.Sim
             return false;
         }
     }
+
+    /// <summary>
+    /// A tuning block that the save and the hash write only when it differs from its defaults, so adding a block for a new
+    /// module leaves every older game's JSON, and so its hash, exactly as it was. A default block is rebuilt on load.
+    /// </summary>
+    public interface IOmitWhenDefault { }
 
     /// <summary>
     /// Per-day forgetting rates (permille) for later milestones: social memory (grudges, M5; SOCIAL_MEMORY 4.7) and

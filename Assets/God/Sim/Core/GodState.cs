@@ -22,5 +22,8 @@ namespace God.Sim
         public SimTuning Tuning = new SimTuning();
 
         public Board Board;
+
+        /// <summary>The population module (M3): null unless <see cref="GameSetup.Population"/> is set, so a stage 3 game is unchanged.</summary>
+        public Population.PopulationState Population;
     }
 }

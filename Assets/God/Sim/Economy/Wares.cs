@@ -53,6 +53,13 @@ namespace God.Sim
         SmallShield = 25,
         Breastplate = 26,
         LightArmour = 27,
+        // ---- stage 4 M3: foraged food (ECONOMY_DESIGN 3.2). Personal goods of NPCs only: beyond Wares.Count, so the stage 3
+        //      economy's per-ware arrays (and every stage 3 hash) are unchanged. ----
+        Berries = 28,
+        Roots = 29,
+        Fish = 30,
+        /// <summary>A bitter, mildly toxic berry: food that hurts (NPC_LEARNING L4). Only test scenarios place it by default.</summary>
+        Nightshade = 31,
     }
 
     /// <summary>How urgently a consumer wants one input ware. Stop means it asks for none.</summary>
@@ -66,7 +73,13 @@ namespace God.Sim
 
     public static class Wares
     {
+        /// <summary>The stage 3 wares (the economy's per-ware arrays). The personal food wares of M3 lie beyond it.</summary>
         public const int Count = 28;
+
+        /// <summary>Every ware including the personal goods of the population (M3): the population ledger's array length.</summary>
+        public const int PersonalCount = 32;
+
+        public static bool IsFood(Ware w) => w == Ware.Berries || w == Ware.Roots || w == Ware.Fish || w == Ware.Nightshade;
 
         /// <summary>The five raws that carriers haul (rock is never hauled).</summary>
         public static readonly ReadOnlyArray<Ware> Raws = new ReadOnlyArray<Ware>(Ware.Log, Ware.Clay, Ware.Grain, Ware.Stone, Ware.Ore);
@@ -111,6 +124,10 @@ namespace God.Sim
                 case Ware.SmallShield: return "small shield";
                 case Ware.Breastplate: return "breastplate";
                 case Ware.LightArmour: return "light armour";
+                case Ware.Berries: return "berries";
+                case Ware.Roots: return "roots";
+                case Ware.Fish: return "fish";
+                case Ware.Nightshade: return "nightshade";
                 default: return "none";
             }
         }

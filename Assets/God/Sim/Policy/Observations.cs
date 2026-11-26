@@ -2,26 +2,6 @@ using System.Collections.Generic;
 
 namespace God.Sim.Policy
 {
-    /// <summary>
-    /// The read-only view of an NPC's own mind (NPC_LEARNING_DESIGN §3.6). PLACEHOLDER until M3: no NPC has a mind yet,
-    /// so every individual policy gets <see cref="Empty"/>. Its layout version is 0.
-    /// </summary>
-    public sealed class MindView
-    {
-        public static readonly MindView Empty = new MindView();
-        private MindView() { }
-        /// <summary>The layout version encoders check (AI_TRAINING_DESIGN §3.2). 0: the empty placeholder.</summary>
-        public int LayoutVersion => 0;
-    }
-
-    /// <summary>What one civilian NPC perceives now. PLACEHOLDER until M3 (no NPCs exist yet).</summary>
-    public readonly struct NpcObservation
-    {
-        public readonly int NpcId;
-        public readonly long Tick;
-        public NpcObservation(int npcId, long tick) { NpcId = npcId; Tick = tick; }
-    }
-
     /// <summary>What one institution's manager reads (INSTITUTIONAL_STATE_DESIGN "InstitutionView"). PLACEHOLDER until M12.</summary>
     public readonly struct InstitutionView
     {

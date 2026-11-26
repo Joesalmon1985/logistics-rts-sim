@@ -66,8 +66,15 @@ namespace God.Sim
             policies.Validate(registry);
             if (policies.Defaults[(int)PolicyLevel.Institution] != PolicyRegistry.None || policies.Scoped[(int)PolicyLevel.Institution].Count > 0)
                 throw new PolicyException("policies.institution: no institutions exist before M12");
-            if (policies.Defaults[(int)PolicyLevel.Civilian] != PolicyRegistry.None || policies.Scoped[(int)PolicyLevel.Civilian].Count > 0)
-                throw new PolicyException("policies.civilian: no NPCs exist before M3");
+            string civilian = policies.Defaults[(int)PolicyLevel.Civilian];
+            if (policies.Scoped[(int)PolicyLevel.Civilian].Count > 0) throw new PolicyException("policies.civilian: per-faction civilian policies are not supported (M3)");
+            if (civilian != PolicyRegistry.None)
+            {
+                if (sim.State.Population == null) throw new PolicyException("policies.civilian: the game has no population (setup.population is off)");
+                var pop = PopulationOf(sim);
+                if (pop != null && registry.Create(PolicyLevel.Civilian, civilian, -1) is INpcPolicy np) pop.SetPolicy(civilian, np);
+                foreach (var n in sim.State.Population.Npcs) if (n.BornTick == sim.State.Tick || n.Policy == null) n.Policy = civilian;
+            }
 
             var mil = MilitaryOf(sim);
             foreach (var f in sim.State.Setup.Factions)
@@ -82,6 +89,13 @@ namespace God.Sim
                 if (policies.NameFor(PolicyLevel.Faction, (int)f) != PolicyRegistry.None) seated.Add(f);
             if (seated.Count == 0) return null;
             return AiDirector.Attach(sim, seated, policies, registry, AiTuning.Default, trader);
+        }
+
+        /// <summary>The sim's population system (null without a population).</summary>
+        public static Population.PopulationSystem PopulationOf(GodSim sim)
+        {
+            foreach (var sys in sim.Systems) if (sys is Population.PopulationSystem p) return p;
+            return null;
         }
 
         /// <summary>The sim's military system (null when a test sim has none).</summary>

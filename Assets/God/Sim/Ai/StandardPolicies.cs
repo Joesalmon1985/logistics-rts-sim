@@ -8,7 +8,7 @@ namespace God.Sim
     /// <list type="bullet">
     /// <item>faction: <c>AiBrain</c> (the stage 3 AI behind <see cref="AiBrainFactionPolicy"/>), <c>none</c>;</item>
     /// <item>military: <c>Stage3MilitaryPolicy</c> (the stage 3 soldier rules), <c>none</c> is refused by the military system (soldiers must decide);</item>
-    /// <item>institution and civilian: only <c>none</c> until M12 and M3.</item>
+    /// <item>civilian (M3): <c>AssociativeNpcPolicy</c>; institution: only <c>none</c> until M12.</item>
     /// </list>
     /// </summary>
     public static class StandardPolicies
@@ -21,6 +21,8 @@ namespace God.Sim
                 "The stage 3 faction AI (P9-P11), unchanged behind the M1 seam. Reads true state internally until M14.");
             r.Register(PolicyLevel.Military, PolicyAssignment.StageThreeMilitary, ctx => new Stage3MilitaryPolicy(),
                 "The stage 3 soldier rules 1-4: nearest enemy in sight, guard, march on the first target, wait at the base.");
+            r.Register(PolicyLevel.Civilian, Population.Policies.Associative, ctx => new AssociativeNpcPolicy(),
+                "M3: instincts plus the NPC's own learned associations, personality, perceived cost and seeded exploration (COMMUNICATION 4.7).");
             return r;
         }
 
