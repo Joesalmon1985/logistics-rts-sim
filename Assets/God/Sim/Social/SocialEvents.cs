@@ -11,13 +11,13 @@ namespace God.Sim.Social
             new EventInfo(typeof(ExchangeOpened), 210, 1, TelemetryDomain.Economy, "fact_transaction", note: "a deal opened by the first offer: the terms as the offerer meant them (analytics)"),
             new EventInfo(typeof(ExchangeStep), 211, 1, TelemetryDomain.Economy, "fact_transaction_line", true, note: "one hand-over of a deal, by its giver on its own think (Goods.Move HandOver)"),
             new EventInfo(typeof(ExchangeClosed), 212, 1, TelemetryDomain.Economy, "fact_transaction", note: "how a deal ended and each side's believed worth gain"),
-            new EventInfo(typeof(GiftGiven), 213, 1, TelemetryDomain.Economy, "fact_transaction", true, note: "a gift hand-over (a deal of kind Gift or Help)"),
+            new EventInfo(typeof(GiftGiven), 213, 1, TelemetryDomain.Economy, "fact_transaction_line", true, note: "a gift hand-over (a deal of kind Gift or Help); the deal itself is in fact_transaction, and gifts add to fact_social_day by believed kin band"),
             // ---- social memory (300-319) ----
             new EventInfo(typeof(TrustChanged), 300, 1, TelemetryDomain.Social, "fact_social_interaction", true, note: "one relation's trust or familiarity changed, with its cause and the event it came from"),
             new EventInfo(typeof(RelationEvicted), 301, 1, TelemetryDomain.Social, "fact_social_interaction", true),
             new EventInfo(typeof(RecognitionError), 302, 1, TelemetryDomain.Social, "fact_social_interaction", true),
             new EventInfo(typeof(BetrayalRecorded), 303, 1, TelemetryDomain.Social, "fact_social_interaction"),
-            new EventInfo(typeof(PersonDaySocial), 310, 1, TelemetryDomain.Social, "fact_social_day", note: "one living person x sim day: relations, trust, messages, gifts, deals"),
+            new EventInfo(typeof(PersonDaySocial), 310, 1, TelemetryDomain.Social, "fact_person_day", note: "the soc_ columns of one living person x sim day: relations, trust, messages, gifts, deals"),
             // ---- communication (340-354) ----
             new EventInfo(typeof(GestureMade), 340, 1, TelemetryDomain.Comms, "fact_social_interaction", true, note: "a composed message (act x topic x quantity x counter x target x time) made by a gesture"),
             new EventInfo(typeof(MessageDecoded), 341, 1, TelemetryDomain.Comms, "fact_social_interaction", true, note: "one perceiving listener's decoded message (its belief)"),
