@@ -324,6 +324,17 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
 - At M14: fill in the balance thresholds of M14.3 before the first balance run.
 
 ## Instructions for the next session
+
+**Paused by the owner on 26 Nov 2026 (evening). Resume here:**
+1. `unity/poc` is at the pushed M4 + M5 merge with all suites green (see the M5 record). Two branches are **not merged**; each has its own record at the end of this log:
+   - `unity/ibs` in `wt-lrs-ibs` (I-BS integration, the M4/M5 contract amendments, M5.18 overlay, M5.19 gesture vocabulary);
+   - `unity/demog` in `wt-lrs-m3` (D4 demography: relationship ontology, preferences, established band, `demog report`, ranging, ecology scenarios).
+2. Read both records, then for each: `git -C <worktree> status` (nothing should be uncommitted), build, run `dotnet test DotNet -c Release`, and continue the listed next steps.
+3. Merge order: `unity/ibs` first (contract seams), then `unity/demog` (merge `unity/poc` into it first and keep the both-off neutrality pins `8b898d115d8a05a7`, `5fa8991b92168385`, `66a55d5a67f2ad4e`). Then the Unity suites, build and both smokes (stage 3 hash `4bd54b271857a803`).
+4. Then: a viable favourable scenario (M4.37) before calling the biology foundation complete; the shelter (LS3) and tool-retention (LS4) redesigns; then M6.
+5. Lessons from this run: run the Unity console check before any Unity test run (`Assets/God/Game` is not compiled by `dotnet`; a duplicate member put an editor in Safe Mode); long-running agents can be cut off, so brief them to commit and document as they go.
+
+**Standing steps:**
 1. Read [STAGE_4_HANDOVER.md](../STAGE_4_HANDOVER.md), then this log, then [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md) (Â§2, Â§10, Â§13, Â§14).
 2. Check the tree: `git status`, `git log --oneline -5` in `wt-lrs`; check which milestone branches exist and what is merged into `unity/poc`.
 3. Run the baseline: `dotnet test DotNet -c Release` and compare with "Test results" above.
