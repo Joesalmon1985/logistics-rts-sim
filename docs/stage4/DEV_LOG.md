@@ -152,7 +152,14 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
 
 ## Outstanding work
 - M3 (in progress), then M4 and M5 (both need M3). The M13a warehouse core is in progress beside M3.
-- **Owner finding from M2:** with our default drift, the book's corrected Hawk/Bully result (L2) does not appear; Retaliator stays dominant. The system is bistable, and drift decides the basin. The finding is recorded in STRATEGY_BENCHMARKS and GAME_THEORY. **Under investigation (D2 §1)** on `unity/lab-hb`. The write-up will be `research/HAWK_BULLY_RETALIATOR_INVESTIGATION.md`.
+- **L2 Hawk/Bully finding: investigated, 26 Nov 2026** (D2 §1; `unity/lab-hb` merged). See [research/HAWK_BULLY_RETALIATOR_INVESTIGATION.md](research/HAWK_BULLY_RETALIATOR_INVESTIGATION.md).
+  - **Cause.** L2 is our own turn-rule contest reduced to a payoff matrix, not the move-based contest of Maynard Smith & Price (1973). Under the 4.2 turn rules, Retaliator pays nothing for its opening display, so it earns exactly what Hawk earns against Hawk (−25) and against Bully (40). I checked this myself with `lab invade --matrix l2`. So no Hawk/Bully ESS exists in L2.
+  - **The only Hawk/Bully-like ESS** (H .614, D .018, B .368) resists Retaliator by just 0.614 per contest. Mutation at 2‰ removes it, leaving a single attractor at R .718.
+  - **The 1973 matrix in our engine:** fed into our engine, Table 1 of the 1973 paper gives Hawk/Bully in 5 of 5 seeds.
+  - **Not causes:** population size, duration, and drift.
+  - **No bug found.** L2's hash is unchanged (`815ddf13e8116bc9`). Added `lab invade` and `lab sweep`.
+  - **Not established:** Gale & Eaves (1975) was paywalled and not read.
+  - **Open design question for the owner:** should island contests charge retaliation a first-blow cost? The default is no change, per D2 ("don't change the model to match the book").
 - **Before M4 and M5:** write `docs/stage4/SHARED_CONTRACTS.md` (D2 §3).
 - **After M4 and M5:** the I-BS integration gate.
 - **Unity test runs:** background editor throttling makes each run take 45–100 minutes. Run them at checkpoint boundaries (as at 4A), not after every commit.
