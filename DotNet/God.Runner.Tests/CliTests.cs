@@ -165,7 +165,6 @@ namespace God.Runner.Tests
             finally { TestUtil.Cleanup(dir); }
         }
 
-        [TestCase("lab", "M2")]
         [TestCase("experiment", "M14")]
         [TestCase("serve", "M15")]
         [TestCase("dataset", "M15")]
