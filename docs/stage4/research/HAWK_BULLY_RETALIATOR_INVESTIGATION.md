@@ -251,3 +251,67 @@ dotnet run --project DotNet/God.Runner -c Release -- lab invade --matrix l2 --ru
 ```
 
 Every run is deterministic for its options. `--workers` does not change the output (tested).
+
+## 11. First-blow cost variant (D3)
+
+Owner decision D3 (DEV_LOG, "Owner decisions D3", item 7): L2 stays as it is, and a first-blow cost is added as a separate, optional, lab-only variant. Branch `unity/lab-firstblow`, 26 Nov 2026. **This is our variant with a first-blow cost. It is not claimed to reproduce Gale and Eaves (1975), nor any "corrected" result: their assumptions and payoffs are not established here (section 8).**
+
+### 11.1 Definition
+
+`ContestRules.FirstBlow` (integer payoff points, default 0; `ContestRules.WithFirstBlow(c)`; CLI `--rule FirstBlow=N` on `lab invade` and `lab sweep`). In terms of the 4.2 turn rules:
+
+> A contestant that plays **Display on turn 1 while its opponent plays Escalate on turn 1** pays the cost once, subtracted from its payoff, whatever it does afterwards and however the contest ends (fight, withdrawal, display block).
+
+Hawk and Bully open with Escalate, so they never pay. Retaliator, Dove and a non-probing Prober open with Display, so they pay against an opening Hawk, Bully or probing Prober. Against Dove, Retaliator and a non-probing Prober nothing changes (nobody escalates on turn 1). So, relative to L2, rows D and R lose c in the H and B columns, and nothing else changes. At c = 10 (row against column):
+
+| | H | D | R | B |
+|---|---|---|---|---|
+| H | -25 | 50 | -25 | 40 |
+| D | -10 | 15 | 15 | -10 |
+| R | -35 | 15 | 15 | 30 |
+| B | -10 | 50 | -10 | 15 |
+
+Two points to keep in view. (1) The charge falls on Dove as well as on Retaliator, because the rule keys on the opening move and on being struck, not on the later reply. That also helps Hawk against Dove; it is a feature of this variant, not of Maynard Smith and Price's table. (2) The key is 0 in L2, L2b and every preset, so L2 and its golden hash `815ddf13e8116bc9` are unchanged (tested: FirstBlow=0 equals L2 contest by contest; the existing L2 golden test still passes). No new lab preset was added, so there is no new golden hash; the variant is pinned by the matrix and threshold tests in `FirstBlowStudyTests`.
+
+### 11.2 Method
+
+Same tools as sections 2 to 5, with `--rule FirstBlow=c` for c in 0, 2, 5, 10, 15, 20, 30: `lab invade` (exact rest points, first and second order invasion, replicator invasion runs, agent invasion runs with N 1000 and 5 seeds), `lab sweep --basins 12` (165 grid starts, replicator, 6000 generations, mu 0, 2, 20 permille), replicator sweeps from the named starts, and agent sweeps (N 200 and 1000, k 10, w0 500, 6000 generations, seeds 1 to 5, starts uniform, hawk, ret, hb, mu 0, 2, 20 permille). Basins as in section 5 (R, H/B, mixed).
+
+### 11.3 Results
+
+| Cost | Strict ESS (exact) | Replicator grid, mu 0: R / H/B (of 165) | mu 2: R / H/B / mixed | Agents N 200, mu 2: seeds in R/HB/mixed for uniform, hawk, ret, hb | Agents N 1000, mu 2: same |
+|---|---|---|---|---|---|
+| 0 (L2) | H .614 D .018 B .368 (weak) | 139 / 26 | 165 / 0 / 0 | 5/0/0, 5/0/0, 4/0/1, 5/0/0 | 5/0/0 in all four |
+| 2 | H 5/8, B 3/8 | 123 / 42 | 165 / 0 / 0 | 5/0/0, 4/0/1, 5/0/0, 5/0/0 | 5/0/0 in all four |
+| 5 | H 5/8, B 3/8 | 104 / 61 | 117 / 48 / 0 | 3/0/2, 3/0/2, 3/1/1, 3/0/2 | 5/0/0, 0/5/0, 5/0/0, 0/5/0 |
+| 10 | H 5/8, B 3/8 | 74 / 91 | 75 / 90 / 0 | 2/2/1, 0/5/0, 1/4/0, 0/5/0 | 3/2/0, 0/5/0, 5/0/0, 0/5/0 |
+| 15 | H 5/8, B 3/8 | 58 / 107 | 55 / 110 / 0 | 0/5/0, 0/5/0, 1/4/0, 0/5/0 | 0/5/0, 0/5/0, 5/0/0, 0/5/0 |
+| 20 | H 5/8, B 3/8 | 42 / 123 | 38 / 127 / 0 | 0/5/0, 0/5/0, 1/4/0, 0/5/0 | 0/5/0, 0/5/0, 4/0/1, 0/5/0 |
+| 30 | H 5/8, B 3/8 | 24 / 141 | 23 / 142 / 0 | 0/5/0, 0/5/0, 0/4/1, 0/5/0 | 0/5/0, 0/5/0, 5/0/0, 0/5/0 |
+
+("ret" is Retaliator 70% with 10% of each other strategy. The Retaliator/Dove edge is neutral at every cost, so a Retaliator-heavy N 1000 population stays in the Retaliator basin: drift cannot cross the saddle.) At high mutation (20 permille) the L2 and low-cost runs end in a mutation-dominated state; from cost 20 the Hawk/Bully mixture survives it in agents from the uniform, Hawk-heavy and Hawk/Bully starts (agent sweep files `ag*.md`, not reproduced here; rerun with the commands below).
+
+**Exact invasion analysis.** For every c of at least 5/8 (all tested costs from 2 to 30) the Hawk 5/8, Bully 3/8 mixture is a strict ESS: Dove earns -c against it, the mixture earns -5/8, and Retaliator earns -5/8 - c. It is the only ESS among those costs. L2's weak Hawk/Dove/Bully ESS (section 1) is gone once c is positive. The Retaliator/Dove edge is untouched (R against R and D unchanged) and stays neutrally stable, with Bully invading it once Dove exceeds the same share as in L2. Agent invasion runs at c = 10: from the Hawk/Bully state, Dove and Retaliator mutants gain in 0 of 5 seeds (all lost); from all-Retaliator, Hawk, Dove and Bully mutants gain in 0 of 5.
+
+### 11.4 Threshold
+
+The exact threshold is **c\* = 5/8 of a payoff point** (V = 50). Dove's first-order payoff against the Hawk/Bully mixture is -c, the mixture's own is -5/8. Below 5/8 Dove invades. At exactly 5/8 Dove ties at first order and loses at second order (its payoff against itself, 15, is below the mixture's payoff against it, 50), so the mixture is still an ESS, a second-order one. Above 5/8 it is a first-order strict ESS. So the ESS exists iff c >= 5/8. Retaliator already resists for any c above 0, so Dove is the binding mutant. With integer costs the first cost that works is 1. Tested with payoffs scaled by 10 (cost 6 invaded, cost 7 ESS) and by 8 (cost 5: first-order tie, second-order ESS).
+
+**Where the basins change.** The ESS appears at c\* = 0.625, but its basin grows only gradually. Of the 165 grid starts, 16% end in H/B at c = 0, 37% at 5, 55% at 10, 75% at 20, 85% at 30 (mu 0). Hawk/Bully overtakes Retaliator in the grid between cost 5 and 10. Under the default mutation (2 permille), cost 0 and 2 send every start to Retaliator; Hawk/Bully becomes reachable at cost 5 and equals Retaliator at about 10. In agents, the uniform start reaches Hawk/Bully in all 5 seeds at N 200 and at N 1000 from cost 15. So "an ESS exists" (c at least 0.625) and "the uniform start reaches it under default drift" (c about 15) are different thresholds.
+
+### 11.5 Limits
+
+- Not Gale and Eaves (1975), and not the book's corrected result: their original assumptions and payoffs are not established (section 8). Describe it only as "our variant with a first-blow cost".
+- The cost is a lab strategy penalty on every opener that is struck, Dove included; it is not an injury model. The strategy set (H, D, R, B) and the payoff scale (V 50, I 100, T 10, S 10) are ours.
+- The Prober obeys the same rule (matrix test) but the sweeps above are four-strategy (`--matrix l2`).
+- Basin shares come from one grid (step 1/12), one w0 (500), 6000 generations, 5 seeds per agent cell. Costs were not searched finer than the table, apart from the exact threshold.
+- **Separation.** The variant is lab-only. In the full island simulation, a first-mover advantage must emerge from combat, injury and reaction mechanics (who lands the first hit, who is hurt or slowed, how reaction time works), not from a strategy penalty. No island rule reads `ContestRules.FirstBlow`, and none should.
+
+### 11.6 Reproducing
+
+```
+dotnet run --project DotNet/God.Runner -c Release -- lab invade --rule FirstBlow=10 --workers 8
+dotnet run --project DotNet/God.Runner -c Release -- lab sweep --rule FirstBlow=10 --basins 12 --mu 0,2,20 --gens 6000 --workers 8
+dotnet run --project DotNet/God.Runner -c Release -- lab sweep --rule FirstBlow=10 --starts uniform,hawk,ret,hb --mu 0,2,20 --agents 200,1000 --gens 6000 --workers 8
+dotnet run --project DotNet/God.Runner -c Release -- lab invade --rule V=500 --rule I=1000 --rule T=100 --rule S=100 --rule FirstBlow=6   # threshold at scale 10
+```
