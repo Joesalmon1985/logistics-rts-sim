@@ -134,6 +134,7 @@ namespace God.Sim.Population.Households
                 case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Store: case HVerb.TakeFromStore: return Activity.Care;
                 case HVerb.Beg: case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.Leave:
                 case HVerb.AskCare: case HVerb.AcceptCare: case HVerb.EndCare: case HVerb.SeekChild: case HVerb.AcceptChild: return Activity.Other;
+                case HVerb.RangeFar: return Activity.Explore;
                 default: return Activity.Other;
             }
         }
@@ -165,7 +166,7 @@ namespace God.Sim.Population.Households
         public static int StarvePermille(GodState s, Npc npc) => npc.Stage == LifeStage.Adult ? 1000 : s.Tuning.Households.Life.FrailStarvePermille;
         public static int RecoverPermille(GodState s, Npc npc) => npc.Stage == LifeStage.Elder ? s.Tuning.Households.Life.ElderRecoverPermille : 1000;
 
-        /// <summary>Work competence (D3 Â§10): 0 below the age a child can pick or forage, then rising to 1000 at adulthood.</summary>
+        /// <summary>Work competence (D3 §10): 0 below the age a child can pick or forage, then rising to 1000 at adulthood.</summary>
         public static int Competence(GodState s, Npc npc)
         {
             if (npc.Life == null || npc.Stage != LifeStage.Child) return 1000;
@@ -194,7 +195,7 @@ namespace God.Sim.Population.Households
     /// <summary>
     /// M4's mind-side hooks (OWNER: M4): the verbs and instincts the learning tables concatenate, and the hooks Cognition and
     /// Policy call. They read the think scratch only, never <see cref="GodState"/> (gate G4.1): the person in sight, its stage
-    /// and displays, the mind's own believed kin (rÌ‚, never the pedigree), its carry and its home. A mind without a believed-kin
+    /// and displays, the mind's own believed kin (r̂, never the pedigree), its carry and its home. A mind without a believed-kin
     /// part (M3 fixtures, <c>Households.Enabled = 0</c>) gets nothing from here.
     /// <para>Person-directed candidates name the person by its handle in <c>TargetId</c> and take the actor's own spot as their node:
     /// M3's perception check (<c>Thinker.Known</c>, frozen) knows no people yet, so a person target there would read as unperceived;
@@ -219,7 +220,8 @@ namespace God.Sim.Population.Households
             new VerbInfo(HVerb.AcceptCare, "agree shared care", VerbGroup.CoopGive, NpcVerb.Interact),
             new VerbInfo(HVerb.EndCare, "end shared care", VerbGroup.Relationships, NpcVerb.Interact),
             new VerbInfo(HVerb.SeekChild, "show it wants a child", VerbGroup.Relationships, NpcVerb.Interact),
-            new VerbInfo(HVerb.AcceptChild, "agree to a child", VerbGroup.Relationships, NpcVerb.Interact));
+            new VerbInfo(HVerb.AcceptChild, "agree to a child", VerbGroup.Relationships, NpcVerb.Interact),
+            new VerbInfo(HVerb.RangeFar, "range far for food", VerbGroup.Search, NpcVerb.Explore));
 
         private static uint RoleF(int v) => Feature.Make(FeatureKind.Role, v);
 
@@ -254,9 +256,17 @@ namespace God.Sim.Population.Households
             // D4: the person it agreed a child with draws trying; wanting a child draws showing it; seeing that draws agreeing
             new Instinct(Feature.Situation(HSituation.UnionPartner), 0, HVerb.TryForChild, 250),
             new Instinct(Feature.Self(HSelf.WantsChild), 0, HVerb.SeekChild, 120),
-            new Instinct(Feature.Situation(HSituation.SeekingChild), 0, HVerb.AcceptChild, 300));
+            new Instinct(Feature.Situation(HSituation.SeekingChild), 0, HVerb.AcceptChild, 300),
+            // D4 (M4.43): hungry with no plentiful food known nearby draws a long walk out
+            new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Situation(HSituation.NoPlentyKnown), HVerb.RangeFar, RangeFarPrior),
+            new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Situation(HSituation.NoPlentyKnown), HVerb.RangeFar, RangeFarPrior / 2));
 
-        /// <summary>The kin term's scale (permille of rÌ‚ x (100 + KinWeight) / 100): the Hamilton weighting (HOUSEHOLDS "Feeding").</summary>
+        /// <summary>The innate prior of ranging far (D4): enough to outweigh the walk's perceived cost at <see cref="RangeFarNodes"/>.</summary>
+        public const int RangeFarPrior = 600;
+        /// <summary>How far one ranging walk goes (nodes): beyond sight (10) and the explore step (9), within recall (40).</summary>
+        public const int RangeFarNodes = 24;
+
+        /// <summary>The kin term's scale (permille of r̂ x (100 + KinWeight) / 100): the Hamilton weighting (HOUSEHOLDS "Feeding").</summary>
         public const int KinTermPermille = 600;
 
         // ---------------- perception and cognition (scratch only) ----------------
@@ -391,6 +401,8 @@ namespace God.Sim.Population.Households
             if (proposer >= 0) Person(sc, HVerb.Accept, proposer, Feature.State(HState.Proposing));
             if (seeker >= 0 && mayUnion) Person(sc, HVerb.AcceptChild, seeker, Feature.Situation(HSituation.SeekingChild));
             if (asker >= 0) Person(sc, HVerb.AcceptCare, asker, Feature.State(HState.AskingCare));
+            // D4 (M4.43): hungry, carrying nothing, and no plentiful food seen or remembered: range far
+            if (hungerBand >= 1 && !food && self.Stage != LifeStage.Child && !PlentyKnown(sc)) RangeFar(sc);
             if (food && beggar >= 0) Person(sc, HVerb.Feed, beggar, Feature.State(HState.Begging1 + Math.Min(2, Math.Max(0, sc.People[beggar].DisplayLevel - 1))));
             else if (food && sick >= 0) Person(sc, HVerb.Feed, sick, Feature.State(HState.Sick));
             if (sick >= 0) Person(sc, HVerb.Tend, sick, Feature.State(HState.Sick));
@@ -426,6 +438,43 @@ namespace God.Sim.Population.Households
             Thinker.TargetFeatures(sc, at, Feature.NpcRel((int)rel), group, extra);
         }
 
+        /// <summary>D4: whether it sees or remembers (within recall) a food source with plenty, or food lying.</summary>
+        private static bool PlentyKnown(ThinkScratch sc)
+        {
+            for (int i = 0; i < sc.SeenCount; i++)
+            {
+                var t = sc.Seen[i];
+                if (t.Category != ObjCategory.Food) continue;
+                if (t.State == ObjState.StockHigh || t.Kind == IntentTarget.Lot) return true;
+            }
+            var b = sc.Mind.Beliefs;
+            int recall = sc.Tuning.RecallNodes;
+            for (int i = 0; i < b.Count; i++)
+            {
+                var bel = b.Slots[i];
+                if (bel.Kind == BeliefKind.Food && bel.Stock == ObjState.StockHigh && sc.Grid.Distance(sc.Self.Node, bel.Subject) <= recall) return true;
+            }
+            return false;
+        }
+
+        /// <summary>D4: a ranging walk of up to <see cref="RangeFarNodes"/> in one of six directions (it turns with the day and its own id), over land.</summary>
+        private static void RangeFar(ThinkScratch sc)
+        {
+            var g = sc.Grid;
+            int dir = (sc.Self.Day + sc.Self.Id) % 6;
+            int cur = sc.Self.Node, steps = 0;
+            for (int k = 0; k < RangeFarNodes; k++)
+            {
+                int v = g.Neighbour(cur, dir);
+                if (v < 0 || !g.IsLand(v)) break;
+                cur = v; steps++;
+            }
+            if (steps < RangeFarNodes / 2) return;
+            int at = Thinker.AddCandidate(sc, HVerb.RangeFar, IntentTarget.Node, 0, cur, 0, g.Distance(sc.Self.Node, cur));
+            if (at < 0) return;
+            Thinker.TargetFeatures(sc, at, Feature.Situation(HSituation.NoPlentyKnown), Feature.Class(ObjClass.Unknown));
+        }
+
         /// <summary>A candidate done where it stands (D4: showing that it wants a child), with one self feature.</summary>
         private static void SelfAct(ThinkScratch sc, byte verb, uint extra)
         {
@@ -444,7 +493,7 @@ namespace God.Sim.Population.Households
             Thinker.TargetFeatures(sc, at, Feature.Class(HClass.Store), Feature.Category(ObjCategory.Store), Feature.PlaceRef(self.HomeNode), need);
         }
 
-        /// <summary>The kin term (Hamilton): <c>rÌ‚ x (100 + KinWeight) / 100 x 0.6</c> for care aimed at a person, from its own beliefs only.</summary>
+        /// <summary>The kin term (Hamilton): <c>r̂ x (100 + KinWeight) / 100 x 0.6</c> for care aimed at a person, from its own beliefs only.</summary>
         public static int KinTerm(ThinkScratch sc, int cand)
         {
             if (!M4(sc) || cand < 0 || cand >= sc.CandCount) return 0;
@@ -528,7 +577,7 @@ namespace God.Sim.Population.Households
                     {
                         case HSituation.DependantInNeed: return "a dependant in need"; case HSituation.CareOwed1: return "is owed a little care";
                         case HSituation.CareOwed2: return "is owed care"; case HSituation.CareOwed3: return "is owed much care";
-                        case HSituation.UnionPartner: return "agreed a child with it"; case HSituation.SeekingChild: return "wants a child";
+                        case HSituation.UnionPartner: return "agreed a child with it"; case HSituation.SeekingChild: return "wants a child"; case HSituation.NoPlentyKnown: return "knows no plentiful food near";
                     }
                     return null;
                 default: return null;

@@ -41,6 +41,7 @@ namespace God.Sim.Population.Households
                 case HVerb.EndCare: EndCare(s, ev, npc); break;
                 case HVerb.SeekChild: SeekChild(s, ev, npc); break;
                 case HVerb.AcceptChild: AcceptChild(s, ev, npc); break;
+                case HVerb.RangeFar: RangeFar(s, npc); break;
                 default: End(npc); break;
             }
             return true;
@@ -413,6 +414,14 @@ namespace God.Sim.Population.Households
             if (fresh) ev.Add(new TryForChildChosen { Npc = npc.Id, Partner = t.Id, Partnership = p?.Id ?? 0 });
             if (u != null) u.LastTryTick = s.Tick;
             End(npc);
+        }
+
+        /// <summary>D4 (M4.43): ranging far for food: walk out to the chosen node; on arrival the walk ends and it looks again
+        /// with what it now sees. A blocked path frustrates.</summary>
+        private static void RangeFar(GodState s, Npc npc)
+        {
+            if (WalkTo(s, npc, npc.Action.TargetNode, 1)) { End(npc); return; }
+            if (npc.Path == null) Frustrate(s, npc);
         }
 
         /// <summary>

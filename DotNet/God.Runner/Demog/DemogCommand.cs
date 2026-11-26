@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 namespace God.Runner.Demog
 {
     /// <summary>
-    /// <c>demog report</c> (owner D4 Ã‚Â§10, M4.45): the multi-seed demographic report of one or more arms. Each arm is a scenario
+    /// <c>demog report</c> (owner D4 §10, M4.45): the multi-seed demographic report of one or more arms. Each arm is a scenario
     /// with <c>--set</c> overrides; every run is an ordinary <see cref="RunEngine"/> run (recording off unless asked) with a
     /// <see cref="DemogRecorder"/> beside it. Arms come from <c>--arm "name: path=value path=value"</c> (repeatable) or a plan
     /// file (<c>--plan FILE</c>: <c>{ "title", "scenario", "years", "seeds", "set": [..], "arms": [ { "name", "scenario"?, "set": [..] } ] }</c>).

@@ -13,7 +13,7 @@ using NUnit.Framework;
 namespace God.Runner.Tests
 {
     /// <summary>
-    /// M4.45 (owner D4 Â§10): the demographic report's figures reconcile with the warehouse of the same run (Full, SQLite) and
+    /// M4.45 (owner D4 §10): the demographic report's figures reconcile with the warehouse of the same run (Full, SQLite) and
     /// with the population ledger; the report never changes a run (the same hash with and without it); and the command runs
     /// multi-seed and writes its report and CSVs.
     /// </summary>
