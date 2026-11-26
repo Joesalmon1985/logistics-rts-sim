@@ -2,6 +2,16 @@
 
 Soldiers are the same persistent NPCs as everyone else. They serve because they accepted terms, they follow assignments they accepted, and they can still retreat, desert, surrender or defect. Combat itself (the stage 3 duel rules) is unchanged. The shared names, layers, policy levels and milestones are in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md); that file wins where this one disagrees.
 
+> **Superseded by owner D5 (26 Nov 2026).** The player is a god only and does not command the army (D5.1, brief §23). Enlistment terms, assignments and bounties are decided by the government or a military organisation's NPC office-holders (D5.2, D5.29); soldiers and leaders keep their own decisions. The god influences military leaders and soldiers through divine actions, which they may refuse. See [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md) and [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md). These earlier statements no longer hold:
+>
+> | Where | Earlier statement | Replaced by |
+> |---|---|---|
+> | [§4 The military institution](#the-military-institution) | "Stage 4 (M9): **the faction manages the military directly** through the state commands … There is no commander NPC" | The government organisation's office-holders post enlistment terms and assignments (the temporary AiBrain government seat for routine ones, with the Head as actor); from C4 a military organisation with a `Commander` office does it |
+> | [§4 The military institution](#the-military-institution) | The commander "receives **the faction's directives**" | Directives are decisions of the owning organisation (the government's council), made by NPCs |
+> | [§6 Player and view](#6-player-and-view) | Army panel with "enlistment terms with a **pay slider**", the assignment board with "post, change and withdraw", "prisoners held, with **release buttons**" | A read-only card of the military organisation's records beside divine observation (D5.28). No player sliders or buttons; the god's options are divine actions on leaders and soldiers |
+> | [§6 Player and view](#6-player-and-view) | "**HUD macros keep the old feel.** Right-click 'defend here with 3' posts a Guard assignment …; 'attack this' posts an Attack assignment" | Stage 3 mode only. In the god-only game the god may suggest, command, compel or possess a commander to post such an assignment, or a soldier to take one |
+> | [§8](#8-stage-4-minimum-vs-later) M14 | "Faction AI using enlistment terms, assignments and bounties" | The government or military organisation's decision procedure, run by its office-holders |
+
 ## 1. Purpose and scope
 
 **This document owns:**
@@ -338,3 +348,29 @@ Settled here:
 - **Squad leadership.** The member with the longest service leads (ties to the lower id); an elected or appointed leader is a later option.
 - **Health scale.** Body health 0–1000 with a ×10 damage scale keeps duels identical. Stats do not depend on body state in stage 4, so duel equivalence stays exact; fighting worse when starving is a later option.
 - **Kit on desertion.** A deserter keeps the kit; it is theft only where a theft law exists and someone enforces it.
+
+## 12. Owner D5 update (26 Nov 2026)
+Brief §23 continues towards persistent NPC soldiers. Most of it is already this document's design; the table says where each item lives and what D5 adds.
+
+| Brief §23 item | Where | D5 addition |
+|---|---|---|
+| Persistent NPC soldiers | §2, §3 `ServiceRecord`, M-INV-1 | Unchanged: nothing is spawned; soldiers keep families, needs, possessions, learned experience and interests; a resurrected soldier's service is not reinstated (D5.13) |
+| Voluntary recruitment | §4 Enlistment | Unchanged; conscription may later emerge only as a law decided by a government organisation and enforced by its NPCs (brief §23) |
+| Compensation | Pay, rations, signing gift, bounties (§4) | Owed pay and rations are formal obligations of the paying organisation (ORGANISATIONS §3.3); arrears as today |
+| Equipment | Kit lent from the quartermaster's store (§4) | The store is an organisation store; kit lots owned by `Org(x)`; M-INV-2 unchanged |
+| Training | Later in §8 | Drill is the education service (INSTITUTIONAL_SERVICES §5.2): a skilled soldier `Demonstrate`s or `Teach`es combat skills; it changes the learner's actual skill and associations, never a unit stat. Tier 3 |
+| Military obligations | Service term and terms (§4) | The term is a role (`RoleHolding`) with terms; breaking it is desertion, a crime only where a law exists and someone enforces it |
+| Leadership | Squad leader by seniority (§4); commander NPC from M12 | A military organisation (`OrgType.Military`) has a `Commander` office filled by its rule. The commander decides from its own knowledge (`InstitutionView` filled from its mind). **Leaders are influenced by divine actions, not commanded** (below) |
+| Logistics | Rations by haul job to muster points (§4) | Unchanged; supply is physical |
+| Morale | §4 Morale | Unchanged; divine events a soldier perceives (a miracle, a smiting) enter its fear and beliefs only through its own perception and learning, never as a morale rule |
+| Orders | Assignments (§4) | Unchanged: an order is a posted assignment a soldier takes or not |
+| Combat, injuries | Duel (reused); wounds | Injured soldiers are patients of the healthcare service (INSTITUTIONAL_SERVICES §5.1) |
+| Surrender, retreat, desertion, defection | §4 | Unchanged |
+
+**How a god influences the military.**
+- **No command authority.** The god cannot post, change or withdraw an assignment, set enlistment terms or release a prisoner. These are organisation commands with an office-holder as actor.
+- **Through leaders.** A divine instruction to the army is relayed to the commander (or the government's Head where no military organisation exists), who may ignore, refuse, adopt or modify it ([ORGANISATIONS §4.12](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md#412-how-a-god-influences-an-organisation)). Compelling the commander makes it attempt one available act (post one assignment it has the power to post); the soldiers still choose whether to take it.
+- **Through soldiers.** A divine suggestion or command to a soldier competes with its assignment in its own `IMilitaryPolicy` scores; compulsion requires it to attempt one valid physical act (retreat, hold, attack a target in reach) and cannot bypass combat rules; possession gives the player that soldier's available combat verbs and ends with the same NPC in its own body. Actions under compulsion or possession are recorded as divinely controlled.
+- **Miracles** (healing a wounded soldier, smiting a building) change physical state through the validated miracle commands of MYTHIC_AND_MIRACLES_DESIGN; they do not change morale, loyalty or service records directly.
+
+**Tier and package mapping:** existing M9 design: unchanged milestones; expanded military service (military organisation with Commander office, training, formal service obligations): Tier 3, C4; injured soldiers treated by healers: Tier 2, C7. **Acceptance hooks:** scenario 15 (a commander refuses or modifies a relayed divine instruction: ORG-ACC-15a applied to a military organisation), scenario 1 (soldiers persist, enlist and desert with divine intervention disabled: M-ENL and M-MOR tests kept), scenario 17 (kit and pay reconcile: M-INV-2 and service facts).

@@ -2,6 +2,16 @@
 
 This document covers goods, production, property, exchange, labour, enterprises, the commons and public goods: the material life of the island once persistent NPCs do all the work. It follows [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md), which wins where the two disagree.
 
+> **Superseded by owner D5 (26 Nov 2026).** The player is a god only (D5.1); the state is an autonomous NPC organisation, the government (D5.2, D5.29); organisations of every ownership model are founded by individuals (D5.16, D5.17); the god's knowledge is divine observation, not the government's records (D5.28). See [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md) and [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md). These earlier statements no longer hold:
+>
+> | Where | Earlier statement | Replaced by |
+> |---|---|---|
+> | [§6 Player and view](#6-player-and-view) | "**State economy panel:** post or withdraw jobs, set pay per job kind and per input …, place boards, designate a market" (a player panel) | The player never posts jobs or sets pay. The government organisation's NPC office-holders do, by their decision rule; the god may suggest, command or compel an office-holder, who may refuse. The panel becomes a read-only card of the government's records; the controls survive only in the temporary Stage 3 mode |
+> | [§6 Player and view](#6-player-and-view) | "The HUD reads only `FactionKnowledgeView`" | `FactionKnowledgeView` is the **government's** knowledge (its decision-makers and `IFactionPolicy` read it). The god's HUD reads divine observation under configured rules (D5.28); the two are shown separately |
+> | [§4.7 Enterprises](#47-enterprises-m8) | "State-owned production: the state's buildings, run by `IInstitutionPolicy` or the faction policy" | Run by the office-holders of a state-owned organisation, each deciding from its own knowledge (ORGANISATIONS §4.4). `EnterpriseId` reads as `OrgId` |
+> | [Property](#property) | "Forms: state (a faction), …" | State property is owned by the faction's government organisation (`Org(gov)`, alias `State(f)` during migration); religious ownership is added as a fifth model |
+> | [§9.1](#91-what-stays-changes-or-goes) | `SetInputPriority` kept "so `AiBrain` keeps working" | Kept only as a command of the government organisation's temporary "AiBrain government seat" and of Stage 3 mode (ORGANISATIONS §4.10) |
+
 ## 1. Purpose and scope
 
 **This document owns:**
@@ -494,3 +504,41 @@ Settled in review (26 Nov 2026): owner tags arrive in M6 and item quality in M8;
 3. **Q10 Food variety:** keep the rule, and also test complementary production inputs (logs and clay for shelter). Several natural reasons to exchange: different nutritional benefits, local availability, complementary construction materials, productive capabilities, individual needs, and skills and equipment. Trade emerges because it benefits individuals, not because the game demands it (4.1, C4).
 4. **Q11 Forest depletion:** forest stock limits are on by default in the sandbox; non-depleting by default in the VP mode, with a scenario option to enable depletion. Renewable resources regenerate by configurable ecological rules. Overexploitation, sustainable harvesting and eventual resource-management institutions (tragedy of the commons, Ostrom experiments) are supported (4.2, 4.8, D5).
 5. **Q19 Walk-outs:** suspend the contract first. The employee may resume, negotiate, resign or keep refusing; the employer may negotiate, improve pay, dismiss or seek alternatives. This is the basis for collective bargaining, strikes, lockouts and economic conflict, arising from material circumstances and incentives, not scripted events (Jobs, E5; [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md#11-open-questions)).
+
+## 12. Owner D5 update (26 Nov 2026)
+Concise additions for the Civilisation and Divinity run (brief §17; D5.16, D5.17, D5.33). Nothing above is removed except as listed in the notice at the top. Organisations, their ownership models and their ledgers are owned by [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md); services (including lending) by [INSTITUTIONAL_SERVICES_DESIGN.md](INSTITUTIONAL_SERVICES_DESIGN.md).
+
+**Progression (brief §17), unchanged in principle.** Subsistence → cooperation → barter → specialisation → surplus → productive ownership → employment → capital accumulation → economic classes → political organisation stays a description of what the mechanics make possible, measured by the table in [§4.3](#43-the-development-path-measured-not-staged), never a sequence the sim enforces. The god may intervene at any step (create goods by miracle, reveal a technique, inspire a founder), and every such intervention is recorded so analysis can separate divinely assisted development from autonomous development (scenario 1 runs with intervention disabled).
+
+**What the run must implement or retain** (brief §17 list; each line names where it lives):
+
+| Item | Status and where |
+|---|---|
+| Personal possessions, gathering, tools and equipment, storage, gifts, barter | Built in M3–M5 (`Assets/God/Sim/Population/Goods.cs`, `LotBin.cs`, `Assets/God/Sim/Social/Valuation.cs`); retained |
+| Productive assets, production chains | §3.4, §4.2; staffed by NPCs (Q8) |
+| Deferred obligations and lending | M7 informal promises (§4.5); formal obligations and loans: INSTITUTIONAL_SERVICES §5.5 |
+| Employment | §4.4 jobs; an employer may be an NPC, a household or any organisation (`Poster = Org(id)`); the output belongs to the owner of the asset under a `Work` right (unchanged) |
+| Enterprises | §4.7, now `OrgType.Enterprise` organisations founded by individuals from their own skill, inputs and seen demand (ORGANISATIONS §4.1) |
+| Cooperative, communal, state, private ownership | One `Owner` type (`OwnerKind.Org` proposed) and one framework; production code never branches on the model (static test of §4.7 extended to `OwnershipModel`). **Religious** ownership is a fifth model (ORGANISATIONS §4.11) |
+| Land access | See below |
+| Resource depletion | §4.8 logistic regrowth and forest stock (Q11, on in sandbox); a `Commons` organisation may manage sources by its own rules (Tier 3) |
+| Inheritance | [MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md); organisation shares pass to estates by charter |
+| Economic failure | See below |
+| Social mobility | Measured in [ECONOMIC_CLASSES_DESIGN.md §4.7](ECONOMIC_CLASSES_DESIGN.md#47-mobility); mechanics listed there |
+
+**Land access.** There is no separate land-ownership system. Access to land is access to its sources and plots: a forage source, a wood stand, a hut plot, a field. It combines (a) the property record of the source or plot (`PropertyRecord`, §3.5), which may be ownerless (open access), claimed by first arrival, owned by an NPC, a household or an organisation (a commune's commons, the government's land, a temple's field); (b) use rights granted by the owner, with or without terms (rent in goods); and (c) each NPC's **belief** about whether it may use it (`Permits.Believed`, `Assets/God/Sim/Cognition/Affordances.cs`). Enclosure is the spread of claims over sources others used; it is possible, not designed, and measured as the share of sources an NPC believes it may use within a day's walk (the subsistence-access measure of ECONOMIC_CLASSES §4.4).
+
+**Economic failure is a real outcome.** An enterprise or other organisation can become insolvent, dormant or dissolved (ORGANISATIONS §4.13); a household can lose its stores and its members can starve; a commons can collapse from overuse; a government can run its treasury dry and default on wages. None of these is tuned away, softened by a hidden rule or reversed automatically (D5.33). Each has an event (`OrgInsolvent`, `OrgDissolved`, `WageUnpaid`, starvation deaths) and is distinguished in reports from defects in the mechanics.
+
+**Currency emerges or is instituted; it never simply appears.** Barter remains the only exchange at first (§4.11).
+- **From accepted exchange goods:** the `Moneyness(w)` measure and `MediumOfExchangeObserved` (§4.11) detect a ware that people accept in order to pass it on. Nothing changes in the rules when it is detected; NPCs accept it because their own price beliefs and exchange-use valuation make it worth accepting.
+- **From institutional developments:** an organisation may decide to accept a particular ware for fees, taxes or offerings, or to issue tallies (a record of a claim on its store). A tally is a formal obligation of the issuing organisation, never a good: it creates no goods, and it is worth only what holders believe the issuer will honour (INSTITUTIONAL_SERVICES §5.5). Minting a coin ware is production like any other. All of this is Tier 3.
+- **No arbitrary replacement of barter** by a currency switch.
+
+**No universal fixed barter price.** As built in M5, each NPC values goods from its own circumstances (`Valuation.Marginal`: consume, production, tool and exchange use) and holds its own price beliefs, moved only by trades it makes or sees (`Valuation.Observe`). No price table is shared between NPCs, and no organisation sets a price that binds anyone: a guild's or government's "price" is a policy its members or staff may follow by their own scores. Price dispersion is a measure (§4.3).
+
+**Reference values are analytics only.** `WareRefValue` and FE (§3.3) remain measurement indexes for telemetry, the warehouse and KPIs. No NPC, organisation decision-maker, policy, god policy or sim rule reads them; the reflection test that forbids policies to read `GodState` is extended to forbid `WareRefValue` outside `Telemetry` and reporting code.
+
+**Tier and package mapping** (brief §39, §42): physical economy, labour and resource ownership: Tier 1, C1; obligations and lending: Tier 2, C2; employment, enterprises and cooperatives: Tier 2, C3; communal stores and welfare: Tier 2, C8; currency from institutions, tallies, banks: Tier 3, C8.
+
+**Acceptance hooks:** scenario 2 (trade: M5's honest-pair and multi-unit barter tests stay the evidence), scenario 3 (employment: ORGANISATIONS ORG-ACC-3), scenario 7 (lending: INSTITUTIONAL_SERVICES SVC-LEND-1), scenario 17 (reconciliation: conservation C1–C6 hold with organisation owners, ORG-INV-1).

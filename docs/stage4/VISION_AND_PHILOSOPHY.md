@@ -1,12 +1,14 @@
 # Vision and philosophy (stage 4 and beyond)
 
+> **Owner decisions D5 (26 Nov 2026): the player is a god, not a government.** Section 5 ("a state, not a god's hand") and the one-sentence vision in 2.1 are superseded; see section 10 and [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md). Everything else here (the influences, neutrality, measurement, NPC autonomy) still holds and is strengthened by D5.6 and D5.33.
+
 ## 1. Purpose and scope
 
 This document says what *God of the Island* is trying to be, and why. It owns:
 - the arc **from Darwin, through Dawkins, to Marx**, with Adam Smith, Robert Axelrod, Elinor Ostrom and the *Creatures* games as equal influences;
 - for each influence: the core idea, the mechanics that make it *possible*, and how we would *measure* whether it happened;
 - the neutrality principles that every other document must follow;
-- the player's role as a state;
+- the player's role (a god since owner decisions D5; section 10);
 - what makes it a game and not only a simulation.
 
 It does not define mechanics. Each mechanic is owned by one document in the [document map](DESIGN_CONVENTIONS.md#11-document-map-one-owner-topic-each-link-dont-repeat), and this document links to it. Where this document and [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md) disagree, the conventions win.
@@ -156,7 +158,7 @@ Each influence below gives: the idea in our own words; the mechanics that make i
 - Darwin and Dawkins explain why NPCs care about themselves and their kin. Axelrod and Ostrom explain how such people can still cooperate. Smith explains why cooperation in production pays. Marx asks who gets the gain, and what follows when the answer is unequal. *Creatures* makes every one of these happen inside individual minds instead of in equations.
 - **Supporting references** we draw on but do not build around: Mancur Olson (selective incentives in collective action), Albert Hirschman (exit, voice and loyalty), Charles Goodhart (targets that stop measuring), Lewis (signalling conventions).
 
-## 5. The player's role: a state, not a god's hand
+## 5. The player's role: a state, not a god's hand **[superseded by D5.1 and D5.2; see section 10]**
 
 - **The player governs a state through institutions and incentives.** It sets taxes, wages, purchase offers, contracts, welfare, laws and budgets; it designates sites and commits treasury goods; it founds and funds institutions when the society can sustain them ([STATE_DESIGN.md](STATE_DESIGN.md), [INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)).
 - **The player never controls a person.** It cannot order an NPC to work, believe, love or obey. It can only change what happens to people who make choices.
@@ -233,3 +235,21 @@ No open questions remain.
 **Owner decision (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026) Q2):** keep the default. The intellectual influences go on an optional About/Philosophy page with appropriate references (section 8). Ordinary gameplay, tutorials, institutional reports and KPIs use neutral, descriptive terms. The game explores the theories and does not instruct players to accept them. There is no predetermined political or economic conclusion (principle 8 in section 2.2).
 
 Owned elsewhere: whether a faction can fall back an age ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#ages-and-unlocks)); suggested goals in the sandbox ([STATE_DESIGN.md](STATE_DESIGN.md)).
+
+## 10. Owner D5: the player is a god (26 Nov 2026)
+
+**The one-sentence vision, revised.** A population of persistent, mortal, learning people on an island, who build their own households, economy and institutions, watched over by a god who can suggest, command, compel, possess, appear among them and work miracles, but who never governs them and can never make them believe; biology, cooperation, production, ownership, politics and faith are allowed to happen, and are measured when they do.
+
+**Influences that become mechanics, not decoration:**
+- **Black & White:** divine intervention, miracles, worship, punishment and a god's relationship with followers. A miracle genuinely changes the world; punishment is something people interpret for themselves and may misread ([DIVINE_PLAYER_DESIGN.md](DIVINE_PLAYER_DESIGN.md), [MYTHIC_AND_MIRACLES_DESIGN.md](MYTHIC_AND_MIRACLES_DESIGN.md)).
+- **The Sims:** watching whole lives: individuals, relationships, households, life histories and memorials ([PLAYER_UI_DESIGN.md](PLAYER_UI_DESIGN.md)).
+- **Widelands** stays the model for physical goods, production chains, transport and logistics ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md)).
+
+**What changes from section 5:**
+- The player is a god only (D5.1). Governments, businesses, religious organisations, armies and communities are NPC organisations with their own decision-making (D5.2). The god influences them only through the individuals who run them, and they may refuse.
+- "The player never controls a person" becomes: the player **may** control a person, but only through explicit, costly, recorded divine acts: compulsion of a single valid action (D5.7) or temporary possession (D5.8). Both cost Mythic, both leave the NPC's body, identity, memory and learning intact, and both are recorded as divinely controlled rather than chosen. Suggestions and commands, the ordinary tools, still leave the decision to the NPC.
+- Religious, political, economic and institutional authority stay distinct (D5.2). Being a god gives no administrative power.
+- The god cannot lose (D5.5), but its followers, religion and faction can disappear; nothing regenerates them automatically.
+- The civilisation must still develop with no divine intervention at all (D5.6), and the sim is never pushed towards any political, economic or evolutionary conclusion (D5.33).
+
+**What does not change:** neutrality (section 2), measurement over assertion (section 4), institutions made of people with their own interests, Goodhart's law, and "explore, don't instruct".

@@ -1,5 +1,7 @@
 # Shared contracts for M4 and M5 (binding)
 
+> **Extended for owner D5 (Civilisation and Divinity, 26 Nov 2026).** The contracts for gods, avatars, control authority, miracles, commandments, organisations, the civilisation packages and their ids, enums, events (incl. the new 800–899 block), save version, hash parts, replay and warehouse migrations 0007+ are in [docs/civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md](../civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md). They extend this document: everything here stays binding unless a row of that document's section 20 changes it, and for anything that crosses a D5 package boundary that document wins. Its F1 foundation commit is the only change to the files this document freezes.
+
 M4 (life cycle, households, kinship, `Genome`, basic estates, care) and M5 (social memory, gestures, honest barter, gifts) are built in parallel from `unity/poc` at `d3aa9fb` (M3 merged), in separate worktrees. This document fixes every interface the two touch, so that both merge mechanically and the I-BS gate ([ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md#i-bs-integration-of-biology-and-society-owner-d2-4-gate-after-m4-and-m5-are-merged)) runs on the merged tree without rework.
 
 **Sequencing (lead's amendment, 26 Nov 2026).** This draft was written against `d3aa9fb`. Two branches were still open on top of it: `unity/m3b`, which finishes M3, and `unity/m3-wh`, which adds the M3 warehouse tables. Both land before F0. F0 is then rebuilt on their result:

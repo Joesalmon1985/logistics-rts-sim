@@ -357,3 +357,39 @@ None for the owner. Settled here, with defaults:
 3. **Faction action form.** A sequence of up to 4 commands per think (3.5): simpler to mask and closer to human play.
 4. **NPC think rate.** `ThinkEvery` 10 ticks (about once a second), staggered by id, with level of detail in [HEADLESS_SIMULATION.md](HEADLESS_SIMULATION.md). Decision counts and training cost follow from it.
 5. **Cross-platform equality.** If training moves to Linux, `IntNet_CsMatchesPython_10k` also runs there. Nothing in the design needs one platform.
+
+
+---
+
+## 14. Owner D5: Civilisation and Divinity (26 Nov 2026)
+**Status: a note, plan only.** Source: [OWNER_BRIEF_2026-11-26.md](../civdiv/OWNER_BRIEF_2026-11-26.md) §48 and decisions D5.30 (future AI god policies) and D5.32 (no neural network training during this run). Sections 1–13 stand as the readiness design.
+
+- **No training in the 18-hour run (D5.32).** No network is trained, no `serve` mode is built or run, no Python bridge work starts, and `experiment`, `serve`, `dataset` and `verify-model` stay "not implemented" (exit 9). Nothing in this document is a deliverable of the run.
+- **Readiness is kept, not dropped.** The retained capabilities are: the four policy interfaces and `PolicyRegistry`; `MindView`; the read-only views (so an agent sees what a scripted policy sees); the optional decision trace (`fact_decision`); `replay --record` to re-record any run in full; deterministic seeds and the batch runner. The D5 packages must not break these: the reflection tests (I1, the encoder test) stay green.
+- **Dataset export stays possible.** Divine tables ([DATA_WAREHOUSE_DESIGN.md §12](DATA_WAREHOUSE_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)) are exportable to CSV and Parquet with the existing `export` command. For learning from divine play later, the decision trace gets the `control_code` column, so a trainer can exclude compelled and possessed actions from imitation data, and instructions with their responses (`fact_divine_command`, `fact_command_response`) give labelled "instruction, state, response" examples. Reward signals must use actual values from the warehouse and observations the reported or divine view ([KPI_CATALOGUE.md §15](KPI_CATALOGUE.md#15-owner-d5-civilisation-and-divinity-26-nov-2026) has no composite, so any reward is composed explicitly in a plan file and its limitations stated, section 11).
+- **The AI god policy seam (D5.30).** A fifth policy level, `IGodPolicy`, is added next to the four of 3.1 (provisional signature, fixed by the contracts document):
+  ```csharp
+  interface IGodPolicy { void Decide(in IDivineView view, ref Rng rng, List<Command> outCommands); }   // PolicyLevel.God
+  ```
+  - It is looked up in `PolicyRegistry` by `(God, scope = god id, policyId)` and is replaceable per god, so a human god, a scripted god and a later learned god differ only in the registered policy.
+  - **Same rules as the human player.** It emits the same `Command`s (suggestion, command, compulsion, possession, avatar, miracle, commandment, resurrection), paid in the same Mythic, with the same validation, cooldowns, physical constraints and rejections. There is no AI-only action and no cheaper cost.
+  - **Same information rules.** It reads only an `IDivineView` filled by the same `DivineObservationProfile` ([INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)); it never reads `GodState`, the warehouse, a KPI engine result or the debug overlay (test I-D5-1).
+  - **Replay.** It runs inside `Step`, so its commands are re-created by replay (as the faction AI's are) and its name, version and model hash are in the replay header and in `dim_agent_policy`.
+  - **First policies:** `IdleGod` (never acts, the control for neutrality pin P2) and a scripted `StewardGod` for scenarios and tests. A learned god is a later stage; there is no god encoder in this run.
+  - **Rival gods and sandbox switching** (sandbox only) use the registry: switching the human to another god is a logged command, and the abandoned god's policy takes over deterministically.
+- **Neutrality.** Training readiness must not constrain play: the NPC, institution, military and faction policies stay autonomous (D5.29), and a God policy does not replace them; it is one more actor that reaches the world only through commands.
+
+### 14.1 Tier and package mapping
+| Item | Package (brief §39) | Tier |
+|---|---|---|
+| `IGodPolicy` interface, registry level, `IdleGod`, reflection and leak tests | D1, F1 | 1 (interface), 2 (scripted `StewardGod`) |
+| `control_code` on the decision trace, divine tables exportable | Q1 | 1 |
+| Learned god policy, encoders, training, serve mode | none in this run | 3 and later |
+
+### 14.2 Acceptance hooks
+| # | Test | Pass criterion |
+|---|---|---|
+| AI-D5-1 | `GodPolicy_SameCommands_SameRules` | a scripted god and a human script of the same commands give the same hash; an AI god cannot submit a command a human could not (the rejection reasons are the same) |
+| AI-D5-2 | `GodPolicy_Replaceable` | swapping the registered policy of a god at a day boundary (a logged command) replays exactly; `IdleGod` gives the neutrality pin P2 of [HEADLESS_SIMULATION.md §12.4](HEADLESS_SIMULATION.md#124-neutrality-pins-for-divinityenabled-and-orgsenabled-the-m4m5-pattern) |
+| AI-D5-3 | `No_Training_In_Run` | the runner commands `experiment`, `serve`, `dataset`, `verify-model` still return exit 9; no Python or model file is added to the repository |
+| AI-D5-4 | `Dataset_Export_Includes_Divine` | `export` of a divine scenario to Parquet contains the divine tables with `control_code` on the decision rows (extends 10.11 of the warehouse design) |

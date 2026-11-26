@@ -436,3 +436,128 @@ Settled here:
 2. **The audit sidecar is hashed.** `RecordAudit` is sim state, so falsification is replay-checked. Its rows reach the warehouse only at the `Full` recording level.
 3. **Census in the Band age.** Band elders tally and register only; the first census is a Village-age activity (section 4.2).
 4. **Reading ability.** Reading a written outlet is a skill in `Population` skills, spread by teaching through [CULTURAL_TRANSMISSION_DESIGN.md](CULTURAL_TRANSMISSION_DESIGN.md). It matters only from the Town age.
+
+
+---
+
+## 12. Owner D5: Civilisation and Divinity (26 Nov 2026)
+**Status: plan only; the existing seam (`FactionKnowledgeView`, `KnowledgeProfile`, `ViewFiller`) is built and stands.** Source: [OWNER_BRIEF_2026-11-26.md](../civdiv/OWNER_BRIEF_2026-11-26.md) §36 and decisions D5.1–D5.2 (the player is a god, not a government), D5.28 (separate divine and institutional knowledge), D5.29 (autonomous civilian, military, institutional and faction policies), D5.30 (future AI god policies). Where sections 1–11 treat the human player as the faction's controller reading `FactionKnowledgeView` (layer 7 "Player and faction"), this section supersedes that: the **faction view belongs to the faction's NPC institutions and policies**, and the **player reads a different, divine view**. Where a claim of 1–11 is not contradicted here (the six lower layers, degradation, falsification, the audit sidecar, media, the overlay rules), it stands.
+
+### 12.1 Nine layers (the existing seven, with layer 7 narrowed and two added)
+| # | Layer | Type and home | Who reads it | Written by | Status |
+|---|---|---|---|---|---|
+| 1 | True state | `GodState` (all modules) | sim systems; the warehouse recorder; the debug overlay | the sim | built |
+| 2 | Observations | `NpcObservation`, perception memory (`Cognition`) | that NPC | `Perception` | built |
+| 3 | Communicated information | `Message`, gossip, gestures (`Comms`, `Social`) | the receiving NPC | senders (may lie or err); a divine suggestion or command arrives here, as a message with source "divine" | built; divine source planned (D2) |
+| 4 | Institutional records | `InfoRecord`, `Measurement` in `InstitutionRecords` | the institution, its staff and its management policy | staff (may err or falsify) | designed, M13b |
+| 5 | Published information | `Publication` by `Outlet` | NPCs in reach | owners and editors | designed, later |
+| 6 | Individual beliefs | `Mind.Beliefs` (`Cognition`), including belief in a god, trust, fear, faith, known commandments | that NPC | layers 2, 3, 5 | built (beliefs), planned (divine and religious) |
+| 7 | Faction knowledge | `FactionKnowledgeView` (`KnowledgeProfile`) | `IFactionPolicy`, institution managers and officials' tools; **not the player** | `ViewFiller` from layer 4 (and, under `FullInformation`, from the faction's own layer 1 books) | built |
+| 8 | **Divine observation** (new) | `IDivineView` filled by `DivineViewFiller`, driven by a `DivineObservationProfile` | the human player's divine UI, and an `IGodPolicy` (human or AI god) through the same interface | `DivineViewFiller` | planned (D1; Tier 1 for the omniscient profile, Tier 2 for perceived) |
+| 9 | **External analytical recording** (new) | the SQLite warehouse, CSV, Parquet, JSONL, and read-only SQL on them | developers, analysts and, as an advanced capability, the player, always outside the sim and never read by the sim | the recorders after the fact | built (core), D5 tables planned |
+
+**The one rule that keeps them apart (extends principle 1):** a value crosses from a lower layer to a higher one only through a named step that can add delay, noise, bias, loss or falsification. Layer 8 is not "the true state with a skin": it is a view with its own sources and rules. Layer 9 is a copy of what happened; it has no path back into layers 1–8 (12.5).
+
+### 12.2 What each reader may read
+| Reader | Allowed | Never |
+|---|---|---|
+| An ordinary NPC (`INpcPolicy`, mind) | layers 2, 3, 5, 6 | 1, 4 (unless it works in the institution and reads its records as part of the job), 7, 8, 9 |
+| A manager or official, a faction policy (`IInstitutionPolicy`, `IFactionPolicy`, `IMilitaryPolicy`) | layers 2, 3, 5, 6 for the individual, plus 4 and 7 through the role | 1, 8, 9, `ITrueStateOverlay`, the warehouse, any debug information |
+| A god, human or AI (`IGodPolicy`) | layer 8 only, as the profile allows | 1 directly, 4 directly, 7, 9 |
+| The player's divine UI | layer 8 (and, in sandbox or developer scenarios, 9 through the SQL tool and the overlay of Q22) | 1 as a hidden source of actions: every action goes through a command that the sim validates |
+| The recorder, report builders, `ViewFiller`, `DivineViewFiller` | the layers they produce, and layer 1 as their input | writing into any layer except their own output |
+| A developer or analyst | all, outside the sim (12.5) | feeding results back into a run except through the command stream |
+
+### 12.3 Divine observation (layer 8)
+**Principle.** The god has no privileged hand on the sim; the god has a window onto it. What the window shows is configurable, so a sandbox can be omniscient and a hard scenario can leave the god half blind. Whatever the profile, an action the god takes is a validated command (brief §3, §10); seeing something never changes it.
+
+**Interface (names provisional; the contracts document fixes signatures).**
+```csharp
+public interface IDivineView                        // read-only, built fresh each refresh like FactionKnowledgeView
+{
+    int  God { get; }
+    DivineObservationProfile Profile { get; }
+    long AsOfTick { get; }
+    // world and people, each item carrying where it came from and how stale it is
+    bool TryPerson(int npcId, out PersonSight sight);          // what the god can see of one individual (see 12.4)
+    bool TryObject(int objectId, out ObjectSight sight);
+    ReadOnlySpan<AreaSight> Areas { get; }                     // settlements, buildings, resources, as the profile allows
+    bool TryKpi(int kpiId, in KpiScope scope, out KpiValue value);     // same struct as layer 7: value, lo, hi, quality, as-of
+    bool TryRecord(int recordId, out RecordSight record);      // an institutional record the god has been shown, with its provenance
+    ReadOnlySpan<DivineAlert> Alerts { get; }                  // aggregated, not per transaction (brief §30)
+}
+```
+**Profile.** `DivineObservationProfile` is the analogue of `KnowledgeProfile`: a mode per domain (the existing `KnowledgeDomain` set, plus Religion, Divine and Individuals, added by appending enum values) and a list of enabled channels.
+
+| Mode | The god sees | Used for |
+|---|---|---|
+| `Omniscient` | the true state of the domain, exact, no delay, flagged `Quality = Exact` and `Source = DivineSight` | the sandbox default and the unlimited-power sandbox (brief §7) |
+| `Perceived` | only what reaches the god through enabled channels: an avatar's senses, a possessed person's senses, prayers and sacrifices, consecrated sites, followers' reports, and the god's own earlier observations (aged by `AsOfTick`) | the hard-mode default |
+| `Reported` | what the faction's institutions have measured and published (layer 4 through the same `Measurement` pipeline, with the same lag, coverage and error), shown as the government's figures | analysis of what a government believes |
+| `Blind` | nothing in this domain | scenario challenge |
+
+Channels are `Avatar`, `Possessed`, `Prayer`, `ConsecratedSite`, `Followers`, `Records` (a record the god was shown by a person), `Sight` (omniscient). A domain can combine modes (for example individual inspection `Omniscient`, institutional finance `Reported`). The default of a new sandbox is `Omniscient` for people and objects and **both** truth and the government's figure, side by side, for institutional KPIs (the gap is the point of Mode D, brief §6). Whether the profile is configured by the scenario, by player setting or per god is a delegated decision (brief §52); until then it is per scenario and per god.
+
+**Rules.**
+1. **Divine observation is distinct from institutional records.** In a `Reported` or mixed domain the god sees the government's figure with its own `Quality`, `Lo` and `Hi`, `AsOfTick` and the producing institution. Government reports may be incomplete, late, noisy or falsified; the god is not told which, unless the profile also grants truth for that domain, in which case both values are shown and the gap is visible (this is the existing overlay logic of 4.8 in the divine view, and the `ITrueStateOverlay` rule of Q22 still limits it in competitive play).
+2. **Divine knowledge does not become institutional knowledge (D5.28).** Nothing the god sees enters any record, belief, message or view of an NPC or organisation by itself. The ways knowledge can pass are only physical and in-sim: a revealed commandment or revealed knowledge is a miracle whose effect is a belief or association written into a person's mind (layer 6) and, if the person then writes or tells it, layer 3 or 4 with the person as the observer and source. A god can "reveal evidence to a judge" only by making the judge perceive it (layer 2) or learn it (layer 6); the court's record shows the judge as the source. The judge may disbelieve it.
+3. **Institutional knowledge does not become divine knowledge by itself.** A god in `Perceived` mode learns what an institution recorded only by a channel (a follower reports it, an avatar reads it); in `Reported` mode it receives the periodic reports. `Omniscient` is the only mode that bypasses channels, and it is a configured capability, not a leak.
+4. **The same interface for AI gods.** An AI god reads `IDivineView` through the same profile, subject to the same Mythic and command rules; there is no second, richer view for AI gods (D5.30). Different gods in one run can have different profiles only if the scenario says so; this is recorded in `dim_god_history` ([DATA_WAREHOUSE_DESIGN.md §12](DATA_WAREHOUSE_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)).
+5. **Observing changes nothing in the sim.** Building a divine view, refreshing it, or toggling the profile in the UI leaves the hash identical (extends I11). The profile itself is scenario data, hashed like any tuning; changing it mid-run is a command and is logged.
+6. **What the player may inspect of an NPC** (brief §31) is split by layer: the **authoritative** items (health, needs, true intentions, true possessions, learned associations, reasons for decisions) come from layer 1 and 6 through the divine view and are **labelled "authoritative"**; the items that describe what the NPC or the government *knows* (an NPC's belief about a neighbour, a recorded employment history in an institution's roll) are labelled with their layer and source. The inspector never shows an authoritative value in a field labelled as belief.
+
+### 12.4 What an NPC sheet shows, by layer (the inspector contract)
+| Item (brief §31) | Layer | Label |
+|---|---|---|
+| Name, age, health, needs, activity, possessions, equipment | 1 | Authoritative |
+| Intentions, reasons for decisions, learned associations, recent experiences | 6 (mind), 1 for the decision trace | Authoritative (from the mind); the decision trace is a debug view and appears only where the overlay is allowed |
+| Trust, fear, beliefs, faith, known commandments | 6 | What the NPC believes (true values of the claims shown alongside only where the overlay is allowed) |
+| Employment history, economic relationships, household, family tree | 1 (history), 4 (what an institution recorded) | Authoritative history; an institution's own record, if different, is shown as "recorded by *X*" |
+| Religious affiliation | 6 and 1 | The NPC's own affiliation (authoritative about the NPC's state), not the organisation's roll |
+| Divine commands received | 1 (events), 3 (what was perceived), 6 | Issued, perceived and as-understood are three items when they differ |
+
+### 12.5 Layer 9 and read-only SQL
+- **Boundary.** The warehouse is written only by recorders outside `God.Sim` (`God.Runner`), opened by nothing inside the sim (existing test `SimAndRecordingAssemblies_DoNotReferenceSqlite`, test 10.13 of the warehouse design). Unity stays on JSONL; the SQLite writer is a runner capability.
+- **Policies never read it.** No `INpcPolicy`, `IMilitaryPolicy`, `IInstitutionPolicy`, `IFactionPolicy` or `IGodPolicy`, and no manager or official, reads the warehouse, a KPI engine result, `fact_kpi`, a debug snapshot, `ITrueStateOverlay` or an NPC's `RecordAudit`. Their reports come from layer 4 or 7 (or 8 for gods). Enforced by test I1 (extended below) and by assembly references.
+- **Read-only SQL is an advanced capability, not a game mechanic.**
+  1. *Developer.* Any SQLite client on a run's file; the runner opens it `mode=ro` with `PRAGMA query_only = ON`.
+  2. *`god-runner sql`* (planned, Q1): `sql --db FILE --query "SELECT ..." [--format csv|json|table] [--limit N] [--timeout S]`. It allows a single `SELECT` or `WITH` statement, denies everything else through the SQLite authorizer (no write, `ATTACH`, `PRAGMA` that changes state, extension loading), applies a row and time limit, and prints the planned views (`v_intervention_chain`, `v_god_day`, `v_org_history`, `v_person_life` and the existing `v_person_day`, `v_life`) with the table list.
+  3. *Player (advanced).* A panel in the player build that sends queries to an out-of-process runner holding a recorded copy of the current run, delayed to the last committed day. It is available in sandbox and developer scenarios and **off by default in competitive play** (the same rule as the Q22 overlay, test I18); it shows its source as "external analysis, not in-world knowledge".
+- **Nothing flows back.** A query result is never a command, never a belief and never an institutional record. If a player wants an NPC to act on a finding, the player acts as a god: a command or a miracle with its Mythic cost, validated by the sim. The only things the warehouse can change are files outside the game.
+- **Recording is optional for the player build.** If no recorder runs, layer 9 does not exist and layers 1–8 behave identically (I12).
+
+### 12.6 What changes in the existing text
+- 3.1 table: layer 7 is read "by the HUD" in 1–11. Under D5 the HUD of a god reads layer 8; a faction's NPC institutions read layer 7. The `FactionKnowledgeView` types and tests stay as they are, so the 27 Nov Q21 foreign-information rules continue to hold for NPC-run factions and AI factions.
+- 4.8 and I1 refer to "the player" reading the view; read them as "the faction's institutions and policies". The HUD's reports panel (section 6) becomes the **divine reports panel**: it reads layer 8, labels each figure with its source layer and shows the government's figure beside it.
+- 9 Migration: the HUD panels already ported to the faction view are re-pointed to `IDivineView`, which in `Omniscient` or `Reported` mode wraps the same `ViewFiller` output, so no panel is rewritten.
+
+### 12.7 Telemetry
+Events (names; codes by the contracts document): `DivineObservationAnswered` (god, domain, mode, channel, subject, quality, as-of tick), `DivineProfileChanged`. Both go to `fact_divine_observation` and `dim_god_history` (HV and S). The audit-only fields of 7 stay Full-only. Warehouse tables, KPIs and acceptance hooks: [DATA_WAREHOUSE_DESIGN.md §12](DATA_WAREHOUSE_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026) and [KPI_CATALOGUE.md §15](KPI_CATALOGUE.md#15-owner-d5-civilisation-and-divinity-26-nov-2026).
+
+### 12.8 Tier and package mapping
+| Part | Package (brief §39) | Tier | Warehouse / KPI work |
+|---|---|---|---|
+| `IDivineView`, `Omniscient` profile, labelled NPC inspector (12.3, 12.4) | D1, U2 | 1 | Q1: `dim_god_history`; DIV-01, DIV-02 |
+| Divine suggestion arriving as a layer 3 message with source "divine"; revealed knowledge as a layer 6 write | D2, D3, D6 | 1 | `fact_command_perception`, `fact_miracle_effect` |
+| `Perceived` and `Reported` modes, channels, `DivineAlert` aggregation | D1, D4, D5, U5 | 2 | `fact_divine_observation` (Tier 3 detail) |
+| Government reports that can be wrong, shown beside truth to the god | C6, U5 | 2 | INS-04..08, SVC-01..06; `fact_record`, `fact_record_audit`, `fact_return` (M13b) |
+| Reflection tests extended to `IGodPolicy` and `IDivineView` | F1, Q3 | 1 | W-D5-10 |
+| `god-runner sql` | Q1 | 2 | views in `0030_kpi_views.sql` |
+| Player SQL panel | Q1, U5 | 3 | none |
+| AI god policy on the same view | D1 | 2 (interface), 3 (a policy beyond a scripted one) | `dim_agent_policy` rows for gods |
+
+### 12.9 Acceptance hooks
+Tests continue the numbering of section 10 (I1–I19 stand); they extend, and do not weaken, them. Scenario numbers are those of brief §47.
+
+| # | Test | Pass criterion |
+|---|---|---|
+| I-D5-1 | `Policies_Never_Read_Truth` (extends I1) | reflection over `God.Sim` and `God.Game`: no type implementing `INpcPolicy`, `IMilitaryPolicy`, `IInstitutionPolicy`, `IFactionPolicy` or `IGodPolicy` has a field, parameter, local, generic argument or call target of `GodState`, `EconomyState`, `PopulationState`, `RecordAudit`, `ITrueStateOverlay`, `God.Runner.Warehouse` or `Microsoft.Data.Sqlite`. Only the view fillers, report builders and recorders may |
+| I-D5-2 | `GodPolicy_Sees_Only_Its_View` | an `IGodPolicy` receives only an `IDivineView`; a scripted god and a test AI god in `Perceived` mode, with a hidden change to a foreign settlement's stores that no channel has reported, leave every field of the view unchanged (the I19 leak test for gods) |
+| I-D5-3 | `Divine_Knowledge_Is_Not_Institutional` | the god in `Omniscient` mode views an NPC's true state and an institution's true treasury for 5 days: no institution record, belief or message changes, and the hash is identical to the run without viewing |
+| I-D5-4 | `Revealed_Evidence_Passes_Through_A_Mind` (scenario 15 and 12) | a miracle "reveal knowledge" to a judge creates a belief or association in the judge's mind and nowhere else; the judge may refuse it; the court record names the judge as source, and `fact_court_decision.grounds_code` says what the decision rested on |
+| I-D5-5 | `Government_Report_Can_Differ` (scenario 17) | in a run with a falsifying or lossy recorder, the divine view in `Reported` mode shows the government's figure with `Quality` below `Exact`, in `Omniscient` shows both; the warehouse `fact_kpi` has actual and reported side by side and the divine view matches the reported one |
+| I-D5-6 | `DivineView_Refresh_NoHashChange` | refreshing, filtering, changing the UI profile mode (not the scenario profile) every day leaves every checkpoint hash identical (extends I11) |
+| I-D5-7 | `Profile_Change_Is_A_Command` | changing a god's observation profile mid-run is a logged command; the replay reproduces the same views and the same hash (scenario 18) |
+| I-D5-8 | `Sql_Is_ReadOnly` | `god-runner sql` rejects `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ATTACH`, `PRAGMA` writes and multi-statements, honours the limit and timeout, and leaves the database file byte-identical (hash of the file before and after) |
+| I-D5-9 | `Sql_Cannot_Reach_The_Sim` | the player SQL panel in a competitive scenario is absent (I18); in a sandbox, running queries for a whole run leaves every checkpoint hash identical to a run with the panel closed |
+| I-D5-10 | `Inspector_Labels_Layers` | for 20 sampled NPCs, every inspector field has a layer label; no authoritative value is displayed in a field labelled belief or record (UI test over the inspector model, not the rendering) |

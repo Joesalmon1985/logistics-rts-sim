@@ -570,3 +570,152 @@ Settled with defaults:
 2. **Wealth for a Band-age Gini:** INQ-03 uses personal wealth (goods, tools, huts); communal and cooperative shares are reported as a separate series. [ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md) may add a class-based variant.
 3. **Evidence strength for CRT-09:** deferred to the courts design (stage 6); CRT-09 is not built before then.
 4. **Theory-dependent KPIs:** TRU-08 follows the political-interest measures of [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md) and changes with them.
+
+
+---
+
+## 15. Owner D5: Civilisation and Divinity (26 Nov 2026)
+**Status: plan only.** Source: [OWNER_BRIEF_2026-11-26.md](../civdiv/OWNER_BRIEF_2026-11-26.md) §35. Sections 1–14 stand, and so do their conventions (units, `S4`, breakdown codes, the actual-versus-reported pair, `div_round`, the minimum cell rule, [3.1–3.6](#3-conventions-read-once-the-tables-use-them)). This section (a) maps each KPI named by the brief to the existing entry or says what is new, and (b) defines the new entries. Tables and columns named as sources are the planned ones of [DATA_WAREHOUSE_DESIGN.md §12](DATA_WAREHOUSE_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026); a KPI whose source table is not built yet is `Missing` in the report with the reason "not recorded", never zero.
+
+**Rules for every new KPI (the brief's five fields):** a definition, a reporting period (`D`, `R5`, `Y`, `C`, `E` of 3.2), a denominator stated as eligibility, a data source (table and columns), and limitations. The old "A≠R" and "Gaming" columns are folded into **Limitations**. A KPI that exists only as truth (needs a truth field or a mind) is **actual-only**, and says so. **No composite wellbeing score** (D5, owner decision Q23): new divine, religious and institutional measures are reported as separate series, never summed with each other or with existing dimensions. In particular there is **no obedience, devotion or "faith" score** (brief §13: belief, faith, trust, fear, loyalty, affiliation, citizenship and cultural membership stay distinct), and no KPI says that more worship, more compliance or more intervention is better. Reports to a god are subject to the information rules of [INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026): an institution's figure can be wrong, and the god's own observation has its own rules.
+
+### 15.1 Coverage of brief §35 (nothing is silently dropped)
+| Brief §35 item | Existing KPI (kept, not duplicated) | New in this section |
+|---|---|---|
+| Population | POP-01, POP-10, POP-11 | POP-13 (accounting identity) |
+| Births, deaths | POP-02, POP-03, POP-04 | POP-14 (deaths by life number) |
+| Fertility | POP-05 | none |
+| Childhood mortality | POP-07 (before year 1) | POP-12 (ages 1 to 4) |
+| Life expectancy | POP-06 | amended note on resurrection (15.7) |
+| Health | HLT-01..09 | HLT-10 (health distribution) |
+| Food security | HLT-01, HLT-02, LIV-01 | LIV-07 (household food cover) |
+| Productivity | EMP-05 (value added) | PRD-01 (physical output per labour tick) |
+| Time allocation | TIM-01 | TIM-04 (ticks by control source) |
+| Unpaid care work | TIM-02, TIM-03 | none |
+| Employment | EMP-01..04 | EMP-09 (relationship mix), EMP-10 (tenure) |
+| Wealth | LIV-05, INQ-03 | none |
+| Ownership concentration | INQ-05, INQ-06 (persons' wealth) | OWN-01, OWN-02 (productive assets) |
+| Inequality | INQ-01..06 | none |
+| Social mobility | INQ-07..09 | none |
+| Institutional capacity | INS-01..03 | INS-04..08 |
+| Unmet service demand | HLT-04..06 (health only) | SVC-01..06 (all services) |
+| Healthcare outcomes | HLT-07, HLT-08 | SVC-04 (generic outcome) |
+| Education outcomes | EDU-01..07 | none (SVC-04 and SVC-05 cover the service side) |
+| Loan defaults | FIN-03, FIN-06 | FIN-09 (repayment timeliness) |
+| Crime | CRM-01..09 | none |
+| Justice outcomes | CRT-01..09, PRI-01..07 | CRT-10 (decision grounds) |
+| Military readiness | MIL-01..08 | none |
+| Religious affiliation | none | REL-01, REL-02, REL-08, REL-09 |
+| Trust and fear | TRU-03, COO-04, LIV-06 (fear drive) | REL-03..05 (towards a god, separate from each other) |
+| Known commandments | none | CMD-01, CMD-02 |
+| Compliance | TRU-06 (state compliance, three values) | CMD-03, CMD-04 (commandments); DIV-04 (instructions) |
+| Divine interventions | none | DIV-01, DIV-05..13 |
+| Mythic expenditure | none | DIV-02, DIV-03 |
+
+### 15.2 Population, health, food, work and ownership (new rows)
+Columns: **Definition (Num ÷ Den, unit)** · **Period** · **Denominator and eligibility** · **Source** · **Limitations** · **Pkg / tier**.
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| POP-12 | Child mortality, ages 1 to 4 | deaths at age ≥ 1 and < 5 years ÷ person-years lived by the cohort in that age band (‰ per person-year, pm1000) | C (3-year pooled) | children alive in the band; `Missing` under 50 person-years | `fact_death.age_ticks`, `fact_person_day` | small numbers at 10 days a year; resurrected children count again as exposed from `fact_life_spell`; reported figure depends on the register (as POP-07) | F2, Q1 / 1 |
+| POP-13 | Population accounting identity | alive at end − alive at start − (births + immigrants + resurrections − deaths − emigrants) (n; must be 0) | D, Y | all persons | `fact_birth`, `fact_migration`, `fact_resurrection`, `fact_death`, `fact_person_day` | a check, not an outcome; actual-only | F2, Q3 / 1 |
+| POP-14 | Deaths by life number | deaths with `life_no` ≥ 2 ÷ all deaths (‰); and median years from resurrection to next death | Y | all deaths | `fact_death.life_no`, `fact_resurrection` | rare events: `Missing` under 5 | D7, Q1 / 2 |
+| HLT-10 | Health distribution | median, 10th percentile `health` of alive persons (pm1000), and share below 300‰ (‰) | D, Y | alive residents | `fact_person_day.health` | health is a sim variable, not a diagnosis; a healer's records see only those treated (C, S); divine healing raises it without institutional help (read with DIV-09) | F2, Q1 / 1 |
+| LIV-07 | Household food cover | households whose edible stock ÷ daily need of members < 3 days ÷ households (‰); and median days of cover (pm1000) | D, Y | households with ≥ 1 alive member | `fact_household_day` (food, size), `fact_person_day_ware` | counts edible wares only; stock held by kin outside the household is not counted; divine resource creation is included (read with DIV-10) | F2, C1, Q1 / 1 |
+| PRD-01 | Physical output per labour tick | units produced of ware *w* ÷ work ticks spent producing *w* (units per tick, pm1000), per ware, never summed across wares | Y | persons who worked on *w*; ≥ 500 ticks | `fact_production` (produce rows, reason, `with_tool`), `fact_person_day.ticks_*` | needs the work ticks to be attributed to a ware (only if the activity code carries the ware); tool and site effects are not separated; compelled and possessed ticks included, with TIM-04 beside | C1, Q1 / 1 |
+| TIM-04 | Time by control source | ticks under compulsion, possession or avatar control ÷ awake ticks of the person (‰), and the number of persons with any such tick | Y | alive persons | `fact_person_day.ticks_*` joined to `fact_compulsion`, `fact_possession`, `control_code` columns | actual-only; avatars have no ticks of their own as persons (reported under DIV-08) | D2, D4, Q1 / 1 (compulsion), 2 |
+| EMP-09 | Work relationship mix | persons in each relationship (wage employee, self-employed, co-op member, enterprise owner, institution staff, unpaid household work) ÷ working-age adults (‰ each; shares overlap, never combined) | R5, Y | working-age adults | `fact_employment`, `fact_org_membership`, `fact_economic_relationship`, `fact_person_day` | a person may hold several; informal work not under contract is unclassified and shown as its own cell | C3, Q1 / 2 |
+| EMP-10 | Job tenure | median spell length of `fact_employment` ended in the period, plus the share still open at period end (days, pm1000; ‰); censoring as in 6.3 | Y | contracts closed or open | `fact_employment` | short spells from 10-day years; ended-by-death spells reported separately | C3, Q1 / 2 |
+| OWN-01 | Productive-asset concentration | Herfindahl (6.10) of ownership shares of productive assets (buildings, tools, land and site rights), by asset class, over owners (pm1000); and the share held by the largest owner (‰) | Y | productive assets alive at period end, shares summing to 1000‰ | `fact_ownership_spell` | owners can be nominees; shared and communal assets count by their registered owner (a household or organisation is one owner); not a wealth measure (see INQ-05) | C1, Q1 / 1 |
+| OWN-02 | Ownership model mix | productive assets (count and reference value) by owner kind (person, household, enterprise, cooperative, communal, state, religious) ÷ all productive assets (‰ each) | Y | as OWN-01 | `fact_ownership_spell`, `dim_party`, `dim_org.ownership_model` | reference value is a measurement index (FE), so the count series is primary; no model is better than another | C1, C6, Q1 / 2 |
+
+### 15.3 Institutions and services (new rows)
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| INS-04 | Institutional capacity | service capacity per org per period = staff labour ticks available for the service ÷ mean labour ticks per delivery of that service in the period (deliveries per day, pm1000), shown beside staff and store stock | R5, Y | orgs of a service kind with ≥ 1 staff | `fact_org_day.staff`, `fact_service_delivery.labour_ticks` | derived from past deliveries, so unknown for a new org; not a quality measure; a reported value rests on the org's own records | C6, C7, Q1 / 2 |
+| INS-05 | Institutional expenditure | spending by category (staff pay, supplies, capital, transfers, loans, service delivery) ÷ total spending of the org (‰ per category) and the wares per delivery | Y | orgs with spending | `fact_org_expenditure` | wares and reference value both shown; internal transfers inside one party are not spending; embezzled amounts appear as spending until audited (see `Embezzled`, INSTITUTIONAL_STATE_DESIGN) | C6, Q1 / 2 |
+| INS-06 | Independent emergence | organisations founded with no accepted divine action on any founder in the preceding window (default 5 days) ÷ organisations founded (‰), by kind | Y | orgs founded in the period excluding scenario seeds | `dim_org.origin_code`, `fact_divine_action` | evidence for scenario 4, not a goal; a divine suggestion upstream is visible only through the window rule; scenario-seeded orgs excluded | C6, Q1 / 2 |
+| INS-07 | Ownership models in use | orgs by ownership model (private, shared, cooperative, communal, state, religious) ÷ orgs alive (‰ each) | Y | orgs alive at period end | `dim_org_history` | descriptive; the model can change within a period (the last row counts) | C6, Q1 / 2 |
+| INS-08 | Response to divine instruction | for instructions to an institution: accepted, modified, refused, ignored (n and ‰ of instructions received), by org kind | Y | institutional targets of commands | `fact_command_response` where `org_key` set, `fact_divine_command` | records only instructions the org's members perceived; the response is the org's decision rule, not a loyalty score (scenario 15) | D2, C6, Q1 / 2 |
+| SVC-01 | Service requests | requests opened per service kind (n) and per 1000 person-years | Y | persons alive | `fact_service_request` | HV table: sampled below Full with `sample_weight`; people who needed help and did not ask are in SVC-06 | C6, Q1 / 2 |
+| SVC-02 | Unmet service demand | requests that ended refused, expired or withdrawn, plus requests open longer than the service's deadline at period end, ÷ requests that fell due or closed in the period (‰) | Y | requests of the kind | `fact_service_request.status`, `close_tick` | open requests are censored at run end and counted as open, not unmet, until their deadline; what counts as the deadline is scenario data; the org's own register may drop unserved requests (S) | C6, C7, Q1 / 2 |
+| SVC-03 | Time to service | median and 90th percentile of (first delivery start − request tick), with open requests counted as censored (6.3), in sim days (pm1000) | Y | requests of the kind | `fact_service_request`, `fact_service_delivery` | HLT-06 is the health instance and must equal SVC-03 for kind healthcare | C6, Q1 / 2 |
+| SVC-04 | Service outcome | for delivered services: outcome improved, unchanged, worsened ÷ outcomes recorded (‰ each), plus mean change in the measured variable (health or skill, pm1000), per kind; truth shown beside the institution's recorded outcome | Y | deliveries with an outcome row | `fact_service_outcome` (before, after, recorded; truth at Full) | the measured variable changes for other reasons too (no counterfactual; an experiment arm is needed for causal claims, [POLICY_EXPERIMENTS_DESIGN.md](POLICY_EXPERIMENTS_DESIGN.md)); recorded outcome can be wrong or falsified | C7, Q1 / 2 |
+| SVC-05 | Cost per delivery | labour ticks and wares consumed per delivery, per kind (both shown, not combined) | Y | deliveries | `fact_service_delivery`, `fact_org_expenditure` | pay and goods in kind appear as wares; overhead is not allocated | C6, Q1 / 2 |
+| SVC-06 | Unrequested need | persons with a true need of a service kind (injury or illness untreated, a skill gap the school covers) at period end who have no open request ÷ persons with the need (‰) | Y | persons in need | `fact_person_day` (health, injury), `fact_service_request` | actual-only: needs truth; "need" thresholds are defined per kind in the scenario | C7, Q1 / 2 |
+| FIN-09 | Repayment timeliness | repayments made by their due tick ÷ repayments falling due (‰); median days late of late ones | Y | loans with a due date in the period | `fact_loan`, `fact_loan_repayment` | physical repayments only; forgiven or restructured loans leave the base and are shown in FIN-06; a lender's own book may omit late payments | C2, Q1 / 2 |
+| CRT-10 | Decision grounds | decisions by grounds code (evidence, law, adopted commandment, custom, instruction refused) ÷ decisions (‰ each) | Y | decisions of forums | `fact_court_decision.grounds_code` | grounds are a recorded code; religious and legal rules stay separate, an adopted commandment is law only where an org adopted it | C9, Q1 / 3 |
+
+### 15.4 Religion, belief, commandments (new rows)
+Belief, faith, trust, fear and loyalty are separate variables in the mind (brief §13). Each is reported alone; no row sums or averages them.
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| REL-01 | Religious affiliation | persons with an open affiliation to god or religion *g* ÷ alive persons (‰ per *g*; shares overlap, a "none" share and a "more than one" share shown) | D, Y | alive persons | `fact_religious_affiliation`, `fact_person_day` | affiliation is a person's own state, not a citizenship: breakdown by faction shows both; private belief of a secret follower is actual-only | D6, Q1 / 2 |
+| REL-02 | Affiliation change | conversions, lapses and new affiliations (n), and the transition matrix between affiliations over the year (‰, rows sum to 1000, as INQ-08) | Y | persons alive at both ends | `fact_religious_affiliation` (spells) | small numbers; cause kind shown (born into, taught, miracle witnessed, conversion), not interpreted | D6, Q1 / 2 |
+| REL-03 | Belief that a god exists | mean of the belief that god *g* exists (0–1000) over persons who have encountered *g*, and share above 500 (‰) | Y | persons with an encounter (witnessed an intervention, was told, prayed) | `fact_belief_sample` (sampled), `fact_belief_change` | sampled; actual-only (it is a mind variable, not reportable by an institution); persons who never met *g* are outside the base | D6, Q1 / 2 |
+| REL-04 | Trust in a god | mean trust in god *g* (0–1000), and share above 500, over believers | Y | persons with REL-03 > 500 | `fact_belief_sample`, `fact_belief_change` | separate from fear and from REL-03: an NPC can believe and distrust; actual-only | D6, Q1 / 2 |
+| REL-05 | Fear of a god | mean fear of god *g* (0–1000) and share above 500, over believers | Y | as REL-04 | as REL-04 | not obedience; fear can be high with low compliance; actual-only; read with LIV-06 (the general fear drive) | D6, Q1 / 2 |
+| REL-06 | Prayer | prayers per 1000 person-years by request kind; share of persons who prayed at least once | Y | affiliated persons | `fact_prayer` | HV: aggregate exact, rows sampled; whether a prayer was answered is Full only and is not a measure of efficacy | D6, Q1 / 2 |
+| REL-07 | Worship participation | persons present at worship events ÷ affiliated persons, per period (‰), and goods given per act (wares) | Y | affiliated persons | `fact_worship`, `fact_worship_day` | counts attendance, not devotion; closed rites are not observed by non-members | D6, Q1 / 3 |
+| REL-08 | Affiliation and citizenship | cross-table of affiliation (rows) by citizenship faction (columns), persons (n, ‰ of row); and changes of one while the other did not (n) | Y | alive persons | `fact_religious_affiliation`, `fact_citizenship` | evidence for scenario 16; it shows separation, it does not prescribe it | D6, C5, Q1 / 2 |
+| REL-09 | Multiple allegiance | persons with ≥ 2 open affiliations ÷ affiliated (‰); persons affiliated to a god of a different faction than their citizenship (‰) | Y | affiliated persons | `fact_religious_affiliation`, `dim_god_history` | descriptive only | D6, Q1 / 3 |
+| CMD-01 | Known commandments | for commandment *c*: persons with an open `fact_commandment_known` spell ÷ persons in its scope (‰); and mean number of commandments known per adult (pm1000) | D, Y | persons in the commandment's scope (people and geography as defined) | `fact_commandment_known`, `dim_commandment_revision` | "knowing" is a state in the mind; by revision, so a revised text is known by fewer people at first; institutions cannot see who knows | D6, Q1 / 1 |
+| CMD-02 | Understanding | knowers whose known revision is the current one ÷ knowers (‰), and knowers whose stance is misunderstood ÷ knowers (‰) | Y | persons knowing *c* | `fact_commandment_known` (stance is truth, Full only) | actual-only; the misunderstood share is Full-only | D6, Q1 / 2 |
+| CMD-03 | Stance | knowers by stance (adopted, rejected, selective, misunderstood) ÷ knowers (‰ each) | Y | as CMD-02 | `fact_commandment_known` | an NPC may hold different stances to different commandments; no total is formed | D6, Q1 / 2 |
+| CMD-04 | Compliance | choices that matched the commandment's action class and followed it ÷ (followed + violated) among knowers (‰); and unaware choices ÷ all matched choices (‰), separately | Y | matched choices (an NPC faced the action class), per commandment and per knower status | `fact_commandment_choice` (HV: sampled below Full with weight) | compliance is inferred from the sim's choice event, not enforced; choices under compulsion or possession are excluded (`control_code` ≠ 0) and shown separately; a rare action class gives `Missing`; commandments conflict, so one value per commandment, never pooled | D6, Q1 / 2 |
+| CMD-05 | Commandment activity | issued, revised and revoked (n) per period, by god and importance | Y | commandments | `dim_commandment`, `dim_commandment_revision` | none | D6, Q1 / 1 |
+| CMD-06 | Transmission | new knowers by channel (revealed, taught, observed, read) ÷ new knowers (‰), and mean days from issue to first teaching by a person | Y | persons who learned in the period | `fact_commandment_known` | the first person learns by revelation; later ones by people (scenario 13) | D6, Q1 / 2 |
+| CMD-07 | Adopted as law | commandments an org has adopted into formal rules ÷ commandments in force (‰) | Y | commandments in force | `fact_policy_change` (law from a commandment), `dim_commandment` | religious and legal rules stay distinct; adoption is by an NPC institution only | D6, C10, Q1 / 3 |
+
+### 15.5 Divine KPIs (new rows)
+Divine KPIs describe what the god did and what followed. They are reported to the player as divine observation ([INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)); a government never receives them. Human and AI gods use the same definitions.
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| DIV-01 | Interventions | accepted divine actions by kind (suggestion, command, compulsion, possession, avatar, each miracle kind, commandment action, resurrection) per god (n), and per 1000 person-years of the god's followers | D, Y | accepted actions, per god | `fact_divine_action` | refused commands are in DIV-04's rejection side (`fact_command`); counts say nothing about effect | D1, Q1 / 1 |
+| DIV-02 | Mythic expenditure | Mythic charged and Mythic nominal by category per god (units, pm1000), and share of each category in the total (‰) | D, Y | the god's ledger rows | `fact_mythic_ledger` | unlimited sandbox charges 0 and shows nominal cost; costs are scenario data, so series are comparable only within one configuration | D1, Q1 / 1 |
+| DIV-03 | Mythic balance use | mean balance ÷ maximum (‰); share of ticks at zero (‰); times Mythic ran out and ended a possession or avatar (n) | D, Y | god-days | `fact_mythic_balance_day` | fixed regeneration in the first release; no inference about worship income | D1, Q1 / 1 |
+| DIV-04 | Response to instructions | of instructions perceived by a target: accepted, refused, deferred, completed ÷ perceived (‰ each); median ticks to response; by kind and target type | Y | perceived instructions (suggestions and commands; compulsions are DIV-06) | `fact_command_perception`, `fact_command_response` | a refusal is the NPC's own decision; sampled for bystanders; this is not a loyalty or obedience score | D2, Q1 / 1 |
+| DIV-05 | Perception rate | instructions perceived by their target ÷ instructions issued (‰); and `Missing` perception by channel | Y | issued instructions | `fact_divine_command`, `fact_command_perception` | distance, channel and clarity are sim rules; failures show unperceived commands as expired | D2, Q1 / 1 |
+| DIV-06 | Compulsion | compulsions started (n), share completed, share blocked by a physical constraint (no path, no material, no action), mean duration (ticks), injuries and deaths during compulsion (n) | Y | compulsions | `fact_compulsion`, `fact_death`, `fact_person_day` | harm is counted by time overlap, not proven cause; survival-priority overrides are visible through the death count | D2, Q1 / 1 |
+| DIV-07 | Possession | possession ticks ÷ run ticks (‰), periods (n), mean length, end reason mix (player, Mythic exhausted, died), actions taken, injuries and deaths during possession | Y | possession spells | `fact_possession` | one person at a time in the first release; actions carry `control_code` = 2 | D4, Q1 / 2 |
+| DIV-08 | Avatar presence | avatar ticks ÷ run ticks (‰), manifestations (n), destroyed ÷ manifestations (‰), Mythic upkeep per avatar-day | Y | avatar spells | `fact_avatar_manifestation` | the god persists after destruction; avatar actions are in `control_code` = 3 rows of other tables | D5, Q1 / 2 |
+| DIV-09 | Miracle effects | miracles by kind (n), refused ÷ attempted (‰), and the totals of effect by kind: health restored, deaths caused, buildings damaged, resources moved (units per ware, never summed across wares) | Y | accepted miracles | `fact_miracle`, `fact_miracle_effect` | an effect is the immediate state change; downstream consequences are in DIV-12 | D3, Q1 / 1 |
+| DIV-10 | Resource creation and destruction | by ware: created, destroyed, net (units), and the created share of all units produced of the ware (‰); the dependence of food stocks on creation is read with LIV-07 | Y | ledger rows | `fact_resource_ledger`, `fact_production` | conservation is checked by W-D5-1; creation in an unlimited sandbox is shown as is | D3, C1, Q1 / 1 |
+| DIV-11 | Resurrections | count by variant, years since death (median, max), and survival: resurrected persons alive 10 days and 1 year after ÷ resurrected (‰) | Y | resurrections | `fact_resurrection`, `fact_life_spell` | small numbers; the survival window is shorter than a life; ownership and household changes after death are not reversed (shown, not scored) | D7, Q1 / 2 |
+| DIV-12 | Witness effects | for each accepted divine action with witnesses: witnesses (n), persons whose belief, trust or fear changed within 5 days ÷ witnesses (‰, each dimension alone), persons who formed or changed an association tied to the event (from the learning trace, at Full) | E, Y | witnesses of divine actions | `fact_belief_change`, `fact_learning` (cause = intervention), `fact_divine_action` | cause links need the learning and decision traces on; attribution (`witness_attributed_to_god`) is Full-only; many causes may overlap in the window | D1, D6, Q1 / 2 |
+| DIV-13 | Divine control share | persons-days with any compulsion, possession or avatar interaction ÷ person-days (‰) | Y | person-days | `fact_person_day`, `control_code` rows | a summary of how much autonomy the run kept (brief §3); ordinary autonomy is the complement and is not "better" | D2, D4, Q1 / 1 |
+
+### 15.6 Reconciliation and reference SQL
+Every new KPI that is not marked actual-only has a reference SQL view in `0030_kpi_views.sql` (K2 parity, `fact_kpi.actual_value` equals the view exactly). Pure integer functions live beside the old ones in `Sim/Information/Kpi` for the KPIs institutions can report (INS-04, SVC-02, SVC-03, FIN-09, EMP-09, EMP-10); the divine and mind-based KPIs are warehouse-side only and are never sim-readable ([INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)).
+
+### 15.7 Amendments to existing entries
+- **POP-06 life expectancy:** a resurrected person re-enters exposure at the resurrection tick; the death interval is not exposure. Deaths and exposure are counted per life (`life_no`). This keeps the period life table well defined; the number of resurrected persons is shown beside it (POP-14).
+- **POP-01 and POP-07:** resurrection counts as an arrival in the identity POP-13, never as a birth.
+- **HLT-06 and SVC-03** share one definition for kind healthcare; HLT-04..07 become views over `fact_service_*` once `0018` exists.
+- **Wellbeing dimensions table (5.16):** add "Belief and religion" (REL-01..09, shown alone, **no total**) and "Divine influence" (DIV-01..13, no total). Neither enters any other dimension, and no report sums across dimensions (test K13 extends to the new IDs).
+
+### 15.8 Tier and package mapping
+| Group | KPIs | Package | Tier |
+|---|---|---|---|
+| Demography, health, food | POP-12..14, HLT-10, LIV-07 | F2, D7, Q1 | 1 (POP-14: 2) |
+| Physical economy | PRD-01, OWN-01, OWN-02, TIM-04 | C1, Q1 | 1 (OWN-02: 2) |
+| Employment | EMP-09, EMP-10 | C3, Q1 | 2 |
+| Institutions and services | INS-04..08, SVC-01..06 | C6, C7, Q1 | 2 |
+| Finance and justice | FIN-09, CRT-10 | C2, C9, Q1 | 2, 3 |
+| Commandments | CMD-01, CMD-05 | D6, Q1 | 1 |
+| Commandments, religion | CMD-02..04, CMD-06, REL-01..06, REL-08 | D6, Q1 | 2 |
+| Advanced religion | REL-07, REL-09, CMD-07 | D6, C10, Q1 | 3 |
+| Divine core | DIV-01..06, DIV-09, DIV-10, DIV-13 | D1..D3, Q1 | 1 |
+| Divine advanced | DIV-07, DIV-08, DIV-11, DIV-12 | D4, D5, D7, Q1 | 2 |
+
+### 15.9 Acceptance hooks
+| # | Test | Pass criterion |
+|---|---|---|
+| K-D5-1 | `NewKpi_SQL_Parity` | extends K2: for each new non-actual-only KPI, the view equals `fact_kpi.actual_value` exactly over the integrated scenario (scenario 17) |
+| K-D5-2 | `NewKpi_Reconcile_ToEvents` | counts in DIV-01, DIV-02, DIV-09, DIV-10, REL-06, CMD-05, SVC-01, FIN-09 equal the sim's own event counters at Full; POP-13 is 0 on every day |
+| K-D5-3 | `NoComposite_NewIds` | extends K13: no template, dashboard or `dim_kpi` row sums or weights REL, DIV, CMD, SVC or any new ID with another dimension; no "obedience", "faith score" or "devotion" KPI exists |
+| K-D5-4 | `DivineKpi_Replay` | the KPI series of a replayed scenario equal the live series (scenario 18) |
+| K-D5-5 | `Missing_Is_Not_Zero` | with the source tables absent (a package not merged) every new KPI reports `Missing` with its reason, never 0 |
+| K-D5-6 | `MinCell_NewIds` | breakdowns below `MinCell` give `Missing` (extends K4) |

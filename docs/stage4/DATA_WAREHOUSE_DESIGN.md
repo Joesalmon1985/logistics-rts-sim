@@ -712,3 +712,211 @@ None for the owner. Settled:
 - **Employment grain:** a job is a lasting contract (a spell in `fact_employment`); single tasks are production rows, as [ECONOMY_DESIGN.md](ECONOMY_DESIGN.md) describes.
 - **The `experiment` level:** adopted as a preset between Metrics and Summary; its domain list is fixed per plan by [POLICY_EXPERIMENTS_DESIGN.md](POLICY_EXPERIMENTS_DESIGN.md).
 - **Experiment table names** keep their unprefixed names as tables owned by POLICY_EXPERIMENTS.
+
+
+---
+
+## 12. Owner D5: Civilisation and Divinity (26 Nov 2026)
+**Status: plan only. Nothing in this section is built.** Source: [OWNER_BRIEF_2026-11-26.md](../civdiv/OWNER_BRIEF_2026-11-26.md) §§33–36, decisions D5.1–D5.33. Where this section and sections 1–11 differ about the player (a god, not a government, D5.1–D5.2) or about the tables below, this section wins. Sections 1–11 and the as-built notes in 8.1–8.2 stand; the schema is at v6 (`0006_social.sql`) and this section plans v7 onwards.
+
+### 12.1 What stays, and the rules every table below follows
+- **Retained (brief §33):** the SQLite warehouse, CSV and Parquet export, pure deterministic C# as the authority, recording that never changes a hash (test 10.5), explicit grains in `meta_table_grain`, persistent ids, deterministic event ids `(run_id, tick, seq)`, half-open effective dates, the five recording levels (Off, Metrics, Experiment, Summary, Full) with per-domain switches and deterministic sampling.
+- **No parallel system.** New tables are `dim_*` and `fact_*` registered the way 8.1 describes: a numbered migration, `TableDef`s, `EventMapRegistry.Register<T>` calls, rows in `meta_table_grain` and `meta_event_map`. An event with no mapper still lands in `fact_event`. `fact_command` stays the one table of external commands applied or rejected; divine tables link to it by `command_key`.
+- **Event names, not codes.** The event code ranges for the new families are allocated by `docs/civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md` (a contracts agent is writing it; it did not exist when this section was written). This section names events only. The existing ranges (100–599, 700–799, 900–999) are untouched. Every new event must appear in 3.7 and have a `meta_event_map` row (test 10.1); the new rows of the catalogue are in 12.5.
+- **Persistent ids** (sim ids, never surrogate keys; `*_id` columns are the natural keys, unique within a run): `god_id`, `faction_id`, `org_id`, `npc_id`, `commandment_id`, `religion_id`, `intervention_id` (one per divine action, minted when the action is accepted and carried by every effect row), `command_id`, `compulsion_id`, `possession_id`, `avatar_id`, `miracle_id`, `ledger_id`, `request_id`, `case_id`, `loan_id`. Surrogate keys are assigned by the writer in order of first appearance as today.
+- **Effective dates** (history tables, marked **H**): `valid_from_tick` inclusive, `valid_to_tick` exclusive, `valid_from_day`, `valid_to_day`, `is_current`; opened and closed by events, never inferred from snapshots (4.3); same-tick close and open share the tick; zero-length spells are dropped and counted in `meta_load.dropped_zero_spells`. Type 2 dimensions carry the same columns.
+- **Causality columns** (brief §14: "record the causal information needed to investigate"): every effect row can carry `cause_kind_code` and `cause_ref` (the convention of `fact_social_interaction.cause_code`) plus `intervention_id` when a divine action is upstream. `dim_code 'cause_kind'` gains: divine suggestion, divine command, compulsion, possession, avatar act, miracle, commandment, own decision, institution.
+- **Who acted.** Because possession and compulsion must be visibly "divinely controlled rather than voluntarily chosen" (brief §6 Mode C), an `ALTER TABLE ... ADD COLUMN control_code` (`dim_code 'control_source'`: 0 own decision, 1 compelled, 2 possessed, 3 avatar) goes onto the person-action tables that exist by then: `fact_decision`, `fact_production` (person rows), `fact_social_interaction`, `fact_transaction`, `fact_transaction_line`, `fact_ownership`. Default 0, so older rows and Enabled=0 runs are unchanged.
+- **Truth fields** (Full only, section 2 principle 4 and test 10.15) added by this section: `misunderstood` and `witness_attributed_to_god` (what the NPC wrongly or rightly blames, truth is the intervention), `record_true_value` on institutional rows, `prayer_answered_by_intervention`. At Summary and below these are NULL. No policy, institution manager or AI god reads them.
+- **Divine and institutional knowledge are separate (D5.28).** Rows say which layer they describe: `info_layer` 1 true, 4 institutional record, 8 divine observation (new value, see [INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)). The warehouse is layer 9 and is read by nobody inside the sim.
+- **Unlimited sandbox and disabled modes (brief §7).** Mythic rows record both the nominal cost and the charged cost, so an unlimited-power run still measures what it would have cost; Disabled mode records every divine command as a `fact_command` rejection with its reason code and writes nothing else.
+
+### 12.2 Recording levels for the new tables
+| Mark | Meaning | Used for |
+|---|---|---|
+| **S** | every row at Summary and Full; Experiment writes it only if the plan's KPIs name it | low-volume events, spells, accumulating rows, dimensions |
+| **HV** | high volume: below Full a daily aggregate plus a 1-in-`sampleEvery` sample (`sample_weight`), accumulating rows sampled by their id | perceptions by bystanders, prayers, worship, service requests and deliveries, relevant-choice rows, divine observation |
+| **F** | Full only | truth fields, per-edge or per-item detail |
+| **D** | daily snapshot at Summary and Full, in-memory aggregate at Metrics | balances, institution-day |
+
+New `TelemetryDomain` values (names; the contracts document fixes the numbers): `divine`, `possession`, `avatar`, `miracle`, `ledger`, `commandment`, `religion`, `organisation`, `service`, `lending`, `justice`, plus the existing `employment`, `ownership`, `health`, `education`, `finance`, `crime`, `military`, `institutions`. `record.domains` can switch each alone, as today.
+
+### 12.3 Planned tables
+Column "Level" uses the marks above. "Reconciles to" is the rule of acceptance test W-D5-1 (section 12.8): the table is checked against the sim's own events or counters and the check must be exact (integers) unless it says "sample". "Mig" is the planned migration block (12.4). Package and tier use the IDs of brief §39 and §42.
+
+**A. Divine identity, Mythic and divine actions**
+
+| Table | Grain and persistent keys | Time semantics | Level | Reconciles to | Mig / Pkg / Tier |
+|---|---|---|---|---|---|
+| `dim_god` | one god ever in the run; `god_id` | type 1; created at setup (every initial faction has a god; gods persist independently of factions, D5.4–D5.5); never closed, because a god cannot cease to exist | S | count = gods created by the scenario (`GodCreated`); never decreases | 0007 / F1, D1 / 1 |
+| `dim_god_history` | one row per change of a god's controlling policy (human, a named AI god policy and its model hash), associated faction, Mythic mode (standard, unlimited sandbox, disabled) and configured maximum, regeneration and cost table version | type 2, **H** | S | `GodPolicyChanged`, `GodAssociated`, `MythicConfigChanged`; rows contiguous per god | 0007 / D1 / 1 |
+| `fact_god_faction` | one spell per (god, faction) association; the god outlives the faction | **H** | S | open spells = associations in state; a collapsed faction closes its spell and not the god | 0007 / D1 / 1 |
+| `fact_mythic_balance_day` | one god × sim day: balance at start and end, maximum, regeneration credited, upkeep charged, spent by category (the `fact_mythic_ledger` categories), nominal and charged | day-end snapshot | D | `end = start + regen − charged` exactly; equals the in-sim balance on the last day; sums equal the ledger | 0008 / D1 / 1 |
+| `fact_mythic_ledger` | one row per credit or debit of Mythic: `ledger_id`, god, category (suggestion, command, compulsion, possession, avatar manifest, avatar upkeep, blessing, healing, smiting, resource creation, commandment, resurrection, other miracle, regeneration, grant), `nominal_cost`, `charged_cost`, `balance_after`, `intervention_id` | event | S (continuous upkeep is rolled into daily rows, kept per tick only at Full) | Σ per god = balance change; every accepted divine action has ≥ 1 row; unlimited mode has `charged_cost = 0` and `nominal_cost` > 0 | 0008 / D1 / 1 |
+| `fact_divine_action` | one accepted divine action: `intervention_id`, god, kind (suggestion, command, compulsion, possession start or end, avatar manifest or dismiss, miracle kind, commandment reveal, revise or revoke, resurrection), target kind and id, scope, tick, `command_key` link to `fact_command`, Mythic cost, status | event (one row, status updated at close) | S | one row per `CommandApplied` whose command is a divine type; rejected ones stay in `fact_command` only | 0008 / D1 / 1 |
+
+**B. Commands, compulsion, possession, avatars, miracles**
+
+| Table | Grain and persistent keys | Time semantics | Level | Reconciles to | Mig / Pkg / Tier |
+|---|---|---|---|---|---|
+| `fact_divine_command` | one issued suggestion, command or compulsion: `command_id`, god, kind, action code (the brief §9 vocabulary, mapped to the existing action primitives), target (individual, group, household, institution, location), scope, expiry tick, cost, final status (open, completed, expired, cancelled, refused by all, target died) | accumulating, closed by its end event | S | one row per issued instruction; the sum of target rows equals the fan-out in the sim | 0009 / D2 / 1 |
+| `fact_divine_command_target` | one row per individual a command reaches (an institution-level instruction fans out to its office holders): `command_id`, `person_key`, route (direct, via institution, via household) | event | S | count = `CommandFanOut` events | 0009 / D2 / 1 |
+| `fact_command_perception` | one row per person who perceives a command or suggestion: channel (voice, vision, dream, via another person), clarity, tick; the target and any bystander | event | HV (the target's own perception always S) | per target: exactly one row if perceived, none if not; perceived ≤ issued × fan-out | 0009 / D2 / 1 |
+| `fact_command_response` | one row per response: considered, accepted, refused, deferred, partly followed, completed, expired unheard; reason code, delay in ticks, `decision_key` when `fact_decision` is on | event | S for targets, HV for others | every target has a final response or an expiry row by `expiry tick`; institutions' accept, modify or refuse (scenario 15) is a response with `org_key` | 0009 / D2 / 1 |
+| `fact_compulsion` | one temporary compulsion: `compulsion_id`, person, `command_id`, action, the physical-constraint outcome (attempted, blocked: no path, no material, no action available), Mythic charged | **H** (`valid_from_tick` to end by completion, timeout, cancel, death) | S | spells never overlap per person; every spell has an end reason; no spell outlives the person | 0009 / D2 / 1 |
+| `fact_possession` | one possession period: `possession_id`, god, person, start and end, end reason (player ended, Mythic exhausted, died, forced), Mythic charged, ticks, count of actions taken, injury taken (health at start and end) | **H** | S | at most one open spell per run in the first release (brief §6); `ticks` = Σ of `control_code = 2` rows in `fact_person_day`; Mythic = ledger | 0010 / D4 / 2 |
+| `fact_avatar_manifestation` | one manifestation: `avatar_id`, god, start and end tick, start and end location, end reason (dismissed, Mythic exhausted, destroyed), upkeep charged, damage taken; the god persists after destruction | **H** | S | at most one open spell per god; `destroyed` rows equal `AvatarDestroyed` events; the god's `dim_god` row is never touched | 0011 / D5 / 2 |
+| `fact_miracle` | one miracle: `miracle_id`, god, kind (heal injury, heal disease, bless, protect, smite person, building or resource source, create or destroy resources, reveal knowledge or technology, consecrate, resurrect, area, weather, terrain), target kind and id, area, magnitude, cost, validated or refused, `intervention_id` | event | S | one row per accepted miracle command; refused ones in `fact_command` | 0012 / D3 / 1 |
+| `fact_miracle_effect` | one genuine state change caused by a miracle: kind (health delta, disease cured, ware created or destroyed, building damaged, tree removed, knowledge revealed, flag set), before and after, `ledger_id` where goods moved | event | S | a miracle row with no effect row is a no-op and must say why; health deltas equal the change in `fact_person_day.health` across the tick | 0012 / D3 / 1 |
+| `fact_resource_ledger` | one creation or destruction of material resources that is not a recipe or consumption: `ledger_id`, ware, quantity, direction, cause (divine create, divine destroy, smite, scenario spawn, ecology event), holder kind and id before and after, `lot_id`, `intervention_id` | event | S | joins 1:1 to `fact_production` rows with reasons divine create and divine destroy (the conservation law C1 of SHARED_CONTRACTS 2.4 is checked with the ledger included): `Σ Produced − Σ Consumed` per ware equals `Σ holdings` exactly | 0007 / F1, C1, D3 / 1 |
+| `fact_divine_observation` | one answer the god's observation facility gave (what was asked, which layer answered, confidence), for human and AI gods alike | event | HV; Tier 3 | none to truth (it records what was shown); links to `fact_record` by `record_id` for institutional answers | 0008 / D1, U5 / 3 |
+
+**C. Resurrection and archive**
+
+| Table | Grain and persistent keys | Time semantics | Level | Reconciles to | Mig / Pkg / Tier |
+|---|---|---|---|---|---|
+| `fact_resurrection` | one resurrection: person, variant (lesser, full, restoration, rejuvenation), years since death, health and energy given, age change (rejuvenation only), god, `intervention_id` | event | S | one row per `NpcResurrected`; the same `dim_person` row (the identity is kept, brief §11) | 0013 / D7 / 2 |
+| `fact_life_spell` | one life of a person: `life_no` (1 at birth or founding, +1 per resurrection), start tick, end tick (death), start cause (born, founded, immigrated, resurrected) | **H** | S | spells contiguous with no overlap; deaths = closed spells; `dim_person.death_*` keeps the first death, and `fact_death` gains `life_no` so every later death is a row | 0013 / D7 / 2 |
+| `fact_npc_archive` | one archival of a dead individual out of active processing and any restoration | **H** | S | `archived` count = deaths archived by the sim; a resurrection of an archived person closes the spell | 0013 / D7 / 2 |
+
+A resurrection never rewrites other tables: estates already settled stay in `fact_inheritance` and `fact_ownership` with their original dates, partnerships and employment spells closed by the death stay closed, and new spells open only on new events (acceptance test W-D5-5).
+
+**D. Commandments, belief, religion**
+
+| Table | Grain and persistent keys | Time semantics | Level | Reconciles to | Mig / Pkg / Tier |
+|---|---|---|---|---|---|
+| `dim_commandment` | one commandment: `commandment_id`, issuing god, template code, kind (required, prohibited, encouraged), action and object classes, scope (people, geography), conditions, importance, introduced tick | type 1 | S | = `CommandmentIssued` | 0014 / D6 / 1 |
+| `dim_commandment_revision` | one revision of a commandment: revision number, the fields above as they stand in that revision, revoked flag | type 2, **H** | S | contiguous revisions; the current row equals the sim's commandment; revoked rows close the commandment | 0014 / D6 / 1 |
+| `fact_commandment_known` | one spell per (person, commandment, revision known): learned from tick, channel (revealed, taught, observed, read), stance (adopted, rejected, misunderstood, selective), until forgotten, replaced by a newer revision, or death | **H** | S | open spells = the sim's known-commandment lists (the brief's "known commandments per person"); `misunderstood` stance is truth (Full only) | 0014 / D6 / 1 |
+| `fact_commandment_choice` | one choice that matched a commandment's action class: person, commandment, followed or violated or unaware, the alternative chosen, `control_code` | event | HV | followed + violated + unaware = matched choices counted by the sim's per-day counters (exact at Full, sample at Summary) | 0014 / D6 / 2 |
+| `dim_religion` | one religion: `religion_id`, founding god or gods, founding tick, linked `org_key` (religious institutions use the same organisation tables, D5.19) | type 1 | S | = `ReligionFounded` | 0014 / D6 / 2 |
+| `fact_religious_affiliation` | one spell per (person, god or religion): kind (follower, convert, lapsed, secret), source (born into, taught, miracle witnessed, conversion), until changed. Several open spells per person are legal (worshipping more than one god). Never touches `fact_citizenship` (D5.16) | **H** | S | open spells = the sim's affiliation lists; a change closes and opens spells without any `fact_citizenship` row | 0014 / D6 / 2 |
+| `fact_belief_change` | one change of one belief dimension: belief that the god exists, faith, trust, fear, loyalty (each its own column or row; there is no obedience score), before, after, cause kind and ref | event | S above a threshold, HV for small drifts | each `BeliefChanged` event; snapshot `fact_belief_sample` agrees on sampled persons | 0014 / D6 / 2 |
+| `fact_prayer` | one prayer: person, god, request kind (food, healing, protection, forgiveness, other), the need it names, tick; Full only: whether an intervention followed (`prayer_answered_by_intervention`) | event | HV | `PrayerMade` events; daily aggregate exact | 0014 / D6 / 2 |
+| `fact_worship` | one worship act or gathering: persons present (aggregate), site or organisation, god, act kind (rite, sacrifice, communal meal), goods given (links to `fact_transaction`) | event plus `fact_worship_day` aggregate | HV | `WorshipHeld`; goods given appear once in the ledger of goods | 0014 / D6 / 3 |
+
+**E. Organisations, ownership, work, services**
+
+| Table | Grain and persistent keys | Time semantics | Level | Reconciles to | Mig / Pkg / Tier |
+|---|---|---|---|---|---|
+| `dim_org` | one organisation of any kind (government, enterprise, cooperative, household business, school, clinic, temple, militia, bank, court, communal store): `org_id`, kind, founding event, how it arose (scenario seed, emerged from NPC action, never "created by the player", D5.18–D5.19), ownership model (private, shared, cooperative, communal, state, religious), jurisdiction | type 1; it extends today's `dim_institution` and `dim_enterprise` rather than adding a third table (`org_kind` separates them; the old names stay as views) | S | = `OrgFounded`; `dissolved` = `OrgDissolved` | 0018 / C6 / 2 |
+| `dim_org_history` | head, charter or rules, funding source, ownership model, status | type 2, **H** | S | contiguous; head equals the sim's current head | 0018 / C6 / 2 |
+| `fact_ownership_spell` | one spell per (asset, owner): asset kind (item lot, building, productive asset, land or site right, share), owner party, share in permille, basis (acquired, built, inherited, gift, theft, divine grant, confiscated) | **H**, written by the writer from `OwnershipChanged` (lots keep their event rows in `fact_ownership`, which is the event stream) | S | every asset has spells summing to 1000‰ at every tick (ownership integrity, brief §46); open spells = current owners in state (extends test 10.4) | 0015 / C1 / 1 |
+| `fact_use_right` | one spell per (asset, user): lease, loan, tenancy, licence, communal access, granted by whom | **H** | S | `UseRightGranted` and `UseRightEnded` | 0015 / C1 / 2 |
+| `fact_economic_relationship` | one spell per (party, party, kind): supplier, customer, tenant, partner, co-op member, patron; exposure as trade volume to date; the "production and economic relationships" of brief §34 | **H** | S | derived from events (`EnterpriseFounded`, `JobTaken`, use-right and exchange events); spells never overlap for the same (a, b, kind) | 0015 / C1, C3 / 2 |
+| `fact_org_membership` | one spell per (person, org, role): member, officer, head, trustee, priest, soldier, patient-registered, student-enrolled | **H** | S | open spells = the sim's rolls; the head in `dim_org_history` has an open spell | 0018 / C6 / 2 |
+| `fact_employment` | one spell per contract (the M13 core plan): employer party, worker, role, pay terms (ware, amount, interval), end reason | **H** | S | `JobTaken` opens, `JobAbandoned` or end closes; `WagePaid` rows reconcile to `fact_transaction` lines | 0016 / C3 / 2 |
+| `fact_org_expenditure` | one spending act of an organisation: org, category (staff pay, supplies, capital, transfer, loan, service delivery), payee party, wares and quantity, `request_id` if a service caused it | event plus `fact_org_day` aggregate | S | equals the org's store and treasury movements in `fact_transaction` and `fact_production` (consume side); Σ per org per day equals the daily snapshot delta | 0018 / C6 / 2 |
+| `fact_org_day` | one org × day: staff, store stock per ware, budget, requests open and served, queue, records held | day-end snapshot (this is the existing `fact_institution_day`, extended; the old name stays a view) | D | stock equals state exactly; staff equals open employment and membership spells | 0018 / C6 / 2 |
+| `fact_service_request` | one request: `request_id`, requester (person or org), service kind (healthcare, education, justice, defence, relief, credit, worship, other), the need (injury id, illness id, skill sought, grievance id), channel, tick, status (open, accepted, served, refused, expired, withdrawn, requester died), close tick, reason | accumulating | HV (Tier 1 kinds healthcare and relief are S) | `ServiceRequested` opens, a close event closes; every open row at run end is listed; `unmet` KPIs read it | 0018 / C6, C7 / 2 |
+| `fact_service_delivery` | one delivery: `request_id`, provider person, org, start and end tick, labour ticks, wares used (line rows or a join to `fact_production` consume side), `control_code` of the provider | event | HV | provider labour ticks equal `fact_person_day.ticks_*` for the activity; wares used equal consume rows | 0018 / C6, C7 / 2 |
+| `fact_service_outcome` | one outcome per delivery: measured change (health before and after, skill before and after, case closed), the institution's recorded outcome and, at Full, the true outcome (`record_true_value`) | event | S for healthcare and education, HV otherwise | health outcome equals the delta in person-day rows; recorded vs true gap feeds the information KPIs | 0018 / C6, C7 / 2 |
+| `fact_health_encounter` | one treatment episode (the planned table): patient, healer, org, injury or illness ref, treatment, start and end, health before and after, request link | accumulating | S | `fact_service_*` rows of kind healthcare join 1:1; patient's `health` before and after equal person-day rows | 0019 / C7 / 2 |
+| `fact_education_enrolment` | one spell per (learner, school or teacher, subject), until completed, dropped out or taught elsewhere | **H** | S | `fact_org_membership` role student-enrolled agrees | 0019 / C7 / 2 |
+| `fact_education_assessment` | one assessment of a skill or trait: learner, subject, level before and after (true, from the mind), the level the school recorded | event | S | skill after − before equals `fact_education_activity.gain` summed over the window (exact for teaching, see 12.6 limits) | 0019 / C7 / 2 |
+
+**F. Finance, justice, military**
+
+| Table | Grain and persistent keys | Time semantics | Level | Reconciles to | Mig / Pkg / Tier |
+|---|---|---|---|---|---|
+| `fact_loan` | one loan: `loan_id`, lender and borrower parties, principal in wares (and later currency), due terms, collateral, status (open, repaid, overdue, restructured, written off, defaulted) | accumulating | S | `LoanMade`, `LoanRepaid`, `LoanDefaulted`; `lent − repaid − written off = outstanding` exactly | 0017 / C2, C8 / 2 |
+| `fact_loan_repayment` | one repayment: loan, amount, tick, on time or late, source | event | S | each is also a `fact_transaction` line; the physical goods moved (scenario 7) | 0017 / C2 / 2 |
+| `fact_loan_default` | one default, restructure, write-off or collateral seizure: loan, kind, amount, cause code, consequence (trust change, ownership transfer) | event | S | links to `fact_social_interaction` (betrayal, trust) and `fact_ownership` | 0017 / C2, C8 / 3 |
+| `fact_crime`, `fact_crime_report` | as planned in 1.1, extended with `control_code` (a compelled act is recorded as such) | event | S | `CrimeCommitted`, `CrimeObserved` | 0021 / C9 / 3 |
+| `fact_investigation` | one investigation: case, investigator, org, start, evidence items (including evidence revealed by a miracle, tagged divine), end, finding | accumulating | S | `InvestigationOpened`, `InvestigationClosed` | 0021 / C9 / 3 |
+| `fact_court_decision` | one decision of a forum: case, forum org, decider, verdict, sanction, appeal link, grounds code (evidence, law, commandment adopted as law, custom, instruction refused) | event | S | extends `fact_court_case`; one row per `CaseDecided`; religious rules and legal rules stay distinct by grounds code | 0021 / C9 / 3 |
+| `fact_detention` | one custody spell: person, org, reason, release reason | **H** | S | open spells = persons held in state; capacity respected | 0021 / C9 / 3 |
+| `fact_military_service` | one spell of service per person and unit; `fact_service_day` as planned | **H** | S | `Enlisted`, `Discharged`, `Deserted`; extends the planned M9 table | 0022 / C4 / 3 |
+
+### 12.4 Migration numbering by package (proposal, to be confirmed by the contracts document)
+The writer applies the numbers that exist, in order, and a migration may reference only tables in lower-numbered files. Blocks therefore follow dependency order; a package that merges earlier or later than planned takes the next free number at merge and keeps its file name suffix, so the order of numbers is the order of merge (a merged file is never edited, as today). Unity branches `unity/demog` (adds no migration; its `demog report` reads the sim and the recorder) and `unity/ibs` (changes `PopulationMapping.cs` only) merge first and need no number.
+
+| Migration | Package | Contents |
+|---|---|---|
+| `0007_divine_core.sql` | F1, D1 | `dim_god`, `dim_god_history`, `fact_god_faction`, `fact_resource_ledger`, new `dim_code` sets (`control_source`, `cause_kind`, mythic category), `control_code` columns, `intervention_id` columns |
+| `0008_mythic.sql` | D1 | `fact_mythic_balance_day`, `fact_mythic_ledger`, `fact_divine_action`, `fact_divine_observation` |
+| `0009_commands.sql` | D2 | `fact_divine_command`, `_target`, `fact_command_perception`, `fact_command_response`, `fact_compulsion` |
+| `0010_possession.sql` | D4 | `fact_possession` |
+| `0011_avatar.sql` | D5 | `fact_avatar_manifestation` |
+| `0012_miracles.sql` | D3 | `fact_miracle`, `fact_miracle_effect` |
+| `0013_resurrection.sql` | D7 | `fact_resurrection`, `fact_life_spell`, `fact_npc_archive`, `life_no` on `fact_death` |
+| `0014_commandments_religion.sql` | D6 | commandment, religion, affiliation, belief, prayer and worship tables |
+| `0015_ownership_work.sql` | C1, C3 | `fact_ownership_spell`, `fact_use_right`, `fact_economic_relationship` |
+| `0016_employment.sql` | C3 | `dim_enterprise` (as `dim_org` view), `fact_employment`, `fact_job_day`, `fact_org_day` columns |
+| `0017_lending.sql` | C2, C8 | `fact_loan`, `fact_loan_repayment`, `fact_loan_default`, `fact_promise` columns |
+| `0018_organisations.sql` | C6 | `dim_org`, `dim_org_history`, `fact_org_membership`, `fact_org_expenditure`, `fact_org_day`, `fact_service_request`, `_delivery`, `_outcome` |
+| `0019_health_education.sql` | C7 | `fact_health_encounter`, `fact_education_enrolment`, `fact_education_assessment` |
+| `0021_justice.sql` | C9 | `fact_investigation`, `fact_court_decision`, `fact_detention`, crime columns |
+| `0022_military.sql` | C4 | `fact_military_service`, `fact_service_day` |
+| `0023_citizenship_politics.sql` | C5 | citizenship spells and migration extensions (affiliation stays separate from citizenship) |
+| `0024_culture_religion_orgs.sql` | C10 | religious-institution columns on `dim_org`, trait and tradition links |
+| `0030_kpi_views.sql` | Q1 | `dim_kpi` rows for the new KPI IDs, the reference-SQL views `v_kpi_*`, the stable analysis views (`v_person_life`, `v_god_day`, `v_intervention_chain`, `v_org_history`), `ANALYZE` hints |
+
+`0020` is left free for a package found late. If the contracts document changes the package split, the table list stays and only the file grouping moves.
+
+### 12.5 Events to add to the catalogue (3.7); codes come from the contracts document
+| Family | Events | Tables |
+|---|---|---|
+| Divine | `GodCreated`, `GodAssociated`, `GodPolicyChanged`, `MythicConfigChanged`, `MythicCredited`, `MythicSpent`, `MythicUpkeepCharged`, `DivineActionAccepted`, `DivineObservationAnswered` | `dim_god*`, `fact_god_faction`, `fact_mythic_*`, `fact_divine_action`, `fact_divine_observation` |
+| Commands | `DivineSuggestionIssued`, `DivineCommandIssued`, `CommandFanOut`, `CommandPerceived`, `CommandResponded`, `CompulsionStarted`, `CompulsionEnded` | `fact_divine_command*`, `fact_command_perception`, `fact_command_response`, `fact_compulsion` |
+| Control | `PossessionStarted`, `PossessionEnded`, `AvatarManifested`, `AvatarDismissed`, `AvatarDestroyed` | `fact_possession`, `fact_avatar_manifestation` |
+| Miracles | `MiracleCast`, `MiracleEffectApplied`, `ResourceCreated`, `ResourceDestroyed` | `fact_miracle*`, `fact_resource_ledger` (and `Produced` or `Consumed` with a divine reason, so C1 holds) |
+| Life | `NpcResurrected`, `NpcArchived`, `NpcRestoredFromArchive` | `fact_resurrection`, `fact_life_spell`, `fact_npc_archive`, `fact_death` |
+| Belief | `CommandmentIssued`, `CommandmentRevised`, `CommandmentRevoked`, `CommandmentLearned`, `CommandmentStanceChanged`, `CommandmentForgotten`, `CommandmentChoiceMade`, `ReligionFounded`, `AffiliationChanged`, `BeliefChanged`, `PrayerMade`, `WorshipHeld` | the D table group |
+| Organisations | `OrgFounded`, `OrgDissolved`, `OrgHeadChanged`, `MemberJoined`, `MemberLeft`, `OrgSpent`, `ServiceRequested`, `ServiceAccepted`, `ServiceDelivered`, `ServiceOutcomeRecorded`, `ServiceRefused` | E group; existing `Institution*` events (500–599) map to the same tables |
+| Finance and justice | `LoanDefaulted` (exists), `LoanWrittenOff`, `CollateralSeized`, `InvestigationOpened`, `InvestigationClosed`, `CaseDecided`, `Detained`, `Released` | F group |
+
+### 12.6 Worked queries (SQLite, planned views)
+```sql
+-- What happened after each divine command: perception, response, and the work done (scenario 8)
+SELECT c.command_id, c.kind_code, p.person_key, r.response_code, r.delay_ticks
+FROM fact_divine_command c
+JOIN fact_divine_command_target t ON t.command_id = c.command_id
+LEFT JOIN fact_command_perception p ON p.command_id = c.command_id AND p.person_key = t.person_key
+LEFT JOIN fact_command_response  r ON r.command_id = c.command_id AND r.person_key = t.person_key;
+
+-- Mythic spent by category per sim year, nominal against charged
+SELECT d.year, l.category_code, SUM(l.nominal_cost) nominal, SUM(l.charged_cost) charged
+FROM fact_mythic_ledger l JOIN dim_date d USING (date_key) GROUP BY 1, 2;
+
+-- Who owned the dead person's goods after a resurrection (scenario 14): spells overlapping the life gap
+SELECT o.* FROM fact_ownership_spell o JOIN fact_resurrection r ON o.valid_from_tick < r.tick
+WHERE (o.valid_to_tick IS NULL OR o.valid_to_tick > r.tick) AND o.owner_person_key <> r.person_key;
+```
+Limits: sampled rows (HV) carry `sample_weight`; analyses must weight them. Truth columns are NULL below Full. Read-only SQL access by a player is described in [INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026).
+
+### 12.7 Tier and package mapping
+| Group | Tables | Package (brief §39) | Tier | Warehouse package |
+|---|---|---|---|---|
+| Divine identity, Mythic, action ledger | `dim_god*`, `fact_mythic_*`, `fact_divine_action`, `fact_resource_ledger` | F1, D1 | 1 | Q1 |
+| Suggestions, commands, compulsion | `fact_divine_command*`, `fact_command_*`, `fact_compulsion` | D2 | 1 | Q1 |
+| Miracles | `fact_miracle*` | D3 | 1 | Q1 |
+| Commandments and known commandments | `dim_commandment*`, `fact_commandment_known` | D6 | 1 | Q1 |
+| Physical ownership and labour | `fact_ownership_spell`, `fact_use_right`, `fact_economic_relationship` | C1 | 1 | Q1 |
+| Possession, avatar, resurrection | `fact_possession`, `fact_avatar_manifestation`, `fact_resurrection`, `fact_life_spell`, `fact_npc_archive` | D4, D5, D7 | 2 | Q1 |
+| Religion, belief, prayer | `dim_religion`, `fact_religious_affiliation`, `fact_belief_change`, `fact_prayer`, `fact_commandment_choice` | D6 | 2 | Q1 |
+| Employment, enterprises | `fact_employment`, `fact_job_day` | C3 | 2 | Q1 |
+| Organisations and services | `dim_org*`, `fact_org_*`, `fact_service_*` | C6 | 2 | Q1 |
+| Healthcare, education | `fact_health_encounter`, `fact_education_*` | C7 | 2 | Q1 |
+| Lending | `fact_loan*` | C2, C8 | 2 (default detail 3) | Q1 |
+| Justice, detention, military | `fact_investigation`, `fact_court_decision`, `fact_detention`, `fact_military_service` | C9, C4 | 3 | Q1 |
+| Worship, divine observation answers | `fact_worship*`, `fact_divine_observation` | D6, U5 | 3 | Q1 |
+| Views, KPI reference SQL, reconciliation suite | `0030_kpi_views.sql`, W-D5 tests | Q1, Q3 | 1 | Q1, Q3 |
+
+Tier 1 means the table is written by the first demonstrable build (checkpoint B, divine sandbox, brief §44). Tier 2 and 3 tables keep their schema and mappers planned so the sim packages can emit their events from the start; a table with no source package merged yet is simply empty.
+
+### 12.8 Acceptance hooks
+New tests, numbered like section 10 and run by Q1 with Q3. They add to, and do not weaken, 10.1–10.16.
+
+| # | Test | What must hold |
+|---|---|---|
+| W-D5-1 | `Reconciliation_AnalyticalEqualsSim` (scenario 17) | On a Full run of the integrated scenario (divine commands, a compulsion, a possession, a miracle, a resurrection, an institution delivering a service, a loan): every identity in the "Reconciles to" column holds exactly: Mythic balance equation per god-day; ledger Σ = balance delta; goods conservation C1 with the resource ledger included; row counts of each new event family = the sim's own counters; open spells = state (affiliations, known commandments, memberships, employment, ownership, detentions); population identity births + immigration + resurrections − deaths − emigration = Δ alive |
+| W-D5-2 | `Replay_ReRecord_IncludesDivine` (scenario 18) | A complete scenario with ordinary NPC actions and divine inputs: live Full record, Off run then `replay --record full`, and a save-and-continue run give the same warehouse content (10.8 and 10.14 methods), and the same final hash. The replay file holds every divine input (see [HEADLESS_SIMULATION.md §12](HEADLESS_SIMULATION.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)) |
+| W-D5-3 | `DivineRecording_DoesNotChangeHash` | Off, Metrics, Experiment, Summary, Full, each new domain alone at Full, `sampleEvery` 1, 16, 64: identical hashes (extends 10.5) |
+| W-D5-4 | `NewTruthFields_OnlyAtFull` | the truth columns of 12.1 are NULL below Full and filled at Full (extends 10.15); no policy, manager or AI god type references them (reflection) |
+| W-D5-5 | `Resurrection_KeepsHistory` | after a resurrection, `dim_person` has one row for the person, `fact_death` has both deaths, previously closed spells stay closed, estates stay with their owners, `fact_life_spell` has two contiguous lives |
+| W-D5-6 | `Spells_Half_Open_Divine` | extends 10.7 to compulsion, possession, avatar, affiliation, known commandment, ownership, membership, employment, detention and loan spells: no overlap where the rule forbids it, `valid_to ≥ valid_from`, day columns agree with ticks |
+| W-D5-7 | `Control_Source_Marked` | every person-action row produced during a compulsion, possession or avatar spell has the matching `control_code`; none outside one |
+| W-D5-8 | `Migration_0007_To_Current` | fixtures at v6 and at each new version migrate forward and the example queries of 12.6 return rows of the right shape |
+| W-D5-9 | `Size_Budget_Civilisation` | a 20-sim-year Summary run of the integrated 500-person scenario stays within 1.3 × the 10.9 budget (still ≤ 1 GB for 200 years); the biggest new tables are the HV ones, which are sampled |
+| W-D5-10 | `Warehouse_NeverFeedsSim` | the existing `SimAndRecordingAssemblies_DoNotReferenceSqlite` test, plus a reflection test that no type implementing `IFactionPolicy`, `IInstitutionPolicy`, `INpcPolicy` or `IGodPolicy` references `God.Runner.Warehouse` or `Microsoft.Data.Sqlite` |

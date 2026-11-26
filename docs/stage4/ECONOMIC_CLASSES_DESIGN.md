@@ -1,5 +1,13 @@
 # Economic classes design (stage 4 measures, later depth)
 
+> **Superseded by owner D5 (26 Nov 2026), in part.** The design here already derives class only from relations and assigns no class identity; D5 confirms it (brief §17) and changes who reads the reports. The player is a god only (D5.1), and divine and institutional knowledge are separate (D5.28). See [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md). These earlier statements no longer hold:
+>
+> | Where | Earlier statement | Replaced by |
+> |---|---|---|
+> | [§6 Player and view](#6-player-and-view) | "**Economy report panel** (through `FactionKnowledgeView`, M13b)" as the player's report | The god's analysis reports read the divine analysis view under configured rules; `FactionKnowledgeView` is what the government organisation knows, shown separately and labelled as its records ([§12](#12-owner-d5-update-26-nov-2026)) |
+> | [§4.9](#49-how-npcs-perceive-position) | `SeenEmployedBy`: "owner key … (NpcId, EnterpriseId or InstitutionId …)" | `NpcId` or `OrgId` (one id space for enterprises and institutions, [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md#31-identity-and-ownership)) |
+> | [§3.5](#35-derived-positions-analysis-only), [§4.5](#45-deriving-the-position) | `StateEmployee` defined by "hired by state" as the faction | "Hired by an organisation whose ownership model is State" (the government or a state body); hiring by any organisation is classified by that organisation's ownership model ([§12](#12-owner-d5-update-26-nov-2026)) |
+
 ## 1. Purpose and scope
 
 This document owns **class as a measured relation** to property, productive assets, labour and the distribution of surplus:
@@ -319,3 +327,14 @@ No open questions remain.
 Settled in review (26 Nov 2026): the FE index is `WareRefValue`, owned by ECONOMY_DESIGN, with the observed valuation always shown beside it (revisit if they differ by more than 30 percent on the main wares); soldiers count as `StateEmployee` with a `Military` sub-flag; reports show both 5-day and 10-day windows until a run shows which is more stable; wild foraging and communal work keep separate tick counts and merge only in the position rule.
 
 1. **Household work.** Child-rearing and care are real work but produce no FE. Default: they count as work for the `NotInWork` test, but not in the relation shares.
+
+## 12. Owner D5 update (26 Nov 2026)
+**Classes are derived from relations to labour, ownership and productive assets only (brief §17).** D5 restates the rule this document already follows and extends it to organisations:
+- **No permanent class identity.** No NPC, role, office or organisation carries a class field. `ClassPosition` stays in `Telemetry` (analysis only), recomputed over a window, so any NPC can move between positions in its lifetime. The static test of section 10 (no decision code reads a position) also covers `Sim/Orgs` and god policies.
+- **No political or religious belief from class.** Political stances (POLITICAL_ECONOMY) and religious affiliation (COMMANDMENTS_AND_RELIGION) are never assigned from position; whether they track positions is a finding.
+- **Roles are not classes.** Priest, judge, healer, teacher, soldier, manager and official are roles held in organisations ([ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md §4.3](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md#43-roles-members-employees-managers-officers)). The class measures see only the relation each role puts the NPC in: who owns the asset it works, who pays it, what share of output it receives.
+- **Organisations classified by ownership model.** Work for an organisation is attributed by that organisation's `OwnershipModel` and the NPC's relation to it: hired by a Private organisation → `TicksHiredByPrivate`; by a State organisation (the government or a state body) → `TicksHiredByState`; member-owner of a Cooperative → `TicksCoopMeans`; rights-holder of a Communal organisation → `TicksCommunalMeans`; paid staff of a Religious organisation → a new component `TicksHiredByReligious`, reported separately and treated as hired labour in the position rule. Unpaid volunteering for any organisation counts as communal work, reported as its own line. Soldiers stay `StateEmployee` with the `Military` sub-flag when the military organisation is state-owned.
+- **Control without ownership.** A new analysis measure `ControlsProductivePermille` (share of the NPC's work ticks spent directing an organisation's productive assets or staff from an office it holds, without owning a share) lets reports distinguish owners from managers and officials. It is a measure, not a position, until evidence shows it is needed.
+- **Who reads the reports.** The god's analysis view (Mode D, divine observation rules, D5.28) and the analytical warehouse. The government organisation may later publish its own, possibly wrong, versions (statistics institutions, Tier 3). Reports never feed back into the sim.
+
+**Tier and package mapping:** class measures over organisation relations: Tier 2 with C3 (employment and enterprises); reporting: Q1. **Acceptance hooks:** scenario 3 (an employment relation appears in `TicksHiredBy*` for the worker and `TicksHiringOthers` for the owner), scenario 17 (class ledgers reconcile to `WorkDone`, `WagePaid` and organisation events).

@@ -536,3 +536,149 @@ None for the owner. Settled with defaults:
 - **Floating point in the sim** (`BoardTopology`, `Lattice`, `FactionRules`, an `EconomySystem` tie-break, `TerritoryState.HqCircle`). **Owner decision (27 Nov):** M0 **audits** every use and **verifies parity on more than one host** (the runner on CoreCLR, the Unity player on Mono and IL2CPP where available, and at least a second machine when one is available). Anything that **fails parity, or whose parity cannot be guaranteed** (for example a transcendental function, or a result whose rounding depends on evaluation order), is converted to integers or fixed point. Code using only `+ − × ÷ √` with fixed evaluation order that passes parity is kept: harmless code is not rewritten without reason. New code is integer or fixed point only (conventions section 3). The audit's list, each item's verdict and the hosts checked go into [DEV_LOG.md](DEV_LOG.md#design-decisions-taken-during-implementation).
 - **The held-step mechanism** (`AiHost.StepHeld`): default, M1 replaces it by queuing commands sent while paused until unpause, so replays need no `hold` lines.
 - **The `God.Recording` assembly in Unity:** default, a third asmdef next to `Assets/God/Sim` (no UnityEngine), so the optional Unity recorder shares the runner's JSONL writer.
+
+
+---
+
+## 12. Owner D5: Civilisation and Divinity (26 Nov 2026)
+**Status: plan only; nothing here is built.** Source: [OWNER_BRIEF_2026-11-26.md](../civdiv/OWNER_BRIEF_2026-11-26.md) §46 (determinism), §48 (performance), §33 (the warehouse), decisions D5.5–D5.12, D5.30–D5.32 (D5.32: no neural network training during this run). Sections 1–11 stand. This section (1) restates §46 as checks, (2) says how divine, possession and avatar inputs enter the replayable command stream, (3) pins neutrality for `Divinity.Enabled` and `Orgs.Enabled` in the M4/M5 way, and (4) plans the §48 benchmarks. Event codes, system orders and the save version are fixed by `docs/civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md`, which a contracts agent is writing; names here are provisional.
+
+### 12.1 Determinism requirements (brief §46) as checks
+Each row is a check that can fail. "Exists" means a test or command is in the repository today; "extend" means the existing check is widened to the new content; "new" means it must be written. Owners: Q3 integrates, each package supplies its fixture.
+
+| Requirement | Check | State |
+|---|---|---|
+| Pure C# authoritative sim | `God.Sim` assembly has `noEngineReferences` and no reference to `God.Game`, `God.Runner`, SQLite or Unity; `SimAndRecordingAssemblies_DoNotReferenceSqlite` | exists; extend to new namespaces (`Sim/Divinity`, `Sim/Organisations`) |
+| No dependency on rendering | the same scenario and the same replay give the same hash in the runner and in the player build at any resolution, any camera, any frame rate (`Unity_Agrees_With_Runner`); a Unity EditMode test runs a replay with the camera at three places and with rendering off | exists (smoke replay); extend to a divine replay; camera test new |
+| No wall-clock behaviour | static scan of `God.Sim` for `DateTime`, `Stopwatch`, `Environment.TickCount`, `Thread`, `Task`, `Random` (system), `Guid`; the M0 static audit | exists; extend to new assemblies |
+| Stable entity processing order | every new system has a `SystemOrder` slot; iteration is by ascending id; no `Dictionary` or `HashSet` enumeration in saved or hashed state; reflection test over new state types (public fields, sorted lists) | exists for M3–M5; extend (F1) |
+| Explicit random streams | new draws use stateless keyed forks `s.Rng.Fork(label, a, b)`, never an NPC's saved streams (SHARED_CONTRACTS 9.1); labels in 12.3 are unique per call site; test enumerates labels and fails on a duplicate | exists (rule); label test new |
+| Deterministic command processing | all divine and player actions are `Command`s submitted through `GodSim.Submit`, applied in submission order at the head of the tick, rejected with a reason code, and logged; pending commands are in the hash | exists (`PendingCommands_AreInTheHash`); extend to divine commands |
+| Save/load continuation parity | save at T/3 and 2T/3 of the integrated divine scenario with an open compulsion, a possession, a manifested avatar, a Mythic balance, a deferred resurrection and an archived dead person; the continued run hashes equal the straight run; a second save is byte-identical | exists (`SaveLoadContinue_GivesTheSameHash...`); scenario new |
+| Replay parity | `verify FILE` and `replay FILE` of a recorded divine scenario match every checkpoint at every module part; `Replay_DetectsTampering` extended to a divine command | exists; extend |
+| Headless and Unity parity | a replay written by the player after a human session (movement, possession, miracle, commandment, resurrection) verifies in the runner (`verify --against-unity`) at every checkpoint | exists for the smoke replay; divine session new (nightly) |
+| Independent parallel simulations | `Parallel_EqualsSerial` and `TwoTunings_InParallel_DoNotLeak` with divine scenarios; no static mutable state in new code (static audit) | exists; extend |
+| Logging independence | Off, Metrics, Experiment, Summary, Full, each domain alone, `sampleEvery` 1, 16, 64 give identical hashes, now including the divine and organisation domains; building a divine view, an inspector or a KPI engine result changes no hash | exists (`SqliteRecording_NeverChangesTheHashes...`, `RecordingOnOff_SameHashes`); extend (W-D5-3) |
+| Versioned save formats | `CurrentVersion` is bumped once by the lead at the merge that adds divine state (as M4/M5 did); older versions are refused with a clear message; a fixture save of each version loads or is refused as documented | exists (rule); the bump is a lead task |
+| Resource conservation | invariant C1 of SHARED_CONTRACTS 2.4 with miracle creation and destruction counted through the resource ledger (`Produced` or `Consumed` with a divine reason): per ware `Σ Produced − Σ Consumed = Σ holdings` every day boundary and after save and load | exists; extend (D3, C1) |
+| Population conservation | alive at end = alive at start + births + immigrants + resurrections − deaths − emigrants, every day; an archived dead person is not alive; a resurrection restores the same `npc_id` | partly exists (`PopulationInvariants`); extend (D7) |
+| Ownership integrity | every asset has owners summing to 1000‰ or none; no asset owned by a dead person after 3 days (C4) unless a resurrection reopens that person; a resurrection never takes back what an estate settled | exists for lots; extend to assets and shares (C1) |
+| Bounded learning and social memory | every per-NPC store keeps its cap and eviction order (existing store tests); the new per-NPC state added by D5 (known commandments, belief about gods, perceived command memory, possession memory) has a cap and a deterministic eviction rule, and `bench` reports bytes per NPC | exists for M3 and M5 stores; new for D5 state |
+| Divine inputs replayable | every divine, possession and avatar input is a command in the stream (12.2); a scenario with them replays exactly (acceptance scenario 18) | new |
+| Camera independence | no sim rule reads a camera, selection, view distance or UI state; the existence and behaviour of an individual is the same whether or not the player is looking (12.5) | new test |
+
+### 12.2 Divine, possession and avatar inputs in the command stream
+**One path.** Every player or AI-god input becomes a `Command` (the existing type, with `CommandApplied` and `CommandRejected` events) and goes through the validation the sim already performs for people and bots ("bots and people use the same commands", CLAUDE.md). There is no divine back door and no second implementation of ordinary actions (brief §9): a compelled, possessed or avatar action is an ordinary action primitive started on behalf of the body, with a `control_source` tag that the warehouse records.
+
+**Command set (names provisional).**
+| Group | Commands | Notes |
+|---|---|---|
+| Instruction | `IssueSuggestion`, `IssueCommand`, `IssueCompulsion`, `CancelCompulsion` | action code from the brief §9 vocabulary, target (person, group, household, institution, location), scope, expiry tick; Mythic charged at acceptance |
+| Possession | `BeginPossession`, `EndPossession`, `PossessedMoveIntent`, `PossessedAction` | one person at a time in the first release |
+| Avatar | `ManifestAvatar`, `DismissAvatar`, `AvatarMoveIntent`, `AvatarAction` | same action set and movement as an NPC; Mythic upkeep per tick |
+| Miracle | `CastMiracle` (kind, target, area, magnitude), `Resurrect` (person, variant) | validated against Mythic, location, inventory conservation, death handling |
+| Doctrine | `RevealCommandment`, `ReviseCommandment`, `RevokeCommandment` | structured template with typed fields, never free text interpreted in the sim |
+| Setup | `SetDivineProfile`, `SetMythicMode` (sandbox only), `SwitchGod` (sandbox scenarios) | changing configuration mid-run is a logged command |
+
+**What is logged (extends 3.4).** Only external commands are logged, as today: a command submitted while `GodSim.Step` is not running. A human's commands are external. An AI god's policy runs inside `Step` through the policy phase (like `AiBrain`), so its commands are recreated by the replay and not logged, exactly as the faction AI's are; the policy name, registry version and model hash are in the replay header (`dim_agent_policy`). The `o` origin tag gains `human`, `aigod:<policy>` and `schedule`; replay ignores it. A scripted god in a test is a `schedule` of external commands.
+
+**Continuous movement becomes per-tick intents.** The camera, the stick or the keys are frame-based and variable; the sim is tick-based and integer. The conversion is defined here so that a human session replays exactly:
+1. **The Game layer, not the sim, converts input to an intent.** It reads the stick or keys, rotates them by the third-person camera yaw (the camera is read here and nowhere else), and quantises the result to an integer **heading** (0–63 in 1/64 turns, or the stop value 64) and an integer **gait** (0 stop, 1 walk, 2 run). The intent carries world heading, never a camera angle.
+2. **Sampled at tick boundaries.** The host samples the quantised intent once per sim tick boundary. It submits a `PossessedMoveIntent` or `AvatarMoveIntent` only when the quantised value differs from the last submitted one (and at most once per body per tick), so the log holds changes, not frames. The command applies at the next tick (`t` of the replay line is that tick).
+3. **The sim holds the intent until it is replaced.** The sim turns heading and gait into the next fine movement node on the body's own movement system, using the existing path and affordance rules (fine movement nodes are developer-visible only). The same intent in the same state gives the same step. Walls, other bodies and terrain stop it as for an NPC. An intent holds until replaced, until `EndPossession` or `DismissAvatar`, until the body dies, or until Mythic runs out (which ends possession or the avatar deterministically on the day or tick of exhaustion).
+4. **Click-to-move and interaction are discrete.** `MoveTo(node)`, pick up, drop, give, use, talk and gesture carry ids and are validated against reach (`Reach.Of(reason)`) as for an NPC.
+5. **Time scaling and pause.** The speed setting (pause, 1x, 2x, 5x, 10x, accelerated) changes how many ticks run per real second, never what a tick does. Commands issued while paused are stamped with the next tick that will run. Replays carry only tick numbers; no real-time stamp is read.
+6. **Possession of an NPC** replaces the NPC's decision step for that NPC with the incoming intents; its body, needs, health, ageing, injuries, memory and learning go on as normal. The learning update runs as for an own decision with the intent as the chosen action and the exploration draw skipped by rule; the possessed NPC's saved streams are not advanced by anything the sim does on the god's behalf (draws use keyed forks, 12.3). Actions are tagged `control_source = possessed`.
+7. **Compulsion** is an instruction with an expiry, checked each tick: the compelled NPC's candidate set is replaced by the compelled action while it is physically possible. If a physical constraint blocks it (no path, no object, no material) the compulsion records "blocked" and runs to expiry or cancellation; it never teleports or creates goods. It ends on completion, timeout, cancellation, death or exhaustion of Mythic (when it is charged continuously).
+8. **Mythic** is integer state updated at fixed times: regeneration and upkeep at day start and per tick for continuous upkeep, costs at acceptance, all in the sim's own systems, in the `divine` hash part. Unlimited sandbox sets the charge to 0 and records the nominal cost. Disabled mode rejects every divine command with a reason code and leaves state untouched.
+
+**Systems and order (provisional, to be fixed by the contracts document).** A `DivinitySystem` slot before `LifeCycleSystem` (240) in the day-start phase: Mythic regeneration and upkeep, compulsion and instruction expiry, possession and avatar exhaustion, resurrection completion; and, per tick, intent resolution for possessed and avatar bodies before `PopulationSystem` (250). `OrganisationSystem` after `EstateSystem` (255). Existing orders do not change.
+
+### 12.3 Random streams for the new code (labels provisional; unique per call site)
+| Owner | Label (a, b) | Purpose |
+|---|---|---|
+| D1/D2 | `divine-perceive` (npcId, tick), `divine-respond` (npcId, commandId) | whether and how clearly a suggestion or command is perceived; the NPC's own acceptance draw when the decision model needs one |
+| D3 | `miracle-effect` (miracleId, step) | scatter and magnitude of an area miracle, if any |
+| D6 | `commandment-learn` (npcId, commandmentId), `commandment-interpret` (npcId, commandmentId), `belief-drift` (npcId, day), `prayer` (npcId, day) | learning, interpretation, drift and prayer draws |
+| D7 | `resurrect-state` (npcId, tick) | the variance of restored health, if any |
+| C6 | `org-emerge` (hex or place id, day), `service-match` (requestId, tick) | emergent founding and provider matching |
+
+No D5 code draws from an NPC's saved streams (`RngPolicy`, `RngWork`, `RngLearn`).
+
+### 12.4 Neutrality pins for `Divinity.Enabled` and `Orgs.Enabled` (the M4/M5 pattern)
+M4 and M5 are neutral switches: `Households.Enabled = 0` reproduces the post-F0 behaviour exactly and `Social.Enabled = 0` likewise, each pinned by hashes for `band_6x20`, seeds 1–3, 10 days (12,000 ticks) (`M4LifeCycleTests`, `M5NeutralityTests`; SHARED_CONTRACTS 7.3). The new switches follow the same pattern. State of the new module lives in its own block (`GodState.Divinity`, `GodState.Organisations`), is null when the switch is 0, and its hash part is present only when non-null, so every older hash is unchanged.
+
+| Switch (tuning path) | Default | Effect when 0 |
+|---|---|---|
+| `Divinity.Enabled` | scenario-dependent: 0 in every scenario that exists today, 1 in new divine scenarios | no gods, no Mythic, no divine commands (every one is rejected with a reason), no possession, avatar, miracle, commandment, belief in gods or resurrection; D5 hooks return defaults |
+| `Divinity.Mode` | `standard` | `standard` (configured maximum, regeneration, costs), `unlimited` (nominal costs recorded, nothing charged), `disabled` (state exists, every divine command rejected) |
+| `Orgs.Enabled` | scenario-dependent: 0 today | no organisation state, no emergent founding, no services, no institutional expenditure; D5 hooks return defaults; the older M12 institution code is unaffected |
+| `Orgs.Emergence` | 1 | with `Orgs.Enabled = 1` and this 0, organisations can be seeded by the scenario but none arises on its own |
+
+**Pins** (each is a test; the pinned hash values are copied from the base commit before the package branch starts, as M4 and M5 did):
+| Pin | Statement |
+|---|---|
+| P1 `Divinity_Off_Reproduces_Base` | with `Divinity.Enabled = 0`: for `band_6x20`, `m4_families`, `ibs_families`, `watch6` and, after the demography branch merges, the `demog_*` scenarios, seeds 1–3, every checkpoint hash and every part hash equals the base commit's |
+| P2 `Divinity_Idle_Is_Neutral` | with `Divinity.Enabled = 1`, a god per faction, regeneration running and **no command ever issued**: every part hash except the new `divine` part equals P1. The god is not in the sim's causal chain until a command is accepted |
+| P3 `Divinity_Disabled_Mode_Neutral` | `Divinity.Mode = disabled` with a scripted god issuing commands every day: all rejected, `CommandRejected` rows with reasons, every part hash except `divine` equals P1 |
+| P4 `Orgs_Off_Reproduces_Base` | `Orgs.Enabled = 0`: as P1 |
+| P5 `Orgs_NoEmergence_Neutral` | `Orgs.Enabled = 1`, `Orgs.Emergence = 0`, no seeded organisations: every part hash except `organisations` equals P4 |
+| P6 `Switch_Matrix` | the suites of M4, M5, D-packages and C-packages each run with all other switches at 0 and equal the hashes of their own branch tips; then pairwise; then everything on. The matrix runs after every merge by the integration lead (Q3) |
+| P7 `Recording_Neutral_On_New_Domains` | recording levels, each new domain alone at Full, and sampling rates give identical hashes in a divine and organisation scenario (W-D5-3) |
+
+Pins are not an excuse to skip later review: when a pinned scenario's hash legitimately changes because a package changed behaviour, the change is recorded in `DEV_LOG.md` with the reason, as the M0 hash change was, and the pin is updated in that same commit.
+
+### 12.5 Camera and level-of-detail independence
+- **Rule (brief §48).** Rendering level of detail may vary with the camera. The existence and behaviour of individuals may not. The sim never receives the camera position, view frustum, selected object, UI mode, or the speed of rendering.
+- **What may affect sim LOD (4.9) is sim state only:** hot places, combat, work and institution sites, and **bodies the god is controlling** (a possessed NPC, a manifested avatar, a compelled NPC): these are Near tier by rule because they are sim state, the same in the headless runner and the player.
+- **Checks.** (a) The M0 reflection test extends to forbid `God.Sim` from referencing `Game` types. (b) `Camera_Independence`: the same replay played in the player with the camera fixed at the whole-island view, at one NPC, and with rendering off gives identical checkpoint hashes. (c) `Lod_Is_SimState_Only`: the LOD bias test of 4.9 reruns with a scripted camera in the player and gives the same tiers and hash.
+
+### 12.6 Benchmark plan (brief §48)
+`bench` stays the one tool and its report columns stay (4.10). The brief's measures map to existing columns, and new cases and columns are listed. All numbers are measured on the reference machine and recorded in `DotNet/God.Runner/Bench/baseline.json` and `DEV_LOG.md`; **no new target is promised before a measurement**, and an optimisation that changes behaviour is documented with its bias, as 4.10 requires.
+
+| Brief §48 measure | Existing `bench` output (as built) | To add |
+|---|---|---|
+| Simulation ticks per second | `ticksPerSecond`, `msPerTickMean`, `msPerTickP50`, `msPerTickP99`, `msPerTickMax`, `realTimeMultiple` | none; regression gate `--compare` (15%) stays |
+| NPC decisions per second | `npcDecisionsPerSecond`, `npcThinks`, `npcUpdateMicrosPerThink` | split by control source (own, compelled, possessed) in `bench_divine` |
+| Simulated years per real minute | `simYearsPerRealSecond` (multiply by 60) | add `simYearsPerRealMinute` to the JSON and DEV_LOG table |
+| Memory per individual | `memoryPerNpcBytes`, `learningStoreBytesPerNpc`, `memoryEndBytes`, `memoryEndUncollectedBytes` | `memoryPerArchivedDeadBytes` (resurrection eligibility), `bytesPerOrg`, D5 per-NPC state bytes |
+| Population scalability | cases `bench_npc_120`, `bench_npc_300`, `bench_npc_500`, `bench_npc_1000` | `bench_npc_100`, `bench_npc_2000` and `bench_npc_5000` (feasible only if 2000 passes; stop where the minimum targets of 4.10 are missed and record that) |
+| Learning overhead | `learningMicrosPerThink`, `learningShareOfThink`, `usPerThinkOff`, `usPerThinkOn`, `consolidationMsPerSimDay` | per-population rows |
+| Social interaction overhead | none as a pair | `Social.Enabled=0` against 1 on the same case: `socialMicrosPerThink`, messages and decodes per tick (4.10 asks for these columns) |
+| Institutional processing overhead | none | `bench_org_500`: `Orgs.Enabled=0` against 1: microseconds per tick and per delivered service, service requests per second, `orgReviewsPerTick` against its budget |
+| Divine overhead | none | `bench_divine_500`: a scripted god issuing a fixed schedule (commands, one compulsion, one possession, one avatar, area miracles): commands per second, cost of a tick with a possessed or avatar body, Mythic and divine hash cost |
+| Pathfinding | `pathSearchesPerTick`, `pathNodesExpandedPerSearch` | `pathMicrosPerSearch`; deferred and queued searches (`path.queue_len`) |
+| Save size | `saveBytes`, `saveMs`, `loadMs`, `loadSameHash` | bytes per NPC, per archived dead person, per org; a 2000-person save |
+| Database recording overhead | `bench --cases recording` (stage 3 scenario: off, in-memory metrics, SQLite metrics, JSONL summary, SQLite summary, JSONL full, SQLite full) | run the same on `bench_npc_500` and `bench_org_500` and `bench_divine_500`; SQLite bytes per sim day; rows per second; writer queue stalls |
+| Parallel headless throughput | `parallel` block (`workers`, `aggregateTicksPerSecond`, `perSimTicksPerSecond`, `scaling`), default workers 1 and 4 for NPC cases | workers 1, 4, 8, 16 for 500 and 1000; `batch` throughput in runs per hour with SQLite recording on |
+
+Populations: 100, 500, 1000, 2000 are the required set; 5000 is attempted. For each, run Off, Summary and Full, and with the divine and organisation switches 0 and 1. Report the cost of **being able to** (switch on, idle) separately from the cost of **using** (scripted activity), because P2 and P5 make the idle cost testable. The order of work is Q2: baselines first (existing cases at the merge commit), then new cases as each package merges.
+
+### 12.7 `demog report` and the runner commands in the stream
+`unity/demog` adds `demog report --scenario S --seeds 1-20 --years 15 [--set ..] [--arm "name: k=v ..."] [--plan FILE] [--out DIR]` and `unity/ibs` fixes the warehouse mappers for NPC 0; both merge before D5 work. `demog report` is the headless demographic viability experiment (F2); it and `lab`, `learn-dump`, `export` and `bench` read the sim and the recorder, never the other way round. The new commands planned for Q1 and Q2 are `sql` (read-only, [INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)), `bench` cases (12.6), and the divine fixture scenarios for Q3. `experiment`, `serve`, `dataset` and `verify-model` stay "not implemented" (exit 9): no training and no served agents in this run (D5.32).
+
+### 12.8 Tier and package mapping
+| Item | Package (brief §39) | Tier |
+|---|---|---|
+| Command types, validation, Mythic, `Divinity.Enabled`, P1–P3, divine replay | F1, D1, D2, Q3 | 1 |
+| Resource ledger and conservation C1 with miracles | D3, C1, Q3 | 1 |
+| Save version bump, `divine` hash part, save/load parity with divine state | F1, Q3 | 1 |
+| Exact replay of a human session (movement intents, possession, avatar) | D4, D5, U1, Q3 | 2 |
+| Resurrection and archive, population identity | D7, Q3 | 2 |
+| `Orgs.Enabled`, P4–P5, switch matrix P6 | C6, Q3 | 2 |
+| Benchmarks for populations 100–2000, learning, social, divine, recording, parallel | Q2 | 1 (baseline, 2000-person run), 2 (org and divine cases) |
+| `bench_npc_5000`, nightly long runs with divine and organisations | Q2 | 3 |
+| Camera independence test in the player | U1, Q3, Q4 | 2 |
+| Checks of 12.1 for justice and military additions | C9, C4, Q3 | 3 |
+
+### 12.9 Acceptance hooks
+| # | Test | Pass criterion |
+|---|---|---|
+| H-D5-1 | `Scenario18_Replay_Exact` | a complete scenario with ordinary NPC actions, a suggestion, a command, a compulsion, a possession with movement intents, an avatar, a miracle, a commandment reveal and a resurrection: `verify FILE` exits 0; `replay FILE --record full` gives a warehouse equal to the live Full recording ([DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md#128-acceptance-hooks) W-D5-1, W-D5-2) |
+| H-D5-2 | `Human_Session_Replays_In_Runner` | a recorded Unity session replays in the runner at every checkpoint; the command log has at most one movement command per body per tick and none from a paused frame |
+| H-D5-3 | `Movement_Quantisation_Stable` | the same sequence of raw stick vectors at two different frame rates gives the same quantised intents at the same ticks and the same final hash |
+| H-D5-4 | `Divinity_Pins_P1_to_P7` | the seven pins of 12.4 |
+| H-D5-5 | `Save_Load_With_Divine_State` | as the save row of 12.1: continued hashes equal the straight run; second save byte-identical |
+| H-D5-6 | `Camera_Independence`, `Lod_Is_SimState_Only` | 12.5 |
+| H-D5-7 | `Conservation_With_Miracles_And_Resurrection` | C1, the population identity and ownership integrity hold every day over 20 sim years of the integrated scenario, and after save and load |
+| H-D5-8 | `Bench_D5_Recorded` | `bench` runs the cases of 12.6 for 100, 500, 1000 and 2000 persons and writes the new columns; the idle divine and organisation switches change the cost by a measured amount that is written in `DEV_LOG.md` (no pass threshold until measured; a regression of the existing cases beyond 15% fails the gate) |

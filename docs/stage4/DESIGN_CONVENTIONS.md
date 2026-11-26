@@ -10,6 +10,8 @@ Owner decisions are recorded in the [plan](../UNITY_POC_PLAN.md#stage-4-a-living
 The game moves **from Darwin, through Dawkins, to Marx**: from how biological individuals evolve, through how cooperation and society emerge, to how production, ownership, labour, wealth and political institutions develop. Adam Smith (division of labour), Axelrod (the evolution of cooperation), Elinor Ostrom (governing common resources) and the *Creatures* games (drives, perception, lifetime learning) are equal influences. The player governs a state through institutions and incentives, never by controlling people. **Nothing is forced.** No economic or political system is built to win. Outcomes must arise from individuals, environments, institutions and the player's choices. See [VISION_AND_PHILOSOPHY.md](VISION_AND_PHILOSOPHY.md).
 
 ## 2. Owner decisions (complete list, 25–27 Nov 2026)
+
+> **Owner decisions D5 (26 Nov 2026) supersede parts of this section.** The player is a god only, never the government (D5.1, D5.2); the faction policy is always autonomous in the god-only game (D5.29). The authoritative list of every owner decision is now [docs/civdiv/OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md). Lines below that D5 changes are marked **[superseded by D5]**.
 Decisions added or changed by the owner's answers of 27 Nov 2026 are marked with the answer number from section 13, for example (Q6).
 
 **People and society**
@@ -46,7 +48,7 @@ Decisions added or changed by the owner's answers of 27 Nov 2026 are marked with
 - **Ownership:** state, private (one NPC), communal (a group), cooperative (worker-owned) and, later, other forms.
 - NPCs can found workshops, employ others, accumulate wealth and pass assets to heirs. Others may come to depend on selling their labour.
 - **Money:** barter only at first (goods for goods or labour). Currency comes in a later stage.
-- **Construction:** the state designates building, road and HQ sites and commits treasury resources. NPC labour must do the building. Nothing is magicked into place.
+- **Construction:** **[D5: the state organisation's NPC decision-makers, not the player]** the state designates building, road and HQ sites and commits treasury resources. NPC labour must do the building. Nothing is magicked into place.
 - **Staffed workshops in both modes (Q8).** All productive work is ultimately done by persistent individuals, in the sandbox and in the VP mode. No anonymous or auto-generated workers are kept to preserve stage 3 balance; production, staffing and resources are rebalanced around the population system.
 - **Hand gathering (Q9):** NPCs may gather dice-produced piles by hand. Specialist buildings, tools, skills and infrastructure make it much more efficient (about 4× as an initial tuning assumption, not a fixed rule).
 - **Reasons to trade (Q10):** keep the stage 3 variety rule and also test complementary production inputs (logs and clay for shelter). Trade emerges because it benefits individuals, never because the game demands it.
@@ -55,7 +57,7 @@ Decisions added or changed by the owner's answers of 27 Nov 2026 are marked with
 - `WareRefValue` and FE are analytics and reporting only, never a hidden currency or a central barter price.
 
 **The state and its institutions**
-- The player operates the **institutions of a state** (see [INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)) through policies, taxes, investment and incentives.
+- **[superseded by D5.1, D5.2]** ~~The player operates the **institutions of a state**~~ The state is an autonomous NPC organisation; the god influences its members, who may refuse. Original text: the player operates the **institutions of a state** (see [INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)) through policies, taxes, investment and incentives.
 - Institutions develop gradually through **civilisation ages**, starting from simple equivalents: elders, healers, communal mediation, guards, informal lending.
 - **Ages advance by emergent unlocks.** An institution or technology becomes possible when the society can sustain it: population, surplus, knowledge spread by learning and culture, and the institutions that already exist. There is no fixed timeline, and factions can be in different ages.
 - **Institutions change the strategic environment** (courts make promises credible, and so on). Institution staff keep their own motives, so management can be poor, corrupt, short-staffed or failing. No structure or ideology is assumed to be best.
@@ -69,7 +71,7 @@ Decisions added or changed by the owner's answers of 27 Nov 2026 are marked with
 
 **Information and data**
 - **Seven information layers** stay separate (section 6).
-- **The player:** Stage 4 **builds the separation now**, and the HUD reads through it. The player still gets near-complete reports on the faction's own affairs until statistics institutions arrive in a later age. Enforcing limited information comes later. Restricted NPC observations and read-only policy views are enforced from the start.
+- **The player [superseded in part by D5.28: the player is a god; divine observation follows configured rules and is distinct from faction records]:** Stage 4 **builds the separation now**, and the HUD reads through it. The player still gets near-complete reports on the faction's own affairs until statistics institutions arrive in a later age. Enforcing limited information comes later. Restricted NPC observations and read-only policy views are enforced from the start.
 - **Foreign information (Q21):** even under `FullInformation` there is no unrestricted access to foreign factions' internal affairs. Existing visibility rules for foreign territory and organisations stay; foreign information comes through observation, trade, diplomacy, migration, communication, media, intelligence and official reporting. The architecture distinguishes what is true from what a faction knows or believes.
 - **Debug true-state overlay (Q22):** off in normal competitive play; allowed in developer mode, lab experiments, debugging and dedicated observation scenarios, and optionally in sandbox scenarios. Ordinary faction AI and NPC policies never get debugging information.
 - **The analytical database:**
@@ -177,7 +179,7 @@ In stage 4 the view in layer 7 is filled almost completely (a `FullInformation` 
 | `INpcPolicy` | one civilian NPC | `NpcObservation` plus its own mind through `MindView` (beliefs, memory, associations) | `NpcIntent` |
 | `IMilitaryPolicy` | one NPC on military duty (combat decisions) | `SoldierObservation` plus its own mind through `MindView` | `NpcIntent` (combat subset) |
 | `IInstitutionPolicy` | one institution's management | `InstitutionView`: its own budget, staff, records and the faction's directives | `List<Command>`: institution commands, within budget and powers |
-| `IFactionPolicy` | a faction's state (AI or human) | `FactionKnowledgeView` | `List<Command>`: state commands, the same ones the HUD sends |
+| `IFactionPolicy` | a faction's state (AI; the human only in the temporary Stage 3 mode, D5.29) | `FactionKnowledgeView` | `List<Command>`: state commands, the same ones the HUD sends |
 
 **Signatures** (one pattern for all four levels):
 ```csharp
@@ -333,7 +335,19 @@ The owning documents give each system's split between stage 4 minimum and later.
 | [AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md) | Observations and actions per policy level, `IntNet`, quantisation, Python bridge, imitation then reinforcement, verification, how trained policies use lifetime-learned state |
 | [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) | Automated tests and acceptance criteria per milestone (gathered from the docs' Tests sections) |
 | [DEV_LOG.md](DEV_LOG.md) | The persistent development log of the implementation run: current milestone and checkpoint, completed milestones, commits, test results, performance benchmarks, decisions taken during implementation, **temporary mechanisms**, known limitations, deviations, outstanding work, instructions for the next session |
-| [research/SELFISH_GENE_NOTES.md](research/SELFISH_GENE_NOTES.md), [research/CREATURES_NOTES.md](research/CREATURES_NOTES.md) | Source research (read-only) |
+| [DIVINE_PLAYER_DESIGN.md](DIVINE_PLAYER_DESIGN.md) | **D5:** the player as a god; god identity and registry; the four interaction modes; the six intervention types; the divine action vocabulary; refusal by NPCs and organisations; divine learning |
+| [MYTHIC_AND_MIRACLES_DESIGN.md](MYTHIC_AND_MIRACLES_DESIGN.md) | **D5:** Mythic (maximum, regeneration, costs, upkeep, cooldowns, unlimited and disabled modes); every miracle's preconditions, state change and ledger |
+| [POSSESSION_AND_AVATAR_DESIGN.md](POSSESSION_AND_AVATAR_DESIGN.md) | **D5:** possession (control authority, body continuity, memory and learning) and the divine avatar body |
+| [COMMANDMENTS_AND_RELIGION_DESIGN.md](COMMANDMENTS_AND_RELIGION_DESIGN.md) | **D5:** structured commandments, templates and builder; per-NPC knowledge and interpretation; belief, faith, fear, affiliation vs citizenship; prayer, worship, conversion; religious organisations |
+| [RESURRECTION_DESIGN.md](RESURRECTION_DESIGN.md) | **D5:** resurrection variants, identity restoration, no reversal of what followed the death, archival of the dead |
+| [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md) | **D5:** the reusable organisation framework (identity, charter, ownership models, governance, roles, assets, budget, records); independent founding and lifecycle; the state as one organisation type |
+| [INSTITUTIONAL_SERVICES_DESIGN.md](INSTITUTIONAL_SERVICES_DESIGN.md) | **D5:** the common service model and the first services: healthcare, education, communal stores and welfare, lending and obligations, justice |
+| [PLAYER_UI_DESIGN.md](PLAYER_UI_DESIGN.md) | **D5:** the hybrid interface, divine toolbar, radial menu, Mythic meter, commandment editor, time controls, alerts, the extended People panel, reports, developer overlays |
+| [CAMERA_AND_CONTROLS_DESIGN.md](CAMERA_AND_CONTROLS_DESIGN.md) | **D5:** overhead, tracking, avatar and possession cameras; selection; contextual actions; input to deterministic commands |
+| [VISUAL_WORLD_DESIGN.md](VISUAL_WORLD_DESIGN.md) | **D5:** the seamless island (hidden hexes and lattice), characters, buildings and the divine visual identity |
+| [NPC_ANIMATION_DESIGN.md](NPC_ANIMATION_DESIGN.md) | **D5:** the non-verbal animation vocabulary driven by sim events |
+| [GAMEPLAY_SCENARIOS.md](GAMEPLAY_SCENARIOS.md) | **D5:** the tutorial, sandbox and scenario set, and what the player sees at each checkpoint |
+| [../civdiv/](../civdiv/OWNER_DECISION_REGISTER.md) | **D5 run documents:** the owner decision register (authoritative for all owner decisions), the owner's brief, the master plan, the implementation baseline, the shared architectural contracts for D5, the package index and specifications, the dependency graph, the release checklist, the runbook and the next-session prompt || [research/SELFISH_GENE_NOTES.md](research/SELFISH_GENE_NOTES.md), [research/CREATURES_NOTES.md](research/CREATURES_NOTES.md) | Source research (read-only) |
 
 ## 12. How every design doc is written
 - **Style:** plain English, short sentences, tables where they help. Integers and named fields where you mean code. British spelling.
@@ -404,7 +418,7 @@ The owner added these requirements with the answers above. Most reinforce the ex
 - The economic progression the design must make possible, never force: subsistence → cooperation → barter → specialisation → surplus → productive ownership → employment → accumulation → classes → political organisation ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md), [ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md), [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md)). No permanent class labels; no political beliefs assigned from class. `WareRefValue` and FE are analytics and reporting only, never a hidden currency or a central barter price.
 
 **Institutions**
-- The player controls budgets, policies, resources, priorities, recruitment incentives and objectives, and eventually may operate individual institutions directly while leaving others under AI management. Healthcare and education should eventually affect the biological and cognitive simulation itself, never give abstract bonuses ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)).
+- **[superseded by D5.1, D5.2, D5.29]** ~~The player controls budgets, policies, resources, priorities, recruitment incentives and objectives, and eventually may operate individual institutions directly while leaving others under AI management.~~ Institutions are NPC organisations run by their office-holders; the god influences them only through individuals ([ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md)). Healthcare and education should eventually affect the biological and cognitive simulation itself, never give abstract bonuses ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)).
 
 **Information and warehouse** ([INFORMATION_AND_MEDIA_DESIGN.md](INFORMATION_AND_MEDIA_DESIGN.md), [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md))
 - Restricted NPC observations and read-only policy views are enforced from the start (sections 6 and 7).
@@ -438,3 +452,6 @@ The owner added these requirements with the answers above. Most reinforce the ex
 - Benchmark early. Measure: ticks/s; sim years per real second; NPC decisions/s; memory per NPC; pathfinding cost; learning cost; communication cost; telemetry and database overhead; save size and load time; parallel throughput.
 - Keep per-NPC memory bounded with deterministic eviction. Avoid all-to-all comparisons; use spatial indexing, staggered decisions and bounded candidate sets.
 - Level of detail is decided by sim state and scenario, never by camera or rendering. Document when an optimisation changes behaviour. Never sacrifice learning, social or economic capability for premature optimisation.
+
+## 15. Owner decisions D5: Civilisation and Divinity (26 Nov 2026)
+The owner made the player a god only and set the plan for the 18-hour Civilisation and Divinity run. The decisions are listed in [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md) (D5.1–D5.33), which is now the single authoritative register of every owner decision; the owner's brief is kept verbatim in [OWNER_BRIEF_2026-11-26.md](../civdiv/OWNER_BRIEF_2026-11-26.md). The milestones of section 10 remain the long-term roadmap; the run's work packages in [DEVELOPMENT_PACKAGE_INDEX.md](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) map onto them.

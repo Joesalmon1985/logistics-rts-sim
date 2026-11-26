@@ -698,3 +698,22 @@ At F0 each switch alone has a stub hash part, so a single switch can no longer p
 **Owner D4 Â§8:** the raised arm, decoded text and recipient lines stay as development aids; making them an optional developer overlay (M5.18) and the non-verbal vocabulary (M5.19) are in the integration branch `unity/ibs`.
 
 **Unity on the merge (`0f978db`, run by me, 26 Nov 2026):** console clean; EditMode 484/484; PlayMode 79/79; Windows build OK (87 MB, 0 errors, 6 warnings); stage 3 smoke seed 2 `4bd54b271857a803` at tick 20161 (unchanged); population smoke seed 2, 60,000 ticks, exit 0, `60d549c28635cc44` (new: M4 and M5 together).
+
+## Civilisation and Divinity preparation (26 Nov 2026, night): paused mid-way
+
+Owner decisions **D5** (player is a god only, and more) are recorded in [docs/civdiv/OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md), which is now the single authoritative register. The owner's brief is kept verbatim in `docs/civdiv/OWNER_BRIEF_2026-11-26.md`. Documentation only: no code changed.
+
+**Done (committed as drafts, not yet cross-reviewed):**
+- `docs/civdiv/`: OWNER_BRIEF, OWNER_DECISION_REGISTER, CURRENT_IMPLEMENTATION_BASELINE (11 blockers in §13), SHARED_ARCHITECTURAL_CONTRACTS (binding; F1 foundation §0; overrides conflicting proposals in the design docs).
+- New design docs in `docs/stage4/`: DIVINE_PLAYER, MYTHIC_AND_MIRACLES, POSSESSION_AND_AVATAR, COMMANDMENTS_AND_RELIGION, RESURRECTION (the divinity agent was stopped at the owner's pause; check each is complete), ORGANISATIONS_AND_INSTITUTIONS, INSTITUTIONAL_SERVICES, PLAYER_UI, CAMERA_AND_CONTROLS, VISUAL_WORLD, NPC_ANIMATION, GAMEPLAY_SCENARIOS.
+- D5 sections and supersession notices in DESIGN_CONVENTIONS (§2, §7, §11, §14, new §15), VISION_AND_PHILOSOPHY (§10), WORLD_ONTOLOGY (§10), SHARED_CONTRACTS (pointer), ECONOMY, ECONOMIC_CLASSES, POLITICAL_ECONOMY, INSTITUTIONAL_STATE, STATE, MILITARY, NPC_LEARNING, CULTURAL_TRANSMISSION, COMMUNICATION_AND_COGNITION, DATA_WAREHOUSE, KPI_CATALOGUE, INFORMATION_AND_MEDIA, HEADLESS_SIMULATION, AI_TRAINING, UNITY_POC_PLAN.
+- `docs/civdiv/DEVELOPMENT_PACKAGE_INDEX.md`: **partial draft** (the planner was stopped at the pause; verify and finish).
+
+**Lead defaults for open questions (until the owner says otherwise):** Divinity turns on by default for population games at Checkpoint B, with deliberate re-pins; `Civ.Enabled` is kept as a third switch; AiBrain stays as the government seat (a temporary mechanism) until C10; AI and scripted gods act inside the sim through the god director, so the authorship rule doesn't block several scripted gods; every faction starts with a council of its oldest adults (a no-government scenario is also supported); a communal rule makes an act a crime for its members and property only; C7 adds `Skill.Healing`.
+
+**Not done, in resume order:**
+1. Check that the five divinity docs and the package index are complete (both agents were stopped mid-work).
+2. Finish DEVELOPMENT_PACKAGE_INDEX.md and write DEVELOPMENT_DEPENDENCY_GRAPH.md.
+3. Write `docs/civdiv/DEVELOPMENT_PACKAGES/` (one spec per package, in parallel), RELEASE_ACCEPTANCE_CHECKLIST.md (and the matching ACCEPTANCE_TESTS additions), CIVILISATION_AND_DIVINITY_RUNBOOK.md, CIVILISATION_AND_DIVINITY_MASTER_PLAN.md (including the open questions above) and NEXT_SESSION_PROMPT.md.
+4. A consistency review across all D5 documents (naming against SHARED_ARCHITECTURAL_CONTRACTS, tiers, package ids); add the superseded notice on INFORMATION_AND_MEDIA layer 7 / I1 text.
+5. Then the implementation run starts with F0 (merge `unity/ibs`, then `unity/demog`) and F1.

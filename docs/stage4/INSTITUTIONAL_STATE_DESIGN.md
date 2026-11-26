@@ -2,6 +2,23 @@
 
 The framework for every institution the player operates, from a Band age healer to a City age central bank. Stage 4 builds the generic model and the Band-age institutions (M12); later stages add the rest. The shared names, layers, policy levels and milestones are in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md); that file wins where this one disagrees.
 
+> **Superseded by owner D5 (26 Nov 2026).** The player is a god only and operates no institution (D5.1). Institutions are organisations of NPCs with their own decision-making (D5.2, D5.29), founded by individuals and communities from actual needs, knowledge, resources and cooperation, under several ownership models (D5.16, D5.17); a threshold only makes an opportunity available. The organisation record, governance, roles, lifecycle and divine influence now live in [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md), and requests, queues and outcomes in [INSTITUTIONAL_SERVICES_DESIGN.md](INSTITUTIONAL_SERVICES_DESIGN.md). This document keeps the manager effort model, Goodhart's law, returns, oversight, failure modes, the catalogue by age and unlock rules, re-based on those documents. See [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md). These earlier statements no longer hold:
+>
+> | Where | Earlier statement | Replaced by |
+> |---|---|---|
+> | Opening line | "every institution **the player operates**" | Every institution, operated by its own NPC role-holders |
+> | [§2 Principles](#2-principles) | "incentive terms that **the player or the faction AI** writes into a manager's … contract" | Incentive terms are written by the owning organisation's decision-makers (the government's council, an enterprise owner, a commune's meeting), each an NPC |
+> | [§2 Principles](#2-principles) | "**Same information as a human at that level.**" | `InstitutionView` is the deciding office-holder's own view: its mind plus the records it may read (ORGANISATIONS §4.4). No human seat exists at this level (D5.29); a player can act as an office-holder only by possessing that NPC |
+> | [§2 Principles](#2-principles) | "**What the player controls (owner, 27 Nov).** Budgets, policies, resources, priorities, recruitment incentives and objectives. Eventually the player may operate individual institutions directly …" | Withdrawn. Budgets, policies, priorities, recruitment and objectives are decided by NPC office-holders. The god may influence them through suggestions, commands, compulsion, possession, commandments and miracles, and they may refuse (ORGANISATIONS §4.12) |
+> | [§3](#3-data-structures-siminstitutions) | `Institution` with `Owner: faction id …`, `FoundedBy: Faction`, `Directives` "from the owner", `Case` | The `Organisation` record (`OrgId`, one id space with enterprises), its `Shares`, `Founders`, decisions and `ServiceRequest` (= `Case`); "owner" means the owning organisation or NPCs, never the player |
+> | [§4 Workforce and leadership](#workforce-and-leadership) | "The manager is an NPC appointed by the owner (`AppointManager`)" | Appointed by the owning organisation's decision rule, carried out by an office-holder with `Hire` power |
+> | [§4 Oversight](#oversight) | "The owner has three tools" | The owning organisation's office-holders have them; using them costs their time and goods |
+> | [§4 `IInstitutionPolicy`](#iinstitutionpolicy) | "**A human could play an institution** in a later mode with the same view and commands" | Withdrawn (D5.29); see the possession route above |
+> | [§4 Ages and unlocks](#ages-and-unlocks) | "An institution type becomes possible when **the faction** can sustain it" | A template becomes **available** to an NPC when the unlock rule holds over its community and the NPC knows the practice; founding is by individuals (ORGANISATIONS §4.1–4.2). The faction-level rule remains one of the community scopes |
+> | [§4 Catalogue by age](#catalogue-by-age) | Band-age government: "HQ store, the faction's own commands" | The government organisation (a council of NPCs) and its HQ stores (ORGANISATIONS §4.10) |
+> | [§6 Player and view](#6-player-and-view) | "**Commands:** found, appoint, set budget, set directive …, order inspection"; "**Unlocks:** a list of institution types the faction can found now" | No player commands on institutions. The card shows the organisation's records beside divine observation (D5.28); unlocks are shown as analysis. The god's options are divine actions on the organisation's people |
+> | [§8](#8-stage-4-minimum-vs-later-stages) M14; [§9](#9-migration-from-the-existing-code) | "The faction AI founds, staffs and funds institutions"; "`AiBrain` gains an institution step in M14 only" | The government organisation's office-holders do (with the temporary "AiBrain government seat" for routine commands); any other organisation founds and funds its own bodies by its own rule |
+
 ## 1. Purpose and scope
 
 **This document owns:**
@@ -374,3 +391,20 @@ Settled here:
 - **Managers chosen by members** use the "most trusted" vote in stage 4. Other rules (rotation, seniority, lot) are a [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md) extension.
 - **Cultural trait ids** for unlock rules ("consult elders", "store food") are defined by [CULTURAL_TRANSMISSION_DESIGN.md](CULTURAL_TRANSMISSION_DESIGN.md); until M11 those clauses are skipped.
 - **Effort quanta and weights** (`Wpay`, `Wkeep`, `Wmot`, `Wcost`) are `SimTuning`. The Goodhart tests force traits to make a clear case; the natural rate of gaming on the island is a measurement, not a target.
+
+## 12. Owner D5 update (26 Nov 2026)
+**What this document now owns, on the new framework.** The organisation record, governance, roles, founding and lifecycle are [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md)'s; the service model and the concrete services are [INSTITUTIONAL_SERVICES_DESIGN.md](INSTITUTIONAL_SERVICES_DESIGN.md)'s. This document keeps, unchanged in substance:
+- the effort model and the falsification choice of staff and managers (section 4), applied to every organisation's role-holders;
+- returns versus measured values, incentive terms, Goodhart's law and its worked examples, oversight and sanctions, now exercised by NPC decision-makers of the owning organisation;
+- failure modes, provision models (now ownership models: state, private, communal, cooperative and **religious**), the strategic-environment table;
+- the catalogue by age and the unlock rules, which now make a **template available** to a community; they never found an organisation, hire staff or create goods (D5.16, ORG-INV-6).
+
+**Mapping of the old names.** `Institution` → `Organisation` with a `Service` purpose; `InstitutionId` → `OrgId`; `Provision` → `OwnershipModel`; `Owner`/`FoundedBy` → `Shares`/`Founders`; `Case` → `ServiceRequest`; `StaffPost` → `RoleHolding` with role `Employee` or `Officer`; `ManagerNpcId` → the `Manager` office; `Directive` → an `OrgDecision` of the owning organisation recorded as a policy. `IInstitutionPolicy` keeps its signature; `InstitutionView` is filled from the deciding office-holder's own knowledge.
+
+**Divine influence (scenario 15).** A divine instruction to an institution is relayed to its office-holders, who may ignore, refuse, adopt, modify or carry it out; the owning organisation's rule still decides (ORGANISATIONS §4.12). A god holds no office and gains no authority by being worshipped.
+
+**Information (D5.28).** Managers read their own records, never true state or the warehouse (I-POL-1 kept). The god's view of an institution is divine observation, shown beside the institution's records, never in place of them; the report gap and target gap of section 2 are therefore visible to the god only as far as divine observation rules allow.
+
+**Tests kept.** I-INV-1 to I-INV-4, I-POL-1, I-DET-1, the M12 effect tests, the Goodhart tests and I-COM-1, I-COM-2 stand. I-COM-2 is extended by ORG-ACC-4 (founding from need evidence). I-UNL-1 now tests that `ProposeOrg` is not offered as a candidate when a template's rule fails.
+
+**Tier and package mapping:** generic institutions on the framework: Tier 2, C6; Band-age services: Tier 2, C7 and C8; Goodhart-prone targets and oversight beyond the M12 tests: Tier 3.

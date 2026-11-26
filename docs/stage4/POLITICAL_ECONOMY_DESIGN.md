@@ -2,6 +2,18 @@
 
 The shared names, layers, policy levels and milestones are in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md); that file wins where this one disagrees.
 
+> **Superseded by owner D5 (26 Nov 2026).** The player is a god only (D5.1). The state is the government, an autonomous NPC organisation whose office-holders decide (D5.2, D5.29); institutions and associations emerge independently (D5.16). See [OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md) and [ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md). These earlier statements no longer hold:
+>
+> | Where | Earlier statement | Replaced by |
+> |---|---|---|
+> | [§1](#1-purpose-and-scope) | "how the **player's state** can concede, repress, co-opt or negotiate" | How the **government organisation's NPC decision-makers** can respond; the god may influence those individuals |
+> | [§4.8](#48-movements-petitions-and-institutional-development) | "The player sees the record through `FactionKnowledgeView`, not the truth" | The government's office-holders see the official's record through the government's knowledge (`FactionKnowledgeView`); the god sees through divine observation under configured rules (D5.28) |
+> | [§4.8](#48-movements-petitions-and-institutional-development) | "The player may recognise, charter, absorb, tax or ban such bodies" | The government organisation may, by its own decision rule ([ORGANISATIONS §4.9](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md#49-relations-between-organisations)) |
+> | [§4.10](#410-competing-forms-of-economic-organisation) table | State-owned production run "under `IInstitutionPolicy` and the player's directives" | Under the owning state organisation's directives, decided by its office-holders |
+> | [§4.10](#410-competing-forms-of-economic-organisation) | "open to all forms unless the player's policy says otherwise"; "Through the player: the state may favour any form by policy. That is a player choice, recorded as a treatment" | The government may favour a form by its own decision; in experiments the treatment is set by the scenario, never by a player seat |
+> | [§4.11](#411-the-states-responses) | "The player (or an AI faction policy) responds through ordinary state and institution commands" | The government's office-holders respond, each deciding from its own knowledge, through the same commands; the god influences them only as individuals |
+> | [§6](#6-player-and-view) | "Petition card (stage 5) … and the response buttons (concede, refuse, partial, open talks, ignore)" | No player buttons. The card shows the petition as recorded and the government's response as decided; the god's options are divine actions on individuals |
+
 ## 1. Purpose and scope
 
 This document owns how NPCs come to want things from the economy and the state, and what they can do together to get them:
@@ -417,3 +429,14 @@ Settled here:
 - **Legitimacy vs loyalty.** Legitimacy is one input to loyalty, weight 2 of 18 by default ([STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection)).
 - **Topic field.** The message `Topic` can name an issue or a posting ([COMMUNICATION_AND_COGNITION_DESIGN.md](COMMUNICATION_AND_COGNITION_DESIGN.md)).
 - **Scale.** 64 members per association and 16 interests per NPC are starting bounds; revisit with M10 performance data. Political memory per NPC is about 0.8 KB (16 interests × 24 B, 12 grievances × 28 B, 4 legitimacy beliefs × 14 B).
+
+## 12. Owner D5 update (26 Nov 2026)
+- **The state is an organisation of NPCs.** Every "state response" in [§4.11](#411-the-states-responses) is a decision of the government organisation, proposed by an office-holder from its own knowledge and adopted by the government's decision rule ([ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md §4.10](ORGANISATIONS_AND_INSTITUTIONS_DESIGN.md#410-the-government-the-state-as-an-organisation)). The proposed commands of §4.11 (`AnswerPetition`, `OpenTalks`, `PostDispersal`, `OfferPost`) are government organisation commands with an `Actor` office-holder. Their direct costs and NPC consequences are unchanged.
+- **Associations are organisations.** The associations of [§3.6](#36-associations-stage-5) are `OrgType.Association` on the generic framework: founded by individuals from shared grievances and interests (the opportunity path, ORGANISATIONS §4.1), with charter, offices, store (a strike fund or mutual-aid fund is the organisation's store), records and relations. The derived kinds of §4.9 stay analysis-only.
+- **One `DecisionRule`.** The Stage 5 `DecisionRule` of [§4.8a](#48a-decisions-and-governance-owner-decision-q20) is now the generic rule owned by ORGANISATIONS §3.2 and §4.4, available to every organisation. The staged plan of Q20 stands: informal decisions first; formal rules for associations; state-level democracy (an assembly, elections) is an organisation type with unlock rules, developed later, never assumed.
+- **Petitions are requests to the government** (INSTITUTIONAL_SERVICES model): presented by a person to an official, recorded or not, queued and answered by a decision.
+- **How a god enters politics.** Only through individuals: suggesting a reform to a citizen, persuading supporters (divine command), compelling or possessing a leader, revealing a commandment that people may adopt as a political belief (brief §4). A government or movement can refuse or modify a divine instruction (scenario 15, ORGANISATIONS §4.12). Religious and political authority stay distinct: a priest gains no government office from its religious role, and a change of religious affiliation never changes citizenship (scenario 16, D5.15).
+- **Autonomous policies (D5.29).** Civilian, institutional and faction (government) policies are always autonomous in the god-only game. No human seat exists at the government level except in the temporary Stage 3 mode.
+- **No predetermined outcome (D5.33).** Unchanged: stances, movements and their success or failure are measured.
+
+**Tier and package mapping:** citizenship, migration and political-interest measures: C5 (Tier 2 for the existing M10 foundations, Tier 3 for associations and autonomous political organisations); government responses as organisation decisions: C10 (Tier 2). **Acceptance hooks:** scenario 15 (ORG-ACC-15a, ORG-ACC-15b), scenario 16 (ORG-ACC-16).

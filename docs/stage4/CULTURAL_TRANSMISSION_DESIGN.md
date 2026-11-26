@@ -290,3 +290,16 @@ No owner questions. Settled here, with defaults:
 - **Conformity is heritable.** It is one of the 12 personality traits in the genome ([BIOLOGICAL_INHERITANCE_DESIGN.md](BIOLOGICAL_INHERITANCE_DESIGN.md)), so test 7 has the variation it needs.
 - **No runtime trait registry in stage 4.** Only Param variants and Technique refinements mutate. Revisit if the content set proves too small.
 - **Exposure cap.** 3 exposures per day in total, not per locus. Revisit only if test 7 or 13 shows one locus starving the others.
+
+---
+
+## 12. Commandments and religious transmission (owner D5)
+
+Owner decisions D5 add commandments: structured religious rules revealed by gods ([COMMANDMENTS_AND_RELIGION_DESIGN.md](COMMANDMENTS_AND_RELIGION_DESIGN.md), which owns them). How they relate to this document:
+
+- **Separate store, shared maths.** Commandment knowledge lives in its own bounded per-NPC table (8 entries, `CommandmentKnowledge`), not in `CultureStore`, because it carries a structured rule, an issuing god and a revision. Exposures use **this document's adoption test (4.3)** and conformity bias (4.4) as one shared pure function, and the same 0..255 strength scale (heard, learned, adoptable).
+- **Channels.** Revelation (from a god), `Recount` gestures between NPCs (M5 comms, with M5 decoding errors), the vertical household channel (a minimal pass in the Religion module until M11; from M11 this document's daily pass carries commandment exposures), gatherings as the tradition channel, and priests' preaching as costly teaching (4.5). Migrants keep their knowledge (4.8).
+- **Variants.** Copies can be altered field by field (a dropped condition, a neighbouring verb, a widened object), exactly like Param drift (4.6): each NPC follows and passes on its own interpretation.
+- **Decision hook.** A held commandment adds a bounded `Doctrine` part to the divine score term, like a Norm's guilt and reward hook (3.3), plus a learnable feature key. It never forces or blocks an action.
+- **Boundary (4.9).** A commandment is not an association and not a named cultural trait: rule 2 still holds (no code writes associations from it), and the culture census does not count it; a separate commandment census does. A religion's gatherings and customs may become ordinary Tradition or Norm traits through the usual routes.
+- **Religion is not culture.** Religious affiliation, belief and devotion are separate from cultural membership (D5.15).

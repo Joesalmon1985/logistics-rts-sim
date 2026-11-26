@@ -497,3 +497,19 @@ The milestones M0–M15 are kept and grouped into six functional checkpoints ([c
 - **Analytical recording:** M0 already gives JSONL events. **M13a** (the SQLite warehouse core with person, household, economy and citizenship facts) needs only M0 and the event types of the milestones done, so it may be pulled forward after M6. **M13b** (institution KPIs and reports) comes after M12.
 
 The other milestones add what the game theory and political economy need: enterprises, citizenship, culture, Band institutions. M14 makes it a balanced, playable game, and M15 makes it trainable. Unity views arrive progressively with each milestone, and every temporary compatibility mechanism is listed with its removal milestone in [stage4/DEV_LOG.md](stage4/DEV_LOG.md#temporary-mechanisms). Parallel work respects milestone dependencies, not just file boundaries.
+
+## Owner D5 presentation and the god-only player (26 Nov 2026)
+
+The owner's brief of 26 Nov 2026 ([civdiv/OWNER_BRIEF_2026-11-26.md](civdiv/OWNER_BRIEF_2026-11-26.md), decisions D5.1 to D5.33 in [civdiv/OWNER_DECISION_REGISTER.md](civdiv/OWNER_DECISION_REGISTER.md)) makes the player **a god only** (D5.1). This **supersedes the older player-as-faction controls** in this plan and in the stage 3 HUD: the build bar, HQ, road, demolish and trade tools, the victory-point standings as the main goal, and the idea that the human fills a faction-policy seat (D5.29). Those controls stay in the code only as a **temporary mechanism**, the stage 3 faction-control mode, so the stage 3 game and its tests keep working until the god-only game replaces them; each temporary piece is listed with its removal milestone in [stage4/DEV_LOG.md](stage4/DEV_LOG.md#temporary-mechanisms). Sandbox is the default game; the victory-point mode survives as an optional objective.
+
+The presentation of the god-only game is specified in:
+
+| Document | Owns |
+|---|---|
+| [stage4/PLAYER_UI_DESIGN.md](stage4/PLAYER_UI_DESIGN.md) | the toolbar, radial menu, Mythic meter, cards, alerts, time controls, developer overlays, NPC inspection, family tree, memorial, reports and divine analysis |
+| [stage4/CAMERA_AND_CONTROLS_DESIGN.md](stage4/CAMERA_AND_CONTROLS_DESIGN.md) | the overhead, follow, avatar and possession cameras, selection, and how continuous movement becomes deterministic commands |
+| [stage4/VISUAL_WORLD_DESIGN.md](stage4/VISUAL_WORLD_DESIGN.md) | the seamless island (grid hidden, resource-derived terrain), characters, divine visual identity |
+| [stage4/NPC_ANIMATION_DESIGN.md](stage4/NPC_ANIMATION_DESIGN.md) | the non-verbal gesture vocabulary and its mapping from sim events |
+| [stage4/GAMEPLAY_SCENARIOS.md](stage4/GAMEPLAY_SCENARIOS.md) | the twelve-step tutorial, scenario set, replay and branching, and the playable checkpoints |
+
+The Unity layer rules are unchanged: it reads state, sends commands and animates events, and it never decides an outcome.

@@ -630,3 +630,21 @@ No owner question remains. Owner decisions of 27 Nov 2026 ([conventions §13](DE
 Settled here, with defaults:
 - **`NpcRef` vs trust.** Keep both: `NpcRef` entries learn "trading with Ana pays", social trust learns "Ana is honest". M5 runs L14 both ways and reports the overlap; a measured double-count is fixed by lowering `NpcRef`'s gain, not by removing it.
 - **Vicarious context.** No inferred drives in stage 4 (as in [COMMUNICATION_AND_COGNITION_DESIGN.md](COMMUNICATION_AND_COGNITION_DESIGN.md#11-open-questions)). Vicarious lessons use only visible keys.
+
+---
+
+## 12. Divine interventions and learning (owner D5, 26 Nov 2026)
+
+Owner decisions D5 ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)) add gods who instruct, compel, possess, reveal commandments and perform miracles. They enter this document's learner **only through its existing channels**; nothing writes the lesson the player intended. The owning documents are [DIVINE_PLAYER_DESIGN.md §4.9](DIVINE_PLAYER_DESIGN.md#49-divine-learning-brief-14) (attribution and the causal record), [POSSESSION_AND_AVATAR_DESIGN.md §4.5](POSSESSION_AND_AVATAR_DESIGN.md#45-learning-from-possessed-actions) and [COMMANDMENTS_AND_RELIGION_DESIGN.md §4.4](COMMANDMENTS_AND_RELIGION_DESIGN.md#44-how-a-held-commandment-enters-the-decision-and-the-learner). In short:
+
+- **Score.** The decision score (4.2) gains one term, `Divine(c) = Instruction(c) + Doctrine(c)`: a bounded weight on a candidate that matches a received divine suggestion or command, or a held commandment as the NPC interprets it. It never removes a candidate. `OpportunitySlot` needs a `Divine` column (proposed amendment, with the pending `Social` one).
+- **Feature kinds.** `Divine = 17` (value `sub << 8 | godId`: suggested, commanded, compelled, possessed, smitten, healed, blessed) and `Commandment = 18` (value = the believed commandment id). They are target features of the instructed or matching candidate, or base features for a few days after an experienced intervention, so an NPC learns per verb and per god whether doing what a god says, or keeping a commandment, has paid.
+- **Signals.** Miracles act through the reward channels of 4.4 that they physically cause: injury and pain from a smite, relief from healing, goods created or destroyed. No new reward channel exists for piety or obedience.
+- **Controlled actions.** Traces of compelled and possessed decisions carry `Flags.DivinelyControlled` and are credited at `SimTuning.Divinity.ControlledCreditPermille` (default 500).
+- **Attribution.** On a divine reward or punishment aimed at it, the NPC may also credit one of its own recent decisions that a held commandment or a refused instruction explains (`Flags.Attributed`, episode kind 16). The explanation comes from its own beliefs, so it can be wrong; with none, only the live traces are credited (possibly the wrong action).
+- **Prayer.** `Pray` is a deferred verb; its episode (kind 17) closes on a perceived divine answer, so praying is learned from outcomes.
+- **Witnesses** learn vicariously by 4.13 (`Struck`, healed); being told of a divine act changes beliefs, never associations.
+- **Causal record.** `AssociationUpdated` gains `CauseIntervention` (Full recording only, from the NPC's exposure ring); recording never changes the hash.
+- **Resurrection** restores this store as it was at death ([RESURRECTION_DESIGN.md](RESURRECTION_DESIGN.md)); traces and episodes start empty.
+
+Episode kinds 16–19 are reserved for Divinity in `EpisodeKey`: 16 attribution, 17 prayer, 18 compulsion, 19 possession.

@@ -392,3 +392,13 @@ Communicating is just another candidate intent, scored by the same decider. Each
 None for the owner. Settled here:
 - **A failed recognition hides both records.** The context uses the *recognised* id, so a failed recognition emits no `NpcRef` key and finds no social-memory record. The cheat's learned entries and its trust record are both hidden.
 - **No inference of others' drives in stage 4.** Observers use only what they see: gestures, carried goods, actions. A visible `NeedFood` gesture is already a `MsgAct` feature. Revisit only if test L15 in [NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md#10-tests-and-acceptance-criteria) needs it.
+
+## 12. Owner D5 presentation (26 Nov 2026)
+
+Owner decisions D5.24 and D5.25 (brief section 28) apply to section 6 and section 8.1 above:
+
+- **Normal play is non-verbal.** NPC communication is shown only as body language: posture, pointing at a place, person or ware, presenting a held object, quantity by fingers or a stack, approach and facing, and short sequences of gestures. No sentence is written above any head. The text label and the addressee line that `GestureLayer` draws today are not part of normal play; they become the developer decode overlay.
+- **Decoded text is developer and accessibility only.** The "interpret" overlay of section 6 (intended and decoded message with the mismatch marker) is a developer overlay, off by default. A separate accessibility "captions" option shows a plain-language line built only from what an observer could have seen, with no truth flags, also off by default. Neither changes the state hash (acceptance row M5.18).
+- **Every animation follows a sim event.** Unity never decides whether a message was made, understood or accepted; the animation vocabulary (all twenty entries of brief section 28), the mapping from `GestureMade`, `ExchangeStep` and the care and divine events to clips, and the LOD rule that rendering detail may vary while sim behaviour never depends on the camera are in [NPC_ANIMATION_DESIGN.md](NPC_ANIMATION_DESIGN.md) (acceptance rows M5.18 and M5.19).
+- **Requested amendments to this grammar** (not blockers): sim acts for `Thank`, `Threaten`, `Greet` and `Alarm` (candidates listed under "Later acts" without an owner), a duration on `GestureMade`, and prayer and teaching events. They are listed in NPC_ANIMATION_DESIGN section 11.
+- Related presentation documents: [PLAYER_UI_DESIGN.md](PLAYER_UI_DESIGN.md), [VISUAL_WORLD_DESIGN.md](VISUAL_WORLD_DESIGN.md).
