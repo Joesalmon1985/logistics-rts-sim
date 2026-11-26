@@ -37,7 +37,7 @@ namespace God.Runner.Warehouse
         };
 
         /// <summary>Tables that exist once per schema version, not per run (exported once under <c>_global</c>).</summary>
-        public static readonly IReadOnlyCollection<string> GlobalTables = new[] { "dim_ware", "dim_code", "dim_kpi", "meta_event_type", "meta_event_map", "meta_schema_version" };
+        public static readonly IReadOnlyCollection<string> GlobalTables = new[] { "dim_ware", "dim_code", "dim_kpi", "meta_event_type", "meta_event_map", "meta_table_grain", "meta_schema_version" };
 
         public static List<ColumnInfo> Columns(WarehouseDb db, string table)
         {

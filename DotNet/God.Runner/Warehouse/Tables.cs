@@ -55,6 +55,13 @@ namespace God.Runner.Warehouse
             "ON CONFLICT(building_key) DO UPDATE SET faction_key = excluded.faction_key, kind = excluded.kind, size_code = excluded.size_code, is_hq = excluded.is_hq, " +
             "node_location_key = excluded.node_location_key, hex_location_key = excluded.hex_location_key, placed_tick = excluded.placed_tick, " +
             "completed_tick = excluded.completed_tick, destroyed_tick = excluded.destroyed_tick, removed_tick = excluded.removed_tick, level = excluded.level", 15);
+        public static readonly TableDef DimPersonUpsert = new TableDef("dim_person", 17,
+            "INSERT INTO dim_person (person_key, run_key, npc_id, faction_key, is_founder, spawn_tick, spawn_date_key, spawn_location_key, death_tick, death_date_key, death_cause_code, age_ticks_at_death) " +
+            "VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11) " +
+            "ON CONFLICT(person_key) DO UPDATE SET faction_key = excluded.faction_key, is_founder = excluded.is_founder, spawn_tick = excluded.spawn_tick, spawn_date_key = excluded.spawn_date_key, " +
+            "spawn_location_key = excluded.spawn_location_key, death_tick = excluded.death_tick, death_date_key = excluded.death_date_key, death_cause_code = excluded.death_cause_code, " +
+            "age_ticks_at_death = excluded.age_ticks_at_death", 12);
+        public static readonly TableDef MetaTableGrain = new TableDef("meta_table_grain", 7, "table_name", "grain", "source_events");
         public static readonly TableDef MetaEventType = new TableDef("meta_event_type", 5, "code", "version", "name", "domain", "status", "high_volume");
         public static readonly TableDef MetaEventMap = new TableDef("meta_event_map", 6, "code", "version", "target_table", "mapper", "note");
 
@@ -63,6 +70,9 @@ namespace God.Runner.Warehouse
             "buildings", "buildings_built", "units", "walkers", "stock_total", "wars_active", "envoys_out");
         public static readonly TableDef FactFactionDayStock = new TableDef("fact_faction_day_stock", 51, "run_key", "date_key", "faction_key", "ware_key", "quantity");
         public static readonly TableDef FactProduction = new TableDef("fact_production", 52, "run_key", "tick", "seq", "date_key", "faction_key", "building_key", "ware_key", "quantity", "building_kind", "sample_weight");
+        /// <summary>The personal-goods rows of fact_production (Produced, Consumed): same table, the columns the M3 migration added.</summary>
+        public static readonly TableDef FactProductionPerson = new TableDef("fact_production", 52, "run_key", "tick", "seq", "date_key", "faction_key", "ware_key", "quantity", "sample_weight",
+            "person_key", "direction", "reason_code", "source_id", "hut_id", "with_tool");
         public static readonly TableDef FactProductionDay = new TableDef("fact_production_day", 53, "run_key", "date_key", "building_key", "ware_key", "faction_key", "quantity", "cycles");
         public static readonly TableDef FactCombat = new TableDef("fact_combat", 54, "run_key", "tick", "seq", "date_key", "kind_code", "faction_key", "unit_id", "unit_kind_code", "weapon_ware_key",
             "target_kind_code", "target_id", "outcome_code", "damage", "killer_unit_id", "disbanded", "building_key", "x_mm", "z_mm", "sample_weight");
@@ -70,6 +80,13 @@ namespace God.Runner.Warehouse
         public static readonly TableDef FactCommand = new TableDef("fact_command", 56, "run_key", "tick", "seq", "date_key", "applied", "command_type", "player_id", "faction_key", "reason", "message", "args");
         public static readonly TableDef FactEvent = new TableDef("fact_event", 57, "run_key", "tick", "seq", "date_key", "event_code", "event_version", "faction_key", "id1", "id2", "id3", "id4", "payload", "sample_weight");
         public static readonly TableDef FactEventDay = new TableDef("fact_event_day", 58, "run_key", "date_key", "event_code", "events");
+        public static readonly TableDef FactDeath = new TableDef("fact_death", 61, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "cause_code", "location_key", "age_ticks");
+        public static readonly TableDef FactPersonDay = new TableDef("fact_person_day", 62, "run_key", "date_key", "person_key", "faction_key", "tick", "age_days", "location_key", "health", "nutrition",
+            "hunger", "fatigue", "cold", "fear", "pain", "mean_hunger", "mean_fatigue", "mean_cold", "mean_fear", "mean_pain",
+            "ticks_idle", "ticks_eat", "ticks_forage", "ticks_sleep", "ticks_rest", "ticks_explore", "ticks_gather", "ticks_build", "ticks_flee", "ticks_carry", "ticks_other",
+            "walk_ticks", "meals", "has_bed", "carry_units", "decisions", "learned_share", "explore_share", "reward_sum", "punish_sum", "associations", "conjunctions", "mode_code");
+        public static readonly TableDef FactLearning = new TableDef("fact_learning", 63, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "kind_code", "verb", "feature_key",
+            "delta", "new_stw", "new_ltw", "origin_code", "slot", "feature_a", "feature_b", "feature_c", "strength", "return_value", "days_elapsed", "sample_weight");
         public static readonly TableDef FactMetricDay = new TableDef("fact_metric_day", 59, "run_key", "date_key", "metric", "value");
         public static readonly TableDef FactRunMetric = new TableDef("fact_run_metric", 60, "run_key", "metric", "source", "value", "deterministic");
         public static readonly TableDef MetaLoad = new TableDef("meta_load", 99, "run_key", "first_day", "last_day", "rows_by_table", "dropped_zero_spells", "loaded_at", "wall_seconds");

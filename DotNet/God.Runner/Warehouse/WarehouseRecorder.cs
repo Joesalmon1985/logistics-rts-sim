@@ -65,7 +65,8 @@ namespace God.Runner.Warehouse
         private readonly Dictionary<int, string> _controller = new Dictionary<int, string>();
         private readonly Dictionary<int, BuildingDim> _buildings = new Dictionary<int, BuildingDim>();
         private readonly Dictionary<long, long> _locations = new Dictionary<long, long>();    // (kind<<32 | idx) -> location key
-        private long _nextLocation = 1, _nextBuilding = 1;
+        private readonly Dictionary<int, PersonDim> _persons = new Dictionary<int, PersonDim>();
+        private long _nextLocation = 1, _nextBuilding = 1, _nextPerson = 1;
         private readonly SortedDictionary<string, Aggregate> _aggs = new SortedDictionary<string, Aggregate>(StringComparer.Ordinal);
         private readonly Dictionary<Type, Plan> _plans = new Dictionary<Type, Plan>();
         private readonly SortedDictionary<string, long> _sampledOut = new SortedDictionary<string, long>(StringComparer.Ordinal);
@@ -120,6 +121,7 @@ namespace God.Runner.Warehouse
                 AddRow(Tables.MetaEventType, (long)e.Code, (long)e.Version, e.Name, e.Domain.ToString().ToLowerInvariant(), e.Table == "analysis-none" ? "analysis-none" : "active", e.HighVolume ? 1L : 0L);
                 AddRow(Tables.MetaEventMap, (long)e.Code, (long)e.Version, m.Table, m.Mapper, m.Note ?? e.Note);
             }
+            foreach (var g in PopulationMapping.Grains) AddRow(Tables.MetaTableGrain, g.table, g.grain, g.events);
             WriteCodes();
             foreach (Ware w in Enum.GetValues(typeof(Ware)).Cast<Ware>().OrderBy(x => (int)x))
                 AddRow(Tables.DimWare, (long)(int)w, Wares.Name(w), WareCategory(w), Wares.IsRaw(w) || w == Ware.Rock ? 1L : 0L);
@@ -175,6 +177,13 @@ namespace God.Runner.Warehouse
             }
             Enum<UnitKind>("unit_kind"); Enum<AttackOutcome>("attack_outcome"); Enum<TargetKind>("target_kind"); Enum<BuildingSize>("building_size");
             Enum<GameEndReason>("game_end_reason"); Enum<RefusalCause>("refusal_cause"); Enum<EnvoyDeathCause>("envoy_death_cause"); Enum<Terrain>("terrain");
+            Enum<God.Sim.Population.DeathCause>("death_cause"); Enum<God.Sim.Population.ProduceReason>("produce_reason"); Enum<God.Sim.Population.ConsumeReason>("consume_reason");
+            Enum<God.Sim.Population.LearningModeCode>("learning_mode"); Enum<God.Sim.Learning.Origin>("learning_origin");
+            for (int a = 0; a < God.Sim.Population.Activity.Count; a++) AddRow(Tables.DimCode, "activity", (long)a, God.Sim.Population.Activity.Names[a], "one of the eleven ticks_* columns of fact_person_day, in order");
+            AddRow(Tables.DimCode, "learning_kind", 1L, "association_updated", "AssociationUpdated (sampled below Full)");
+            AddRow(Tables.DimCode, "learning_kind", 2L, "conjunction_recruited", "ConjunctionRecruited");
+            AddRow(Tables.DimCode, "learning_kind", 3L, "conjunction_freed", "ConjunctionFreed");
+            AddRow(Tables.DimCode, "learning_kind", 4L, "episode_closed", "EpisodeClosed");
             AddRow(Tables.DimCode, "combat_kind", 1L, "attack", "one swing or shot (UnitFired); outcome_code = attack_outcome");
             AddRow(Tables.DimCode, "combat_kind", 2L, "unit_died", "a soldier is gone (UnitDied); outcome_code 0 killed, 1 disbanded with its eliminated faction");
             AddRow(Tables.DimCode, "combat_kind", 3L, "building_destroyed", "a building fell (BuildingDestroyed)");
@@ -204,6 +213,14 @@ namespace God.Runner.Warehouse
             b = new BuildingDim { Key = _nextBuilding++, Id = id, Dirty = true };
             _buildings[id] = b;
             return b;
+        }
+
+        internal PersonDim PersonOf(int id)
+        {
+            if (_persons.TryGetValue(id, out var p)) return p;
+            p = new PersonDim { Key = _nextPerson++, NpcId = id, Dirty = true };
+            _persons[id] = p;
+            return p;
         }
 
         private static long Loc(int kind, int idx) => ((long)kind << 32) | (uint)idx;
@@ -336,6 +353,12 @@ namespace God.Runner.Warehouse
                 AddRow(Tables.DimBuildingUpsert, b.Key, 1L, (long)b.Id, b.FactionKey, b.InitialFactionKey, b.Kind, (object)b.SizeCode, b.IsHq ? 1L : 0L, b.NodeLocation, b.HexLocation,
                     b.PlacedTick, b.CompletedTick, b.DestroyedTick, b.RemovedTick, (object)b.Level);
                 b.Dirty = false;
+            }
+            foreach (var p in _persons.Values.Where(x => x.Dirty).OrderBy(x => x.Key))
+            {
+                AddRow(Tables.DimPersonUpsert, p.Key, 1L, (long)p.NpcId, p.FactionKey, p.IsFounder ? 1L : 0L, p.SpawnTick, p.SpawnDate, p.SpawnLocation,
+                    p.DeathTick, p.DeathDate, (object)p.DeathCause, p.AgeAtDeath);
+                p.Dirty = false;
             }
             FlushBatch();
         }

@@ -640,7 +640,7 @@ The M13a core is merged in `unity/poc`: code in `DotNet/God.Runner/Warehouse/`, 
 
   SQLite size per sim day: 12.6 KB at metrics, 34.7 KB at summary, 54.9 KB at full. These are stage 3 numbers; the NPC-scale bench (`bench_npc_500`, criteria 10.9 and 10.10) comes after M3.
 - **Not built yet:**
-  - the person, household and other NPC tables (`dim_person`, spells, transactions and the rest of the list in 1.1);
+  - the household, spell, transaction and other NPC-era tables beyond the M3 set ([8.2](#82-as-built-population-tables-m3-schema-v2));
   - the Experiment level;
   - `--record-decisions`;
   - the size-budget test (10.9) and the 200-year nightly run;
@@ -648,6 +648,19 @@ The M13a core is merged in `unity/poc`: code in `DotNet/God.Runner/Warehouse/`, 
   - a DuckDB check of the Parquet lake (10.11 is checked by reading the Parquet files back and comparing row counts and integer sums with SQLite);
   - the migration-fixture test (10.12), since only schema v1 exists;
   - the life-history report (10.16).
+
+### 8.2 As built: population tables (M3, schema v2)
+`Warehouse/Migrations/0002_population.sql`, mappers in `Warehouse/PopulationMapping.cs`, tests in `PopulationWarehouseTests.cs`. Each grain is also a row in `meta_table_grain` (global table, exported under `_global`).
+
+| Table | Grain | Source events | Notes |
+|---|---|---|---|
+| `dim_person` | one row per person ever alive in the run | `NpcSpawned`, `NpcDied` | Type 1: key by first appearance; `npc_id` is the sim's persistent id. `is_founder`, `spawn_tick`, `spawn_date_key`, `spawn_location_key`, faction; death fields filled once. No genome or trait columns: `NpcSpawned` carries none (M4 adds birth and genome). A person first seen in another event (a recorder that starts late) gets a row with a NULL spawn. |
+| `fact_death` | one row per death | `NpcDied` | Cause is `dim_code 'death_cause'`; `age_ticks`; equals `dim_person.death_*`. |
+| `fact_person_day` | one row per living person x sim day | `NpcDay` | `date_key` is the day the row describes, not the day it was emitted. All `NpcDay` fields: drives at day end and day means, eleven `ticks_*` columns (`dim_code 'activity'`; their sum is the ticks lived), meals, bed, carry, decisions, learned and explore share, reward and punishment, store size, mode. Written at Summary and Full (the event is not high volume). |
+| `fact_production` | one row per `WaresProduced`, `Produced` or `Consumed` | same | The stage 3 table extended: `person_key`, `direction` (1 in, -1 out), `reason_code` (`produce_reason` or `consume_reason`), `source_id`, `hut_id`, `with_tool`. Stage 3 rows keep a building and a NULL person. Personal-goods rows are sampled below Full (`sample_weight`); no daily aggregate yet. |
+| `fact_learning` | one row per learning event | `AssociationUpdated`, `ConjunctionRecruited`, `ConjunctionFreed`, `EpisodeClosed` | `kind_code` (`dim_code 'learning_kind'`): 1 update, 2 recruit, 3 free, 4 episode close. Columns not used by a kind are NULL. Kind 1 is sampled below Full. |
+
+`dim_ware` lists every ware id (`Wares.PersonalCount`, 32), the personal wares included. An event whose catalogue table has no mapper yet still lands in `fact_event`.
 
 ## 9. Migration from the existing code
 - **Events:** `SimEvent` and `EventBuffer` stay. `EventBuffer.Add` also stamps `Seq`. Existing event classes gain codes and domains.

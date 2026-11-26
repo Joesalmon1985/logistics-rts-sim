@@ -65,11 +65,12 @@ namespace God.Runner.Tests
             using (var d = WarehouseDb.OpenRead(db))
             {
                 Assert.AreEqual(WarehouseDb.CurrentVersion, d.SchemaVersion());
-                Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM meta_schema_version"));
+                Assert.AreEqual(WarehouseDb.CurrentVersion, (long)d.Scalar("SELECT COUNT(*) FROM meta_schema_version"), "one row per applied migration");
+                Assert.AreEqual(2, WarehouseDb.CurrentVersion, "v2 = the M3 population tables");
                 var tables = d.TableNames();
                 foreach (var t in new[] { "dim_run", "dim_date", "dim_faction", "dim_faction_history", "dim_ware", "dim_building", "dim_location", "dim_code", "dim_kpi",
                     "fact_faction_day", "fact_production", "fact_production_day", "fact_combat", "fact_command", "fact_policy_change", "fact_kpi", "fact_event",
-                    "fact_run_metric", "fact_metric_day", "meta_event_type", "meta_event_map", "meta_load", "meta_schema_version" })
+                    "fact_run_metric", "fact_metric_day", "dim_person", "fact_death", "fact_person_day", "fact_learning", "meta_table_grain", "meta_event_type", "meta_event_map", "meta_load", "meta_schema_version" })
                     CollectionAssert.Contains(tables, t);
                 Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM dim_run"));
                 Assert.AreEqual(res.RunId, (string)d.Scalar("SELECT run_id FROM dim_run"));
@@ -98,6 +99,9 @@ namespace God.Runner.Tests
 
         // ------------------------------------------------------------------ 10.1 every event type maps to a table
 
+        /// <summary>Tables a catalogue event may name before its table exists; such an event falls back to fact_event. Empty for today's events.</summary>
+        private static readonly HashSet<string> PendingTables = new HashSet<string> { "fact_decision" };
+
         [Test]
         public void EveryEventType_MapsToATable()
         {
@@ -117,6 +121,9 @@ namespace God.Runner.Tests
                 {
                     var m = reg.Resolve(e.Type);
                     CollectionAssert.Contains(tables, m.Table, e.Name + " maps to " + m.Table);
+                    // TODO(merge with unity/m3b): DecisionMade names fact_decision in the catalogue; until its mapper and table are merged it falls
+                    // back to fact_event. When they land, delete "fact_decision" from PendingTables so the check is strict for it too.
+                    if (PendingTables.Contains(e.Table) && reg.IsGeneric(e.Type)) { Assert.AreEqual(EventMapRegistry.GenericTable, m.Table, e.Name); continue; }
                     Assert.AreEqual(m.Table, (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = " + e.Code + " AND version = " + e.Version), e.Name);
                     // the catalogue's own table column must agree with the mapper (generic means no claim, analysis-none needs a note)
                     if (e.Table == "analysis-none") Assert.IsFalse(string.IsNullOrEmpty(e.Note), e.Name + ": analysis-none needs a reason");
@@ -541,7 +548,8 @@ namespace God.Runner.Tests
         {
             var (_, db, _) = RunWh("dims", 1, 36000, RecordingLevel.Summary);
             Assert.AreEqual(6, Q(db, "SELECT COUNT(*) FROM dim_faction"));
-            Assert.AreEqual(28, Q(db, "SELECT COUNT(*) FROM dim_ware"));
+            Assert.AreEqual(Wares.PersonalCount, Q(db, "SELECT COUNT(*) FROM dim_ware"), "every ware id, the personal wares of M3 included");
+            Assert.AreEqual(Enum.GetValues(typeof(Ware)).Length, Q(db, "SELECT COUNT(*) FROM dim_ware"));
             Assert.Greater(Q(db, "SELECT COUNT(*) FROM dim_location WHERE kind = 'hex'"), 5);
             Assert.Greater(Q(db, "SELECT COUNT(*) FROM dim_building WHERE is_hq = 1"), 5);
             Assert.AreEqual((Q(db, "SELECT final_tick FROM dim_run") + 1199) / 1200, Q(db, "SELECT COUNT(*) FROM dim_date"));
