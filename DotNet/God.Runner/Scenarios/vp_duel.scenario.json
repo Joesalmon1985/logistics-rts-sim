@@ -1,0 +1,12 @@
+{
+  "scenarioVersion": 1,
+  "name": "vp_duel",
+  "description": "Two AI factions, 10 VP then last standing.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "victory": [ { "kind": "vp", "target": 10 }, { "kind": "lastStanding" } ]
+  },
+  "stop": { "maxTicks": 60000, "onGameOver": true },
+  "checks": [ "invariants", "no-exceptions" ]
+}

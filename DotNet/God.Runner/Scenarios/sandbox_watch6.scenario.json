@@ -1,0 +1,12 @@
+{
+  "scenarioVersion": 1,
+  "name": "sandbox_watch6",
+  "description": "The stage 3 game with six AI factions as a sandbox: nothing ends it, the run stops at its length.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "stop": { "maxYears": 10 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

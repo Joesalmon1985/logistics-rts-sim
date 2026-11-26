@@ -42,3 +42,6 @@ sysinfo.txt
 !/DotNet/*.sln
 DotNet/**/bin/
 DotNet/**/obj/
+
+# Headless runner output (God.Runner --out default)
+/out/

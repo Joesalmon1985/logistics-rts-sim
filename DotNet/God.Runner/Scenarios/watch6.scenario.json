@@ -1,0 +1,14 @@
+{
+  "scenarioVersion": 1,
+  "name": "watch6",
+  "description": "The stage 3 smoke game (the player's -godsmoke 40000 -godseed S): six AI factions, watch mode, 10 VP then last standing.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "victory": [ { "kind": "vp", "target": 10 }, { "kind": "lastStanding" } ]
+  },
+  "record": { "level": "off" },
+  "checkpointEvery": 1200,
+  "stop": { "maxTicks": 40000, "onGameOver": true },
+  "checks": [ "invariants", "no-exceptions", "smoke" ]
+}

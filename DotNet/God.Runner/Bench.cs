@@ -1,0 +1,153 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using God.Recording;
+using God.Sim;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace God.Runner
+{
+    /// <summary>
+    /// The benchmark (HEADLESS_SIMULATION 4.10): the stage 3 game with no NPCs (<c>bench_stage3_watch6</c>, a sandbox so it
+    /// never ends early), recording Off. Measures ticks per second, sim years per real second, the tick-time spread, the
+    /// allocation rate, memory, save size and save/load time, and the throughput of 1, 4 and N parallel sims.
+    /// </summary>
+    public static class Bench
+    {
+        public const double MinimumTicksPerSecond = 2000;
+        public const double RegressionTolerance = 0.15;
+
+        public sealed class Options
+        {
+            public Scenario Scenario;
+            public ulong Seed = 1;
+            public long Ticks = 40000;
+            /// <summary>Ticks each parallel sim runs.</summary>
+            public long ParallelTicks = 20000;
+            public int[] Workers;
+            public TextWriter Log = TextWriter.Null;
+        }
+
+        public static JObject Run(Options o)
+        {
+            var sc = o.Scenario;
+            var setup = sc.ToSetup(o.Seed);
+            var tuning = sc.ToTuning();
+            // warm-up: JIT and the shared topology caches
+            {
+                var w = SimBuilder.Create(sc.ToSetup(o.Seed + 1000), tuning).Sim;
+                for (int i = 0; i < 12000; i++) { w.Step(); w.DrainEvents(); } // past tiered JIT's first tiers
+            }
+            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+            long memBefore = GC.GetTotalMemory(true);
+            var built = SimBuilder.Create(setup, tuning);
+            var sim = built.Sim;
+            long memAfterBuild = GC.GetTotalMemory(true);
+            var times = new double[o.Ticks];
+            var events = new List<SimEvent>(256);
+            long alloc0 = GC.GetAllocatedBytesForCurrentThread();
+            double tickToMs = 1000.0 / Stopwatch.Frequency;
+            var total = Stopwatch.StartNew();
+            long done = 0;
+            for (; done < o.Ticks && !sim.State.IsGameOver; done++)
+            {
+                long t0 = Stopwatch.GetTimestamp();
+                sim.Step();
+                events.Clear(); sim.DrainInto(events);
+                times[done] = (Stopwatch.GetTimestamp() - t0) * tickToMs;
+            }
+            total.Stop();
+            long alloc = GC.GetAllocatedBytesForCurrentThread() - alloc0;
+            long memEnd = GC.GetTotalMemory(false);
+            long memEndCollected = GC.GetTotalMemory(true);
+            var ms = times.Take((int)done).OrderBy(x => x).ToArray();
+            double tps = done / total.Elapsed.TotalSeconds;
+            double ticksPerYear = (double)setup.TicksPerDay * setup.DaysPerYear;
+
+            // save size and times
+            var sw = Stopwatch.StartNew();
+            var bytes = RunEngine.SaveBytes(sim);
+            double saveMs = sw.Elapsed.TotalMilliseconds;
+            sw.Restart();
+            var loaded = SimBuilder.FromSave(SaveFile.FromJson(Encoding.UTF8.GetString(bytes)));
+            double loadMs = sw.Elapsed.TotalMilliseconds;
+            bool loadedSame = loaded.Sim.StateHash() == sim.StateHash();
+
+            var result = new JObject
+            {
+                ["case"] = sc.Name, ["seed"] = o.Seed, ["ticks"] = done,
+                ["ticksPerSecond"] = Math.Round(tps, 1),
+                ["realTimeMultiple"] = Math.Round(tps / GodSim.TicksPerSecond, 1),
+                ["simYearsPerRealSecond"] = Math.Round(tps / ticksPerYear, 4),
+                ["msPerTickMean"] = Math.Round(ms.Average(), 4),
+                ["msPerTickP50"] = Math.Round(Pct(ms, 0.50), 4),
+                ["msPerTickP99"] = Math.Round(Pct(ms, 0.99), 4),
+                ["msPerTickMax"] = Math.Round(ms.Last(), 3),
+                ["allocBytesPerTick"] = done > 0 ? alloc / done : 0,
+                ["memoryBuildBytes"] = memAfterBuild - memBefore,
+                ["memoryEndBytes"] = memEndCollected - memBefore,
+                ["memoryEndUncollectedBytes"] = memEnd - memBefore,
+                ["processWorkingSetBytes"] = Process.GetCurrentProcess().WorkingSet64,
+                ["saveBytes"] = bytes.Length, ["saveMs"] = Math.Round(saveMs, 1), ["loadMs"] = Math.Round(loadMs, 1), ["loadSameHash"] = loadedSame,
+                ["machine"] = Environment.MachineName.Length > 0 ? "cores " + Environment.ProcessorCount : "", ["runtime"] = Environment.Version.ToString(),
+            };
+            o.Log.WriteLine("single: " + done + " ticks, " + tps.ToString("0") + " ticks/s, mean " + ms.Average().ToString("0.000") + " ms, p99 " + Pct(ms, 0.99).ToString("0.000") + " ms, max " + ms.Last().ToString("0.0") + " ms");
+
+            // parallel throughput
+            var par = new JArray();
+            double single = 0;
+            foreach (int w in (o.Workers ?? new[] { 1, 4, Environment.ProcessorCount }).Distinct())
+            {
+                var watch = Stopwatch.StartNew();
+                var counts = new long[w];
+                Parallel.For(0, w, new ParallelOptions { MaxDegreeOfParallelism = w }, i =>
+                {
+                    // every worker plays the same seed, so the scaling measures interference between sims, not different games
+                    var s = SimBuilder.Create(sc.ToSetup(o.Seed), sc.ToTuning()).Sim;
+                    var ev = new List<SimEvent>(256);
+                    long n = 0;
+                    for (; n < o.ParallelTicks && !s.State.IsGameOver; n++) { s.Step(); ev.Clear(); s.DrainInto(ev); }
+                    counts[i] = n;
+                });
+                watch.Stop();
+                double agg = counts.Sum() / watch.Elapsed.TotalSeconds;
+                if (w == 1) single = agg;
+                double eff = single > 0 ? agg / (w * single) : 0;
+                par.Add(new JObject { ["workers"] = w, ["aggregateTicksPerSecond"] = Math.Round(agg, 0), ["perSimTicksPerSecond"] = Math.Round(agg / w, 0), ["scaling"] = Math.Round(eff, 3) });
+                o.Log.WriteLine("parallel " + w + ": " + agg.ToString("0") + " ticks/s in total, " + (agg / w).ToString("0") + " per sim, scaling " + eff.ToString("0.00"));
+            }
+            result["parallel"] = par;
+            return result;
+        }
+
+        private static double Pct(double[] sorted, double p)
+        {
+            if (sorted.Length == 0) return 0;
+            int i = (int)Math.Ceiling(p * sorted.Length) - 1;
+            return sorted[Math.Max(0, Math.Min(sorted.Length - 1, i))];
+        }
+
+        /// <summary>
+        /// The regression gate: fails (exit 7) when ticks per second fall more than 15% below the baseline or below the
+        /// 2,000 ticks/s minimum. Enforced only on the reference machine (<c>GOD_REFERENCE_MACHINE=1</c>) or with <c>--strict</c>;
+        /// elsewhere it prints a warning and passes.
+        /// </summary>
+        public static int Compare(JObject result, JObject baseline, bool strict, TextWriter log)
+        {
+            double now = (double)result["ticksPerSecond"];
+            double was = (double?)baseline?["ticksPerSecond"] ?? 0;
+            var problems = new List<string>();
+            if (now < MinimumTicksPerSecond) problems.Add("below the minimum: " + now.ToString("0") + " < " + MinimumTicksPerSecond + " ticks/s");
+            if (was > 0 && now < was * (1 - RegressionTolerance)) problems.Add("more than 15% below the baseline: " + now.ToString("0") + " vs " + was.ToString("0") + " ticks/s");
+            if (problems.Count == 0) { log.WriteLine("bench: within budget (" + now.ToString("0") + " ticks/s, baseline " + was.ToString("0") + ")"); return ExitCodes.Ok; }
+            bool enforce = strict || Environment.GetEnvironmentVariable("GOD_REFERENCE_MACHINE") == "1";
+            foreach (var p in problems) log.WriteLine((enforce ? "bench FAIL: " : "bench WARNING (not the reference machine): ") + p);
+            return enforce ? ExitCodes.PerformanceMissed : ExitCodes.Ok;
+        }
+    }
+}
