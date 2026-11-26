@@ -42,6 +42,7 @@ Branch rules for this run: commit and push tested changes to `unity/poc` and to 
 
 | Date | Commit | Suite | Result | Notes |
 |---|---|---|---|---|
+| 27 Nov 2026 | `3463d30` (**checkpoint 4A**, merged tree) | Unity EditMode / PlayMode; Windows build; player smoke vs runner | EditMode 363/363 and PlayMode 77/77. Build OK (87 MB, 0 errors). Player smoke seed 2: Crimson at tick 20161, `4bd54b271857a803`, invariants ok, 0 exceptions. The runner gives the same result. | Run by the lead; closes 4A. |
 | 27 Nov 2026 | `10a7142` (M0+M1+M2) | `dotnet test DotNet -c Release`; `lab all --check` | God.Sim 359/359, God.Runner 90/90; lab 70/70 in 33.8 s | Rerun by the lead after merging. |
 | 27 Nov 2026 | `324c96b` (unity/m1) | Unity EditMode / PlayMode; build; player smoke | 336/336 and 77/77; build OK. Smoke seed 2: tick 20161, `4bd54b271857a803`; seed 1: 17534, `12be0f64cefc59f1`. Both equal the runner. | Run by the M1 agent. Background Unity runs took 45–100 minutes each because of editor throttling. |
 | 27 Nov 2026 | `bd42cb9` (unity/m2) | Unity EditMode | 340/340 | Run by the M2 agent. |
