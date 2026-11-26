@@ -160,7 +160,20 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
   - **No bug found.** L2's hash is unchanged (`815ddf13e8116bc9`). Added `lab invade` and `lab sweep`.
   - **Not established:** Gale & Eaves (1975) was paywalled and not read.
   - **Open design question for the owner:** should island contests charge retaliation a first-blow cost? The default is no change, per D2 ("don't change the model to match the book").
-- **Before M4 and M5:** write `docs/stage4/SHARED_CONTRACTS.md` (D2 §3).
+- **M3 merged into `unity/poc` while still in progress, 26 Nov 2026** (`d3aa9fb`). The work is tested and green, but M3 is **not accepted**:
+  - learning On lowers island survival (657 vs 679 of 720 over 30 days) because spoilage is never credited back to the forage decision;
+  - LS3 and LS4 fail;
+  - several design numbers are short;
+  - learning takes 42% of NPC update time at 500 NPCs, against a 25% budget.
+  The details are in the "M3 record" below. Finishing M3 continues on `unity/m3b` in `wt-lrs-m3`, which also adds `DecisionMade`. I verified the twins, contextual, reversal, exploration, generalisation and save/load acceptance tests myself: they pass and are behavioural. For example, in seed 1 twin A's learned term for nightshade is −170 against twin B's −21, with the need and instinct terms equal.
+- **M13a.5 population warehouse merged, 26 Nov 2026** (`unity/m3-wh`: `93039d2`, `595ea4a`, `a4e28bb`, `497636a`).
+  - **Tables:** schema v2 adds `dim_person` (one row per person ever alive), `fact_death` (one per death), `fact_person_day` (one per living person × sim day, every NpcDay field) and `fact_learning` (one per learning event, `kind_code` 1–4). It also adds personal-goods rows to `fact_production` (direction ±1). Grains are in `meta_table_grain`.
+  - **Checks:** reconciliation with the event stream is exact on band_6x20 at Full. Full, Summary and Off give identical hashes. CSV and Parquet export cover the new tables. `dim_ware` lists all 32 wares.
+  - **Overhead** on band_6x20 (shared machine): SQLite summary +2.9%, full +14.9%, JSONL full +5.4%.
+  - **Tests:** after the merge, a single full run passes, sim 396/396 and runner 144/144.
+  - **Gaps:** `dim_person` has no genome columns until M4. The short reconciliation run has no deaths; deaths are reconciled in a separate 6×80, 30-day test (476 deaths).
+  - **At the M3b merge:** drop `fact_decision` from `PendingTables`, add migration `0003_decision.sql` with a `TableDef` (order ≥ 64), register the mapper (Full only), add its grain row, and move the schema version to 3.
+- **Shared contracts for M4 and M5 written,** in [SHARED_CONTRACTS.md](SHARED_CONTRACTS.md) (`42860b2`). The order is M3b, then the F0 scaffolding commit, then M4 and M5 in parallel.
 - **After M4 and M5:** the I-BS integration gate.
 - **Unity test runs:** background editor throttling makes each run take 45–100 minutes. Run them at checkpoint boundaries (as at 4A), not after every commit.
 - M0 leftovers: the nightly 200-year recording-neutrality run (M0.2 N), CI wiring for the runner and player smokes, and the owner's manual check (play one stage 3 game from the menu).
