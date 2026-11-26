@@ -1,84 +1,489 @@
+using System;
 using System.Collections.Generic;
 using God.Sim.Cognition;
 using God.Sim.Learning;
+using God.Sim.Policy;
 
 namespace God.Sim.Population.Households
 {
     /// <summary>
-    /// M4's sim-side hooks of the extension dispatch (SHARED_CONTRACTS 0.2), landed by F0 as no-op stubs. OWNER: M4.
-    /// The call sites and their order are frozen (M3, then M4, then M5); only the bodies change. These are sim code and may
-    /// read and write state; the scratch-only hooks Cognition and Policy call are on <see cref="HouseholdMindHooks"/> (gate G4.1).
+    /// M4's sim-side hooks of the extension dispatch (SHARED_CONTRACTS 0.2). OWNER: M4. The call sites and their order are
+    /// frozen (M3, then M4, then M5); only the bodies change. These are sim code and may read and write state; the scratch-only
+    /// hooks Cognition and Policy call are on <see cref="HouseholdMindHooks"/> (gate G4.1). With <c>Households.Enabled = 0</c>
+    /// M4 never starts (<c>GodState.Households</c> stays null) and every hook returns its default.
     /// </summary>
     public static class HouseholdHooks
     {
         // ---------------- module entry points ----------------
 
-        /// <summary>From <c>GodSim.Create</c> after the population started (founder families, households, kin cues).</summary>
-        public static void StartGame(GodState s) { }
+        /// <summary>From <c>GodSim.Create</c> after the population started: the household state, founder genomes, ages and households.</summary>
+        public static void StartGame(GodState s) => Founders.StartGame(s);
 
-        /// <summary>From <c>GodSim</c>'s module installation (new game and loaded save): M4 adds its systems here (order 240, 255).</summary>
-        public static void Install(GodSim sim) { }
+        /// <summary>From <c>GodSim</c>'s module installation (new game and loaded save): the life cycle (240) and estates (255).</summary>
+        public static void Install(GodSim sim)
+        {
+            if (sim.State.Households == null) return;
+            sim.AddSystem(240, new LifeCycleSystem());
+            sim.AddSystem(255, new Estate.EstateSystem());
+        }
 
-        /// <summary>From <c>PopulationModule.AddNpc</c> after the NPC and its mind exist (stage, kin mind).</summary>
-        public static void NewMind(GodState s, Npc npc) { }
+        /// <summary>From <c>PopulationModule.AddNpc</c>: an NPC M4 itself makes (a birth, an immigrant) gets a believed-kin mind.</summary>
+        public static void NewMind(GodState s, Npc npc)
+        {
+            if (s.Households == null || !s.Households.Creating || npc.Mind == null) return;
+            npc.Mind.Kin = new KinMind();
+        }
 
-        /// <summary>From <c>PopulationModule.Kill</c> after <c>NpcDied</c> (carry into the estate, leave the household).</summary>
-        public static void OnDeath(GodState s, EventBuffer ev, Npc npc) { }
+        /// <summary>
+        /// From <c>PopulationModule.Kill</c> after <c>NpcDied</c> (SHARED_CONTRACTS 9.2): the carry goes into an estate, the
+        /// partnerships end, the household loses the member, the arrangements end. M3's cleanup follows (rights, mind).
+        /// </summary>
+        public static void OnDeath(GodState s, EventBuffer ev, Npc npc)
+        {
+            var hs = s.Households;
+            if (hs == null || npc.Life == null) return;
+            if (npc.Life.PregFather != 0) { npc.Life.PregFather = 0; ev.Add(new PregnancyEnded { Mother = npc.Id, Outcome = PregnancyEnded.MotherDied }); }
+            Estate.Estates.Open(s, ev, npc);
+            foreach (var p in hs.Partnerships.ToArray())
+            {
+                if (p.A != npc.Id && p.B != npc.Id) continue;
+                Partnerships.End(s, ev, p, PartnershipEnded.Death, npc.Id);
+                var other = s.Population.Find(p.A == npc.Id ? p.B : p.A);
+                if (other != null) KinCues.Forget(other, npc.Id);
+            }
+            for (int i = hs.Care.Count - 1; i >= 0; i--)
+            {
+                var c = hs.Care[i];
+                if (c.Asker != npc.Id && c.Carer != npc.Id) continue;
+                hs.Care.RemoveAt(i);
+                ev.Add(new CareArrangementEnded { Arrangement = c.Id, EndedBy = npc.Id, Given = c.Given, Returned = c.Returned, Reason = 2 });
+            }
+            foreach (var hut in s.Population.Huts)
+            {
+                if (hut.Lodgers != null) hut.Lodgers.Remove(npc.Id);
+                if (hut.RightSource != null) for (int i = 0; i < hut.Rights.Length; i++) if (hut.Rights[i] == npc.Id) hut.RightSource[i] = 0;
+            }
+            HouseholdModule.Leave(s, ev, npc, LeaveReason.Died, 0);
+            npc.Life.Display = 0;
+        }
 
-        /// <summary>From <c>SimInvariants.Check</c>: M4's invariants, one line per broken rule.</summary>
-        public static void Check(GodState s, List<string> bad) { }
+        /// <summary>From <c>SimInvariants.Check</c>: M4's invariants (M4.14 membership; C4 and C5 estate clauses; M4.25 adults only).</summary>
+        public static void Check(GodState s, List<string> bad) => HouseholdInvariants.Check(s, bad);
 
-        /// <summary>Fills M4's fields of a seen person (stage displays, same household). Sim side: may read state.</summary>
-        public static void FillPerson(GodState s, Npc observer, Npc seen, ref SeenPerson p) { }
+        /// <summary>
+        /// M4's fields of a seen person: whether it shares the observer's household, and the one display it shows (begging,
+        /// a proposal, a request for care, trying for a child; else being sick, an orphan needing a home, the care partner's
+        /// owed band as the observer recorded it, or being partnered). Displays are visible state, never decoded.
+        /// </summary>
+        public static void FillPerson(GodState s, Npc observer, Npc seen, ref SeenPerson p)
+        {
+            var hs = s.Households;
+            if (hs == null) return;
+            p.SameHousehold = observer.Household != 0 && seen.Household == observer.Household;
+            var l = seen.Life;
+            if (l == null || s.Tuning.Households.Care.Off != 0 && observer.Stage != LifeStage.Child && seen.Stage == LifeStage.Child) return;
+            if (l.Display != 0 && l.DisplayUntil >= s.Tick && l.Display != DisplayKind.Trying)
+            { p.Display = l.Display; p.DisplayLevel = l.DisplayLevel; p.DisplayTarget = l.DisplayTarget; return; }
+            if (s.Tuning.Households.Care.Off == 0 && (l.Illness == 1 || seen.Injury > 300000))
+            {
+                // the level shows how ill (1-3) and, as bit 4, that it was tended today (a visible fact)
+                int day = (int)SimCalendar.Of(s).Day(s.Tick);
+                p.Display = DisplayKind.Sick;
+                p.DisplayLevel = (byte)((l.Illness == 1 ? Math.Min(3, 1 + l.Severity / 100) : 1) | (l.TendedDay == day ? 4 : 0));
+                return;
+            }
+            if (seen.Stage == LifeStage.Child && l.OrphanSince >= 0) { p.Display = DisplayKind.NeedsHome; p.DisplayLevel = 1; return; }
+            var ct = s.Tuning.Households.Care;
+            foreach (var c in hs.Care)
+            {
+                int owed;
+                if (c.Carer == observer.Id && c.Asker == seen.Id) owed = c.Given - c.Returned;
+                else if (c.Asker == observer.Id && c.Carer == seen.Id) owed = c.Returned - c.Given;
+                else continue;
+                p.Display = DisplayKind.CarePartner;
+                p.DisplayLevel = (byte)(owed >= ct.OwedBand3 ? 3 : owed >= ct.OwedBand2 ? 2 : owed >= ct.OwedBand1 ? 1 : 0);
+                p.DisplayTarget = observer.Id;
+                return;
+            }
+            if (l.Display == DisplayKind.Trying && l.DisplayUntil >= s.Tick) { p.Display = DisplayKind.Trying; p.DisplayLevel = 1; p.DisplayTarget = l.DisplayTarget; return; }
+            if (Partnerships.Count(s, seen.Id) >= s.Tuning.Households.Partner.MaxLivePartnerships) { p.Display = DisplayKind.Partnered; p.DisplayLevel = 1; }
+        }
 
         // ---------------- sim side ----------------
 
-        /// <summary>The episode key of an M4 decision (<see cref="EpisodeKey.Make"/> with kinds 1-7), 0 for none.</summary>
-        public static int EpisodeKey(Npc npc, in Candidate c) => 0;
+        /// <summary>The episode of trying for a child: kind 1 (partnership) keyed by the partner (the hook sees the candidate only), closed at a birth.</summary>
+        public static int EpisodeKey(Npc npc, in Candidate c) =>
+            c.Verb == HVerb.TryForChild && c.TargetId > 0 && c.TargetId <= Learning.EpisodeKey.MaxId ? Learning.EpisodeKey.Make(Learning.EpisodeKey.Partnership, c.TargetId) : 0;
 
-        /// <summary>Starts an M4 intent; true when handled.</summary>
-        public static bool TryStart(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day) => false;
+        public static bool TryStart(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day) => HouseholdActs.Start(s, ev, npc, in c, day);
 
-        /// <summary>One tick of an M4 intent; true when handled.</summary>
-        public static bool TryAct(GodState s, EventBuffer ev, Npc npc, int day) => false;
+        public static bool TryAct(GodState s, EventBuffer ev, Npc npc, int day) => HouseholdActs.Act(s, ev, npc, day);
 
-        /// <summary>The time-use category of an M4 verb.</summary>
-        public static int ActivityOf(byte verb) => Activity.Other;
+        /// <summary>Time use (Q12): feeding, tending, taking in a child and keeping the household store are care work; courtship and displays are other.</summary>
+        public static int ActivityOf(byte verb)
+        {
+            switch (verb)
+            {
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Store: case HVerb.TakeFromStore: return Activity.Care;
+                case HVerb.Beg: case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.Leave:
+                case HVerb.AskCare: case HVerb.AcceptCare: case HVerb.EndCare: return Activity.Other;
+                default: return Activity.Other;
+            }
+        }
+
+        // ---------------- the body and the learner (PopulationSystem's M4 branches, SHARED_CONTRACTS 10.2) ----------------
+
+        /// <summary>The learning-rate shift by life stage (SHARED_CONTRACTS 6): children learn fastest, elders slowest.</summary>
+        public static int AlphaShift(Npc npc, int adult)
+        {
+            if (npc.Life == null) return adult;
+            return npc.Stage == LifeStage.Child ? Math.Max(0, adult - 1) : npc.Stage == LifeStage.Elder ? adult + 1 : adult;
+        }
+
+        /// <summary>The hunger rate (permille of the adult's): a child at 60% rising to 100% at adulthood; pregnancy +30%.</summary>
+        public static int HungerPermille(GodState s, Npc npc)
+        {
+            var lt = s.Tuning.Households.Life;
+            int f = 1000;
+            if (npc.Stage == LifeStage.Child)
+            {
+                long age = SimCalendar.Of(s).AgeMilli(npc.BornTick, s.Tick);
+                f = lt.ChildHungerPermille + (int)((1000 - lt.ChildHungerPermille) * Math.Min(1000, age) / 1000);
+            }
+            if (npc.Life.PregFather != 0) f = f * (1000 + lt.PregnantHungerPermille) / 1000;
+            return f;
+        }
+
+        /// <summary>Starvation damage and health recovery of the frail (POPULATION "Mortality", "Ageing").</summary>
+        public static int StarvePermille(GodState s, Npc npc) => npc.Stage == LifeStage.Adult ? 1000 : s.Tuning.Households.Life.FrailStarvePermille;
+        public static int RecoverPermille(GodState s, Npc npc) => npc.Stage == LifeStage.Elder ? s.Tuning.Households.Life.ElderRecoverPermille : 1000;
+
+        /// <summary>Work competence (D3 §10): 0 below the age a child can pick or forage, then rising to 1000 at adulthood.</summary>
+        public static int Competence(GodState s, Npc npc)
+        {
+            if (npc.Life == null || npc.Stage != LifeStage.Child) return 1000;
+            var lt = s.Tuning.Households.Life;
+            long age = SimCalendar.Of(s).AgeMilli(npc.BornTick, s.Tick);
+            if (age < lt.ForageFromMilli) return 0;
+            int span = Math.Max(1, 1000 - lt.ForageFromMilli);
+            return lt.CompetenceStartPermille + (int)((1000 - lt.CompetenceStartPermille) * Math.Min(span, age - lt.ForageFromMilli) / span);
+        }
+
+        public static bool CanWork(GodState s, Npc npc) => Competence(s, npc) > 0;
+
+        /// <summary>Whether this work tick counts: a child's competence share of ticks do (deterministic accumulation).</summary>
+        public static bool WorkTick(GodState s, Npc npc)
+        {
+            int c = Competence(s, npc);
+            if (c >= 1000) return true;
+            var l = npc.Life;
+            l.WorkAcc += c;
+            if (l.WorkAcc < 1000) return false;
+            l.WorkAcc -= 1000;
+            return true;
+        }
     }
 
     /// <summary>
-    /// M4's mind-side hooks (F0 stubs; OWNER: M4): the data rows the learning tables concatenate and the
-    /// hooks Cognition and Policy call. They receive the think scratch only, never <see cref="GodState"/> (gate G4.1), so they
-    /// live apart from the sim-side <see cref="HouseholdHooks"/>.
+    /// M4's mind-side hooks (OWNER: M4): the verbs and instincts the learning tables concatenate, and the hooks Cognition and
+    /// Policy call. They read the think scratch only, never <see cref="GodState"/> (gate G4.1): the person in sight, its stage
+    /// and displays, the mind's own believed kin (r̂, never the pedigree), its carry and its home. A mind without a believed-kin
+    /// part (M3 fixtures, <c>Households.Enabled = 0</c>) gets nothing from here.
+    /// <para>Person-directed candidates name the person by its handle in <c>TargetId</c> and take the actor's own spot as their node:
+    /// M3's perception check (<c>Thinker.Known</c>, frozen) knows no people yet, so a person target there would read as unperceived;
+    /// the handle is the seen person's (13.12). Contract amendment requested: let <c>Known</c> accept <c>sc.People</c>.</para>
     /// </summary>
     public static class HouseholdMindHooks
     {
         // ---------------- data rows (concatenated after M3's in F0.11) ----------------
 
-        /// <summary>M4's learning verbs (32-47, plus rows for 17 Store and 18 TakeFromStore).</summary>
-        public static readonly ReadOnlyArray<VerbInfo> Verbs = new ReadOnlyArray<VerbInfo>();
+        public static readonly ReadOnlyArray<VerbInfo> Verbs = new ReadOnlyArray<VerbInfo>(
+            new VerbInfo(HVerb.Store, "store", VerbGroup.CoopGive, NpcVerb.UseStore),
+            new VerbInfo(HVerb.TakeFromStore, "take from store", VerbGroup.CoopTake, NpcVerb.UseStore),
+            new VerbInfo(HVerb.Feed, "feed", VerbGroup.CoopGive, NpcVerb.HandOver),
+            new VerbInfo(HVerb.Beg, "beg", VerbGroup.CoopTake, NpcVerb.Interact),
+            new VerbInfo(HVerb.Propose, "propose", VerbGroup.Relationships, NpcVerb.Interact),
+            new VerbInfo(HVerb.Accept, "accept partner", VerbGroup.Relationships, NpcVerb.Interact),
+            new VerbInfo(HVerb.TryForChild, "try for a child", VerbGroup.Relationships, NpcVerb.Reproduce, deferred: true),
+            new VerbInfo(HVerb.Leave, "leave partner", VerbGroup.Relationships, NpcVerb.Leave),
+            new VerbInfo(HVerb.Tend, "tend", VerbGroup.CoopGive, NpcVerb.Interact),
+            new VerbInfo(HVerb.Adopt, "take in a child", VerbGroup.CoopGive, NpcVerb.Interact),
+            new VerbInfo(HVerb.AskCare, "ask for shared care", VerbGroup.CoopTake, NpcVerb.Interact),
+            new VerbInfo(HVerb.AcceptCare, "agree shared care", VerbGroup.CoopGive, NpcVerb.Interact),
+            new VerbInfo(HVerb.EndCare, "end shared care", VerbGroup.Relationships, NpcVerb.Interact));
 
-        /// <summary>M4's instinct rules (appended to the default table).</summary>
-        public static readonly ReadOnlyArray<Instinct> Instincts = new ReadOnlyArray<Instinct>();
+        private static uint RoleF(int v) => Feature.Make(FeatureKind.Role, v);
+
+        /// <summary>
+        /// The innate priors of M4 (NPC_LEARNING 3.4: the strong defaults come from instincts and the genome's gains, and can
+        /// fail): a hungry child begs; a begging child draws feeding, harder the louder it begs; the sick draw tending, an
+        /// orphan a home; the hungry go to the household store; a sated carrier puts food in it; a perceived proposal or care
+        /// request is answered; a partner draws "try for a child"; an unpartnered adult proposes now and then; a care partner
+        /// who owes a lot draws an end. Leaving a partner has no prior.
+        /// </summary>
+        public static readonly ReadOnlyArray<Instinct> Instincts = new ReadOnlyArray<Instinct>(
+            new Instinct(RoleF(HRole.Child), Feature.DriveBand(Drive.Hunger, 1), HVerb.Beg, 400),
+            new Instinct(RoleF(HRole.Child), Feature.DriveActive(Drive.Hunger), HVerb.Beg, 550),
+            new Instinct(Feature.State(HState.Begging1), 0, HVerb.Feed, 300),
+            new Instinct(Feature.State(HState.Begging2), 0, HVerb.Feed, 450),
+            new Instinct(Feature.State(HState.Begging3), 0, HVerb.Feed, 600),
+            new Instinct(Feature.State(HState.Sick), 0, HVerb.Feed, 200),
+            new Instinct(Feature.State(HState.Sick), 0, HVerb.Tend, 250),
+            new Instinct(Feature.State(HState.NeedsHome), 0, HVerb.Adopt, 350),
+            new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Class(HClass.Store), HVerb.TakeFromStore, 450),
+            new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Class(HClass.Store), HVerb.TakeFromStore, 200),
+            new Instinct(Feature.Situation(HSituation.DependantInNeed), Feature.Class(HClass.Store), HVerb.TakeFromStore, 350),
+            new Instinct(Feature.Self(SelfFeature.CarryingFood), Feature.Class(HClass.Store), HVerb.Store, 200),
+            new Instinct(Feature.State(HState.Proposing), 0, HVerb.Accept, 450),
+            new Instinct(Feature.State(HState.AskingCare), 0, HVerb.AcceptCare, 250),
+            new Instinct(Feature.NpcRel((int)NpcRelClass.Partner), 0, HVerb.TryForChild, 250),
+            new Instinct(Feature.State(HState.Trying), 0, HVerb.TryForChild, 200),
+            new Instinct(Feature.Self(HSelf.Unpartnered), 0, HVerb.Propose, 150),
+            new Instinct(Feature.Self(HSelf.HasDependants), 0, HVerb.AskCare, 60),
+            new Instinct(Feature.Situation(HSituation.CareOwed2), 0, HVerb.EndCare, 300),
+            new Instinct(Feature.Situation(HSituation.CareOwed3), 0, HVerb.EndCare, 600));
+
+        /// <summary>The kin term's scale (permille of r̂ x (100 + KinWeight) / 100): the Hamilton weighting (HOUSEHOLDS "Feeding").</summary>
+        public const int KinTermPermille = 600;
 
         // ---------------- perception and cognition (scratch only) ----------------
 
-        /// <summary>At most one base feature key, while the base has room (dispatch checks the count).</summary>
-        public static void AddBase(ThinkScratch sc) { }
+        private static bool M4(ThinkScratch sc) => sc.Mind?.Kin != null;
 
-        /// <summary>M4's candidates (quota 4, after M3's 16), through <see cref="Thinker.AddCandidate"/>.</summary>
-        public static void AddCandidates(ThinkScratch sc) { }
+        /// <summary>One base key: a child knows it is a child, an elder that it is old; an adult sees a dependant in need (a begging child of its household, a sick kin).</summary>
+        public static void AddBase(ThinkScratch sc)
+        {
+            if (!M4(sc)) return;
+            var self = sc.Self;
+            if (self.Stage == LifeStage.Child) { Add(sc, RoleF(HRole.Child)); return; }
+            if (self.Stage == LifeStage.Elder) { Add(sc, RoleF(HRole.Elder)); return; }
+            for (int i = 0; i < sc.PeopleCount; i++)
+            {
+                var p = sc.People[i];
+                bool mine = p.SameHousehold || KinData.RHat(sc.Mind, p.As) >= 250;
+                if (mine && (p.Stage == LifeStage.Child && p.Display == DisplayKind.Beg || p.Display == DisplayKind.Sick)) { Add(sc, Feature.Situation(HSituation.DependantInNeed)); return; }
+            }
+        }
 
-        /// <summary>The kin term of candidate <paramref name="cand"/> (Hamilton: KinWeight trait x r̂), clamped by the dispatch to ±2000.</summary>
-        public static int KinTerm(ThinkScratch sc, int cand) => 0;
+        private static void Add(ThinkScratch sc, uint f) { if (sc.BaseCount < ThinkScratch.MaxBase) sc.Base[sc.BaseCount++] = f; }
 
-        /// <summary>The genome's instinct gain on a verb's prior.</summary>
-        public static int InstinctGain(ThinkScratch sc, byte verb, int prior) => prior;
+        private static bool BaseHas(ThinkScratch sc, uint f) { for (int i = 0; i < sc.BaseCount; i++) if (sc.Base[i] == f) return true; return false; }
 
-        /// <summary>Personality bias of an M4 verb.</summary>
-        public static int Personality(byte verb, int[] traits) => 0;
+        /// <summary>Food in its own carry that it believes it may give (its own or its household's, A8).</summary>
+        private static bool UsableFood(ThinkScratch sc)
+        {
+            for (int i = 0; i < sc.CarryCount; i++)
+            {
+                var l = sc.Carry[i];
+                if (l.Empty || !Wares.IsFood(l.Ware) || l.Ware == Ware.Nightshade) continue;
+                if (Permits.Believed(sc, l.Owner).Allowed) return true;
+            }
+            return false;
+        }
 
-        /// <summary>Words for an M4 feature value, or null.</summary>
-        public static string Describe(uint f) => null;
+        private static bool HasPartnerBelief(ThinkScratch sc)
+        {
+            foreach (var b in sc.Mind.Kin.Beliefs) if (b.Role == KinRole.Partner) return true;
+            return false;
+        }
+
+        private static bool CloseKin(ThinkScratch sc, int other)
+        {
+            var k = sc.Mind.Kin;
+            int i = k.IndexOf(other);
+            if (i < 0) return false;
+            var b = k.Beliefs[i];
+            if (b.Confidence <= 400) return false;
+            switch (b.Role)
+            {
+                case KinRole.Mother: case KinRole.Father: case KinRole.Daughter: case KinRole.Son: case KinRole.FullSibling: case KinRole.HalfSibling:
+                case KinRole.FosterChild: case KinRole.FosterParent: case KinRole.StepChild: case KinRole.StepParent: return true;
+                default: return false;
+            }
+        }
+
+        /// <summary>
+        /// M4's candidates (quota 4, after M3's 16), in a fixed priority order: answers to what it perceives first (a proposal,
+        /// a care request), then care (feed, tend, take in), the partnership (try for a child, propose), the store (take,
+        /// put), shared care (end, ask) and leaving a partner when hard-pressed.
+        /// </summary>
+        public static void AddCandidates(ThinkScratch sc)
+        {
+            if (!M4(sc)) return;
+            var self = sc.Self;
+            int hungerBand = Thinker.Band(sc.Tuning, Drive.Hunger, self.Hunger);
+            bool food = UsableFood(sc);
+            bool home = self.HomeHut != 0 && self.HomeNode >= 0 && self.Household != 0;
+            if (self.Stage == LifeStage.Child)
+            {
+                if (hungerBand >= 1 && !food)
+                {
+                    int best = -1, bestScore = int.MinValue;
+                    for (int i = 0; i < sc.PeopleCount; i++)
+                    {
+                        var p = sc.People[i];
+                        if (p.Stage == LifeStage.Child || p.Asleep) continue;
+                        int score = (p.SameHousehold ? 1000 : 0) + KinData.RHat(sc.Mind, p.As) - p.Dist * 20;
+                        if (score > bestScore) { bestScore = score; best = i; }
+                    }
+                    if (best >= 0) Person(sc, HVerb.Beg, best, 0);
+                    if (home) Store(sc, HVerb.TakeFromStore);
+                }
+                return;
+            }
+            int proposer = -1, asker = -1, beggar = -1, sick = -1, orphan = -1, partner = -1, mate = -1, other = -1, owed = -1;
+            int begScore = int.MinValue, dMate = int.MaxValue, dOther = int.MaxValue, sickScore = int.MinValue, dOrphan = int.MaxValue;
+            bool dependants = false, needing = false;
+            bool partnered = HasPartnerBelief(sc);
+            for (int i = 0; i < sc.PeopleCount; i++)
+            {
+                var p = sc.People[i];
+                int rhat = KinData.RHat(sc.Mind, p.As);
+                var role = KinData.RoleOf(sc.Mind, p.As);
+                if (p.Display == DisplayKind.Propose && p.DisplayTarget == self.Id && proposer < 0) proposer = i;
+                if (p.Display == DisplayKind.AskCare && p.DisplayTarget == self.Id && asker < 0) asker = i;
+                if (p.Stage == LifeStage.Child && p.SameHousehold) dependants = true;
+                if (p.Stage == LifeStage.Child && p.Display == DisplayKind.Beg)
+                {
+                    int score = p.DisplayLevel * 1000 + rhat - p.Dist * 20;
+                    if (score > begScore) { begScore = score; beggar = i; }
+                    if (p.SameHousehold) needing = true;
+                }
+                if (p.Display == DisplayKind.Sick && (p.SameHousehold || rhat > 0 || role == KinRole.Partner))
+                {
+                    // the sick one that matters most to it, as it believes (kin, partner, household), then the nearest
+                    // (one already tended today, as anyone can see, draws less: care passes to the next)
+                    int score = rhat + (role == KinRole.Partner ? 500 : 0) + (p.SameHousehold ? 100 : 0) - p.Dist * 20 - ((p.DisplayLevel & 4) != 0 ? 300 : 0);
+                    if (score > sickScore) { sickScore = score; sick = i; }
+                }
+                if (p.Display == DisplayKind.NeedsHome && p.Stage == LifeStage.Child && p.Dist < dOrphan) { dOrphan = p.Dist; orphan = i; }
+                if (role == KinRole.Partner && !p.Asleep && partner < 0) partner = i;
+                if (!partnered && p.Stage != LifeStage.Child && p.SameFaction && !p.Asleep && p.Display != DisplayKind.Partnered && p.Display != DisplayKind.Trying
+                    && role != KinRole.Partner && !CloseKin(sc, p.As) && p.Dist < dMate) { dMate = p.Dist; mate = i; }
+                if (self.Household != 0 && p.Stage != LifeStage.Child && p.SameFaction && !p.SameHousehold && !p.Asleep && p.Display != DisplayKind.CarePartner && p.Dist < dOther)
+                { dOther = p.Dist; other = i; }
+                if (p.Display == DisplayKind.CarePartner && p.DisplayLevel >= 2 && owed < 0) owed = i;
+            }
+            if (proposer >= 0) Person(sc, HVerb.Accept, proposer, Feature.State(HState.Proposing));
+            if (asker >= 0) Person(sc, HVerb.AcceptCare, asker, Feature.State(HState.AskingCare));
+            if (food && beggar >= 0) Person(sc, HVerb.Feed, beggar, Feature.State(HState.Begging1 + Math.Min(2, Math.Max(0, sc.People[beggar].DisplayLevel - 1))));
+            else if (food && sick >= 0) Person(sc, HVerb.Feed, sick, Feature.State(HState.Sick));
+            if (sick >= 0) Person(sc, HVerb.Tend, sick, Feature.State(HState.Sick));
+            if (orphan >= 0) Person(sc, HVerb.Adopt, orphan, Feature.State(HState.NeedsHome));
+            if (partner >= 0)
+            {
+                var pp = sc.People[partner];
+                bool trying = pp.Display == DisplayKind.Trying && pp.DisplayTarget == self.Id;
+                Person(sc, HVerb.TryForChild, partner, trying ? Feature.State(HState.Trying) : 0);
+            }
+            if (mate >= 0) Person(sc, HVerb.Propose, mate, Feature.Self(HSelf.Unpartnered));
+            if (home && !food && (hungerBand >= 1 || needing)) Store(sc, HVerb.TakeFromStore);
+            if (home && food && hungerBand == 0) Store(sc, HVerb.Store);
+            if (owed >= 0) Person(sc, HVerb.EndCare, owed, Feature.Situation(sc.People[owed].DisplayLevel >= 3 ? HSituation.CareOwed3 : HSituation.CareOwed2));
+            if (dependants && other >= 0) Person(sc, HVerb.AskCare, other, Feature.Self(HSelf.HasDependants));
+            if (partner >= 0 && hungerBand >= 2) Person(sc, HVerb.Leave, partner, 0);
+        }
+
+        /// <summary>A candidate aimed at a seen person (target id = its handle; node = the actor's own spot), with its person features.</summary>
+        private static void Person(ThinkScratch sc, byte verb, int i, uint extra)
+        {
+            var p = sc.People[i];
+            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Node, p.Id, sc.Self.Node, 0, p.Dist);
+            if (at < 0) return;
+            var rel = Relations.ClassOf(sc, in p);
+            uint group = p.Stage == LifeStage.Child ? Feature.NpcGroup(NpcGroupValue.Child) : p.Stage == LifeStage.Elder ? Feature.NpcGroup(NpcGroupValue.Elder) : 0;
+            Thinker.TargetFeatures(sc, at, Feature.NpcRel((int)rel), group, extra);
+        }
+
+        /// <summary>A candidate at the household store (its own hut: known to it), with the store's features.</summary>
+        private static void Store(ThinkScratch sc, byte verb)
+        {
+            var self = sc.Self;
+            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Hut, self.HomeHut, self.HomeNode, HClass.Store, sc.Grid.Distance(self.Node, self.HomeNode), true);
+            if (at < 0) return;
+            uint need = BaseHas(sc, Feature.Situation(HSituation.DependantInNeed)) ? Feature.Situation(HSituation.DependantInNeed) : 0;
+            Thinker.TargetFeatures(sc, at, Feature.Class(HClass.Store), Feature.Category(ObjCategory.Store), Feature.PlaceRef(self.HomeNode), need);
+        }
+
+        /// <summary>The kin term (Hamilton): <c>r̂ x (100 + KinWeight) / 100 x 0.6</c> for care aimed at a person, from its own beliefs only.</summary>
+        public static int KinTerm(ThinkScratch sc, int cand)
+        {
+            if (!M4(sc) || cand < 0 || cand >= sc.CandCount) return 0;
+            var c = sc.Cand[cand];
+            if (c.Verb != HVerb.Feed && c.Verb != HVerb.Tend && c.Verb != HVerb.Adopt) return 0;
+            for (int i = 0; i < sc.PeopleCount; i++)
+            {
+                if (sc.People[i].Id != c.TargetId) continue;
+                int rhat = KinData.RHat(sc.Mind, sc.People[i].As);
+                int kw = sc.Traits != null && sc.Traits.Length > Trait.KinWeight ? sc.Traits[Trait.KinWeight] : 0;
+                return rhat * (100 + kw) / 100 * KinTermPermille / 1000;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// The genome's instinct gains (BIOLOGICAL 4.4) on M4's situational instincts: hunger gain on begging, social gain on
+        /// partnership and shared care, nurture gain on care. Read from the mind's own traits (12-15 hold the gains of an M4
+        /// person; an M3 NPC has none). Not on M3's drive instincts (see below) nor on the store's (they are need-driven).
+        /// </summary>
+        public static int InstinctGain(ThinkScratch sc, byte verb, int prior)
+        {
+            if (prior == 0 || sc.Traits == null || sc.Traits.Length < Trait.Count + 4) return prior;
+            int g;
+            switch (verb)
+            {
+                // M3's verbs keep their priors: the frozen MindView reports a need part without this gain, so a gain there
+                // would let the need exceed the instinct it is part of (contract amendment: apply the gain in MindView)
+                case HVerb.Beg: g = sc.Traits[Trait.Count + 0]; break;
+                case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.AskCare: case HVerb.AcceptCare: g = sc.Traits[Trait.Count + 2]; break;
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: g = sc.Traits[Trait.Count + 3]; break;
+                default: return prior;
+            }
+            return (int)((long)prior * g / 1000);
+        }
+
+        /// <summary>Personality biases of M4's verbs (traits -100..100): generosity on care, boldness on proposing, patience against accepting at once, loyalty against leaving.</summary>
+        public static int Personality(byte verb, int[] traits)
+        {
+            if (traits == null || traits.Length < Trait.Count) return 0;
+            switch (verb)
+            {
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: return traits[Trait.Generosity] / 4;
+                case HVerb.Propose: return traits[Trait.Boldness] / 3;
+                case HVerb.Accept: return -traits[Trait.Patience] / 3;
+                case HVerb.TryForChild: return traits[Trait.KinWeight] / 4;
+                case HVerb.Leave: return -150 - traits[Trait.Loyalty] / 2;
+                case HVerb.AskCare: return traits[Trait.Trustfulness] / 4;
+                case HVerb.EndCare: return traits[Trait.Vengefulness] / 4;
+                default: return 0;
+            }
+        }
+
+        public static string Describe(uint f)
+        {
+            int v = Feature.ValueOf(f);
+            switch (Feature.KindOf(f))
+            {
+                case FeatureKind.Role: return v == HRole.Child ? "is a child" : v == HRole.Elder ? "is old" : null;
+                case FeatureKind.Self: return v == HSelf.Unpartnered ? "has no partner" : v == HSelf.HasDependants ? "has children at home" : null;
+                case FeatureKind.ObjClass: return v == HClass.Store ? "household store" : null;
+                case FeatureKind.ObjState:
+                    switch (v)
+                    {
+                        case HState.Begging1: return "begging a little"; case HState.Begging2: return "begging"; case HState.Begging3: return "begging hard";
+                        case HState.Proposing: return "proposing to it"; case HState.Trying: return "wants a child"; case HState.Sick: return "sick";
+                        case HState.NeedsHome: return "needs a home"; case HState.AskingCare: return "asks for shared care";
+                    }
+                    return null;
+                case FeatureKind.Situation:
+                    switch (v)
+                    {
+                        case HSituation.DependantInNeed: return "a dependant in need"; case HSituation.CareOwed1: return "is owed a little care";
+                        case HSituation.CareOwed2: return "is owed care"; case HSituation.CareOwed3: return "is owed much care";
+                    }
+                    return null;
+                default: return null;
+            }
+        }
     }
 }

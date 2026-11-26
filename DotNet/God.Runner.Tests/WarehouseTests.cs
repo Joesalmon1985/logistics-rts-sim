@@ -66,7 +66,7 @@ namespace God.Runner.Tests
             {
                 Assert.AreEqual(WarehouseDb.CurrentVersion, d.SchemaVersion());
                 Assert.AreEqual(WarehouseDb.CurrentVersion, (long)d.Scalar("SELECT COUNT(*) FROM meta_schema_version"), "one row per applied migration");
-                Assert.AreEqual(4, WarehouseDb.CurrentVersion, "v4 = the M3 population tables, the M3b decision trace and F0's people and goods seams");
+                Assert.AreEqual(5, WarehouseDb.CurrentVersion, "v5 = the M3 population tables, the M3b decision trace, F0's people and goods seams and M4's households (0005)");
                 var tables = d.TableNames();
                 foreach (var t in new[] { "dim_run", "dim_date", "dim_faction", "dim_faction_history", "dim_ware", "dim_building", "dim_location", "dim_code", "dim_kpi",
                     "fact_faction_day", "fact_production", "fact_production_day", "fact_combat", "fact_command", "fact_policy_change", "fact_kpi", "fact_event",

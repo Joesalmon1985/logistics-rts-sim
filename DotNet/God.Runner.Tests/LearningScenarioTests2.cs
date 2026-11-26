@@ -237,6 +237,10 @@ namespace God.Runner.Tests
         {
             var t = new SimTuning();
             t.Learning.DefaultMode = mode;
+            // M4: L7 is about a fixed band's learning modes (the stores of the same NPCs before and after); births and deaths
+            // of M4's life cycle would change the set of stores without a weight changing, so this M3 criterion runs with M4 off
+            // (SHARED_CONTRACTS 7.3)
+            t.Households.Enabled = 0;
             var setup = new GameSetup(seed, GameSetup.NoHuman, 2) { Population = true, StartNpcsPerFaction = 10, Victory = VictorySpec.SandboxOnly() };
             var sim = GodSim.Create(setup, t);
             var p = sim.State.Population;

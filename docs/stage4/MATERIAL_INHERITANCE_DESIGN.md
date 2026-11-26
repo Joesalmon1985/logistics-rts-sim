@@ -245,6 +245,15 @@ The sim has no hard ledger of private debt. Debts are obligations in memories ([
 - The invariant list (`Invariants`) gains: "no asset is owned by a dead NPC more than 3 days after death" and "estate transfers conserve goods".
 - Save version 3 includes open estates and wills. `StateHash` covers `Estate` and the per-NPC header in id order.
 
+### M4 as built (branch `unity/m4`, 26 Nov 2026)
+Code: `Sim/Estate/Estates.cs`, `EstateTuning.cs`. Decisions taken:
+- **Where the goods are** (WORLD_ONTOLOGY A2): at a death the carry moves into an estate bin at the death node (`EstateIn`, owner `Estate(d)`, never merged); household goods the person carried stay the household's. Goods the deceased owned in a household store pass to that household in place (HOUSEHOLDS: the store stays with the household).
+- **Split** at `MournTicks` (600), through the seam `IEstateSettlement` (`CustomSettlement`): the executor by the configurable ladder (`Estate.Ladder`, rung digits 1-5, default 12345; no wills before M8, no appointments before M12), the custom by the executor's faction (`Estate.CustomF0..F5`, default `DefaultCustom` = EqualChildren; scenarios choose). Ownership passes in place (`SetOwner`). A stackable lot shared by several heirs is split by a `Move` into a share bin beside it (the moved part takes a new id, as every split does; units and each id's lineage are conserved). This is the only way to divide one lot: see the amendment to test 20 proposed in the M4 report.
+- **Collection:** an heir standing within `Reach.Store` of the estate takes its own lots (`Withdraw`), a reflex at the place rather than a decision (no seam lets a mind perceive a bin). At `SettleWithinTicks` (2400) what is left goes to the heir's household store (O4 executor delivery, a temporary cross-node move, `Estate.Delivery`) or becomes ownerless on the ground at the death node; then every estate bin is removed.
+- **BackToCommunity** owners are `Group(faction)`; with no communal store before M8 and M12 their goods go ownerless on the ground at the deadline. **BuriedWithDead** buries half of each stackable lot (`Consume(Buried)`) and the rest follows HouseholdKeeps (no second variant before M11).
+- **Disputes** (4.7) compare each child heir's own faction custom with the executor's, valued by the executor's worth; the grudge `min(255, shortfall / 2) x 3` is carried by `EstateDisputed` for M5 to apply (M4 never writes social memory).
+- **Not built in M4:** wills and bequests (M8 per section 8), dowry and bride-price hooks, `EstateAssetClaimed` (a claim is M3's first pick-up of an ownerless lot), the contest between simultaneous claimants (M5's `Contest`; its stub, the lower id, equals tick order).
+
 ## 10. Tests and acceptance criteria
 
 All run in `dotnet test DotNet` and Unity EditMode. Numbers are exact unless a range is given.

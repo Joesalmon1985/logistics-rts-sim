@@ -7,20 +7,3 @@ namespace God.Sim
         public Population.Households.HouseholdState Households;
     }
 }
-
-namespace God.Sim.Population.Households
-{
-    /// <summary>
-    /// The household module's state (SHARED_CONTRACTS 9.3): public fields, ascending-id lists, no dictionaries. F0 stub.
-    /// OWNER: M4. Its hash part ("household") is appended only while <c>GodState.Households</c> is non-null.
-    /// </summary>
-    public sealed class HouseholdState
-    {
-        public int NextHouseholdId = 1, NextPartnershipId = 1, NextCareId = 1;
-
-        public void AddTo(ref StateHasher h)
-        {
-            h.Add(NextHouseholdId); h.Add(NextPartnershipId); h.Add(NextCareId);
-        }
-    }
-}

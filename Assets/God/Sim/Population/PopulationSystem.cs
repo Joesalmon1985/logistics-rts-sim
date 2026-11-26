@@ -71,7 +71,7 @@ namespace God.Sim.Population
         public static LearnTraits TraitsOf(GodState s, Npc npc)
         {
             var t = npc.LearnTraits;
-            t.AlphaShift = s.Tuning.Learning.AlphaShift;
+            t.AlphaShift = Households.HouseholdHooks.AlphaShift(npc, s.Tuning.Learning.AlphaShift); // M4: by life stage (child 1, adult 2, elder 3)
             return t;
         }
 
@@ -300,6 +300,7 @@ namespace God.Sim.Population
             bool night = TimeOf(cal, s.Tick) == TimeOfDay.Night;
 
             int hunger = tu.HungerPerDay + (working ? tu.HungerWorkPerDay : 0);
+            if (npc.Life != null) hunger = hunger * Households.HouseholdHooks.HungerPermille(s, npc) / 1000; // M4: a child eats less, a pregnant mother more
             Add(npc, Drive.Hunger, PerTick(hunger, tpd));
             if (a.Asleep) Add(npc, Drive.Fatigue, -PerTick(inHut ? tu.SleepHutPerDay : tu.SleepOpenPerDay, tpd));
             else Add(npc, Drive.Fatigue, PerTick(tu.FatiguePerDay + (working ? tu.FatigueWorkPerDay : 0) + (walking ? tu.FatigueWalkPerDay : 0)
@@ -323,6 +324,7 @@ namespace God.Sim.Population
             int loss = 0; var cause = DeathCause.None;
             if (npc.Nutrition == 0) { loss = PerTick(tu.StarveLossAtZero, tpd); cause = DeathCause.Starvation; }
             else if (npc.Nutrition < tu.NutritionLowFrom * 1000) { loss = PerTick(tu.StarveLossLow, tpd); cause = DeathCause.Starvation; }
+            if (loss > 0 && npc.Life != null) loss = loss * Households.HouseholdHooks.StarvePermille(s, npc) / 1000; // M4: children and elders take 1.5x
             if (!inHut && npc.DriveOf(Drive.Cold) >= tu.BandPain)
             {
                 int ex = PerTick(tu.ExposureLossPerDay, tpd);
@@ -330,7 +332,7 @@ namespace God.Sim.Population
                 loss += ex;
             }
             if (loss > 0) { npc.Health -= loss; npc.DeathCause = cause; }
-            else if (npc.Nutrition > 500000) npc.Health = Math.Min(1000000, npc.Health + PerTick(tu.HealthRecoverPerDay, tpd));
+            else if (npc.Nutrition > 500000) npc.Health = Math.Min(1000000, npc.Health + PerTick(npc.Life == null ? tu.HealthRecoverPerDay : tu.HealthRecoverPerDay * Households.HouseholdHooks.RecoverPermille(s, npc) / 1000, tpd));
             if (npc.Health > 0 && loss == 0) npc.DeathCause = DeathCause.None;
         }
 
@@ -915,7 +917,10 @@ namespace God.Sim.Population
                     var src = SourceAt(p, a.TargetNode);
                     if (src == null || src.Stock <= 0) { NoteEmpty(npc, a.TargetNode); Frustrate(s, npc); return; }
                     if (npc.DriveOf(Drive.Hunger) < tu.SatedBelow) { Frustrate(s, npc); return; }
-                    npc.Action.BusyUntil = s.Tick + tu.ForageTicks; // pick and eat on the spot
+                    // M4 child limits: a young child cannot pick at all, an older one slowly (its competence)
+                    int competence = npc.Life == null ? 1000 : Households.HouseholdHooks.Competence(s, npc);
+                    if (competence <= 0) { Frustrate(s, npc); return; }
+                    npc.Action.BusyUntil = s.Tick + (competence >= 1000 ? tu.ForageTicks : tu.ForageTicks * 1000 / competence); // pick and eat on the spot
                     return;
                 }
                 case Verb.ForageAt:
@@ -925,6 +930,8 @@ namespace God.Sim.Population
                     if (src == null || src.Stock <= 0) { NoteEmpty(npc, a.TargetNode); Frustrate(s, npc); return; }
                     var ware = PopulationModule.WareOf(src.Kind);
                     if (PopulationModule.Room(s, npc, ware) <= 0) { EndAction(npc); return; }
+                    if (npc.Life != null && !Households.HouseholdHooks.CanWork(s, npc)) { Frustrate(s, npc); return; } // M4 child limits
+                    if (npc.Life != null && !Households.HouseholdHooks.WorkTick(s, npc)) return;
                     if (++npc.Action.Progress < tu.ForageTicks) return;
                     npc.Action.Progress = 0;
                     int yield = 1 + npc.RngWork.NextInt(2);
@@ -949,6 +956,8 @@ namespace God.Sim.Population
                     if (src == null && !pile || src != null && (src.Kind != SourceKind.Wood || src.Stock <= 0) || pile && PileUnits(s, hex) <= 0)
                     { NoteEmpty(npc, a.TargetNode); Frustrate(s, npc); return; }
                     if (PopulationModule.Room(s, npc, Ware.Log) <= 0) { EndAction(npc); return; }
+                    if (npc.Life != null && !Households.HouseholdHooks.CanWork(s, npc)) { Frustrate(s, npc); return; } // M4 child limits
+                    if (npc.Life != null && !Households.HouseholdHooks.WorkTick(s, npc)) return;
                     int axe = AxeSlot(npc);
                     npc.Action.Progress += axe >= 0 ? tu.AxeSpeedPermille : 1000;
                     if (npc.Action.Progress < tu.GatherTicks * 1000) return;

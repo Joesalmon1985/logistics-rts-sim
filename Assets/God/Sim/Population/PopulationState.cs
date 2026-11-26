@@ -63,8 +63,17 @@ namespace God.Sim.Population
         public List<int> Contributors = new List<int>();
         public int FoundedBy;
         public long FoundedTick, BuiltTick;
+        /// <summary>M4 (SHARED_CONTRACTS 5): where each right came from (<see cref="Households.HutRights"/> Built 1, Household 2, Invited 3), parallel to <see cref="Rights"/>; null in M3.</summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)] public byte[] RightSource;
+        /// <summary>M4: children sleeping by their household's right (a child counts as half a bed: two per free bed); null in M3.</summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)] public List<int> Lodgers;
 
-        public bool HasRight(int npc) { foreach (int r in Rights) if (r == npc) return true; return false; }
+        public bool HasRight(int npc)
+        {
+            foreach (int r in Rights) if (r == npc) return true;
+            if (Lodgers != null) foreach (int r in Lodgers) if (r == npc) return true;
+            return false;
+        }
         public int FreeBeds { get { int n = 0; foreach (int r in Rights) if (r == 0) n++; return n; } }
     }
 
@@ -188,6 +197,8 @@ namespace God.Sim.Population
         public LifeStage Stage;
         /// <summary>The household it belongs to (F0.4; written only by M4), 0 for none.</summary>
         public int Household;
+        /// <summary>M4's part (sex, parents, genome, phenotype, growth, pregnancy, illness, displays); null for an NPC M4 did not make.</summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)] public Households.NpcLife Life;
 
         // ---- position ----
         public int Node;
@@ -267,6 +278,8 @@ namespace God.Sim.Population
         /// <summary>Bins of lots (household stores, estates; F0), sorted by id. Created and removed only by <see cref="Goods"/>.</summary>
         public List<LotBin> Bins = new List<LotBin>();
         public int NextBinId = 1;
+        /// <summary>M4: the true pedigree of everyone ever born or arrived (sorted by id; telemetry and tests only, G4.2); null in M3.</summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)] public List<Genetics.PedigreeRecord> Pedigree;
         /// <summary>Per hex: logs left in the pile an NPC opened by hand (a dice pile holds 4 units, ECONOMY 4.2).</summary>
         public int[] OpenPileUnits;
         public GoodsLedger Ledger = new GoodsLedger();
