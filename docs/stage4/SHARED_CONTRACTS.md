@@ -598,6 +598,20 @@ All seven also run at Off, Summary and Full with the same hash.
 
 ---
 
+
+**D4 additive shared data (branch `unity/demog`; additive only, nothing frozen changes).**
+
+| Item | Values | Owner |
+|---|---|---|
+| Household verbs | 43 SeekChild, 44 AcceptChild, 45 RangeFar (Search group, M4-only) | M4 |
+| Events | 148 ReproductiveUnionFormed, 149 ReproductiveUnionEnded, 150 ChildWanted (`HouseholdEvents`) | M4 |
+| DisplayKind | 9 SeekChild, 10 UnionPartner | M4 |
+| HSelf / HSituation features | HSelf 18 WantsChild; HSituation 20 UnionPartner, 21 SeekingChild, 22 NoPlentyKnown | M4 |
+| Npc.Traits | length 19: 16 companionship, 17 child desire, 18 commitment (stored on NpcLife); 12-15 left to I-BS | M4 |
+| KinMind | `UnionWith` (the mind's believed reproductive partner) | M4 |
+| HouseholdState | reproductive-union and economic-partnership lists and their hash fields (see 71f1f67) | M4 |
+| Tuning | `Households.Prefs`, `Households.Partner.{MaxLiveUnions, UnionLapseMilli, SeekTicks, IndependentUnions, UnionVp}`, `Households.Founders.Generator` and established-band fields, `Households.Care.FeedFrom` | M4 |
+
 ## 13. Open decisions (each with the default taken)
 
 | # | Decision | Default |
