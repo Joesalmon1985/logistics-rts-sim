@@ -305,7 +305,7 @@ score(c) = Instinct(c) + Learned(c) + Social(c) + Culture(c) + Personality(c) - 
 |---|---|---|
 | **Drive relief** (borrowed) | If drive `d` fell from `p` to `n` and `p > Comfort[d]`: `+W[d] × (p − max(n, Comfort[d])) / 250` | `W`: hunger 1000, pain 1200, fear 900, fatigue 700, cold 700; later loneliness 400, boredom 300, anger 400, status 500 |
 | **Drive rise** (borrowed) | If `d` rose from `p` to `n` and `n > Comfort[d]`: `−W[d] × (n − max(p, Comfort[d])) / 250` | Same `W` |
-| Goods | Gained or lost items: `± BeliefValue(ware, own need) × count` | Value from the NPC's own price beliefs |
+| Goods | Gained or lost items: `± BeliefValue(ware, own need) × count` | Value from the NPC's own price beliefs. **M3 (M3b, 26 Nov 2026): realised value.** Until price beliefs exist (M5), food and tools are worth what they realise for their holder: nothing is paid when they are taken; each meal from a food lot pays its hunger relief back to the decisions that gained the lot, each log gathered with a tool pays the tool's share of the work (log worth × (speed − 1000) / speed), and spoilage is a loss of the food's fixed worth. All three travel through lot episodes (4.7). Logs keep the fixed worth at once. `SimTuning.Learning.Goods` selects `Realised` (default), `LotEpisodes` (fixed worth at once, spoilage booked back) or `Immediate` (the first M3 rule) |
 | Injury | Each wound taken (pain covers the rest) | −300 |
 | Obligations | A promise to me kept / broken; I kept / broke one (guilt scales with honesty) | +400 / −600; +100 / −(200 + 3 × Honesty) |
 | Opportunities | Bed right gained / lost; job gained / lost; accepted into / expelled from a household or faction; a new food place discovered (× curiosity) | +400 / −400; +300 / −300; +500 / −600; +100 |
@@ -352,7 +352,9 @@ Some outcomes arrive days later: a wage at the end of a shift, repayment of a lo
 - **Opening:** an intent whose verb is marked `Deferred` in the `VerbTable` (`Lend`, `Give`, `TakeJob`, `Enlist`, `AskJoin`, `Migrate`, `AcceptOffer` of a promise) moves its trace into `Open` when the trace would close. It carries the `EpisodeKey` that the sim attaches to the obligation.
 - **Closing:** the matching domain event (`WagePaid`, `PromiseKept`, `PromiseBroken`, `LoanRepaid`, `CitizenshipChanged`, ...) adds its reward to `Return`, discounted by `Fx.Shr(r, daysElapsed / 2)`. The episode then closes through the normal update (4.6).
 - **Expiry:** an episode with no event by `ExpiresDay` (default 10 days) closes with what it has.
-- **When `Open` is full,** the oldest episode closes first.
+- **When `Open` is full,** the oldest episode of the incoming verb closes first, else the oldest (M3b: many small forage lots must not push out the one `Build` episode waiting for its hut).
+- **Lot episodes (M3b, 26 Nov 2026).** `ForageAt`, `PickUp` and `Equip` are deferred too. When the decision puts food into the carry, or takes up a tool, its newest trace waits for that carried lot (`EpisodeKey = 1 << 30 | lotId`; merged food shares the carried lot's id). Each meal from the lot and each log gathered with the tool reaches the waiting decisions as partial outcomes (`Learner.Accrue`: split between them, applied at once as news, the episode stays open); spoilage closes them with the loss, split and undiscounted (it corrects goods already counted); eating the lot up, or the tool leaving the carry (worn out or set down to sleep), closes them with nothing more.
+- **An outcome reaching a live trace** (the hut finished while its builder is still building) is learned at once as news under TD (M3b fix: it used to go into a return that TD never reads).
 - **Social memory still records the obligation** for the trust term. Learning records the *value of the act* in that context ("lending to strangers loses goods").
 
 ### 4.8 Sleep consolidation (once per NPC per day, at sleep start)
@@ -456,7 +458,7 @@ A parent's example for a child uses gain shift 1. An imitator of a successful ne
 | Mode | Learned term | Updates | Use |
 |---|---|---|---|
 | `On` | yes | yes | Default |
-| `Frozen` | yes (as loaded) | none (traces still run, so switching back is seamless) | Benchmarks, policy comparisons, `STRATEGY_BENCHMARKS.md` policies |
+| `Frozen` | yes (as loaded) | none (traces still run, so switching back is seamless) | Benchmarks, policy comparisons, `STRATEGY_BENCHMARKS.md` policies. `Frozen` from birth has an empty store, so it decides exactly as `Off`; the LS scenarios use it as the "nothing learned" baseline. The island control (M3.27) also runs a trained-then-frozen arm (On for 10 days, then `Frozen`), which is what "as loaded" means for a population |
 | `Off` | 0 | none | Instinct-only baseline; ablation experiments |
 
 The mode is set per NPC by the scenario, or for all NPCs with `SimTuning.Learning.DefaultMode`. Benchmark policies such as `TitForTatNpcPolicy` act only where they apply and fall back to the default policy, which still uses the store.
@@ -530,7 +532,7 @@ What each test asserts is in section 10 (LS1–LS9). Together with L16 (every do
 | `AssociationUpdated` | Sampled: `|δ| ≥ 1000` always; otherwise when `hash(npcId, day) % SampleEvery == 0` (default 16). The sampling uses a hash, never the sim's random streams | tick, npc, key, verb, δ, newStw, newLtw, origin |
 | `ConjunctionRecruited`, `ConjunctionFreed` | At sleep | tick, npc, slot, A, B, C, strength |
 | `EpisodeClosed` | When an episode closes | tick, npc, episodeKey, verb, return, daysElapsed |
-| `DecisionMade` | Sampled as above | tick, npc, verb, target, instinct, learned, social, personality, cost, explore, learnedChangedWinner |
+| `DecisionMade` | One per chosen intent, built only when the host asks (`EventBuffer.TraceDecisions`; the runner sets it at Full recording of the learning domain, M3b). Not sampled; off at every other level, so it never costs anything or touches the hash | tick, npc, verb, target kind, id and node, target class, total, instinct, need, learned, social, culture, personality, cost, explore, candidates, learnedChangedWinner, exploreWon, continued, runner-up verb and total. Table `fact_decision` (code 334) |
 | `AssociationsImitated` | When an `Import` runs (4.14, M11) | tick, learner, model, entries copied, gainShift. This is Learning's imitation; trait adoption is Culture's `TraitAcquired` |
 
 **Daily person snapshot fields:**
