@@ -46,6 +46,7 @@ commands:
   bench    benchmark       [--cases bench_stage3_watch6] [--ticks N] [--parallel-ticks N] [--workers 1,4,16]
                            [--compare FILE] [--update-baseline] [--baseline FILE] [--strict] [--out DIR]
   lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2) | invade | sweep
+  demog    demographic report  report --scenario S --seeds 1-20 --years 15 [--set ..] [--arm ""name: k=v ...""].. [--plan FILE] [--out DIR]
   export   warehouse out  --from FILE|DIR [--to csv|parquet] --out DIR [--tables a,b]   (SQLite to CSV or a Parquet lake)
   learn-dump  one NPC's association store as JSON lines --scenario FILE|NAME --seed N --days D --npc ID|all [--out FILE]
                            or --from-save FILE --npc ID|all
@@ -62,6 +63,7 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             try
             {
                 if (cmd == "lab") return LabCommand.Run(argv, output, error, cancel);
+                if (cmd == "demog") return Demog.DemogCommand.Run(argv, output, error, cancel);
                 if (Later.TryGetValue(cmd, out var when))
                 {
                     error.WriteLine("'" + cmd + "' is not implemented until " + when + ".");
