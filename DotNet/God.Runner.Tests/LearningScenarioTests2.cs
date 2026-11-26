@@ -27,10 +27,20 @@ namespace God.Runner.Tests
         /// </summary>
         public static (double aLast50, int fillerQ) DelayedReward(ulong seed, int traceShift, int trials = 200)
         {
+            var r = DelayedRewardRun(seed, traceShift, trials);
+            return (r.ALast50, r.FillerQ);
+        }
+
+        /// <summary>What one L3 run shows: the TestA share, the filler choices and the learned values of all four options.</summary>
+        public sealed class DelayedResult { public double ALast50; public int FillerQ, QA, QB, Q33, Q34, Filler33Last50, FillerLast50; }
+
+        public static DelayedResult DelayedRewardRun(ulong seed, int traceShift, int trials = 200, LearningMode mode = LearningMode.On)
+        {
+            var res = new DelayedResult();
             var tu = new LearningTuning { TraceShift = traceShift };
             var sc = new ThinkScratch
             {
-                Mind = new NpcMind(tu.Caps, 64, LearningMode.On), Instincts = InstinctTable.Empty, Traits = new int[Trait.Count],
+                Mind = new NpcMind(tu.Caps, 64, mode), Instincts = InstinctTable.Empty, Traits = new int[Trait.Count],
                 Learn = LearnTraits.Neutral, LearningTuning = tu, Tuning = new PopulationTuning(), Grid = NodeGrid.Get(3),
             };
             sc.Base[0] = Feature.Place(PlaceKind.Meadow); sc.Base[1] = Feature.Time(TimeOfDay.Day); sc.BaseCount = 2;
@@ -65,12 +75,17 @@ namespace God.Runner.Tests
                     Learner.EndOngoing(st); // a lab act ends at once
                     Learner.DecayTraces(st, Learner.TraceShiftOf(tu, tr));
                     if (step == 0 && c.Verb == Verb.TestA) { pending = tick + 30; if (trial >= trials - 50) aCount++; }
+                    if (step > 0 && trial >= trials - 50) { res.FillerLast50++; if (c.Class == 33) res.Filler33Last50++; }
                 }
             }
-            // the filler's learned value, in its own context
-            AddLabOnly(sc, Verb.TestFiller, 33);
-            int fq = st.SumStw(sc.Keys, sc.Cand[0].KeyOffset, sc.Cand[0].KeyCount, Verb.TestFiller, out _);
-            return (aCount / 50.0, fq);
+            // the learned values, each in its own context
+            int Q(byte verb, int cls) { AddLabOnly(sc, verb, cls); return st.SumStw(sc.Keys, sc.Cand[0].KeyOffset, sc.Cand[0].KeyCount, verb, out _); }
+            res.ALast50 = aCount / 50.0;
+            res.FillerQ = res.Q33 = Q(Verb.TestFiller, 33);
+            res.Q34 = Q(Verb.TestFiller, 34);
+            res.QA = Q(Verb.TestA, 31);
+            res.QB = Q(Verb.TestB, 32);
+            return res;
         }
 
         private static void AddLabOnly(ThinkScratch sc, byte verb, int cls) { sc.CandCount = 0; AddLab(sc, verb, cls); }
@@ -152,11 +167,11 @@ namespace God.Runner.Tests
         /// nodes from A. With <paramref name="regrowA"/>, A regrows on day 12 and B empties. Trips are decisions to eat or
         /// forage at a bush other than the previous decision's target.
         /// </summary>
-        public static TripResult Moves(ulong seed, bool regrowA, int days)
+        public static TripResult Moves(ulong seed, bool regrowA, int days, Action<SimTuning> tune = null, LearningMode mode = LearningMode.On)
         {
-            var sim = LearningFixtures.Empty(seed);
+            var sim = LearningFixtures.Empty(seed, tune);
             int glade = LearningFixtures.Glade(sim, 9);
-            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, LearningMode.On, hunger: 300);
+            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, mode, hunger: 300);
             int aNode = LearningFixtures.Step(sim, glade, 0, 5), bNode = LearningFixtures.Step(sim, aNode, 2, 6);
             var a = LearningFixtures.Bush(sim, SourceKind.Berries, aNode, 300, 300, 300);
             ResourceSource b = null;
@@ -286,6 +301,43 @@ namespace God.Runner.Tests
             return (share, npc.Mind.Store.HashWeights());
         }
 
+        public sealed class NurtureProbeResult { public double ShadeShare; public int Choices; public bool Died; }
+
+        /// <summary>
+        /// L8 measured on what the nurture taught: as <see cref="Nurture"/>, but at the end of the 5 nurture days the store is
+        /// frozen (NPC_LEARNING 4.16 "as loaded"), so the test days measure the learned rate without the test glade teaching
+        /// it anything new; the test then runs 5 days (days 5-9) and takes every meal choice from a bush there.
+        /// <paramref name="nurtureMode"/> Frozen is the control: nothing is learned in either life.
+        /// </summary>
+        public static NurtureProbeResult NurtureProbe(ulong seed, bool bitter, LearningMode nurtureMode, int testDays = 5)
+        {
+            var sim = LearningFixtures.Empty(seed);
+            int glade = LearningFixtures.Glade(sim);
+            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, nurtureMode, hunger: 400);
+            int near = LearningFixtures.Step(sim, glade, 0, 2), other = LearningFixtures.Step(sim, glade, 3, 2);
+            var first = LearningFixtures.Bush(sim, bitter ? SourceKind.Nightshade : SourceKind.Berries, near);
+            var roots = bitter ? LearningFixtures.Bush(sim, SourceKind.Roots, other) : null;
+            int tpd = sim.State.Setup.TicksPerDay;
+            var w = new Watch(sim, npc.Id);
+            w.RunDays(5 + testDays, tick =>
+            {
+                if (tick == 5L * tpd)
+                {
+                    npc.Mind.Store.Mode = LearningMode.Frozen;
+                    PopulationModule.RemoveSource(sim.State, first);
+                    if (roots != null) PopulationModule.RemoveSource(sim.State, roots);
+                    LearningFixtures.Bush(sim, SourceKind.Nightshade, near);
+                    LearningFixtures.Bush(sim, SourceKind.Roots, other);
+                }
+            });
+            var test = w.Rows[npc.Id].Where(r => r.Day >= 5 && r.Verb == Verb.Eat && r.TargetClass != ObjClass.FoodLot).ToList();
+            return new NurtureProbeResult
+            {
+                Choices = test.Count, Died = !npc.Alive,
+                ShadeShare = test.Count == 0 ? 0 : (double)test.Count(r => r.TargetClass == ObjClass.Nightshade) / test.Count,
+            };
+        }
+
         [Test]
         public void L8_SameNatureDifferentNurture()
         {
@@ -305,9 +357,23 @@ namespace God.Runner.Tests
 
         public static (int thinksToFish, bool conjByDay3) Generalise(ulong seed, bool berriesEdible)
         {
+            var r = GeneraliseDetail(seed, berriesEdible);
+            return (r.ThinksToEatAtSpot, r.ConjByDay3);
+        }
+
+        /// <summary>
+        /// What the L13 NPC does when it first meets fish. Thinks are counted from the first think after the fish appears.
+        /// <c>ThinksToEatAtSpot</c> is the published count (only thinks attending the fish spot, only Eat at the spot);
+        /// <c>FirstFoodAction</c> counts every think and takes either food verb on the fish (Eat at the spot, or ForageAt it);
+        /// <c>FirstMeal</c> is the first think whose choice is a fish meal (Eat at the spot, or Eat of the carried fish).
+        /// </summary>
+        public sealed class GeneraliseResult { public int ThinksToEatAtSpot, FirstFoodAction = -1, FirstMeal = -1; public byte FirstVerbOnFish; public bool ConjByDay3, EatSpotWithin3Attended; }
+
+        public static GeneraliseResult GeneraliseDetail(ulong seed, bool berriesEdible, LearningMode mode = LearningMode.On)
+        {
             var sim = LearningFixtures.Empty(seed);
             int glade = LearningFixtures.Glade(sim);
-            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.None, LearningMode.On, hunger: 600);
+            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.None, mode, hunger: 600);
             int near = LearningFixtures.Step(sim, glade, 0, 2);
             var first = LearningFixtures.Bush(sim, berriesEdible ? SourceKind.Berries : SourceKind.Nightshade, near);
             int tpd = sim.State.Setup.TicksPerDay;
@@ -335,7 +401,17 @@ namespace God.Runner.Tests
             });
             var after = w.Rows[npc.Id].Where(r => r.Tick > shown && r.Attends(ObjClass.FishSpot)).ToList();
             int k = after.FindIndex(r => r.Verb == Verb.Eat && r.TargetClass == ObjClass.FishSpot);
-            return (k < 0 ? 99 : k + 1, conj);
+            var res = new GeneraliseResult { ThinksToEatAtSpot = k < 0 ? 99 : k + 1, ConjByDay3 = conj };
+            res.EatSpotWithin3Attended = res.ThinksToEatAtSpot <= 3;
+            var all = w.Rows[npc.Id].Where(r => r.Tick > shown).ToList();
+            // the carry was emptied when the fish appeared and the berries removed, so any carried lot eaten afterwards is fish
+            int f = all.FindIndex(r => r.TargetClass == ObjClass.FishSpot && (r.Verb == Verb.Eat || r.Verb == Verb.ForageAt));
+            res.FirstFoodAction = f < 0 ? -1 : f + 1;
+            int m = all.FindIndex(r => r.Verb == Verb.Eat && (r.TargetClass == ObjClass.FishSpot || r.TargetClass == ObjClass.FoodLot));
+            res.FirstMeal = m < 0 ? -1 : m + 1;
+            var firstOn = all.FirstOrDefault(r => r.TargetClass == ObjClass.FishSpot);
+            res.FirstVerbOnFish = firstOn.Verb;
+            return res;
         }
 
         [Test]
