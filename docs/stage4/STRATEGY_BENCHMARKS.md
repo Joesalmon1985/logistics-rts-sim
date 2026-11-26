@@ -141,6 +141,7 @@ Contest rules used by the lab (the island uses the real contest record, [GAME_TH
 - **One-sided escalation**: if one side Escalates and the other Displays, the displayer's next move is made after seeing it. A side that Withdraws gives the prize to the other with no cost to either.
 - **Mutual exchange**: a turn where both Escalate. If they escalate in two consecutive turns it becomes a **fight**: coin flip, winner `+V`, loser `-I`, ends. If one Withdraws after a mutual exchange, the contest ends: the other wins `V`, and both pay `S`. If both Withdraw, the winner is a coin flip, and both pay `S`.
 - A **contest** is limited to `MaxTurns = 8`. Hitting the limit is treated as a display block.
+- **Two rules settled at M2 (27 Nov 2026; the text above left them open).** (a) A display block ends the contest: it is a terminal outcome, so a contest never continues after one. (b) If both sides withdraw with **no prior mutual exchange**, nobody gets the prize and nobody pays (no `S`). The "both Withdraw, `S` each" rule above applies only after a mutual exchange. The published resident/intruder cells of -12.5 (Hawk against Bourgeois and the like) need rule (b). See [Amendment A10](#lab-amendments-m2-27-nov-2026).
 
 The strategies:
 
@@ -160,11 +161,13 @@ Lab matrix derived from these rules for `V=50, I=100, T=10, S=10, q=0.1` (row pl
 |---|---|---|---|---|---|
 | Hawk | -25 | 50 | -25 | 40 | -25 |
 | Dove | 0 | 15 | 15 | 0 | 13.5 |
-| Retaliator | -25 | 15 | 15 | 40 | 14 |
+| Retaliator | -25 | 15 | 15 | 40 | 14 (**amended 11**) |
 | Bully | -10 | 50 | -10 | 15 | -10 |
-| Prober | -25 | 18.5 | 14 | 40 | 13.2 |
+| Prober | -25 | 18.5 | 14 (**amended 11**) | 40 | 13.2 (**amended 7.4**) |
 
 The Prober row and column are approximate because of the one-sided-hit simplification in the rules above. Test L2b checks the matrix against a Monte Carlo run of the turn-level rules with tolerance 3 per cell. If a cell fails, the turn rules are right and the table is corrected.
+
+**Amendment A1 (M2, 27 Nov 2026).** Three Prober cells failed exactly that way, and the table is corrected as the sentence above says. Published: R vs P 14, P vs R 14, P vs P 13.2. Amended: 11, 11 and 7.4. Both values stay visible in the table. Reason: under these turn rules a failed probe against a Retaliator becomes two mutual exchanges, which is a fight worth -25. So R vs P = 0.9 × 15 + 0.1 × (-25) = 11, and P vs P = 0.81 × 15 + 0.19 × (-25) = 7.4. Exact enumeration and a Monte Carlo of 50,000 contests per cell agree (R vs P measured 10.83 to 11.12; P vs P 7.29 to 7.49). The other 38 cells match as published. Consequence: the H/D/R/B/P replicator shares quoted under L2 change, and are **report-only**. Evidence: `DotNet/God.Runner.Tests/LabRunnerTests.cs`, `Assets/God/Tests/EditMode/LabTests.cs`.
 
 **Resident/intruder matrix** (roles are random, 50:50; strategies Hawk, Dove, Bourgeois, Anti-Bourgeois; derived with the same prize and injury):
 
@@ -270,6 +273,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - the group optimum is `1/6` Hawks with mean payoff `16.67`. The ESS is **below** it (test: mean payoff at ESS < 0.5 × optimum);
   - a "conspiracy of Doves" (all Dove) is invaded: one Hawk among 999 Doves earns 50 against 15. Hawk share passes 0.3 within 30 generations (N=1000, k=10);
   - per-agent mixed strategy (each agent plays Hawk with its own heritable probability): the population mean converges to 0.583 ± 0.03;
+  - **Note (M2, 27 Nov 2026; A13).** The agents' mean payoff runs 6.4 to 6.9 as the Hawk share drifts. The `6.25 ± 0.5` check is made **at the replicator ESS**, and the agent value is report-only. The L1 negative control (`w0 = 100`) misses the Hawk tolerance, as intended.
   - a predictable player (7 Hawk then 5 Dove in a fixed cycle) loses to a reader that knows the phase: reader payoff `5/12 × 50 = 20.8` against 6.25 for the random mix, a gain of at least 10.
 
 **L2. Retaliator, Bully, Prober (PDF 97 and 98, endnote 306).**
@@ -280,9 +284,10 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - In a mix of Retaliators and Doves with Dove share `d`, a Bully beats the Retaliators when `50d - 10(1 - d) > 15`, that is `d > 25/60 = 0.417`. A Hawk needs `75d - 25 > 15`, that is `d > 0.533`. Test: start (R 0.5, D 0.45, B 0.05): Bully share rises. Start (R 0.65, D 0.30, B 0.05): it falls.
 - Agent results: **the corrected claim is that Retaliator does not stay dominant once drift and Hawks or Bullies are present.**
   - Strategies H, D, R, B, N = 200 (proto, 6 seeds): mean shares H 0.20, D 0.15, R 0.58, B 0.08. Tolerance: Retaliator below 0.75; Hawk plus Bully above 0.10. At N = 1000: Retaliator 0.80, Hawk plus Bully 0.05 (tolerance R between 0.65 and 0.90). Smaller populations drift further.
-  - Strategies H, D, R, B, P, replicator with mutation (proto): D 0.177, R 0.620, P 0.198, H 0.002, B 0.003.
+  - Strategies H, D, R, B, P, replicator with mutation (proto): D 0.177, R 0.620, P 0.198, H 0.002, B 0.003. **Report-only after Amendment A1** (these shares came from the published Prober cells 14, 14 and 13.2; with 11, 11 and 7.4 they change and are no longer a pass criterion).
+  - **Amendment A2 (M2, 27 Nov 2026), N = 200.** Published: Retaliator below 0.75 and Hawk plus Bully above 0.10. Measured with `k = 10, w0 = 500, mu = 2 permille`: every N = 200 run on seeds 1 to 13 stayed in the Retaliator basin (R 0.77 to 0.94; H + B 0.03 to 0.05), so both published bounds fail. The system is **bistable**: a Retaliator basin and an H/D/B basin. The prototype's runs that reached H/D/B needed more drift (`k = 1`, or `w0 = 100`). **Amended expectation:** Retaliator stays dominant under the default parameters. The "corrected claim" above (Retaliator does not stay dominant once drift and Hawks or Bullies are present) is therefore **not reproduced under our defaults**. This is an open finding for the owner (see [GAME_THEORY_DESIGN.md](GAME_THEORY_DESIGN.md) and [section 11](#11-open-questions)). Neither result is presented as the truth. N = 1000 agrees with the prototype (R about 0.80, inside 0.65 to 0.90, unchanged).
 - **Honest limit:** our matrix does not reproduce Gale and Eaves's stable Hawk/Bully mix. With our payoffs, a Dove invades a Hawk/Bully mixture (it earns 0 against a mixture whose members earn -0.6), and Retaliators tie with it. The book does not give the payoffs that produced the Hawk/Bully result. We test only the mechanism claims above, and we do not claim a Hawk/Bully ESS. See the open questions.
-- **L2b:** a Monte Carlo of the turn-level rules reproduces every cell of the matrix within 3 (50,000 contests per cell).
+- **L2b:** a Monte Carlo of the turn-level rules reproduces every cell of the matrix within 3 (50,000 contests per cell). **After Amendment A1** this holds against the amended matrix (38 cells as published, three Prober cells amended).
 
 **L3. War of attrition (PDF 99 and 100).**
 - **Status: invented parameters, theory check.** The book gives no numbers. Prize, cost rate, selection and mutation are ours; the checks test the known mathematical properties of the model (mean persistence equals `V`, fixed limits are invadable, the value of a tell), not a figure from the book.
@@ -291,7 +296,8 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - mean `m` over the last 100 generations is `V` ± 0.2 `V` (proto 1.105 to 1.129 V in 3 seeds);
   - the coefficient of variation of realised persistence is between 1.0 and 1.5 (an exponential has 1; a spread of means adds). This is a calibration target, not yet seen;
   - a **fixed limit** `L < V` is invaded by `L + 1`, which always wins: test for every `L` in `[1, V - 2]`;
-  - a **tell**: a reader who sees an opponent's quitting time in advance, stays one tick longer when the opponent will quit before `V` and quits at once otherwise. Its gain per contest against exponential opponents of mean `V` is `V/e = 0.368 V`. Tolerance 0.368 V ± 0.01 V over 100,000 contests (proto 0.368 V). A population in which a tell is readable lets readers spread: reader share above 0.9 within 100 generations. A population whose tell is hidden shows no reader advantage (gain within ± 0.01 V).
+  - a **tell**: a reader who sees an opponent's quitting time in advance, stays one tick longer when the opponent will quit before `V` and quits at once otherwise. Its gain per contest against exponential opponents of mean `V` is `V/e = 0.368 V`. Tolerance 0.368 V ± 0.01 V over 100,000 contests (proto 0.368 V). A population in which a tell is readable lets readers spread: reader share above 0.9 within 100 generations (**amended, Amendment A3 below: 0.780 ± 0.05**). A population whose tell is hidden shows no reader advantage (gain within ± 0.01 V).
+  - **Amendment A3 (M2, 27 Nov 2026).** Published: readers reach above 0.9 within 100 generations. Amended: reader share settles at `p* = 1/(4 - e) = 0.780`, tolerance ± 0.05 (measured 0.74 to 0.78). Reason: a reader's opponent earns `V(3/e - 1) = 0.104 V`, so readers have an edge only below `p*`.
 
 **L4. Resident/intruder (PDF 100 to 103).**
 - **Status: derived payoffs, not a reproduction.** The book describes the Bourgeois strategy qualitatively. The matrix is derived from L1's book payoffs with random roles; the boundaries tested are consequences of that derived matrix.
@@ -299,8 +305,9 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - Expected (replicator, mutation `0.0005`):
   - Bourgeois vs Anti-Bourgeois (no Hawks or Doves): the share of the larger starts the takeover. Starting B 0.51: B above 0.99. Starting B 0.49: A above 0.99. The boundary is 0.5 ± 0.01;
   - both are stable on their own (a rare mutant of the other loses);
-  - a Hawk/Dove mix at its ESS (0.58/0.42) **resists** a small Bourgeois share, because a Bourgeois earns 3.1 against the mix, below 6.25 (proto: starting B at 0.05, 0.2 or 0.4, B ends near 0.02). With B at 0.6 it takes over: B share ends at 0.9 ± 0.05. The boundary lies between 0.4 and 0.6;
+  - a Hawk/Dove mix at its ESS (0.58/0.42) **resists** a small Bourgeois share, because a Bourgeois earns 3.1 against the mix, below 6.25 (proto: starting B at 0.05, 0.2 or 0.4, B ends near 0.02). With B at 0.6 it takes over: B share ends at 0.9 ± 0.05. The boundary lies between 0.4 and 0.6 (**amended, Amendment A4 below: 0.2 to 0.4, and B from 0.4 takes over**);
   - when both sides think they are resident, mean payoff of Bourgeois against Bourgeois drops from 25 to -25 (test on the matrix).
+  - **Amendment A4 (M2, 27 Nov 2026).** Published: the H/D mix resists Bourgeois at 0.4 (proto: B ends near 0.02), boundary between 0.4 and 0.6. Amended: the replicator boundary is **0.394**, so the boundary lies between 0.2 and 0.4 and Bourgeois starting at 0.4 takes over. Evidence: on the derived matrix (equal to the published table), at B = 0.4 Bourgeois earns 11.9 against a population mean of 11.25, so it grows and ends at 0.896. The resistance claim stays for B = 0.05 and 0.2. B from 0.6 still takes over (0.9 ± 0.05).
 - **L4b (optional):** paradoxical strategy (attack larger, flee smaller). Heavier injury, where `I` grows with the opponent's size, plus an initial majority of paradoxical players: the paradoxical rule persists. Below a critical share, the sensible rule takes over (zone of attraction). Calibrated at M2, not yet seen.
 
 **L5. Pecking orders (PDF 104 and 105).**
@@ -320,8 +327,9 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - the **time average** is `(5/6, 5/8) = (0.833, 0.625)`, tolerance ± 0.01 on `c`, ± 0.02 on `f`;
   - the instantaneous state **keeps cycling**: standard deviation of `c` above 0.1 and of `f` above 0.2 over the second half (proto 0.198 and 0.301); the distance to `(5/6, 5/8)` averages above 0.1 in the last quarter;
   - the conserved quantity `H = -10 ln c - 2 ln(1-c) - 5 ln f - 3 ln(1-f)` drifts by less than 0.1 per cent over the run (a test of the integrator: an Euler step fails it);
-  - agents, `N = 1000` per sex, soft selection `exp(0.02 × payoff)`, mutation `1 permille`: time-averages `c = 0.83 ± 0.03`, `f = 0.60 ± 0.05` over generations 5000 to 20000, standard deviation of `c` above 0.05 (proto 0.16); at `N = 10000` the cycle shrinks (proto std 0.06 to 0.07) but does not vanish.
+  - agents, `N = 1000` per sex, soft selection `exp(0.02 × payoff)`, mutation `1 permille`: time-averages `c = 0.83 ± 0.03`, `f = 0.60 ± 0.05` over generations 5000 to 20000 (**amended, Amendment A5 below: same tolerances, re-centred on (0.859, 0.559)**), standard deviation of `c` above 0.05 (proto 0.16); at `N = 10000` the cycle shrinks (proto std 0.06 to 0.07) but does not vanish.
 - The book's equilibrium is the **mean** of the cycle, not a place the system sits. A system that settles at `(5/6, 5/8)` is wrong.
+- **Amendment A5 (M2, 27 Nov 2026), agent means.** Published: `c = 0.83 ± 0.03`, `f = 0.60 ± 0.05`. Amended: `c = 0.859 ± 0.03`, `f = 0.559 ± 0.05` (same tolerances, re-centred). Reason: the spec's own agent model (soft selection on realised payoffs with a random partner, and mutation 1 permille) has its mutation-selection point at (0.859, 0.559); an independent Python iteration gave 0.8588 and 0.5586. All the RK4 checks pass as published: time averages 0.833 and 0.625, a persistent cycle, and the `H` drift check.
 
 **L7. Sucker, Cheat, Grudger (PDF 206 to 209).**
 - **Status: invented payoffs, not a reproduction.** The book reports Dawkins's simulation qualitatively and gives no payoffs. `b = 3`, `c = 1`, `n = 10` and the start shares are ours; only the order of events and the bistability are tested, not the book's numbers (it gives none).
@@ -362,6 +370,17 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   | 11 | Naive Prober | 349 | 58.1 |
   | 12 | Always Defect | 336 | 56.1 |
 
+- **Amendment A6 (M2, 27 Nov 2026).** Five published scores are more than 15 away from what the 4.3 state machines give. Published, then amended (± 15 each):
+
+  | Strategy | Published | Amended |
+  |---|---|---|
+  | Suspicious TFT | 387 | 406.5 |
+  | Grudger | 445 | 413.8 |
+  | Naive Prober | 349 | 332.0 |
+  | Tester | 484 | 455.7 |
+  | Sneak | 400 | 419.2 |
+
+  The other seven scores stand as published, and the table above is left unchanged for comparison. Evidence for Grudger: its deterministic entries cap it at 475 even if it scored 600 against Random and both probers, and a q = 0.1 prober triggers the grudge in about 10 rounds. Tit for Tat's row matches the prototype (491.8 against 493), which confirms the readings of the state machines. The structural checks below pass as published (TFT and TF2T in the top 4; Always Defect in the bottom 2; at least 4 of the top 5 nice).
 - Pass criteria:
   - TFT and TF2T are both in the top 4; Always Defect is in the bottom 2;
   - at least 4 of the top 5 are nice;
@@ -372,12 +391,14 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - The book's top 8 were all nice. Ours has one nasty strategy (Tester) in the top 5, because the set contains exploitable nice players (Always Cooperate, Tit for Two Tats) for it to feed on. The book's own second round showed the same: results depend on who enters (Tit for Two Tats lost its crown to subtle nasty strategies, PDF 235).
   - Tit for Two Tats ranks first here and would have won round 1 in the book, too.
   - We do not have the 63 original entries, so scores are not comparable with the book's 504.5 or 96 per cent.
-- **L8b, the known last round:** a Tit for Tat that defects on the final round (`TFT-End`) scores 602 against Tit for Tat's 597 over 200 rounds (exact; the other side gets 0 on the last round). With an unknown length (geometric, `w = 0.995`) it has no systematic advantage (test: mean gain within ± 3 over 200 seeds).
+- **L8b, the known last round:** a Tit for Tat that defects on the final round (`TFT-End`) scores 602 against Tit for Tat's 597 over 200 rounds (exact; the other side gets 0 on the last round). With an unknown length (geometric, `w = 0.995`) it has no systematic advantage (test: mean gain within ± 3 over 200 seeds; **amended, Amendment A7 below: gain ≤ +3**).
+  - **Amendment A7 (M2, 27 Nov 2026).** Published: gain within ± 3. Amended to a **one-sided** check: gain ≤ +3. If the game length is hidden, a TFT-End that never defects early has a gain of 0 by construction (that check passes), but a TFT-End that guesses round 200 loses about 36 on average, so "within ± 3" fails on the negative side. No positive advantage exists, which is the claim that matters.
 
 **L9. The ecological run (PDF 237 to 239).**
 - **Status: derived, not a reproduction.** It runs the replicator on L8's own score matrix (book payoffs, our entrants), so it is a derived experiment in the spirit of Axelrod's ecological run, not a reproduction of it.
 - Setup: the replicator on the L8 mean score matrix, uniform start (1/12 each), 1000 generations, no mutation.
-- Expected (proto): nasty strategies and probers fall below 1 per cent in this order: Always Defect (generation 8), Naive Prober (9), Suspicious TFT (16), Random (20), Sneak (20), Remorseful Prober (22), Tester (35). Final shares: TFT 0.33, Grudger 0.22, Pavlov 0.19, TF2T 0.14, AllC 0.11, tolerance ± 0.05 each.
+- Expected (proto): nasty strategies and probers fall below 1 per cent in this order: Always Defect (generation 8), Naive Prober (9), Suspicious TFT (16), Random (20), Sneak (20), Remorseful Prober (22), Tester (35). Final shares: TFT 0.33, Grudger 0.22, Pavlov 0.19, TF2T 0.14, AllC 0.11, tolerance ± 0.05 each (**TFT, Grudger, Pavlov amended, Amendment A8 below**).
+- **Amendment A8 (M2, 27 Nov 2026).** Published: TFT 0.33, Grudger 0.22, Pavlov 0.19. Amended: TFT **0.669**, Grudger **0.004**, Pavlov **0.138**, ± 0.05 each. Reason: it follows from Amendment A6. Grudger scores less in the corrected L8 matrix, so it dies early, and the nice survivors then freeze. TF2T (0.14) and AllC (0.11) pass as published. Every structural criterion passes: nasty strategies and probers below 1 per cent by generation 200, Always Defect gone by generation 30 (actual: generation 8), TFT the largest share.
 - Pass criteria: all nasty strategies and probers below 1 per cent by generation 200; Always Defect below 1 per cent by generation 30; Tit for Tat has the largest final share; the survivors are all nice. Always Cooperate survives only because nothing invades it here. With a defector seed it would be exploited. That is a finding about Always Cooperate, not a result for it.
 
 **L9b. Tit for Tat against Always Defect, and clustering (PDF 239 to 243).**
@@ -390,17 +411,19 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   | p* | 0.500 | 0.200 | 0.059 | 0.027 | 0.0051 | 0.0025 |
 
 - Expected: the replicator boundary matches `p*` to ± 0.003 for each `w`. Agents, `N = 1000`, 20 seeds: starting at `1.5 p*`, TFT takes over (above 0.95) in at least 90 per cent of runs; at `0.5 p*` it dies in at least 90 per cent.
-- **Clustering.** If a fraction `k` of each agent's partners is chosen from its own strategy, the effective chance of meeting its own kind is `k + (1-k) p`. With `w = 0.9` and a start of `p = 0.01`, the critical clustering is `k* = (p* - p)/(1 - p) = 0.049`. Test: `k = 0.10` lets Tit for Tat take over; `k = 0.02` does not. Clusters do not help Always Defect (its own meetings pay `1/(1-w)`, below TFT-TFT's `3/(1-w)`).
+- **Clustering.** If a fraction `k` of each agent's partners is chosen from its own strategy, the effective chance of meeting its own kind is `k + (1-k) p`. With `w = 0.9` and a start of `p = 0.01`, the critical clustering is `k* = (p* - p)/(1 - p) = 0.049` (**report line amended, Amendment A9 below: 0.040**). Test: `k = 0.10` lets Tit for Tat take over; `k = 0.02` does not. Clusters do not help Always Defect (its own meetings pay `1/(1-w)`, below TFT-TFT's `3/(1-w)`).
+- **Amendment A9 (M2, 27 Nov 2026; report line only, no check changed).** Published `k* = 0.049` counts only TFT's own meetings. The exact threshold is 0.040, from `21k + 17(1 - k)p = 1` (measured 0.0399). The tested values `k = 0.10` (takes over) and `k = 0.02` (does not) bracket both numbers and are unchanged.
 - A **Tit for Tat is not a strict ESS**: Always Cooperate behaves identically among nice players, so with mutation a share of Always Cooperate drifts in and then Always Defect invades. Test (agents, `mu = 5 permille`, 5000 generations): the Always Cooperate share does not stay near zero; its time average is above 0.02 (calibration, not yet seen).
 
 **L10. Digger wasps (endnote PDF 307 and 308).**
 - **Status: invented payoffs.** The book reports the wasp study's conclusion without giving the benefits and costs we need. `B`, `Cd`, `Ce` and `Cw` are ours, chosen so the mixed equilibrium is interior; the test checks our model's own equilibrium, not the study's measured share.
 - Setup: `B = 100, Cd = 40, Ce = 5, Cw = 30`. Each wasp has a heritable entering probability `x_i`. Agents: `N = 500`, soft selection `exp(0.02 × payoff)`, mutation of `x_i` by Gaussian-like noise of 0.01, 2000 generations.
 - Expected: population mean `x` over the last 500 generations is `0.28 ± 0.03` (proto 0.278 to 0.282, 4 seeds); at that point `|payoff(Dig) - payoff(Enter)| < 3`. A start at `x = 0.9` and a start at `x = 0.05` both end there.
+- **Modelling note (M2, 27 Nov 2026, report-only; A12).** The check uses the **expected** payoff given `x_i` and the population mean `x`. With realised single draws and exp soft selection the equilibrium moves to about 0.55. That figure is reported, not checked, and `0.28 ± 0.03` stands for the expected-payoff model.
 - Variant: pure types (each wasp always digs or always enters, heritable) gives the same population mean ± 0.03, as a polymorphic population. The book found a true mixed ESS in one population and not the other, so the lab treats both versions as valid.
 
 **L11. Hamilton's rule and the mushroom call (PDF 112 to 122).**
-- **Status: exact (decision example) and invented (spread test).** The decision test uses the book's worked example as recorded in the research notes ([research/SELFISH_GENE_NOTES.md](research/SELFISH_GENE_NOTES.md) C1); the numbers are checked against the book at M2 before the label is final. The spread test uses invented values of `b` and `c` and checks Hamilton's rule itself, not a book figure.
+- **Status: Exact (as recorded in research notes C1) for the decision example; invented (spread test).** The decision test uses the book's worked example as recorded in the research notes ([research/SELFISH_GENE_NOTES.md](research/SELFISH_GENE_NOTES.md) C1). At M2 it was checked against those notes (calling 12 + 6 + 1.5 = 19.5 against 18 for keeping quiet; a tie resolves to Keep; exact match), **not against the book itself**. The label is final in that form (A11); it was published as "to be checked against the book at M2". The spread test uses invented values of `b` and `c` and checks Hamilton's rule itself, not a book figure.
 - Decision test: `Call iff own_if_call + sum(r_i × b_i) > own_if_keep`. The book's example: keep quiet scores 18; calling scores 12 (own) + 6 (brother, r 1/2 × 12) + 1.5 (cousin, r 1/8 × 12) = 19.5, so **call**. Without the cousin the total is 18.0, a tie, resolved to Keep. A stranger (r 0) never adds anything. A brother needs a benefit above `cost / r = 12` to make the same call at a cost of 6.
 - Spread test (agents, assortment `r`: the chance that the helped partner carries the same allele, beyond chance, is `r`): the helper allele has a fitness edge of `r b - c`, independent of its frequency. At `r = 0.5, c = 1`:
   - `b = 2.6` (r b / c = 1.3): helper allele above 0.95 after 300 generations;
@@ -438,7 +461,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 | L9 Ecological run | Derived | Replicator on L8's matrix |
 | L9b TFT against AllD, clustering | Exact payoffs, derived analysis | Thresholds derived by us |
 | L10 Digger wasps | Invented | Costs and benefits ours |
-| L11 Hamilton's rule | Exact (decision example, to be verified against the book at M2); invented (spread test) | |
+| L11 Hamilton's rule | Exact (as recorded in research notes C1; decision example); invented (spread test) | Decision example checked against the research notes at M2, not against the book (A11) |
 | L12 Selfish herd | Invented | Whole model ours |
 | L13 Vampire bats | Invented, exploratory | No payoffs in the book |
 | Dollar Prisoner's Dilemma preset | Exact | Book values (PDF 226), used for the ordering check only |
@@ -446,6 +469,53 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 | Island scenarios S1–S10 | Not reproductions | Payoffs come from island consequences, never from the book ([section 4.7](#47-island-benchmark-scenarios-later-milestones)) |
 
 Test 24 checks that every experiment in `lab list` has a status and that no experiment with status other than **Exact** prints the word "reproduces" in its report.
+
+### Lab amendments (M2, 27 Nov 2026)
+
+M2 implemented every experiment exactly to the state machines and rules in this document. Several expected values proved wrong. They are **amendments with evidence**, not silent rewrites: each entry above keeps the published value visible, and the table below lists them together. The reproduction-status labels of the experiments are **not** changed by amendments (an amendment corrects a number, not the source of the payoffs).
+
+| # | Where | Published | Amended | Reason in one line |
+|---|---|---|---|---|
+| A1 | L2b, 4.2 matrix (three Prober cells) | R vs P 14, P vs R 14, P vs P 13.2 | 11, 11, 7.4 | A failed probe against a Retaliator becomes a fight worth -25 |
+| A2 | L2, N = 200 | R < 0.75 and H + B > 0.10 | Retaliator stays dominant (R 0.77 to 0.94, H + B 0.03 to 0.05; seeds 1 to 13) | Bistable system; default drift stays in the R basin. **Open finding for the owner** |
+| A3 | L3, reader spread | readers above 0.9 within 100 generations | 0.780 ± 0.05 (measured 0.74 to 0.78) | Readers have an edge only below `p* = 1/(4 - e)` |
+| A4 | L4, Hawk/Dove mix against Bourgeois | resists at 0.4; boundary 0.4 to 0.6 | boundary 0.2 to 0.4 (replicator 0.394); B from 0.4 takes over | At B = 0.4 Bourgeois earns 11.9 against a mean of 11.25 |
+| A5 | L6, agent means | c 0.83 ± 0.03, f 0.60 ± 0.05 | c 0.859 ± 0.03, f 0.559 ± 0.05 | The agent model's mutation-selection point |
+| A6 | L8, five scores | STFT 387, Grudger 445, Naive Prober 349, Tester 484, Sneak 400 | 406.5, 413.8, 332.0, 455.7, 419.2 (± 15) | The 4.3 state machines give these; TFT's row matches the prototype |
+| A7 | L8b, unknown length | gain within ± 3 | gain ≤ +3 (one-sided) | A TFT-End that guesses round 200 loses about 36 |
+| A8 | L9, final shares | TFT .33, Grudger .22, Pavlov .19 | .669, .004, .138 (± .05) | Follows from A6; Grudger dies early |
+| A9 | L9b, `k*` (report line) | 0.049 | 0.040 (measured 0.0399) | The published value counts only TFT's own meetings |
+| A10 | 4.2 contest rules | left open | (a) a display block ends the contest; (b) both withdraw with no prior mutual exchange: nobody gets the prize and nobody pays | The resident/intruder -12.5 cells need (b) |
+| A11 | L11 label | "Exact, to be verified against the book at M2" | "Exact (as recorded in research notes C1)" | Checked against the notes, not the book |
+| A12 | L10 | (none) | Report-only note: with realised single draws and exp soft selection the equilibrium is about 0.55 | The check uses expected payoffs |
+| A13 | L1, other notes | (none) | Agent mean payoff 6.4 to 6.9 is report-only; the `w0 = 100` negative control misses the tolerance, as intended | The 6.25 check is made at the replicator ESS |
+
+### Lab results (M2, 27 Nov 2026)
+
+**One command reproduces everything:** `God.Runner lab all --check` (70 runs; exit 0 on a pass, 1 on a miss). Runtime: 33.8 to 34.1 s on one core, against the 60 s budget. Tests: `DotNet/God.Runner.Tests/LabRunnerTests.cs` and `Assets/God/Tests/EditMode/LabTests.cs`. Merged at commit 10a7142.
+
+"Pass" means every published check passes. "Amended" means one or more published values were amended (see [Lab amendments](#lab-amendments-m2-27-nov-2026)); the remaining checks, and the amended ones, pass. The reproduction label of each experiment is the one in [Reproduction status](#reproduction-status), unchanged.
+
+| Experiment | Result | Notes |
+|---|---|---|
+| State machines, golden sequences | pass | |
+| L1 Hawk/Dove | pass | Agent mean payoff 6.4 to 6.9 is report-only (A13); the `w0 = 100` negative control fails as designed |
+| L2, L2b Retaliator, Bully, Prober | amended | A1 (three Prober cells; the H/D/R/B/P shares become report-only), A2 (N = 200 stays Retaliator; **open finding for the owner**), A10 (contest rules). N = 1000 passes as published |
+| L3 War of attrition | amended | A3 (reader share 0.780 ± 0.05); other checks pass |
+| L4 Resident/intruder | amended | A4 (boundary 0.2 to 0.4, B from 0.4 takes over); other checks pass |
+| L5 Pecking orders | pass | |
+| L6 Coy/fast | amended | A5 (agent means); every RK4 check passes as published (0.833 and 0.625, persistent cycle, `H` drift) |
+| L7 Sucker, Cheat, Grudger | pass | |
+| L8 Round robin | amended | A6 (five scores); all structural checks pass |
+| L8b Known last round | amended | A7 (one-sided check at unknown length); 602 against 597 exact |
+| L9 Ecological run | amended | A8 (final shares); TF2T .14, AllC .11 and every structural criterion pass |
+| L9b TFT against AllD, clustering | pass | A9 is a report-line correction only (`k*` 0.040) |
+| L10 Digger wasps | pass | A12 report-only note (about 0.55 with realised draws) |
+| L11 Hamilton's rule | pass | A11 label: Exact (as recorded in research notes C1) |
+| L12 Selfish herd | pass | |
+| L13 Vampire bats | runs and reports | No numeric expectation, as designed |
+
+Nothing was tuned to pass: each amendment records the published value, the measured or derived value and the reason.
 
 ### 4.7 Island benchmark scenarios (later milestones)
 
@@ -593,6 +663,7 @@ All tests run in EditMode and under `dotnet test DotNet`. The lab as a whole mus
 
 ## 11. Open questions
 None needs the owner. Settled here, with defaults:
+0. **Open finding for the owner (M2, 27 Nov 2026): L2 does not show the corrected claim under our defaults.** With `k = 10, w0 = 500, mu = 2 permille`, N = 200 stays in the Retaliator basin (seeds 1 to 13), and the system is bistable (a Retaliator basin and an H/D/B basin). The book's endnote result (a Hawk/Bully mix) needs drift we do not apply by default (`k = 1` or `w0 = 100` reach it). We record it and decide nothing: neither outcome is presented as the truth. See Amendment A2 and [GAME_THEORY_DESIGN.md](GAME_THEORY_DESIGN.md).
 1. **Gale and Eaves.** Their payoffs are not in the book. We accept the mechanism-level result (L2) and claim no Hawk/Bully ESS. If the original payoffs are found, they become an extra experiment, L2c.
 2. **Vampire bats.** L13 stays exploratory at M2 and gets a directional pass criterion only after its payoff design is calibrated and recorded here.
 3. **Pecking orders.** L5 keeps weak expectations; Landau's h is reported, not checked. A more strength-dependent contest can tighten it later.

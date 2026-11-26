@@ -11,7 +11,7 @@ Rules for this file:
 
 | Item | Value |
 |---|---|
-| Current milestone | **M1** (policy seams) and **M2** (maths lab), in parallel in separate worktrees. M0 is done and merged. |
+| Current milestone | **M3** (NPC core with instincts and lifetime learning) in worktree `wt-lrs-m3`, plus **M13a infrastructure** (SQLite warehouse core) in `wt-lrs-m13a`, in parallel. M0, M1 and M2 are done and merged, which completes checkpoint 4A. |
 | Current checkpoint | **4A Simulation laboratory** (M0–M2) |
 | Next functional release | **First playable new game**: M0–M7 and M9 ([conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)) |
 | Owner questions | None open: all 23 answered on 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)) |
@@ -21,12 +21,15 @@ Rules for this file:
 
 | Milestone | Checkpoint | Completed | Commit | Notes |
 |---|---|---|---|---|
+| M2 | 4A | 27 Nov 2026 | merge into `unity/poc` (`unity/m2`: `2b2a972`, `c9d2813`, `0d86851`, `bd42cb9`) | `Sim/Lab`: Q30 fixed point; benchmark state machines; replicator (including two populations with RK4); agent-based engine; tournaments; presets L1–L13 with status labels. Runner `lab` list/run/all --check/report/hash. `lab all --check`: 70 runs, 70 pass, 33.8 s on one core. Nine expectations were **amended with evidence** (see [STRATEGY_BENCHMARKS.md](STRATEGY_BENCHMARKS.md)). One is a finding for the owner: L2's Hawk/Bully claim doesn't hold under default drift (Retaliator stays dominant; the system is bistable). |
+| M1 | 4A | 27 Nov 2026 | merge into `unity/poc` (`unity/m1`: `a112a21`, `324c96b`) | Four policy interfaces; `PolicyRegistry`; `AiBrainFactionPolicy`; `Stage3MilitaryPolicy` (the military seam also done); `FactionKnowledgeView` (live and filtered: own books exact, foreign stores never, Q21); `KnowledgeProfile`; true-state overlay as a host setting (Q22). The HUD reads only the view, and the reflection test's exception list is empty. Pause rule replaces `StepHeld`. Seeds 1–12 replay the M0 hashes exactly. |
 | M0 | 4A | 27 Nov 2026 | merge into `unity/poc` (branch `unity/m0`: `46d9fad`, `d44aa05`, `1dfb80f`, `acae4c1`) | Delivered: `SimTuning` (no mutable statics; audit test), keyed `Rng` streams, `SimCalendar`/`LifeScale`, `VictorySpec` list (VP10 + LastStanding default; Sandbox), `StateHashParts` including pending commands, domain events and `EventCatalog`, the `God.Recording` JSONL recorder (Off/Metrics/Summary/Full), `God.Runner` (run, batch, verify, replay, bench), save v3, `SimBuilder` shared with Unity's SmokeRun, and the HUD calendar. The Unity player and the runner give identical hashes. |
 
 ## Commits and branches
 
 | Date | Branch | Commit | What |
 |---|---|---|---|
+| 27 Nov 2026 | `unity/poc` | `10a7142` | M1 and M2 merged (pushed) |
 | 27 Nov 2026 | `unity/poc` | merge of `unity/m0` | M0 merged (4 commits on `unity/m0`, listed above) |
 | 27 Nov 2026 | `unity/poc` | `c584818` | Owner's 23 answers recorded, roadmap 4A–4F, DEV_LOG created |
 | 27 Nov 2026 | `unity/poc` | `e4bc98d` | Stage 4 design: 24 design docs, conventions, acceptance tests, handover |
@@ -39,6 +42,9 @@ Branch rules for this run: commit and push tested changes to `unity/poc` and to 
 
 | Date | Commit | Suite | Result | Notes |
 |---|---|---|---|---|
+| 27 Nov 2026 | `10a7142` (M0+M1+M2) | `dotnet test DotNet -c Release`; `lab all --check` | God.Sim 359/359, God.Runner 90/90; lab 70/70 in 33.8 s | Rerun by the lead after merging. |
+| 27 Nov 2026 | `324c96b` (unity/m1) | Unity EditMode / PlayMode; build; player smoke | 336/336 and 77/77; build OK. Smoke seed 2: tick 20161, `4bd54b271857a803`; seed 1: 17534, `12be0f64cefc59f1`. Both equal the runner. | Run by the M1 agent. Background Unity runs took 45–100 minutes each because of editor throttling. |
+| 27 Nov 2026 | `bd42cb9` (unity/m2) | Unity EditMode | 340/340 | Run by the M2 agent. |
 | 27 Nov 2026 | M0 merge | `dotnet test DotNet -c Release` | God.Sim.Tests 313/313, God.Runner.Tests 48/48 | Rerun by the lead after merging. |
 | 27 Nov 2026 | `acae4c1` (unity/m0) | Unity EditMode / PlayMode | 313/313 and 74/74 | Run by the M0 agent in its worktree. A golden hash for the double-based rules matched under Mono. |
 | 27 Nov 2026 | `acae4c1` (unity/m0) | Windows build and player smoke | Build OK (87 MB). Seed 2: Crimson at tick 20161, hash `4bd54b271857a803`, the same as the runner; `verify --against-unity` matched 16 checkpoints. Seed 1: matched 14 checkpoints. | M0.2 ran 4 seeds × 2 years in CI; the 200-year nightly run has not been done. |
@@ -58,6 +64,12 @@ Choices the docs left open, or that implementation forced, with the reason and t
 
 | Date | Milestone | Decision | Why | Owning doc updated |
 |---|---|---|---|---|
+| 27 Nov 2026 | M1 | `FactionKnowledgeView` answers live (no copies). Own books are exact. The map, units, building health and envoys are by observation (stage 3 has no fog). Wars are public; peace offers are seen by the two sides; trade only where involved; foreign stores never. | Q21; cheap in stage 3 | INFORMATION_AND_MEDIA (the lead records it) |
+| 27 Nov 2026 | M1 | `Purpose` and `AllowTrueStateOverlay` are host settings, neither hashed nor saved. Competitive play has no overlay; watch mode is observation (allowed); `-goddev` is developer mode. | Q22; the overlay can't change the sim | INFORMATION_AND_MEDIA |
+| 27 Nov 2026 | M1 | Pause rule: a paused game takes one ordinary tick (AI included) when a person's command is accepted. Nothing else moves a paused game. | Replaces `StepHeld`. About 40 PlayMode tests and placing while paused need commands to show at once | HEADLESS_SIMULATION |
+| 27 Nov 2026 | M1 | The military policy seam is done in M1 (`Stage3MilitaryPolicy`, per-soldier forked stream) | MILITARY_DESIGN and M1.4 | MILITARY_DESIGN |
+| 27 Nov 2026 | M1 | The HUD reflection tests live in a Unity-only EditMode assembly `God.Game.EditTests` | The HUD needs UnityEngine, so it can't run under `dotnet test` | ACCEPTANCE M1.2/M1.3 |
+| 27 Nov 2026 | M2 | Lab numbers: Q30 fixed point; exact 128-bit MulDiv; integer Ln/Exp. Contest rules settled: a display block ends a contest; withdrawal with no mutual exchange means no prize and no cost. | Determinism, and gaps in the spec | STRATEGY_BENCHMARKS |
 | 27 Nov 2026 | M0 | Tuning in `GodState.Tuning` (`MilitaryTuning` is an instance; a `Decay` block), set through integer dotted paths. Static arrays are `ReadOnlyArray<T>`; `BuildingDef` is readonly. | Removes all mutable statics so parallel runs can use different tuning | HEADLESS_SIMULATION (the lead records it) |
 | 27 Nov 2026 | M0 | Dice draw from `Rng.Fork("dice", roll)` and duels from `Rng.Fork("duel", attacker, tick)`. The root `GodState.Rng` never advances. | Keyed streams (conventions §3) | conventions §3 |
 | 27 Nov 2026 | M0 | Victory is a `VictorySpec` list. The default [VP10, LastStanding] is exactly the old rule; Sandbox has no limit. | Pluggable victory; old tests keep their meaning | STATE_DESIGN |
@@ -78,8 +90,9 @@ Every temporary compatibility mechanism is listed here with its removal mileston
 | Stage 3 mode (`GameSetup.Population` off) and its tests | Keeps the stage 3 game playable and its tests meaningful while NPC systems arrive (G6.1, G6.4) | M14 (owner decides whether to retire it) |
 | Walkers (carriers, builders, harvesters) beside NPCs | The stage 3 economy runs until NPC labour passes the same tests | M6 |
 | `MilUnit` spawning | Soldiers are spawned units until they are NPCs | M9 |
-| `AiBrain` behind the `IFactionPolicy` adapter, unchanged | Behaviour-preserving seam (M1.4) | M14 (rewritten for incentives) |
-| `AiHost.StepHeld` (a paused game steps a held tick per command; replays log `hold` lines) | Existing pause mechanism | M1 |
+| `AiBrain` behind the `IFactionPolicy` adapter, unchanged. It still reads true state internally, **including a Q21 breach**: `AiTrader` reads other factions' stock and needs. `AiTradeJudge` answers offers inside the trade system, outside the seam. It is the only temporary entry in the policy reflection test. | Seam that preserves behaviour (M1.4) | M14 (rewritten for incentives, reading only the view) |
+| Saves don't record the policy assignment; a loaded game gets its policies from its host | Not built in M1 | M3 (when NPC policies are added) |
+| Non-HUD Unity code (world views, models, boot, menu, tutorial cards) still reads the sim directly | Outside the M1 gate | M14 |
 | `Stage3MilitaryPolicy` as the default military policy | Combat equivalence while soldiers become NPCs | M9 (stays as a benchmark policy only) |
 | Legacy `double` code on the allow-list | Kept only where M0's multi-host parity audit passes | Shrinks from M0; any item that fails parity is converted at once |
 | Automatic HQ paymaster (`IPayPoint` automatic implementation) | Owner decision Q16: temporary rule; must respect resources and policy, emit events, create nothing | Stage 5 (Village age: a staffed paymaster) |
@@ -90,8 +103,7 @@ Every temporary compatibility mechanism is listed here with its removal mileston
 | `FoundCommunal` explicit interface (only if M12 does not implement autonomous communal founding) | Owner decision Q17 fallback | Stage 5 |
 | `FullInformation` knowledge profile | Stage 4 builds the separation; limited information comes later | Later ages (Stage 6–7), per domain |
 | `TutorialSteps.All` on the static-audit allow-list | Stage 3 tutorial data | M14 (tutorial rewrite) |
-| Scenario `policies` accepts only `faction.default` (AiBrain) or none | No `PolicyRegistry` yet | M1 |
-| Runner exit code 9, "not implemented until Mx", for lab (M2), learn-dump (M3), export (M13a), experiment (M14), serve, dataset and verify-model (M15) | Explicit stubs; nothing is faked | The milestone named |
+| Runner exit code 9, "not implemented until Mx", for learn-dump (M3), export (M13a), experiment (M14), serve, dataset and verify-model (M15). `lab` was implemented in M2. | Explicit stubs; nothing is faked | The milestone named |
 | Scenario keys `population`, `startNpcsPerFaction` and `populationBelow` are refused | No NPCs yet | M3 |
 | `MaxLivePartnerships` = 1 | Owner decision Q5: serial partnerships are enough for M4 | Not a removal: raised or set by custom when concurrent partnerships are added |
 
@@ -112,7 +124,9 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
 | 27 Nov 2026 | roadmap | "Minimum viable Stage 4" replaced by the functional releases (first playable new game = M0–M7 and M9; analytical recording = M0 JSONL, M13a, M13b) | M13 needed M12, which needs M10, which needs M7 and M9 | Owner (27 Nov) |
 
 ## Outstanding work
-- M1 and M2 (in parallel), then M3.
+- M3 (in progress), then M4 and M5 (both need M3). The M13a warehouse core is in progress beside M3.
+- **Owner finding from M2:** with our default drift, the book's corrected Hawk/Bully result (L2) does not appear; Retaliator stays dominant. The system is bistable, and drift decides the basin. The finding is recorded in STRATEGY_BENCHMARKS and GAME_THEORY.
+- **Unity test runs:** background editor throttling makes each run take 45–100 minutes. Run them at checkpoint boundaries (as at 4A), not after every commit.
 - M0 leftovers: the nightly 200-year recording-neutrality run (M0.2 N), CI wiring for the runner and player smokes, and the owner's manual check (play one stage 3 game from the menu).
 - At M2: check L11's mushroom-call numbers against the book before its status label is final.
 - At M12: decide whether autonomous communal founding fits M12 or whether `FoundCommunal` stays an interface until Stage 5 (record the choice above; I-COM-2).
