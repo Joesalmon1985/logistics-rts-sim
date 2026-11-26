@@ -216,6 +216,13 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
   - **No bug found.** L2's hash is unchanged (`815ddf13e8116bc9`). Added `lab invade` and `lab sweep`.
   - **Not established:** Gale & Eaves (1975) was paywalled and not read.
   - **Open design question for the owner:** should island contests charge retaliation a first-blow cost? The default is no change, per D2 ("don't change the model to match the book").
+- **D3 §7 first-blow variant: done, 26 Nov 2026** (`unity/lab-firstblow`: `16ec15b`, `b588920`, `249355b`). See the [investigation, §11](research/HAWK_BULLY_RETALIATOR_INVESTIGATION.md).
+  - **The variant:** an optional first-blow cost, `ContestRules.FirstBlow` (`--rule FirstBlow=N` on `lab invade`/`lab sweep`). The default is 0, so L2 and its hash `815ddf13e8116bc9` are unchanged.
+  - **Definition:** a side that displays on turn 1 against an escalation pays the cost once. Dove and Retaliator pay against Hawk and Bully.
+  - **ESS:** a strict Hawk 5/8, Bully 3/8 ESS exists for any cost of at least 5/8 of a point. I verified this at cost 1 (Dove −0.375, Retaliator −1.0).
+  - **Basin:** it grows with cost. H/B overtakes R in the replicator start grid at about cost 10. From a uniform start with default mutation, every agent seed reaches it from about cost 15.
+  - **Scope:** this is our variant, not Gale & Eaves. On the island, first-mover advantage must come from combat mechanics.
+  - **Tests after merge:** sim 418/418, runner 144/144.
 - **M3 acceptance decision (lead), 26 Nov 2026, after M3b merged.**
   - **Accepted for every D2 §2 requirement,** each demonstrated by behaviour and verified:
     - twins diverge, then decide differently, with the difference attributed to the learned term;
