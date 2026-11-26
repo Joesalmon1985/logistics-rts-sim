@@ -65,8 +65,9 @@ namespace God.Runner.Tests
             using (var d = WarehouseDb.OpenRead(db))
             {
                 Assert.AreEqual(WarehouseDb.CurrentVersion, d.SchemaVersion());
-                Assert.AreEqual(WarehouseDb.CurrentVersion, (long)d.Scalar("SELECT COUNT(*) FROM meta_schema_version"), "one row per applied migration");
-                Assert.AreEqual(5, WarehouseDb.CurrentVersion, "v5 = the M3 population tables, the M3b decision trace, F0's people and goods seams and M4's households (0005)");
+                // M5: one row per migration that exists (a branch may carry 0006 without M4's 0005, SHARED_CONTRACTS 8)
+                Assert.AreEqual(WarehouseDb.Migrations().Count, (long)d.Scalar("SELECT COUNT(*) FROM meta_schema_version"), "one row per applied migration");
+                Assert.GreaterOrEqual(WarehouseDb.CurrentVersion, 4, "v4 = the M3 population tables, the M3b decision trace and F0's people and goods seams; later milestones add theirs");
                 var tables = d.TableNames();
                 foreach (var t in new[] { "dim_run", "dim_date", "dim_faction", "dim_faction_history", "dim_ware", "dim_building", "dim_location", "dim_code", "dim_kpi",
                     "fact_faction_day", "fact_production", "fact_production_day", "fact_combat", "fact_command", "fact_policy_change", "fact_kpi", "fact_event",

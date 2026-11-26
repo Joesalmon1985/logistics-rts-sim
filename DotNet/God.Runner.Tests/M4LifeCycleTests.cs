@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using God.Recording;
@@ -27,15 +27,16 @@ namespace God.Runner.Tests
         /// final hashes of <c>6671592</c> (unity/poc with F0 merged) run with the same setting (taken by its own runner, 26 Nov 2026).
         /// </summary>
         [Test]
+        // After the M5 merge (26 Nov 2026) both switches are off and the pins are F0 (6671592) with both off. Each switch alone has a stub hash part at F0, so a single switch cannot pin F0 any more; the merge was checked to reproduce each branch with the other switch off.
         public void HouseholdsOff_Band6x20_EqualsPostF0Hashes()
         {
-            var pinned = new Dictionary<ulong, ulong> { [1] = 0x355435285f49d02cUL, [2] = 0x8619778f5c1029aeUL, [3] = 0xed46c61909f118eaUL };
-            var specs = pinned.Keys.Select(s => TestUtil.Spec("band_6x20", s, 12000, "tuning.Households.Enabled=0")).ToList();
+            var pinned = new Dictionary<ulong, ulong> { [1] = 0x8b898d115d8a05a7UL, [2] = 0x5fa8991b92168385UL, [3] = 0x66a55d5a67f2ad4eUL };
+            var specs = pinned.Keys.Select(s => TestUtil.Spec("band_6x20", s, 12000, "tuning.Households.Enabled=0", "tuning.Social.Enabled=0")).ToList();
             var res = TestUtil.RunAll(specs);
             foreach (var r in res)
             {
                 Assert.AreEqual(0, r.ExitCode, r.Error);
-                Assert.AreEqual(pinned[r.Seed].ToString("x16"), r.FinalHash.ToString("x16"), "seed " + r.Seed + ": M4 off must hash exactly as F0");
+                Assert.AreEqual(pinned[r.Seed].ToString("x16"), r.FinalHash.ToString("x16"), "seed " + r.Seed + ": M4 and M5 off must hash exactly as F0 (after the M5 merge both switches are needed)");
             }
         }
 

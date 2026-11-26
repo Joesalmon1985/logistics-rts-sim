@@ -41,7 +41,7 @@ namespace God.Runner.Tests
         private static long Q(string db, string sql) { using (var d = WarehouseDb.OpenRead(db)) return Convert.ToInt64(d.Scalar(sql) ?? 0L); }
 
         private const long Ticks = 3 * 1200 + 5;   // three full sim days and a little
-        // M4: care ticks are counted from M4 (F0's two NpcDay v2 columns, Activity.Care and Activity.Social, are part of the day)
+        // NpcDay v2 (F0): care (M4) and social (M5) ticks are part of the day
         private const string AllTicks = "ticks_idle + ticks_eat + ticks_forage + ticks_sleep + ticks_rest + ticks_explore + ticks_gather + ticks_build + ticks_flee + ticks_carry + ticks_other + ticks_care + ticks_social";
 
         [Test]
@@ -141,9 +141,10 @@ namespace God.Runner.Tests
                 Q(db, "SELECT COUNT(*) FROM dim_party WHERE party_kind_code = 1 AND person_key IS NOT NULL"));
             Assert.AreEqual(prod.Sum(p => (long)p.Lot), Q(db, "SELECT COALESCE(SUM(lot_id), 0) FROM fact_production WHERE direction = 1 AND person_key IS NOT NULL"));
             Assert.AreEqual(cons.Sum(p => (long)p.Lot), Q(db, "SELECT COALESCE(SUM(lot_id), 0) FROM fact_production WHERE direction = -1"));
-            // M4: care acts fill the social day aggregate (ChildFed 134, CareGiven 136), exactly, before any sampling
+            // M4 care acts (ChildFed 134, CareGiven 136) and M5 gifts (213) fill the social day aggregate, exactly, before any sampling
             Assert.AreEqual(ev.OfType<God.Sim.Population.Households.ChildFed>().Count() + ev.OfType<God.Sim.Population.Households.CareGiven>().Count(),
-                Q(db, "SELECT COALESCE(SUM(events), 0) FROM fact_social_day"), "the social day holds exactly the care acts (M5 adds its own kinds)");
+                Q(db, "SELECT COALESCE(SUM(events), 0) FROM fact_social_day WHERE kind_code IN (134, 136)"), "the social day holds exactly the care acts");
+            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_social_day WHERE kind_code NOT IN (134, 136, 213)"), "nothing else fills the social day (M5WarehouseTests reconciles the gifts)");
 
             // none of these events also lands in fact_event; counts by code agree with fact_event_day
             Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_event WHERE event_code IN (100, 101, 104, 200, 201, 206, 330, 331, 332, 333, 334)"));
@@ -152,7 +153,8 @@ namespace God.Runner.Tests
             using (var d = WarehouseDb.OpenRead(db))
             {
                 Assert.AreEqual(0, WarehouseRecorder.ForeignKeyViolations(d));
-                Assert.AreEqual(9 + HouseholdMappings.Grains.Length, d.Count("meta_table_grain")); // M4: its seven tables add their grains
+                // M4 and M5 add their own grains (HouseholdMappings.Grains, SocialMappings.Grains)
+                Assert.AreEqual(9 + HouseholdMappings.Grains.Length + SocialMappings.Grains.Length, d.Count("meta_table_grain"));
                 foreach (var t in new[] { "dim_person", "fact_death", "fact_person_day", "fact_production", "fact_learning", "fact_decision", "dim_party", "fact_ownership", "fact_social_day" })
                     Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM meta_table_grain WHERE table_name = '" + t + "'"), t);
                 Assert.AreEqual("fact_person_day", (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = 104"));

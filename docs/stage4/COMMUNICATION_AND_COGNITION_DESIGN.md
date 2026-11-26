@@ -354,6 +354,21 @@ Communicating is just another candidate intent, scored by the same decider. Each
 | M15 | `IntNetNpcPolicy` reading the observation and the learned state |
 | Later | Emergent signalling, learned lexicons, trained networks ([AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md)) |
 
+### 8.1 As built in M5 (branch `unity/m5`, 26 Nov 2026)
+
+`Sim/Comms/Messages.cs` (composition, emission, perception, decoding; it never references `Goods`) and `Sim/Social` (candidates, responses, acts):
+
+| Topic | As built |
+|---|---|
+| Composition | A message is `Composed { Act, Topic, Quantity, Counter (ware, with the count in Sub), Target, Time, DealId, Presented }`, made by one function from its parts. There is one learning verb per act, `Say(act) = 64 + act`. M5 composes: need food (`NeedFood`), request help (`NeedHelp` with a ware topic), offer a trade (`Offer`: wants topic x quantity, gives counter x count), offer a gift (`Offer` with no topic), accept, refuse, counter-offer (`Offer` on the same DealId), cooperate (`Cooperate` with the ware promised) and warn (`Warn` with the enemy's place). `Want` is understood, but no M5 candidate composes it |
+| Perceiving listener | Awake, within its own current sight of the speaker (`CommsRange.Gesture`), and attending it: it is addressed, or the speaker is among its nearest 8 people in sight (`CommsTuning.AttendPeople`) |
+| Decoding | At delivery, into the listener's own inbox (6 slots), with `MessageDecoded`. The listener reads it at its first think after the gesture; its beliefs about deals change then, on the sim side, before the think. A message stays readable for `MessageTtlTicks` (60); an addressed request or offer left unanswered is recorded as `ResponseChosen(Ignored)` |
+| Misunderstanding | Already built in M5 (the table above puts it at M7) and on by default: the chance is 60 per mille x distance / sight, +40 per mille at night, -30 per mille when the goods are presented. One field is read wrong (an act as a similar act, the quantity off by one, a ware as a neighbouring ware). `Comms.Misunderstanding = 0` turns it off (M5.4) |
+| Candidates (4 at most) | 1) my side of an agreed deal (`HandOver`, verb 49); 2) answers to the newest addressed message: accept, refuse or counter an offer; `Give` (48) or refuse a need of food; cooperate or refuse a request for help; `Flee` when warned. An offer to anyone watching is answered only by someone who has what is wanted, by accepting it; 3) my own messages, and `Seek` (54: walk to where a remembered friend or trading partner was last seen). The person is the intent's handle (`TargetId`) with target kind `None`, because the frozen M3.12 check (`Thinker.Known`) has no person targets. Proposed amendment: let it accept `IntentTarget.Npc` targets that are in `sc.People` |
+| The receiver decides | The receiver's own policy scores the response candidates on its own decoded message and beliefs (instinct priors on `MsgAct` and the offer-quality feature, learned values, personality); nothing else decides. Every M5 hand-over follows a gesture and the receiver's own decision (M5.15 test) |
+| Gestures off | `Social.Gestures = 0`: no Say candidates and no decoding, so no deals and no gifts (M5.15) |
+| View | `GestureLayer` draws a gesture from `GestureMade` events only: the speaker's raised arm, the composed message as text, and a line to the addressee |
+
 ## 9. Migration from the existing code
 - The stage 3 code has no NPCs, so nothing is removed.
 - The earlier draft's hand-made utility score with a small "learned bias" is replaced by `AssociativeNpcPolicy`:
