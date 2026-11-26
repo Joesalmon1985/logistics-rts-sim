@@ -160,6 +160,21 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
   - **No bug found.** L2's hash is unchanged (`815ddf13e8116bc9`). Added `lab invade` and `lab sweep`.
   - **Not established:** Gale & Eaves (1975) was paywalled and not read.
   - **Open design question for the owner:** should island contests charge retaliation a first-blow cost? The default is no change, per D2 ("don't change the model to match the book").
+- **M3 acceptance decision (lead), 26 Nov 2026, after M3b merged.**
+  - **Accepted for every D2 §2 requirement,** each demonstrated by behaviour and verified:
+    - twins diverge, then decide differently, with the difference attributed to the learned term;
+    - positive and negative experience, context, reversal, exploration, generalisation, delayed reward, and save/load;
+    - a six-arm On / Frozen / trained-then-Frozen / Off control;
+    - the "why" breakdown in the People card and in `learn-dump`;
+    - the `NpcDay` and `DecisionMade` events.
+  - **Control result, reported as found:** On 666, trained-then-Frozen 663, Frozen/Off 675 alive of 720. The gap shrank from 31 to 9 deaths after the credit fix. The starving had no food in sight in 99.8% of their hungry thinks; they die where shared wild food runs out. Over-harvesting of commons is left for norms and property (M8, M12), not tuned away.
+  - **Still open,** as `[Explicit]` "M3-open" tests, each with an amendment proposed in the M3 record and **not applied** (they wait for the owner):
+    - LS3: the scenario gives no speed-of-rest benefit;
+    - LS4: per seed 27 of 50, and its conjunction has no drive;
+    - LS1: per seed and the Frozen baseline;
+    - L2, L3's filler, L8 and L13;
+    - M3.19's 25% learning share (37.5% at 500 NPCs; the 20 µs and 5 ms budgets are met).
+  - None of these blocks M4 or M5.
 - **M3 merged into `unity/poc` while still in progress, 26 Nov 2026** (`d3aa9fb`). The work is tested and green, but M3 is **not accepted**:
   - learning On lowers island survival (657 vs 679 of 720 over 30 days) because spoilage is never credited back to the forage decision;
   - LS3 and LS4 fail;
