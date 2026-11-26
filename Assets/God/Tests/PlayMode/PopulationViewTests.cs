@@ -68,6 +68,8 @@ namespace God.Game.Tests
             boot.People.TryPosition(person.Id, out var at);
             ModelViewTests.Aim(cam, at, 34f, 48f);
             for (int i = 0; i < 4; i++) yield return null;
+            // M4: the figure may still be easing to its node (people walk to feed, court, store): click where it is drawn now
+            Assert.IsTrue(boot.People.TryPosition(person.Id, out at), "the person is drawn");
             var sp = cam.WorldToScreenPoint(at + Vector3.up * 1.2f);
             Assert.AreEqual(person.Id, boot.Hud.PickNpc(new Vector2(sp.x, sp.y)), "clicking the figure picks that person");
             boot.Hud.SelectNpc(person.Id);
