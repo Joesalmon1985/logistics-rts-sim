@@ -786,7 +786,7 @@ namespace God.Sim.Social
             };
             OpenTrace(s, ev, giver, receiver.Id, dealId, DealKind.Gift, 0, ware, count, Ware.None, 0);
             var saved = giver.Action;
-            giver.Action = new NpcAction { Verb = SocialVerb.Give, TargetKind = IntentTarget.None, TargetId = receiver.Id, TargetNode = receiver.Node, Since = s.Tick };
+            giver.Action = new NpcAction { Verb = SocialVerb.Give, TargetKind = IntentTarget.Npc, TargetId = receiver.Id, TargetNode = receiver.Node, Since = s.Tick };
             m.Act = new SocialAct { Verb = SocialVerb.Give, Handle = receiver.Id, TargetAs = receiver.Id, DealId = dealId, Ware = ware, Count = count, StartTick = tick };
             TryAct(s, ev, giver, Day(s));
             bool ok = m.FindDeal(dealId) >= 0 && m.Deals[m.FindDeal(dealId)].MyGiven >= count;

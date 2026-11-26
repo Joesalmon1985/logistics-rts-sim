@@ -109,6 +109,43 @@ namespace God.Sim.Population.Households
             if (Partnerships.Count(s, seen.Id) >= s.Tuning.Households.Partner.MaxLivePartnerships) { p.Display = DisplayKind.Partnered; p.DisplayLevel = 1; }
         }
 
+        /// <summary>
+        /// The Sense seam for bins (I-BS amendment, SHARED_CONTRACTS 12.32): within sight, a person perceives its own household's
+        /// store (class <see cref="HClass.Store"/>) and any estate goods lying at a death place (<see cref="HClass.Estate"/>), with
+        /// the band of what it sees there that is its own or its household's to take (A8: Own, Household): food for a store,
+        /// any goods for an estate (its inheritance once the executor has split it). Other households' stores are not offered
+        /// to the mind (no permission; theft is M8). The bin id is a reference it may name (a thing it knows, like a lot).
+        /// </summary>
+        public static int SenseBins(GodState s, Npc npc, int sight, NodeGrid g, Sensed[] near, int n)
+        {
+            if (s.Households == null || npc.Life == null) return n;
+            foreach (var b in s.Population.Bins)
+            {
+                if (n >= near.Length) break;
+                bool store = b.Kind == BinKind.HouseholdStore;
+                if (store && (npc.Household == 0 || b.Owner.Kind != OwnerKind.Household || b.Owner.Id != npc.Household)) continue;
+                if (!store && b.Kind != BinKind.Estate) continue;
+                int d = g.Distance(npc.Node, b.Node);
+                if (d > sight) continue;
+                int units = 0;
+                foreach (var l in b.Lots)
+                {
+                    if (store && (!Wares.IsFood(l.Ware) || l.Ware == Ware.Nightshade)) continue;
+                    bool mine = l.Owner.Kind == OwnerKind.Npc && l.Owner.Id == npc.Id
+                        || l.Owner.Kind == OwnerKind.Household && l.Owner.Id == npc.Household && npc.Household != 0 && (store || npc.Stage != LifeStage.Child);
+                    if (mine) units += l.Count;
+                }
+                if (!store && units == 0) continue; // another's estate: nothing of its own lies there
+                near[n++] = new Sensed
+                {
+                    Class = (byte)(store ? HClass.Store : HClass.Estate), Category = ObjCategory.Store,
+                    State = (byte)(units == 0 ? ObjState.StockEmpty : units < 4 ? ObjState.StockLow : ObjState.StockHigh),
+                    Kind = IntentTarget.Bin, Node = b.Node, Dist = d, Ref = b.Id,
+                };
+            }
+            return n;
+        }
+
         // ---------------- sim side ----------------
 
         /// <summary>The episode of trying for a child: kind 1 (partnership) keyed by the partner (the hook sees the candidate only), closed at a birth.</summary>
@@ -189,9 +226,8 @@ namespace God.Sim.Population.Households
     /// Policy call. They read the think scratch only, never <see cref="GodState"/> (gate G4.1): the person in sight, its stage
     /// and displays, the mind's own believed kin (r̂, never the pedigree), its carry and its home. A mind without a believed-kin
     /// part (M3 fixtures, <c>Households.Enabled = 0</c>) gets nothing from here.
-    /// <para>Person-directed candidates name the person by its handle in <c>TargetId</c> and take the actor's own spot as their node:
-    /// M3's perception check (<c>Thinker.Known</c>, frozen) knows no people yet, so a person target there would read as unperceived;
-    /// the handle is the seen person's (13.12). Contract amendment requested: let <c>Known</c> accept <c>sc.People</c>.</para>
+    /// <para>Person-directed candidates are <see cref="IntentTarget.Npc"/> targets: the seen person's handle (13.12) and its node.
+    /// Since the I-BS amendment (SHARED_CONTRACTS 12.31) <c>Thinker.Known</c> accepts them (in sight, or remembered).</para>
     /// </summary>
     public static class HouseholdMindHooks
     {
@@ -234,6 +270,8 @@ namespace God.Sim.Population.Households
             new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Class(HClass.Store), HVerb.TakeFromStore, 200),
             new Instinct(Feature.Situation(HSituation.DependantInNeed), Feature.Class(HClass.Store), HVerb.TakeFromStore, 350),
             new Instinct(Feature.Self(SelfFeature.CarryingFood), Feature.Class(HClass.Store), HVerb.Store, 200),
+            // I-BS (12.32): goods of its own lying in an estate (its inheritance, seen) draw it to take them up
+            new Instinct(Feature.Class(HClass.Estate), 0, HVerb.TakeFromStore, 450),
             new Instinct(Feature.State(HState.Proposing), 0, HVerb.Accept, 450),
             new Instinct(Feature.State(HState.AskingCare), 0, HVerb.AcceptCare, 250),
             new Instinct(Feature.NpcRel((int)NpcRelClass.Partner), 0, HVerb.TryForChild, 250),
@@ -313,7 +351,7 @@ namespace God.Sim.Population.Households
             var self = sc.Self;
             int hungerBand = Thinker.Band(sc.Tuning, Drive.Hunger, self.Hunger);
             bool food = UsableFood(sc);
-            bool home = self.HomeHut != 0 && self.HomeNode >= 0 && self.Household != 0;
+            bool home = self.Household != 0;
             if (self.Stage == LifeStage.Child)
             {
                 if (hungerBand >= 1 && !food)
@@ -327,7 +365,7 @@ namespace God.Sim.Population.Households
                         if (score > bestScore) { bestScore = score; best = i; }
                     }
                     if (best >= 0) Person(sc, HVerb.Beg, best, 0);
-                    if (home) Store(sc, HVerb.TakeFromStore);
+                    if (home) Bins(sc, true, false, false);
                 }
                 return;
             }
@@ -377,33 +415,74 @@ namespace God.Sim.Population.Households
                 Person(sc, HVerb.TryForChild, partner, trying ? Feature.State(HState.Trying) : 0);
             }
             if (mate >= 0) Person(sc, HVerb.Propose, mate, Feature.Self(HSelf.Unpartnered));
-            if (home && !food && (hungerBand >= 1 || needing)) Store(sc, HVerb.TakeFromStore);
-            if (home && food && hungerBand == 0) Store(sc, HVerb.Store);
+            Bins(sc, home && !food && (hungerBand >= 1 || needing), home && food && hungerBand == 0, true);
             if (owed >= 0) Person(sc, HVerb.EndCare, owed, Feature.Situation(sc.People[owed].DisplayLevel >= 3 ? HSituation.CareOwed3 : HSituation.CareOwed2));
             if (dependants && other >= 0) Person(sc, HVerb.AskCare, other, Feature.Self(HSelf.HasDependants));
             if (partner >= 0 && hungerBand >= 2) Person(sc, HVerb.Leave, partner, 0);
         }
 
-        /// <summary>A candidate aimed at a seen person (target id = its handle; node = the actor's own spot), with its person features.</summary>
+        /// <summary>A candidate aimed at a seen person (a person target: its handle and the node it stands on), with its person features.</summary>
         private static void Person(ThinkScratch sc, byte verb, int i, uint extra)
         {
             var p = sc.People[i];
-            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Node, p.Id, sc.Self.Node, 0, p.Dist);
+            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Npc, p.Id, p.Node, 0, p.Dist);
             if (at < 0) return;
             var rel = Relations.ClassOf(sc, in p);
             uint group = p.Stage == LifeStage.Child ? Feature.NpcGroup(NpcGroupValue.Child) : p.Stage == LifeStage.Elder ? Feature.NpcGroup(NpcGroupValue.Elder) : 0;
             Thinker.TargetFeatures(sc, at, Feature.NpcRel((int)rel), group, extra);
         }
 
-        /// <summary>A candidate at the household store (its own hut: known to it), with the store's features.</summary>
-        private static void Store(ThinkScratch sc, byte verb)
+        /// <summary>
+        /// Store and estate candidates from perception (I-BS amendment 12.32): a bin it sees now (the Sense seam), else one it
+        /// remembers seeing (a store belief: walk there, then act within <c>Reach.Store</c>). Taking needs something of its own
+        /// or its household's seen there (the band is not empty); depositing needs its household's store. Never blind.
+        /// </summary>
+        private static void Bins(ThinkScratch sc, bool take, bool deposit, bool estates)
         {
-            var self = sc.Self;
-            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Hut, self.HomeHut, self.HomeNode, HClass.Store, sc.Grid.Distance(self.Node, self.HomeNode), true);
+            if (!take && !deposit && !estates) return;
+            bool storeSeen = false;
+            for (int i = 0; i < sc.SeenCount; i++)
+            {
+                var t = sc.Seen[i];
+                if (t.Kind != IntentTarget.Bin) continue;
+                if (t.Class == HClass.Store)
+                {
+                    storeSeen = true;
+                    if (take && t.State != ObjState.StockEmpty) BinCand(sc, HVerb.TakeFromStore, t.Ref, t.Node, t.Class, t.State, t.Dist, false);
+                    if (deposit) BinCand(sc, HVerb.Store, t.Ref, t.Node, t.Class, t.State, t.Dist, false);
+                }
+                else if (t.Class == HClass.Estate && estates && t.State != ObjState.StockEmpty) BinCand(sc, HVerb.TakeFromStore, t.Ref, t.Node, t.Class, t.State, t.Dist, false);
+            }
+            var b = sc.Mind.Beliefs;
+            for (int i = 0; i < b.Count; i++)
+            {
+                var bel = b.Slots[i];
+                if (bel.Kind != BeliefKind.Store || bel.Ref == 0) continue;
+                bool seenNow = false;
+                for (int k = 0; k < sc.SeenCount; k++) if (sc.Seen[k].Kind == IntentTarget.Bin && sc.Seen[k].Ref == bel.Ref) { seenNow = true; break; }
+                if (seenNow) continue;
+                int d = sc.Grid.Distance(sc.Self.Node, bel.Subject);
+                if (d > sc.Tuning.RecallNodes) continue;
+                if (bel.Class == HClass.Store && !storeSeen)
+                {
+                    if (take && bel.Stock != ObjState.StockEmpty) BinCand(sc, HVerb.TakeFromStore, bel.Ref, bel.Subject, bel.Class, bel.Stock, d, true);
+                    if (deposit) BinCand(sc, HVerb.Store, bel.Ref, bel.Subject, bel.Class, bel.Stock, d, true);
+                }
+                else if (bel.Class == HClass.Estate && estates && bel.Stock != ObjState.StockEmpty) BinCand(sc, HVerb.TakeFromStore, bel.Ref, bel.Subject, bel.Class, bel.Stock, d, true);
+            }
+        }
+
+        /// <summary>A candidate at a bin it perceives or remembers (a bin target: its id and node), with the bin's features.</summary>
+        private static void BinCand(ThinkScratch sc, byte verb, int bin, int node, int cls, int stock, int dist, bool fromBelief)
+        {
+            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Bin, bin, node, (byte)cls, dist, fromBelief);
             if (at < 0) return;
             uint need = BaseHas(sc, Feature.Situation(HSituation.DependantInNeed)) ? Feature.Situation(HSituation.DependantInNeed) : 0;
-            Thinker.TargetFeatures(sc, at, Feature.Class(HClass.Store), Feature.Category(ObjCategory.Store), Feature.PlaceRef(self.HomeNode), need);
+            Thinker.TargetFeatures(sc, at, Feature.Class(cls), Feature.Category(ObjCategory.Store), stock != 0 ? Feature.State(stock) : 0, Feature.PlaceRef(node), need);
         }
+
+        /// <summary>I-BS amendment (12.31): a person it believes kin of any kind is remembered (a person target out of sight is then known).</summary>
+        public static bool Remembers(ThinkScratch sc, int person) => M4(sc) && person != 0 && sc.Mind.Kin.IndexOf(person) >= 0;
 
         /// <summary>The kin term (Hamilton): <c>r̂ x (100 + KinWeight) / 100 x 0.6</c> for care aimed at a person, from its own beliefs only.</summary>
         public static int KinTerm(ThinkScratch sc, int cand)
@@ -423,23 +502,24 @@ namespace God.Sim.Population.Households
 
         /// <summary>
         /// The genome's instinct gains (BIOLOGICAL 4.4) on M4's situational instincts: hunger gain on begging, social gain on
-        /// partnership and shared care, nurture gain on care. Read from the mind's own traits (12-15 hold the gains of an M4
-        /// person; an M3 NPC has none). Not on M3's drive instincts (see below) nor on the store's (they are need-driven).
+        /// partnership and shared care, nurture gain on care. Read from its own <see cref="SelfView"/> (I-BS amendment 12.33;
+        /// formerly copied into <c>Npc.Traits[12..15]</c>); 0 = no gain (an M3 NPC). Not on M3's drive instincts: MindView reports
+        /// their need part without a gain, so a gain there would let the need exceed the instinct it is part of (kept as built,
+        /// DEV_LOG I-BS record); nor on the store's (need-driven).
         /// </summary>
         public static int InstinctGain(ThinkScratch sc, byte verb, int prior)
         {
-            if (prior == 0 || sc.Traits == null || sc.Traits.Length < Trait.Count + 4) return prior;
+            if (prior == 0) return prior;
+            var self = sc.Self;
             int g;
             switch (verb)
             {
-                // M3's verbs keep their priors: the frozen MindView reports a need part without this gain, so a gain there
-                // would let the need exceed the instinct it is part of (contract amendment: apply the gain in MindView)
-                case HVerb.Beg: g = sc.Traits[Trait.Count + 0]; break;
-                case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.AskCare: case HVerb.AcceptCare: g = sc.Traits[Trait.Count + 2]; break;
-                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: g = sc.Traits[Trait.Count + 3]; break;
+                case HVerb.Beg: g = self.HungerGain; break;
+                case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.AskCare: case HVerb.AcceptCare: g = self.SocialGain; break;
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: g = self.NurtureGain; break;
                 default: return prior;
             }
-            return (int)((long)prior * g / 1000);
+            return g <= 0 ? prior : (int)((long)prior * g / 1000);
         }
 
         /// <summary>Personality biases of M4's verbs (traits -100..100): generosity on care, boldness on proposing, patience against accepting at once, loyalty against leaving.</summary>
@@ -466,7 +546,7 @@ namespace God.Sim.Population.Households
             {
                 case FeatureKind.Role: return v == HRole.Child ? "is a child" : v == HRole.Elder ? "is old" : null;
                 case FeatureKind.Self: return v == HSelf.Unpartnered ? "has no partner" : v == HSelf.HasDependants ? "has children at home" : null;
-                case FeatureKind.ObjClass: return v == HClass.Store ? "household store" : null;
+                case FeatureKind.ObjClass: return v == HClass.Store ? "household store" : v == HClass.Estate ? "estate goods" : null;
                 case FeatureKind.ObjState:
                     switch (v)
                     {

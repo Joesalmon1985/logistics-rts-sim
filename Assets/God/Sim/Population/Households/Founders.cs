@@ -62,8 +62,9 @@ namespace God.Sim.Population.Households
 
         /// <summary>
         /// M4's part of a person: sex, parents, generation, genome; the developmental noise and the birth phenotype; the
-        /// personality, instinct gains and learning rates the decider uses (<c>Npc.Traits</c> 0-11, then the four gains at 12-15,
-        /// read by the instinct-gain hook); lifespan; the pedigree record.
+        /// personality and learning rates the decider uses (<c>Npc.Traits</c> 0-11; the instinct gains reach the mind through
+        /// <c>SelfView</c>, I-BS amendment 12.33; slots 12-15 stay reserved, zero, so later trait slots keep their indices);
+        /// lifespan; the pedigree record.
         /// </summary>
         public static void MakeLife(GodState s, Npc npc, byte sex, byte[] genome, int mother, int father, int generation)
         {
@@ -73,8 +74,6 @@ namespace God.Sim.Population.Households
             life.Noise = PhenotypeBuilder.Noise(dev, s.Tuning.Genetics.NoisePermille);
             var traits = new int[Trait.Count + 4];
             PhenotypeBuilder.Birth(genome, LifeCycleSystem.MapOf(s), life.Noise, ref life.Pheno, traits);
-            traits[Trait.Count + 0] = life.Pheno.HungerGain; traits[Trait.Count + 1] = life.Pheno.FearGain;
-            traits[Trait.Count + 2] = life.Pheno.SocialGain; traits[Trait.Count + 3] = life.Pheno.NurtureGain;
             npc.Traits = traits;
             npc.LearnRate = life.Pheno.LearnRate; npc.ForgetRate = life.Pheno.ForgetRate; npc.Curiosity = life.Pheno.Curiosity;
             life.MaxAgeMilli = lt.MaxAgeBaseMilli + life.Pheno.Lifespan + dev.NextRange(-lt.MaxAgeJitterMilli, lt.MaxAgeJitterMilli + 1);

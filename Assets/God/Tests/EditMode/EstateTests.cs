@@ -189,7 +189,7 @@ namespace God.Sim.Tests
             foreach (var custom in customs)
                 foreach (int ladder in ladders)
                 {
-                    var w = Make(4, true, custom == Custom.None ? Custom.EqualChildren : custom, t => { t.Estate.Ladder = custom == Custom.None ? 0 : ladder; t.Estate.Delivery = 0; });
+                    var w = Make(4, true, custom == Custom.None ? Custom.EqualChildren : custom, t => { t.Estate.Ladder = custom == Custom.None ? 0 : ladder; });
                     var s = w.Sim.State;
                     var rule = new CustomSettlement();
                     var rng = new Rng((ulong)(estates + 1));
@@ -262,8 +262,11 @@ namespace God.Sim.Tests
             Assert.IsEmpty(SimInvariants.Check(w.Sim.State));
             Assert.IsEmpty(w.Probe.Trace.CheckC3(w.Sim.State));
             Assert.IsEmpty(w.Probe.Trace.CheckC6(w.Sim.State.Territory.Grid), "every move by a person was within reach (heirs collect where they stand)");
-            // the heirs who stood there took their own lots in hand (Withdraw), or they went to the household store by the deadline
-            Assert.IsTrue(w.Probe.Of<ItemMoved>().Any(m => m.Reason == MoveReason.Withdraw && m.FromKind == HolderKind.Bin || m.Reason == MoveReason.EstateOut && m.ToKind == HolderKind.Bin));
+            // the heirs who saw the estate decided to take their own lots in hand (Withdraw by an heir, I-BS amendment 12.32: a
+            // perceived decision, no longer a reflex nor O4's delivery); anything left went ownerless to the ground
+            var heirs = w.Kids.Select(k => k.Id).ToList();
+            Assert.IsTrue(w.Probe.Of<ItemMoved>().Any(m => m.Reason == MoveReason.Withdraw && m.FromKind == HolderKind.Bin && heirs.Contains(m.Actor)), "an heir collected by its own decision");
+            Assert.IsFalse(w.Probe.Of<ItemMoved>().Any(m => m.Reason == MoveReason.EstateOut && m.ToKind == HolderKind.Bin && m.FromNode != m.ToNode), "no cross-node delivery");
         }
 
         [Test]

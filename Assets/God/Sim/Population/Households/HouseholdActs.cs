@@ -249,22 +249,26 @@ namespace God.Sim.Population.Households
 
         // ---------------- the household store ----------------
 
-        private static LotBin StoreAt(GodState s, Npc npc, int hutId)
-        {
-            if (npc.Household == 0) return null;
-            var h = s.Households.Find(npc.Household);
-            if (h == null || h.Bin == 0 || h.Hut != hutId) return null;
-            return Goods.BinById(s.Population, h.Bin);
-        }
+        /// <summary>The bin an intent names (a bin target, I-BS amendment 12.32): it must still exist; the act then walks to it.</summary>
+        private static LotBin TargetBin(GodState s, Npc npc) =>
+            npc.Action.TargetKind == IntentTarget.Bin ? Goods.BinById(s.Population, npc.Action.TargetId) : null;
 
-        /// <summary>Withdraw (SHARED_CONTRACTS 2.5): food from the household store into the carry, within <see cref="Population.Reach.Store"/>, owner kept.</summary>
+        /// <summary>Its own household's store (the one bin it may deposit in or take food from under the household's norms).</summary>
+        private static bool IsOwnStore(GodState s, Npc npc, LotBin bin) =>
+            bin.Kind == BinKind.HouseholdStore && npc.Household != 0 && bin.Owner.Kind == OwnerKind.Household && bin.Owner.Id == npc.Household;
+
+        /// <summary>
+        /// Withdraw (SHARED_CONTRACTS 2.5): from a bin it perceived or remembers, within <see cref="Population.Reach.Store"/>, owner
+        /// kept. Its household's store gives food under <see cref="StoreAccess.MayTake"/>; an estate gives the lots that are its
+        /// own or its household's (an heir collecting its inheritance, a decision since the I-BS amendment; A2).
+        /// </summary>
         private static void Take(GodState s, EventBuffer ev, Npc npc)
         {
-            var hut = s.Population.HutById(npc.Action.TargetId);
-            if (hut == null) { Frustrate(s, npc); return; }
-            if (!WalkTo(s, npc, hut.Node, Population.Reach.Store)) { if (npc.Path == null) Frustrate(s, npc); return; }
-            var bin = StoreAt(s, npc, hut.Id);
-            if (bin == null || !StoreAccess.MayTake(s, npc, bin) || !HouseholdHooks.CanWork(s, npc)) { Frustrate(s, npc); return; }
+            var bin = TargetBin(s, npc);
+            if (bin == null) { Frustrate(s, npc); return; }
+            if (!WalkTo(s, npc, bin.Node, Population.Reach.Store)) { if (npc.Path == null) Frustrate(s, npc); return; }
+            if (bin.Kind == BinKind.Estate) { Collect(s, ev, npc, bin); return; }
+            if (!IsOwnStore(s, npc, bin) || !StoreAccess.MayTake(s, npc, bin) || !HouseholdHooks.CanWork(s, npc)) { Frustrate(s, npc); return; }
             int want = s.Tuning.Households.Care.TakeUnits, got = 0;
             for (int k = 0; k < bin.Lots.Count && got < want;)
             {
@@ -282,14 +286,33 @@ namespace God.Sim.Population.Households
             End(npc);
         }
 
+        /// <summary>An heir at an estate takes up what is its own (or, an adult, its household's), as room allows; permission is checked lot by lot.</summary>
+        private static void Collect(GodState s, EventBuffer ev, Npc npc, LotBin bin)
+        {
+            int got = 0;
+            for (int k = 0; k < bin.Lots.Count;)
+            {
+                var l = bin.Lots[k];
+                bool mine = l.Owner.Kind == OwnerKind.Npc && l.Owner.Id == npc.Id
+                    || l.Owner.Kind == OwnerKind.Household && npc.Household != 0 && l.Owner.Id == npc.Household && npc.Stage != LifeStage.Child;
+                int n = mine ? Math.Min(l.Count, PopulationModule.Room(s, npc, l.Ware)) : 0;
+                if (n <= 0) { k++; continue; }
+                bool whole = n == l.Count;
+                var r = Goods.Move(s, ev, Holder.Bin(bin.Id), l.Id, n, Holder.Carry(npc.Id), MoveReason.Withdraw, npc.Id, OwnerRule.Keep);
+                if (!r.Ok) { k++; continue; }
+                got += n;
+                if (!whole) k++;
+            }
+            if (got == 0) Frustrate(s, npc); else End(npc);
+        }
+
         /// <summary>Deposit (SHARED_CONTRACTS 2.5): its own and its household's food into the store, the store's owner taking it (no exchange, no gift).</summary>
         private static void Deposit(GodState s, EventBuffer ev, Npc npc)
         {
-            var hut = s.Population.HutById(npc.Action.TargetId);
-            if (hut == null) { Frustrate(s, npc); return; }
-            if (!WalkTo(s, npc, hut.Node, Population.Reach.Store)) { if (npc.Path == null) Frustrate(s, npc); return; }
-            var bin = StoreAt(s, npc, hut.Id);
+            var bin = TargetBin(s, npc);
             if (bin == null) { Frustrate(s, npc); return; }
+            if (!WalkTo(s, npc, bin.Node, Population.Reach.Store)) { if (npc.Path == null) Frustrate(s, npc); return; }
+            if (!IsOwnStore(s, npc, bin)) { Frustrate(s, npc); return; }
             int put = 0;
             for (int i = 0; i < npc.Carry.Length; i++)
             {

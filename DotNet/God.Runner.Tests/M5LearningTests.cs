@@ -218,9 +218,9 @@ namespace God.Runner.Tests
         /// while a fresh stranger offers too; then the learner trades honestly with other strangers. The social term is off
         /// (the default), so trust does not enter the choice: what changes the choice is learned.
         /// </summary>
-        private static L14Result RunL14(ulong seed, LearningMode mode)
+        private static L14Result RunL14(ulong seed, LearningMode mode, int term = -1)
         {
-            var lab = new M5SocialLab(seed, t => { t.Population.ExploreNodes = 0; t.Social.OfferCooldownTicks = 100; t.Social.DealTimeoutTicks = 240; });
+            var lab = new M5SocialLab(seed, t => { t.Population.ExploreNodes = 0; t.Social.OfferCooldownTicks = 100; t.Social.DealTimeoutTicks = 240; if (term >= 0) t.Social.Term = term; });
             var l = lab.AddH(lab.Glade, null, mode, false, 300, (Ware.Roots, 3));
             var sp = new BenchSocialPolicy("bench.cheat") { Delivers = false, Only = l.Id };
             var sNpc = lab.Add(lab.At(0, 1), sp, LearningMode.On, true, (Ware.Fish, 3));
@@ -278,9 +278,18 @@ namespace God.Runner.Tests
         /// learned entries and social trust are reported side by side.
         /// </summary>
         [Test, Explicit("M5 outstanding target: the learned avoidance is too slow and too general (see the M5 record)"), Category("M5-target")]
-        public void M5_6_L14_AvoidanceAfterBeingCheated_AndRecovery()
+        public void M5_6_L14_AvoidanceAfterBeingCheated_AndRecovery() => L14(-1);
+
+        /// <summary>I-BS evidence for amendment 12.34: the same L14 run with the social term forced off (0) and on (1), side by side.</summary>
+        [Test, Explicit("I-BS evidence: Social.Term off and on"), Category("M5-target")]
+        public void M5_6_L14_SocialTermOff() => L14(0);
+
+        [Test, Explicit("I-BS evidence: Social.Term off and on"), Category("M5-target")]
+        public void M5_6_L14_SocialTermOn() => L14(1);
+
+        private static void L14(int term)
         {
-            var rows = Enumerable.Range(1, 20).AsParallel().AsOrdered().Select(sd => (sd, r: RunL14((ulong)sd, LearningMode.On))).ToList();
+            var rows = Enumerable.Range(1, 20).AsParallel().AsOrdered().Select(sd => (sd, r: RunL14((ulong)sd, LearningMode.On, term))).ToList();
             foreach (var (sd, r) in rows)
                 TestContext.WriteLine("seed " + sd + ": base " + r.BaseAccepted + "/" + r.BaseOffers + ", S after " + r.SAccepted + "/" + r.SOffers + ", others " + r.OtherAccepted + "/" + r.OtherOffers
                     + ", recover " + r.RecoverAccepted + "/" + r.RecoverOffers + " (honest trades " + r.HonestTrades + ", betrayals " + r.Betrayals + "); learned S " + r.LearnedS + ", stranger " + r.LearnedStranger + ", trust S " + r.TrustS);
