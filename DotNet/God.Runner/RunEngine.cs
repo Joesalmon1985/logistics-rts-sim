@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using God.Recording;
+using God.Runner.Warehouse;
 using God.Sim;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -77,6 +78,12 @@ namespace God.Runner
         /// person's or a served agent's) and are logged in the replay with origin "external". Used by the replay tests.
         /// </summary>
         public Action<GodSim> BeforeStep;
+        /// <summary>Also record the run in a SQLite warehouse (<c>warehouse.sqlite</c> in the run directory unless a path is set). Null: JSONL only.</summary>
+        public WarehouseOptions Sqlite;
+        /// <summary>Do not write the JSONL event and snapshot streams even at Summary or Full (SQLite only; <c>--no-jsonl</c>).</summary>
+        public bool SkipJsonl;
+        /// <summary>Extra recorders built per run (tests: an event capture). They are begun, fed and ended like the runner's own.</summary>
+        public List<Func<IRunRecorder>> ExtraRecorders = new List<Func<IRunRecorder>>();
         public string Host = "runner";
         public string GitCommit;
         public CancellationToken Cancel;
@@ -100,6 +107,8 @@ namespace God.Runner
         public bool? SmokeOk;
         public string LastStandings;
         public string RunDir;
+        /// <summary>The SQLite warehouse file of this run, when one was written.</summary>
+        public string WarehousePath;
         public Divergence Divergence;
         public List<string> Messages = new List<string>();
         public List<(long tick, byte[] bytes)> Saves = new List<(long, byte[])>();
@@ -192,9 +201,17 @@ namespace God.Runner
             };
             var metrics = new MetricsRecorder(sc.Metrics);
             var recorders = new List<IRunRecorder> { metrics };
-            if (level >= RecordingLevel.Summary || info.Domains.Values.Any(v => v >= RecordingLevel.Summary)) recorders.Add(new JsonlRecorder());
+            if (!spec.SkipJsonl && (level >= RecordingLevel.Summary || info.Domains.Values.Any(v => v >= RecordingLevel.Summary))) recorders.Add(new JsonlRecorder());
+            WarehouseRecorder wh = null;
+            if (spec.Sqlite != null && (level >= RecordingLevel.Metrics || info.Domains.Values.Any(v => v >= RecordingLevel.Summary)))
+            {
+                var wo = spec.Sqlite.Clone();
+                if (wo.Path == null && dir != null) wo.Path = Path.Combine(dir, "warehouse.sqlite");
+                if (wo.Path != null) { wh = new WarehouseRecorder(wo, sc, spec.Replicate, git, spec.Host, metrics); recorders.Add(wh); res.WarehousePath = wo.Path; }
+            }
+            foreach (var f in spec.ExtraRecorders) recorders.Add(f());
             try { foreach (var r in recorders) r.Begin(info, sim); }
-            catch (Exception e) { ioFailed = true; res.Messages.Add("I/O error (recorder): " + e.Message); }
+            catch (Exception e) { ioFailed = true; res.Messages.Add("I/O error (recorder): " + e.Message); DropRecorders(recorders); }
             var smoke = smokeCheck ? new SmokeVerdict() : null;
             var expected = spec.Replay?.Of(ReplayEntryKind.Checkpoint).ToDictionary(e => e.Tick, e => e);
             var expectedEnd = spec.Replay?.Of(ReplayEntryKind.End).FirstOrDefault();
@@ -231,7 +248,7 @@ namespace God.Runner
                     if (sInfo != null && !spec.Quiet) log.WriteLine(sInfo);
                 }
                 try { foreach (var r in recorders) r.OnTick(sim, events); }
-                catch (Exception e) { ioFailed = true; res.Messages.Add("I/O error (recorder): " + e.Message); recorders.RemoveAll(r => !(r is MetricsRecorder)); }
+                catch (Exception e) { ioFailed = true; res.Messages.Add("I/O error (recorder): " + e.Message); DropRecorders(recorders); }
                 if (eventJson != null) foreach (var e in events) log.WriteLine(eventJson.Line(e));
                 if (spec.SnapshotEveryTick) SnapshotBuilder.FactionDay(s);
 
@@ -245,7 +262,7 @@ namespace God.Runner
                 {
                     var rows = SnapshotBuilder.FactionDay(s);
                     try { foreach (var r in recorders) r.OnDayEnd(sim, rows); }
-                    catch (Exception e) { ioFailed = true; res.Messages.Add("I/O error (recorder): " + e.Message); recorders.RemoveAll(r => !(r is MetricsRecorder)); }
+                    catch (Exception e) { ioFailed = true; res.Messages.Add("I/O error (recorder): " + e.Message); DropRecorders(recorders); }
                     res.LastStandings = Standings(s);
                     if (!spec.Quiet && smoke == null) log.WriteLine(cal.Label(s.Tick) + " | " + res.LastStandings);
                     foreach (var c in sc.Fail) if (metrics.Latest.TryGetValue(c.Metric, out long v) && c.Holds(v)) { failed = true; stop = "fail:" + c.Metric; }
@@ -319,6 +336,11 @@ namespace God.Runner
             else if (ioFailed) code = ExitCodes.Worst(code, ExitCodes.IoError);
             res.ExitCode = code;
 
+            if (wh != null && recorders.Contains(wh))
+            {
+                try { wh.Finish(res, sc); }
+                catch (Exception e) { res.Messages.Add("I/O error (warehouse): " + e.Message); if (res.ExitCode != ExitCodes.Interrupted) res.ExitCode = ExitCodes.Worst(res.ExitCode, ExitCodes.IoError); wh.Dispose(); }
+            }
             if (dir != null) WriteOutputs(res, spec, level, git, dir);
             if (!spec.Quiet)
             {
@@ -331,6 +353,13 @@ namespace God.Runner
         }
 
         // ---------------- helpers ----------------
+
+        /// <summary>After a recorder failed: stop and close every recorder except the in-memory metrics (the sim result stays valid).</summary>
+        private static void DropRecorders(List<IRunRecorder> recorders)
+        {
+            foreach (var r in recorders.Where(x => !(x is MetricsRecorder)).ToList()) { try { r.Dispose(); } catch { } }
+            recorders.RemoveAll(r => !(r is MetricsRecorder));
+        }
 
         public static string Standings(GodState s) =>
             string.Join(" | ", FactionRules.Standings(s).Select(st => FactionInfo.Name(st.Faction) + " " + st.VictoryPoints + " VP " + st.Hqs + " HQ" + (st.Eliminated ? " (out)" : "")));

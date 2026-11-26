@@ -65,6 +65,7 @@ namespace God.Runner
                     string dir = Path.Combine(template.OutRoot, template.Group ?? "adhoc", template.Scenario.Name);
                     Directory.CreateDirectory(dir);
                     File.WriteAllText(Path.Combine(dir, "batch.json"), batch.ToString(Formatting.Indented));
+                    if (template.Sqlite != null) God.Runner.Warehouse.BatchIndex.Write(Path.Combine(dir, "batch.sqlite"), items.Select(i => i.RunDir).ToList());
                 }
                 catch (Exception e) { log.WriteLine("I/O error (batch.json): " + e.Message); exitCode = ExitCodes.Worst(exitCode, ExitCodes.IoError); }
             }
@@ -106,6 +107,7 @@ namespace God.Runner
             var args = new List<string> { Quote(RunnerDll), "run", "--scenario", Quote(scenarioFile), "--seed", seed.ToString(), "--quiet", "--json" };
             if (template.OutRoot != null) { args.Add("--out"); args.Add(Quote(template.OutRoot)); args.Add("--group"); args.Add(template.Group ?? "adhoc"); }
             else args.Add("--no-out");
+            if (template.Sqlite != null) { args.Add("--sqlite"); if (template.SkipJsonl) args.Add("--no-jsonl"); }
             if (template.Level.HasValue) { args.Add("--record"); args.Add(RecordingLevels.Name(template.Level.Value)); }
             if (template.ToTick > 0) { args.Add("--ticks"); args.Add(template.ToTick.ToString()); }
             if (template.CheckSmoke) args.Add("--check-smoke");

@@ -170,7 +170,6 @@ namespace God.Runner.Tests
         [TestCase("dataset", "M15")]
         [TestCase("verify-model", "M15")]
         [TestCase("learn-dump", "M3")]
-        [TestCase("export", "M13")]
         public void LaterCommands_SayWhenTheyArrive(string cmd, string milestone)
         {
             Assert.AreEqual(ExitCodes.NotImplemented, TestUtil.Cli(out _, out var e, cmd, "all", "--check"));

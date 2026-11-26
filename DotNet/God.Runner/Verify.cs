@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using God.Recording;
+using God.Runner.Warehouse;
 using God.Sim;
 
 namespace God.Runner
@@ -123,7 +124,7 @@ namespace God.Runner
             WriteReplay = s.WriteReplay, SaveAtTick = s.SaveAtTick, SaveEveryDays = s.SaveEveryDays, FromSave = s.FromSave, FromSavePath = s.FromSavePath,
             Replay = s.Replay, ToTick = s.ToTick, CheckpointEvery = s.CheckpointEvery, CheckSmoke = s.CheckSmoke, PrintEvents = s.PrintEvents,
             Quiet = s.Quiet, Log = s.Log, KeepSaveBytes = s.KeepSaveBytes, TestSystems = new List<Func<ISimSystem>>(s.TestSystems),
-            SnapshotEveryTick = s.SnapshotEveryTick, BeforeStep = s.BeforeStep, Host = s.Host, GitCommit = s.GitCommit, Cancel = s.Cancel,
+            Sqlite = s.Sqlite?.Clone(), SkipJsonl = s.SkipJsonl, ExtraRecorders = new List<Func<IRunRecorder>>(s.ExtraRecorders), SnapshotEveryTick = s.SnapshotEveryTick, BeforeStep = s.BeforeStep, Host = s.Host, GitCommit = s.GitCommit, Cancel = s.Cancel,
         };
 
         /// <summary>The recording matrix: Off, Metrics, Summary, Full, and each M0 domain alone at Full (writing real files under <paramref name="outRoot"/>).</summary>
