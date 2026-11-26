@@ -19,10 +19,21 @@ namespace God.Sim.Lab
     public readonly struct ContestRules
     {
         public readonly int V, I, T, S, MaxTurns, ProbePermille;
-        public ContestRules(int v, int i, int t, int s, int maxTurns, int probePermille)
+        /// <summary>
+        /// Optional first-blow cost (lab variant, D3; 0 in L2 and every preset, so they are unchanged). A contestant that
+        /// plays Display on turn 1 while its opponent plays Escalate on turn 1 pays this once, on top of whatever else the
+        /// contest gives it, whatever it does afterwards and however the contest ends. Both sides can pay (never both:
+        /// a side that displays is struck only by an escalating opponent). Dove, Retaliator and a non-probing Prober
+        /// open with Display, so they pay against an opening Hawk, Bully or probing Prober; it is not charged to Hawk or Bully.
+        /// </summary>
+        public readonly int FirstBlow;
+        public ContestRules(int v, int i, int t, int s, int maxTurns, int probePermille) : this(v, i, t, s, maxTurns, probePermille, 0) { }
+        public ContestRules(int v, int i, int t, int s, int maxTurns, int probePermille, int firstBlow)
         {
-            V = v; I = i; T = t; S = s; MaxTurns = maxTurns; ProbePermille = probePermille;
+            V = v; I = i; T = t; S = s; MaxTurns = maxTurns; ProbePermille = probePermille; FirstBlow = firstBlow;
         }
+        /// <summary>The same rules with a first-blow cost.</summary>
+        public ContestRules WithFirstBlow(int cost) => new ContestRules(V, I, T, S, MaxTurns, ProbePermille, cost);
         public static ContestRules Lab => new ContestRules(50, 100, 10, 10, 8, 100);
     }
 
@@ -112,6 +123,19 @@ namespace God.Sim.Lab
         public static ContestOutcome Resolve(ContestKind a, ContestKind b, Role roleA, Role roleB, bool probeA, bool probeB, bool coinA,
             in ContestRules r, bool recordMoves = false)
         {
+            var o = ResolveTurns(a, b, roleA, roleB, probeA, probeB, coinA, r, recordMoves, out bool fbA, out bool fbB);
+            if (r.FirstBlow != 0) // the first-blow cost of the D3 variant (see ContestRules.FirstBlow); absent in L2
+            {
+                if (fbA) o.PayA -= r.FirstBlow;
+                if (fbB) o.PayB -= r.FirstBlow;
+            }
+            return o;
+        }
+
+        private static ContestOutcome ResolveTurns(ContestKind a, ContestKind b, Role roleA, Role roleB, bool probeA, bool probeB, bool coinA,
+            in ContestRules r, bool recordMoves, out bool firstBlowA, out bool firstBlowB)
+        {
+            firstBlowA = firstBlowB = false;
             var sa = new ContestState { Kind = a, ProbeMode = a == ContestKind.Prober && probeA };
             var sb = new ContestState { Kind = b, ProbeMode = b == ContestKind.Prober && probeB };
             var o = new ContestOutcome();
@@ -126,6 +150,11 @@ namespace God.Sim.Lab
                 CMove ma = sa.Decide(va), mb = sb.Decide(vb);
                 if (recordMoves) { o.MovesA[turn - 1] = ma; o.MovesB[turn - 1] = mb; }
                 o.Turns = turn;
+                if (turn == 1)
+                {
+                    firstBlowA = ma == CMove.Display && mb == CMove.Escalate;
+                    firstBlowB = mb == CMove.Display && ma == CMove.Escalate;
+                }
                 if (ma == CMove.Withdraw || mb == CMove.Withdraw)
                 {
                     int cost = mutualEver ? r.S : 0;

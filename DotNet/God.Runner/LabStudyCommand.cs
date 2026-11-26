@@ -17,7 +17,7 @@ namespace God.Runner
     /// </summary>
     public static class LabStudyCommand
     {
-        public const string Usage = @"  God.Runner lab invade [--matrix l2|l2p|msp|msp4] [--rule S=10 ...] [--eps 10] [--gens 20000] [--w0 500]
+        public const string Usage = @"  God.Runner lab invade [--matrix l2|l2p|msp|msp4] [--rule S=10 --rule FirstBlow=N ...] [--eps 10] [--gens 20000] [--w0 500]
                         [--agents 1000] [--agent-gens 2000] [--k 10] [--seeds 1..5] [--expected] [--workers N]
   God.Runner lab sweep  [--matrix l2] [--dynamics agents|replicator] [--starts uniform,hawk,ret,hb] [--mu 0,2,20]
                         [--agents 200] [--k 10] [--w0 500] [--gens 6000] [--seeds 1..5] [--rule S=10 ...]
@@ -28,12 +28,12 @@ namespace God.Runner
         private static ContestRules Rules(Args a)
         {
             var r = ContestRules.Lab;
-            int v = r.V, i = r.I, t = r.T, s = r.S, mt = r.MaxTurns, q = r.ProbePermille;
+            int v = r.V, i = r.I, t = r.T, s = r.S, mt = r.MaxTurns, q = r.ProbePermille, fb = r.FirstBlow;
             foreach (var kv in a.All("rule"))
             {
                 int eq = kv.IndexOf('=');
                 if (eq <= 0 || !int.TryParse(kv.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int val))
-                    throw new UsageException("--rule takes KEY=integer (V, I, T, S, MaxTurns, q): " + kv);
+                    throw new UsageException("--rule takes KEY=integer (V, I, T, S, MaxTurns, q, FirstBlow): " + kv);
                 switch (kv.Substring(0, eq))
                 {
                     case "V": v = val; break;
@@ -42,13 +42,14 @@ namespace God.Runner
                     case "S": s = val; break;
                     case "MaxTurns": mt = val; break;
                     case "q": q = val; break;
-                    default: throw new UsageException("--rule key must be V, I, T, S, MaxTurns or q: " + kv);
+                    case "FirstBlow": fb = val; break;
+                    default: throw new UsageException("--rule key must be V, I, T, S, MaxTurns, q or FirstBlow: " + kv);
                 }
             }
-            return new ContestRules(v, i, t, s, mt, q);
+            return new ContestRules(v, i, t, s, mt, q, fb);
         }
 
-        private static string RulesText(ContestRules r) => "V " + r.V + ", I " + r.I + ", T " + r.T + ", S " + r.S + ", MaxTurns " + r.MaxTurns + ", q " + r.ProbePermille + " permille";
+        private static string RulesText(ContestRules r) => "V " + r.V + ", I " + r.I + ", T " + r.T + ", S " + r.S + ", MaxTurns " + r.MaxTurns + ", q " + r.ProbePermille + " permille" + (r.FirstBlow != 0 ? ", FirstBlow " + r.FirstBlow : "");
 
         private static List<int> Ints(Args a, string name, string def)
         {
