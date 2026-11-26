@@ -58,6 +58,8 @@ Milestone numbers are the official ones in [DESIGN_CONVENTIONS.md](DESIGN_CONVEN
    - No code nudges a Hawk share towards 7/12, rewards Tit for Tat, or punishes cycles.
    - If our island produces no Hawk/Dove mix, or a Grudger-free village, that is a finding.
    - Two of the book's own published equilibria were wrong (see the corrections in the research notes). So the island is not expected to match the book.
+   - **If the island differs from the maths, investigate why (owner, 27 Nov).** A difference is never "fixed" by tuning the island towards the book. It is explained: which ingredient the island lacks or adds (memory, recognition, noise, kinship, institutions, scarcity, payoffs that differ from the matrix), with a controlled island run that varies that ingredient. The explanation is written into the experiment's report.
+8. **Exact, derived or invented (owner, 27 Nov).** A lab experiment is called a **reproduction** only when the book gives every number it needs. Where the book lacks the numbers, the experiment says so and states whether its payoffs are derived (computed from the book's own numbers or a cited source) or invented (chosen by us); an invented-payoff experiment is never called an exact reproduction. The status of each experiment is in [STRATEGY_BENCHMARKS.md](STRATEGY_BENCHMARKS.md#reproduction-status).
 5. **Mechanics make it possible; measurement says whether it happened.** Nothing here is designed in. Each example lists the ingredients the book says it needs, and then a measurement that can come back negative.
 6. **Measurement never feeds back.** Fingerprints and benchmark-likeness scores exist for analysis only. Policies cannot read them (the reflection test in [Tests](#10-tests-and-acceptance-criteria) covers this), and recording on or off gives the same state hash.
 7. **Honest about limits.** The island has no genetic fitness in the book's sense: NPCs do not reproduce in proportion to payoff in a clean way. Where the book's result is about gene frequencies, the island version is about what spreads through inheritance, learning and imitation. Section 4.9 states this per example.
@@ -280,7 +282,7 @@ For each example: **Island form**, **Makes it possible**, **Institutions**, **Me
 - **Makes it possible:** communal care by households as an informal arrangement; the possibility of leaving a child; recognition of own children by familiarity (children do wander).
 - **Institutions:** a school or nursery (Village and Town ages, later stages) formalises the pool and adds staff and funding. Welfare in kind (food for children) makes dumping less costly for the cheat. A court of elders can sanction.
 - **Measure:** births per household against nursery hours given; the share of nursery hours given versus received by household; whether care is directed at own children when the pool is large.
-- **Scope:** **in, light** (M4 children, M12 elders). A formal nursery is **later** (Stage 5).
+- **Scope:** **in, light** (M4 children; informal shared childcare between households is supported in Stage 4 through `CareArrangement`, [HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#shared-childcare-between-households); M12 elders). A formal nursery can emerge in Stage 5 or later (owner decision Q15).
 
 **C3. Cuckoos and host arms race (Ch6, Ch8, Ch13)**
 - **Island form (optional):** a child secretly placed in another household and raised as its own. Hosts evolve ways to detect strangers, and the cheats evolve better disguises.
@@ -661,4 +663,6 @@ All automatable, and also runnable under `dotnet test DotNet`.
 
 Settled in review (26 Nov 2026): the contest mechanic is owned here and coded in `Sim/Social/Contests`; civilians fight with the `Unarmed` profile; item quality is owned by ECONOMY_DESIGN; truth fields are analytics-only and stored at the `Full` level; benchmark likeness is computed by the analysis job for every adult each sim year in runs up to 1000 NPCs, and for a deterministic 1-in-10 sample by `NpcId` above that.
 
-1. **Nurseries.** A shared nursery (guillemot case) is not in the Band-age institution list. Default: an informal arrangement between households in stage 4, and a formal institution from Stage 5.
+No open questions remain.
+
+**Owner decision Q15 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)): shared nurseries.** Yes. Informal shared childcare between households is supported in Stage 4 ([HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#shared-childcare-between-households)); a formal institution can emerge in Stage 5 or later. Individuals can cooperate in raising children, share caregiving and potentially exploit such arrangements, which is what the guillemot case (C2) needs. Biological parents are not the only possible caregivers.

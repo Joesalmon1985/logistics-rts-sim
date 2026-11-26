@@ -23,11 +23,11 @@ This document defines the **named benchmark policies** exactly, the **maths-only
 
 1. **Benchmarks are policies, not people.** They are registered `INpcPolicy` implementations (keys such as `bench.tft`) used in the lab and in scripted island scenarios. Ordinary NPCs never get one, and the sim has no strategy field.
 2. **Lab and island stay apart.**
-   - The lab uses the book's payoffs and abstract agents. It must reproduce known results, within stated tolerances.
+   - The lab uses the book's payoffs where the book gives them, and abstract agents. Where the book gives the numbers, it must reproduce the known results within stated tolerances; where it does not, the experiment says so and checks its own derived or invented model ([Reproduction status](#reproduction-status)).
    - The island uses real consequences. It is allowed to disagree with the book. It is never tuned to agree.
 3. **Same definitions in both places.** The island adapter wraps exactly the lab state machine (section 4.1). A test feeds both the same scripted history and requires the same moves.
 4. **Integers only, seeded, ordered.** Lab shares are fixed-point. Random draws use forked streams. Iteration is by ascending id. The lab compiles in `Sim/Lab` (pure C#) and runs under `dotnet test DotNet`.
-5. **Honest about the book.** Two of its published equilibria were wrong (Retaliator, coy/fast). The lab tests the **corrected** statements. Where the book gives no numbers (Sucker/Cheat/Grudger, vampire bats, the war of attrition) we choose numbers and say so.
+5. **Honest about the book.** Two of its published equilibria were wrong (Retaliator, coy/fast). The lab tests the **corrected** statements. Where the book gives no numbers (Sucker/Cheat/Grudger, vampire bats, the war of attrition and others) we choose numbers and say so plainly, and such an experiment is never called an exact reproduction (owner rule, 27 Nov; [Reproduction status](#reproduction-status)).
 6. **Honest about our strategy set.** Axelrod's 63 entries are not available. Our round robin uses a set we define (section 4.3). It can show the *shape* of his result, not his scores. Where our result differs from the book's (for example one nasty strategy in our top five), the document says so and the test records what we got.
 7. **Tolerances come from a prototype, not from wishes.** Numbers marked (proto) came from a throwaway Python prototype of these exact definitions, run on 26 Nov 2026. The C# lab must match within the tolerance. If it does not, find the bug before touching a tolerance. If a tolerance is changed, record why.
 
@@ -262,6 +262,7 @@ Two engines run each experiment. Results must agree where the experiment allows 
 Each experiment lists: setup, expected result, tolerance, and the book's source. **(proto)** marks a prototype number.
 
 **L1. Hawk/Dove (PDF 93 to 96).**
+- **Status: exact reproduction.** The book gives every payoff used (prize, injury, time cost) and the result (7/12 Hawks, mean payoff 6.25). The group optimum (1/6 Hawks) and the phase-reader check are derived by us from the same payoffs.
 - Setup: `V=50, I=100, T=10`, matrix: HH -25, HD 50, DH 0, DD 15. Agents: `N=1000, k=10, w0=500, mu=10 permille, 300 generations`, time average over generations 100 to 300.
 - Expected:
   - the replicator fixed point is `p* = 7/12 = 0.5833`. Tolerance: 583 permille ± 3 (fixed point), 0.583 ± 0.03 (agents, N=1000; proto 0.582 ± 0.01 over 5 seeds), ± 0.05 at `N=100` (proto 0.585);
@@ -272,6 +273,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - a predictable player (7 Hawk then 5 Dove in a fixed cycle) loses to a reader that knows the phase: reader payoff `5/12 × 50 = 20.8` against 6.25 for the random mix, a gain of at least 10.
 
 **L2. Retaliator, Bully, Prober (PDF 97 and 98, endnote 306).**
+- **Status: derived and invented payoffs, not a reproduction.** The book gives no payoff matrix for these strategies. Our matrix is derived from L1's book payoffs plus turn rules and a scuffle cost `S` that we chose. Gale and Eaves's payoffs are not in the book, so their Hawk/Bully result is **not** reproduced and not claimed.
 - Setup: the matrix in 4.2 (strategies H, D, R, B, and P in the second variant). Replicator with mutation `mu = 0.002`, and agents with mutation `2 permille`, 6000 generations, window 3000 to 6000, N = 200 and 1000.
 - Facts that hold exactly (replicator):
   - Dove ties with Retaliator against both (15 = 15), so an all-Retaliator population is **not** a strict ESS: a Dove share stays constant, neither growing nor shrinking, over 20000 generations (no mutation). Test: Dove share stays within 0.1 ± 0.001 from a start of 0.1.
@@ -283,6 +285,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - **L2b:** a Monte Carlo of the turn-level rules reproduces every cell of the matrix within 3 (50,000 contests per cell).
 
 **L3. War of attrition (PDF 99 and 100).**
+- **Status: invented parameters, theory check.** The book gives no numbers. Prize, cost rate, selection and mutation are ours; the checks test the known mathematical properties of the model (mean persistence equals `V`, fixed limits are invadable, the value of a tell), not a figure from the book.
 - Setup: prize `V`, cost rate 1 per tick for both sides until one quits, higher persistence wins. Each agent has a heritable **mean** `m` and draws its private giving-up time from an exponential distribution of that mean. `N = 1000, k = 20, 400 generations`, soft selection `exp(f/(0.3 k V))`, mutation: multiply `m` by a log-normal factor with spread 5 per cent, initial `m` uniform in `[0.2 V, 3 V]`.
 - Expected:
   - mean `m` over the last 100 generations is `V` ± 0.2 `V` (proto 1.105 to 1.129 V in 3 seeds);
@@ -291,6 +294,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
   - a **tell**: a reader who sees an opponent's quitting time in advance, stays one tick longer when the opponent will quit before `V` and quits at once otherwise. Its gain per contest against exponential opponents of mean `V` is `V/e = 0.368 V`. Tolerance 0.368 V ± 0.01 V over 100,000 contests (proto 0.368 V). A population in which a tell is readable lets readers spread: reader share above 0.9 within 100 generations. A population whose tell is hidden shows no reader advantage (gain within ± 0.01 V).
 
 **L4. Resident/intruder (PDF 100 to 103).**
+- **Status: derived payoffs, not a reproduction.** The book describes the Bourgeois strategy qualitatively. The matrix is derived from L1's book payoffs with random roles; the boundaries tested are consequences of that derived matrix.
 - Setup: the matrix in 4.2 (H, D, B, A). Roles random 50:50.
 - Expected (replicator, mutation `0.0005`):
   - Bourgeois vs Anti-Bourgeois (no Hawks or Doves): the share of the larger starts the takeover. Starting B 0.51: B above 0.99. Starting B 0.49: A above 0.99. The boundary is 0.5 ± 0.01;
@@ -300,6 +304,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - **L4b (optional):** paradoxical strategy (attack larger, flee smaller). Heavier injury, where `I` grows with the opponent's size, plus an initial majority of paradoxical players: the paradoxical rule persists. Below a critical share, the sensible rule takes over (zone of attraction). Calibrated at M2, not yet seen.
 
 **L5. Pecking orders (PDF 104 and 105).**
+- **Status: invented model.** The book describes pecking orders qualitatively. Group size, strengths and both rules are ours; only the qualitative claim (memory of past contests reduces fighting) is tested, with wide tolerances.
 - Setup: groups of 8 with hidden strengths 10 to 99, 400 random-pair contests each. *Cricket rule:* the chance to escalate is `0.5 + 0.1 × streak`, where `streak` is a decayed win-minus-loss count. *Hen rule:* after losing to a partner, never escalate against that partner; otherwise escalate with probability 0.5. Mutual escalation ends in a fight won by strength-weighted chance.
 - Expected (proto, 60 groups each, wide tolerance):
   - Hen rule: the share of fights in the first 100 contests is 0.07; in the last 100 it is ≤ 0.02. Fighting falls to almost nothing;
@@ -308,6 +313,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - Landau's h is **not** a pass criterion here, because outcomes depend heavily on chance (proto h 0.33 for hens, 0.54 for crickets). It is reported.
 
 **L6. Coy/fast, faithful/philanderer (PDF 174 to 176, endnote 326).**
+- **Status: exact payoffs, corrected result.** The payoffs are the book's (PDF 174). The book's claim that the mix is stable is wrong (its own endnote says so); we test the corrected statement (the system cycles around `(5/6, 5/8)`), so the book's stability claim is deliberately **not** reproduced.
 - Setup: the payoffs in 4.4. Two-population replicator, state `(c, f)` = (coy share of females, faithful share of males), start `(0.5, 0.3)`, RK4 step 0.01 in fixed point, 4000 time units.
   - `dc/dt = c(1-c)(5 - 8f)`, `df/dt = f(1-f)(12c - 10)`.
 - Expected (proto):
@@ -318,6 +324,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - The book's equilibrium is the **mean** of the cycle, not a place the system sits. A system that settles at `(5/6, 5/8)` is wrong.
 
 **L7. Sucker, Cheat, Grudger (PDF 206 to 209).**
+- **Status: invented payoffs, not a reproduction.** The book reports Dawkins's simulation qualitatively and gives no payoffs. `b = 3`, `c = 1`, `n = 10` and the start shares are ours; only the order of events and the bistability are tested, not the book's numbers (it gives none).
 - Setup: help game `b = 3, c = 1`, `n = 10` rounds per pairing, `w0 = 50`. Per-pair payoffs over 10 rounds (row, column):
 
   | | Sucker | Cheat | Grudger |
@@ -336,6 +343,7 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - Mackie's point (selection between ESSs, endnote PDF 344) is not tested.
 
 **L8. Axelrod-like round robin (PDF 231 to 239).**
+- **Status: exact payoffs, different tournament.** The payoffs (5, 3, 1, 0) are the book's. The entrants are our 12 strategies, not Axelrod's 63 entries (not in the book), so the scores and ranks are **not** a reproduction of his tournament and are not compared with his figures.
 - Setup: the 12 strategies in 4.3 (TFT, TF2T, STFT, AllD, AllC, Random(500), Grudger, Naive Prober, Remorseful Prober, Pavlov, Tester, Sneak). Every strategy plays every other **and itself**, 200 rounds, payoffs 5/3/1/0. Scores are averaged over 30 seeds (Random and the probers use random draws). Maximum is 600.
 - Expected (proto, mean of 30 seeds, tolerance ± 15 points per entry):
 
@@ -367,11 +375,13 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - **L8b, the known last round:** a Tit for Tat that defects on the final round (`TFT-End`) scores 602 against Tit for Tat's 597 over 200 rounds (exact; the other side gets 0 on the last round). With an unknown length (geometric, `w = 0.995`) it has no systematic advantage (test: mean gain within ± 3 over 200 seeds).
 
 **L9. The ecological run (PDF 237 to 239).**
+- **Status: derived, not a reproduction.** It runs the replicator on L8's own score matrix (book payoffs, our entrants), so it is a derived experiment in the spirit of Axelrod's ecological run, not a reproduction of it.
 - Setup: the replicator on the L8 mean score matrix, uniform start (1/12 each), 1000 generations, no mutation.
 - Expected (proto): nasty strategies and probers fall below 1 per cent in this order: Always Defect (generation 8), Naive Prober (9), Suspicious TFT (16), Random (20), Sneak (20), Remorseful Prober (22), Tester (35). Final shares: TFT 0.33, Grudger 0.22, Pavlov 0.19, TF2T 0.14, AllC 0.11, tolerance ± 0.05 each.
 - Pass criteria: all nasty strategies and probers below 1 per cent by generation 200; Always Defect below 1 per cent by generation 30; Tit for Tat has the largest final share; the survivors are all nice. Always Cooperate survives only because nothing invades it here. With a defector seed it would be exploited. That is a finding about Always Cooperate, not a result for it.
 
 **L9b. Tit for Tat against Always Defect, and clustering (PDF 239 to 243).**
+- **Status: exact payoffs, derived analysis.** The payoffs are the book's; the threshold `p*` and the clustering bound are derived analytically by us and checked numerically.
 - Setup: two strategies, geometric match length with continuation probability `w`. Payoffs per match: TFT-TFT `3/(1-w)`, TFT-AllD `w/(1-w)`, AllD-TFT `5 + w/(1-w)`, AllD-AllD `1/(1-w)`.
 - **The critical TFT share** (the invasion threshold) is `p* = (1 - w)/(3w - 1)` for `w > 1/2` (for `w ≤ 1/2`, Tit for Tat cannot invade at all).
 
@@ -384,11 +394,13 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - A **Tit for Tat is not a strict ESS**: Always Cooperate behaves identically among nice players, so with mutation a share of Always Cooperate drifts in and then Always Defect invades. Test (agents, `mu = 5 permille`, 5000 generations): the Always Cooperate share does not stay near zero; its time average is above 0.02 (calibration, not yet seen).
 
 **L10. Digger wasps (endnote PDF 307 and 308).**
+- **Status: invented payoffs.** The book reports the wasp study's conclusion without giving the benefits and costs we need. `B`, `Cd`, `Ce` and `Cw` are ours, chosen so the mixed equilibrium is interior; the test checks our model's own equilibrium, not the study's measured share.
 - Setup: `B = 100, Cd = 40, Ce = 5, Cw = 30`. Each wasp has a heritable entering probability `x_i`. Agents: `N = 500`, soft selection `exp(0.02 × payoff)`, mutation of `x_i` by Gaussian-like noise of 0.01, 2000 generations.
 - Expected: population mean `x` over the last 500 generations is `0.28 ± 0.03` (proto 0.278 to 0.282, 4 seeds); at that point `|payoff(Dig) - payoff(Enter)| < 3`. A start at `x = 0.9` and a start at `x = 0.05` both end there.
 - Variant: pure types (each wasp always digs or always enters, heritable) gives the same population mean ± 0.03, as a polymorphic population. The book found a true mixed ESS in one population and not the other, so the lab treats both versions as valid.
 
 **L11. Hamilton's rule and the mushroom call (PDF 112 to 122).**
+- **Status: exact (decision example) and invented (spread test).** The decision test uses the book's worked example as recorded in the research notes ([research/SELFISH_GENE_NOTES.md](research/SELFISH_GENE_NOTES.md) C1); the numbers are checked against the book at M2 before the label is final. The spread test uses invented values of `b` and `c` and checks Hamilton's rule itself, not a book figure.
 - Decision test: `Call iff own_if_call + sum(r_i × b_i) > own_if_keep`. The book's example: keep quiet scores 18; calling scores 12 (own) + 6 (brother, r 1/2 × 12) + 1.5 (cousin, r 1/8 × 12) = 19.5, so **call**. Without the cousin the total is 18.0, a tie, resolved to Keep. A stranger (r 0) never adds anything. A brother needs a benefit above `cost / r = 12` to make the same call at a cost of 6.
 - Spread test (agents, assortment `r`: the chance that the helped partner carries the same allele, beyond chance, is `r`): the helper allele has a fitness edge of `r b - c`, independent of its frequency. At `r = 0.5, c = 1`:
   - `b = 2.6` (r b / c = 1.3): helper allele above 0.95 after 300 generations;
@@ -397,12 +409,43 @@ Each experiment lists: setup, expected result, tolerance, and the book's source.
 - Estimated versus true relatedness: with the helper using estimated `r' = r × 0.55` (the book's 0.275 for uncertain sibs, PDF 118), the threshold in `b` rises by the same factor (test: `b* = c / r'`).
 
 **L12. The selfish herd (PDF 190 to 192).**
+- **Status: invented model.** The book describes Hamilton's argument without a model to copy. The ring, prey count and predator rule are ours; only the qualitative claim (prey bunch) is tested.
 - Setup: a ring of length 1000, 20 prey at random places. Each step every prey moves 1 unit towards its nearest neighbour; a predator appears at a random place and takes the nearest prey. 300 steps.
 - Expected (proto, 50 runs): mean nearest-neighbour distance falls to under 20 per cent of its random-start value (random start 24.8; proto end 0.14, ratio 0.006). Tolerance: ratio below 0.2. Edge prey suffer more attacks than centre prey (calibration, not yet seen).
 
 **L13. Vampire bats (PDF 253 to 256).**
+- **Status: invented payoffs, exploratory.** See below; nothing here is a reproduction.
 - The book gives no payoffs. The lab defines: nightly foraging success random per bat, a hunger store that falls by one per night, a bat dies at zero, a well-fed bat may give one unit to a roostmate with at most one left, reciprocators give to those who gave to them, non-sharers never give.
 - **No numeric expectation is claimed.** A first prototype with simple payoffs showed no clear advantage for sharers across roost turnover, so the model needs a proper design (needs vary strongly day to day; giving costs little). L13 is **exploratory** at M2: it must run and report. A directional pass criterion (sharers do better in stable roosts, worse when roost membership turns over fast) is added after calibration and recorded here.
+
+### Reproduction status
+**Owner rule (27 Nov 2026):** where the book lacks the numbers needed to reproduce an experiment exactly, the experiment says so, and an experiment with invented payoffs is **never** called an exact reproduction. If the island later differs from the maths, the difference is investigated, not tuned away ([GAME_THEORY_DESIGN.md](GAME_THEORY_DESIGN.md#2-principles), principle 4). Every lab experiment carries one of these labels, in its own entry above, in `lab list`, and in its `checks.json` (`"status"`):
+- **Exact:** the book gives every payoff and parameter used, and the result checked is the book's.
+- **Exact payoffs, corrected or different result:** the payoffs are the book's, but the result checked is a corrected statement or a different setting (said which).
+- **Derived:** payoffs computed by us from the book's own numbers, or results derived analytically from them.
+- **Invented:** payoffs or parameters chosen by us because the book gives none; only the qualitative claim or the model's own mathematics is tested.
+
+| Experiment | Status | What is the book's, what is ours |
+|---|---|---|
+| L1 Hawk/Dove | Exact | Book payoffs and ESS; group optimum and phase reader derived |
+| L2, L2b Retaliator, Bully, Prober | Derived and invented | Matrix derived from L1 plus our turn rules and scuffle cost; Gale and Eaves not reproduced |
+| L3 War of attrition | Invented | All parameters ours; model mathematics tested |
+| L4, L4b Resident/intruder | Derived (L4b invented) | Matrix derived from L1 payoffs |
+| L5 Pecking orders | Invented | Rules, strengths, group size ours |
+| L6 Coy/fast | Exact payoffs, corrected result | Book payoffs; the book's stability claim corrected |
+| L7 Sucker, Cheat, Grudger | Invented | Book gives no payoffs |
+| L8, L8b Round robin, known last round | Exact payoffs, different tournament | Book payoffs; our 12 entrants, not Axelrod's 63 |
+| L9 Ecological run | Derived | Replicator on L8's matrix |
+| L9b TFT against AllD, clustering | Exact payoffs, derived analysis | Thresholds derived by us |
+| L10 Digger wasps | Invented | Costs and benefits ours |
+| L11 Hamilton's rule | Exact (decision example, to be verified against the book at M2); invented (spread test) | |
+| L12 Selfish herd | Invented | Whole model ours |
+| L13 Vampire bats | Invented, exploratory | No payoffs in the book |
+| Dollar Prisoner's Dilemma preset | Exact | Book values (PDF 226), used for the ordering check only |
+| L2c (if Gale and Eaves's payoffs are found) | Exact | Not built |
+| Island scenarios S1–S10 | Not reproductions | Payoffs come from island consequences, never from the book ([section 4.7](#47-island-benchmark-scenarios-later-milestones)) |
+
+Test 24 checks that every experiment in `lab list` has a status and that no experiment with status other than **Exact** prints the word "reproduces" in its report.
 
 ### 4.7 Island benchmark scenarios (later milestones)
 
@@ -545,6 +588,9 @@ All tests run in EditMode and under `dotnet test DotNet`. The lab as a whole mus
 22. Mechanism checks pass (the treatment changed the payoff it claims to).
 23. Outcome hypotheses are **recorded**; no test requires an effect.
 
+**Honest labels (owner rule, 27 Nov).**
+24. Every experiment in `lab list` has one status from [Reproduction status](#reproduction-status), and `checks.json` carries it. A report for an experiment whose status is not **Exact** never uses the words "reproduces" or "reproduction" about itself (a text check on the generated report).
+
 ## 11. Open questions
 None needs the owner. Settled here, with defaults:
 1. **Gale and Eaves.** Their payoffs are not in the book. We accept the mechanism-level result (L2) and claim no Hawk/Bully ESS. If the original payoffs are found, they become an extra experiment, L2c.
@@ -553,3 +599,4 @@ None needs the owner. Settled here, with defaults:
 4. **Noise.** Noisy variants of L8 and L9 (1 per cent mistakes) are reported runs at M2, not pass criteria; trembling-hand checks come later.
 5. **Probers count as nasty,** by Axelrod's definition (nice means never first to defect). The "nasty strategies go extinct" check uses that definition.
 6. **Benchmark keys.** The `bench.*` registry prefix plus the `BenchmarkAssigned` event (stored as an NPC attribute in the warehouse) is enough; experiments need no separate treatment table.
+7. **Owner rule (27 Nov 2026):** every experiment states plainly whether it is an exact reproduction or uses derived or invented payoffs ([Reproduction status](#reproduction-status)); an invented-payoff experiment is never called an exact reproduction; a difference between island and maths is investigated, never tuned away.

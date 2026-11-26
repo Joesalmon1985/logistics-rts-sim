@@ -94,12 +94,14 @@ Age uses the simulation calendar and the life scale ([conventions section 4](DES
 
 At the defaults (1200 ticks per day, 10 days per year, LifeScale 100) one sim year is 12,000 ticks, 20 real minutes at 1x. The HUD shows `sim year × 16` as a human age. A higher `LifeScale` makes every duration below shorter. The stage and the fertile window are re-evaluated once per day.
 
+**What `LifeScale` touches (owner decision Q1, 27 Nov).** `LifeScale` affects biological life-cycle durations only: ageing, fertility, childhood and lifespan (and the elder decline rates below). It does **not** scale ordinary work, movement, learning, social-memory decay or association decay. Those decay rates are per sim day and are independently configurable on `SimTuning` ([SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md#47-forgetting), [NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md#11-open-questions)).
+
 | Stage / event | Sim age at LifeScale 100 | HUD age | Notes |
 |---|---|---|---|
 | Child | 0 to 1.0 | 0–16 | Fed by household; light work from 0.5 |
 | Adult | 1.0 to 3.0 | 16–48 | Full work, full rights |
 | Elder | after 3.0 | 48+ | Strength and speed fall; frailty rises |
-| Fertile window (female) | 0.9 to `2.4 + 0.4 × Fertility/1000` (2.4–2.8) | | See Fertility |
+| Fertile window (female) | 1.0 to `2.4 + 0.4 × Fertility/1000` (2.4–2.8) | | See Fertility. Starts at adulthood: reproduction is for adults only (changed from 0.9 on 27 Nov) |
 | Natural death | `MaxAge` = 3.5 + `Lifespan`/1000 (3.5–4.5), plus a per-NPC jitter of ±0.2 | 56–72 | Hard end for old age; other causes can come first |
 
 A generation (mean mother's age at a birth) is expected at 1.3–1.7 sim years, 25–35 real minutes at 1x, as in the [conventions](DESIGN_CONVENTIONS.md#4-time-model).
@@ -135,8 +137,8 @@ On death, once per tick in ascending id order: drop to a corpse record; househol
 
 ### Fertility
 Fertility is how likely a conception is in a day. A **conception** needs all of these:
-- a female NPC, in her fertile window, not pregnant, with at least 0.10 years since her last birth (so at least 0.35 years between births in all);
-- a **partner** (see [partnership](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#partnership-and-courtship)) who is the biological father;
+- a female **adult** NPC (never a child), in her fertile window, not pregnant, with at least 0.10 years since her last birth (so at least 0.35 years between births in all);
+- a **partner** (see [partnership](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#partnership-and-courtship)), also an adult, who is the biological father;
 - **both partners have chosen "try for a child"** (an intent each of them makes from its own beliefs: household food, hut space, health, how the partner treats it, their drives and personalities). If either does not want it, there is no conception (families are an NPC choice);
 - sufficient nutrition: the daily chance is multiplied by `NutritionFactor`, 0 at Nutrition ≤ 300, rising linearly to 1000 at ≥ 600.
 
@@ -159,16 +161,21 @@ Four physical causes act on every NPC, each from the body, in ascending id order
 Child hazards are not special-cased: they follow from lower Health, smaller bodies and dependence on feeding. Expected child mortality to year 1.0 is 10–25% at default settings in a poor year and under 8% in a fed one; this is measured, not enforced.
 
 ### Disease (simple model in Stage 4; healthcare later)
+**Owner decision Q3 (27 Nov): disease is on by default.** `GameSetup.Disease` is `On`, `Mild` or `Off`: **On** in the sandbox, **Mild** in the tutorial, and configurable in controlled experiments (scenario key `disease`). `Mild` halves `Contact`, `Crowding` and the sanitation term and caps `Severity` at 150; `Off` makes the infection chance 0. Disease must link **nutrition, crowding, sanitation, healthcare, population growth and mortality**, and there are **no arbitrary disease events** that play cannot understand or mitigate: every term below is a condition that households, communities or the state can see and change.
+
 One illness kind in M4 ("fever"); more kinds are data rows later.
 - **States:** `None` (susceptible) → `Infected` (3–6 days, set at infection) → `Recovered` (immune for 15 days, then susceptible again).
-- **Infection:** each day for each susceptible NPC: `p = Base + Contact × infectedContacts + Crowding`. Contacts are infected people who shared a hut or a work group that day. `Base` is 1 in 4000 per day (imports, bad water), `Contact` 15% per infected hut-mate and 4% per infected workmate, and `Crowding` adds 1 in 1500 per bed over capacity in the hut. Immigrants arrive infected with 2% probability.
+- **Infection:** each day for each susceptible NPC: `p = Base + Contact × infectedContacts + Crowding + Sanitation`. Contacts are infected people who shared a hut or a work group that day. `Base` is 1 in 4000 per day (imports), `Contact` 15% per infected hut-mate and 4% per infected workmate, and `Crowding` adds 1 in 1500 per bed over capacity in the hut. Immigrants arrive infected with 2% probability.
+- **Sanitation** (added 27 Nov for Q3): a per-hex `Fouling` value (0–1000) rises with the number of people sleeping and eating on the hex and its neighbours and with rotting food left there, and falls each day by a regeneration rate (faster near running water and with a latrine or waste pit, which a household, a community or the state can build later). The term adds `Fouling / 4` per million per day for each NPC who sleeps or drinks there (up to 1 in 4000 more at the worst). Crowded, dirty settlements are therefore sicker, and moving huts, spreading out, clearing rot or building sanitation are visible remedies. The exact rates are tuning on `SimTuning.Disease`.
+- **Infection route recorded.** Each `IllnessStarted` names its route (`Contact`, `Crowding`, `Sanitation`, `Wound`, `Import`) and, for contact, the source NPC (analytics field). Reports and the debug view can therefore explain where an outbreak came from; nothing is unexplained.
 - **Severity:** `Severity = 100 + (500 - Health phenotype) / 5 + (500 - Nutrition) / 10 + 30 if child or elder`. It is the daily Health loss. Rest, food and care by a household member reduce it by 30% (the reason sickness costs households).
 - **Death:** when Health reaches 0 with cause `Disease`. A typical well-fed adult loses 100–300 Health over an illness and recovers. A hungry child or elder may die.
 - **Spread and shock events** are the mechanism by which outbreaks happen. No outbreak is scripted.
-- **Healthcare later (Stage 6):** healers and hospitals, treatment and prevention; M12 adds a Band-age healer institution acting as a care role. Medicine (which makes disease less deadly) is not in the sim in Stage 4.
+- **Healthcare:** in Stage 4 it is care by household members (above), informal shared care between households ([HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#shared-childcare-between-households)) and, from M12, the Band-age healer acting as a care role. Healthcare must act on the body itself (severity, recovery, infection routes), never as an abstract bonus ([conventions §14](DESIGN_CONVENTIONS.md#14-further-owner-requirements-27-nov-2026)). Hospitals, treatment and prevention come in Stage 6; medicine (which makes disease less deadly) is not in the sim in Stage 4.
+- **Links to population growth and mortality:** disease deaths enter mortality by cause; illness lowers work and therefore food, and weighs on the decision to try for a child; crowding and fouling grow with population unless households build and spread out. Disease is therefore one of the physical brakes on growth in [carrying capacity](#carrying-capacity-emerges-from-food), not a separate random shock.
 
 ### Immigration and emigration
-- **Immigration** (M3 minimum, kept in M4): newcomers arrive at the island's edge as adults aged 1.0–2.2, with random founder genomes (see [BIOLOGICAL_INHERITANCE_DESIGN.md](BIOLOGICAL_INHERITANCE_DESIGN.md#42-founder-genomes)), a small pack of food, no household. Each day, per faction, the arrival chance is `clamp(10 × (FoodDaysPerHead - 5) + 20 × FreeBeds, 0, 150)` permille, subject to `ImmigrationCap` per year (15% of population) and to the faction's acceptance rule (accept all in M4; policy later, [STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection)). `FoodDaysPerHead` and `FreeBeds` are what a visitor at the shore could plausibly see or be told; it is *not* read by NPCs but by the arrival rule. Draw: `Rng.Fork("immigration", faction)` per day.
+- **Immigration** (M3 minimum, kept in M4) is one of the **temporary automatic rules** the owner keeps in Stage 4 (Q16, [STATE_DESIGN.md](STATE_DESIGN.md#11-open-questions)): it respects state policy (the acceptance rule), emits events, can be replaced by a staffed process and creates no goods. It is **never replenishment**: its chance does not rise because NPCs died, emigrated or a job is unfilled, and the scenario key `immigration` (`On`, `Off`) controls it. **The default is `Off`** (lead decision, 27 Nov 2026): the island is closed unless a scenario opts in. It is listed in the temporary mechanisms table ([DEV_LOG.md](DEV_LOG.md#temporary-mechanisms)). Newcomers arrive at the island's edge as adults aged 1.0–2.2, with random founder genomes (see [BIOLOGICAL_INHERITANCE_DESIGN.md](BIOLOGICAL_INHERITANCE_DESIGN.md#42-founder-genomes)), a small pack of food, no household. Each day, per faction, the arrival chance is `clamp(10 × (FoodDaysPerHead - 5) + 20 × FreeBeds, 0, 150)` permille, subject to `ImmigrationCap` per year (15% of population) and to the faction's acceptance rule (accept all in M4; policy later, [STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection)). `FoodDaysPerHead` and `FreeBeds` are what a visitor at the shore could plausibly see or be told; it is *not* read by NPCs but by the arrival rule. Draw: `Rng.Fork("immigration", faction)` per day.
 - **Emigration:** an NPC decides to leave (by its policy): a persistent hunger drive with no household support, low loyalty, a grudge, or a belief that elsewhere is better. It walks to the island's edge and leaves, taking its carried goods. Children leave with their parents only if a parent decides so. M4 only leaves the map. Migration between factions is M10.
 - **Both are events:** `NpcImmigrated`, `NpcEmigrated`, with reasons.
 
@@ -198,10 +205,13 @@ There is no cap on the number of NPCs.
 | Fear | Seeing enemies, being hit, seeing death | Distance, being in a group, shelter | M3 |
 | Pain | Injury | Rest, care | M3 |
 | Desire for a partner | Adulthood, time alone | Partnership | **M4** |
+| Belonging (optional: `SimTuning.Drives.Belonging`, off by default) | Time without friendly contact with people the NPC believes it belongs with (household, friends, workmates, community) | Friendly contact, shared work, being greeted or thanked by those people | later (M10 at the earliest), only if political economy needs social motivation |
 | Loneliness | Time without friendly contact | Gestures and help from friends, sharing a hut | later (M5) |
 | Boredom | Repeating the same task | Change of task, play | later |
 | Status | Seeing richer neighbours, losing contests | Owning tools, goods and buildings; winning; being thanked | later |
 | Anger | Being cheated, struck or robbed | Time, retaliation, an apology accepted | later (M7) |
+
+**The `Belonging` drive (owner decision Q7).** It is acceptable only as useful social motivation. It is relieved by contact with people the NPC knows, never by obeying, serving or staying in a faction, and no faction, state or institution can relieve it by decree. Faction loyalty is never a reward signal ([NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md#11-open-questions)).
 
 Hunger at its top level damages health, and an NPC starves at zero health. Fatigue at its top level makes an NPC fall asleep on the spot. Care for children and kin is not a drive: it comes from the Nurture instinct, the kin-weight trait and learning.
 
@@ -241,7 +251,19 @@ Hunger at its top level damages health, and an NPC starves at zero health. Fatig
   - A per-NPC value of 0–1000, rebuilt each day from the NPC's own experience: how well fed, housed, paid and safe it was, how taxed and treated by soldiers, its household and friends, and what it believes about other factions.
   - Those beliefs come from rumours and from envoys or migrants it has met. It is never read from true global state.
   - The formula and levers are in [STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection).
+  - **Loyalty is never rewarded directly (Q7).** It is a measured state built from experiences, relationships, security, living standards, cultural beliefs and treatment by the state. It is not a reward signal for learning, and no rule pays an NPC for being loyal. An NPC can learn that staying loyal, migrating, defecting or becoming independent pays under different circumstances. The state must earn loyalty.
 - **Changing sides:** migration, defection and capture (M10). The receiving state decides whether to accept.
+
+### Owner population requirements (27 Nov)
+The owner's population requirements ([conventions §14](DESIGN_CONVENTIONS.md#14-further-owner-requirements-27-nov-2026)) bind this document:
+- **`SimCalendar` and `LifeScale` are kept** (section 4 above).
+- **Configurable per scenario:** starting population, faction count, founder age distribution, biological parameters (`SimTuning.Population` and `SimTuning.Genetics`), disease (`disease`) and resources. The scenario file ([HEADLESS_SIMULATION.md](HEADLESS_SIMULATION.md#32-scenario-file-scenariojson-version-1)) carries each one.
+- **Defaults: six factions** by default, with **about 20 individuals per faction** as the first scenario (`band_6x20`). Larger and smaller populations are also tested (`band_6x40`, `band_6x10`, and the single-faction `pop_test_40` used by the tests below). Founders come in **varied household configurations** (couples with and without children, single adults, multi-adult households, same-sex couples) and **varied age distributions** (children, adults and a few elders), from a seeded generator; the founding ages and household mix are scenario data, not code.
+- **Reproduction for adults only** (section 4, Fertility).
+- **Growth, decline and extinction must emerge.** Workers, soldiers and citizens are never auto-replenished: no rule creates an NPC to fill a job, a garrison or a quota. The only sources of new NPCs are birth and the temporary immigration rule, which never responds to losses (Immigration above).
+- **Demographic stability is tested across generations** (section 10), with immigration on and off.
+- **Sandbox primary, VP optional.**
+- **Collapse is not tuned away.** If a population collapses, an economy fails or a faction dies out, the run is first classified as one of: a **meaningful outcome** (traceable to circumstances and decisions), a **defective mechanic** (a bug or a rule that cannot work as designed) or **bad baseline parameters** (a default that makes a playable start impossible). Only the second and third are fixed, and every fix is recorded in [DEV_LOG.md](DEV_LOG.md#design-decisions-taken-during-implementation) with its evidence ([VISION_AND_PHILOSOPHY.md](VISION_AND_PHILOSOPHY.md#22-neutrality-binding-on-every-document), principle 7).
 
 ## 5. Interactions with other systems
 - **Biological inheritance:** genome, phenotype, relatedness: [BIOLOGICAL_INHERITANCE_DESIGN.md](BIOLOGICAL_INHERITANCE_DESIGN.md).
@@ -277,13 +299,14 @@ Recording never changes the hash. See [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_
 | Genome, personality from genes | | yes | pleiotropy, more traits |
 | Birth, childhood, growth, adulthood, ageing, old-age death | | yes | |
 | Fertility with a joint decision; pregnancy | | yes | twins, contraception as culture |
-| One illness (fever); injury infection | | yes | many illnesses, healers, hospitals (M12, Stage 6) |
+| One illness (fever); injury infection; `Disease` setting On/Mild/Off; sanitation (`Fouling`); infection routes recorded | | yes | many illnesses, healers, hospitals (M12, Stage 6) |
 | Emigration off the map | | yes | between factions (M10) |
 | Demographic pyramid and yearly measures | | yes | |
 | Desire for a partner drive | | yes | |
 | Loneliness, boredom, status, anger | | | M5–M7 and later |
 | Item quality and ownership tags, weather | | | M6 ownership, M8 quality ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md)); weather later |
-| Citizenship and basic loyalty | | yes | political interests (M10+) |
+| Citizenship and basic loyalty | | yes | political interests (M10+); optional `Belonging` drive (M10 at the earliest) |
+| Scenario population settings (faction count, founders per faction, age and household mix), `band_6x20` default | yes (adults only) | yes (with children, elders, households) | |
 
 ## 9. Migration from the existing code
 - **M3:** NPCs are added beside the walkers, with `GameSetup.Population` set. Without the flag, the stage 3 game is unchanged and its tests still pass.
@@ -295,20 +318,28 @@ Recording never changes the hash. See [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_
 ## 10. Tests and acceptance criteria
 **Sanity bands, not targets.** Population-level checks (`Capacity_Emerges`, `Stable_10Generations`, `Pyramid_SteadyState`, `Generation_Time`) are wide plausibility bands for the default tuning. A run outside a band is investigated as a possible bug or a degenerate rule. It is never fixed by adding a rule that forces the outcome, and a tuning change made for it records that it serves playability ([VISION_AND_PHILOSOPHY.md](VISION_AND_PHILOSOPHY.md#22-neutrality-binding-on-every-document)).
 
-Defaults: a "default sandbox seed" is a sandbox game, `LifeScale` 100, 40 founding adults (20 of each sex, ages uniform 1.0–2.4), enough food for about 80 adults (`K` = 80), no wars, seeds from the scenario list. All tests run headless and under `dotnet test DotNet`.
+Defaults: a "default sandbox seed" (scenario `pop_test_40`) is a sandbox game, `LifeScale` 100, one faction of 40 founding adults (20 of each sex, ages uniform 1.0–2.4), enough food for about 80 adults (`K` = 80), no wars, immigration on, seeds from the scenario list. This controlled single-faction scenario stays the reference for the calibration tests below. The owner's default game, `band_6x20` (six factions of about 20, varied households and ages), is tested by `Default_6x20_Generations` and the size variants. All tests run headless and under `dotnet test DotNet`.
 
 | Test | Expected |
 |---|---|
 | `LifeStages_Boundaries` | Child before 1.0, adult 1.0–3.0, elder after 3.0 at LifeScale 100; at 200 the same ages in half the ticks; HUD age = sim year × 16 |
 | `NaturalDeath_Window` | With starvation, injury and disease off, every NPC dies between 3.3 and 4.7 years (MaxAge 3.5–4.5 ± 0.2); mean in 3.9–4.1 |
 | `Fertility_NeedsBothPartners` | No conception in 1,000 couple-days if either partner's decision is "no child"; with both yes and fertile, conception within 12 days in at least 90% of couples |
-| `Fertility_Window` | No conception below 0.9 or above the fertility end; no birth sooner than 0.35 years after the last |
+| `Fertility_Window` | No conception below 1.0 (adulthood) or above the fertility end; no birth sooner than 0.35 years after the last |
+| `Reproduction_AdultsOnly` | Over 10 seeds × 15 sim years, every `PregnancyStarted` has a mother and a biological father aged ≥ 1.0 at conception (zero exceptions) |
 | `Pregnancy_Length` | Every full-term birth at 0.25 ± 0.005 years |
 | `Starvation_Time` | An adult at Nutrition 0 with no food dies in 5–10 days; a child in 3–7 days |
 | `Disease_Outbreak` | One infected adult in a hut of 6 well-fed adults: 2–5 infections in the hut; deaths under 1 in 6; a hungry hut shows at least twice the deaths |
+| `Disease_Settings` | `Off`: zero `IllnessStarted` over 10 seeds × 5 years. `Mild`: mean disease deaths per 1000 person-years at most half of `On` on the same seeds |
+| `Disease_Linkage` | Controlled hut scenarios, 20 seeds each, all directions significant (paired sign test, 5%): hungry hut more deaths than fed (as `Disease_Outbreak`); over-capacity hut more infections than at capacity; high-`Fouling` hex more infections than a clean one with the same people; tended patients lower severity than untended ([HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#10-tests-and-acceptance-criteria) `Care_*`) |
+| `Disease_RouteRecorded` | Every `IllnessStarted` carries exactly one route; counts by route sum to the total; no infection has route "unknown" |
 | `Immigration_Responds` | Surplus food and free beds give at least 3× the arrivals of a starving, full faction over 5 years |
+| `Immigration_NotReplenishment` | Two arms on the same seeds, 20 seeds: one with a scripted epidemic killing 30% on day 20. Arrivals in days 21–40 are not higher in the epidemic arm than the food-and-beds rule predicts from its own inputs (exact recomputation). With `immigration Off`, the only `NpcBorn`-free NPC appearances are the founders (zero exceptions) |
+| `No_Spawned_Replacements` | With `immigration Off`, over 10 seeds × 20 sim years: the number of NPCs ever alive equals founders plus births, exactly; no job, garrison or institution vacancy creates an NPC |
 | `Capacity_Emerges` | Food supply ×1, ×2 and ×0.5: mean population over years 8–15 in ratio 1 : 1.6–2.4 : 0.4–0.6 |
 | `Stable_10Generations` | Default sandbox seed, 15 sim years: never extinct, minimum population 10 or more, population at end between 0.5× and 2× of the population at year 3, no year with growth above 60% after year 3 |
+| `Stable_Closed` | As `Stable_10Generations` with `immigration Off`: the same bands are **reported** for 20 seeds (not asserted), with each extinction or collapse classified as meaningful outcome, defective mechanic or bad baseline (section 4, owner requirements) |
+| `Default_6x20_Generations` | `band_6x20`, 20 seeds × 15 sim years, and the size variants `band_6x10` and `band_6x40` on 10 seeds each: population per faction per year, births, deaths by cause, extinctions and generation count are **reported** with intervals; the run passes when every seed completes without an invariant failure and every faction extinction has a recorded classification. No band is asserted on faction survival, so genuine extinction is never tuned away |
 | `Pyramid_SteadyState` | In a steady state: children under 1.0 are 20–40% of the population; elders (over 3.0) are under 20%; sum of bins equals the headcount |
 | `Generation_Time` | Mean mother's age at birth, years 4–15: 1.1–1.8 |
 | `Child_Mortality_Measured` | Reported value equals the recomputed one from events (exact) |
@@ -318,6 +349,11 @@ Defaults: a "default sandbox seed" is a sandbox game, `LifeScale` 100, 40 foundi
 | `Npc_MemoryBudget` | The sum of the default per-NPC caps in the memory budget table (section 3) is at most 20 KiB; each module's measured size is at most its cap |
 
 ## 11. Open questions
-- **Disease in the default sandbox.** It makes famine and crowding costly, but may be too punishing for the tutorial. Owner question; default: setting `Disease` (On, Mild, Off) with On in the sandbox and Mild in the tutorial.
+No open questions remain. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q3 Disease** is on by default: `Disease` On, Mild or Off, with Sandbox On, Tutorial Mild and controlled experiments configurable. It links nutrition, crowding, sanitation, healthcare, population growth and mortality, and there are no arbitrary disease events that cannot be understood or mitigated through play ([Disease](#disease-simple-model-in-stage-4-healthcare-later)).
+- **Q1 `LifeScale`** scales biological life-cycle durations only; work, movement, learning and the decay of social memory and associations are not scaled, and the decay rates are independently configurable ([Time and life stages](#time-and-life-stages)).
+- **Q7 Belonging:** an optional, configurable `Belonging` drive is allowed for social motivation only; loyalty is never rewarded directly, and the state must earn it ([Drives](#drives), [Citizenship and loyalty](#citizenship-and-loyalty)).
+- **Q16 Immigration** is a temporary automatic rule that respects state policy, emits events, is replaceable by a staffed process, creates no resources and is never replenishment ([Immigration and emigration](#immigration-and-emigration)).
+- **Further requirements:** six factions of about 20 by default, adults-only reproduction, no auto-replenishment, collapse not tuned away ([Owner population requirements](#owner-population-requirements-27-nov)).
 
 Settled here: founders start with ages uniform in 1.0–2.4 (a stable-age start is a later scenario option if the founding wave proves a problem); children emigrate only with a parent who decides to leave.

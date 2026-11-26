@@ -36,6 +36,9 @@ The framework for every institution the player operates, from a Band age healer 
   - Both are measured; the first exists even with perfect records.
 - **No structure or ideology is assumed superior.** Public, private, cooperative and communal provision use the same model. Each has its own failure modes. Comparisons are experiments.
 - **Same information as a human at that level.** An institution's policy reads only its `InstitutionView`; a faction's reads only `FactionKnowledgeView`.
+- **Institutions do not all come from the state (owner decision Q17, 27 Nov).** Communities must be able to organise themselves independently of the state; this is central to the Ostrom aspect. The architecture never assumes an institution has a faction owner or was founded by a faction command. Communities should eventually establish their own shelters and stores, childcare, mutual-aid groups, resource-management organisations, cooperatives, schools and healthcare, and dispute resolution. The state may support, regulate, compete with or replace them ([Communal founding without the state](#communal-founding-without-the-state)).
+- **What the player controls (owner, 27 Nov).** Budgets, policies, resources, priorities, recruitment incentives and objectives. Eventually the player may operate individual institutions directly (with the same `InstitutionView` and commands as `IInstitutionPolicy`) while leaving others under AI management.
+- **Institutions act on the simulation itself.** Healthcare and education should eventually affect the biological and cognitive simulation (a healer changes illness severity and wound recovery; teaching changes skills and learned associations), never give abstract bonuses.
 - **Determinism.** Institutions update in ascending `InstitutionId`; cases in ascending case id; staff in ascending `NpcId`. Random draws use `Rng.Fork("inst", id)`.
 
 ## 3. Data structures (`Sim/Institutions`)
@@ -45,6 +48,7 @@ Institution   (InstitutionId, unique for the game, never reused)
   Id, Type: InstitutionType, Age: Band | Village | Town | City
   Provision: Public | Private | Cooperative | Communal
   Owner: faction id | NpcId | group id (communal or cooperative members)
+  FoundedBy: Faction | Npc | Group             // who founded it; no code path requires Faction (Q17)
   Facilities: int[<= 4] BuildingIds          // e.g. a healer's hut, a guard post
   Store: per-ware counts held in its facilities (physical, can be stolen)
   Budget: BudgetLine[<= 8]                  // per-day allowance per purpose, in goods
@@ -239,6 +243,12 @@ UnlockRule
 - **Several can coexist.** A private healer and a public healer can serve the same village; NPCs choose.
 - **None is the default winner.** Experiments compare them across seeds and generations (POLICY_EXPERIMENTS_DESIGN).
 
+### Communal founding without the state
+**Owner decision Q17 (27 Nov 2026).** Communities must be able to organise themselves independently of the state.
+- **M12 (where practical):** simple communal institutions arise through the mechanisms that already exist: the household store and its norms ([HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md)), contributions to a shared site, communal ownership records and `Commons` records ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md#48-the-commons-ostrom)), cooperative enterprises with their `DecisionRule`, informal shared childcare (`CareArrangement`) and informal lending. When a group of adults who already share such an arrangement agree by gesture (each decides for itself; the group's existing decision rule counts the answers), the arrangement is registered as an institution with `Provision = Communal`, `FoundedBy = Group` and the members as owner. The unlock rule is evaluated over the **group's** members and resources, not the faction's. It then runs through the same generic model (staff are members who take on tasks, funding is member contributions, records are kept by a member), with the same failure modes (free-riding, exclusion, capture).
+- **If autonomous founding would complicate M12 significantly,** M12 keeps the explicit `FoundCommunal(type, members)` intent as the interface (defined, validated and refused with `not_yet` until implemented) and Stage 5 completes it. Either way the data model, policies and views already allow a group-founded institution, so nothing has to be rewritten. Which path M12 took is recorded in [DEV_LOG.md](DEV_LOG.md#design-decisions-taken-during-implementation), and `FoundCommunal` stays listed as a temporary mechanism until it is complete.
+- **The state's options:** support (a budget grant or goods), regulate (a law that recognises, limits or taxes it), compete (found a public institution of the same type) or replace (absorb or dissolve it by law). Each is an ordinary state command with real consequences for members' loyalty and trust.
+
 ### Failure modes
 | Failure | How it arises in the mechanics | How it shows |
 |---|---|---|
@@ -298,10 +308,10 @@ public interface IInstitutionPolicy
 |---|---|
 | M1 | `IInstitutionPolicy` and `InstitutionView` types in `Sim/Policy`; the reflection test covers them |
 | M6 | Posts as state contracts (STATE_DESIGN); the granary keeper as a plain shift |
-| M12 | **The generic model** (institution record, staff posts, manager, budget, directives, cases, records, the daily cycle, effort allocation, falsification choice, inspection); unlock rules and the faction age; **Band-age institutions:** elders and mediation, healer, guards, shared store and welfare, informal lending (recorded lending circle); public and communal provision; `ManagerUtilityPolicy` and `RuleFollowerPolicy` |
-| M13 | Institution snapshots and Band-age KPIs in the warehouse; the HUD institutions panel and reports |
+| M12 | **The generic model** (institution record, staff posts, manager, budget, directives, cases, records, the daily cycle, effort allocation, falsification choice, inspection); unlock rules and the faction age; **Band-age institutions:** elders and mediation, healer, guards, shared store and welfare, informal lending (recorded lending circle); public and communal provision; **communal institutions founded by groups without the state where practical (Q17)**, otherwise the explicit `FoundCommunal` interface; `ManagerUtilityPolicy` and `RuleFollowerPolicy` |
+| M13b | Institution snapshots and Band-age KPIs in the warehouse; the HUD institutions panel and reports |
 | M14 | The faction AI founds, staffs and funds institutions through the same commands |
-| Stage 5 | Village institutions (headman's court, militia, granary, schools-lite, lending circles); private and cooperative provision at scale; collectors |
+| Stage 5 | Village institutions (headman's court, militia, granary, schools-lite, lending circles); private and cooperative provision at scale; collectors; `FoundCommunal` completed if M12 deferred it; a formal nursery if one emerges (Q15); the association `DecisionRule` (Q20); staffed paymaster and immigration official replacing the temporary automatic HQ rules (Q16, [STATE_DESIGN.md](STATE_DESIGN.md#11-open-questions)) |
 | Stage 6 | Town institutions (courts, police, prisons, hospitals, schools, banks); the Goodhart-prone target sets for managers; the policy-experiment suite |
 | Stage 7 | City institutions (media, statistics, central bank, regulators, environmental agency, research); limited information enforced |
 
@@ -345,12 +355,20 @@ There is no institution code today. Pieces that move in:
 - **I-GH-6 FullInformation:** in the same runs, the faction view's theft figure equals the actual within rounding (INFORMATION_AND_MEDIA test I2 still holds).
 - **I-GH-5 No incentive, no gaming motive:** with the same targets but no incentive terms, both the target gap and the report gap do not differ significantly from the no-target control.
 
+**Communal institutions without the state (Q17):**
+- **I-COM-1 Architecture (M12):** a fixture institution with `Provision = Communal`, `FoundedBy = Group` and a group owner runs the full daily cycle (staff, budget from contributions, cases, records) with no faction command anywhere in its history; a static check finds no code path in `Sim/Institutions` that requires a faction owner.
+- **I-COM-2 Founding (M12 if implemented there, else Stage 5):** in a scenario with two households that share a store and no faction command, a communal shared store institution is founded by member agreement in at least 10 of 20 seeds within 20 days; with the members' agreement withheld (fixture), none is founded. Until implemented, `FoundCommunal` is refused with `not_yet` and the test is listed as outstanding in [DEV_LOG.md](DEV_LOG.md#outstanding-work).
+
 **Unlocks:**
 - **I-UNL-1:** `FoundInstitution` for a type whose rule fails is refused with `not_unlocked`, on every rule clause in turn (unit tests).
 - **I-UNL-2:** in a scenario with one faction of 30 adults and one of 6, the larger reaches more Band unlocks within 20 days on at least 18 of 20 seeds; their measured ages can differ.
 
 ## 11. Open questions
-The owner question (communal founding without the state) is in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md#13-open-questions-owner). Settled here:
+No open owner question remains.
+
+**Owner decision Q17 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)): communal institutions without the state.** Yes. Communities must be able to organise themselves independently of the state; this is central to the Ostrom aspect. In M12, simple communal institutions are supported through the existing household, contribution, ownership and association mechanisms where practical. If autonomous founding would complicate M12 significantly, the explicit `FoundCommunal` interface is kept and completed in Stage 5. The architecture must not assume all institutions come from the state. Communities should eventually establish their own shelters and stores, childcare, mutual-aid groups, resource-management organisations, cooperatives, schools and healthcare, and dispute resolution. The state may support, regulate, compete with or replace them ([Communal founding without the state](#communal-founding-without-the-state); I-COM-1, I-COM-2).
+
+Settled here:
 - **Band-age inspection.** There is no inspector post in the Band age; the faction borrows an elder for an inspection.
 - **Returns vs `KpiReported`** (decided): `KpiReported` is the faction's measured value (equal to the actual under `FullInformation`); managers file separate returns (`FileReturn`, `ReturnFiled`) that can be gamed, and incentives are paid only on returns. KPI_CATALOGUE and INFORMATION_AND_MEDIA_DESIGN follow this split.
 - **Managers chosen by members** use the "most trusted" vote in stage 4. Other rules (rotation, seniority, lot) are a [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md) extension.

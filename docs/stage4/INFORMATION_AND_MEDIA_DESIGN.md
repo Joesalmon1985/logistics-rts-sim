@@ -319,6 +319,8 @@ struct KpiValue
 - `FullInformation`: `ViewFiller` computes each KPI from layer 1 through the shared KPI functions, with `Coverage = 1000`, `Lo = Hi`, zero delay, `Quality = Exact` (rounded to the KPI's unit). This is the **Stage 4 default**. "Almost completely" means:
   - **included:** the faction's own books, own population and institutions, and everything the KPI catalogue defines for the own faction;
   - **excluded even here:** NPC minds (beliefs, memories, private intentions), other factions' internal books, and territory the faction's people have not seen. Foreign data follows the current visibility rules.
+  - **Foreign information (owner decision Q21, 27 Nov).** `FullInformation` never gives unrestricted access to foreign factions' internal affairs. The existing visibility rules for foreign territory and organisations stay. What a faction knows about another comes only through **observation** (its people and soldiers see it), **trade** (envoys and traders), **diplomacy** (what the other side says, which may be false), **migration** (what immigrants and returning emigrants report), **communication** (gossip that crosses borders), **media**, **intelligence** (later: spies and scouts as staff) and **official reporting** (what the other faction publishes). Each foreign item in the view (`ForeignKnowledge`) carries its source channel, `AsOfTick` and confidence, and can be wrong or stale. A faction's own treasury and records may be near-complete at first.
+  - **True, known and believed stay apart.** The architecture keeps three things distinct: what is **true** (layer 1), what a faction **knows** (records and measurements it holds, layers 4 and 7) and what it or its people **believe** (layers 3, 5 and 6). The view never fills a foreign figure from layer 1.
 - `Reported`: the view shows only `Measurement`s that institutions have produced, with their lag, coverage and intervals; a KPI no institution measures is `Missing`. Later ages use this per domain, so a faction can have exact treasury books and a hazy crime picture.
 
 The code path is identical in both modes. In `FullInformation` the same report builders run with the degradation parameters set to zero ("perfect recorder"), so reports and records still exist, are still emitted as events, and `Reported == Actual` to rounding (the test in section 10).
@@ -332,10 +334,10 @@ The code path is identical in both modes. In `FullInformation` the same report b
 | Town | census, courts, police, hospital registers, bank books, first surveys | counted and estimated, with intervals, some falsification |
 | City | statistics office (censuses, surveys), regulators' inspections, central bank, media | estimated with explicit intervals, independent cross-checks |
 
-**Debug "true state" toggle.** For sandbox, tests and teaching only.
-- `GameSetup.AllowTrueStateOverlay` (default false in competitive mode, true in sandbox and tests) and a HUD toggle.
+**Debug "true state" toggle (owner decision Q22, 27 Nov).** Off in normal competitive play.
+- `GameSetup.AllowTrueStateOverlay` is **false** in normal competitive play (VP mode against AI or humans). It is **allowed** (true by default) in developer mode, lab experiments, debugging and test runs, and in dedicated observation scenarios. **Sandbox scenarios may optionally enable it** (a scenario and settings option, default off). A HUD toggle shows it when allowed.
 - When on, the HUD asks a **separate** `ITrueStateOverlay` (also built by the `ViewFiller`) for each figure's actual value and shows it beside the reported one, with the gap.
-- The overlay is **view-side only.** `IFactionPolicy`, `IInstitutionPolicy` and `INpcPolicy` implementations never receive it, so toggling it can't change a decision. It carries no sim state, is not saved, and the state hash is the same with it on or off (tested).
+- The overlay is **view-side only.** `IFactionPolicy`, `IInstitutionPolicy`, `IMilitaryPolicy` and `INpcPolicy` implementations never receive it: **ordinary faction AI and NPC policies never get debugging information**, so toggling it can't change a decision. It carries no sim state, is not saved, and the state hash is the same with it on or off (tested).
 - A teaching mode can also show the inspector card with an NPC's beliefs next to the true state. The NPC's own decisions are not affected.
 - A test harness may run a **policy with truth** (`TruthCheatPolicy`) only in a named test scenario, to measure the value of information (policy experiments). It is registered separately and cannot be selected in a normal game.
 
@@ -353,11 +355,11 @@ The code path is identical in both modes. In `FullInformation` the same report b
 
 ## 6. Player and view
 
-- **Reports panel (M13).** A list of KPI cards grouped by domain. Each shows the figure, its interval, `as of` age, `Quality` and a coverage mark; a series-break marker on the sparkline when the method changed. A card opens the drill-down described in [KPI_CATALOGUE.md](KPI_CATALOGUE.md#7-dashboards).
+- **Reports panel (M13b).** A list of KPI cards grouped by domain. Each shows the figure, its interval, `as of` age, `Quality` and a coverage mark; a series-break marker on the sparkline when the method changed. A card opens the drill-down described in [KPI_CATALOGUE.md](KPI_CATALOGUE.md#7-dashboards).
 - **Provenance tooltip.** Which institution reported it, how (tally, census, survey), the period, the sample size.
 - **Collection controls.** A panel to fund and schedule a census, a survey or an inspection, with its cost and the expected interval width.
 - **Media panel (later).** Outlets, owners, reach, perceived credibility, and (if the overlay is on) accuracy.
-- **True state overlay.** A toggle in the sandbox settings. When on, each card shows an actual value and a coloured gap.
+- **True state overlay.** A toggle shown only where the overlay is allowed (developer mode, lab, debugging, observation scenarios, and sandbox scenarios that enable it; never normal competitive play, Q22). When on, each card shows an actual value and a coloured gap.
 - **Animations** show events only: a crier calling, a survey taker visiting a hut, a clerk writing, a notice posted. They decide nothing.
 - The HUD must show *uncertainty honestly*: a `Missing` card says "nobody measures this", never zero.
 
@@ -385,8 +387,8 @@ Audit-stream events and fields (`RecordFalsified`, true `Falsity` tags, the actu
 
 | Part | Stage 4 | Later |
 |---|---|---|
-| **M1: the seam** | `IFactionKnowledgeView` with `FullInformation`; `ViewFiller`; the HUD and `AiBrain` wrapper read only the view; reflection test | per-domain `Reported` mode (Stage 6–7); a limited-information option for competitive play (Stage 7) |
-| **M13: records and reports** | `InfoRecord`, `RecordAudit`, `Measurement`; the elders' tally, healer's log, store count and guards' observations as recorders; the degradation pipeline wired with a "perfect recorder" default; Band-age KPI set (see [KPI_CATALOGUE.md](KPI_CATALOGUE.md#8-the-stage-4-minimum)); reports panel; `KpiReported` and `RecordWritten` events; debug overlay | census, surveys, inspections (Village–Town); statistics office (City) |
+| **M1: the seam** | `IFactionKnowledgeView` with `FullInformation`; `ViewFiller`; the HUD and `AiBrain` wrapper read only the view; reflection test; foreign items only through `ForeignKnowledge` with a source channel (Q21, I19); the overlay allowed only in developer, lab, debugging and observation scenarios and in sandboxes that enable it (Q22, I18) | per-domain `Reported` mode (Stage 6–7); a limited-information option for competitive play (Stage 7) |
+| **M13b: records and reports** | `InfoRecord`, `RecordAudit`, `Measurement`; the elders' tally, healer's log, store count and guards' observations as recorders; the degradation pipeline wired with a "perfect recorder" default; Band-age KPI set (see [KPI_CATALOGUE.md](KPI_CATALOGUE.md#8-the-stage-4-minimum)); reports panel; `KpiReported` and `RecordWritten` events; debug overlay | census, surveys, inspections (Village–Town); statistics office (City) |
 | Falsification | the mechanism and the audit sidecar exist and are tested, with a falsifying recorder available as a test scenario; default honest | staff motives tied to targets once institutions have KPI directives (Stage 6) |
 | Detection effects | modelled for theft and violence observed (guards' detect rate) | health, courts, finance |
 | Media | `Publication` and `Outlet` types, the notice-board postings (exist already) as the one outlet kind; not exercised beyond that | crier and notice boards (Village); press (Town); broadcast, media institutions, regulators (City) |
@@ -412,6 +414,8 @@ Audit-stream events and fields (`RecordFalsified`, true `Falsity` tags, the actu
 | I8 | `Delay_Is_Respected` | No `Measurement` is readable through the view before its `PublishedTick`; with `d = 2` days every KPI's `AsOfTick` lags `PeriodEnd` by ≥ 2 days. |
 | I9 | `Loss_Matches_Coverage` | With `loss = 200‰` over 1000 items, `Coverage` is 800‰ ± 40‰ and the count is within 800 ± 40. |
 | I10 | `Noise_Is_Unbiased` | With symmetric noise ±100‰ the mean reported error over 500 records is within ±10‰ of zero. |
+| I18 | `Overlay_Off_In_Competitive` | Loading a competitive VP scenario gives `AllowTrueStateOverlay = false` and the HUD toggle is absent; a sandbox scenario has it false unless the scenario or setting enables it; developer, lab and observation scenarios allow it (unit test on the setup) |
+| I19 | `No_Foreign_Truth_In_View` | Under `FullInformation`, changing a foreign faction's treasury, population or institution records that no channel has reported leaves every field of the viewing faction's `FactionKnowledgeView` unchanged (the M15.5 leak test, extended to the view); each `ForeignKnowledge` item names a source channel |
 | I11 | `Overlay_Does_Not_Change_Sim` | Two runs, same seed and commands, one with the true-state overlay toggled on and off every day: identical `StateHash` at every checkpoint. |
 | I12 | `Recording_Off_Same_Hash` | Warehouse recording off vs on: identical `StateHash`. (Records are sim state and appear in both.) |
 | I13 | `Records_Deterministic_And_Saved` | Save/load mid-run, continue: identical hash to the uninterrupted run. Two runs with the same seed draw identical survey samples. |
@@ -422,7 +426,12 @@ Audit-stream events and fields (`RecordFalsified`, true `Falsity` tags, the actu
 
 ## 11. Open questions
 
-Owner questions (foreign information under `FullInformation`; the debug overlay in competitive play) are collected in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md#13-open-questions-owner). Settled here:
+No open owner question remains. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q21 Foreign information under `FullInformation`:** no unrestricted access to foreign factions' internal affairs. The existing visibility rules for foreign territory and organisations stay. Foreign information comes through observation, trade, diplomacy, migration, communication, media, intelligence and official reporting. A faction's own treasury and records may be near-complete at first. The architecture distinguishes what is true from what a faction knows or believes (4.8; test I19).
+- **Q22 Debug true-state overlay:** off in normal competitive play. Allowed in developer mode, lab experiments, debugging and dedicated observation scenarios; sandbox scenarios may optionally enable it (changed from "on in sandbox by default"). Ordinary faction AI and NPC policies never get debugging information (4.8; tests I11, I18).
+- **Further requirement (27 Nov):** restricted NPC observations and read-only policy views are enforced from the start (M1, I1), and institutional returns stay distinct from independently calculated KPIs and from true outcomes ([KPI_CATALOGUE.md](KPI_CATALOGUE.md#2-principles)).
+
+Settled here:
 1. **View refresh cost.** Each KPI refreshes on its own period; the faction's own books are live. Measured in M13.
 2. **The audit sidecar is hashed.** `RecordAudit` is sim state, so falsification is replay-checked. Its rows reach the warehouse only at the `Full` recording level.
 3. **Census in the Band age.** Band elders tally and register only; the first census is a Village-age activity (section 4.2).

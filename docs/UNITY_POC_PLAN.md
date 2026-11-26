@@ -425,14 +425,14 @@ The owner's request after stage 2:
 
 # Stage 4: a living population under a state (planned 26–27 Nov 2026, not started)
 
-**Start here:** [STAGE_4_HANDOVER.md](STAGE_4_HANDOVER.md) has the status, the order of work and how to begin.
+**Start here:** [STAGE_4_HANDOVER.md](STAGE_4_HANDOVER.md) has the status, the order of work and how to begin. The running record of the implementation is [stage4/DEV_LOG.md](stage4/DEV_LOG.md).
 
 [stage4/DESIGN_CONVENTIONS.md](stage4/DESIGN_CONVENTIONS.md) is the binding contract for every Stage 4 design document. It holds:
 - the complete list of owner decisions;
 - the time model, modules, ids and information layers;
 - the four policy levels, domain events and civilisation ages;
-- **the official milestone list (M0–M15)** and the map of design documents;
-- the open owner questions, each with a default (section 13).
+- **the official milestone list (M0–M15)**, grouped into the functional checkpoints 4A–4F, and the map of design documents;
+- the owner's answers to all 23 former open questions (section 13, 27 Nov 2026) and the owner's further requirements (section 14).
 
 ## What stage 4 is
 The game moves **from Darwin, through Dawkins, to Marx**, with Smith, Axelrod, Ostrom and *Creatures* as further influences. See [stage4/VISION_AND_PHILOSOPHY.md](stage4/VISION_AND_PHILOSOPHY.md).
@@ -480,10 +480,20 @@ The roadmap is in the conventions, section 10.
 | HUD (build bar, cards, trade, tutorial) | **Refactor:** placing becomes "designate a site and post a contract". New state and institution panels, an NPC inspector, gesture animations, reports through `FactionKnowledgeView`. The tutorial is rewritten in M14. |
 | `SmokeRun` in the player, `DotNet` tests | **Reuse.** The new `DotNet/God.Runner` console app becomes the main headless tool. |
 
-## Minimum viable stage 4
-These milestones together give the smallest version that is already the new game:
-- **M0–M6:** the runner and policy seams; NPCs who live, learn, form households, barter and choose jobs; a state that taxes and pays.
-- **M9:** volunteer soldiers.
-- **M13:** basic recording and KPIs.
+## Checkpoints and functional releases (corrected 27 Nov 2026)
+The milestones M0–M15 are kept and grouped into six functional checkpoints ([conventions §10](stage4/DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)):
 
-The other milestones add what the game theory and political economy need: credit and reputation, enterprises, citizenship, culture, Band institutions. M14 makes it a balanced, playable game, and M15 makes it trainable.
+| Checkpoint | Milestones |
+|---|---|
+| 4A Simulation laboratory | M0–M2 |
+| 4B Living population | M3–M4 |
+| 4C Social economy | M5–M7 |
+| 4D Political economy | M8–M11 |
+| 4E Institutional state | M12, M13a, M13b |
+| 4F Integrated gameplay and network readiness | M14–M15 (no training) |
+
+**The earlier "minimum viable stage 4" (M0–M6 plus M9 and M13) was wrong:** M13 needed M12, which needs M10, which needs M7 and M9. M13 is now split, and the honest functional releases are:
+- **First playable new game: the end of 4C plus M9 (M0–M7 and M9).** A living, learning population; households; a social economy with NPC labour and state incentives; persistent soldiers.
+- **Analytical recording:** M0 already gives JSONL events. **M13a** (the SQLite warehouse core with person, household, economy and citizenship facts) needs only M0 and the event types of the milestones done, so it may be pulled forward after M6. **M13b** (institution KPIs and reports) comes after M12.
+
+The other milestones add what the game theory and political economy need: enterprises, citizenship, culture, Band institutions. M14 makes it a balanced, playable game, and M15 makes it trainable. Unity views arrive progressively with each milestone, and every temporary compatibility mechanism is listed with its removal milestone in [stage4/DEV_LOG.md](stage4/DEV_LOG.md#temporary-mechanisms). Parallel work respects milestone dependencies, not just file boundaries.

@@ -34,6 +34,9 @@ It links to, and does not repeat:
 3. **Disputes are detected, not started.** The sim never runs a "strike event". Analysis detects a dispute episode from individual acts (section 4.7).
 4. **Saying is not doing, at scale too.** A pledge to strike, a demand, a threat and a promise of concession are messages. They bind no one in the rules.
 5. **No form of organisation is favoured.** Independent, communal, cooperative, private and state production run on the same physics. They differ only in rules for deciding, joining and dividing. See section 4.10.
+6. **No political belief comes from class.** Class is a measured relation ([ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md)); no NPC carries a permanent class label, and no political belief is assigned from class. Whether stances track positions is a finding.
+7. **Communities organise themselves (owner decision Q17).** Groups can create their own institutions without the state, from households, contributions, shared ownership and associations ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#communal-founding-without-the-state)). The state may support, regulate, compete with or replace them.
+8. **Governance is not assumed (owner decision Q20).** Informal household and community decisions come first; formal rules for associations come later; state-level democracy develops as an institution and is not assumed from the start.
 6. **The state's responses have direct costs only.** Conceding costs what was conceded; repression costs staff time, wages and risk. The *consequences* (resentment, emboldenment, fear, emigration) arise through NPC learning, memory and beliefs, never through a scripted penalty.
 7. **Collective action must be able to fail.** Free riding, mistrust, misunderstanding, lack of reserves and replacement workers are all real. A scenario in which collective action cannot fail, or cannot succeed, is a bug unless the circumstances explain it.
 
@@ -120,7 +123,8 @@ Association
   Members  : (NpcId, JoinedDay, DuesOwed)[<=64]
   Leaders  : NpcId[<=3]        // whoever members endorse most (4.5); recomputed weekly
   Rules    : Dues (goods per day), EntryRule (open | invited | trade-only),
-             Sanction (shun | expel | fine), DecisionRule (leader | majority | unanimity)
+             Sanction (shun | expel | fine), DecisionRule (generic, Q20: Majority | Consensus | Leader |
+             Appointment | Rotation | Election | Lot | Seniority; data with parameters, more kinds later)
   Fund     : ItemLotId[<=8]    // pooled goods: lots owned by the association's Group (Owner{Group, id})
   Record   : (Day, Act, Outcome)[<=32]   // its own memory of past actions, readable by members
 ```
@@ -238,8 +242,9 @@ P(carry out Y) = f( pledges seen and crowd size,
 
 ### 4.7 Collective bargaining and industrial disputes
 - **Bargaining.** An association (or an informal group with a leader) sends `Demand` to an employer. The employer's decider scores `Concede`, `Refuse`, counter-`Offer` or `Ignore`. A concession becomes new contract terms ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md)). Until courts exist, the employer can quietly break them later, and the workers remember.
-- **Strike.** Workers choose `Withhold`: they do not go to their jobs, and may stand at the workplace. Under laws v1 ([STATE_DESIGN.md](STATE_DESIGN.md)) they may lose the job; that is part of the cost.
-- **Lockout.** An owner chooses not to open the workplace or pay, to press its own terms.
+- **Strike.** Workers choose `Withhold`: they do not go to their jobs, and may stand at the workplace. **A walk-out suspends the job contract first; it does not end it (owner decision Q19).** The contract mechanics are in [ECONOMY_DESIGN.md](ECONOMY_DESIGN.md#jobs-and-the-end-of-walkers): while suspended there is no work and no pay. Each employee may then resume, negotiate, resign or keep refusing; the employer may negotiate, improve pay, dismiss or seek alternatives. Dismissal is the employer's choice, so losing the job is a possible cost, never an automatic one.
+- **Lockout.** An owner chooses not to open the workplace or pay, to press its own terms: the same suspension from the employer's side.
+- **From material circumstances, not scripts.** Collective bargaining, strikes, lockouts and economic conflict arise from these individual choices under material circumstances and incentives (reserves, dependence, replacement labour, ties); no event is scripted (principle 3).
 - **Strike-breaking.** The owner can offer the jobs to others. Whether anyone takes them depends on their own decider: how dependent they are, how they view the strikers, whether they fear being shunned.
 - **Picketing.** Strikers can `Defend` the gate. Crossing it is a contest under the resident/intruder logic, and violence becomes a crime with witnesses.
 - **Resolution** comes from individuals: strikers drift back as hunger rises, the owner concedes as stock spoils and state purchase orders go unmet, or a mediator (elders in the Band age, a court later) proposes terms.
@@ -249,6 +254,11 @@ P(carry out Y) = f( pledges seen and crowd size,
 - **Movements** are associations with `PetitionState`, or informal groups whose members repeatedly `Complain` and `Rally` about the same state issue.
 - **Petitions** are `Demand`s presented to an official. The official (an NPC with its own interests) writes `SignerCountSeen` into the institution's records, possibly wrong. The player sees the record through `FactionKnowledgeView`, not the truth.
 - **Institutional development** can arise when an association's practice works and persists: a mutual-aid fund that acts like welfare, a guild that settles members' disputes like a court. The player may recognise, charter, absorb, tax or ban such bodies; the catalogue and unlock rules are in [INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#ages-and-unlocks). An association's existence and practice can count towards an unlock condition, the same as any measured feature of society.
+
+### 4.8a Decisions and governance (owner decision Q20)
+- **Stage 4: informal decisions only.** Households decide norms by the agreement of their adults ([HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#forming-and-breaking-households)); cooperatives decide at a meeting of present members ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md#47-enterprises-m8)); communities and communal institutions decide by the agreement of those present, with the "most trusted" member as manager ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#11-open-questions)). Each participant decides for itself by gesture.
+- **Stage 5: a generic `DecisionRule` for associations,** shared by associations, cooperatives and communal institutions, supporting alternative governance: majority, consensus, appointment, rotation, election, lot, seniority and others later. It is data, so a group can change its own rule by its current rule. Which rules persist is a finding.
+- **State-level democracy develops as an institution,** not assumed from the start: an assembly, elections or a council is an institution type with unlock rules, staff and failure modes ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)), in a later age. Its design links to the owner's wider political plans and is decided with the owner when that stage is planned.
 
 ### 4.9 Economic alliances (derived kinds)
 Kinds are computed each day from an association's purposes and its members' class measures, for analysis only:
@@ -338,9 +348,11 @@ Each component is reported separately, plus an equal-weight index for the HUD. T
 | M7 | Promises and reputation, the basis for pledges and credibility |
 | **M10** | **Political-interest measures (foundations only)**: `InterestEntry` with Material, Learned and Social parts on the stage 4 issues (tax, state wage, welfare ration, commons access, immigration); grievances; legitimacy components feeding loyalty; `Complain` and `Approve` gestures. No groups, no collective acts |
 | M11 | Political beliefs as cultural traits (the `Cultural` part) |
-| M12 | Band-age elders and mediation can receive complaints; communal mediation of disputes between two parties |
-| M13 | Snapshot fields recorded; politics report (stances, parts, grievances, legitimacy, unrest components) |
-| **Stage 5** | Associations, `Rally`, `Pledge`, `Endorse`, `Demand`, `Withhold`, `Shun`, `Concede`, `Disperse`; strikes, lockouts and dispute detection; petitions; the state's responses; derived alliance kinds; cooperatives at scale; the headman's court as mediator |
+| M6, M8 | Contract suspension for lasting jobs (an individual `RefuseWork` suspends, Q19), the basis for later collective walk-outs ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md)) |
+| M12 | Band-age elders and mediation can receive complaints; communal mediation of disputes between two parties; simple communal institutions founded by groups without the state where practical (Q17) |
+| M13a, M13b | Snapshot fields recorded (M13a); politics report (stances, parts, grievances, legitimacy, unrest components) (M13b) |
+| **Stage 5** | Associations with the generic `DecisionRule` (Q20), `Rally`, `Pledge`, `Endorse`, `Demand`, `Withhold` (a collective walk-out, suspending contracts), `Shun`, `Concede`, `Disperse`; strikes, lockouts and dispute detection; petitions; the state's responses; derived alliance kinds; cooperatives at scale; the headman's court as mediator; `FoundCommunal` completed if M12 deferred it |
+| Later | State-level democracy as an institution (Q20) |
 | Stage 6 | Courts enforcing collective contracts; police and prisons; chartered companies; money in strike funds and dues; institution staff organising |
 | Stage 7 | Media spreading political traits and grievances at a distance; statistics on unrest that can be gamed; mass movements across settlements |
 
@@ -386,11 +398,21 @@ Both scenarios have one private enterprise employing 12 NPCs at a wage that fall
 14. **Ablations** (descriptive, reported, no pass threshold): flip each variable in the table one at a time and report how the rate moves.
 15. **Repression consequence check** (stage 5): in `CanArise`, randomise whether the state posts dispersal. Report emigration and later dispute rates in each arm with 95% intervals. Pass if the experiment completes with its control; the sign is a finding.
 
+**Owner decisions (Q17, Q19, Q20)**
+17. `Walkout_Suspends` (M6, shared with ECONOMY E5): a `Withhold` or `RefuseWork` leaves the contract `Suspended`, not ended; only `Resign` or `Dismiss` ends it.
+18. `DecisionRule_Generic` (stage 5): one association fixture decided under each of majority, consensus, appointment, rotation and election gives the outcome that rule defines, through the same code path; a group can change its own rule only by its current rule.
+19. `NoClassBelief`: no constructor, scenario loader or rule sets a political trait or interest from a class measure (static test, beside test 3).
+
 **Performance**
 16. Interest updates for 600 NPCs at sleep take under 3 ms per sim day; joining scores add under 5% to think-tick time.
 
 ## 11. Open questions
-Owner questions (whether a walk-out ends or suspends the job contract; formal voting) are collected in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md#13-open-questions-owner). Settled here:
+No open owner question remains. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q19 Walk-outs:** suspend the contract first. The employee may resume, negotiate, resign or keep refusing; the employer may negotiate, improve pay, dismiss or seek alternatives. This is the basis for collective bargaining, strikes, lockouts and economic conflict, arising from material circumstances and incentives, not scripted events (4.7; test 17).
+- **Q20 Formal voting:** the staged approach. Informal household and community decisions in Stage 4; a generic `DecisionRule` for associations in Stage 5, supporting alternative governance later (majority, consensus, appointment, rotation, election and others). State-level democracy develops as an institution, is not assumed from the start, and links to the owner's wider political plans (4.8a; test 18).
+- **Q17 Communal institutions without the state:** yes; communities organise themselves independently of the state ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#communal-founding-without-the-state); principle 7).
+
+Settled here:
 - **Issue formulas.** This document owns the table of first-order material formulas, one line per lever, added when the lever is added.
 - **Legitimacy vs loyalty.** Legitimacy is one input to loyalty, weight 2 of 18 by default ([STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection)).
 - **Topic field.** The message `Topic` can name an issue or a posting ([COMMUNICATION_AND_COGNITION_DESIGN.md](COMMUNICATION_AND_COGNITION_DESIGN.md)).

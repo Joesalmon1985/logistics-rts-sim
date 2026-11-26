@@ -7,7 +7,9 @@ This document gathers the tests and acceptance criteria from every design docume
 
 Where a source document still uses the plan's old milestone numbers, this document uses the conventions' numbers. Where a source gives a range of milestones, the assignment here is a proposal and is marked *(assigned)*.
 
-Contents: 1 How tests run · 2 Standing gates · 3 Milestones M0 to M15 · 4 Traceability · 5 Conflicts between documents
+**Updated 27 Nov 2026** for the owner's answers and further requirements ([conventions §13 and §14](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)): M13 is split into **M13a** (warehouse core) and **M13b** (institution KPIs and reports); the milestones are grouped into the functional checkpoints **4A–4F** and two functional releases (section 3.0); the owner's eight learning scenarios (LS1–LS8, plus LS9) and the tests for each answer are added; section 4.3 maps the owner's evidence list to tests. **Coverage is never reduced**: no criterion was removed or loosened in this update.
+
+Contents: 1 How tests run · 2 Standing gates · 3 Milestones M0 to M15 (3.0 checkpoints and releases) · 4 Traceability · 5 Conflicts between documents
 
 ---
 
@@ -53,6 +55,14 @@ Exit codes: 0 success, 1 check failed, 2 usage, 3 invalid input, 4 determinism d
 | **Perf** | A time, memory or size budget (reference machine for time) | budget missed |
 | **Man** | A manual check by the owner | owner does not sign off |
 
+**The owner's three tiers (27 Nov).** Every criterion belongs to exactly one tier, and reports keep them apart:
+
+| Tier | Kinds | What it proves |
+|---|---|---|
+| **Deterministic unit tests** | Unit, Inv (and Perf hard caps) | exact values and invariants that hold on every run and every seed |
+| **Controlled model tests** | Lab, Mech | a mechanism or a maths result works in a controlled setting (fixed seeds, scripted or benchmark counterparts) |
+| **Statistical island experiments** | Dir, Hyp | directions and recorded hypotheses over many seeds on the real island |
+
 ### 1.4 Rules for statistical and many-seed tests
 
 1. **Fixed seed sets, named in advance.** Seed lists are `S10` = 1–10, `S20` = 1–20, `S30` = 1–30, `S50` = 1–50 and `S100` = 1–100 (and so on), committed with the test. A test never picks seeds after seeing results, never retries, and never drops a seed. A failure is therefore reproducible from its seed and tick.
@@ -60,6 +70,7 @@ Exit codes: 0 success, 1 check failed, 2 usage, 3 invalid input, 4 determinism d
 3. **Calibration targets are pinned once.** Where a source says "baseline recorded at the first run" (culture, estates, class measures, benchmarks), the first accepted run is stored as a baseline file. From then on the baseline is a **regression bound of ±15%**, and re-baselining needs a commit with a reason.
 4. **A measured hypothesis is recorded, not asserted.** A **Hyp** test has no assertion on the sign or size of an effect. It passes when it runs to completion with its control, uses the named seeds, and writes the mean paired difference, a bootstrap 95% interval and the share of seeds with the same sign. "No effect" and "the opposite effect" are valid results and are published as found.
 5. **No tuning to get an effect.** If an expected direction does not appear, the finding is recorded and the model reviewed. Parameters change only for a documented bug or for balance reasons unrelated to the effect. No rule may be added that assigns an activity, a class or a strategy.
+5a. **Never weaken a criterion to pass (owner, 27 Nov).** If an expectation proves wrong, the evidence is documented (runs, seeds, what was found) in [DEV_LOG.md](DEV_LOG.md#deviations-from-plan) and the criterion is amended **transparently**, by a commit to this document that states the old value, the new value and the evidence. A failing test is never skipped, `[Ignore]`d or loosened silently (G1.4).
 6. **Direction tests:**
    - paired by seed (same world, one change), at least 30 seeds per arm for island scenarios (stricter of the sources; see conflicts);
    - "significant" means a two-sided Mann–Whitney test at p < 0.05 for unpaired arms, or a one-sided paired sign test at 5% for the direction of a paired difference;
@@ -150,10 +161,12 @@ A milestone is not done, and nothing merges as "done", unless all of the followi
 | Save or load at 500 NPCs | ≤ 1 s each | M3 | HEADLESS 4.10 |
 | Class measures, 600 NPCs | < 2 ms per sim day | M8 | CLASSES 16 |
 | Interest updates, 600 NPCs | < 3 ms per sim day; joining scores add < 5% to think-tick time | M10 | POLITICAL 16 |
-| Recording overhead vs Off | Metrics ≤ 3%, Summary ≤ 15%, Full ≤ 60% | M13 | DATA_WAREHOUSE 10.10 |
-| 200 sim years, `band_village_500`, Summary | ≤ 3.5 h, warehouse ≤ 1 GB | NIGHT from M4 (warehouse from M13) | HEADLESS, DATA_WAREHOUSE 10.9 |
+| Recording overhead vs Off | Metrics ≤ 3%, Summary ≤ 15%, Full ≤ 60% | M13a | DATA_WAREHOUSE 10.10 |
+| 200 sim years, `band_village_500`, Summary | ≤ 3.5 h, warehouse ≤ 1 GB | NIGHT from M4 (warehouse from M13a) | HEADLESS, DATA_WAREHOUSE 10.9 |
 | Parallel scaling, 8 workers | ≥ 0.8 × 8 runs' throughput | M0 | HEADLESS 4.10 |
 | Regression gate | `bench --compare` fails (exit 7) below 15% under the stored baseline | M0 | HEADLESS 4.10 |
+
+**Benchmark early (owner, 27 Nov).** From M0, every milestone records the owner's benchmark columns (ticks/s, sim years per real second, NPC decisions/s, memory per NPC, pathfinding cost, learning cost, communication cost, telemetry and database overhead, save size and load time, parallel throughput) in [DEV_LOG.md](DEV_LOG.md#performance-benchmarks), using the report of [HEADLESS_SIMULATION.md §4.10](HEADLESS_SIMULATION.md#410-performance-targets-and-profiling). A capability is never cut to meet a budget without the owner.
 
 Scaling checks repeat at M3, M6, M9 and M12. A miss blocks the milestone, and the fix is level of detail or budget tuning before any rule change. Level-of-detail bias is tested at M3 (mean population, births and food per head within 5% of LOD off, 20 seeds × 5 sim years).
 
@@ -165,7 +178,9 @@ Scaling checks repeat at M3, M6, M9 and M12. A miss blocks the milestone, and th
 | G6.2 | **Boots and plays.** `BootSceneTests` and the menu and HUD PlayMode tests pass; the Windows build starts in `-batchmode -nographics` and completes a smoke replay. |
 | G6.3 | **The chain works.** On at least 9 of 10 seeds every faction completes plank → building → gear → its first soldier within 1.5× the stage 3 median ticks for that seed (from M6; before M6, equal to stage 3). |
 | G6.4 | **No milestone may leave the game broken.** Every milestone merges in a state where: the stage 3 smoke passes, new features that are not finished are behind a scenario switch that defaults to the previous behaviour, and the owner can start a game from the menu and play it. A milestone that cannot meet this is split. |
-| G6.5 | **Stage 3 hashes.** Seeds 1–12 in stage 3 mode replay with the same end tick and winner as the **M0 baseline** at every later milestone (see conflict C1 for why the pre-M0 baseline is not used). |
+| G6.5 | **Stage 3 hashes.** Seeds 1–12 in stage 3 mode replay with the same end tick and winner as the **M0 baseline** at every later milestone (see conflict C1 for why the pre-M0 baseline is not used). The pre-M0 game itself is kept as the git tag `stage3-final` (at `d7eeb95`); Stage 3 save compatibility is not required (owner, 27 Nov). |
+| G6.6 | **Temporary mechanisms are listed.** Every temporary compatibility mechanism in the code is in the "Temporary mechanisms" table of [DEV_LOG.md](DEV_LOG.md#temporary-mechanisms) with its removal milestone; at that milestone it is gone (reflection or search test where possible). |
+| G6.7 | **Progressive inspection.** The milestone delivers its Unity inspection or view from [conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list) (the "Manual" line below). |
 
 ### 2.7 G7. Hygiene
 
@@ -174,6 +189,20 @@ Every milestone's report states which tests actually ran and which did not (`CLA
 ---
 
 ## 3. Milestones
+
+### 3.0 Checkpoints and functional releases
+| Checkpoint | Milestones | Done when |
+|---|---|---|
+| **4A Simulation laboratory** | M0, M1, M2 | each milestone below is done |
+| **4B Living population** | M3, M4 | as above |
+| **4C Social economy** | M5, M6, M7 | as above |
+| **4D Political economy** | M8, M9, M10, M11 | as above |
+| **4E Institutional state** | M12, M13a, M13b (M13a may be done earlier, any time after M6) | as above |
+| **4F Integrated gameplay and network readiness** | M14, M15 (no training) | as above |
+
+**Functional releases** (replacing the old "minimum viable stage 4", which wrongly included M13 although M13 needed M12, M12 needs M10, and M10 needs M7 and M9):
+- **First playable new game = end of 4C plus M9 (M0–M7 and M9).** Gate: every criterion of M0–M7 and M9, all standing gates, plus an owner play session from the menu in the sandbox with a living, learning population, households, the social economy with NPC labour and state incentives, and persistent soldiers.
+- **Analytical recording:** JSONL events from M0 (M0.2, M0.14); the SQLite warehouse core at M13a; institution KPIs and reports at M13b.
 
 Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* is `doc id` (see the abbreviations list in section 4.1), *Suite* is from section 1.1. "N" after a suite means the NIGHT tier. Counts such as "20 seeds" refer to the named seed sets `S20`.
 
@@ -214,6 +243,8 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M1.5 | Inv | Toggling the true-state overlay every day leaves `StateHash` identical at every checkpoint | INFORMATION I11 | RT |
 | M1.6 | Unit | `PolicyRegistry` resolves names; an unknown policy name is refused at load; a policy cannot name an intent outside its interface *(derived)* | CONVENTIONS 7 | EM |
 | M1.7 | Inv | `FullInformation` view: HUD figures equal the previous direct-read figures (snapshot comparison on 5 seeds) *(derived)* | INFORMATION 8 | PM |
+| M1.8 | Unit | **Overlay off in competitive play (Q22):** a competitive VP scenario has the overlay disallowed and no toggle; a sandbox scenario has it off unless enabled; developer, lab and observation scenarios allow it; no policy interface receives it | INFORMATION I18 | EM |
+| M1.9 | Inv | **No foreign truth (Q21):** under `FullInformation`, changing a foreign faction's unreported treasury, population or records leaves the viewing faction's view unchanged; each foreign item names its source channel | INFORMATION I19 | RT |
 
 **Manual:** screenshots of the HUD before and after are visually identical. **Done means:** nothing in the HUD or AI touches true state; behaviour is unchanged.
 
@@ -242,6 +273,7 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M2.17 | Perf | `lab all --check` runs in under 60 s on one core; exit 1 on a miss, 0 on a pass | STRATEGY_BENCHMARKS 10 | RT |
 | M2.18 | Inv | A game with no benchmark assigned gives the same hash as before the benchmark module existed | STRATEGY_BENCHMARKS 20 | RT |
 | M2.19 | Inv | **There is no acceptance test that a book result appears on the island.** Island adapter checks (STRATEGY_BENCHMARKS 18, 19, 21–23) start at M3 and later milestones | GAME_THEORY section 10 | n/a |
+| M2.20 | Unit | **Honest labels:** every experiment in `lab list` carries a reproduction status (Exact; Exact payoffs with a corrected or different result; Derived; Invented); no report of a non-Exact experiment calls itself a reproduction | STRATEGY_BENCHMARKS 24 | EM |
 
 **Manual:** none. **Done means:** `lab all --check` exits 0 and every number above is within tolerance; the lab is independent of the island.
 
@@ -270,6 +302,11 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M3.17 | Unit | The utility policy's score for continuing a task does not change with the amount already spent (Concorde), but changes with remaining cost | GAME_THEORY 11 | EM |
 | M3.18 | Hyp | S10 dig-or-enter: share entering and payoff of each route, hut register on/off, scarce vs plentiful huts, 30 seeds per arm. Mechanism check (the register adds the stated penalty) is **Mech** and must pass | STRATEGY_BENCHMARKS S10 | RT |
 | M3.19 | Perf | L19: 500 NPCs, 1 sim day: learning ≤ 20 µs per think, ≤ 25% of NPC update time; consolidation ≤ 5 ms per day. `bench_npc_500`, `bench_npc_1000` and save/load budgets (G5). LOD bias within 5% over 20 seeds × 5 sim years (N) | NPC_LEARNING L19, HEADLESS | RT, N |
+| M3.20 | Mech | **Owner learning scenario LS1, hungry near food:** L1 and L2 pass in the LS1 scenario, and `Frozen`-from-birth with no instincts eats within 5 think ticks in ≤ 40% of hungry episodes (so the result is learned) | NPC_LEARNING LS1 | RT |
+| M3.21 | Mech | **LS3, tired near shelter:** by days 4–5 the learner sleeps in the hut in ≥ 20 points more fatigue episodes than `Frozen`, in ≥ 90% of 50 seeds; with no hut within 10 nodes it does not make wasted walks (≥ 95%) | NPC_LEARNING LS3 | RT |
+| M3.22 | Mech | **LS4, gathering wood with an axe:** by days 6–8 the learner equips the axe before gathering in ≥ 20 points more trips than `Frozen`, in ≥ 90% of 50 seeds; a conjunction with `ObjClass(LogPile)` is recruited by day 8 in ≥ 80%; with a useless axe, no gain over `Frozen` (± 10 points) | NPC_LEARNING LS4 | RT |
+| M3.23 | Unit | Decay is independent of `LifeScale` and configurable: `LifeScale` 200 leaves a fixture store's daily decay unchanged; `DecayScalePermille` 2000 doubles it (within rounding) and 0 stops it (Q1) | NPC_LEARNING 4.8 | EM |
+| M3.24 | Perf | First benchmark row with NPCs: every owner benchmark column that exists at M3 is recorded in DEV_LOG (NPC decisions/s, memory per NPC, pathfinding, learning cost, save size and load time) | HEADLESS 4.10 | RT |
 
 **Manual:** screenshot of the NPC inspector (drives, attention, beliefs, top learned associations) and of a foraging NPC. **Done means:** NPCs live in the game, learn, never read the truth, and the budgets hold at 500 NPCs.
 
@@ -280,7 +317,7 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | # | Kind | Criterion | Source | Suite |
 |---|---|---|---|---|
 | M4.1 | Unit | Natural death only (starvation, injury, disease off): every NPC dies between 3.3 and 4.7 years; mean 3.9–4.1 | POPULATION `NaturalDeath_Window` | EM |
-| M4.2 | Unit | Fertility needs both partners: no conception in 1,000 couple-days if either says no; both yes and fertile: conception within 12 days in ≥ 90% of couples. No conception below 0.9 or above the fertility end; no birth sooner than 0.35 y after the last; full-term pregnancy 0.25 ± 0.005 y | POPULATION `Fertility_*`, `Pregnancy_Length` | EM |
+| M4.2 | Unit | Fertility needs both partners: no conception in 1,000 couple-days if either says no; both yes and fertile: conception within 12 days in ≥ 90% of couples. No conception below 1.0 (adulthood; the threshold moved from 0.9 on 27 Nov because reproduction is for adults only) or above the fertility end; no birth sooner than 0.35 y after the last; full-term pregnancy 0.25 ± 0.005 y | POPULATION `Fertility_*`, `Pregnancy_Length` | EM |
 | M4.3 | Mech | Disease: one infected adult in a hut of 6 well-fed adults gives 2–5 infections, deaths under 1 in 6; a hungry hut shows ≥ 2× the deaths | POPULATION `Disease_Outbreak` | RT |
 | M4.4 | Mech | Immigration responds: surplus food and free beds give ≥ 3× the arrivals of a starving, full faction over 5 years. Capacity emerges: food ×1, ×2, ×0.5 gives mean population (years 8–15) in ratio 1 : 1.6–2.4 : 0.4–0.6 | POPULATION | RT |
 | M4.5 | Mech | **Stable over 10 generations:** default sandbox seed, 15 sim years: never extinct, minimum population ≥ 10, end population 0.5×–2× of year 3, no year with growth above 60% after year 3; households per capita 0.17–0.4 (the stricter of 0.15–0.5 and the size band); ≤ 1% of living NPCs without a household for over 1 year | POPULATION, HOUSEHOLDS `Stable_10Generations` | RT |
@@ -303,6 +340,14 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M4.22 | Inv | Determinism: 10 generations twice and with recording on/off give the same hash at every day boundary and the same membership table, pedigree hash and `EstateTransfer` stream; save and load with an open estate and pending will give an identical stream | POPULATION, BIOLOGICAL, HOUSEHOLDS, MATERIAL 4 | RT |
 | M4.23 | Hyp | S7 partnership strategies (fast/philanderer seeded 20% each; courts or none; welfare or none): cycle amplitude and shares recorded. MATERIAL 17 estate measures (Gini, parent-child rank correlation) are recorded here, with the first baseline pinned at M8 | STRATEGY_BENCHMARKS S7, MATERIAL 17 | RT, N |
 | M4.24 | Perf | `LongRun_200Years` `band_village_500` seed 1, 200 sim years at Summary-equivalent: exit 0 in ≤ 3.5 h (N from M4) | HEADLESS | N |
+| M4.25 | Inv | **Adults only, never replenished:** every `PregnancyStarted` has both parents aged ≥ 1.0 (10 seeds × 15 years, zero exceptions); with `immigration Off` the NPCs ever alive equal founders plus births exactly, and no vacancy creates an NPC; immigration arrivals after a scripted epidemic equal the rule's prediction from its own inputs (exact) | POPULATION `Reproduction_AdultsOnly`, `No_Spawned_Replacements`, `Immigration_NotReplenishment` | RT |
+| M4.26 | Mech | **Disease (Q3):** `Off` gives zero infections; `Mild` at most half the disease deaths of `On`; hungry, over-capacity and high-`Fouling` huts are each sicker than their controls and tended patients less severe (paired sign test, 20 seeds each); every infection records one route | POPULATION `Disease_Settings`, `Disease_Linkage`, `Disease_RouteRecorded` | RT |
+| M4.27 | Hyp | **Multigenerational stability, owner default:** `band_6x20` on 20 seeds and `band_6x10`, `band_6x40` on 10 seeds each, 15 sim years; and `Stable_10Generations` with immigration Off (20 seeds). Population per faction, births, deaths by cause, extinctions and generations are reported with intervals; every extinction or collapse is classified (meaningful outcome, defective mechanic, bad baseline) in DEV_LOG. Passes when every seed completes without an invariant failure and every extinction is classified; nothing is tuned to prevent extinction | POPULATION `Default_6x20_Generations`, `Stable_Closed` | RT, N |
+| M4.28 | Inv | **Partnerships (Q5, Q6):** same-sex fixtures give identical household, care, estate and social-memory outcomes to the unit (conception disabled) over 1000 fixtures, and no code outside `Reproduction` and `PhenotypeBuilder` branches on partner sex; orphans are fostered by same-sex couples and single adults within ± 10 points of the mixed control; every partnership forms and ends by the NPCs' own decisions; with `MaxLivePartnerships` 2 concurrent partnerships occur and every invariant holds | HOUSEHOLDS `SameSex_EqualCapabilities`, `Adoption_OpenToAll`, `Partnership_Voluntary`, `Partnership_CapConfigurable` | EM, RT |
+| M4.29 | Mech | **Shared childcare (Q15):** at least one `CareArrangementMade` in ≥ 10 of 20 seeds of the two-household scenario; an arrangement exploited by one side is ended by the other within 10 days in ≥ 80% of cases | HOUSEHOLDS `SharedChildcare_Possible` | RT |
+| M4.30 | Unit | **Mutation configurable (Q4):** `MutationPer10k` 10 gives 100 ± 30 events per 100,000 copies; 0 gives exactly 0; per-scenario values are honoured and do not leak between parallel runs | BIOLOGICAL `Mutation_RateHonoured`, `Mutation_ScenarioOverride` | EM, RT |
+| M4.31 | Inv | **Estates (Q13, Q14):** assets transferred, never duplicated (1,000 estates per custom and ladder: id multisets conserved, no new ids); the executor ladder is configurable; no executor receives more than its custom gives it | MATERIAL 20–22 | EM |
+| M4.32 | Inv | **Care is counted (Q12):** unpaid care ticks and the time-use categories are counted from M4 and sum exactly to the ticks of each day | CLASSES 18 | RT |
 
 **Manual:** screenshot of a household panel and family tree; owner watches one generation turn over. **Done means:** a population lives, breeds and dies for 15 years without extinction or explosion; inheritances are separate; goods pass to heirs and conservation holds.
 
@@ -324,6 +369,8 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M5.10 | Inv | Reflection for ECONOMY B6 (no policy references `DealTrace`, `PropertyRecord` truth, `Ledger`, `TradeTuning.ValueOf`) added to G4 | ECONOMY B6 | EM |
 | M5.11 | Mech | L16 domain progress: for each domain introduced (communication, barter, cooperation, relationships), the learned NPC's rate of the rewarding choice differs by ≥ 20 points from `Frozen`-from-birth in ≥ 90% of 50 seeds | NPC_LEARNING L16 | RT |
 | M5.12 | Hyp | S2 resident/intruder by custom (20% resident rule, 20% intruder rule seeded; hut register on/off) and S5 hut-mates share on unlucky days (shared store on/off; stable vs high-turnover huts): 30 seeds per arm. **Mech** checks (the register carries its penalty; the store changes the payoff) must pass | STRATEGY_BENCHMARKS S2, S5 | RT |
+| M5.13 | Mech | **LS2, hungry with no food (producing goods enables a later food exchange):** by days 8–10 the learner, hungry with no food, gathers logs or goes to the trader with them in ≥ 20 points more think ticks than `Frozen`, in ≥ 90% of 50 seeds; with food in sight it still eats first (≥ 90%); with episodes off and traces disabled the gap shrinks by at least half (reported); with a trader who gives nothing, no gain over `Frozen` (± 10 points) | NPC_LEARNING LS2 | RT |
+| M5.14 | Unit | Social-memory decay is independent of `LifeScale` and configurable: test 12 of SOCIAL_MEMORY with `ScalePermille` 2000 and with grudge decay 0 (Q1) | SOCIAL 12 | EM |
 
 **Manual:** screenshot of gesture animation (the view animates sim events and decides nothing). **Done means:** NPCs recognise, remember and gesture; an exchange can be cheated; gifts happen; nothing enforces honesty.
 
@@ -346,6 +393,12 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M6.11 | Inv | Same seed and commands give the same hash with recording off, default and detailed; Perf: 500 NPCs, 4 factions, 10 sim days at ≥ 20× real time, economy ≤ 20% of tick time, haul planner ≤ 2 ms, no per-tick allocation in the economy loop | ECONOMY F1, F2 | RT |
 | M6.12 | Inv | **Same command set:** the HUD "designate a site and post a contract" sends the commands an `IFactionPolicy` can return (G4.5) | STATE S-CMD-1 | EM |
 | M6.13 | Mech | L16 domains: work, production, gathering, gear (each: learned rate differs by ≥ 20 points from `Frozen` in ≥ 90% of 50 seeds) | NPC_LEARNING L16 | RT |
+| M6.14 | Mech | **LS7, working for a reliable state:** by days 12–15 the learner prefers state postings over an identical private posting ≥ 20 points more in the reliable-state arm than in the defaulting-state arm, in ≥ 90% of 50 paired seeds; a reliable private employer is not avoided in either arm (± 10 points); with episodes off the arm difference shrinks by at least half (reported) | NPC_LEARNING LS7 | RT |
+| M6.15 | Inv | **No anonymous workers in either mode (Q8):** in VP mode and the sandbox, every recipe cycle, build tick and gather has a staff NPC present (10 seeds × 10 days, exact) | ECONOMY E6 | RT |
+| M6.16 | Unit | **Walk-out suspends (Q19):** `RefuseWork` makes the employment `Suspended` with no pay and no work, no `JobAbandoned` after 300 ticks, ended only by `Resign` or `Dismiss`; a lockout likewise | ECONOMY E5, POLITICAL 17 | EM |
+| M6.17 | Mech | **Reasons to trade and hand gathering (Q9, Q10):** `LogsAndClay` gives ≥ 0.2 log-for-clay exchanges per adult per day and ≥ 1.3× the huts of `ExchangeOff` on ≥ 7 of 10 seeds; the hand-versus-capital output ratio is reported for every default run and lies in 3–5 at default tuning | ECONOMY C4, C5 | RT |
+| M6.18 | Unit | **Forest stock (Q11):** on in the sandbox and off in VP by default; a depleted forest hex gets no piles until regrowth (exact); with depletion off pile size never changes (exact); depletion and sustained stock are both possible in the forest commons scenario | ECONOMY D5 | EM, RT |
+| M6.19 | Inv | **Temporary HQ paymaster (Q16):** pays only goods the store holds, emits `WageUnpaid` for every shortfall, ledger exact; `IPayPoint` can be replaced by a queuing test implementation with no other code change | STATE S-TMP-1, S-TMP-3 | RT |
 
 **Manual:** owner places a sawmill by designating a site and posting a contract and watches NPCs build it; screenshots of the state and jobs panels. **Done means:** the stage 3 economy works with NPC labour and no walkers; the state governs only by pay and commitment.
 
@@ -365,6 +418,8 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M7.8 | Unit | Fingerprints from events: five defections and three retaliations give `RetaliationRate` 600 permille and the known median lag; a rate with fewer than `MinObs` observations is −1; a replayed TFT policy has `FirstMoveCooperation`, `ReciprocationRate`, `RetaliationRate` all above 950, a Grudger has `ForgivenessLagTicks` −1 after a defection, Always Defect has `FirstMoveCooperation` 0; likeness of TFT to its shadow above 990 and to Always Defect below 500 | GAME_THEORY 7–10 | EM |
 | M7.9 | Hyp | **Island:** S3 help on credit survives cheats (5% `bench.alld`, 10% `bench.grudger`, 10% `bench.tft`; none / elders' mediation); S4 barter as a prisoner's dilemma; S9 are fakes caught (inspector on/off). **Mech** checks (the treatment changed the payoff it claims to) must pass; outcomes are recorded only, 30 seeds per arm | STRATEGY_BENCHMARKS S3, S4, S9 | RT, N |
 | M7.10 | Mech | L16 domains: exploitation, cooperation, reputation | NPC_LEARNING L16 | RT |
+| M7.11 | Mech | **LS5, helping someone (future reciprocity):** by days 12–15 the learner's `Help` rate is ≥ 20 points higher with `bench.tft` neighbours than with `bench.alld` neighbours, in ≥ 90% of 50 paired seeds; with episodes off the difference shrinks by at least half (reported) | NPC_LEARNING LS5 | RT |
+| M7.12 | Mech | **LS6, lending to an unreliable person:** after 3 defaults by A the learner lends to A in ≤ 20% of A's requests and to reliable B in ≥ 60%, in ≥ 90% of 50 seeds; a new stranger's requests fall ≥ 10 points but stay above A's | NPC_LEARNING LS6 | RT |
 
 **Manual:** screenshots of a gossip chain and a broken-promise event. **Done means:** trust, credit, lies and gossip operate with no referee; the benchmark policies can be measured after the fact.
 
@@ -385,6 +440,7 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M8.9 | Hyp | Material estate measures: wealth Gini, parent-child rank correlation and inherited share by custom over 20 seeds × 5 generations. Expected direction (`EldestChild` gives higher within-family inequality than `EqualChildren`) is **recorded, not asserted**. The first run pins the baseline; later runs stay within ± 15% | MATERIAL 17 | N |
 | M8.10 | Mech | L16 domains: enterprise, employment, property | NPC_LEARNING L16 | RT |
 | M8.11 | Inv | No class label, no outcome flag in sim code (G4.4); no constructor or scenario loader can set a class position | VISION 1 | EM |
+| M8.12 | Unit | **Care work and time use (Q12):** a full-time carer is not `NotInWork` and has relation shares 0; the six time-use categories plus `TicksOther` sum to the day for every NPC-day and equal the recomputation from events; unpaid care appears in every economy report | CLASSES 17–19 | EM, RT |
 
 **Manual:** screenshot of a workshop with its employer and workers and of the class-measures view (analysis only). **Done means:** NPCs found and staff enterprises under the same rules whatever the form; classes show up only in measures.
 
@@ -406,6 +462,8 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M9.10 | Mech | Truce measure works: both posts on a fixed hold-fire policy emit `TruceFormed` after exactly `TruceQuietDays`; one damaging shot emits `TruceBroken` with the right cause. Herd measure: domain-of-danger values match a hand-built layout exactly | MILITARY M-TRU-1, M-HERD-1 | EM |
 | M9.11 | Hyp | **Island:** M-TRU-2 bounty effect on quiet pair-days (20 seeds per arm, with and without `PerKill`); M-HERD-2 casualty rate by quartile of domain of danger over 20 raid seeds; S1 contests over berries and beds with 0, 10, 30% `bench.hawk`; S6 truces; S8 herd. Reported with confidence intervals, **no direction required**; **Mech** checks must pass | MILITARY, STRATEGY_BENCHMARKS S1, S6, S8 | RT, N |
 | M9.12 | Perf | Scaling check at M9 (`bench_npc_500`, `bench_npc_1000`) | HEADLESS | RT |
+| M9.13 | Mech | **LS8, joining a poorly managed military:** after the first tour, re-enlistment is ≥ 20 points lower and `Desert` while hungry and unpaid ≥ 20 points more frequent in the poorly managed arm than in the well-managed arm, in ≥ 90% of 50 paired seeds; `Frozen` learners show no arm difference in re-enlistment (± 10 points) | NPC_LEARNING LS8 | RT |
+| M9.14 | Mech | **Conduct in war (Q18):** a witnessed killing of the surrendered changes every witness's trust and group reputation by the evidence-table deltas and shocks the victims' comrades' morale, while an unwitnessed one changes no record; soldiers who know of it surrender ≥ 20 points less often to that faction (20 seeds); acceptance of surrender varies between individuals and is neither 0% nor 100% overall | MILITARY M-CON-1..3 | EM, RT |
 
 **Manual:** screenshot of soldiers as NPCs, their kit and morale; owner plays a skirmish and a defection-free war. **Done means:** the army is the population; stage 3 battles give the stage 3 results under the stage 3 policy; desertion occurs only through morale.
 
@@ -423,6 +481,9 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M10.6 | Mech | A broken wage promise creates a grievance with `TargetId` = employer and `Severity` > 0 and lowers trust in the employer. A state that pays every contract for 5 days raises `Procedural` legitimacy in contractors; one that defaults on half lowers it. Hash unchanged with politics telemetry off | POLITICAL 4, 5 | EM |
 | M10.7 | Perf | Interest updates for 600 NPCs < 3 ms per sim day; joining scores add < 5% to think-tick time | POLITICAL 16 | RT |
 | M10.8 | Mech | L16 domains: military service, faction membership, migration | NPC_LEARNING L16 | RT |
+| M10.9 | Inv | **Loyalty earned, not rewarded (Q7):** no reward channel, command or scenario key writes `Loyalty` or rewards it; a faction that pays and feeds reliably has higher mean loyalty than an otherwise identical defaulting one on ≥ 18 of 20 seeds by day 20; if the optional `Belonging` drive is on, it is relieved only by contact with known people (unit) | STATE S-LOY-3, NPC_LEARNING 4.4 | EM, RT |
+| M10.10 | Inv | **Temporary immigration desk (Q16):** HQ answers to 50 scripted `AskJoin` follow `ImmigrationPolicy` exactly, each with its event; no `WelcomeGift` without treasury goods | STATE S-TMP-2 | EM |
+| M10.11 | Inv | No political trait or interest is set from a class measure (static) | POLITICAL 19 | EM |
 
 *Political scenarios `Scenario_CollectiveActionCanArise`/`Fails`, `Lab_PublicGoods`, `Lab_Threshold` and the repression check are stage 5 and not part of any M0–M15 gate (POLITICAL 10–15).*
 
@@ -466,12 +527,30 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M12.9 | Inv | Under `FullInformation` the faction view's theft figure equals the actual within rounding in the same runs | INSTITUTIONAL I-GH-6 | RT |
 | M12.10 | Hyp | **Natural rate of gaming on the island:** the rate at which unforced managers cherry-pick or falsify is measured over 50 seeds and recorded (no threshold) | INSTITUTIONAL open question | N |
 | M12.11 | Perf | Scaling check at M12 | HEADLESS | RT |
+| M12.12 | Inv | **Institutions without the state (Q17):** a group-founded communal institution runs the full daily cycle with no faction command in its history, and no code path requires a faction owner | INSTITUTIONAL I-COM-1 | EM |
+| M12.13 | Mech | **Communal founding (Q17):** if M12 implements autonomous founding, a communal shared store is founded by member agreement in ≥ 10 of 20 seeds within 20 days and none without agreement; if M12 keeps only the `FoundCommunal` interface, the intent is refused with `not_yet`, the choice is recorded in DEV_LOG, and this criterion moves to Stage 5 as outstanding work | INSTITUTIONAL I-COM-2 | RT |
 
 **Manual:** screenshot of the institution panel with staff and budget; owner founds a store and a guard post. **Done means:** institutions exist only through staffed NPCs, change the environment in the stated direction, and can fail or game their targets.
 
-### M13. Analytical recording, KPIs, reports, the HUD reports panel
+### M13a. Analytical recording core: the SQLite warehouse with person, household, economy and citizenship facts
 
-**Goal:** a SQLite warehouse and Band-age KPIs that never change sim outcomes, reported through `FactionKnowledgeView` with a measurable reported-vs-actual gap.
+**Goal:** a SQLite warehouse that never changes sim outcomes and reconciles exactly with the events of every milestone done so far. **Needs:** M0 and the event types of the milestones done; may be pulled forward any time after M6, after which each later milestone adds its tables.
+
+| # | Kind | Criterion | Source | Suite |
+|---|---|---|---|---|
+| M13a.1 | Inv | M13.1 below, for the tables whose sources exist | DW 10.1, 10.2 | RT |
+| M13a.2 | Inv | M13.2 below (counts and snapshots reconcile exactly with events and state) | DW 10.3, 10.4 | RT |
+| M13a.3 | Inv | M13.3 below, without the KPI-engine clause (recording never changes outcomes, every level and domain) | DW 10.5, VISION 3 | RT, N |
+| M13a.4 | Inv | M13.4 below (deterministic warehouse, live equals replayed, spells consistent, no SQLite reference in sim or game) | DW 10.7, 10.8, 10.13, 10.14 | RT |
+| M13a.5 | Unit | **Life history:** for 20 sampled NPCs the life-history report contains every event naming the NPC, in order, and nothing else; spells half-open and non-overlapping | DW 10.16 | RT |
+| M13a.6 | Perf | M13.13 below for the recorder (budgets and size) | DW 10.9, 10.10 | RT, N |
+| M13a.7 | Unit | M13.14 below (Parquet round trip, migrations) | DW 10.11, 10.12 | RT |
+
+**Manual:** screenshot of the dev-mode NPC life-history view. **Done means:** any recorded run can be queried, equals the sim to the unit, and switching recording off changes nothing. The criteria M13.1–M13.4, M13.13 and M13.14 below are met here for the tables M13a builds, and again at M13b for the tables it adds.
+
+### M13b. Institution KPIs and reports (the full M13)
+
+**Goal:** a SQLite warehouse and Band-age KPIs that never change sim outcomes, reported through `FactionKnowledgeView` with a measurable reported-vs-actual gap. **Needs:** M12 and M13a. The criteria keep their M13.x numbers; those also listed under M13a are rerun here for the tables M13b adds.
 
 | # | Kind | Criterion | Source | Suite |
 |---|---|---|---|---|
@@ -491,6 +570,8 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M13.14 | Unit | Parquet round trip: `export` then DuckDB gives equal row counts and sums per table; a schema-v1 fixture migrates and the example queries return results of the right shape | DW 10.11, 10.12 | RT |
 | M13.15 | Hyp | Scenario descriptive checks, 50 seeds × 6 sim years: Enclosure dependency rate above 300 permille by year 5 is computed for every seed and is neither 0% nor 100% (G4.11); no threshold on the rate itself | CLASSES 14 | N |
 | M13.16 | Unit | Media: only the notice-board `Outlet` exists; I14–I16 (reach, learned credibility, dual-channel beliefs) are stage 6–7 and **not** gated | INFORMATION 8 | n/a |
+| M13.17 | Inv | **No composite wellbeing (Q23):** no KPI definition, report template or dashboard sums or weights KPIs from different wellbeing dimensions; LIV-06 is five separate drive levels | KPI K13 | EM |
+| M13.18 | Inv | **Time use reconciles (Q12):** TIM-01 and TIM-02 equal their recomputation from events for every adult-day (5 seeds) and are present in the reports with unpaid care beside paid work | KPI K14 | RT |
 
 **Manual:** screenshots of the HUD reports panel (each KPI with source, as-of date and quality). **Done means:** the warehouse can be queried for any recorded run, equals the sim to the unit, and switching it off changes nothing.
 
@@ -502,7 +583,7 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 |---|---|---|---|---|
 | M14.1 | Inv | **Incentives only, nothing built by magic:** with the incentive AI on 20 seeds × 10 sim years, every building completed was built by NPC labour and committed goods (G3.6 holds with AI factions); the AI reads only `FactionKnowledgeView` and uses only commands the HUD can send (G4.1, G4.5) | STATE, INSTITUTIONAL, CONVENTIONS 2 | RT, EM |
 | M14.2 | Inv | Stage 3 mode (`VictoryPoints10`, `Population` off) still plays and wins (G6.1); the 10 VP race on the Stage 4 rules runs 12 seeds to a result without invariant failures; a sandbox of 10 sim years on 5 seeds never ends while two factions remain | STATE S-VIC-1, G6 | RT |
-| M14.3 | Mech | **Balance (set before the run, from the sandbox-first rule):** over 20 seeds × 10 sim years the default sandbox has no invariant failure; no extinction of any faction caused by a rule bug (extinctions are reported); mean daily nutrition and population within the bands of M4.5. Thresholds recorded in this document before the first balance run *(derived, to be filled in at M14)* | CONVENTIONS 10 | RT, N |
+| M14.3 | Mech | **Balance (set before the run, from the sandbox-first rule):** over 20 seeds × 10 sim years the default sandbox (`band_6x20`) has no invariant failure; no extinction of any faction caused by a rule bug (extinctions are reported, and each is classified as meaningful outcome, defective mechanic or bad baseline; genuine collapse is not tuned away); mean daily nutrition and population within the bands of M4.5. Thresholds recorded in this document before the first balance run *(derived, to be filled in at M14)* | CONVENTIONS 10, 14 | RT, N |
 | M14.4 | Inv | `experiment` rerun gives identical per-run hashes, metrics and `results.csv` (bitwise with the recorded analysis seed); 1 worker and 8 workers, or arms in a different order, give identical results; changing a registered plan field makes the runner refuse (an unlisted metric is flagged exploratory); an unknown or seed-touching override path is rejected before any run; recording level `none` and `experiment` give equal final hashes | POLICY_EXPERIMENTS | RT |
 | M14.5 | Inv | CRN: two arms that differ only in a parameter first used on day 10 have equal hashes at day 10 on every seed | POLICY_EXPERIMENTS `Experiment_CRN_Alignment` | RT |
 | M14.6 | Mech | **A/A tests:** different independent seed sets: over 20 repeated A/A experiments of 40 runs per arm the unadjusted share of significant tests lies in 2–9%, Holm family-wise error ≤ 6%; same seeds and no overrides: every pair of run hashes is equal and every estimated difference exactly 0 | POLICY_EXPERIMENTS `AA_*` | RT |
@@ -512,6 +593,8 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M14.10 | Inv | **Not inevitable:** each headline emergent outcome the scenarios claim as possible (commons collapse, property concentration, desertion, a failed institution) occurs in > 0% and < 100% of 100 seeds (G4.11); each report names its control and seed count | VISION 4, 5 | N |
 | M14.11 | Inv | Recording neutrality at every level over 20 seeds × 10 sim years; no outcome flag in sim code; form neutrality (G2.2, G4.4, G4.6) | VISION 1–3 | N |
 | M14.12 | Man | The tutorial is rewritten: `TutorialTests`, `TutorialEndToEndTests` and `TutorialHudTests` are replaced by equal-strength tests for the new flow (designate a site, post a contract, read a report); the PlayMode HUD, menu and boot tests pass; the play guide matches the game | UNITY_POC_PLAN | EM, PM |
+| M14.13 | Inv | **Neutral vocabulary (Q2):** HUD strings, tutorial cards, KPI names and report labels contain no theorist's name or listed theory term outside the About/Philosophy page | VISION 11.6 | EM |
+| M14.14 | Inv | **Composites declared (Q23):** an experiment plan using a composite without components, weights and limitations is refused; a report with a composite shows every component | POLICY_EXPERIMENTS `Composite_Declared` | EM |
 
 **Manual:** the owner plays a full sandbox for several generations and one 10 VP game from the menu; screenshots of every new HUD panel; the owner decides whether stage 3 mode is retired. **Done means:** a playable, balanced sandbox and race on the new rules, with the experiment harness proven by A/A and planted-effect tests.
 
@@ -532,6 +615,7 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M15.9 | Mech | **Behaviour cloning sanity:** a small `IntNet` (2 × 128) cloned from the scripted civilian reproduces its verb on > 99% of held-out decisions when deterministic (≥ 95% of the noise ceiling otherwise); the scripted faction policy > 99% on verb and > 97% on the full action; a game played by the cloned civilian matches the scripted game on survivors at day 30 and food stock within 10% over 20 seeds | AI_TRAINING `BC_*` | RT |
 | M15.10 | Inv | The Python environment with a fixed action rule and seed gives the same observation hash sequence on two runs | AI_TRAINING `Bridge_Determinism` | RT |
 | M15.11 | Perf | Bridge throughput is printed; more than 30% regression from the stored baseline logs a warning and **does not fail** the build | AI_TRAINING `Bridge_Throughput_Report` | RT |
+| M15.12 | Mech | **LS9, shared network, personal experience:** two identical-genome NPCs on the same `IntNetNpcPolicy` with different LS6 histories differ in lending to A by ≥ 30 points in ≥ 95% of 50 seed pairs; identical histories give identical decisions; the store keeps changing under the network | NPC_LEARNING LS9 | RT |
 
 **Manual:** none. **Done means:** a network can be plugged in at any of the four levels, replays exactly, and can only see what a human at that level sees.
 
@@ -547,7 +631,7 @@ POPULATION, BIOLOGICAL (BIOLOGICAL_INHERITANCE), HOUSEHOLDS, NPC_LEARNING, COMMU
 
 | Owner requirement | Proven by | Kind |
 |---|---|---|
-| **Lifetime learning in all domains** (survival, gathering, production, gear, barter, cooperation, exploitation, relationships, communication, work, military service, faction membership) | M3.1–M3.11 (L1–L13: eat when hungry, delayed reward, avoidance, forgetting, nature vs nurture, generalisation), M5.5–M5.6, M5.11, M6.13, M7.6, M7.10, M8.10, M10.8, M11.11–M11.12 (L14–L17: **L16 per domain, added in the milestone that introduces each domain**); L7 learning on vs off, `Frozen` unchanged; M4.11 (learning never inherited); M15.7 (L18: networks take learned state) | Mech, Inv |
+| **Lifetime learning in all domains** (survival, gathering, production, gear, barter, cooperation, exploitation, relationships, communication, work, military service, faction membership) | M3.1–M3.11 (L1–L13: eat when hungry, delayed reward, avoidance, forgetting, nature vs nurture, generalisation), M5.5–M5.6, M5.11, M6.13, M7.6, M7.10, M8.10, M10.8, M11.11–M11.12 (L14–L17: **L16 per domain, added in the milestone that introduces each domain**); L7 learning on vs off, `Frozen` unchanged; M4.11 (learning never inherited); M15.7 (L18: networks take learned state); the owner's eight scenarios LS1–LS8 (M3.20–M3.22, M5.13, M6.14, M7.11, M7.12, M9.13) and LS9 (M15.12) | Mech, Inv |
 | **NPCs never read true state** | G4.1, G4.2, G4.5 (reflection); M1.1–M1.3; M3.12 (perception-only on every decision); M3.16; M8.3 (`Perception_NotTruth`); M10.5 (no trace of an unperceived change); M15.5 (encoding leak test); M4.11 | Inv |
 | **Gestures as real mechanics incl. lies and misunderstanding** | M5.4 (every `GestureMade` has `MessageDecoded`), M5.5, M7.1 (lying promise), M7.4 (gossip errors), M7.5 (decode error rate within ± 2 points; lies caught), M5.7 (defection possible); Unity only animates (G4.5, manual screenshot at M5) | Inv, Mech |
 | **Four inheritances kept distinct** | G4.7; M4.8–M4.11 (`FourInheritances_Separate`, `NoFitnessFunction`, genome mutation and recombination numbers); M4.19–M4.21 (material, conserved, by custom); M11.1 (no cross-write between learning and culture stores); M11.11 (imports bounded and revised by own experience) | Unit, Inv |
@@ -562,6 +646,32 @@ POPULATION, BIOLOGICAL (BIOLOGICAL_INHERITANCE), HOUSEHOLDS, NPC_LEARNING, COMMU
 | **Lab vs island kept separate** | §1.5; M2 (all numeric, lab only); M2.19; island rows M3.18, M5.12, M7.9, M9.11 (mechanism + direction, outcomes recorded); G4.3 | Lab, Mech, Hyp |
 | **Conservation, no dead owners, ids never reused** | G3.1–G3.3; M4.19; M6.1; M9.2 | Inv |
 | **Performance at the stated scale** | G5; M3.19; M6.11; M8.4; M10.7; M13.13 | Perf |
+| **Owner answers of 27 Nov (Q1–Q23)** | Q1: M3.23, M5.14 · Q2: M14.13 · Q3: M4.3, M4.26 · Q4: M4.8, M4.30 · Q5, Q6: M4.28 · Q7: M10.9 · Q8: M6.15 · Q9, Q10: M6.17 · Q11: M6.18 · Q12: M4.32, M8.12, M13.18 · Q13, Q14: M4.31 · Q15: M4.29 · Q16: M6.19, M10.10 · Q17: M12.12, M12.13 · Q18: M9.14 · Q19: M6.16 · Q20: POLITICAL 18 (stage 5) · Q21: M1.9 · Q22: M1.5, M1.8 · Q23: M13.17, M14.14 | all kinds |
+
+### 4.3 Owner evidence list (27 Nov)
+The owner asked for evidence of each item below. Each row names the tests that provide it and their tier (section 1.3).
+
+| Evidence wanted | Proven by | Tier |
+|---|---|---|
+| Genuine individual learning | M3.1–M3.11 (L1–L13), M3.20–M3.22 (LS1, LS3, LS4), M5.13 (LS2), M6.14 (LS7), M7.11–M7.12 (LS5, LS6), M9.13 (LS8); every LS compares against `Frozen` | controlled model |
+| Contextual and delayed reinforcement | M3.3 (L3 traces), M3.11 (L13 conjunctions), LS2, LS5, LS7 (episodes on vs off), LS6 (`NpcRef` specificity), LS1–LS4 context controls | controlled model |
+| Different behaviour from different experience | M3.7 (L8 same nature, different nurture), LS5, LS7, LS8 (arms differ only in experience), M15.12 (LS9 under one network) | controlled model |
+| Multigenerational population stability | M4.5, M4.6, M4.27 (owner default `band_6x20`, size variants, immigration off), M4.24 | controlled model, statistical island |
+| Genealogical integrity | M4.10 (relatedness exact), M4.11, M4.22 (pedigree hash), G3.3 (ids never reused), G3.7 (one death cause) | deterministic unit |
+| Resource conservation | G3.1, M6.1, M9.2, M6.18 (forest stock exact) | deterministic unit |
+| Population conservation | M4.25 (NPCs ever alive = founders + births + immigrants; never spawned), G3.5, M9.1, M12.1 | deterministic unit |
+| Estate and ownership conservation | M4.19, M4.31 (transferred, never duplicated), G3.2 | deterministic unit |
+| Knowledge isolation | G4.1, G4.2, G4.5, M1.1–M1.3, M1.9 (no foreign truth), M3.12, M8.3, M10.5, M15.5 | deterministic unit |
+| Meaningful non-verbal communication | M5.4, M5.5 (gesture learning), M7.1, M7.4, M7.5 (lies caught, misunderstanding), M5.7 | controlled model |
+| Cooperation, exploitation and retaliation | M5.6, M5.7, M7.3, M7.8 (fingerprints), M7.9 (S3, S4), M4.29 (shared childcare exploited and answered), LS5, LS6 | controlled model, statistical island |
+| Emergent specialisation | M6.10 (`TwoFoods` with `ExchangeOff` control), M6.17 (`LogsAndClay`) | controlled model |
+| Different ownership and employment relationships | M8.1–M8.3, M8.5 (form neutrality), M8.8 (enclosure), M6.16 (suspension), M12.12 (communal without the state) | deterministic unit, controlled model |
+| Deterministic replay | G2.1, G2.6, M0.1, M0.7, M3.8, M4.22, M15.4 | deterministic unit |
+| Save/load continuation parity | G2.3, M0.6, M3.8 (L9 with open traces), M4.22 (open estates), M13.11 | deterministic unit |
+| Parallel independence | G2.4, M0.4, M4.30 (mutation rates in parallel), M14.4 | deterministic unit |
+| Headless and Unity parity | G2.5, M0.8 | deterministic unit (NIGHT) |
+| Telemetry independence | G2.2, M0.2, M3.8 (L10), M8.3, M13.3, M14.11 | deterministic unit |
+| KPI reconciliation | M13.2, M13.6, M13.7, M13.18, M4.7 | deterministic unit |
 
 ---
 
@@ -569,7 +679,7 @@ POPULATION, BIOLOGICAL (BIOLOGICAL_INHERITANCE), HOUSEHOLDS, NPC_LEARNING, COMMU
 
 | # | Conflict | Resolution here |
 |---|---|---|
-| C1 | **Stage 3 seeds.** STATE S-VIC-2 and MILITARY M-DET-1 ask that stage 3 seeds 1–12 replay with the **same** end tick, winner and hashes as before stage 4. CONVENTIONS section 3 says M0 moves dice and other draws onto keyed forks, which changes stage 3 results once, and accepts it. | M0 re-baselines once. The M0 reference (end tick, winner, hashes) is the baseline for G6.5, M1.4 and M9.4. Pre-M0 equality is not required; the stage 3 smoke verdict (a win) is. **The owner should confirm.** |
+| C1 | **Stage 3 seeds.** STATE S-VIC-2 and MILITARY M-DET-1 ask that stage 3 seeds 1–12 replay with the **same** end tick, winner and hashes as before stage 4. CONVENTIONS section 3 says M0 moves dice and other draws onto keyed forks, which changes stage 3 results once, and accepts it. | M0 re-baselines once. The M0 reference (end tick, winner, hashes) is the baseline for G6.5, M1.4 and M9.4. Pre-M0 equality is not required; the stage 3 smoke verdict (a win) is. **Settled by the owner on 27 Nov:** Stage 3 save compatibility is not needed, and the pre-M0 game is kept as the git tag `stage3-final` (at `d7eeb95`). |
 | C2 | **Households per capita:** HOUSEHOLDS `Stable_10Generations` 0.15–0.5, `Household_Size` 2.5–6.0 mean (equivalent to 0.17–0.4). | Use 0.17–0.4 (M4.5). |
 | C3 | **Seeds per island arm:** GAME_THEORY says at least 20 seeds with a one-sided sign test at 5%; STRATEGY_BENCHMARKS says at least 30 seeds per arm, paired, with bootstrap; STATE, INSTITUTIONAL and MILITARY use 20 seeds with Mann–Whitney. | Island scenarios in STRATEGY_BENCHMARKS use 30 per arm; the STATE, INSTITUTIONAL and MILITARY direction tests keep their stated 20 seeds and Mann–Whitney p < 0.05 (a different, unpaired design); the paired sign test is reserved for paired scenarios. |
 | C4 | **Recording-neutrality scale:** HEADLESS and DW use seeds 1–4 × 2 sim years (CI) and 1 × 200 years (N); VISION 11.3 asks for every level, 20 seeds × 10 sim years; CLASSES 11 asks 20 seeds × 10 years with measures on/off. | Both: the CI set at every milestone and the 20 × 10 set in NIGHT before a milestone closes. |

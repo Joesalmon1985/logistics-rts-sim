@@ -151,6 +151,18 @@ shocks (immediate, then recover with the daily update):
 - **Flee.** Like retreat, but towards the nearest safe-looking place, ignoring the squad. Fear relief on fleeing is a learning signal (NPC_LEARNING_DESIGN).
 - **Desert.** `Desert` ends service: status `Deserted`, the assignment slot frees, pay stops, the kit goes with the deserter. The NPC becomes a civilian with memories intact. It may go home, hide, migrate or later re-enlist elsewhere. Desertion is a crime only if `Law(Desertion)` exists and someone enforces it (later).
 - **Surrender.** `Surrender` is the gesture of the same name (drop weapon, kneel, open hands). The weapon lot is dropped on the ground. Enemy soldiers who perceive it choose, by their own policies, to `AcceptSurrender` (take prisoner), ignore it, or attack anyway. Killing a surrendering soldier is seen by witnesses on both sides; their memories lower trust in the killer's faction, which can make later surrenders less likely and fights longer. That link is measured, not assumed.
+
+### Conduct in war: real consequences without a law of war (owner decision Q18)
+There is no full law of war in Stage 4, but **surrender, retreat, prisoners, treatment of the defeated and reciprocal restraint have real consequences**, carried by the ordinary mechanics, never by a rule that forbids or punishes:
+- **Attacking someone who surrendered** (`SurrenderedKilled`, or wounding a kneeling soldier, a prisoner or a retreating soldier who has dropped its weapon) is an observable act. Every NPC who perceives it, on either side, records it; gossip and returning prisoners carry it further. Where it is **observed or communicated**, it affects:
+  - **reputation and trust:** the attacker's relation records and its faction's group reputation (`GroupRep`) fall with every witness and listener ([SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md));
+  - **morale:** a `MoraleShock` for the victim's comrades who see or hear of it (fear and anger), and a smaller shock for the attacker's own comrades whose Honesty or Kin weight make it costly to them;
+  - **future willingness to surrender:** the `Surrender` verb's learned value and the expected-treatment belief about that faction fall for those who know, so they fight on or flee instead ([NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md)); that the war then becomes bloodier is a measured result, not a rule.
+- **Treatment of prisoners and the defeated** (rations given or withheld, release, escape, enlistment offers, how residents of a captured HQ are treated) enters their memories, gossip and loyalty in the same way (`treatment` term, [STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection)), and so the defeated's later loyalty, desertion and defection.
+- **Reciprocal restraint** (warning shots, holding fire, sparing the surrendered) can be learned and copied, and lapses are remembered; truces (below) are its measured form.
+- **Not everyone behaves the same.** Individuals differ by traits, learned values and culture, and factions differ by their posted bounties, assignments and (later) laws, so one squad may spare the surrendered and another may not.
+- **Later:** institutions and treaties (courts-martial, laws of war, prisoner exchange) can establish and enforce formal rules (Stage 6 and later).
+
 - **Defection.** A soldier with low loyalty and a belief that the enemy treats people better can `Defect(to f)`: it gestures `AskJoin` to enemy soldiers or an enemy HQ. The receiving state's `AcceptDefectors` rule answers (STATE_DESIGN). Accepted defectors become citizens of f with their kit, and may enlist there. Refused ones are treated as surrendering.
 - **Recognising intent is imperfect.** A `Surrender` or `AskJoin` seen at a distance, at night or in a crowd can be misread (COMMUNICATION_AND_COGNITION misunderstanding rules), so a genuine surrender can be shot and a feigned one can be accepted.
 
@@ -304,6 +316,11 @@ public interface IMilitaryPolicy
 - **M-PRI-2 Peace:** on `PeaceMade`, every prisoner held from that faction is released within 1 tick.
 - **M-DEF-1 Closed to defectors:** with `AcceptDefectors = false`, zero `CitizenshipChanged(defected)` events over 20 days, exactly.
 
+**Conduct in war (Q18; M9):**
+- **M-CON-1 Witnessed killing of the surrendered has consequences:** in a scripted fixture where soldier A kills a surrendered enemy in sight of 3 enemy and 2 friendly NPCs, every witness's trust in A falls and the enemy witnesses' group reputation of A's faction falls (exact deltas from the evidence table); the enemy witnesses' comrades receive a `MoraleShock`; with no witness and no communication, no NPC's records change.
+- **M-CON-2 Surrender willingness responds:** over 20 seeds, soldiers of faction B who saw or were told of a killing of the surrendered by faction A choose `Surrender` in the M-SUR-1 situation against A at least 20 points less often than B soldiers with no such knowledge (Mech); the overall size is reported.
+- **M-CON-3 Not uniform:** in a 36-seed battle scenario the rate of `SurrenderAccepted` per `SurrenderOffered` differs between individuals (some always accept, some do not) and is neither 0% nor 100% overall (G4.11).
+
 **Truces and herds (descriptive, measured; M9):**
 - **M-TRU-1 The measure works:** in a scripted scenario where both posts use a fixed hold-fire benchmark policy, `TruceFormed` is emitted after exactly `TruceQuietDays`; one damaging shot emits `TruceBroken` with the right cause.
 - **M-TRU-2 Bounty effect (hypothesis):** two factions at war with facing guard posts for 20 days and no attack assignments, with and without a `PerKill` bounty, 20 seeds each. Report the fraction of quiet pair-days in each arm and the difference with a confidence interval. Pass criterion: the measurement runs and is reported; no direction is required.
@@ -313,7 +330,11 @@ public interface IMilitaryPolicy
 **Performance:** 100 soldiers in contact plus 400 civilians run at least 20 times real time headless (HEADLESS_SIMULATION targets).
 
 ## 11. Open questions
-The owner question (a stage 4 law of war) is in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md#13-open-questions-owner). Settled here:
+No open owner question remains.
+
+**Owner decision Q18 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)): law of war.** No full system in Stage 4, but surrender, retreat, prisoners, treatment of the defeated and reciprocal restraint have real consequences. Attacking someone who surrendered affects reputation, trust, morale and future willingness to surrender, where observed or communicated. Later institutions and treaties can establish and enforce formal rules. Individuals and factions do not all behave the same ([Conduct in war](#conduct-in-war-real-consequences-without-a-law-of-war-owner-decision-q18); M-CON-1 to M-CON-3).
+
+Settled here:
 - **Squad leadership.** The member with the longest service leads (ties to the lower id); an elected or appointed leader is a later option.
 - **Health scale.** Body health 0–1000 with a ×10 damage scale keeps duels identical. Stats do not depend on body state in stage 4, so duel equivalence stays exact; fighting worse when starving is a later option.
 - **Kit on desertion.** A deserter keeps the kit; it is theft only where a theft law exists and someone enforces it.

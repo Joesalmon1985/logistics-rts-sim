@@ -59,7 +59,14 @@ ClassDay                           // one NPC, one day; all ints
   TicksHiredByPrivate    // employed by another NPC or a private enterprise
   TicksHiredByState      // employed by the state or an institution (incl. soldiers)
   TicksForagingWild      // unowned wild sources
-  TicksHousehold         // unpaid care and household work (child-rearing, nursing)
+  TicksHousehold         // unpaid care and household work, the sum of the four below (owner decision Q12: real work)
+  TicksCareChildren      //   child-rearing: feeding, minding, carrying, teaching own or others' children unpaid
+  TicksCareRelatives     //   caring for elders, the sick and the injured (Tend, Carry, Feed)
+  TicksFoodPrep          //   preparing food for the household
+  TicksHouseMaint        //   maintaining the household: hut repair, fetching for the store, fire
+  // time use outside work (for the time-use report, 4.10)
+  TicksLeisure           // awake, not working, not caring, not travelling for work: rest, play, social contact
+  TicksOther             // sleep, eating, illness, travel to work; so that every category sums to the ticks of the day
   TicksHiringOthers      // labour ticks of others employed by enterprises it owns (pro rata to its share)
   // income, in FE, by source
   IncOwnProduct, IncCommunalShare, IncCoopShare, IncWage, IncStateWage,
@@ -155,7 +162,7 @@ Thresholds live in `SimTuning.Analysis`, default 500 permille. Rules are checked
 
 | Order | Position | Rule |
 |---|---|---|
-| 1 | NotInWork | Child or elder, or total work ticks below 20% of a full-time day, and no profit or rent income above 100 permille |
+| 1 | NotInWork | Child or elder, or total work ticks (**including unpaid care**, `TicksHousehold`) below 20% of a full-time day, and no profit or rent income above 100 permille. So a full-time carer is never "not in work" |
 | 2 | EmployerOwner | `OwnsProductive`, `HiresLabour ≥ 1000` (one full-time worker or more) and profit plus rent ≥ 300 permille of income |
 | 3 | DependentPoor | Poor, and no work share ≥ 500 |
 | 4 | WageWorker | `TicksHiredByPrivate` ≥ 500 permille of work ticks |
@@ -169,6 +176,11 @@ Thresholds live in `SimTuning.Analysis`, default 500 permille. Rules are checked
 - `Dependent` is a separate flag on every profile, because a wage worker may or may not be dependent.
 - **Household position**: the same rules applied to the sum of a household's ledgers. Children and non-working elders take their household's position for mobility analysis.
 - **Sensitivity**: reports recompute positions at thresholds 400, 500 and 600 and show how many NPCs change position. If more than 20% change, the report warns that the categories are fragile in that run.
+
+### 4.5a Care work (owner decision Q12, 27 Nov)
+**Care work is real work.** Child-rearing, caring for relatives, preparing food, tending the injured and maintaining households cost time and resources and give genuine benefits in the sim (children fed and protected, lower illness severity and faster recovery, food ready, huts kept: [HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#care-of-elders-the-sick-and-the-injured), [POPULATION_DESIGN.md](POPULATION_DESIGN.md#disease-simple-model-in-stage-4-healthcare-later)).
+- **In class calculations** the distinction is kept: care work counts as work for the `NotInWork` test, but it is not a relation to productive assets, so it does not enter `SellsLabour`, `WorksOwnMeans`, `WorksCommunal` or `HiresLabour`. Paid care (childminding for goods under a `CareArrangement`, or a care job) is counted where its pay comes from, like any paid work.
+- **Unpaid care is reported separately, so it is never economically invisible.** Every economy report and the time-use KPIs ([KPI_CATALOGUE.md](KPI_CATALOGUE.md)) show unpaid care hours beside paid work, by sex, age group and household; its value is shown in hours, and optionally at a stated replacement valuation (FE of the same hours of paid care), always labelled as an analytical valuation.
 
 ### 4.6 Inequality
 All per faction, per day, over living adults (and separately over households):
@@ -184,6 +196,20 @@ All per faction, per day, over living adults (and separately over households):
   - **Rank-rank slope** of wealth (KPI INQ-07; formula in [KPI_CATALOGUE.md](KPI_CATALOGUE.md) section 6.6), with the parents' rank taken as the average of both parents where both are known.
   - A parent-to-child **position transition matrix** (INQ-08), using the parents' household position, beside the KPI's wealth-quintile matrix.
 - **What makes mobility possible or unlikely** (all emergent, none designed to win): luck in foraging and harvest; skill growth; marriage and household pooling; inheritance customs and laws; returns on productive assets; debt; enclosure or exhaustion of commons; taxes and welfare; death and migration. Each run's report lists which of these mechanics were active.
+
+### 4.7a Time use (owner decision Q12)
+Reports include each adult's time in six categories per day and over the window, as shares of awake ticks and in hours (from the `ClassDay` ticks, so they reconcile to the events exactly):
+
+| Category | Ticks |
+|---|---|
+| Paid work | `TicksHiredByPrivate + TicksHiredByState` (and paid care) |
+| Independent production | `TicksOwnMeans` |
+| Communal work | `TicksCommunalMeans + TicksCoopMeans` |
+| Unpaid care | `TicksHousehold` (with its four parts) |
+| Subsistence | `TicksForagingWild` (gathering from unowned sources for one's own or the household's use) |
+| Leisure | `TicksLeisure` |
+
+`TicksOther` (sleep, eating, illness, travel) completes the day so that the categories sum exactly to the ticks of the day. The breakdown is by sex, life stage and household position, so a division of labour inside households is visible as a measure, never assigned.
 
 ### 4.8 How inequality can arise (possibilities, not outcomes)
 - **Concentrating forces**: assets that produce more than they wear; heirs who inherit undivided; skill compounding with tools; owners able to hire when others lose subsistence access; loans whose defaults transfer collateral.
@@ -223,7 +249,7 @@ PerceivedOther                   // per known NPC: fields of the social-memory R
 - **KPIs and warehouse**: section 7.
 
 ## 6. Player and view
-- **Economy report panel** (through `FactionKnowledgeView`, M13): Gini of wealth and income; top 10% and bottom 50% shares; share of adults owning productive assets; position shares with membership bars; dependency rate; a mobility matrix for the last year.
+- **Economy report panel** (through `FactionKnowledgeView`, M13b): Gini of wealth and income; top 10% and bottom 50% shares; share of adults owning productive assets; position shares with membership bars; dependency rate; a mobility matrix for the last year; **time use** (4.7a) with unpaid care shown beside paid work.
 - **NPC inspector**: shows the NPC's *own* view (its `PerceivedStanding`), not the analysis label. A separate "analyst" tab, off by default and marked as true-state, shows the computed measures for debugging and teaching.
 - **Wording**: the HUD uses the neutral position names in section 3.5 and always shows the underlying measures next to them.
 - No animation exists for class; nothing on screen changes when a label changes.
@@ -242,10 +268,11 @@ PerceivedOther                   // per known NPC: fields of the social-memory R
 | Milestone | Delivers |
 |---|---|
 | M6 | Ownership records (state, private, communal) and wages exist; the ledger categories can be counted |
-| **M8** | **Measures computed**: `ClassLedger`, `ClassMeasures`, `ClassProfile`, reference valuation, surplus with both attribution conventions, subsistence access, Gini and position shares, in the daily snapshot. Cooperatives and NPC employers exist, so every position can occur |
+| M4 | Care acts exist (`CareGiven`, `ChildFed`); unpaid care and time-use ticks (`TicksHousehold` and its parts, `TicksLeisure`, `TicksOther`) are counted from M4, so time use can be reported from M13a |
+| **M8** | **Measures computed**: `ClassLedger`, `ClassMeasures`, `ClassProfile`, reference valuation, surplus with both attribution conventions, subsistence access, Gini and position shares, time use (4.7a), in the daily snapshot. Cooperatives and NPC employers exist, so every position can occur |
 | M10 | `PerceivedStanding` and `PerceivedOther` in the mind, used by political-interest measures |
 | M11 | Imitation uses perceived success, so it can depend on perceived standing |
-| **M13** | **Recorded**: warehouse fields and tables, Band-age KPIs (INQ-03 wealth Gini, INQ-05 top shares, INQ-06 Palma, INQ-11 class composition), position shares and dependency rate as report items, economy report panel |
+| **M13a / M13b** | **Recorded** (M13a: ledger and time-use facts; M13b: KPIs and the report panel): warehouse fields and tables, Band-age KPIs (INQ-03 wealth Gini, INQ-05 top shares, INQ-06 Palma, INQ-11 class composition), position shares and dependency rate as report items, economy report panel |
 | Stage 5 | Village-age KPIs (INQ-04, INQ-09, INQ-10); intergenerational measures once several generations exist (INQ-07 and INQ-08 are Town-age KPIs, but headless runs can compute them earlier); household positions |
 | Stage 6 | Money: valuation switches to prices where they exist; rent, interest and shares as income sources; banks change debt measures |
 | Stage 7 | Statistics institutions publish *reported* versions; the actual vs reported pair per KPI |
@@ -278,7 +305,16 @@ All run under `dotnet test DotNet` and become entries in [ACCEPTANCE_TESTS.md](A
 15. `Scenario_PartibleVsUnitaryInheritance` (stage 5, causal): randomise inheritance custom across 100 seeds; report the difference in wealth Gini at year 20 with a 95% interval. Pass if the experiment runs to completion with its control; the sign is a finding, not a requirement.
 16. Performance: computing class measures for 600 NPCs takes under 2 ms per sim day on one core.
 
+**Care work and time use (owner decision Q12)**
+17. `Care_CountsAsWork_NotAsRelation`: an adult who spends 80% of its awake ticks minding and feeding children and does no other work is not `NotInWork`; its `SellsLabour`, `WorksOwnMeans` and `WorksCommunal` are 0 and its unpaid-care share is 800 ± 10 permille.
+18. `TimeUse_SumsToDay`: for every NPC and day over 10 seeds × 5 sim years, the six categories plus `TicksOther` sum exactly to the ticks of the day; each category equals its recomputation from events.
+19. `UnpaidCare_Reported`: every economy report and the KPI set contain the unpaid-care series (hours and share) beside paid work, with no gap where care occurred (checked over 5 seeds).
+
 ## 11. Open questions
+
+No open questions remain.
+
+**Owner decision Q12 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)): care work is real work.** Child-rearing, caring for relatives, preparing food, tending the injured and maintaining households cost time and resources and give genuine benefits. The distinction between care work and relationships to productive assets is kept in class calculations, but unpaid care is reported separately so that it is not economically invisible. Reports include time on paid work, independent production, communal work, unpaid care, subsistence and leisure (sections 4.5a and 4.7a; tests 17–19; [KPI_CATALOGUE.md](KPI_CATALOGUE.md) TIM-01 to TIM-03).
 
 Settled in review (26 Nov 2026): the FE index is `WareRefValue`, owned by ECONOMY_DESIGN, with the observed valuation always shown beside it (revisit if they differ by more than 30 percent on the main wares); soldiers count as `StateEmployee` with a `Military` sub-flag; reports show both 5-day and 10-day windows until a run shows which is more stable; wild foraging and communal work keep separate tick counts and merge only in the position rule.
 

@@ -312,9 +312,10 @@ score(c) = Instinct(c) + Learned(c) + Social(c) + Culture(c) + Personality(c) - 
 | Status (M8+) | Thanked, a contest won / lost, visibly richer than neighbours | Through the status drive |
 | Frustration | The sim rejected or aborted the intent (blocked, item gone, refused) | −50 |
 
-**Wellbeing, not attitudes:**
-- Loyalty is not a reward channel. Loyalty is rebuilt daily from the same experiences ([STATE_DESIGN.md](STATE_DESIGN.md)), so adding it would count each experience twice.
-- Its causes (wages paid, protection, expulsion) are the channels above.
+**Wellbeing, not attitudes (owner decision Q7, 27 Nov):**
+- Faction loyalty is **not rewarded directly** and is never a reward channel. Loyalty is rebuilt daily from the same experiences ([STATE_DESIGN.md](STATE_DESIGN.md#loyalty-migration-and-defection)), so adding it would count each experience twice, and it would be an artificial reward for obeying a faction.
+- Its causes (wages paid, protection, security, living standards, relationships, treatment by the state, expulsion) are the channels above. So an NPC can learn that staying loyal, migrating, defecting or becoming independent pays under different circumstances, and the state must earn loyalty through what it does.
+- An optional, configurable `Belonging` drive ([POPULATION_DESIGN.md](POPULATION_DESIGN.md#drives)) may add social motivation through the ordinary drive-relief channel. It is relieved by contact with people the NPC knows, never by obeying or staying in a faction, and it is off by default.
 
 ### 4.5 Delayed credit: eligibility traces
 - **Spreading reward:** on each think tick, every live trace gets `Return += Fx.MulDiv(RewardAcc, E, 1024)`.
@@ -360,7 +361,7 @@ In fixed order:
 2. **Consolidate**, for each entry in key order:
    - `Ltw += Fx.Shr(Stw − Ltw, 2)` (sleep moves the long-term view towards the day's lesson);
    - then `Stw += Fx.Shr(Ltw − Stw, 1)` (the fast weight relaxes halfway back).
-3. **Decay untouched entries:** an entry not touched today does `Ltw -= Fx.MulDiv(Fx.Shr(Ltw, 5), ForgetRate, 1000)`, and the same for `Stw` (`ForgetRate` 500..1500 from the genome). At 1000 that is about 3% a day, a half-life of about 22 days (2.2 sim years at the default calendar). Decay is per sim day and is **not** scaled by `LifeScale`, which scales only life-cycle durations (conventions, section 4); see the owner question in the conventions, section 13.
+3. **Decay untouched entries:** an entry not touched today does `Ltw -= Fx.MulDiv(Fx.MulDiv(Fx.Shr(Ltw, 5), ForgetRate, 1000), DecayScalePermille, 1000)`, and the same for `Stw` (`ForgetRate` 500..1500 from the genome; `SimTuning.Learning.DecayScalePermille` default 1000). At 1000 and 1000 that is about 3% a day, a half-life of about 22 days (2.2 sim years at the default calendar). Decay is per sim day and is **not** scaled by `LifeScale`, which affects biological life-cycle durations only (owner decision Q1, [conventions §4](DESIGN_CONVENTIONS.md#4-time-model)). `DecayScalePermille`, `Use` decay (step 4) and conjunction decay (step 5) are independently configurable for experiments, separately from social-memory decay ([SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md#47-forgetting)); 0 switches forgetting off.
 4. **Usefulness:** every entry does `Use -= Use >> 3`, then the `Touched` flag is cleared.
 5. **Conjunction strength:**
    - an active slot that took part in a closed trace today gains `+64 + |δ|/32` (capped at 4000);
@@ -447,7 +448,7 @@ A parent's example for a child uses gain shift 1. An imitator of a successful ne
 
 ### 4.15 Offline training and network inputs (M15)
 - **What `IntNetNpcPolicy` reads:** the `MindView` of 3.6: `CandidateTerms` for each candidate (the score terms, familiarity and the top 4 keys' weights), `TopAssociations`, `AssocSummary`, drives, beliefs, relationships and `Memory`. They are fixed-size integer inputs, alongside the observation ([AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md)).
-- **Lifetime learning keeps running under a network policy.** The store is updated from outcomes exactly as before. The network learns *how to use* an individual's experience. It never stands in for it.
+- **Lifetime learning keeps running under a network policy.** The store is updated from outcomes exactly as before. The network learns *how to use* an individual's experience. It never stands in for it. In the owner's words of 27 Nov: a **shared trained network gives general competence, and individual associations give personal experience.** Two NPCs running the same network still behave differently because their stores differ (test LS9).
 - **The network never writes to the store**, and its weights are fixed during a run.
 - **Benchmark experiments** can set `LearningMode.Frozen` to compare policies on equal, fixed experience.
 
@@ -459,6 +460,28 @@ A parent's example for a child uses gain shift 1. An imitator of a successful ne
 | `Off` | 0 | none | Instinct-only baseline; ablation experiments |
 
 The mode is set per NPC by the scenario, or for all NPCs with `SimTuning.Learning.DefaultMode`. Benchmark policies such as `TitForTatNpcPolicy` act only where they apply and fall back to the default policy, which still uses the store.
+
+### 4.17 Required lifetime learning scenarios (owner, 27 Nov)
+*Creatures*-style lifetime learning is fundamental to the game. It is **never mere telemetry, a skill counter or machine-learning scaffolding**: what an NPC learns changes what it does next, in context, and two NPCs with the same genome act differently because they lived differently. The owner named eight examples that must work. Each is a scenario in the runner (`scenarios/learning/ls<n>_*.scenario.json`) and an acceptance test (section 10, LS1–LS8; [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md)).
+
+Rules for all eight:
+- **The rewarding choice is not the instinct default** in the test arm, so only learning can explain the change. Each is compared with the same NPC in `Frozen`-from-birth mode and, where stated, with a control environment whose consequences are reversed (different experience gives different behaviour).
+- **Credit is contextual:** the lesson holds in the context where it was learned and not, or much less, outside it (for example a learned preference for the state's postings does not spread to a private employer who defaults).
+- **Credit is delayed** where the owner's example is delayed: the reward arrives through a trace (4.5) or an episode (4.7), and the test also runs with traces or episodes disabled to show the delay mechanism carries the lesson.
+- No scenario scripts the learner's choices. Other NPCs may be benchmark policies (`bench.*`) so that the consequences are controlled.
+
+| # | Owner example | Mechanism | Scenario | Milestone |
+|---|---|---|---|---|
+| LS1 | **Hungry near food** | Drive relief on `Eat` in context `DriveBand(Hunger) & ObjCategory(Food)`; no reward when full (L1, L2) | An NPC with `InstinctTable.None` in a glade with food in sight, hunger rising; days 1–5 | M3 |
+| LS2 | **Hungry with no food: producing goods enables a later food exchange** | Two links of delayed credit. (a) The exchange is rewarded by hunger relief, so `Offer` and `AcceptOffer` of logs for food gain value in `Hunger & no food`. (b) The NPC's price belief for logs rises from its own completed exchanges ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md)), so `Gather(LogPile)` while hungry with no food earns a Goods reward at once, and its trace also receives part of the later hunger relief | No wild food reachable; logs reachable; a `bench` trader NPC at a fixed spot gives food for logs and nothing for empty hands; days 1–10 | M5 |
+| LS3 | **Tired near shelter** | Fatigue relief is faster in a hut, so `SeekShelter` and `Sleep` at the hut beat sleeping on the spot in context `DriveBand(Fatigue) & ObjCategory(Shelter)` | A hut with a free bed within 3 nodes; the instinct default is to sleep where tired; days 1–5 | M3 |
+| LS4 | **Gathering wood with an axe** | An axe multiplies the gathering rate, so `Equip(Axe)` before `Gather(LogPile)` yields more goods per trace (Goods channel), and the conjunction `ObjClass(LogPile) & Self(carrying tool)` is recruited | An axe lies by the hut; logs 4 nodes away; the NPC values logs (it needs a hut); days 1–8 | M3 |
+| LS5 | **Helping someone: future reciprocity** | `Help` opens an episode (4.7) carrying the obligation; a returned favour or gift closes it with its value days later | Neighbours are `bench.tft` (they return help) in the test arm and `bench.alld` (never return) in the control arm; days 1–15 | M7 |
+| LS6 | **Lending to an unreliable person: loss** | `Lend` opens an episode; `LoanDefaulted` closes it with the loss; `NpcRef` and `NpcRel` entries carry it to the borrower and, more weakly, to similar borrowers | Borrower A always defaults, borrower B always repays; both ask the learner repeatedly; days 1–15 | M7 |
+| LS7 | **Working for a reliable state: paid** | `TakeJob` on a state posting opens a wage episode; `WagePaid` closes it with the wage, `WageUnpaid` with nothing; the lesson attaches to `Posting(state)` and `NpcGroup(StateStaff)` | Test arm: the state pays every contract on time. Control arm: the state defaults on half. A private employer posting the same work at the same pay is present in both; days 1–15 | M6 |
+| LS8 | **Joining a poorly managed military: injury, hunger, unpaid wages** | `Enlist` opens a service episode; injury, rising hunger from missing rations, and `WageUnpaid` all close into it; later `Desert` while hungry and unpaid gains value | Test arm: a quartermaster with no rations, pay withheld, squads sent into losing fights. Control arm: fed, paid, sensible assignments. Recruitment postings repeat after the first tour; days 1–20 | M9 |
+
+What each test asserts is in section 10 (LS1–LS9). Together with L16 (every domain learns) they are the evidence for "genuine individual learning", "contextual and delayed reinforcement" and "different behaviour from different experience" in the owner's evidence list ([ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md#43-owner-evidence-list-27-nov)).
 
 ## 5. Interactions with other systems
 
@@ -526,17 +549,17 @@ With recording off, none of these are built, and the hash is unchanged ([DATA_WA
 
 | Milestone | Learning delivers |
 |---|---|
-| **M3 core** | `AssociationStore` with the caps above; feature kinds 1–6, 11–13, 15–16; pairs only in conjunctions; instincts as priors (fixed table until M4); drive and frustration signals, plus goods and the bed right; traces and the update rule; sleep consolidation, decay and eviction; exploration; the three modes; save version 3 and the hash; inspector "Habits"; tests L1–L13 |
+| **M3 core** | `AssociationStore` with the caps above; feature kinds 1–6, 11–13, 15–16; pairs only in conjunctions; instincts as priors (fixed table until M4); drive and frustration signals, plus goods and the bed right; traces and the update rule; sleep consolidation, decay (with `DecayScalePermille`) and eviction; exploration; the three modes; save version 3 and the hash; inspector "Habits"; tests L1–L13; owner scenarios LS1, LS3, LS4 |
 | M4 | Instincts from the `Genome`; learning rates by life stage; kin features; empty store at birth; children watching parents within the household (the M7 rule at a basic level) |
-| **M5 social** | `NpcRel`, `NpcGroup`, `NpcRef`, `MsgAct` features; triples; barter and gift signals; `Say*` verbs; obligation signals for direct exchanges; tests L14 and L16 (survival, gathering, barter, relationships, communication) |
-| M6 | `Posting` features; the employment verbs; episodes for wages and contracts |
-| **M7 observational** | Episodes for promises and loans; vicarious learning (4.13); exploitation and cooperation signals; test L15 |
+| **M5 social** | `NpcRel`, `NpcGroup`, `NpcRef`, `MsgAct` features; triples; barter and gift signals; `Say*` verbs; obligation signals for direct exchanges; tests L14 and L16 (survival, gathering, barter, relationships, communication); owner scenario LS2 |
+| M6 | `Posting` features; the employment verbs; episodes for wages and contracts; owner scenario LS7 |
+| **M7 observational** | Episodes for promises and loans; vicarious learning (4.13); exploitation and cooperation signals; test L15; owner scenarios LS5, LS6 |
 | M8 | Enterprise, hiring and theft contexts (production, exploitation domains) |
-| M9 | Military features, verbs and signals; `IMilitaryPolicy` reads the store |
+| M9 | Military features, verbs and signals; `IMilitaryPolicy` reads the store; owner scenario LS8 |
 | M10 | Faction membership contexts and signals (migration, defection, acceptance) |
 | **M11 cultural** | Imitation (4.14) with `ExportTop` and `Import`, origin `Imitated`, `AssociationsImitated`; a parent's example for children; `Culture(c)` in the score; origin shares in snapshots; test L17 |
 | M13 | Learning facts in the warehouse (from events and snapshots) |
-| **M15 network inputs** | `MindView` encoding for `IntNetNpcPolicy`; test L18 |
+| **M15 network inputs** | `MindView` encoding for `IntNetNpcPolicy`; tests L18 and LS9 |
 | Stage 5+ | Learned perception categories (new `ObjCategory` from experience); learned attention; learned lexicons and emergent signals (Comms); conjunctions over remembered episodes; level-of-detail learning for distant NPCs |
 
 ## 9. Migration from the existing code
@@ -574,6 +597,15 @@ All tests run under `dotnet test DotNet` unless marked *runner*. "Seeds" means d
 | L16 | M5 → M10 | **Every domain learns.** For each of the 12 domains (section 5), a scenario where the rewarding choice differs from the instinct default | Compared with `Frozen`-from-birth, the learned NPC's rate of the rewarding choice differs by ≥ 20 points in ≥ 90% of 50 seeds. Each domain's test is added in the milestone that introduces it |
 | L17 | M11 | **Import is deterministic and bounded.** A parent with 200 entries teaches a child (`Import`, shift 1) | The same seed gives the same child store hash; caps hold; the child's imported entries change by its own experience within 5 days in an environment that contradicts them |
 | L18 | M15 | **Network inputs use learned state.** `IntNetNpcPolicy` with a test model that copies `Q(c)` into its score | It picks the same action as the default policy with the instinct term zeroed, in 100% of 1,000 recorded decisions |
+| LS1 | M3 | **Hungry near food** (4.17). 100 seeds | L1 and L2 pass in this scenario. `Frozen`-from-birth with `InstinctTable.None` eats within 5 think ticks of becoming hungry in ≤ 40% of hungry episodes, so the learned rate (≥ 95%) is shown to come from learning |
+| LS2 | M5 | **Hungry with no food; producing goods enables a later food exchange.** 50 seeds | By days 8–10, when hungry with no food, the learner chooses `Gather(LogPile)` or goes to the trader with logs in ≥ 20 points more think ticks than `Frozen`, in ≥ 90% of seeds. Contextual: when food is in sight it still eats first in ≥ 90% of hungry episodes. Delayed: with episodes off and `TraceShift` 16 the gap shrinks by at least half (reported with interval). Control (trader gives nothing): no gain over `Frozen` (within ± 10 points) |
+| LS3 | M3 | **Tired near shelter.** 50 seeds | By days 4–5 the learner sleeps in the hut in ≥ 20 points more fatigue episodes than `Frozen`, in ≥ 90% of seeds. Contextual: with no hut within 10 nodes it still sleeps where it is (no wasted walk beyond 10 nodes in ≥ 95% of episodes) |
+| LS4 | M3 | **Gathering wood with an axe.** 50 seeds | By days 6–8 the learner equips the axe before gathering logs in ≥ 20 points more gathering trips than `Frozen`, in ≥ 90% of seeds, and a conjunction containing `ObjClass(LogPile)` is recruited by day 8 in ≥ 80%. Control (the axe gives no speed-up): no gain over `Frozen` (within ± 10 points) |
+| LS5 | M7 | **Helping someone: future reciprocity.** 50 seeds per arm | By days 12–15 the learner's `Help` rate towards neighbours is ≥ 20 points higher in the `bench.tft` arm than in the `bench.alld` arm, in ≥ 90% of paired seeds. Delayed: with episodes off the difference shrinks by at least half (reported). The arms differ only in the neighbours' policies, so the difference is learned from experience |
+| LS6 | M7 | **Lending to an unreliable person: loss.** 50 seeds | After 3 defaults by A, the learner lends to A in ≤ 20% of A's later requests while still lending to B in ≥ 60% of B's, in ≥ 90% of seeds (contextual, by `NpcRef`); acceptance of a new stranger's loan request falls by ≥ 10 points but stays above A's (generalisation with specificity) |
+| LS7 | M6 | **Working for a reliable state: paid.** 50 paired seeds | By days 12–15 the learner takes state postings over the identical private posting ≥ 20 points more often in the reliable-state arm than in the defaulting-state arm, in ≥ 90% of paired seeds. Contextual: the learned preference attaches to the state; a private employer who pays reliably is not avoided in either arm (difference within ± 10 points). Delayed: with episodes off, the arm difference shrinks by at least half (reported) |
+| LS8 | M9 | **Joining a poorly managed military.** 50 paired seeds | After the first tour, re-enlistment when a posting reappears is ≥ 20 points lower in the poorly managed arm than in the well-managed arm, and `Desert` is chosen in ≥ 20 points more hungry, unpaid think ticks, in ≥ 90% of paired seeds. `Frozen` learners show no arm difference in re-enlistment (within ± 10 points), so the difference is learned, not instinct or morale alone |
+| LS9 | M15 | **Shared network, personal experience.** Two NPCs with identical genome run the same `IntNetNpcPolicy`; one lived LS6's arm with A defaulting, the other with A repaying | They differ in lending to A by ≥ 30 points in ≥ 95% of 50 seed pairs; with identical histories their decisions are identical. Lifetime learning stays on under the network (store hash changes during the run) |
 | L19 | M3 *runner* | **Cost.** 500 NPCs, 1 sim day, the default scenario | Learning (context, conjunctions, `Q`, credit, updates) ≤ 20 µs mean per think on the reference machine, and ≤ 25% of total NPC update time. Consolidation ≤ 5 ms per sim day for all 500 |
 
 **The cost estimate behind L19:**
@@ -588,6 +620,11 @@ All tests run under `dotnet test DotNet` unless marked *runner*. "Seeds" means d
   - about 10 minutes for 100 sim years.
 
 ## 11. Open questions
-Owner questions (decay and `LifeScale`; loyalty as a reward) are in the [conventions, section 13](DESIGN_CONVENTIONS.md#13-open-questions-owner). Settled here, with defaults:
+No owner question remains. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q1 Decay and `LifeScale`:** keep the default. `LifeScale` affects biological life-cycle durations only; it does not scale learning or association decay. The decay rates are independently configurable for experiments (`SimTuning.Learning.DecayScalePermille`, use and conjunction decay; section 4.8), separately from social-memory decay.
+- **Q7 Loyalty as a reward:** no. Faction loyalty is never rewarded directly; it emerges from experiences, relationships, security, living standards, cultural beliefs and treatment by the state. An optional configurable `Belonging` drive may give social motivation, never a reward for obeying a faction. NPCs can learn that staying loyal, migrating, defecting or becoming independent pays under different circumstances; the state must earn loyalty (section 4.4).
+- **Further requirement (27 Nov):** the eight owner learning examples are required scenarios with acceptance tests (section 4.17, LS1–LS8), and learning stays active after networks arrive (section 4.15, LS9).
+
+Settled here, with defaults:
 - **`NpcRef` vs trust.** Keep both: `NpcRef` entries learn "trading with Ana pays", social trust learns "Ana is honest". M5 runs L14 both ways and reports the overlap; a measured double-count is fixed by lowering `NpcRef`'s gain, not by removing it.
 - **Vicarious context.** No inferred drives in stage 4 (as in [COMMUNICATION_AND_COGNITION_DESIGN.md](COMMUNICATION_AND_COGNITION_DESIGN.md#11-open-questions)). Vicarious lessons use only visible keys.

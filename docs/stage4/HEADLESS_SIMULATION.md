@@ -197,6 +197,9 @@ recorders.End(); write run.json; return exit code
   Today the pending queue is not hashed, and M0 adds it. This changes every stage 3 hash once; that is accepted (no stage 3 hash is stored as a golden value). See [conventions §3](DESIGN_CONVENTIONS.md#3-layers-and-determinism-unchanged-from-stages-13).
 - **Cost:** hashing is linear in state size. At 500 NPCs a hash should take under 2 ms, so a checkpoint every sim day costs under 0.1% of run time. `verify --every 1` hashes every tick, to find the exact divergent tick.
 
+### 4.4a Owner determinism requirements (27 Nov)
+Source: [conventions §14](DESIGN_CONVENTIONS.md#14-further-owner-requirements-27-nov-2026). Same version, configuration, seed, initial state and commands give identical results. Where each requirement is met: versioned saves (4.3); serialisable random streams (every stored `Rng` fork is saved and hashed, 4.4); stable processing order and deterministic tie-breaking (conventions §3, 4.1, 4.9); pending commands in the hash (4.4); persistent learning state (saved with the NPC, [NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md) L9); save/load continuation parity and replay verification (4.3, 4.5); independent parallel instances and no mutable global tuning (4.6, M0 static audit); identical results at any telemetry level (G2.2); headless and Unity parity (`Unity_Agrees_With_Runner`). **Stage 3 save compatibility is not needed**: Stage 4 saves start at version 3 and need not read stage 3 saves; the git tag `stage3-final` (at `d7eeb95`) keeps the stage 3 game.
+
 ### 4.5 Replay and verification
 - **`replay FILE`**:
   - rebuilds the sim from the header;
@@ -319,6 +322,15 @@ Level of detail (LOD) is a **sim rule** in `Sim/Population`. It is decided from 
 | Parallel scaling, 8 workers | at least 0.8 × 8 runs' throughput | at least 0.9 × 8 |
 | Save or load at 500 NPCs | at most 1 s each | at most 0.3 s |
 | Allocation in the steady state | at most 64 KB per tick | at most 8 KB per tick |
+
+**Benchmark report (owner, 27 Nov: benchmark early, from M0).** Every `bench` run writes, per case, these columns (the same columns as the benchmark table in [DEV_LOG.md](DEV_LOG.md#performance-benchmarks)): ticks/s; sim years per real second; NPC decisions per second; memory per NPC (bytes, measured and against the cap in [POPULATION_DESIGN.md](POPULATION_DESIGN.md#memory-budget-per-npc-combined)); pathfinding cost (searches and expanded nodes per tick, µs per search); learning cost (µs per think); communication cost (messages and decodes per tick, µs per message); telemetry and database overhead (% against recording Off, per level); save size (bytes) and load time; parallel throughput (runs per hour at 1, 4 and 8 workers). Columns that do not exist yet at a milestone are blank, not zero.
+
+**Rules for cost (owner, 27 Nov):**
+- Per-NPC memory is bounded, with deterministic eviction (every store has a cap and an eviction order by score, ties by id).
+- No all-to-all comparisons: perception, partner choice, gossip, job matching and migration use spatial indexing, staggered decisions and bounded candidate sets (section 4.9 budgets).
+- Level of detail is decided by sim state and scenario, never by camera or rendering (section 4.9).
+- **An optimisation that changes behaviour is documented**: in the owning document and in [DEV_LOG.md](DEV_LOG.md#design-decisions-taken-during-implementation), with the bias measured (as the LOD bias test does).
+- **Capability comes first:** learning, social or economic capability is never cut for premature optimisation. A budget miss is fixed by LOD, data layout or budget tuning first; a capability change needs the owner.
 
 **Profiling plan:**
 1. **M0 baseline:** `bench` runs `bench_stage3_watch6` for 40,000 ticks and records ticks per second, the tick-time distribution and the allocation rate (`GC.GetAllocatedBytesForCurrentThread`). The result is stored as `DotNet/God.Runner/Bench/baseline.json`.
@@ -453,7 +465,7 @@ Level of detail (LOD) is a **sim rule** in `Sim/Population`. It is decided from 
 | **M2 (lab)** | `lab` with presets and `--check` against [STRATEGY_BENCHMARKS.md](STRATEGY_BENCHMARKS.md) |
 | M3 | LOD tiers and per-tick budgets; `bench_npc_500` and `bench_npc_1000`; the LOD bias test |
 | M3–M12 | each new module adds its part-hash, its snapshot fields and its events; save version 3 at M3 |
-| **M13 (recorder)** | SQLite recorder, Summary and Experiment levels, per-domain switches, `export` to Parquet, the warehouse in `batch.sqlite`, the size-budget test |
+| **M13a (recorder)** | SQLite recorder, Summary and Experiment levels, per-domain switches, `export` to Parquet, the warehouse in `batch.sqlite`, the size-budget test |
 | M14 | `experiment` with balance sweeps and the standard stability metrics |
 | **M15 (serve)** | `serve` with stdio and TCP or pipe, agent ports for all four levels, the two-phase step, served replays; `dataset` and `verify-model` ([AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md)) |
 | Stage 6 | The full policy-experiment suite through `experiment` |
@@ -512,6 +524,6 @@ Tests live in `God.Runner.Tests` unless noted. "Seeds" means a fixed list in the
 
 ## 11. Open questions
 None for the owner. Settled with defaults:
-- **Floating point in the sim** (`BoardTopology`, `Lattice`, `FactionRules`, an `EconomySystem` tie-break, `TerritoryState.HqCircle`): they use only `+ − × ÷ √` and rounding, so they are expected to match across CoreCLR, Mono and IL2CPP on x64. Default: keep them and rely on the cross-host hash test (`verify --against-unity`); convert a function to integers only if that test fails. New code is integer-only (conventions section 3).
+- **Floating point in the sim** (`BoardTopology`, `Lattice`, `FactionRules`, an `EconomySystem` tie-break, `TerritoryState.HqCircle`). **Owner decision (27 Nov):** M0 **audits** every use and **verifies parity on more than one host** (the runner on CoreCLR, the Unity player on Mono and IL2CPP where available, and at least a second machine when one is available). Anything that **fails parity, or whose parity cannot be guaranteed** (for example a transcendental function, or a result whose rounding depends on evaluation order), is converted to integers or fixed point. Code using only `+ − × ÷ √` with fixed evaluation order that passes parity is kept: harmless code is not rewritten without reason. New code is integer or fixed point only (conventions section 3). The audit's list, each item's verdict and the hosts checked go into [DEV_LOG.md](DEV_LOG.md#design-decisions-taken-during-implementation).
 - **The held-step mechanism** (`AiHost.StepHeld`): default, M1 replaces it by queuing commands sent while paused until unpause, so replays need no `hold` lines.
 - **The `God.Recording` assembly in Unity:** default, a third asmdef next to `Assets/God/Sim` (no UnityEngine), so the optional Unity recorder shares the runner's JSONL writer.

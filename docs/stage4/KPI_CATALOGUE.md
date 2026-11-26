@@ -17,6 +17,9 @@ Every measure the game can report, with its exact definition. How reports are pr
 - **Measures are paired.** No headline KPI stands alone; see [Balanced scorecards](#balanced-scorecards-against-goodharts-law).
 - **A KPI reports what is possible, not what is wanted.** Nothing here says a value is good. Direction notes are descriptive.
 - **Never present an outcome as designed in.** For emergent outcomes (class, mobility, legitimacy) the KPI says how to *measure* whether it happened.
+- **No composite wellbeing score (owner decision Q23, 27 Nov).** There is no universal composite score anywhere in the catalogue, the HUD or the reports. The underlying measures are reported separately (see [Wellbeing dimensions](#wellbeing-dimensions-reported-separately)). An experiment may use an explicitly defined composite only with its components, weights and limitations documented in its plan file ([POLICY_EXPERIMENTS_DESIGN.md](POLICY_EXPERIMENTS_DESIGN.md)). There is no hidden political or moral weighting of which societies succeed.
+- **Unpaid care is visible (owner decision Q12).** Time use, including unpaid care, is reported beside paid work ([5.16](#516-time-use-and-unpaid-care-tim)).
+- **Neutral names.** KPI names and report labels use neutral, descriptive terms (owner decision Q2, [VISION_AND_PHILOSOPHY.md](VISION_AND_PHILOSOPHY.md#22-neutrality-binding-on-every-document)).
 
 ## 3. Conventions (read once; the tables use them)
 
@@ -176,7 +179,7 @@ Literacy maps to knowing a cultural technique or symbol system (`tech_known_mask
 | LIV-02 | Median consumption | median `consumption_fe` per person-day over persons (FE per day, pm1000) | Y | alive residents | `fpd.consumption_fe` | G A H C F | N: survey of households | Counting gifts as consumption | Town |
 | LIV-03 | Housing | residents with a bed (sleeping right) ÷ residents (‰); people per bed | Y | alive residents | `fpd.housed` | G H C | Df | Counting empty beds | Band |
 | LIV-04 | Price index | cost of reference basket at observed barter ratios ÷ cost in the base period × 1000 | Y | traded items | `ftx.value_fe`, `qty` | G F | S, B: only recorded trades; barter ratios noisy | Price controls leading to non-trade | Band |
-| LIV-06 | Drive wellbeing | mean over adults of (1000 − mean of the hunger, fatigue, cold, fear and pain drives) (‰). A composite with equal weights; an experiment that uses other weights states them in its file | D, Y | alive adult residents | `fpd` drive columns | G A H C F | actual-only | none | Band |
+| LIV-06 | Drive levels | mean over adults of **each** of the hunger, fatigue, cold, fear and pain drives (0–1000), reported as five separate values, **never combined** (owner decision Q23; this was an equal-weight composite before 27 Nov) | D, Y | alive adult residents | `fpd` drive columns | G A H C F | actual-only | none | Band |
 | LIV-05 | Median wealth | median `wealth_fe` over persons (FE) | Y | alive residents | `fpd.wealth_fe` | G A H C F | S, N: only what the register knows; hidden stores | Hiding assets from tax | Village |
 
 ### 5.5 Taxation, spending, liabilities, reserves (FIS)
@@ -330,6 +333,33 @@ Band: informal lending between kin and friends, recorded by the elder if told. B
 | INS-02 | Staff turnover | staff leaving ÷ mean staff (‰ per person-year) | Y | staffed institutions | `fid.staff_left`, `dim_person_history` | I F | F: the manager's own staff list | Keeping absent staff on the books | Band |
 | INS-03 | Rule changes | `PolicyChanged` count per faction or institution (n per year) | Y | factions, institutions | `fact_policy_change` | I F | actual-only | none | Band |
 
+### 5.16 Time use and unpaid care (TIM)
+Owner decision Q12: care work is real work, and unpaid care is reported separately so that it is not economically invisible. Definitions of the categories are in [ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md#47a-time-use-owner-decision-q12).
+
+| ID | Name | Num ÷ Den (unit) | Period | Elig | Source | Brk | A≠R | Gaming / Goodhart | Age |
+|---|---|---|---|---|---|---|---|---|---|
+| TIM-01 `S4` | Time use | ticks in each of paid work, independent production, communal work, unpaid care, subsistence, leisure ÷ awake ticks (‰ each; six values, never combined) | R5, Y | alive adults (children and elders as separate breakdowns) | `fpd.ticks_*` | G A H C F | actual-only in Stage 4 | none | Band |
+| TIM-02 `S4` | Unpaid care hours | unpaid care ticks per adult per day (hours, pm1000), with its four parts (children, relatives, food preparation, household maintenance) | R5, Y | alive adults | `fpd.ticks_care_*` | G A H C F | actual-only in Stage 4 | none | Band |
+| TIM-03 | Unpaid share of all work | unpaid care ticks ÷ (all work ticks including unpaid care) (‰) | Y | alive adults | `fpd.ticks_*` | G A H C | actual-only | none | Band |
+
+### Wellbeing dimensions (reported separately)
+Owner decision Q23: no universal composite. Each dimension below is shown as its own series, and a report or dashboard never sums them.
+
+| Dimension | KPIs (each shown on its own) |
+|---|---|
+| Health | HLT-01 hunger rate, HLT-03..08 where available, POP-03 deaths by cause |
+| Nutrition | HLT-01, HLT-02, LIV-01 food stocks, LIV-06 hunger level |
+| Life expectancy | POP-05, POP-06 |
+| Security | CRM-01, CRM-02, CRM-06, MIL casualties, LIV-06 fear level |
+| Comfort | LIV-03 housing, LIV-06 cold and fatigue levels |
+| Leisure | TIM-01 leisure share |
+| Education | EDU-01..05 (from the Town age; skill measures earlier) |
+| Autonomy | EMP-07 wage-labour dependence, the dependency rate and subsistence access ([ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md#44-subsistence-access-and-dependency)), TRU-05 exit |
+| Material living standards | LIV-02 median consumption, LIV-05 median wealth, EMP-06 real wage |
+| Inequality | INQ-01..06 |
+| Social relationships | COO-03 gifts and sharing, COO-04 mean interpersonal trust, household membership (HOUSEHOLDS measures) |
+| Environmental sustainability | ENV-01..03, ENV-06 |
+
 ## 6. Formulas (integer or fixed point)
 
 All use `i64` unless noted. `mulDiv(a, b, c) = (a·b)/c` with 128-bit intermediate (`Int128`) where `a·b` can exceed 2^62, and half-away rounding as in 3.1. No floats.
@@ -469,7 +499,7 @@ Each pair holds one measure that institutions are likely to be pushed on (the **
 
 ## 8. The Stage 4 minimum
 
-M13 delivers the Band-age set through `FactionKnowledgeView` (reports panel):
+M13b delivers the Band-age set through `FactionKnowledgeView` (reports panel); the facts the person, household and economy KPIs need are recorded from M13a ([conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)):
 
 | KPI | Measure | Recorder (Band) |
 |---|---|---|
@@ -483,6 +513,7 @@ M13 delivers the Band-age set through `FactionKnowledgeView` (reports panel):
 | TRU-01 | loyalty | the elders' assessment; actual from NPC state |
 | POP-09 | migration | the guards at the edge |
 | INQ-11 | class composition | none in the Band age: actual-only, from the class measures ([ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md)) |
+| TIM-01, TIM-02 | time use and unpaid care | none in the Band age: actual-only, from the time-use ticks ([ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md#47a-time-use-owner-decision-q12)) |
 
 - **`FullInformation` default:** every one equals its actual value within rounding (test I2).
 - **A degraded `Reported` profile** exists for the same set, so the view and dashboards work when information is narrowed (test I17).
@@ -524,11 +555,17 @@ See section 8 and the Age column. In short: M13 builds the Band set above; Villa
 | K9 | `Hash_Unchanged_By_Kpi_Engine` | The warehouse KPI engine on or off: identical `StateHash` (information doc I12). |
 | K10 | `Band_Set_Present` | A 20-year Band run has a value or an explicit `Missing` reason for each `S4` KPI on every period, with source and `AsOfTick`. |
 | K11 | `Rank_Slope_Known` | Pairs with child rank = parent rank give slope 1000; with independent random ranks, 1000 pairs give a slope in ±100. |
+| K13 | `No_Composite_Wellbeing` | No KPI definition, report template or dashboard sums or weights KPIs from different wellbeing dimensions; a static check over `dim_kpi` and the report templates finds no composite outside experiment plan files, and every composite in a plan file lists components, weights and limitations |
+| K14 | `TimeUse_Reconciles` | TIM-01 categories plus `TicksOther` sum to the ticks of the day for every adult-day; TIM-01 and TIM-02 equal their recomputation from events exactly (5 seeds) |
 | K12 | `Rounding_Rule` | `div_round` is symmetric: `div_round(-5, 2) = -3` and `div_round(5, 2) = 3`; no KPI function uses floating point (static check on `Sim/Information/Kpi`). |
 
 ## 14. Open questions
 
-None for the owner. Settled with defaults:
+No open questions remain. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q23 Composite wellbeing:** no universal composite score. The underlying measures are reported separately (health, nutrition, life expectancy, security, comfort, leisure, education, autonomy, material living standards, inequality, social relationships, environmental sustainability; [Wellbeing dimensions](#wellbeing-dimensions-reported-separately)). Experiments may use explicitly defined composites with documented components, weights and limitations. No hidden political or moral weighting of which societies succeed. LIV-06 is therefore five separate drive levels (K13).
+- **Q12 Care work:** unpaid care is reported separately so it is not economically invisible; reports include time on paid work, independent production, communal work, unpaid care, subsistence and leisure (TIM-01 to TIM-03, K14).
+
+Settled with defaults:
 1. **Smoothing and the 10-day year:** life expectancy (POP-05, POP-06) is *defined* over a 3-year window, not just displayed smoothed; other annual KPIs keep the 1-year definition with a 3-year rolling display.
 2. **Wealth for a Band-age Gini:** INQ-03 uses personal wealth (goods, tools, huts); communal and cooperative shares are reported as a separate series. [ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md) may add a class-based variant.
 3. **Evidence strength for CRT-09:** deferred to the courts design (stage 6); CRT-09 is not built before then.

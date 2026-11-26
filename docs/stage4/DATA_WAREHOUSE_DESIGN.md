@@ -20,7 +20,7 @@ It links to, and does not repeat:
 - measuring strategies after the fact: [GAME_THEORY_DESIGN.md](GAME_THEORY_DESIGN.md).
 
 ### 1.1 The published table list
-Other documents refer to these names. A name changes only by editing this list.
+Other documents refer to these names. A name changes only by editing this list. **Milestone names (27 Nov):** M13 is split into **M13a** and **M13b** ([conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)). "M13 core" below means **M13a**, except `dim_kpi` and `fact_kpi`, which come with the KPI engine in **M13b**. An "M13 extended" table comes in **M13a** when its sources are person, household, economy, citizenship, learning, culture or military events of milestones already done, and in **M13b** when it records institutions, records, returns or KPIs (`dim_institution`, `fact_institution_day`, `fact_record`, `fact_record_audit`, `fact_return`, `fact_court_case`, `fact_grievance` reports). M13a needs only M0 and the event types of the milestones done, so it may be pulled forward after M6; it then grows with each later milestone's events.
 
 **Dimensions**
 
@@ -493,6 +493,22 @@ WHERE p.origin_code = (SELECT code FROM dim_code WHERE code_set='origin' AND nam
 GROUP BY p.cohort_year ORDER BY p.cohort_year;
 ```
 
+**One NPC's whole life** (owner requirement, 27 Nov: it must be possible to inspect an NPC's entire life: family, education, employment, ownership, transactions, relationships, estate). The runner's `life NPC_ID` report and the M13a dev-mode view run this union over the person's spells and events, in time order:
+```sql
+-- :run and :npc are parameters; each branch returns (tick, kind, detail)
+SELECT birth_tick, 'born', 'mother ' || mother_npc_id || ', father ' || bio_father_npc_id FROM dim_person WHERE run_key=:run AND npc_id=:npc
+UNION ALL SELECT from_tick, 'household', household_key || ' ' || join_reason FROM fact_household_membership WHERE run_key=:run AND npc_id=:npc
+UNION ALL SELECT from_tick, 'employment', employer_party_key || ' ' || job_kind FROM fact_employment WHERE run_key=:run AND npc_id=:npc
+UNION ALL SELECT from_tick, 'citizenship', faction_key FROM fact_citizenship WHERE run_key=:run AND npc_id=:npc
+UNION ALL SELECT from_tick, 'owns', asset_key FROM fact_ownership WHERE run_key=:run AND owner_npc_id=:npc
+UNION ALL SELECT tick, 'transaction', transaction_key FROM fact_transaction WHERE run_key=:run AND (party_a_npc_id=:npc OR party_b_npc_id=:npc)
+UNION ALL SELECT tick, 'teaching', skill_code FROM fact_education_activity WHERE run_key=:run AND learner_npc_id=:npc
+UNION ALL SELECT tick, 'inherited', estate_key FROM fact_inheritance WHERE run_key=:run AND heir_npc_id=:npc
+UNION ALL SELECT death_tick, 'died', death_cause_code FROM dim_person WHERE run_key=:run AND npc_id=:npc AND death_tick IS NOT NULL
+ORDER BY 1;
+```
+Relationships come from `fact_social_interaction` and `fact_relation_edge_day` for the same NPC. The column names here are indicative and are fixed against the DDL (3.4) when M13a is built; the test `Life_History_Complete` (10.16) checks that every event naming the NPC appears.
+
 **Gini of wealth by sim year** (last day of each year, reference units):
 ```sql
 WITH last_day AS (SELECT sim_year, MAX(date_key) AS d FROM dim_date GROUP BY sim_year),
@@ -582,8 +598,8 @@ ORDER BY rel.kin_band, rel.trust_band;
 |---|---|
 | **M0** | `DomainEvent` base with code, version, seq and domain; `meta_event_type` generated from the code; the **JSONL event stream** (`events.jsonl.gz`: one line per event with run id, tick, seq, code, name, version, payload); recording levels Off, Metrics and Full (JSONL); the Metrics recorder; the hash-equality test across levels |
 | M1–M12 | each module adds its events and snapshot fields with codes in its range, and its JSONL mapping |
-| **M13 core** (SQLite) | `dim_run`, `dim_date`, `dim_person`, `dim_household`, `dim_faction`, `dim_ware`, `dim_building`, `dim_class`, plus the plumbing `dim_party`, `dim_code`, `dim_kpi`, `meta_*`, `fact_event`; `fact_person_day`, `fact_person_day_class`, `fact_birth`, `fact_death`, `fact_household_membership`, `fact_citizenship`, `fact_transaction` and `fact_transaction_line` (with `fact_exchange_day`), `fact_production` (with `fact_production_day`), `fact_employment`, `fact_ownership`, `fact_social_interaction` (with `fact_social_day`), `fact_policy_change`, `fact_kpi`, `fact_run_metric`, `fact_metric_day`; Summary and Experiment levels; per-domain switches; deterministic sampling; the migrations framework; `export` to Parquet; the size-budget test |
-| **M13 extended** (same milestone, where the source events exist by then) | `dim_person_history`, `dim_faction_history`, `dim_institution` (+ history), `dim_enterprise`, `dim_location`, `dim_occupation`, `dim_policy`, `dim_agent_policy`, `dim_relationship`; `fact_migration`, `fact_tax`, `fact_inheritance`, `fact_education_activity`, `fact_crime` and `fact_crime_report` (theft), `fact_military_service`, `fact_service_day`, `fact_combat`, `fact_contest`, `fact_promise`, `fact_loan` and repayments, `fact_institution_day`, `fact_faction_day`, `fact_command`, `fact_person_day_ware`, `fact_household_day`, `fact_hex_day`, `fact_job_day`, `fact_learning`, `fact_decision`, `dim_trait` with `fact_trait_census_daily` and `fact_trait_transmission`, `fact_grievance`, `fact_court_case` (mediation), `fact_record`, `fact_record_audit`, `fact_return`, `fact_belief_sample`, `fact_collective_action` (gatherings), `fact_relation_edge_day`; lab tables |
+| **M13a = M13 core** (SQLite; may be pulled forward after M6) | `dim_run`, `dim_date`, `dim_person`, `dim_household`, `dim_faction`, `dim_ware`, `dim_building`, `dim_class`, plus the plumbing `dim_party`, `dim_code`, `dim_kpi`, `meta_*`, `fact_event`; `fact_person_day`, `fact_person_day_class`, `fact_birth`, `fact_death`, `fact_household_membership`, `fact_citizenship`, `fact_transaction` and `fact_transaction_line` (with `fact_exchange_day`), `fact_production` (with `fact_production_day`), `fact_employment`, `fact_ownership`, `fact_social_interaction` (with `fact_social_day`), `fact_policy_change`, `fact_kpi`, `fact_run_metric`, `fact_metric_day`; Summary and Experiment levels; per-domain switches; deterministic sampling; the migrations framework; `export` to Parquet; the size-budget test |
+| **M13a/M13b extended** (M13a where the sources are person, household, economy, citizenship and other non-institution events; M13b for institutions, records, returns and KPIs; see 1.1) | `dim_person_history`, `dim_faction_history`, `dim_institution` (+ history), `dim_enterprise`, `dim_location`, `dim_occupation`, `dim_policy`, `dim_agent_policy`, `dim_relationship`; `fact_migration`, `fact_tax`, `fact_inheritance`, `fact_education_activity`, `fact_crime` and `fact_crime_report` (theft), `fact_military_service`, `fact_service_day`, `fact_combat`, `fact_contest`, `fact_promise`, `fact_loan` and repayments, `fact_institution_day`, `fact_faction_day`, `fact_command`, `fact_person_day_ware`, `fact_household_day`, `fact_hex_day`, `fact_job_day`, `fact_learning`, `fact_decision`, `dim_trait` with `fact_trait_census_daily` and `fact_trait_transmission`, `fact_grievance`, `fact_court_case` (mediation), `fact_record`, `fact_record_audit`, `fact_return`, `fact_belief_sample`, `fact_collective_action` (gatherings), `fact_relation_edge_day`; lab tables |
 | After M13 in stage 4 | `dim_strategy` analysis job; DuckDB example notebooks |
 | Stage 5 | `fact_court_case` for the headman's court, `dim_action`, strikes and assemblies in `fact_collective_action` ([POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md)) |
 | Stage 6 | `fact_health_encounter` and `fact_referral` at clinic scale, `fact_investigation`, `fact_detention`, currency columns on transactions |
@@ -612,6 +628,7 @@ ORDER BY rel.kin_band, rel.trust_band;
 | 10.13 | `Game_DoesNotReference_Warehouse` | The `God.Game` and `God.Sim` assemblies do not reference `Microsoft.Data.Sqlite` or the SQLite writer |
 | 10.14 | `Replay_ReRecord_EqualsLiveRecord` | A run recorded live at Full and the same run recorded Off and then `replay --record full` give identical warehouse content (10.8 method) |
 | 10.15 | `TruthFields_OnlyAtFull` | At Summary and below, every event-borne truth-field column (`honest`, `mismatch`, `falsified`, the return's actual value, a record's true value) is NULL; at Full it is filled. Snapshot-built truth (`fact_kpi.actual_value`, `fact_belief_sample.true_value`, layer 1 counts in `fact_institution_day`) is stored at every level that writes the table. No policy references a truth field (reflection, with the conventions' policy test). |
+| 10.16 | `Life_History_Complete` | (M13a) For 20 NPCs sampled by id over a 10-sim-year Full run, the life-history report contains every domain event that names the NPC (birth, household and citizenship spells, employment, ownership, transactions, teaching, relationships, inheritance, death), in tick order, and nothing that does not; spells are half-open and do not overlap |
 
 **Size estimate behind 10.9** (500 living NPCs on average, 10 days per year, 200 years = 2000 days, about 50,000 persons ever):
 

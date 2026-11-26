@@ -215,7 +215,9 @@ Faction reputation can be wrong and sticky. An NPC that sees a member of a stere
 ### 4.7 Forgetting
 **Daily pass** (each NPC on its own day slot, `(tick + id × 7) % TicksPerDay == 0`, ascending id, so the work is spread).
 
-**Life scaling.** Per-day decay is per sim day and is **not** scaled by `LifeScale`, which scales only life-cycle durations ([conventions §4](DESIGN_CONVENTIONS.md#4-time-model)). The same rule applies to the learning store's decay ([NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md)). So at `LifeScale` 200 a grudge lasts the same number of days but a larger share of a life. Whether social and learning decay should instead keep pace with lives is an owner question ([conventions §13](DESIGN_CONVENTIONS.md#13-open-questions-owner)); if the owner says yes, each per-day decay is multiplied by `LifeScale / 100` (integer, rounded half up, at least 1 where the base is non-zero), and changes caused by events stay unscaled.
+**Life scaling (owner decision Q1, 27 Nov).** Per-day decay is per sim day and is **not** scaled by `LifeScale`, which affects biological life-cycle durations only ([conventions §4](DESIGN_CONVENTIONS.md#4-time-model)). The same rule applies to the learning store's decay ([NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md#11-open-questions)). So at `LifeScale` 200 a grudge lasts the same number of days but a larger share of a life.
+
+**Decay rates are independently configurable for experiments.** Every per-day rate in the list below is a field of `SimTuning.Social.Decay` (saved with the state and hashed), with the default shown: `FamiliarityPerDay` 2, `GrudgeBase` 60 and `GrudgeFloor`/`GrudgeCeil` 10/110 per mille, `TrustDriftPermille` 10, `FearShift` 4 (that is, `Fear/16`), `HearsayConfPerDay` 20, `RepShrinkPermille` 30, `ObligationConfPerDay` 3, `GroupRepShrinkPermille` 10. A single `ScalePermille` (default 1000) multiplies all of them together (integer, rounded half up, at least 1 where the base is non-zero), so an experiment can make social memory fade faster or slower, or switch one kind of forgetting off (rate 0), without touching `LifeScale` or the learning store's own rates. Changes caused by events are never scaled.
 
 - `Familiarity −2` if no contact today.
 - `Grudge −= Grudge × GrudgeDecay / 1000`, where `GrudgeDecay = clamp(60 − Vengefulness/2, 10, 110)` per mille per day. At Vengefulness +100: 1 percent per day (half-life about 69 days, which outlasts a lifetime of about 40 days). At −100: 11 percent per day (half-life about 6 days).
@@ -328,7 +330,7 @@ All tests run in `dotnet test DotNet` and in Unity EditMode. A fixed seed is use
 11. A registered obligation (`ContractId ≠ 0`) changes the *expected cost* term only. Memory records and statuses behave as before. (Contract exists from Stage 5.)
 
 **Trust and forgiveness**
-12. At `LifeScale` 100, after a value-100 betrayal, `Grudge` is 300 at `sev` 100. With `Vengefulness +100`, grudge after 20 days is at least 245 (about 82 percent remaining). With `−100` it is at most 30 (about 10 percent). At `LifeScale` 200 the grudge after 20 days equals its `LifeScale` 100 value (decay is not scaled by default).
+12. At `LifeScale` 100, after a value-100 betrayal, `Grudge` is 300 at `sev` 100. With `Vengefulness +100`, grudge after 20 days is at least 245 (about 82 percent remaining). With `−100` it is at most 30 (about 10 percent). At `LifeScale` 200 the grudge after 20 days equals its `LifeScale` 100 value (decay is never scaled by `LifeScale`). With `SimTuning.Social.Decay.ScalePermille` 2000 the grudge is strictly lower than in the 1000 run on every day it is non-zero, and the learning store's weights are identical to the 1000 run (the two decay settings are independent); with `GrudgeBase`, `GrudgeFloor` and `GrudgeCeil` all 0 the grudge is unchanged after 20 days.
 13. After a betrayal with grudge 600, a helpful act raises trust by `delta × 0.4`, not `delta`.
 14. An `Apologise` with a gift raises the forgiveness score by `giftValue/2`. A repeat apology after three betrayals scores `120` lower than after none.
 
@@ -349,4 +351,6 @@ All tests run in `dotnet test DotNet` and in Unity EditMode. A fixed seed is use
 
 ## 11. Open questions
 
-Settled in review (26 Nov 2026): `Praise` is in the gesture vocabulary, with `Topic = building` for group topics; per-day decay is not scaled by `LifeScale` by default (4.7; owner question in conventions §13); ledger values are the NPC's own worth units, and reports use `WareRefValue`; `BelievedFaction` is refreshed only by faction colours, a message or an `AskJoin`. No open questions remain.
+**Owner decision Q1 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):** keep the default. `LifeScale` affects biological life-cycle durations but not social-memory decay; the decay rates are independently configurable for experiments (`SimTuning.Social.Decay`, section 4.7).
+
+Settled in review (26 Nov 2026): `Praise` is in the gesture vocabulary, with `Topic = building` for group topics; ledger values are the NPC's own worth units, and reports use `WareRefValue`; `BelievedFaction` is refreshed only by faction colours, a message or an `AskJoin`. No open questions remain.

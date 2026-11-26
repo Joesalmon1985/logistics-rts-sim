@@ -147,6 +147,7 @@ The state system runs once per tick after the economy and before the military, i
 - **Arrears.** If the goods are missing when a worker comes to be paid, a `Debt` is recorded and `WageUnpaid` is emitted (the event name ECONOMY_DESIGN uses). The worker's social memory records a broken promise by the state (the state is a pseudo-agent in social memory, see SOCIAL_MEMORY_DESIGN). The debt stays owed until paid or written off (`WriteOffDebt`, which is a second, explicit broken promise).
 - **Purchase offers.** A standing offer: "this HQ buys up to `MaxCount` of ware `W` at price `P` per unit until tick `Expires`". Any NPC (or private workshop) that brings the ware and hands it over is paid on the spot, less sale tax. This is how the state buys bread, gear or logs without owning the workshop. It replaces input priorities for privately owned producers.
 - **Public works.** A public work is a site whose building will be state or communal property (roads, huts, a granary, a well) plus its contracts. Public works paid in food are also a welfare tool: they put food where there is labour. Nothing else is special about them.
+- **The paymaster is a temporary automatic rule in Stage 4 (owner decision Q16).** See [Temporary automatic HQ rules](#temporary-automatic-hq-rules-stage-4).
 - **Matching.** Contracts are posted on the HQ notice board. NPCs learn of them by visiting or being told. An NPC takes a free slot with a `TakeJob` intent; if two try in the same tick, the lower `NpcId` wins (ascending order of intent application). The state never assigns a person.
 
 ### Designating sites
@@ -187,6 +188,8 @@ Enlistment offers, soldiers' pay and rations, the quartermaster's store and post
 
 **Loyalty is rebuilt each day from the NPC's own experience and beliefs.** It never reads the true state of any faction.
 
+**The state must earn loyalty (owner decision Q7, 27 Nov).** Faction loyalty is never rewarded directly: it is not a learning reward ([NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md#11-open-questions)), no rule pays an NPC for being loyal, and no command sets it. It emerges from experiences, relationships, security, living standards, cultural beliefs and treatment by the state, which are the terms below. Individuals can learn that staying loyal, migrating, defecting or becoming independent pays under different circumstances. An optional `Belonging` drive ([POPULATION_DESIGN.md](POPULATION_DESIGN.md#drives)) may add social motivation, never a reward for obeying a faction.
+
 Each term is a value in −1000..1000, computed on the day boundary from the NPC's own records:
 
 | Term | From | Source layer |
@@ -217,12 +220,22 @@ Loyalty   += (target - Loyalty) * rate / 1000           // integer, toward targe
   - `Open`: accepted on arrival, up to `MaxPerDay`.
   - `AskToJoin`: accepted if the skill rule passes, up to `MaxPerDay`.
   - `Closed`: refused. A refused NPC remembers the refusal and decides again (go home, try elsewhere, stay as a non-citizen).
-  - In stage 4 the answer is given by the HQ as a rule, at the moment of the gesture. From the Village age an official (an institution staff member) gives it and can be bribed.
-  - A `WelcomeGift` is handed over on acceptance, from the treasury.
+  - In stage 4 the answer is given by the HQ as a rule, at the moment of the gesture (a temporary automatic rule, owner decision Q16; see below). From the Village age an official (an institution staff member) gives it and can be bribed.
+  - A `WelcomeGift` is handed over on acceptance, from the treasury, only if the treasury holds it (otherwise none, with `WelcomeGiftUnpaid`).
 - **Leaving.** Stage 4 has no exit controls. Stopping citizens from leaving needs guards at borders and a law, which is a later stage.
 - **Defection** is the soldier's version of migration, in the field: see [MILITARY_DESIGN.md](MILITARY_DESIGN.md#desertion-surrender-and-defection). `AcceptDefectors` governs the answer.
 - **Capture.** When an HQ is captured, its residents stay and become the conqueror's citizens, with loyalty reset to `CapturedLoyalty` (default 200). Owed state debts to them are void, which they remember.
 - **Non-citizens.** An NPC whose request was refused, or whose faction was eliminated, is stateless: it can forage, barter and work private jobs but cannot take state contracts or handouts.
+
+### Temporary automatic HQ rules (Stage 4)
+**Owner decision Q16 (27 Nov 2026).** Two automatic rules stay in Stage 4 as **temporary** rules: the **HQ paymaster** (wages, purchase payments and handouts paid by the HQ store with no paymaster on staff) and the **immigration rules** (the HQ's answer to `AskJoin` under `ImmigrationPolicy`, and the off-island arrival rule in [POPULATION_DESIGN.md](POPULATION_DESIGN.md#immigration-and-emigration)). Each must:
+- **respect available resources:** it pays only goods that are in the store, in the order the escrow and commitment rules give, and records arrears otherwise; a gift is given only if held;
+- **respect state policy:** it applies exactly the faction's current contract terms, escrow choice, tax rates and `ImmigrationPolicy` (`Open`, `AskToJoin`, `Closed`, `MaxPerDay`);
+- **emit events:** `WagePaid`, `WageUnpaid`, `PurchasePaid`, `CitizenshipChanged`, `ImmigrationRefused`, like any staffed process;
+- **be replaceable by a staffed institutional process:** each rule sits behind one interface (`IPayPoint`, `IImmigrationDesk`) with the automatic implementation now and a staffed implementation later, so that real NPC officials (a paymaster, an immigration official) take over with **capacity limits, their own motives and possible administrative failure** (slow queues, favouritism, bribes, errors);
+- **never create resources or bypass economic constraints:** nothing is paid that the store does not hold; nothing is moved without a hand-over at the pay point (the worker still walks there).
+
+Both are listed in the temporary mechanisms table ([DEV_LOG.md](DEV_LOG.md#temporary-mechanisms)) with their removal at the Village age (Stage 5).
 
 ### Victory conditions
 ```csharp
@@ -362,18 +375,28 @@ All scenario tests run headless with `God.Runner` over the stated seeds. "Signif
 - **S-WEL-1 Handouts:** in a famine scenario (wild food halved, farms burnt), a staffed granary with handouts lowers starvation deaths over 10 days by a significant margin vs no handouts, over 20 seeds. The change in labour supply (contract fill times) is reported, not targeted.
 - **S-WEL-2 Unstaffed granary:** with no keeper, zero handouts are given over 5 days, exactly.
 
+**Temporary automatic rules (Q16), M6 and M10:**
+- **S-TMP-1 No creation:** over 10 seeds × 10 days with escrow off and a treasury that runs dry, the HQ paymaster pays exactly the goods the store held; every shortfall emits `WageUnpaid`; the ledger (S-INV-1) balances exactly.
+- **S-TMP-2 Policy respected:** with `ImmigrationPolicy` `Closed`, `AskToJoin` and `Open` (`MaxPerDay` 2), the HQ's answers follow the policy exactly in a scripted stream of 50 `AskJoin` gestures; each answer emits its event; a `WelcomeGift` is never handed over when the treasury lacks it.
+- **S-TMP-3 Replaceable:** the automatic `IPayPoint` and `IImmigrationDesk` can be swapped for a test implementation that queues and delays, with no other code change, and S-INV-1 still holds.
+
 **Laws and loyalty (M9–M12):**
 - **S-LAW-1 Laws without guards:** with a theft law and no enforcer, measured theft over days 5–15 is within ±15% of the no-law control on 20 seeds (no significant difference expected; reported either way).
 - **S-LAW-2 Laws with guards:** with the same law and 3 staffed guards, measured theft is lower than no-law by a significant margin over 20 seeds. The size of the effect is reported, not tuned to a target.
 - **S-LAW-3 Belief decay:** an NPC that sees 5 unpunished thefts lowers its believed chance of being caught by at least half (unit test on the belief update).
 - **S-LOY-1 Formula:** unit tests show loyalty moves towards target, never leaves 0..1000, and changes more slowly for high loyalty-trait NPCs.
 - **S-LOY-2 Pay default lowers loyalty:** 3 defaults in 5 days lower the affected NPCs' mean loyalty by at least 100 versus unaffected NPCs.
+- **S-LOY-3 Loyalty is earned, not rewarded (Q7):** a reflection test finds no reward channel, command or scenario key that writes `Loyalty` or adds reward for it; two factions identical except that A pays and feeds reliably and B defaults: mean loyalty in A exceeds B's on at least 18 of 20 seeds by day 20.
 - **S-MIG-1 Voting with feet:** two factions in contact, identical except faction A's sale tax at 500 permille and B's at 0. Net migration from A to B over 20 days is positive on at least 16 of 20 seeds.
 - **S-MIG-2 Closed border:** with `Closed`, zero NPCs become B's citizens by migration over 20 days, exactly.
 - **S-MIG-3 Capture:** after an HQ capture, every resident's citizenship changes and its loyalty equals `CapturedLoyalty`.
 
 ## 11. Open questions
-Owner questions (automatic HQ rules in stage 4: the paymaster and the answer to `AskJoin`) are collected in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md#13-open-questions-owner). Settled here:
+No open owner question remains. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q16 Automatic HQ paymaster and immigration rules:** kept as temporary rules in Stage 4. They must respect available resources and state policy, emit events, be replaceable by staffed institutional processes, and never create resources or bypass economic constraints. Eventually real NPC officials do these jobs, with capacity limits, motives and possible administrative failure ([Temporary automatic HQ rules](#temporary-automatic-hq-rules-stage-4); S-TMP-1 to S-TMP-3).
+- **Q7 Loyalty:** not rewarded directly; the state must earn it ([Loyalty, migration and defection](#loyalty-migration-and-defection); S-LOY-3).
+
+Settled here:
 - **The unit of pay under barter.** The HUD shows contracts as bundles of goods. Reports may add a bundle's food-equivalent (FE) value from `WareRefValue` ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md) owns it); that is a measurement index only, and no NPC reads it, so it creates no price.
 - **The state in social memory.** Each NPC keeps one trust record for its faction's state as a pseudo-agent, beside its records of individual state agents (keepers, guards). [SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md) holds both.
 - **Default escrow:** on, as in section 4; unescrowed contracts are a choice.

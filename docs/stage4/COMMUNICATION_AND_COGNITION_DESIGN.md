@@ -29,6 +29,7 @@ The background research is in [research/CREATURES_NOTES.md](research/CREATURES_N
 - **Decisions come from instincts plus learned associations.** Hand-written estimates are innate priors only. Each NPC's own experience adds learned values that can outweigh them, so two NPCs with the same genome and personality come to act differently. Nothing is a fixed utility formula or a behaviour tree. See [NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md).
 - **Personality changes scores, never rules.** An aggressive, bold NPC scores "fight for this" higher, but still backs off when the visible opponent is much stronger and its own fear is high.
 - **Communication is a sim action.** NPCs decide whether, what and to whom to communicate, and how to respond. Unity animates the events and decides nothing. Headless works the same.
+- **Communication is functional, not decorative (owner, 27 Nov).** A promise is not a completed action, an offer is not a completed transaction, and a claim is not necessarily true. Each message changes only the listener's beliefs and expectations; goods move only by separate hand-overs ([ECONOMY_DESIGN.md](ECONOMY_DESIGN.md#45-exchange)) and obligations are only remembered ([SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md)). It works identically headless and in Unity (`Unity_Agrees_With_Runner`).
 - **Determinism.** Integers only; NPCs in ascending id; one forked stream per NPC (`Rng.Fork("npc", id)`); fixed candidate order; ties go to the lowest index.
 
 ## 3. Data structures

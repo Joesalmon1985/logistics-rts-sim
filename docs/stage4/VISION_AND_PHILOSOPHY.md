@@ -23,7 +23,9 @@ A population of persistent, mortal, learning people on an island, governed by a 
 4. **Experiments must not manufacture outcomes.** A scenario may set up circumstances (scarce food, one large employer, a closed border) but may never set up results (a forced strike, a fixed share of cooperators). Benchmark strategies such as Tit for Tat are separate test policies, never labels on island NPCs. See [GAME_THEORY_DESIGN.md](GAME_THEORY_DESIGN.md) and [STRATEGY_BENCHMARKS.md](STRATEGY_BENCHMARKS.md).
 5. **Descriptive and causal claims are kept apart.** "Wage workers in our runs complained more" is descriptive. "Losing the commons *causes* wage dependency" is causal, and needs a randomised treatment across seeds. Reports label which kind they are. See [POLICY_EXPERIMENTS_DESIGN.md](POLICY_EXPERIMENTS_DESIGN.md).
 6. **The theories are questions, not scripts.** Darwin, Dawkins, Marx and the others give us things worth looking for. The game does not assume any of them is right. A run in which classes never form, or in which a cooperative economy outcompetes private firms, or the reverse, is a valid run.
-7. **Tuning is honest.** Balancing a number so that a *game* is playable (food yields, walking speed, lifespan) is fine. Balancing a number so that a *theory* comes true is not. Every tuning change records which of the two it serves.
+7. **Tuning is honest.** Balancing a number so that a *game* is playable (food yields, walking speed, lifespan) is fine. Balancing a number so that a *theory* comes true is not. Every tuning change records which of the two it serves. Genuine collapse, economic failure or extinction is never tuned away; a failure is first classified as a meaningful outcome, a defective mechanic or a bad baseline parameter ([conventions §14](DESIGN_CONVENTIONS.md#14-further-owner-requirements-27-nov-2026)).
+8. **Explore, don't instruct (owner decision Q2).** The game explores the theories; it does not instruct players to accept them, and it has no predetermined political or economic conclusion. Ordinary gameplay, tutorials, institutional reports and KPIs use **neutral, descriptive terms** ("share of adults who work for an employer", not a theory's vocabulary). The intellectual influences are named only on an optional **About/Philosophy page**, with appropriate references (section 8).
+9. **The whole vision, not an RTS with NPC stats.** Biology, learning, communication, culture, economy, institutions and information all interact. A milestone that would reduce one of them to a number on a unit card is a design change that needs the owner.
 
 ### 2.3 Engineering principles that serve the vision
 - **People, not units.** One NPC record for life; nothing is spawned to do a job ([POPULATION_DESIGN.md](POPULATION_DESIGN.md)).
@@ -197,6 +199,7 @@ This document is upstream of all others. In particular:
 
 ## 8. Player and view
 - The HUD never declares a society "capitalist", "communist" or anything else. It shows measured facts: who owns what, who works for whom, how surplus is shared, what people say they want.
+- **About/Philosophy page (optional, from the main menu).** It names the influences in section 4 with references (the books and papers in [research/](research/SELFISH_GENE_NOTES.md) and their published sources), explains which mechanics each one suggested, and says plainly that the game tests these ideas rather than endorsing them. No other screen, tutorial card, report or KPI name uses the theorists' names or vocabulary.
 - Reports label descriptive statistics and experimental results differently.
 - Animations only show events; they never decide them.
 
@@ -211,7 +214,7 @@ This document emits nothing. Each measure in section 4 is computed from the doma
 | Dawkins | Lab benchmarks (M2); recognition, memory, contests, help (M5, M7); kin weight (M4); memes (M11) | Learned signalling conventions; meme complexes |
 | Smith | Skills, recipes, barter, jobs (M3–M6); workshops (M8) | Money (Town age); markets between strangers |
 | Axelrod | Deferred exchange, promises, reputation (M7) | Courts as enforcement (Town age) and their measured effect |
-| Ostrom | Communal property, witnesses, sanctions (M8); elders and mediation (M12) | Commons councils; nested institutions |
+| Ostrom | Communal property, witnesses, sanctions (M8); forest and other renewables that can be overused (M6); elders and mediation, and communal institutions founded by communities without the state (M12, owner decision Q17) | Commons councils; nested institutions |
 | Marx | Ownership forms, employment, class measures (M8); political-interest measures (M10); recorded in M13 | Collective action, movements, disputes (stage 5 onwards) |
 | *Creatures* | Drives, perception, associative learning (M3); social learning (M7); culture (M11); network inputs (M15) | Learned concepts and lexicons |
 
@@ -222,8 +225,11 @@ These are neutrality checks that every relevant milestone adds to [ACCEPTANCE_TE
 3. **Recording neutrality.** Recording at every level gives the same `StateHash` after 10 sim years on 20 seeds.
 4. **Not inevitable.** For each headline emergent outcome a scenario claims is *possible* (a strike, a commons collapse, a concentration of property), the outcome occurs in more than 0% and fewer than 100% of 100 seeds, unless the document explains why it is physically determined.
 5. **Neutral controls exist.** Every causal claim in a report names its control treatment and seed count.
+6. **Neutral vocabulary (Q2).** A static check over HUD strings, tutorial cards, KPI names and report labels finds no theorist's name and no term from a fixed list of theory vocabulary (for example "proletariat", "bourgeoisie", "capitalist", "selfish gene", "ESS") outside the About/Philosophy page. The list lives with the test and only grows.
 
 ## 12. Open questions
-1. **Naming the theories in the game.** Naming Darwin or Marx in the game may read as endorsement. Owner question; default: influences are named only in an optional "about" page, never in reports or the tutorial.
+No open questions remain.
+
+**Owner decision (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026) Q2):** keep the default. The intellectual influences go on an optional About/Philosophy page with appropriate references (section 8). Ordinary gameplay, tutorials, institutional reports and KPIs use neutral, descriptive terms. The game explores the theories and does not instruct players to accept them. There is no predetermined political or economic conclusion (principle 8 in section 2.2).
 
 Owned elsewhere: whether a faction can fall back an age ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#ages-and-unlocks)); suggested goals in the sandbox ([STATE_DESIGN.md](STATE_DESIGN.md)).

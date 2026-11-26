@@ -106,7 +106,14 @@ The executor is the surviving NPC best placed to act, found by this fixed ladder
 5. a person the elders or institution appoint (M12);
 6. nobody: no executor, no custom, goods become ownerless.
 
-This ladder is the one fixed rule of the module and exists only so that someone applies a custom. It is a choice of *who decides*, not of *what is decided*. See open question 2.
+This ladder is the one fixed rule of the module and exists only so that someone applies a custom. It is a choice of *who decides*, not of *what is decided*.
+
+**Owner decision Q13 (27 Nov): the ladder stays fixed in Stage 4, but its rules are configurable and the architecture is open.**
+- **Configurable:** the rungs and their order are data, `SimTuning.Estate.ExecutorLadder` (a list of rung kinds: `NamedInWill`, `Partner`, `EldestAdultChild`, `EldestHouseholdAdult`, `Appointed`, `None`), with the order above as the default. Experiments may reorder or drop rungs; the scenario records which ladder it used.
+- **Open architecture:** settlement goes through one seam, `IEstateSettlement` (choose executor → read rule → split → transfer), so that later stages can add **wills** with wider force, **household decisions** (the household agrees a split by gesture), **communal inheritance** (assets pass to a group, as `BackToCommunity` already does), **state inheritance laws** and **estate tax** (4.9) as further implementations, without changing the transfer code.
+- **Actual assets are transferred, never duplicated.** Every transfer moves the existing `ItemLotId` or asset record to its new owner (or marks it destroyed, taxed or ownerless); no settlement path creates a copy. Conservation and single ownership are invariants (tests 1–3 and 20).
+
+**Owner decision Q14 (27 Nov): no estate skimming in the first Stage 4 estate milestone (M4).** The ability to add it later is preserved: dishonesty, corruption, disputed inheritance and restitution are added as another case of **exploiting an institutional position** (as for institution staff, [INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md#failure-modes)), with consequences that come from **observation, reputation and enforcement**: heirs and witnesses who see or are told of a shortfall, gossip, disputes (4.7), and later mediation, courts and restitution. The hook is that the split step (4.4) is a decision point of the executor, so a later executor policy can choose to favour itself; in Stage 4 the split follows the custom exactly.
 
 ### 4.3 Customs as cultural traits
 The `InheritanceCustom` locus ([CULTURAL_TRANSMISSION_DESIGN.md](CULTURAL_TRANSMISSION_DESIGN.md#31-trait-definitions-content-read-only-in-simtuningculturedefs)) holds competing variants. The executor's **active variant** (strongest, strength 128 or more) is the custom applied. Ties go to the lower trait id. **Before M11** the custom is a fixed per-faction default read through a `StaticCultureProvider` (scenario setting); from M11 it is the NPC's own trait. A custom has an optional `Param`: the lineage filter (bit 0: only through the mother's line; bit 1: only the father's; none set: either) and seniority order (bit 2: youngest first).
@@ -226,9 +233,10 @@ The sim has no hard ledger of private debt. Debts are obligations in memories ([
 | **M7** | Orphaned obligations: debts and claims behave as described (memory only). |
 | **M8 (productive assets)** | Workshops, enterprises and tools pass by custom. `EldestChild` becomes meaningful. Cooperative membership rules. Theft by disputing heirs has witnesses. Wills and bequests (a `Bequest` obligation, witnesses). Gifts counted as advancements. |
 | **M11** | Customs become cultural traits, spread and drift by transmission. `FirstArrivalOwns` and `InheritDebts` as norms. |
-| **M12** | Elders' mediation of disputes. Appointed executors. |
+| **M12** | Elders' mediation of disputes. Appointed executors. Executor dishonesty (skimming) may be added here or later, as an exploit of an institutional position with consequences from observation, reputation and enforcement (Q14); it is not in M4. |
 | **Later (Stage 5)** | Dowry and bride-price content; livestock; land claims; sleeping-right rules per hut group. |
-| **Later (Stage 6)** | Inheritance law, estate tax, court enforcement, creditors paid first, registrars, records. |
+| **Later (Stage 6)** | Inheritance law, estate tax, court enforcement, creditors paid first, registrars, records, restitution, as further `IEstateSettlement` implementations (Q13). |
+| **Later (Stage 5+)** | Wills with wider force, household decisions on a split, communal inheritance beyond `BackToCommunity` (Q13). |
 
 ## 9. Migration from the existing code
 - **Stage 3 has no NPC death and no ownership.** Buildings and stores belong to factions. Nothing is migrated.
@@ -270,9 +278,15 @@ All run in `dotnet test DotNet` and Unity EditMode. Numbers are exact unless a r
 18. Provenance check (recorder): for every NPC, the inherited `FE` total equals the sum of its inbound `EstateTransfer` lines valued at `WareRefValue` (exact).
 19. **The split reads no reference table:** a reflection test finds no reference to `WareRefValue` in `Sim/Estate`.
 
+**Owner decisions Q13 and Q14**
+20. **Transferred, never duplicated:** over 1,000 random estates for every custom and every ladder configuration, the multiset of `ItemLotId`s and asset ids after settlement equals the multiset before, minus those marked destroyed, taxed or ownerless; no id appears twice and no new id is created by settlement.
+21. **Ladder configurable:** with `ExecutorLadder` reordered (household adult before partner), the executor chosen in a fixed fixture changes accordingly, and every other estate test still passes.
+22. **No skimming in Stage 4:** across 1,000 random estates the executor's own award equals exactly what its custom gives it as an heir (zero if it is not an heir).
+
 ## 11. Open questions
 
 Settled in review (26 Nov 2026): estates are keyed by the deceased's `NpcId`; acknowledged kin are believed kin with confidence above 400; the split uses units and the executor's own valuation, never `WareRefValue`; a sleeping right lapses to the hut group at death (as distinct from leaving a household, [HOUSEHOLDS_AND_KINSHIP_DESIGN.md](HOUSEHOLDS_AND_KINSHIP_DESIGN.md#forming-and-breaking-households)); `MournTicks` and `SettleWithinTicks` are not scaled by `LifeScale`, because settlement is work time, like walking.
 
-1. **The executor ladder** is a fixed rule. It could be replaced by a decision the household makes (gesture-based), at the cost of delays. Default: keep the ladder in stage 4.
-2. **Skimming by executors.** An executor could favour itself (a decision scored by honesty and the risk of being caught). Default: left out of stage 4; added at M12 with mediation.
+No open questions remain. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+1. **Q13 Executor ladder:** keep it fixed in Stage 4. The rules are configurable, and the architecture supports wills, household decisions, communal inheritance, state inheritance laws and estate tax later. Actual assets are transferred, never duplicated (4.2; tests 20, 21).
+2. **Q14 Estate skimming:** not in the first Stage 4 estate milestone. The ability to add dishonesty, corruption, disputed inheritance and restitution later is preserved, as another case of exploiting an institutional position, with consequences from observation, reputation and enforcement (4.2; test 22).

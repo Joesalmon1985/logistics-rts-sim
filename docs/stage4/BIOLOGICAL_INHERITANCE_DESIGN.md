@@ -174,7 +174,7 @@ for c in 0..7:                      // chromosomes ascending
         gamete[8c+i] = a
 ```
 - **Recombination:** crossovers at 150 permille per gap give about 1 per chromosome. Chromosomes assort independently.
-- **Mutation:** 40 per 10,000 per allele gives about 0.26 mutations per gamete, so about half of all children carry a new variant. Fast enough to see over 10 generations, slow enough not to be noise. Tunable per scenario, including zero.
+- **Mutation:** 40 per 10,000 per allele gives about 0.26 mutations per gamete, so about half of all children carry a new variant. Fast enough to see over 10 generations, slow enough not to be noise. It is **deliberately accelerated** compared with nature (owner decision Q4, 27 Nov). `MutationPer10k` is scenario tuning (`tuning.Genetics.MutationPer10k`); zero and any lower rate are supported for controlled experiments, and the rate is reported with every experiment that uses it.
 - **A scenario can switch the genome off** (`GameSetup.Genetics = Fixed`): every child copies a fixed clone genome. Useful for tests that isolate other systems.
 
 ### 4.6 Kin relatedness: truth, and what NPCs can know
@@ -293,7 +293,8 @@ All run in `DotNet/` and Unity EditMode. Statistical tests use fixed seeds and t
 | Test | Setup | Expected |
 |---|---|---|
 | `Gamete_Deterministic` | same genome and stream twice | identical gamete; different stream gives different gamete |
-| `Mutation_RateHonoured` | 100,000 allele copies, `MutationPer10k = 40` (count mutation events inside `Gamete`, not value changes) | 400 ± 60. At 0 exactly 0 |
+| `Mutation_RateHonoured` | 100,000 allele copies, `MutationPer10k = 40` (count mutation events inside `Gamete`, not value changes) | 400 ± 60. At 0 exactly 0. At 10: 100 ± 30 (a lower rate is honoured) |
+| `Mutation_ScenarioOverride` | Scenario files with `tuning.Genetics.MutationPer10k` 0, 10 and 40 | each run uses its own value (read back from the saved `SimTuning`); two runs with different rates in parallel do not leak into each other |
 | `Mutation_BiasHonoured` | `DownBiasPermille = 800`, 2,000 mutations | share of downward steps 0.80 ± 0.04 |
 | `Recombination_Rate` | 20,000 gametes | crossovers per chromosome 1.05 ± 0.08; each parental allele appears in a gamete 50% ± 1% |
 | `Offspring_BetweenParents` | 2,000 families, additive loci, mutation off, noise 0 | mean (child − mid-parent) within ± 5 permille; child variance about mid-parent equals 0.5 × population genotypic variance, within [0.42, 0.58] |
@@ -312,7 +313,9 @@ All run in `DotNet/` and Unity EditMode. Statistical tests use fixed seeds and t
 | `Replay_Deterministic` | 10 generations, same seed twice, and with recording on and off | same state hash and same pedigree hash |
 
 ## 11. Open questions
-- **Mutation rate.** 40 per 10,000 allele copies (about 0.26 new variants per gamete) is chosen so change is visible within 10 generations; it is faster than nature. Owner question; default: keep 40 for the sandbox, with `MutationPer10k` per scenario. The rate is per gamete, so it is already per generation and does not follow `LifeScale`.
+No open questions remain.
+
+**Owner decision Q4 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):** keep the default of 40 per 10,000 allele copies (about 0.26 new variants per gamete), configurable in scenario tuning. It is deliberately accelerated so that change is visible within 10 generations. Zero and lower rates are also supported for controlled experiments (`Mutation_RateHonoured`, `Mutation_ScenarioOverride`). The rate is per gamete, so it is already per generation and does not follow `LifeScale`. Biological inheritance stays distinct from learning and culture ([section 4.8](#48-four-inheritances-separate-in-code-and-data)).
 
 Settled here, with defaults:
 - Founders are unrelated to each other (`phi = 0`). A shared ancestor pool is a later scenario option.

@@ -103,7 +103,7 @@ Grain keeps 20 days and bread 4. Grain can be eaten raw for 40% of bread's nutri
 ```csharp
 sealed class ResourceSource            // a wild food source or another renewable stock (a commons candidate)
 {
-    int Id; ResourceKind Kind;        // Berries, Roots, Fish; Forest and Pasture later
+    int Id; ResourceKind Kind;        // Berries, Roots, Fish, Forest (M6: stock behind dice log piles); Pasture later
     int Hex, Node;
     int Stock, Capacity;              // units
     int RegrowPermille;               // logistic growth rate per day
@@ -173,7 +173,8 @@ Bounds: postings per faction ≤ 256, per board ≤ 32; enterprises ≤ 1 per 4 
 
 ### 4.1 Items, freshness, quality and consumption
 - Eating takes a food lot from carry or from a store the NPC may use, and lowers hunger by the ware's nutrition (berries 150, roots 200, fish 300, raw grain 120, bread 300, all in drive points).
-- **Variety:** the *n*-th unit of the same food eaten in one day relieves `nutrition × 1000 / (1000 + 250 × (n − 1))`. This is the reason a fisher values berries and a berry picker values fish.
+- **Variety:** the *n*-th unit of the same food eaten in one day relieves `nutrition × 1000 / (1000 + 250 × (n − 1))`. This is the reason a fisher values berries and a berry picker values fish. The rule is kept (owner decision Q10).
+- **Natural reasons to exchange (Q10).** Trade must emerge because it benefits individuals, never because the game demands it. The reasons the mechanics provide: different nutritional benefits (variety, above); local availability (sources differ by terrain, [4.8](#48-the-commons-ostrom)); **complementary construction materials** (a scenario option makes a hut need logs and clay, `HutRecipe = LogsAndClay`, tested as C4); productive capabilities (buildings and tools, 4.2); individual needs (children, illness, pregnancy); and skills and equipment (skill growth, switching cost, tools).
 - **Spoiling:** at each day start, lots past `SpoilDay` are removed with a `Consumed(cause: Spoiled)` event. Granaries (state or communal) add 50% to grain and roots' keeping time.
 - **Construction** consumes cost wares into the building (`Consumed(cause: Built)`); the building's record notes the wares as capital for surplus accounts.
 - **Item quality (M8).** Before M8 every lot has `TrueQuality = VisibleQuality = 2`, which gives the stage 3 stats. From M8:
@@ -187,9 +188,11 @@ Bounds: postings per faction ≤ 256, per board ≤ 32; enterprises ≤ 1 per 4 
 - **Dice piles stay.** The hidden Catan dice keep adding piles to hexes (`DiceSystem`). A pile is nature's yield; it is ownerless until claimed or taken.
 - **Gathering** is work by an NPC:
   - By hand from a pile: 60 ticks, takes what it can carry (one log). A pile holds `WaresPerPile` units and lasts several trips.
-  - Through a harvester building: as in stage 3 (4, 5 or 6 units per pile by level, faster gathering), because the building's cart carries the whole pile. **The building is capital:** it multiplies a worker's output about 4 times over hand gathering. That gives owning one a real meaning.
+  - Through a harvester building: as in stage 3 (4, 5 or 6 units per pile by level, faster gathering), because the building's cart carries the whole pile. **The building is capital:** with tools, skill and roads it makes a worker's output much higher than hand gathering, **about 4× as an initial tuning assumption, not a fixed rule** (owner decision Q9; the factor is measured per run and tuned only for playability). That gives owning one a real meaning.
+  - **Anyone may gather a pile by hand (Q9).** Hand gathering supports independent subsistence, specialisation and mobility: an NPC without access to a building can still make a living from piles, at lower output per hour. Dice piles are therefore a commons too ([4.8](#48-the-commons-ostrom)).
+  - **Forest stock (owner decision Q11).** Each forest hex holds a `ResourceSource` of kind `Forest` (`Stock`, `Capacity`, `RegrowPermille`). When the dice add a log pile on a forest hex, the pile's units are taken from that stock; a hex whose stock cannot cover a pile gets a smaller pile or none. The stock regrows by the configurable ecological rule of 4.8 (`SimTuning.Ecology.Forest`: growth rate, capacity, the minimum stock for regrowth). **Forest stock limits are on by default in the sandbox and off by default in the VP mode** (non-depleting piles as in stage 3), with the scenario key `forestDepletion` to turn them on in VP or off in the sandbox. Overexploitation, sustainable harvesting and, later, resource-management institutions are therefore all possible.
 - **Foraging** from a `ResourceSource`: 30 ticks per unit, yield 1 or 2 drawn from the gatherer's own stream; takes 1 from `Stock`.
-- **Workshops** run a recipe cycle only while a staff NPC is present in a staff slot (from M6). Cycle ticks are divided by the staff's work speed.
+- **Workshops** run a recipe cycle only while a staff NPC is present in a staff slot (from M6), **in both the sandbox and the VP mode** (owner decision Q8). All productive work is ultimately done by persistent individuals: no anonymous or auto-generated worker is kept to preserve stage 3 balance. Production, staffing and resources are rebalanced around the population system (M14). Cycle ticks are divided by the staff's work speed.
 - **Work speed** in permille: `1000 + 3 × skill(work)` (skill 0 to 255, so up to 1765), times the tool effect, times fatigue (`1000 − fatigue / 2`).
 - **Tools:**
 
@@ -207,16 +210,22 @@ Bounds: postings per faction ≤ 256, per board ≤ 32; enterprises ≤ 1 per 4 
 - **Farms:** the farm building is a harvester on grain land. Dice piles appear there as now. From M8 a farm can also be worked as a plot: staff work raises a hidden "tended" counter that adds 1 grain per pile gathered when above 600. Optional, off in VP mode.
 
 ### 4.3 The development path (measured, not staged)
-The path is a description of what the mechanics make possible. No rule moves a village from one phase to the next. Each phase has a measure, computed daily per faction and per village cluster (NPCs sharing huts within 3 hexes):
+The path is a description of what the mechanics make possible. No rule moves a village from one phase to the next, and a village may stop, skip, mix or reverse phases. The owner's progression (27 Nov) is **subsistence → cooperation → barter → specialisation → surplus → productive ownership → employment → accumulation → classes → political organisation**. Each phase has a measure, computed daily per faction and per village cluster (NPCs sharing huts within 3 hexes):
 
 | Phase | What makes it possible | Measure |
 |---|---|---|
 | Subsistence | foraging, hand gathering, own huts | share of food eaten that the eater gathered itself (`SelfProvisionPermille`) |
 | Cooperation | gifts, help, household sharing (vampire bats: lucky days and unlucky days, [notes E10](research/SELFISH_GENE_NOTES.md#e10-vampire-bats-pdf-253256-bk-230233)) | gifts and help acts per NPC per day; share of food eaten that came from others |
-| Specialisation | skill growth, switching cost, tools, variety | `SpecialisationIndex`: mean over adults of the share of work ticks in their top activity, 7-day window; Gini of skill profiles |
 | Barter | offers, hand-overs, price beliefs, markets | completed exchanges per NPC per day; price dispersion (spread of observed ratios for the same pair) |
+| Specialisation | skill growth, switching cost, tools, variety | `SpecialisationIndex`: mean over adults of the share of work ticks in their top activity, 7-day window; Gini of skill profiles |
 | Surplus | higher productivity, storage, granaries | surplus per adult per day (section 4.10) |
-| Ownership and employment | property records, enterprises, job postings | share of work ticks done for another owner; `WageDependencePermille` (4.8) |
+| Productive ownership | property records, buildings and tools as capital, enterprises (4.7) | share of productive assets by owner form; share of adults owning a productive asset |
+| Employment | job postings, wage relation (`Work` use right) | share of work ticks done for another owner; `WageDependencePermille` (4.8) |
+| Accumulation | estates, retained surplus, inheritance ([MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md)) | wealth Gini; top-10% share; parent-child wealth rank correlation |
+| Classes | measured relations to property, labour and surplus ([ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md)) | class-position shares (analysis only; no NPC has a class label, and no political belief is assigned from class) |
+| Political organisation | interests, grievances, associations ([POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md)) | association membership; collective acts (stage 5) |
+
+`WareRefValue` and FE (3.3) are used by these measures for analytics and reporting only. They are never a hidden currency and never a central barter price: no NPC, policy or price reads them.
 
 The gains from trade are measured directly: output per work hour of the same seed with exchange disabled (`GameSetup.ExchangeOff`, a control scenario only) vs enabled.
 
@@ -262,6 +271,7 @@ The gains from trade are measured directly: output per work hour of the same see
 - **Boards** stand at every HQ and at flags where the poster places one (the state places them by command; any NPC owner can place one on its own building). NPCs know a posting only by reading a board or being told (cognition doc).
 - **Taking a job is a choice.** A posting is a candidate intent scored like any other: pay worth (by the NPC's own valuation of the pay ware) minus walking, effort (fatigue), risk and the value of the time for its own needs, plus learned bias. `JobTaken` reserves a slot and, for hauls, the source units and destination space, as stage 3 carriers do now.
 - **Doing and abandoning:** an NPC may drop a job at any think. A taken job with no progress for 300 ticks is released (`JobAbandoned`), and its reservations return.
+- **Walk-outs suspend the contract first (owner decision Q19, 27 Nov).** For a lasting job (a staff or employment spell, M6 onwards), an employee who refuses to work without quitting (`RefuseWork`, alone or with others) does not end the contract: the employment becomes `Suspended`. While suspended, no work is done and no pay is due; the slot stays the employee's; the 300-tick abandonment rule does not apply. Each side then decides by its own scores: **the employee may resume, negotiate (an `Offer` about pay or terms), resign or keep refusing; the employer may negotiate, improve pay, dismiss or seek alternatives** (post a replacement, hire someone else). An employer can likewise suspend work and pay (a lockout). Nothing ends a suspension automatically and nothing scripts the outcome, so collective bargaining, strikes, lockouts and economic conflict (Stage 5, [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md)) arise from material circumstances and incentives. Events: `ContractSuspended(by, reason)`, `ContractResumed`, `ContractEnded(reason: Resigned, Dismissed, …)`.
 - **Pay:** the poster pays on completion of each unit. **State pay** is made by the HQ store under the state's rules (an institution, so it is enforced while the treasury has the goods; arrears otherwise, see [STATE_DESIGN.md](STATE_DESIGN.md)). **Private pay** is a hand-over by the employer, so an employer can cheat a worker and a worker can demand pay first. Each payment is `WagePaid`.
 - **Wage labour** is the case where an NPC works regularly for another owner for pay. It is not a special rule: it is the job mechanism used repeatedly.
 - **Dependence on selling labour** arises when an NPC has no access to subsistence: no forage source it believes it may use within reach (depleted, enclosed by claims, or far), no productive asset of its own and no household that feeds it. It then has only jobs or gifts. Measured as `WageDependencePermille`: share of the NPC's food and goods intake over 7 days that came from pay. Not forced; possible.
@@ -278,7 +288,7 @@ The gains from trade are measured directly: output per work hour of the same see
 - **Equal rules:** production speed, recipe, job, exchange and theft rules have no branch on `EnterpriseForm`. A reflection-and-test check enforces this (section 10). Which form does better is a result to measure across seeds ([POLICY_EXPERIMENTS_DESIGN.md](POLICY_EXPERIMENTS_DESIGN.md)).
 
 ### 4.8 The commons (Ostrom)
-- **Resources:** forage sources (berries, roots), fishing grounds, and later forest and pasture. Each has `Stock` and logistic regrowth once a day: `Stock += RegrowPermille × Stock × (Capacity − Stock) / (Capacity × 1000)`, at least 1 while `0 < Stock < Capacity`. An emptied source regrows only if a neighbouring source of its kind is above half capacity (1 unit per 3 days). So overuse is possible and costly.
+- **Resources:** forage sources (berries, roots), fishing grounds, forest (from M6, the stock behind dice log piles, 4.2) and later pasture. Each has `Stock` and logistic regrowth once a day: `Stock += RegrowPermille × Stock × (Capacity − Stock) / (Capacity × 1000)`, at least 1 while `0 < Stock < Capacity`. An emptied source regrows only if a neighbouring source of its kind is above half capacity (1 unit per 3 days). So overuse is possible and costly. **The ecological rules are configurable per resource kind** (`SimTuning.Ecology`: growth rate, capacity, the recovery rule; owner decision Q11), so experiments can vary how forgiving nature is.
 - **Open access by default.** Anyone who knows a source may take from it. The temptation is to take more today; the cost falls on everyone later. That is the free-rider problem, with real consequences.
 - **What lets local rules emerge** (Ostrom's conditions, each a mechanic, none a rule that applies itself):
 
@@ -367,10 +377,10 @@ All events carry `Tick` and the ids involved. Counts are integers; ware arrays a
 |---|---|
 | M3 | Foraging from `ResourceSource`s, food wares and spoiling, eating, personal carry with weight, hut stores, hand gathering of piles. Holder is owner. Conservation ledger and `Produced`/`Consumed`. Walkers still run the stage 3 economy. |
 | M5 | Valuation, price beliefs, offers and counter-offers, hand-overs (`ExchangeStep`), defection by walking away, gifts, help in labour, meeting-place markets. Variety rule. Skills and switching cost. |
-| M6 | Owner tags on lots; property records (state, private, communal); use rights; job postings and boards; state pay; the haul planner; staffed workshops; envoys as volunteers. **Walkers deleted.** Tools and the toolsmith. |
+| M6 | Owner tags on lots; property records (state, private, communal); use rights; job postings and boards; state pay; the haul planner; staffed workshops in both modes; contract suspension (`Suspended`, Q19); forest stock behind dice log piles (on in sandbox, off in VP, Q11); `HutRecipe` option; envoys as volunteers. **Walkers deleted.** Tools and the toolsmith. |
 | M7 | Loans and deferred exchange, promise-linked deal traces, repaid and defaulted classification. |
 | M8 | Item quality (true and visible), cheap fakes and inspection. Enterprises (private, cooperative, communal, state), founding, NPCs employing NPCs, private pay as hand-overs, theft with witnesses, commons records and norms, public-good contributions, surplus appropriation measures, `Moneyness`. |
-| Later | Forest and pasture commons; farms as tended plots by default; escrow markets and courts (Stage 6); currency pilot (Stage 5) and state currency and banks (Stage 6); markets at scale, merchants between factions, chartered companies, leases and other forms. |
+| Later | Pasture; forest commons records with institutions; farms as tended plots by default; escrow markets and courts (Stage 6); currency pilot (Stage 5) and state currency and banks (Stage 6); markets at scale, merchants between factions, chartered companies, leases and other forms. |
 
 ## 9. Migration from the existing code
 
@@ -441,17 +451,22 @@ All run headless in `DotNet/God.Sim.Tests` or as `God.Runner` scenarios; "seeds"
 - C1 **Two resources, different skills:** scenario `TwoFoods`: 40 adults, one village, berries in forest and fish on the coast in equal capacity, half start with forage-berries skill 120 and half fish skill 120, the rest 20. By day 10, on ≥ 7 of 10 seeds: `SpecialisationIndex ≥ 650‰` and at least 150‰ above the same seed with `ExchangeOff`; ≥ 0.5 completed exchanges per adult per day; mean daily nutrition not below the control's. If it fails, the mechanics or tuning are revisited; no rule may be added that assigns activities.
 - C2 With identical skills and `ExchangeOff`, `SpecialisationIndex` stays below 550‰ (the control shows the mechanism, not a bias, makes the difference).
 - C3 Surplus: in the default game, physical food surplus per adult is reported daily and is positive on day 10 on ≥ 7 of 10 seeds (a balance target, not a rule).
+- C4 **Complementary inputs (Q10):** scenario `LogsAndClay`: 40 adults, `HutRecipe = LogsAndClay`, logs on one side of the village and clay on the other, food plentiful (so food variety is not the motive). By day 10, on ≥ 7 of 10 seeds, completed exchanges of logs for clay are ≥ 0.2 per adult per day and huts built are at least 1.3× the same seed with `ExchangeOff`. Reported with the C1 control style; no rule assigns who gathers what.
+- C5 **Hand gathering vs capital (Q9):** the measured output per work hour of hand gathering against a staffed harvester with an axe is reported for every default run; at default tuning the ratio lies in 3–5 (a tuning check on the initial 4× assumption, not a design constant).
 
 **D. Property, theft, commons**
 - D1 Theft with witnesses: a take against a claim in daylight within sight of 2 attending NPCs gives both an observation; the same take at night beyond sight radius gives none.
 - D2 First arrival: an NPC using an ownerless hut plot gets a `FirstArrival` record; a second NPC arriving later appears in `Disputes` only if it acts on it.
 - D3 Commons, open access: scenario `Commons30`, 30 NPCs, one berry commons with capacity 200 and growth 150‰, no norm: the stock falls below 20% of capacity by day 15 on ≥ 6 of 10 seeds. With the norm *q* = 3 seeded in 80% of members and sanctions on, the stock stays above 50% on ≥ 6 of 10 seeds. Both results are reported; they test that both outcomes are possible.
+- D5 **Forest stock (Q11):** in the sandbox default a forest hex harvested faster than it regrows reaches stock 0 and then gets no log piles until regrowth (exact, unit test); with `forestDepletion` off the same harvest never changes pile size (exact); `Commons30`-style forest scenario with and without a seeded take-limit norm shows both depletion and sustained stock are possible (as D3).
 - D4 Equal rules: the same building, recipe, staff skill and tool give identical output per tick for every `EnterpriseForm` (parameterised test over the four forms).
 
 **E. Jobs and the stage 3 chain**
 - E1 Jobs are chosen: with haul pay set to 0, no NPC takes haul jobs in 5 days; with default pay, ≥ 80% of haul postings are taken within 600 ticks.
 - E2 **The chain still works:** default 4-faction game with population, AI factions on `AiBrain` with the M6 adapter: on ≥ 9 of 10 seeds every faction completes plank → building → gear → its first soldier, within 1.5× the stage 3 median ticks for that seed.
 - E3 Walkers are gone: after M6 no `Walker` type exists in the sim assembly (reflection), and no code path creates a worker for a job.
+- E5 **Suspension (Q19):** an employee's `RefuseWork` moves the employment to `Suspended` with one `ContractSuspended`; no `WagePaid` and no work ticks follow while suspended; no `JobAbandoned` is emitted for it after 300 ticks; the contract ends only by a `Resign` or `Dismiss` intent (exact, unit test). A lockout fixture behaves the same from the employer's side.
+- E6 **No anonymous workers (Q8):** in VP mode and in the sandbox, every recipe cycle, build tick and gather has a staff NPC present (exact over 10 seeds × 10 days); a workshop with no staff runs no cycle in either mode.
 - E4 Dependence: scenario `Enclosure`: 30 NPCs, all forage sources claimed by 3 owners who post gather jobs: mean `WageDependencePermille` of non-owners exceeds 600 by day 10 on ≥ 7 of 10 seeds; in the same seed with open access it stays below 300.
 
 **F. Determinism and performance**
@@ -460,9 +475,13 @@ All run headless in `DotNet/God.Sim.Tests` or as `God.Runner` scenarios; "seeds"
 
 ## 11. Open questions
 
+No open questions remain.
+
 Settled in review (26 Nov 2026): owner tags arrive in M6 and item quality in M8; the state paymaster is enforced while the HQ store holds the pay ware, as [STATE_DESIGN.md](STATE_DESIGN.md) confirms; the dice stream is forked in M0 ([DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md#4-time-model)); `WareRefValue` is owned here (3.3).
 
-1. **Staffed workshops in M6** slow the stage 3 chain unless NPCs are plentiful. Default: staffing is on from M6 in sandbox and VP modes, with balance handled in M14.
-2. **Hand gathering of piles** makes dice piles a commons too. Default: anyone may gather a pile by hand; harvester buildings stay about 4 times faster.
-3. **The variety rule** is what makes trade between food gatherers pay. Default: keep it, and also run the two-resource test with complementary building inputs (log and clay for huts).
-4. **Forest depletion** (forest stock limits dice log piles). Default: off in VP mode, on in sandbox.
+**Owner decisions of 27 Nov 2026** ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+1. **Q8 Staffed workshops:** yes, in both modes. All productive work is ultimately done by persistent individuals. No anonymous or auto-generated workers are kept to preserve stage 3 balance; production, staffing and resources are rebalanced around the population system (4.2, E6; balance at M14).
+2. **Q9 Gathering dice piles by hand:** yes. Specialist buildings, tools, skills and infrastructure make it much more efficient, about 4× as an initial tuning assumption, not a fixed rule. This supports independent subsistence, specialisation and mobility (4.2, C5).
+3. **Q10 Food variety:** keep the rule, and also test complementary production inputs (logs and clay for shelter). Several natural reasons to exchange: different nutritional benefits, local availability, complementary construction materials, productive capabilities, individual needs, and skills and equipment. Trade emerges because it benefits individuals, not because the game demands it (4.1, C4).
+4. **Q11 Forest depletion:** forest stock limits are on by default in the sandbox; non-depleting by default in the VP mode, with a scenario option to enable depletion. Renewable resources regenerate by configurable ecological rules. Overexploitation, sustainable harvesting and eventual resource-management institutions (tragedy of the commons, Ostrom experiments) are supported (4.2, 4.8, D5).
+5. **Q19 Walk-outs:** suspend the contract first. The employee may resume, negotiate, resign or keep refusing; the employer may negotiate, improve pay, dismiss or seek alternatives. This is the basis for collective bargaining, strikes, lockouts and economic conflict, arising from material circumstances and incentives, not scripted events (Jobs, E5; [POLITICAL_ECONOMY_DESIGN.md](POLITICAL_ECONOMY_DESIGN.md#11-open-questions)).

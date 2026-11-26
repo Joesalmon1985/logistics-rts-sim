@@ -30,7 +30,7 @@
 6. **Causal and descriptive are separate.** Only a designed contrast with randomised or paired assignment is a causal claim. Correlation inside runs is descriptive and is labelled so (section 4.9).
 7. **Generations matter.** A policy that looks good in 5 sim years can look different over 5 generations. Experiments run long enough to measure what they claim (section 4.5).
 8. **Outcome measures are real outcomes, reported alongside reported ones.** Institutions respond to reported KPIs and can game them. Each primary metric has an actual and a reported version in the KPI catalogue. The experiment compares both, so Goodhart effects are visible, not hidden.
-9. **Lab and island stay separate.** Lab experiments (payoffs from the book's matrices) test strategy properties. Island experiments, here, take their payoffs from consequences in the simulated world and are never forced toward a theoretical equilibrium ([conventions](DESIGN_CONVENTIONS.md#2-owner-decisions-complete-list-2526-nov-2026)).
+9. **Lab and island stay separate.** Lab experiments (payoffs from the book's matrices) test strategy properties. Island experiments, here, take their payoffs from consequences in the simulated world and are never forced toward a theoretical equilibrium ([conventions](DESIGN_CONVENTIONS.md#2-owner-decisions-complete-list-2527-nov-2026)).
 10. **The sim is a model, not the world.** Results say what happens in this model under stated rules. Reports say so in plain words, and do not claim real-world policy conclusions.
 
 ## 3. Data structures
@@ -238,7 +238,8 @@ Ids refer to [KPI_CATALOGUE.md](KPI_CATALOGUE.md), which owns exact definitions,
 | Outcome family | KPI ids |
 |---|---|
 | Survival | `POP-01` population, `POP-03` deaths (and `POP-03[cause=Starvation]`), `POP-07` child mortality, `POP-06` life expectancy at birth |
-| Welfare | `HLT-01` hunger rate, `HLT-02` undernourishment depth, `LIV-03` housing, `HLT-05` treatment coverage, `LIV-06` drive wellbeing *(proposed; a composite, so its weights are in the file, see 4.12)* |
+| Welfare | `HLT-01` hunger rate, `HLT-02` undernourishment depth, `LIV-03` housing, `HLT-05` treatment coverage, `LIV-06` drive levels (five separate values, never combined) |
+| Time use and care | `TIM-01` time use (paid work, independent production, communal work, unpaid care, subsistence, leisure), `TIM-02` unpaid care hours |
 | Productivity | `EMP-05` productivity, `EMP-01` participation, `EMP-04` underemployment, `LIV-01` food stocks (days of cover) |
 | Inequality | `INQ-03` wealth Gini, `INQ-04` income Gini, `INQ-05` top shares, `INQ-11` class composition (measured relation to property and labour) |
 | Social mobility | `INQ-07` rank-rank slope, `INQ-08` transition matrix (the exit share of the bottom row stands in for "born poor who exit"), `INQ-09` within-life mobility |
@@ -285,7 +286,7 @@ Every experiment file includes this checklist, and the report answers it. A box 
 - [ ] **No outcome metric was used as a reward** for a trained policy in the experiment, unless stated ([AI_TRAINING_DESIGN.md](AI_TRAINING_DESIGN.md)).
 - [ ] **Model limits stated.** The report says what the model leaves out (money before stage 6, for example) and does not draw a real-world policy conclusion.
 - [ ] **Code and data available.** The runner version, commit, seeds and warehouse are kept, so anyone can rerun the experiment and get the same hashes.
-- [ ] **Value-laden weights are explicit.** If a composite index is used (a wellbeing score), its weights are in the file, and results for each component are also shown.
+- [ ] **No hidden composite (owner decision Q23).** There is no universal composite wellbeing score. If this experiment uses a composite, it is defined in the plan file with its **components, weights and limitations** (what it leaves out and whose values the weights express), it is labelled as this experiment's own construct, and results for every component are shown beside it. No composite decides which society "succeeds".
 
 ### 4.13 Example analyses
 **SQL on the warehouse** (DuckDB or SQLite). Table and column names are those published in [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md#11-the-published-table-list); analysis SQL runs outside the sim, so it may use floating point.
@@ -428,10 +429,13 @@ false_pos = (res["p"] < 0.05).mean()    # over many metrics and environments
 | `Report_Contains_Nulls` | a report for an experiment with only null results lists every pre-registered primary metric with its interval and adjusted p-value (no omitted rows) |
 | `Report_Labels` | every table and figure in the report carries `causal` or `descriptive`; a report check fails if a figure from within-run association lacks the label |
 | `Demo_Hut_Experiment_Runs` | the communal against private hut experiment runs to completion with at least 30 seeds per arm in a documented time budget and produces the report |
+| `Composite_Declared` | a plan that uses a composite without listing components, weights and limitations is refused at registration; a report that shows a composite also shows each component's result (owner decision Q23) |
 | `Sensitivity_Runs` | a three-parameter one-at-a-time sensitivity sweep produces the sign-agreement table |
 
 ## 10. Open questions
-1. **A composite wellbeing index.** Any weighting is a value judgement. Owner question; default: no project-wide index. Reports show components; an experiment may use an index (such as `LIV-06`) only with its weights written in the file.
+No owner question remains.
+
+**Owner decision Q23 (27 Nov 2026, [conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)): no universal composite score.** Report the underlying measures separately (health, nutrition, life expectancy, security, comfort, leisure, education, autonomy, material living standards, inequality, social relationships, environmental sustainability; [KPI_CATALOGUE.md](KPI_CATALOGUE.md#wellbeing-dimensions-reported-separately)). Experiments may use explicitly defined composites with documented components, weights and limitations (checklist 4.12, `Composite_Declared`). There is no hidden political or moral weighting of which societies succeed.
 
 Settled here, with defaults:
 - **Seed budget.** Set from the runner's measured speed (`bench_npc_500`, [HEADLESS_SIMULATION.md](HEADLESS_SIMULATION.md)) when the harness is built in M13: the default plan is 60 seeds per arm, 2 arms and up to 3 environments, with a pilot of 20 seeds per arm first.

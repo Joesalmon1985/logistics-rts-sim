@@ -8,7 +8,8 @@ This document owns how NPCs pair up, live together, raise children, look after r
 - partnership and courtship;
 - forming and breaking households: shared huts, sleeping rights, the household store, pooling rules;
 - reproduction decisions;
-- child-rearing, care of elders, the sick and the injured, fostering and orphans;
+- child-rearing, care of elders, the sick and the injured, fostering, adoption and orphans;
+- informal shared childcare between households (owner decision Q15);
 - the kinship graph (what NPCs believe) and the names of kin roles;
 - desertion and divorce;
 - the household economy;
@@ -32,6 +33,9 @@ This document owns how NPCs pair up, live together, raise children, look after r
 - **Mechanics make outcomes possible; measures say whether they happened.** The costs and asymmetries are real (pregnancy, infant dependence, food), so strategies in the coy/fast, faithful/philanderer and guard/desert games *can* arise. None is scripted, and no payoff matrix is used on the island ([lab vs island](GAME_THEORY_DESIGN.md)). Section 4 ("Measuring family strategies") defines the measures.
 - **NPCs perceive kin only through cues.** They use a believed kinship graph, never the true pedigree. A foster child can be treated as own, and a father can be wrong about paternity.
 - **Same options for both sexes.** Both partners have the same intents. The sexes differ in bodies (pregnancy), not in rules. Any difference in behaviour is learned, chosen or inherited as a predisposition.
+- **All partnerships are equal (owner decision Q6, 27 Nov).** Same-sex partnerships are explicitly supported, with the same social, emotional, household, economic, caregiving and material-inheritance capabilities as any other partnership. The only difference anywhere in the sim is that biological conception follows the reproductive model ([POPULATION_DESIGN.md](POPULATION_DESIGN.md#fertility)). Adoption, fostering and caring for children are open to all suitable households, and no rule, score or KPI values one kind of partnership or household above another.
+- **Relationships are voluntary (Q5).** Individuals enter and leave partnerships by their own decisions; no rule pairs NPCs or keeps them together.
+- **Biological parents are not the only caregivers (Q15).** Any adult may feed, mind, tend or raise a child, inside or outside its household.
 - **Future costs and benefits only.** The decider does not add sunk costs, so past investment does not by itself keep a partner in place (the Concorde point in the research notes).
 - **Abstract and family-friendly.** Reproduction is a partnership, then a pregnancy period with a marker, then a child appears in the household. Nothing more is shown.
 - **Deterministic.** All daily processing in ascending id order. Streams: `Rng.Fork("household", id)` and `Rng.Fork("npc", id)`.
@@ -59,10 +63,20 @@ public struct Norms                               // owned by the members; permi
 
 public struct SleepRight { public int Npc, Hut; public byte Source; } // Built, Household, Invited, Rented
 
-public struct Partnership                         // key: pair (A < B); one live partnership per NPC in M4
+public struct Partnership                         // key: pair (A < B). An NPC may hold several Partnership records;
+                                                  // how many may be live at once is SimTuning.Households.MaxLivePartnerships
+                                                  // (1 in M4: serial). Nothing else assumes one partner (owner decision Q5).
 {
     public int A, B, StartTick, Stage;            // Stage: Courting, Partnered, Parenting, Separated
     public int GiftsAToB, GiftsBToA, HelpAToB, HelpBToA; // value and hours, for the record
+}
+
+public struct CareArrangement                     // informal shared childcare between households (Q15); up to 4 per household
+{
+    public int ChildId, CarerId, CarerHousehold;  // the carer is any adult outside the child's household
+    public int AgreedTick, LastCareTick;
+    public byte Terms;                            // Reciprocal (turns), ForGoods, Unpaid (favour), as agreed by gesture
+    public int CareTicksGiven, CareTicksReturned; // the record each side keeps in social memory; nothing enforces it
 }
 
 public struct KinBelief                           // 16 B padded; one per (NPC, other); up to 32 per NPC in Mind (512 B)
@@ -100,7 +114,7 @@ Roles describe what the NPC **believes**. They are the only kinship an NPC sees.
   - social memory: trust, reputation, a past partnership;
   - the NPC's own traits (Patience, Trustfulness, Honesty), learned weights and culture;
   - how many partners are available (a small island has few).
-  There is no sex rule beyond fertility needing a woman and a man. Same-sex partnership is allowed and simply produces no child.
+  There is no sex rule in choosing, courting, partnering, sharing a household or raising children. Only conception needs a woman and a man ([POPULATION_DESIGN.md](POPULATION_DESIGN.md#fertility)). Same-sex partnerships are explicitly supported (owner decision Q6) and have every other capability of a partnership: the same courtship acts and social-memory records, a shared household and store, sleeping rights, care of each other, the `Partner` kin role and its place in estate customs ([MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md)), adoption and fostering (below).
 - **Courtship acts** are ordinary intents, available to both:
   - **gifts** of food or goods (a hand-over, possibly refused, see [ECONOMY_DESIGN.md](ECONOMY_DESIGN.md));
   - **help:** doing some of the other's work;
@@ -108,7 +122,8 @@ Roles describe what the NPC **believes**. They are the only kinship an NPC sees.
   - **showing:** presenting its hut or store.
   Each act is recorded in the relationship record ([SOCIAL_MEMORY_DESIGN.md](SOCIAL_MEMORY_DESIGN.md)) and in the `Partnership` totals.
 - **Accepting.** NPCs decide when to move from courting to partnership (shared household), and later when to *try for a child*. A patient NPC may ask for more before saying yes. The amount asked is not a parameter: it comes from traits, learned experience (earlier partners who left) and gossip.
-- **Partnership.** One live partnership per NPC in M4 (serial, not concurrent). It is formed when both choose it; stage becomes `Partnered` and, if the partners share a household, the household changes (see below).
+- **Partnership.** It is formed only when both choose it, and either partner may end it by its own decision (section "Desertion and divorce"): entering and leaving are always voluntary. Stage becomes `Partnered` and, if the partners share a household, the household changes (see below).
+- **How many at once (owner decision Q5).** In M4 an NPC holds at most one live partnership at a time (`SimTuning.Households.MaxLivePartnerships` = 1, serial partnerships). The architecture does **not** fix this: partnerships are pair records, households are member lists, kin roles and estate candidates are lists, and the decider scores each candidate partnership on its own. Raising the cap, or letting a household custom set it ([CULTURAL_TRANSMISSION_DESIGN.md](CULTURAL_TRANSMISSION_DESIGN.md)), allows concurrent partnerships and other household arrangements later without a data change. Code that reads "the partner" uses the list (`PartnersOf(npc)`), never a single field.
 - **What can arise (not scripted).** The book's models need a long, costly courtship to filter out those who will leave, and the males-and-females asymmetry in investment ([research/SELFISH_GENE_NOTES.md](research/SELFISH_GENE_NOTES.md) D2–D4). Here the investment asymmetry is physical (pregnancy and infant dependence, see below). Whether some NPCs become "coy" or "fast", "faithful" or "philanderer", is measured.
 - **Measuring family strategies** (computed afterwards from events; never fed back to NPCs):
 
@@ -202,11 +217,19 @@ See [POPULATION_DESIGN.md](POPULATION_DESIGN.md#fertility) for the conditions on
 
 ### Fostering and orphans
 - **Orphan:** a child (under 1.0) with no living believed caregiver in its household after a death or a desertion. `ChildOrphaned` is emitted.
-- **Who may take it in.** Any adult can choose `Adopt(child)`. Likely candidates are kin who believe themselves related (by `r̂`), household or hut-mates who know the child, and neighbours moved by gossip. The decision weighs the child's need, `r̂ × Kin weight`, free beds and food, and the other children already there. The child also acts: it can seek a household (follow, beg, stay at the hut).
+- **Who may take it in.** Any adult can choose `Adopt(child)`: a couple of either sex or the same sex, a single adult, or a multi-adult household. Suitability is judged in the same way for every household (free beds, food, the adults' own care load and their decision), never by the kind of partnership (owner decision Q6). Likely candidates are kin who believe themselves related (by `r̂`), household or hut-mates who know the child, and neighbours moved by gossip. The decision weighs the child's need, `r̂ × Kin weight`, free beds and food, and the other children already there. The child also acts: it can seek a household (follow, beg, stay at the hut).
 - **Spread of the request.** An orphan's plight spreads through gestures and gossip (a "needs a home" message), so more distant adults may learn of it. Institutions (elders, Band age, M12) later add mediation.
 - **Foster relationship.** The child joins with reason `Fostered`. Believed role is `FosterParent` or, if the child is not told and cues say "ours", `Mother` or `Father` by cue. True relatedness is unchanged. That gap (treating co-resident unrelated children as kin) is the exploit the research notes describe for cuckoos, and its size can be measured.
 - **If nobody takes the child** it survives only by begging and foraging, with the high hazards above. This also is measured, not prevented.
 - **Estates:** an orphan's inherited goods are held by the new household ([MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md)).
+
+### Shared childcare between households
+**Owner decision Q15 (27 Nov):** informal shared childcare between households is supported in Stage 4; a formal institution (a nursery) can emerge in Stage 5 or later ([INSTITUTIONAL_STATE_DESIGN.md](INSTITUTIONAL_STATE_DESIGN.md)).
+- **What it is.** An adult minds, feeds or tends a child of another household (`Mind(child)`, `Feed(child)`, `Tend(child)` are already open to any adult). When two households do this repeatedly they may agree an arrangement by gesture (`SayOffer` with topic "mind child", accepted or refused), recorded as a `CareArrangement` with its terms: turns (I mind yours today, you mind mine tomorrow), for goods, or as an unpaid favour.
+- **Why it can pay.** A carer can mind several children at once at a small extra cost, so parents in two households gain work time (the guillemot and crèche cases in [GAME_THEORY_DESIGN.md](GAME_THEORY_DESIGN.md)). Kin, friends and neighbours are the likely partners, by `r̂`, trust and learned experience.
+- **It can be exploited.** Nothing enforces the terms. A household can take turns and not return them, or a carer can neglect a minded child. The record each side keeps in social memory, and gossip, are the only answers in Stage 4, so cooperation, free-riding and retaliation are all possible and measured (`CareTicksGiven` against `CareTicksReturned` per arrangement).
+- **Care work.** Minding children is care work: it costs the carer time and is reported as unpaid care unless paid in goods ([ECONOMIC_CLASSES_DESIGN.md](ECONOMIC_CLASSES_DESIGN.md#11-open-questions)).
+- **Events:** `CareArrangementMade(child, carer, terms)`, `CareArrangementEnded(reason)`; each act is a `CareGiven` with `kind = MindChild`.
 
 ### The kinship graph (believed)
 - **Cues** (in order of strength; see [BIOLOGICAL_INHERITANCE_DESIGN.md](BIOLOGICAL_INHERITANCE_DESIGN.md#46-kin-relatedness-truth-and-what-npcs-can-know)): seeing a birth, caring for or being cared for in childhood, co-residence, being told, resemblance.
@@ -216,6 +239,7 @@ See [POPULATION_DESIGN.md](POPULATION_DESIGN.md#fertility) for the conditions on
 - **No access to the pedigree.** A reflection test checks that `Mind`, `Policy` and `Social` types never read `PedigreeRecord`.
 
 ### Inheritance hooks
+- **Partners of any sex** are heir candidates in the same way ([MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md)); so are adopted and fostered children who are acknowledged.
 - **At a member's death,** the Estate module opens the estate and emits `EstateOpened` ([MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md) is its only emitter). This document supplies the heir candidates: the *decedent's* believed kin (confidence above 400) and household members. The household store stays with the household unless it dissolves.
 - **What is decided** (custom, will, partner first, eldest child, equal split) belongs to [MATERIAL_INHERITANCE_DESIGN.md](MATERIAL_INHERITANCE_DESIGN.md). The kinship graph supplies the candidates, not the rule.
 - **No biological or learned traits pass here.** See [BIOLOGICAL_INHERITANCE_DESIGN.md](BIOLOGICAL_INHERITANCE_DESIGN.md#48-four-inheritances-separate-in-code-and-data).
@@ -259,12 +283,13 @@ See [POPULATION_DESIGN.md](POPULATION_DESIGN.md#fertility) for the conditions on
 Domain events (each stamped with a tick and ids):
 - **Household membership** (important for the warehouse): `HouseholdFormed`, `HouseholdJoined(npc, household, reason, fromHousehold)`, `HouseholdLeft(npc, household, reason, toHousehold)`, `HouseholdDissolved`. Reasons are the enumerations above.
 - **Partnership:** `CourtshipAct(giver, receiver, kind, value)`, `PartnershipFormed`, `PartnershipEnded(a, b, reason, initiator)`, `TryForChildChosen`, `TryForChildStopped`.
+- **Shared childcare:** `CareArrangementMade`, `CareArrangementEnded`.
 - **Children and care:** `ChildFed(feeder, child, amount, source)`, `BeggingMade(child, intensity, trueHungerBucket)` (the true hunger is recorded for analysis only), `CareGiven(carer, patient, kind)`, `ChildOrphaned`, `ChildFostered`, `ChildUnattendedHazard`.
 - **Kin:** `KinBeliefFormed(npc, other, role, source, confidence)` (full level only). `EstateOpened` is emitted by Estate, not here.
 
 Snapshots:
 - **Daily household snapshot:** id, faction, hut, member count, children, elders, store value, norms, food days.
-- **Person snapshot** adds household id, partner id, believed mother and father.
+- **Person snapshot** adds household id, partner ids (a list, length 1 in M4), believed mother and father.
 - **Membership history** is built in the warehouse as a slowly changing table (`npc, household, from_tick, to_tick, join_reason, leave_reason`) from `HouseholdJoined` and `HouseholdLeft`. Gaps (no household) are valid. See [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md).
 - **Derived KPIs** (see [KPI_CATALOGUE.md](KPI_CATALOGUE.md)): children fed share, orphans fostered within N days, household size, partner turnover, the family-strategy measures above.
 
@@ -274,12 +299,12 @@ Recording never changes the hash.
 
 | M4 (life cycle and households) | Later |
 |---|---|
-| Serial monogamous partnerships, courtship acts, one live partnership per NPC | Concurrent partners, extra-pair conception, polygyny and polyandry as customs |
+| Serial partnerships (`MaxLivePartnerships` 1), courtship acts, voluntary entry and exit; same-sex partnerships with every capability except conception; data structures that allow several partners | Concurrent partnerships (raise the cap or a household custom sets it), extra-pair conception, other household customs |
 | Households with huts, sleeping rights, a store, simple norms decided by vote of adults | Compounds of several huts, extended-family households, rent and tenancy |
 | `TryForChild` decision, pregnancy marker, birth into the mother's household | Twins, longer child dependence, apprenticeship |
-| Feeding, begging, protection from hazards, teaching hook | Schools (Town age), organised childcare |
+| Feeding, begging, protection from hazards, teaching hook; informal shared childcare between households (`CareArrangement`) | A formal nursery institution (Stage 5 or later, if it emerges); schools (Town age) |
 | Care of elders and the sick by household (feed, tend, carry) | Healers (M12, Band age), hospitals (Stage 6) |
-| Fostering and orphans by individual decision and gossip | Welfare and mediation for orphans (M12 elders, Village-age welfare, Stage 5) |
+| Fostering, adoption and orphans by individual decision and gossip, open to all suitable households | Welfare and mediation for orphans (M12 elders, Village-age welfare, Stage 5) |
 | Believed kin graph with cues; `r̂` and Hamilton-style weighting | Learned kin terms in language; kinship taboos as culture (M11) |
 | Desertion and divorce by decision; social-memory consequences | Courts, marriage law, custody rules (Town age) |
 | Estate hook with heir candidates | Customs and wills (MATERIAL_INHERITANCE_DESIGN.md, M4 basic, M11 culture) |
@@ -317,10 +342,17 @@ Recording never changes the hash.
 | `Divorce_SplitsHousehold` | Controlled separation | store split by norm within 1 unit; each child in exactly one household afterwards; both histories closed with reasons |
 | `Telemetry_Membership` | Any run | every `HouseholdJoined` is matched by a `HouseholdLeft` or the NPC is alive at the end; intervals of one NPC never overlap; for every dead NPC the last interval ends at its death |
 | `Determinism` | 10 generations, same seed twice; recording on and off | same state hash at every day boundary and same membership table |
+| `SameSex_EqualCapabilities` | 1000 random household fixtures, each run twice with the partners' sexes swapped to make the pair same-sex (conception disabled in both runs) | identical household store, care acts, sleeping rights, estate shares and social-memory records, to the unit, in every fixture; a static check finds no branch on partner sex outside `Reproduction` and `PhenotypeBuilder` |
+| `Adoption_OpenToAll` | Orphan scenario with only same-sex couples and single adults as candidate households, 10 seeds, at least 30 orphans | orphans are fostered at a rate within ± 10 points of the mixed-household control on the same seeds; no `Adopt` is refused by a rule |
+| `Partnership_Voluntary` | Any run | every `PartnershipFormed` follows a "yes" from both NPCs in the same or the previous think; every `PartnershipEnded` names its initiator; no partnership forms or persists by a rule |
+| `Partnership_CapConfigurable` | Test scenario with `MaxLivePartnerships` 1 and 2 | at 1 no NPC ever holds two live partnerships; at 2 at least one NPC does in ≥ 5 of 10 seeds, and every invariant, estate and membership test still passes (the architecture is not one-partner) |
+| `SharedChildcare_Possible` | Two neighbouring households with infants and adults who work; 20 seeds | at least one `CareArrangementMade` occurs in ≥ 10 of 20 seeds; in a fixture where one side never returns turns, the other side's arrangement with it ends within 10 days in ≥ 80% of cases (exploitation is possible and answered by decision, not by a rule) |
 
 ## 11. Open questions
-- **Concurrent partners.** Serial monogamy gives the faithful-or-not question less room. Owner question; default: one live partnership per NPC in M4, with concurrent partners and extra-pair conception later.
-- **Same-sex partnerships.** Allowed in M4; they produce no child. Owner question; default: keep.
+No open questions remain. Owner decisions of 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)):
+- **Q5 Concurrent partners:** serial partnerships are enough for M4, but the relationship architecture must not permanently restrict individuals to one partner. Concurrent partnerships, different household customs and other arrangements must be possible later. Individuals enter and leave relationships voluntarily ([Partnership and courtship](#partnership-and-courtship), `Partnership_CapConfigurable`, `Partnership_Voluntary`).
+- **Q6 Same-sex partnerships:** explicitly supported, with the same social, emotional, household, economic, caregiving and material-inheritance capabilities as other partnerships. Biological reproduction stays constrained by the reproductive model, but adoption, fostering and caring for children are open to all suitable households. No arbitrary differences in value (`SameSex_EqualCapabilities`, `Adoption_OpenToAll`).
+- **Q15 Shared nurseries:** informal shared childcare between households in Stage 4; a formal institution can emerge in Stage 5 or later. Individuals can cooperate in raising children, share caregiving and potentially exploit such arrangements. Biological parents are not the only possible caregivers ([Shared childcare between households](#shared-childcare-between-households)).
 
 Settled here, with defaults:
 - When a partnership ends during a pregnancy, no rule makes the believed father care. Whether he does is his decision and is measured (desertion lag, `Foster_TreatedAsKin`).
