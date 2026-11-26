@@ -346,30 +346,42 @@ namespace God.Sim.Learning
         {
             if (st.Mode != LearningMode.On || n <= 0) return;
             int delta = Fx.Clamp(error, -4000, 4000);
+            if (n > AssociationStore.MaxKeys) n = AssociationStore.MaxKeys;
             // Rescorla-Wagner cue salience: the error is shared out in proportion to each key's salience (drives and
-            // conjunctions, then what was acted on, then the situation), not equally (M3 finding; DEV_LOG).
+            // conjunctions, then what was acted on, then the situation), not equally (M3 finding; DEV_LOG). Each key's
+            // salience is computed once (M3b performance).
+            Span<int> sal = stackalloc int[AssociationStore.MaxKeys];
             int sumSal = 0;
-            for (int k = 0; k < n; k++) sumSal += Salience(tu, keys[off + k]);
+            for (int k = 0; k < n; k++) { sal[k] = Salience(tu, keys[off + k]); sumSal += sal[k]; }
             int share = Fx.MulDiv(Fx.Shr(delta, tr.AlphaShift), tr.LearnRate, 1000);
             ushort day = (ushort)today;
+            long evictionsBefore = st.Evictions;
+            bool anyEntry = false;
+            int lo = 0; uint prevKey = 0; // the keys are sorted: each search starts after the previous key's place
             for (int k = 0; k < n; k++)
             {
                 uint key = keys[off + k];
-                int dFast = Fx.MulDiv(share, Salience(tu, key), sumSal);
+                int dFast = Fx.MulDiv(share, sal[k], sumSal);
                 int absD = Fx.Abs(dFast);
-                int at = st.Find(key, verb);
+                if (key <= prevKey) lo = 0;
+                prevKey = key;
+                int at = st.FindFrom(key, verb, lo);
                 if (at < 0)
                 {
+                    lo = ~at;
                     if (absD < tu.MinInsertDelta) continue;
                     if (st.Count >= st.Entries.Length)
                     {
                         EvictOne(st, today);
+                        lo = 0;
                         at = st.Find(key, verb);
                         if (at >= 0) goto found;
                     }
                     at = st.InsertAt(~at, key, verb, day, Origin.Own);
                 }
             found:
+                lo = at + 1;
+                anyEntry = true;
                 ref var e = ref st.Entries[at];
                 e.Stw = Fx.Clamp16(e.Stw + dFast);
                 e.Ltw = Fx.Clamp16(e.Ltw + Fx.Shr(dFast, 3));
@@ -393,8 +405,9 @@ namespace God.Sim.Learning
             int absAll = Fx.Abs(share);
             // A verb tried here with no notable outcome is still no longer untried: if no key holds an entry for it, the first
             // target key (else the first key) gets a zero entry, so the novelty bonus (4.2) stops (M3 finding; DEV_LOG).
-            bool familiar = false;
-            for (int k = 0; k < n && !familiar; k++) if (st.Find(keys[off + k], verb) >= 0) familiar = true;
+            // every key that reached an entry above still has one unless an eviction in this loop removed it (then look again)
+            bool familiar = anyEntry && st.Evictions == evictionsBefore;
+            if (!familiar) for (int k = 0; k < n && !familiar; k++) if (st.Find(keys[off + k], verb) >= 0) familiar = true;
             if (!familiar)
             {
                 uint mark = keys[off];

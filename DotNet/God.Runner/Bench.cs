@@ -169,6 +169,47 @@ namespace God.Runner
             result["learningMicrosPerThink"] = Math.Round(usOn - usOff, 2);
             result["learningShareOfThink"] = usOn > 0 ? Math.Round((usOn - usOff) / usOn, 3) : 0;
             o.Log.WriteLine("npcs " + alive + ": " + pop.Thinks / seconds + " decisions/s, memory/NPC " + result["memoryPerNpcBytes"] + " B, learning " + (usOn - usOff).ToString("0.00") + " us/think of " + usOn.ToString("0.00"));
+
+            // M3b: the population update timed by phase (host profiler), On and Off over the same ticks. Learning is the
+            // learning-only phases (credit and close, the update, consolidation) plus the extra cognition and decision time
+            // On spends over Off per think (conjunction matching, Q lookups); the share is of the NPC update time.
+            var phOn = PhaseRun(sc.ToSetup(o.Seed), sc.ToTuning(), ticks, out long thinksOn);
+            var phOff = PhaseRun(sc.ToSetup(o.Seed), tOff, ticks, out long thinksOff);
+            double Per(double[] ph, long th, int k) => ph[k] * 1e6 / Math.Max(1, th);
+            var phases = new JObject();
+            for (int k = 0; k < God.Sim.Population.PopPhase.Count; k++)
+                phases[God.Sim.Population.PopPhase.Names[k]] = new JObject { ["usPerThinkOn"] = Math.Round(Per(phOn, thinksOn, k), 3), ["usPerThinkOff"] = Math.Round(Per(phOff, thinksOff, k), 3) };
+            result["populationPhases"] = phases;
+            double npcUpdate = phOn.Sum() * 1e6 / Math.Max(1, thinksOn);
+            int[] learnOnly = { God.Sim.Population.PopPhase.Credit, God.Sim.Population.PopPhase.LearnUpdate, God.Sim.Population.PopPhase.Consolidate };
+            int[] mixed = { God.Sim.Population.PopPhase.Cognition, God.Sim.Population.PopPhase.Decide };
+            double learn = learnOnly.Sum(k => Per(phOn, thinksOn, k)) + Math.Max(0, mixed.Sum(k => Per(phOn, thinksOn, k) - Per(phOff, thinksOff, k)));
+            result["npcUpdateMicrosPerThink"] = Math.Round(npcUpdate, 2);
+            result["learningMicrosPerThinkByPhase"] = Math.Round(learn, 2);
+            result["learningShareOfNpcUpdate"] = npcUpdate > 0 ? Math.Round(learn / npcUpdate, 3) : 0;
+            result["consolidationMsPerSimDay"] = Math.Round(phOn[God.Sim.Population.PopPhase.Consolidate] * 1000 * sc.TicksPerDay / Math.Max(1, ticks), 3);
+            o.Log.WriteLine("population update " + npcUpdate.ToString("0.00") + " us/think; learning " + learn.ToString("0.00") + " us/think (" + (npcUpdate > 0 ? 100 * learn / npcUpdate : 0).ToString("0.0") + "%)");
+        }
+
+        private sealed class PhaseTimer : God.Sim.Population.IPopulationProfiler
+        {
+            public readonly long[] Ticks = new long[God.Sim.Population.PopPhase.Count];
+            private long _last;
+            public void Begin() => _last = Stopwatch.GetTimestamp();
+            public void Mark(int phase) { long now = Stopwatch.GetTimestamp(); Ticks[phase] += now - _last; _last = now; }
+        }
+
+        /// <summary>Runs a game for <paramref name="ticks"/> ticks with the phase profiler; seconds spent per phase.</summary>
+        private static double[] PhaseRun(GameSetup setup, SimTuning tuning, long ticks, out long thinks)
+        {
+            var sim = SimBuilder.Create(setup, tuning).Sim;
+            var pop = SimBuilder.PopulationOf(sim);
+            var timer = new PhaseTimer();
+            pop.Profiler = timer;
+            var ev = new List<SimEvent>(256);
+            for (long i = 0; i < ticks; i++) { sim.Step(); ev.Clear(); sim.DrainInto(ev); }
+            thinks = pop.Thinks;
+            return timer.Ticks.Select(t => (double)t / Stopwatch.Frequency).ToArray();
         }
 
         private static double Pct(double[] sorted, double p)

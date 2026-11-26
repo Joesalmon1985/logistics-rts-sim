@@ -44,6 +44,9 @@ namespace God.Sim.Population
         /// <summary>A read-only hook for tests and tools: called with the NPC id and the think's scratch after Cognition, before the policy decides. It must not change anything.</summary>
         public Action<int, ThinkScratch> Inspect;
 
+        /// <summary>A host profiler (the bench): told where each phase of the update ends. Not state; null in games.</summary>
+        public IPopulationProfiler Profiler;
+
         public PopulationSystem()
         {
             _policies[Policies.Associative] = _assoc;
@@ -139,8 +142,10 @@ namespace God.Sim.Population
                 foreach (var n in p.Npcs) if (n.Founder) ev.Add(new NpcSpawned { Npc = n.Id, Faction = n.Faction, Node = n.Node, Founder = true });
                 p.FoundersAnnounced = true;
             }
+            Profiler?.Begin();
             if (day > p.DayDone) DayStart(s, ev, (int)day);
             if (p.IndexDirty) RebuildIndex(p);
+            Profiler?.Mark(PopPhase.Day);
             var tu = s.Tuning.Population;
             for (int i = 0; i < p.Npcs.Count; i++)
             {
@@ -162,6 +167,7 @@ namespace God.Sim.Population
                     if (s.Tick >= npc.Action.BusyUntil) FinishBusy(s, ev, npc);
                     else continue;
                 }
+                Profiler?.Mark(PopPhase.Body);
                 if ((s.Tick + npc.Id) % tu.ThinkEvery == 0)
                 {
                     if (p.IndexDirty) RebuildIndex(p);
@@ -169,6 +175,7 @@ namespace God.Sim.Population
                 }
                 if (npc.Alive && !npc.Action.Asleep && npc.Action.BusyUntil == 0) Act(s, ev, npc, (int)day);
                 if (p.IndexDirty) RebuildIndex(p);
+                Profiler?.Mark(PopPhase.Act);
             }
         }
 
@@ -387,7 +394,9 @@ namespace God.Sim.Population
             var tr = TraitsOf(s, npc);
             if (collapsed) Learner.EndOngoing(st); // nothing was chosen: no decision takes the night's relief
             _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, s.Tuning.Learning.SampleEvery));
+            Profiler?.Mark(PopPhase.Act);
             Learner.Consolidate(st, s.Tuning.Learning, tr, day, DecayScale(s), _recruit, _sink);
+            Profiler?.Mark(PopPhase.Consolidate);
             // sleeping sets tools down beside the sleeper
             for (int i = 0; i < npc.Carry.Length; i++)
                 if (!npc.Carry[i].Empty && npc.Carry[i].Ware == Ware.Axe) { ToolGone(s, ev, npc, npc.Carry[i].Id, day); PopulationModule.Drop(s, npc.Node, npc.Carry[i]); npc.Carry[i] = default; }
@@ -622,6 +631,7 @@ namespace God.Sim.Population
             // 2.1-2.2: reward since the last think, credit, close
             Settle(s, npc);
             Learner.BeginThink(st, lt, tr, day, _sink);
+            Profiler?.Mark(PopPhase.Credit);
 
             // senses and fear
             int sight = TimeOf(SimCalendar.Of(s), s.Tick) == TimeOfDay.Night ? tu.SightNight : tu.SightDay;
@@ -632,6 +642,7 @@ namespace God.Sim.Population
 
             // cognition (pure)
             FillSelf(s, npc, day, sight);
+            Profiler?.Mark(PopPhase.Sense);
             _sc.Mind = mind;
             _sc.Instincts = InstinctTable.Of(npc.Instincts);
             _sc.Traits = npc.Traits;
@@ -641,6 +652,7 @@ namespace God.Sim.Population
             _sc.Grid = _g;
             Thinker.Think(_sc);
             Inspect?.Invoke(npc.Id, _sc);
+            Profiler?.Mark(PopPhase.Cognition);
 
             // decide: the policy sees only the observation and its own mind
             var obs = MindViews.Observe(_sc, npc.Id, s.Tick);
@@ -652,6 +664,7 @@ namespace God.Sim.Population
             if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
             else { intent = policy.Decide(obs, view, ref rng); mind.OpportunityCount = 0; }
             IntentRules.Require(PolicyLevel.Civilian, policy.Name, intent);
+            Profiler?.Mark(PopPhase.Decide);
             p.Stats.Decisions++;
             mind.Decisions++;
             if (intent.Verb == NpcVerb.None) { Experience(mind, st, s.Tick, prev); Learner.Step(st, lt, tr, 0, day, _sink); EndAction(npc); Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr)); return; }
@@ -694,11 +707,15 @@ namespace God.Sim.Population
             Experience(mind, st, s.Tick, prev);
             int elapsed = st.RingCount > 0 ? (int)((s.Tick - st.Ring[st.RingCount - 1].Tick) / tu.ThinkEvery) : 1;
             Learner.Step(st, lt, tr, NextValue(st, lt, cand, why), day, _sink, elapsed);
+            Profiler?.Mark(PopPhase.LearnUpdate);
             Start(s, ev, npc, cand, day);
-            int q = view.Terms(ci).Learned;
+            Profiler?.Mark(PopPhase.Act);
+            // the learned value predicted for this decision (the Learned term, now; only Q, not the whole term set)
+            int q = st.Mode == LearningMode.Off ? 0 : (int)((long)st.SumStw(_sc.Keys, cand.KeyOffset, cand.KeyCount, cand.Verb, out _) * lt.LearnGain >> 10);
             int episodeKey = cand.Verb == Verb.Build ? (npc.SiteHut != 0 ? npc.SiteHut : cand.TargetId) : 0;
             Learner.OpenTrace(st, lt, tr, (int)s.Tick, cand.Verb, _sc.Keys, cand.KeyOffset, cand.KeyCount, q, episodeKey, day, _sink);
             Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr));
+            Profiler?.Mark(PopPhase.LearnUpdate);
         }
 
         /// <summary>The decision trace (<see cref="DecisionMade"/>, Full recording only): one row per chosen intent with its terms.</summary>
