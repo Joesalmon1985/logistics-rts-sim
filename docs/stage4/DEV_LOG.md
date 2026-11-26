@@ -40,6 +40,62 @@ Given after checkpoint 4A. The criteria live in [ACCEPTANCE_TESTS.md](ACCEPTANCE
 
 **Date note:** the owner's 23 answers are labelled "27 Nov 2026" across these docs (for example conventions §13). They were in fact given on 26 Nov 2026, as the commit dates show. The label is kept because anchors link to it.
 
+## Owner decisions D3 (26 Nov 2026, after M3b)
+
+1. **M3 is accepted as a functional development milestone,** with its outstanding numerical targets recorded. F0, then M4 and M5 in parallel, may proceed without them.
+2. **Survival:** the On/Frozen results are accepted provisionally. Never tune them so that learning always wins.
+   - "No food in sight" does not prove the extra deaths are unrelated to learning. Investigate depletion, overharvesting, poor exploration, failure to relocate and competition when appropriate.
+   - This may be an early tragedy of the commons; revisit it after households, ownership, cooperation and institutions.
+   - M4 must show that populations with dependent children survive and reproduce under suitable ecological conditions.
+3. **LS3, shelter: an amendment is approved.**
+   - Split into mild, adverse (cold) and changing-conditions experiments, the last showing adaptation.
+   - Shelters change physical circumstances (warmth, exposure, security, recovery). There is never an arbitrary reward for entering a hut.
+   - NPCs discover when shelter is useful and when it is not.
+4. **LS4, tools:** the mechanism is accepted and LS4 stays an improvement target.
+   - The distinction between a useful and a useless axe is essential.
+   - Review the every-seed requirement. Make the axe genuinely advantageous, considering travel time, opportunity cost, effectiveness and other needs.
+   - Add a scenario in which NPCs learn to acquire and **retain** productive assets for their future benefit (the root of investment and capital later).
+5. **LS1, L2, L3, L8 and L13:** adopt the evidence-justified amendments, keeping the original target, the observed result, the revised target and the rationale.
+   - Never pass a failed mechanism by lowering its threshold.
+   - Keep three categories distinct: **implemented capabilities**, **revised acceptance criteria** and **outstanding improvement targets**.
+   - These capabilities are non-negotiable: context-sensitive hunger responses, delayed reinforcement shaping earlier decisions, identical NPCs diverging, learned associations driving choices, generalisation, and persistence through save and load.
+6. **Learning performance:** 37.5% is accepted, and 25% stays as an **aspiration, not a gate**.
+   - Prioritise absolute decision time, NPC update time, memory, throughput and headless scaling.
+   - Keep benchmarks at several population sizes, with learning on and off.
+   - Revisit once the social and economic systems show the real bottlenecks.
+7. **Hawk/Bully:** keep L2 unchanged.
+   - Add an optional, configurable first-blow cost as a separate variant, and sweep it (seeds, starts, mutation, invasion).
+   - Never claim it reproduces Gale & Eaves unless their assumptions are established.
+   - On the island, any first-mover advantage must emerge from combat, injury and reaction mechanics, not a strategy penalty.
+   - This does not block M4 or M5.
+8. **F0:** behaviour-neutral and exactly equivalent. `fact_decision` reconciles to the actual decisions with no side effects.
+   - Before M4 and M5 begin, confirm the contracts for identity, physical location, perception, ownership, inventories, relationships, households, learning and events.
+9. **Spatial ontology:** keep the hexes and the node lattice.
+   - Distinguish location, accessibility, visual perception, communication range, interaction range, ownership, possession and permission. Nothing is used at a distance because it is seen or remembered.
+   - Add the physical actions incrementally: MoveTo, Take, Drop, Give, Store, Withdraw, Consume, Equip, Use, Gather and Inspect.
+   - Goods can be on the ground, in stores, in inventories or equipped. Fungible goods are `ItemLot`s. Objects expose affordances.
+   - Social and economic behaviour is composed from these actions (theft = taking without permission; its consequences come from ownership, observation, norms and enforcement).
+   - Reuse the existing systems. The concepts are documented in `WORLD_ONTOLOGY.md` and delivered through the existing milestones, with no rewrites.
+10. **M4:** genuine life cycles, with permanent death.
+    - Biological and non-biological caregivers, shared childcare, genetic variation and material inheritance.
+    - The four inheritances stay distinct. Test across generations, and never replenish the dead.
+    - **Children are not small independent workers:** dependency, care, learning and gradual development matter.
+11. **M5:** communication changes other individuals' decisions.
+    - NPCs can communicate a need, display an object, offer an exchange, request help, and accept, refuse or cooperate. The recipient decides independently.
+    - Intentions stay separate from actions.
+    - NPCs learn through experience that a particular person is helpful, unreliable, generous or dangerous.
+12. **Integration (I-BS, extended):** run these after M4 and M5 merge:
+    - a parent provides food to a dependent child;
+    - shared shelter and resources;
+    - a request for food is met voluntarily;
+    - a communicated, mutually beneficial exchange;
+    - a child observes another's behaviour, where the milestone supports it;
+    - learning that a particular person is good or bad to deal with;
+    - acquiring and using a productive tool;
+    - death, then possessions to an estate or another owner;
+    - population and resource conservation hold throughout.
+    The warehouse captures all of it.
+
 ## Completed milestones
 
 | Milestone | Checkpoint | Completed | Commit | Notes |

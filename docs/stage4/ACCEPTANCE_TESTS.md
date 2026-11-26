@@ -357,6 +357,7 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M4.30 | Unit | **Mutation configurable (Q4):** `MutationPer10k` 10 gives 100 ± 30 events per 100,000 copies; 0 gives exactly 0; per-scenario values are honoured and do not leak between parallel runs | BIOLOGICAL `Mutation_RateHonoured`, `Mutation_ScenarioOverride` | EM, RT |
 | M4.31 | Inv | **Estates (Q13, Q14):** assets transferred, never duplicated (1,000 estates per custom and ladder: id multisets conserved, no new ids); the executor ladder is configurable; no executor receives more than its custom gives it | MATERIAL 20–22 | EM |
 | M4.32 | Inv | **Care is counted (Q12):** unpaid care ticks and the time-use categories are counted from M4 and sum exactly to the ticks of each day | CLASSES 18 | RT |
+| M4.36 | Mech | **Owner D3, viable families:** under suitable ecology (stated in the scenario), a population with dependent children survives and reproduces over at least 3 generations in ≥ 80% of 20 seeds. Children are dependent:<br>• below a stated age they cannot forage effectively without care;<br>• their competence grows gradually;<br>• their survival depends measurably on care given.<br>Each of these is asserted against a no-care control | Owner D3 §2, §10 | RT |
 | M4.33 | Hyp | **Owner D2, demographic sweeps:** multigenerational runs across starting population (10, 20, 40 per faction), fertility (low, default, high), disease (Off, Mild, On) and `LifeScale` (at least 3 values). Births, deaths by cause, migration, age distribution and extinctions are reported per arm. Population change reconciles exactly: start + births + arrivals − deaths − departures = end. Nothing is tuned to prevent collapse | Owner D2 §3 | RT, N |
 | M4.34 | Mech | **Owner D2, non-biological care:** a child is fed and tended by a non-parent caregiver (foster, step-parent or shared nursery) with real food movements, in the scenario and in at least 10 of 20 seeds | Owner D2 §3 | RT |
 | M4.35 | Inv | **Owner D2, recording:** births, deaths, age distribution (person-day or person-year), household membership intervals, caregiving ticks and inheritance transfers reach the warehouse with persistent person, household and lot ids, and reconcile exactly with the sim events | Owner D2 §5 | RT |
@@ -400,6 +401,10 @@ Every scenario uses persistent individuals and actual resource movements, and ea
 | I-BS.5 | Two NPCs exchange goods, and each one's believed utility rises from the trade. |
 | I-BS.6 | An individual's behaviour changes after a social or economic experience. This is a behavioural assertion, as in M3.25. |
 | I-BS.7 | On a death, the estate passes to heirs. Lot ids are conserved and none is duplicated. |
+| I-BS.8 | **D3:** An individual communicates a need for food, and another voluntarily provides it. The `GestureMade`, the receiver's own decision and the hand-over are three separate events, in that order. |
+| I-BS.9 | **D3:** A child observes another individual's behaviour, and a later choice of the child's reflects it. This applies where the milestone supports observation; otherwise it is recorded as deferred to M7 or M11, never faked. |
+| I-BS.10 | **D3:** An individual acquires a productive tool, uses it, and keeps it for later use (see LS4b). |
+| I-BS.11 | **D3:** Population (start + births + arrivals − deaths − departures = end) and goods conservation (C1–C5 of SHARED_CONTRACTS) hold at every day boundary of every I-BS run. |
 
 The recording-neutrality check (Full, Summary and Off give the same hash) runs on all seven scenarios.
 
