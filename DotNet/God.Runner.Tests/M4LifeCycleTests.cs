@@ -276,9 +276,11 @@ namespace God.Runner.Tests
         [Test]
         public void Disease_SettingsAndRoutes_M4_26()
         {
-            var on = Watch.Seeds(1, 20, s => M4Run.FromScenario("m4_band_6x20", s, 20));
-            var mild = Watch.Seeds(1, 20, s => M4Run.FromScenario("m4_band_6x20", s, 20, setup: g => g.Disease = DiseaseSetting.Mild));
-            var off = Watch.Seeds(1, 20, s => M4Run.FromScenario("m4_band_6x20", s, 20, setup: g => g.Disease = DiseaseSetting.Off));
+            // D4: the disease routes are measured on the young-band control (the established band, D4 default, has 0-2 disease deaths
+            // in 20 seeds x 20 days, too few for the Mild-vs-On comparison; the threshold is unchanged)
+            var on = Watch.Seeds(1, 20, s => M4Run.FromScenario("m4_band_6x20_young", s, 20));
+            var mild = Watch.Seeds(1, 20, s => M4Run.FromScenario("m4_band_6x20_young", s, 20, setup: g => g.Disease = DiseaseSetting.Mild));
+            var off = Watch.Seeds(1, 20, s => M4Run.FromScenario("m4_band_6x20_young", s, 20, setup: g => g.Disease = DiseaseSetting.Off));
             TestContext.WriteLine($"infections On {on.Sum(r => r.Infections)} Mild {mild.Sum(r => r.Infections)} Off {off.Sum(r => r.Infections)}; disease deaths On {on.Sum(r => r.DiseaseDeaths)} Mild {mild.Sum(r => r.DiseaseDeaths)}");
             Assert.AreEqual(0, off.Sum(r => r.Infections), "Off gives zero infections");
             Assert.LessOrEqual(mild.Sum(r => r.DiseaseDeaths) * 2, Math.Max(on.Sum(r => r.DiseaseDeaths), 0) + 0, "Mild at most half the disease deaths of On");
