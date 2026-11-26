@@ -32,6 +32,5 @@ namespace God.Game
             }
         }
 
-        private static string Signed(int v) => v > 0 ? "+" + v : v.ToString();
     }
 }
