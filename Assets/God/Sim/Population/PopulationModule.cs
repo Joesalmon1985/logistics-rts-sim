@@ -155,11 +155,13 @@ namespace God.Sim.Population
         public static bool PutInCarry(GodState s, Npc npc, ItemLot lot)
         {
             if (Room(s, npc, lot.Ware) < lot.Count) return false;
+            // the same ware merges into one lot; a mixed lot rots with its oldest part (the earlier spoil day)
             for (int i = 0; i < npc.Carry.Length; i++)
-                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == lot.Ware && npc.Carry[i].SpoilDay == lot.SpoilDay && lot.Ware != Ware.Axe)
+                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == lot.Ware && lot.Ware != Ware.Axe)
                 {
                     npc.Carry[i].Count += lot.Count;
                     if (lot.Id < npc.Carry[i].Id) npc.Carry[i].Id = lot.Id;
+                    if (lot.SpoilDay >= 0 && (npc.Carry[i].SpoilDay < 0 || lot.SpoilDay < npc.Carry[i].SpoilDay)) npc.Carry[i].SpoilDay = lot.SpoilDay;
                     return true;
                 }
             for (int i = 0; i < npc.Carry.Length; i++)

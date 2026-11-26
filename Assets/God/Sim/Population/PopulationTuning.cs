@@ -137,11 +137,16 @@ namespace God.Sim.Population
     /// </summary>
     public sealed class EcologyTuning : IOmitWhenDefault
     {
-        public int BerriesPerForest = 3, BerriesPerMeadow = 2, RootsPerHills = 2, RootsPerFields = 2, WoodPerForest = 2, FishPerCoast = 1;
+        /// <summary>
+        /// Sources per hex by terrain. The M3 baseline gives the 6x20 island about twice the food its people need at the
+        /// sources' maximum sustainable yield (K about 2N, as POPULATION's reference scenario); with half of it the island
+        /// collapses into starvation by day 12-30 (M3 finding, DEV_LOG).
+        /// </summary>
+        public int BerriesPerForest = 5, BerriesPerMeadow = 4, RootsPerHills = 4, RootsPerFields = 4, WoodPerForest = 2, FishPerCoast = 2;
         public int NightshadePerForest = 0;
-        public int BerryCapacity = 60, BerryRegrowPermille = 400;
-        public int RootCapacity = 50, RootRegrowPermille = 300;
-        public int FishCapacity = 60, FishRegrowPermille = 400;
+        public int BerryCapacity = 80, BerryRegrowPermille = 400;
+        public int RootCapacity = 70, RootRegrowPermille = 300;
+        public int FishCapacity = 80, FishRegrowPermille = 400;
         public int WoodCapacity = 40, WoodRegrowPermille = 150;
         public int NightshadeCapacity = 30, NightshadeRegrowPermille = 300;
         /// <summary>An emptied source regrows only if a neighbour of its kind is above half capacity: one unit every this many days.</summary>

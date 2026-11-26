@@ -150,7 +150,9 @@ namespace God.Sim.Population
                 if (npc.Health <= 0) { Die(s, ev, npc, npc.DeathCause == DeathCause.None ? DeathCause.Starvation : npc.DeathCause); continue; }
                 if (npc.Action.Asleep)
                 {
-                    if (npc.DriveOf(Drive.Fatigue) <= tu.WakeFatigue || npc.DriveOf(Drive.Hunger) >= tu.WakeHunger) Wake(s, ev, npc);
+                    // rested, or hungry enough to get up once somewhat rested (exhaustion keeps a starving sleeper asleep)
+                    int f = npc.DriveOf(Drive.Fatigue);
+                    if (f <= tu.WakeFatigue || npc.DriveOf(Drive.Hunger) >= tu.WakeHunger && f < tu.SleepFrom) Wake(s, ev, npc);
                     else continue;
                 }
                 if (npc.DriveOf(Drive.Fatigue) >= tu.CollapseFatigue) { Collapse(s, ev, npc); continue; }
@@ -802,7 +804,7 @@ namespace God.Sim.Population
                     yield = Math.Min(yield, Math.Min(src.Stock, PopulationModule.Room(s, npc, ware)));
                     src.Stock -= yield;
                     var lot = PopulationModule.NewLot(s, ware, yield, day + PopulationModule.SpoilDays(s.Tuning.Ecology, ware), 0);
-                    PopulationModule.PutInCarry(s, npc, lot);
+                    if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("forage: no room after the room check");
                     p.Ledger.Produce(ProduceReason.Foraged, ware, yield);
                     p.Stats.Foraged += yield;
                     ev.Add(new Produced { Npc = npc.Id, Source = src.Id, Ware = ware, Count = yield, Reason = ProduceReason.Foraged });
@@ -826,7 +828,7 @@ namespace God.Sim.Population
                     npc.Action.Progress -= tu.GatherTicks * 1000;
                     if (pile) TakePileUnit(s, hex); else src.Stock--;
                     var lot = PopulationModule.NewLot(s, Ware.Log, 1, -1, 0);
-                    PopulationModule.PutInCarry(s, npc, lot);
+                    if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("gather: no room after the room check");
                     p.Ledger.Produce(ProduceReason.HandGathered, Ware.Log, 1);
                     p.Stats.LogsGathered++;
                     ev.Add(new Produced { Npc = npc.Id, Source = src?.Id ?? 0, Ware = Ware.Log, Count = 1, Reason = ProduceReason.HandGathered, WithTool = axe >= 0 });
@@ -854,7 +856,7 @@ namespace God.Sim.Population
                     if (take < g.Lot.Count) { g.Lot.Count -= take; lot.Id = p.NextLotId++; }
                     else { p.Lots.RemoveAt(li); }
                     p.IndexDirty = true;
-                    PopulationModule.PutInCarry(s, npc, lot);
+                    if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("pick up: no room after the room check");
                     Learner.AddReward(npc.Mind.Store, Worth(s, npc, lot.Ware) * take);
                     EndAction(npc);
                     return;

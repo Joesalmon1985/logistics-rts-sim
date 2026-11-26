@@ -376,7 +376,7 @@ namespace God.Sim.Cognition
 
             // own options
             Target(sc, AddCand(sc, Verb.Rest, IntentTarget.Node, 0, s.Node, ObjClass.Spot, 0, false), ObjClass.Spot, ObjCategory.Ground, 0, -1);
-            if (s.Fatigue >= tu.SleepFrom)
+            if (CanSleep(s, tu))
                 Target(sc, AddCand(sc, Verb.Sleep, IntentTarget.Node, 0, s.Node, ObjClass.Spot, 0, false), ObjClass.Spot, ObjCategory.Ground, 0, -1);
             if (!s.HasBed && !s.HasSite && s.CarryLog && s.CanFoundHere)
                 Target(sc, AddCand(sc, Verb.Build, IntentTarget.Node, 0, s.Node, ObjClass.HutSite, 0, false), ObjClass.HutSite, ObjCategory.Shelter, ObjState.Unfinished, -1);
@@ -406,6 +406,9 @@ namespace God.Sim.Cognition
             }
         }
 
+        /// <summary>One can fall asleep only when tired enough; when starving, only when very tired (hunger would wake one at once otherwise).</summary>
+        public static bool CanSleep(in SelfView s, PopulationTuning tu) => s.Fatigue >= tu.SleepFrom && (s.Hunger < tu.WakeHunger || s.Fatigue >= tu.BandHigh);
+
         private static int FoodClass(Ware w)
         {
             switch (w)
@@ -433,7 +436,7 @@ namespace God.Sim.Cognition
                     if (s.CanCarryLog) Target(sc, AddCand(sc, Verb.Gather, IntentTarget.Node, 0, t.Node, t.Class, t.Dist, false), t.Class, ObjCategory.Raw, t.State, t.Node);
                     break;
                 case ObjClass.Hut:
-                    if (t.State == ObjState.Mine && s.Fatigue >= tu.SleepFrom)
+                    if (t.State == ObjState.Mine && CanSleep(s, tu))
                         Target(sc, AddCand(sc, Verb.Sleep, IntentTarget.Hut, t.Ref, t.Node, t.Class, t.Dist, false), ObjClass.Hut, ObjCategory.Shelter, ObjState.Mine, t.Node);
                     break;
                 case ObjClass.HutSite:
@@ -513,7 +516,7 @@ namespace God.Sim.Cognition
                 }
             }
             // own hut (sleep) and own site (build), when out of sight
-            if (s.HomeHut != 0 && s.HomeNode >= 0 && !SeenAt(sc, s.HomeNode) && s.Fatigue >= tu.SleepFrom)
+            if (s.HomeHut != 0 && s.HomeNode >= 0 && !SeenAt(sc, s.HomeNode) && CanSleep(s, tu))
                 Target(sc, AddCand(sc, Verb.Sleep, IntentTarget.Hut, s.HomeHut, s.HomeNode, ObjClass.Hut, sc.Grid.Distance(s.Node, s.HomeNode), true),
                     ObjClass.Hut, ObjCategory.Shelter, ObjState.Mine, s.HomeNode);
             if (s.SiteHut != 0 && s.SiteNode >= 0 && !SeenAt(sc, s.SiteNode))

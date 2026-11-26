@@ -105,6 +105,14 @@ namespace God.Sim.Information
             return a;
         }
 
+        /// <summary>Everyone alive on the island as they can be seen (no fog in stage 4), ascending id, written into <paramref name="into"/>.</summary>
+        public void Sightings(List<NpcSighting> into)
+        {
+            into.Clear();
+            if (_s.Population == null) return;
+            foreach (var n in _s.Population.Npcs) if (n.Alive) into.Add(new NpcSighting(n.Id, n.Faction, n.Node, n.Action.Asleep, n.Action.Verb));
+        }
+
         /// <summary>A person on the island as anyone can see them (null when unknown).</summary>
         public NpcSighting? See(int npcId)
         {
