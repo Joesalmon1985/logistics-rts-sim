@@ -18,7 +18,15 @@
     <ProjectReference Include="../God.Recording/God.Recording.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Parquet.Net" Version="6.1.0" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Warehouse/Migrations/*.sql" LogicalName="Migrations/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Warehouse/post_load.sql" LogicalName="post_load.sql" />
+    <None Include="Warehouse/ExampleQueries.sql" CopyToOutputDirectory="PreserveNewest" LinkBase="Warehouse" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Scenarios/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="Scenarios" />

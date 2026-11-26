@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using God.Recording;
+using God.Runner.Warehouse;
 using God.Sim;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -20,14 +21,14 @@ namespace God.Runner
         private static readonly string[] Flags =
         {
             "quiet", "json", "no-out", "no-replay", "print-events", "check-smoke", "parallel", "save-mid", "record-matrix",
-            "processes", "strict", "update-baseline", "help",
+            "processes", "strict", "update-baseline", "help", "sqlite", "no-index", "fk", "no-jsonl",
         };
 
         private static readonly Dictionary<string, string> Later = new Dictionary<string, string>
         {
             ["experiment"] = "M14 (balance sweeps; the full policy suite in stage 6)",
             ["serve"] = "M15 (network readiness)", ["dataset"] = "M15 (network readiness)", ["verify-model"] = "M15 (network readiness)",
-            ["learn-dump"] = "M3 (NPC learning)", ["export"] = "M13 (warehouse export to Parquet and SQLite)",
+            ["learn-dump"] = "M3 (NPC learning)",
         };
 
         public const string Usage = @"God.Runner - the headless God of the Island simulation (stage 4 M0)
@@ -36,7 +37,7 @@ usage: God.Runner <command> [options]
 
 commands:
   run      one run         --scenario FILE|NAME --seed N [--ticks T|--days D|--years Y] [--set path=value]...
-                           [--record off|metrics|summary|full] [--out DIR|--no-out] [--group NAME] [--every N]
+                           [--record off|metrics|summary|full] [--sqlite [--no-jsonl]] [--out DIR|--no-out] [--group NAME] [--every N]
                            [--from-save FILE] [--save-at TICK] [--save-every-days N] [--check smoke] [--no-replay]
                            [--print-events] [--quiet] [--json]
   batch    many seeds      --scenario S --seeds 1-64 [--workers N] [--processes] (and run's options)
@@ -46,7 +47,8 @@ commands:
   bench    benchmark       [--cases bench_stage3_watch6] [--ticks N] [--parallel-ticks N] [--workers 1,4,16]
                            [--compare FILE] [--update-baseline] [--baseline FILE] [--strict] [--out DIR]
   lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2)
-  experiment, serve, dataset, verify-model, learn-dump, export: later milestones (exit code 9)
+  export   warehouse out  --from FILE|DIR [--to csv|parquet] --out DIR [--tables a,b]   (SQLite to CSV or a Parquet lake)
+  experiment, serve, dataset, verify-model, learn-dump: later milestones (exit code 9)
 
 exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 invariant, 6 sim exception,
             7 performance, 8 I/O, 9 not implemented until a later milestone, 130 interrupted";
@@ -72,6 +74,7 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
                     case "verify": return VerifyCmd(a, output, error, cancel);
                     case "replay": return ReplayCmd(a, output, error, cancel);
                     case "bench": return BenchCmd(a, output, error);
+                    case "export": return ExportCmd(a, output, error);
                     default: error.WriteLine("unknown command '" + cmd + "'\n\n" + Usage); return ExitCodes.Usage;
                 }
             }
@@ -128,6 +131,13 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             if (check != null && check != "smoke") throw new UsageException("--check takes smoke");
             spec.CheckSmoke = check == "smoke" | a.Flag("check-smoke");
             spec.PrintEvents = a.Flag("print-events");
+            if (a.Flag("sqlite"))
+            {
+                if (noOut) throw new UsageException("--sqlite writes warehouse.sqlite into the run directory, so it cannot be combined with --no-out");
+                spec.Sqlite = new WarehouseOptions { IndexAtEnd = !a.Flag("no-index"), ForeignKeys = a.Flag("fk") };
+            }
+            else { a.Flag("no-index"); a.Flag("fk"); }
+            spec.SkipJsonl = a.Flag("no-jsonl");
             return spec;
         }
 
@@ -315,11 +325,57 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             return r.ExitCode;
         }
 
+        // ---------------- export ----------------
+
+        private static int ExportCmd(Args a, TextWriter output, TextWriter error)
+        {
+            string from = a.Str("from") ?? (a.Positional.Count > 0 ? a.Positional[0] : null) ?? throw new UsageException("export needs --from FILE_OR_DIR (a warehouse.sqlite, a run directory or a folder of runs)");
+            string to = a.Str("to", "csv");
+            string outDir = a.Str("out") ?? throw new UsageException("export needs --out DIR");
+            var only = (a.Str("tables") ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            a.CheckAllUsed(1);
+            if (to == "sqlite") { error.WriteLine("'export --to sqlite' (JSONL to SQLite) is not implemented; record the run again with 'replay FILE --record full --sqlite' (same mapper code, DATA_WAREHOUSE 4.6)."); return ExitCodes.NotImplemented; }
+            if (to != "csv" && to != "parquet") throw new UsageException("--to takes csv or parquet");
+            var dbs = new List<string>();
+            if (File.Exists(from)) dbs.Add(from);
+            else if (Directory.Exists(from)) dbs.AddRange(Directory.GetFiles(from, "warehouse.sqlite", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal));
+            if (dbs.Count == 0) { error.WriteLine("no warehouse.sqlite under " + from); return ExitCodes.InvalidInput; }
+            foreach (var db in dbs)
+            {
+                try
+                {
+                    if (to == "csv")
+                    {
+                        string runId; using (var d = WarehouseDb.OpenRead(db)) runId = (string)d.Scalar("SELECT run_id FROM dim_run LIMIT 1");
+                        var counts = WarehouseExport.ToCsv(db, dbs.Count > 1 ? Path.Combine(outDir, runId) : outDir, only);
+                        output.WriteLine("export " + db + ": " + counts.Count + " tables, " + counts.Values.Sum() + " rows to CSV");
+                    }
+                    else
+                    {
+                        var files = WarehouseExport.ToParquet(db, outDir, only);
+                        output.WriteLine("export " + db + ": " + files.Count + " Parquet files under " + outDir);
+                    }
+                }
+                catch (InvalidDataException e) { error.WriteLine("invalid warehouse: " + e.Message); return ExitCodes.InvalidInput; }
+                catch (Microsoft.Data.Sqlite.SqliteException e) { error.WriteLine("invalid warehouse " + db + ": " + e.Message); return ExitCodes.InvalidInput; }
+            }
+            return ExitCodes.Ok;
+        }
+
         // ---------------- bench ----------------
 
         private static int BenchCmd(Args a, TextWriter output, TextWriter error)
         {
             string cases = a.Str("cases", "bench_stage3_watch6");
+            if (cases == "recording")
+            {
+                long rt = a.Long("ticks", 24000); string rout = a.Str("out");
+                a.CheckAllUsed(0);
+                var rb = RecordingBench.Run(Scenario.Parse(File.ReadAllText(FindScenario("bench_stage3_watch6")), new List<string>()), rt, a.ULong("seed") ?? 1, output);
+                output.WriteLine(rb.ToString(Formatting.Indented));
+                if (rout != null) { Directory.CreateDirectory(rout); File.WriteAllText(Path.Combine(rout, "bench_recording.json"), rb.ToString(Formatting.Indented)); }
+                return ExitCodes.Ok;
+            }
             if (cases != "bench_stage3_watch6") throw new UsageException("M0 has one bench case, bench_stage3_watch6 (the NPC cases arrive at M3)");
             var sc = Scenario.Parse(File.ReadAllText(FindScenario(cases)), a.All("set"));
             var o = new Bench.Options { Scenario = sc, Ticks = a.Long("ticks", 40000), ParallelTicks = a.Long("parallel-ticks", 20000), Log = output, Seed = a.ULong("seed") ?? 1 };
