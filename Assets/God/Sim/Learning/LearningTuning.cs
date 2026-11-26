@@ -5,6 +5,16 @@ namespace God.Sim.Learning
     /// saved and hashed with the game, settable from scenarios (<c>Learning.TraceShift</c>, <c>Learning.DecayScalePermille</c>).
     /// Decay is per sim day and independent of <c>LifeScale</c> (owner decision Q1).
     /// </summary>
+    /// <summary>
+    /// How goods gained into the carry are credited (M3b). <see cref="Immediate"/>: the M3 rule, a fixed worth at once, and
+    /// spoilage as a plain reward at the next day start (it reaches whatever the NPC does then). <see cref="LotEpisodes"/>:
+    /// the same worth at once, and the decision that gained a food lot waits for its fate (an episode keyed by the lot), so
+    /// spoilage is booked back to it. <see cref="Realised"/> (default): goods are worth what they realise for their holder;
+    /// nothing is paid when food or a tool is taken; the decision waits on the lot, and each meal from it pays back its
+    /// hunger relief, each log gathered with a tool pays back the tool's share of the work, and spoilage is a loss.
+    /// </summary>
+    public enum GoodsCredit : byte { Immediate = 0, LotEpisodes = 1, Realised = 2 }
+
     /// <summary>The credit rule of the learning core (see <see cref="Learner.Step"/>).</summary>
     public enum CreditRule : byte { TdLambda = 0, MonteCarlo = 1 }
 
@@ -31,12 +41,19 @@ namespace God.Sim.Learning
         /// <summary>Episodes (4.7) are on; 0 closes a deferred trace like any other (the "episodes off" arm of the tests).</summary>
         public bool EpisodesOn = true;
         public int EpisodeExpireDays = 10;
+        /// <summary>How goods gained are credited to the decision that gained them (M3b; NPC_LEARNING 4.4 and 4.7).</summary>
+        public GoodsCredit Goods = GoodsCredit.Realised;
 
         // ---- the update rule (4.6) ----
         public int AlphaShift = 2;
         /// <summary>How reward reaches the traces: TD(lambda) errors (default) or the raw reward with the error taken at close (Monte Carlo).</summary>
         public CreditRule Credit = CreditRule.TdLambda;
-        /// <summary>The per-think discount of the next decision's value in the TD error (970 = a horizon of about 33 thinks).</summary>
+        /// <summary>
+        /// The per-think discount of the next decision's value in the TD error (970 = a horizon of about 33 thinks), applied
+        /// once per think elapsed since the previous decision (semi-Markov, M3b), so a long sleep or walk discounts more. 0 (the
+        /// default) bootstraps nothing. M3b tried 950 for LS3/LS4: the hut share fell to 0.5% and the axe share to 0%, so it
+        /// stays 0 (DEV_LOG, M3 record).
+        /// </summary>
         public int GammaPermille = 0;
         /// <summary>The TD error bootstraps from the best candidate's learned value (Q-learning style, default) or the chosen one's (SARSA).</summary>
         public bool BootstrapBest = true;

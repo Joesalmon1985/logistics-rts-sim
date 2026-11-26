@@ -25,9 +25,11 @@ namespace God.Runner.Tests
             public int HungryDays; // person-days with a mean hunger above comfort (500)
         }
 
-        public static IslandResult Run(ulong seed, int days, int perFaction = 20, int factions = 6, LearningMode mode = LearningMode.On)
+        public static IslandResult Run(ulong seed, int days, int perFaction = 20, int factions = 6, LearningMode mode = LearningMode.On,
+            int freezeAtDay = -1, Action<SimTuning> tune = null)
         {
             var t = new SimTuning(); t.Learning.DefaultMode = mode;
+            tune?.Invoke(t);
             var setup = new GameSetup(seed, GameSetup.NoHuman, factions) { Population = true, StartNpcsPerFaction = perFaction, Victory = VictorySpec.SandboxOnly() };
             var built = SimBuilder.Create(setup, t); // the stage 3 AI brains play the factions' states, as in a real sandbox game
             var sim = built.Sim;
@@ -35,6 +37,8 @@ namespace God.Runner.Tests
             int tpd = setup.TicksPerDay;
             for (int d = 0; d < days; d++)
             {
+                // the trained-then-frozen arm (NPC_LEARNING 4.16 "as loaded"): the store learned until now is kept and used, never changed again
+                if (d == freezeAtDay) foreach (var n in sim.State.Population.Npcs) if (n.Mind != null) n.Mind.Store.Mode = LearningMode.Frozen;
                 for (int i = 0; i < tpd; i++)
                 {
                     int aliveBefore = sim.State.Population.AliveCount, rowsNow = 0;
@@ -84,31 +88,45 @@ namespace God.Runner.Tests
             Assert.AreEqual(0, res.Sum(r => r.Invariants));
         }
 
+        /// <summary>The arms of the learning control: name, mode from birth, the day the store is frozen (-1 never), and a tuning change.</summary>
+        public static readonly (string name, LearningMode mode, int freezeAt, Action<SimTuning> tune)[] ControlArms =
+        {
+            ("On", LearningMode.On, -1, null),
+            ("On, lot episodes only", LearningMode.On, -1, t => t.Learning.Goods = GoodsCredit.LotEpisodes),
+            ("On, M3 goods credit", LearningMode.On, -1, t => t.Learning.Goods = GoodsCredit.Immediate),
+            ("Trained 10 d, then Frozen", LearningMode.On, 10, null),
+            ("Frozen from birth", LearningMode.Frozen, -1, null),
+            ("Off", LearningMode.Off, -1, null),
+        };
+
         /// <summary>
-        /// The learning control (owner, 26 Nov): the same 6 x 20 island over 30 days with learning On, Frozen (the store never
-        /// changes: instincts and exploration only) and Off (no learned term at all), seeds 1-6. Survival, need satisfaction
-        /// (day-mean drives, nutrition, hungry person-days, meals) and time allocation from the person-day rows. The result
-        /// is recorded as it comes out (DEV_LOG); only invariants and the person-day grain are asserted.
+        /// The learning control (owner, 26 Nov; M3.27): the same 6 x 20 island over 30 days, seeds 1-6, in five arms: learning
+        /// On; On without lot episodes (the M3 credit, the ablation of the M3b fix); trained On for 10 days and then Frozen (a
+        /// trained store that no longer changes, NPC_LEARNING 4.16); Frozen from birth (an empty store that never changes:
+        /// instincts and exploration only); Off (no learned term). Survival with a per-seed 95% interval, need satisfaction
+        /// (day-mean drives, nutrition, hungry person-days, meals) and time allocation from the person-day rows. The result is
+        /// recorded as it comes out (DEV_LOG); only invariants and the person-day grain are asserted.
         /// </summary>
         [Test]
         public void Island_LearningOn_VsFrozen_VsOff_Control()
         {
             const int days = 30;
-            var modes = new[] { LearningMode.On, LearningMode.Frozen, LearningMode.Off };
-            var all = modes.Select(m => (mode: m, res: Watch.Seeds(1, 6, s => Run(s, days, mode: m)))).ToList();
-            TestContext.WriteLine($"CONTROL 6x20, {days} days, seeds 1-6 (720 founders per mode)");
-            TestContext.WriteLine("mode | alive | starved | exposure | meals/person-day | mean hunger | mean tiredness | mean cold | nutrition | hungry person-days | with a bed | huts | reward/punish per person-day | learned-changed share | explore share");
+            var all = ControlArms.Select(a => (mode: a.name, res: Watch.Seeds(1, 6, s => Run(s, days, mode: a.mode, freezeAtDay: a.freezeAt, tune: a.tune)))).ToList();
+            TestContext.WriteLine($"CONTROL 6x20, {days} days, seeds 1-6 (720 founders per arm)");
+            TestContext.WriteLine("arm | alive | alive per seed (mean +/- 95% CI) | starved | exposure | meals/person-day | mean hunger | mean tiredness | mean cold | nutrition | hungry person-days | with a bed | huts | reward/punish per person-day | learned-changed share | explore share");
             foreach (var (mode, res) in all)
             {
                 long pd = res.Sum(r => r.PersonDays);
-                TestContext.WriteLine($"{mode} | {res.Sum(r => r.Alive)}/{res.Sum(r => r.Founders)} | {res.Sum(r => r.Starved)} | {res.Sum(r => r.Exposure)} | {(double)res.Sum(r => r.MealsRows) / pd:F2} | "
+                var per = res.Select(r => (double)r.Alive).ToArray();
+                double mean = per.Average(), sd = Math.Sqrt(per.Sum(x => (x - mean) * (x - mean)) / (per.Length - 1)), ci = 2.571 * sd / Math.Sqrt(per.Length);
+                TestContext.WriteLine($"{mode} | {res.Sum(r => r.Alive)}/{res.Sum(r => r.Founders)} | {mean:F1} +/- {ci:F1} [{string.Join(",", res.Select(r => r.Alive))}] | {res.Sum(r => r.Starved)} | {res.Sum(r => r.Exposure)} | {(double)res.Sum(r => r.MealsRows) / pd:F2} | "
                     + $"{(double)res.Sum(r => r.SumMeanHunger) / pd:F0} | {(double)res.Sum(r => r.SumMeanFatigue) / pd:F0} | {(double)res.Sum(r => r.SumMeanCold) / pd:F0} | {(double)res.Sum(r => r.SumNutrition) / pd:F0} | "
                     + $"{100.0 * res.Sum(r => r.HungryDays) / pd:F1}% | {res.Sum(r => r.Sheltered)} | {res.Sum(r => r.HutsBuilt)} | {(double)res.Sum(r => r.SumReward) / pd:F0}/{(double)res.Sum(r => r.SumPunish) / pd:F0} | "
                     + $"{(double)res.Sum(r => r.SumLearnedShare) / pd / 10:F1}% | {(double)res.Sum(r => r.SumExploreShare) / pd / 10:F1}%");
             }
             foreach (var (mode, res) in all)
                 TestContext.WriteLine($"{mode}: food sources empty at day {days} {res.Sum(r => r.SourcesEmpty)}/{res.Sum(r => r.Sources)}, food left in the wild {res.Sum(r => r.FoodStock)}, total meals {res.Sum(r => r.Meals)}, food taken from the wild {res.Sum(r => r.FoodTaken)}, spoiled {res.Sum(r => r.FoodSpoiled)}; starvation days [{string.Join(",", res.SelectMany(r => r.DeathDays.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)).Select(int.Parse).OrderBy(x => x).Distinct())}]");
-            TestContext.WriteLine("time allocation (% of person-day ticks): mode | " + string.Join(" | ", Activity.Names) + " | of which walking");
+            TestContext.WriteLine("time allocation (% of person-day ticks): arm | " + string.Join(" | ", Activity.Names) + " | of which walking");
             foreach (var (mode, res) in all)
             {
                 double tot = res.Sum(r => r.DayTicks);
