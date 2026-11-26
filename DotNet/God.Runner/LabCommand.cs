@@ -16,12 +16,12 @@ namespace God.Runner
 {
     /// <summary>
     /// <c>god-runner lab ...</c> (HEADLESS_SIMULATION 4.12, STRATEGY_BENCHMARKS 4.8): the maths-only game-theory lab of
-    /// <c>Sim/Lab</c>. Subcommands list, run, all, report, hash. Exit 0 when every check passes, 1 when a check fails,
+    /// <c>Sim/Lab</c>. Subcommands list, run, all, report, hash, and the study runs invade and sweep (<see cref="LabStudyCommand"/>). Exit 0 when every check passes, 1 when a check fails,
     /// 2 for usage errors, 8 for I/O errors.
     /// </summary>
     public static class LabCommand
     {
-        private static readonly string[] Flags = { "check", "json", "quiet", "no-out", "help" };
+        private static readonly string[] Flags = { "check", "json", "quiet", "no-out", "help", "expected" };
 
         public const string Usage = @"usage:
   God.Runner lab list [--json]
@@ -29,7 +29,8 @@ namespace God.Runner
                         [--param key=value ...] [--out DIR] [--no-out] [--format jsonl|csv] [--json]
   God.Runner lab all [--check] [--seeds 1..5] [--workers N] [--out DIR] [--format jsonl|csv] [--json]
   God.Runner lab report DIR
-  God.Runner lab hash L1 [--seed N]";
+  God.Runner lab hash L1 [--seed N]
+" + LabStudyCommand.Usage;
 
         public static int Run(string[] argv, TextWriter output, TextWriter error, CancellationToken cancel)
         {
@@ -43,6 +44,8 @@ namespace God.Runner
                 case "all": return All(a, output, cancel);
                 case "report": return Report(a, output);
                 case "hash": return Hash(a, output);
+                case "invade": return LabStudyCommand.Invade(a, output, cancel);
+                case "sweep": return LabStudyCommand.Sweep(a, output, cancel);
                 default: error.WriteLine("unknown lab subcommand '" + sub + "'\n" + Usage); return ExitCodes.Usage;
             }
         }

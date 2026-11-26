@@ -265,6 +265,36 @@ namespace God.Runner.Tests
             Assert.IsFalse(rx.IsMatch(md));
         }
 
+        // ---- Hawk/Bully/Retaliator investigation: lab invade and lab sweep (analysis only; L2's golden hash is untouched) ----
+
+        [Test]
+        public void LabInvade_ExactTable_IsDeterministic()
+        {
+            Assert.AreEqual(0, TestUtil.Cli(out var o1, out var e1, "lab", "invade", "--matrix", "l2", "--agents", "0"), o1 + e1);
+            StringAssert.Contains("| H 0.6250, B 0.3750 | -0.625 | (resident) | 0.625 **invades** | 0.000 / 34.375 **invades** | (resident) | not stable: invaded by D, R |", o1);
+            StringAssert.Contains("| H 0.6140, D 0.0175, B 0.3684 | 0.263 | (resident) | (resident) | -0.614 resists | (resident) | ESS (every mutant resists) |", o1);
+            StringAssert.Contains("| R 1.0000 | 15.000 | -40.000 resists | 0.000 / 0.000 **neutral** | (resident) | -25.000 resists | neutrally stable only: D drift in |", o1);
+            Assert.AreEqual(0, TestUtil.Cli(out var o2, out _, "lab", "invade", "--matrix", "l2", "--agents", "0", "--workers", "4"));
+            Assert.AreEqual(o1, o2, "workers do not change the output");
+            Assert.AreEqual(0, TestUtil.Cli(out var m, out var me, "lab", "invade", "--matrix", "msp", "--agents", "0"), m + me);
+            StringAssert.Contains("| H 0.5757, B 0.4243 | 20.431 | (resident) | -0.931 resists | -9.038 resists | (resident) | -6.795 resists | ESS (every mutant resists) |", m);
+        }
+
+        [Test]
+        public void LabSweep_BasinsAndAgents_Deterministic_AndUsageErrors()
+        {
+            Assert.AreEqual(0, TestUtil.Cli(out var b, out var be, "lab", "sweep", "--matrix", "msp4", "--basins", "10", "--mu", "0", "--gens", "20000"), b + be);
+            StringAssert.Contains("| 500 | 0 | 20000 | 84 | 29 | 55 | 0 |", b);
+            var args = new[] { "lab", "sweep", "--matrix", "l2", "--agents", "100", "--gens", "400", "--seeds", "1..2", "--starts", "uniform,hb", "--mu", "0,2" };
+            Assert.AreEqual(0, TestUtil.Cli(out var a1, out var ae, args), a1 + ae);
+            Assert.AreEqual(0, TestUtil.Cli(out var a2, out _, args.Concat(new[] { "--workers", "3" }).ToArray()));
+            Assert.AreEqual(a1, a2);
+            Assert.AreEqual(4, a1.Split('\n').Count(l => l.StartsWith("| uniform |") || l.StartsWith("| hb |")));
+            Assert.AreEqual(ExitCodes.Usage, TestUtil.Cli(out _, out _, "lab", "sweep", "--matrix", "nope"));
+            Assert.AreEqual(ExitCodes.Usage, TestUtil.Cli(out _, out _, "lab", "sweep", "--starts", "nope"));
+            Assert.AreEqual(ExitCodes.Usage, TestUtil.Cli(out _, out _, "lab", "invade", "--rule", "Z=1"));
+        }
+
         // ---- M2.18: a game with no benchmark assigned is unchanged ----
 
         [Test]
