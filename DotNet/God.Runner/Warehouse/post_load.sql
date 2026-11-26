@@ -7,3 +7,8 @@ CREATE INDEX ix_fact_command_day ON fact_command (date_key);
 CREATE INDEX ix_fact_event_code ON fact_event (event_code, tick);
 CREATE INDEX ix_fact_kpi ON fact_kpi (kpi_key, period_from_day);
 CREATE INDEX ix_faction_hist ON dim_faction_history (faction_key, valid_from_tick);
+CREATE INDEX ix_fact_production_person ON fact_production (person_key, date_key);
+CREATE INDEX ix_fact_person_day_person ON fact_person_day (person_key);
+CREATE INDEX ix_fact_death_person ON fact_death (person_key);
+CREATE INDEX ix_fact_learning_person ON fact_learning (person_key, date_key);
+CREATE INDEX ix_fact_learning_kind ON fact_learning (kind_code, date_key);

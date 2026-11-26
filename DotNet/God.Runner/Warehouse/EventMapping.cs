@@ -116,6 +116,7 @@ namespace God.Runner.Warehouse
                 if (c.RowWanted)
                     c.Insert(Tables.FactCombat, c.Tick, c.Seq, date, 3L, f, null, null, null, null, null, null, null, null, null, b.Key, null, null, (long)c.Weight);
             }, "also closes dim_building");
+            PopulationMapping.Register(r);   // M3: person, death, person-day, personal goods, learning
             return r;
         }
     }
@@ -159,6 +160,11 @@ namespace God.Runner.Warehouse
         /// <summary>The sim day of the event (day 0 first); a row for it is in <c>dim_date</c> once this has been called.</summary>
         public long DateKey() => _r.EnsureDate(_r.DayOf(Event.Tick));
         public long DateKeyOfTick(long tick) => _r.EnsureDate(_r.DayOf(tick));
+        /// <summary>The key of an explicit sim day (NpcDay names the day it describes).</summary>
+        public long DateKeyOfDay(long day) => _r.EnsureDate(day);
+
+        /// <summary>The <c>dim_person</c> row of a sim Npc id (created on first sight, so a recorder that starts late still has the person).</summary>
+        public PersonDim Person(int npcId) => _r.PersonOf(npcId);
 
         /// <summary>The <c>dim_faction</c> key of a sim faction id, or null for an id outside the game.</summary>
         public long? FactionKey(int factionId) => _r.FactionKeyOf(factionId);
