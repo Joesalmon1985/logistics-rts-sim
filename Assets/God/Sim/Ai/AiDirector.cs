@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using God.Sim.Information;
+using God.Sim.Policy;
 
 namespace God.Sim
 {
@@ -28,20 +30,30 @@ namespace God.Sim
 
         public GodSim Sim { get; }
         public AiTuning Tuning { get; }
+
+        /// <summary>One faction played by a policy: the policy and the faction's knowledge view (M1).</summary>
+        public sealed class Seat
+        {
+            public Faction Side;
+            public IFactionPolicy Policy;
+            public FactionKnowledgeView View;
+        }
+
+        private readonly List<Seat> _seats = new List<Seat>();
         private readonly List<AiBrain> _brains = new List<AiBrain>();
+        private readonly List<Command> _out = new List<Command>();
+        /// <summary>The factions played, ascending, each with its policy.</summary>
+        public IReadOnlyList<Seat> Seats => _seats;
+        /// <summary>The stage 3 brains among the seats (the <c>AiBrain</c> policy), ascending by faction.</summary>
         public IReadOnlyList<AiBrain> Brains => _brains;
 
-        /// <summary>False stops every brain (a director cannot be removed from a sim, so <see cref="Detach"/> clears this).</summary>
+        /// <summary>False stops every policy (a director cannot be removed from a sim, so <see cref="Detach"/> clears this).</summary>
         public bool Enabled = true;
-
-        /// <summary>
-        /// True holds every brain without detaching: ticks pass with no thinking. The game holds the brains for the single
-        /// step it takes while paused to apply a person's command, so a paused game stays paused.
-        /// </summary>
-        public bool Held;
 
         /// <summary>Thinks run so far (for tests and logs; not state).</summary>
         public long Thinks;
+        /// <summary>Commands a policy returned that a faction policy may not send (another faction's, or not a faction command); dropped.</summary>
+        public long Inadmissible;
 
         private AiDirector(GodSim sim, AiTuning tuning)
         {
@@ -49,17 +61,36 @@ namespace God.Sim
         }
 
         /// <summary>
-        /// Gives each listed faction a brain and installs the director as a sim system. Factions not in the game are skipped;
-        /// duplicates are ignored. Optional trader (default <see cref="NoTrade"/>); any other trader also becomes the
-        /// game's trade judge (<see cref="AiTradeJudge"/>), and an <see cref="AiTrader"/> is bound to this director.
+        /// The stage 3 AI for each listed faction: an <c>AiBrain</c> behind <see cref="AiBrainFactionPolicy"/>. Factions not
+        /// in the game are skipped; duplicates are ignored. Optional trader (default <see cref="NoTrade"/>); any other trader
+        /// also becomes the game's trade judge (<see cref="AiTradeJudge"/>), and an <see cref="AiTrader"/> is bound to this
+        /// director.
         /// </summary>
-        public static AiDirector Attach(GodSim sim, IEnumerable<Faction> factions, AiTuning tuning = null, IAiTrader trader = null)
+        public static AiDirector Attach(GodSim sim, IEnumerable<Faction> factions, AiTuning tuning = null, IAiTrader trader = null) =>
+            Attach(sim, factions, null, null, tuning, trader);
+
+        /// <summary>
+        /// Seats each listed faction with the faction policy its <paramref name="assignment"/> names (default
+        /// <c>AiBrain</c>), built by <paramref name="registry"/> (default <see cref="StandardPolicies.Registry"/>), in
+        /// ascending faction order. A faction assigned <c>none</c> gets no seat. Unknown names throw
+        /// <see cref="PolicyException"/> before anything is installed.
+        /// </summary>
+        public static AiDirector Attach(GodSim sim, IEnumerable<Faction> factions, PolicyAssignment assignment, PolicyRegistry registry,
+            AiTuning tuning = null, IAiTrader trader = null)
         {
             if (sim == null) throw new ArgumentNullException(nameof(sim));
             var d = new AiDirector(sim, tuning);
+            registry = registry ?? StandardPolicies.Registry(sim, d.Tuning, trader);
             var seen = new SortedSet<int>();
             if (factions != null) foreach (var f in factions) if (sim.State.Setup.InGame((int)f)) seen.Add((int)f);
-            foreach (int f in seen) d._brains.Add(new AiBrain(sim, (Faction)f, d.Tuning, trader));
+            foreach (int f in seen)
+            {
+                string name = assignment?.NameFor(PolicyLevel.Faction, f) ?? PolicyAssignment.StageThreeFaction;
+                var policy = registry.CreateFaction(name, (Faction)f);
+                if (policy == null) continue;
+                d._seats.Add(new Seat { Side = (Faction)f, Policy = policy, View = ViewFiller.For(sim.State, (Faction)f) });
+                if (policy is AiBrainFactionPolicy ab) d._brains.Add(ab.Brain);
+            }
             sim.AddSystem(SystemOrder, d);
             // P11: an AI trader answers offers to its brains through the trade judge (not saved: set again on every start).
             if (trader is AiTrader at) at.Director = d;
@@ -77,22 +108,39 @@ namespace God.Sim
 
         public AiBrain BrainOf(Faction f) => _brains.Find(b => b.Side == f);
 
+        /// <summary>The policy playing a faction, or null.</summary>
+        public IFactionPolicy PolicyOf(Faction f) { foreach (var s in _seats) if (s.Side == f) return s.Policy; return null; }
+
         /// <summary>Stops every brain for good.</summary>
         public void Detach() => Enabled = false;
 
         /// <summary>The tick offset of a faction within the think interval: factions spread evenly over it.</summary>
         public int OffsetOf(Faction f) => (int)f * Tuning.ThinkIntervalTicks / FactionInfo.Max;
 
+        /// <summary>
+        /// The due seats think, ascending by faction, at most <see cref="AiTuning.MaxThinksPerTick"/> per tick. Each gets its
+        /// own view and the think stream <c>Fork("ai.F.T")</c> of the game seed, returns commands, and the director submits
+        /// them in order (inside the step, so they apply at the start of the next tick, like a person's). A command a faction
+        /// policy may not send is dropped and counted in <see cref="Inadmissible"/>.
+        /// </summary>
         public void Tick(GodState s, EventBuffer ev)
         {
-            if (!Enabled || Held || s.IsGameOver) return;
+            if (!Enabled || s.IsGameOver) return;
             int interval = Math.Max(1, Tuning.ThinkIntervalTicks), budget = Tuning.MaxThinksPerTick;
-            foreach (var b in _brains)
+            foreach (var seat in _seats)
             {
                 if (budget <= 0) break;
-                if ((s.Tick + OffsetOf(b.Side)) % interval != 0) continue;
-                if (s.Factions.IsEliminated(b.Side)) continue;
-                b.Think();
+                if ((s.Tick + OffsetOf(seat.Side)) % interval != 0) continue;
+                if (s.Factions.IsEliminated(seat.Side)) continue;
+                var rng = AiBrain.ThinkStream(s.Seed, seat.Side, s.Tick);
+                _out.Clear();
+                seat.Policy.Decide(seat.View, ref rng, _out);
+                foreach (var c in _out)
+                {
+                    if (!FactionCommandSet.Admissible(c, seat.Side)) { Inadmissible++; continue; }
+                    Sim.Submit(c);
+                }
+                _out.Clear();
                 Thinks++;
                 budget--;
             }

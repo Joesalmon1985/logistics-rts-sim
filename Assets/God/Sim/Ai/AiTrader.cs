@@ -92,7 +92,7 @@ namespace God.Sim
             foreach (var o in s.Trade.PendingFor(brain.Side))
             {
                 bool yes = JudgeIncoming(brain, o.From, Counts(o.Give), Counts(o.Want));
-                brain.Sim.Submit(new AnswerTrade(brain.Side, o.Id, yes));
+                brain.Emit(new AnswerTrade(brain.Side, o.Id, yes));
                 brain.LastActions.Add((yes ? "accept" : "refuse") + " offer " + o.Id);
             }
         }
@@ -150,7 +150,7 @@ namespace God.Sim
             if (t.EnvoyCountOf(brain.Side) >= TradeTuning.MaxEnvoysPerFaction) return;
             var offer = Plan(brain);
             if (offer == null) return;
-            if (brain.Sim.Submit(offer).Ok)
+            if (brain.Emit(offer))
                 brain.LastActions.Add("offer " + FactionInfo.Name(offer.To) + " " + string.Join("+", Array.ConvertAll(offer.Give, g => g.ToString()))
                     + " for " + string.Join("+", Array.ConvertAll(offer.Want, g => g.ToString())));
         }

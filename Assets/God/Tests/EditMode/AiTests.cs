@@ -414,11 +414,14 @@ namespace God.Sim.Tests
             Assert.AreEqual(6 * 200 / ai.Tuning.ThinkIntervalTicks, ai.Thinks, "each brain thinks every 2 s");
             Assert.AreEqual(1, most, "staggered: never two brains on one tick");
             foreach (var b in ai.Brains) Assert.LessOrEqual(b.ChecksUsed, ai.Tuning.MaxChecksPerThink + 1);
-            ai.Held = true;
+            // M1: the "held" brains of a paused game are gone (a paused game steps ordinary ticks); a stopped director still thinks never.
+            ai.Enabled = false;
             long held = ai.Thinks;
             sim.Step(60); sim.DrainEvents();
-            Assert.AreEqual(held, ai.Thinks, "held brains do not think");
-            ai.Held = false;
+            Assert.AreEqual(held, ai.Thinks, "a stopped director's brains do not think");
+            ai.Enabled = true;
+            sim.Step(20); sim.DrainEvents();
+            Assert.AreEqual(held + 6, ai.Thinks, "and they think again, each on its slot, once it runs");
             Assert.AreEqual(6, AiDirector.NonHuman(sim.State).Count, "watch mode: all six");
             Assert.AreEqual(5, AiDirector.NonHuman(GodSim.Create(new GameSetup(14)).State).Count, "play: all but the human");
         }

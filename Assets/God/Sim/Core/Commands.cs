@@ -36,6 +36,18 @@ namespace God.Sim
     }
 
     /// <summary>
+    /// Where commands go (M1): check a command against the rules now, or submit it for the next tick. The sim is the gate;
+    /// the HUD and every faction policy reach the rules only through it, never through the state.
+    /// </summary>
+    public interface ICommandGate
+    {
+        /// <summary>Validate without queuing. Never mutates state.</summary>
+        CommandResult Check(Command c);
+        /// <summary>Validate now; if accepted, queue for the next tick boundary.</summary>
+        CommandResult Submit(Command c);
+    }
+
+    /// <summary>
     /// Validates and applies one command type. Validate must not mutate state. Apply is called at the
     /// next tick boundary and must re-check anything that may have changed (it returns a result; a
     /// failure there is reported as a <see cref="CommandRejected"/> event and nothing is applied).

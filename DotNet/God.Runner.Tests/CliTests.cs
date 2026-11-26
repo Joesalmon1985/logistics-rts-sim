@@ -40,7 +40,7 @@ namespace God.Runner.Tests
         [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"setup\":{\"victory\":[{\"kind\":\"conquest\"}]}}", "conquest")]
         [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"setup\":{\"victory\":[]}}", "non-empty")]
         [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"setup\":{\"population\":true}}", "M3")]
-        [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"policies\":{\"civilian\":{\"default\":\"utility.v1\"}}}", "M1")]
+        [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"policies\":{\"civilian\":{\"default\":\"utility.v1\"}}}", "M3")]
         [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"metrics\":[\"gini_wealth\"]}", "gini_wealth")]
         [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"record\":{\"level\":\"experiment\"}}", "M13")]
         [TestCase("{\"scenarioVersion\":1,\"name\":\"x\",\"commands\":[{\"tick\":5,\"type\":\"DeclareWar\",\"args\":{\"Agianst\":2}}]}", "Agianst")]

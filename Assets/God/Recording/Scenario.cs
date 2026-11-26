@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using God.Sim;
+using God.Sim.Information;
+using God.Sim.Policy;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -36,7 +38,8 @@ namespace God.Recording
     /// A scenario file, version 1 (HEADLESS_SIMULATION 3.2): everything except the seed that decides a run. Unknown keys
     /// are refused. M0 implements setup (faction count, human, calendar, life scale, victory list, disease, information),
     /// tuning overrides, the command schedule, record, metrics, checkpoints, periodic saves, stop conditions and checks.
-    /// Blocks of later milestones (policies other than the stage 3 AI, population) are refused with a clear message.
+    /// M1 adds the policies block (registry names per level and faction) and the Q22 purpose and overlay switches. Blocks of
+    /// later milestones (population, civilian and institution policies, served agents) are refused with a clear message.
     /// </summary>
     public sealed class Scenario
     {
@@ -55,8 +58,14 @@ namespace God.Recording
         public DiseaseSetting Disease = DiseaseSetting.On;
         public bool FullInformation = true;
         public List<VictorySpec> Victory = VictorySpec.Stage3Default();
-        /// <summary>The faction policy of every non-human faction: "AiBrain" (the stage 3 AI) or "none" (idle).</summary>
-        public string FactionPolicy = SimBuilder.StageThreeAi;
+        /// <summary>What the game is for (Q22): decides whether the true-state overlay is allowed. Null: implied by the setup (<see cref="EffectivePurpose"/>).</summary>
+        public ScenarioPurpose? Purpose;
+        /// <summary>An explicit choice for the true-state overlay (setup.trueStateOverlay), or null.</summary>
+        public bool? TrueStateOverlay;
+        /// <summary>M1: the policy of every slot, by registry name (the <c>policies</c> block). Default: the stage 3 game.</summary>
+        public PolicyAssignment Policies = PolicyAssignment.Stage3Default();
+        /// <summary>The faction policy default ("AiBrain" or "none"; M0's only policy setting).</summary>
+        public string FactionPolicy => Policies.DefaultOf(PolicyLevel.Faction);
         // the rest
         public SortedDictionary<string, long> Tuning = new SortedDictionary<string, long>(StringComparer.Ordinal);
         public List<ScheduledCommand> Commands = new List<ScheduledCommand>();
@@ -92,12 +101,23 @@ namespace God.Recording
             }
         }
 
-        public GameSetup ToSetup(ulong seed) => new GameSetup(seed, Human, FactionCount)
+        public GameSetup ToSetup(ulong seed)
         {
-            Tutorial = Tutorial, LifeScale = LifeScale, TicksPerDay = TicksPerDay, DaysPerYear = DaysPerYear,
-            DecayFollowsLifeScale = DecayFollowsLifeScale, Disease = Disease, FullInformation = FullInformation,
-            Victory = Victory.Select(v => new VictorySpec(v.Kind, v.Target)).ToList(),
-        };
+            var g = new GameSetup(seed, Human, FactionCount)
+            {
+                Tutorial = Tutorial, LifeScale = LifeScale, TicksPerDay = TicksPerDay, DaysPerYear = DaysPerYear,
+                DecayFollowsLifeScale = DecayFollowsLifeScale, Disease = Disease, FullInformation = FullInformation,
+                Victory = Victory.Select(v => new VictorySpec(v.Kind, v.Target)).ToList(),
+            };
+            return TrueStateOverlayRules.Apply(g, EffectivePurpose, TrueStateOverlay);
+        }
+
+        /// <summary>The purpose given, else the one the setup implies: a sandbox victory list, else watch mode (observation), else competitive.</summary>
+        public ScenarioPurpose EffectivePurpose =>
+            Purpose ?? (Victory.Any(v => v.Kind == VictoryKind.Sandbox) ? ScenarioPurpose.Sandbox : Human == GameSetup.NoHuman ? ScenarioPurpose.Observation : ScenarioPurpose.Competitive);
+
+        /// <summary>The scenario spelling of each <see cref="ScenarioPurpose"/>, by value.</summary>
+        public static readonly ReadOnlyArray<string> PurposeNames = new ReadOnlyArray<string>("competitive", "sandbox", "developer", "lab", "observation");
 
         public SimTuning ToTuning()
         {
@@ -137,7 +157,7 @@ namespace God.Recording
         // ---------------- parsing ----------------
 
         private static readonly string[] TopKeys = { "scenarioVersion", "name", "description", "setup", "tuning", "policies", "commands", "record", "metrics", "checkpointEvery", "saveEveryDays", "stop", "checks" };
-        private static readonly string[] SetupKeys = { "factionCount", "human", "tutorial", "population", "startNpcsPerFaction", "lifeScale", "ticksPerDay", "daysPerYear", "decayFollowsLifeScale", "disease", "fullInformation", "victory" };
+        private static readonly string[] SetupKeys = { "factionCount", "human", "tutorial", "population", "startNpcsPerFaction", "lifeScale", "ticksPerDay", "daysPerYear", "decayFollowsLifeScale", "disease", "fullInformation", "victory", "purpose", "trueStateOverlay" };
         private static readonly string[] StopKeys = { "maxTicks", "maxDays", "maxYears", "onGameOver", "populationBelow", "wallSeconds", "when", "fail" };
         private static readonly string[] RecordKeys = { "level", "domains", "sampleEvery" };
         public static readonly string[] KnownChecks = { "invariants", "no-exceptions", "smoke" };
@@ -209,6 +229,15 @@ namespace God.Recording
                 string dis = Str(s, "disease", "setup.", "on").ToLowerInvariant();
                 if (dis == "on") sc.Disease = DiseaseSetting.On; else if (dis == "mild") sc.Disease = DiseaseSetting.Mild; else if (dis == "off") sc.Disease = DiseaseSetting.Off;
                 else throw new ScenarioException("setup.disease must be on, mild or off");
+                if (s["purpose"] != null)
+                {
+                    string pu = Str(s, "purpose", "setup.", "competitive");
+                    int pi = -1;
+                    for (int k = 0; k < PurposeNames.Count; k++) if (PurposeNames[k] == pu) pi = k;
+                    if (pi < 0) throw new ScenarioException("setup.purpose must be competitive, sandbox, developer, lab or observation");
+                    sc.Purpose = (ScenarioPurpose)pi;
+                }
+                if (s["trueStateOverlay"] != null) sc.TrueStateOverlay = Bool(s, "trueStateOverlay", "setup.", false);
                 if (s["victory"] != null)
                 {
                     if (!(s["victory"] is JArray va) || va.Count == 0) throw new ScenarioException("setup.victory must be a non-empty list");
@@ -232,6 +261,9 @@ namespace God.Recording
                 }
             }
 
+            try { TrueStateOverlayRules.Allowed(sc.EffectivePurpose, sc.TrueStateOverlay); }
+            catch (ArgumentException e) { throw new ScenarioException("setup.trueStateOverlay: " + e.Message); }
+
             if (o["tuning"] != null)
             {
                 var t = Obj(o, "tuning", "");
@@ -245,19 +277,7 @@ namespace God.Recording
                 }
             }
 
-            if (o["policies"] != null)
-            {
-                var pol = Obj(o, "policies", "");
-                foreach (var p in pol.Properties())
-                {
-                    if (p.Name != "faction") throw new ScenarioException("policies." + p.Name + " is not implemented until M1");
-                    if (!(p.Value is JObject fo)) throw new ScenarioException("policies.faction must be an object");
-                    Only(fo, new[] { "default" }, "policies.faction.");
-                    string d = Str(fo, "default", "policies.faction.", SimBuilder.StageThreeAi);
-                    if (d != SimBuilder.StageThreeAi && d != "none") throw new ScenarioException("policies.faction.default '" + d + "': only AiBrain or none before M1's policy registry");
-                    sc.FactionPolicy = d;
-                }
-            }
+            if (o["policies"] != null) sc.Policies = ParsePolicies(Obj(o, "policies", ""));
 
             if (o["commands"] != null)
             {
@@ -335,6 +355,54 @@ namespace God.Recording
                 }
             }
             return sc;
+        }
+
+        /// <summary>
+        /// The <c>policies</c> block (M1): per level (<c>faction</c>, <c>military</c>, <c>institution</c>, <c>civilian</c>) a
+        /// <c>default</c> name and per-faction entries (<c>"0"</c> to <c>"5"</c>, faction and military levels). Every name is
+        /// checked against the registry now (an unknown name is refused at load, M1.6). Institutions (M12), civilians (M3),
+        /// <c>sample</c> (M3) and <c>external</c> (M15) are refused with the milestone that brings them.
+        /// </summary>
+        public static PolicyAssignment ParsePolicies(JObject pol)
+        {
+            var a = PolicyAssignment.Stage3Default();
+            var reg = StandardPolicies.ForValidation();
+            foreach (var p in pol.Properties())
+            {
+                if (!PolicyRegistry.TryParseLevel(p.Name, out var level)) throw new ScenarioException("policies." + p.Name + " is not a policy level (faction, military, institution, civilian)");
+                if (!(p.Value is JObject lo)) throw new ScenarioException("policies." + p.Name + " must be an object");
+                string where = "policies." + p.Name + ".";
+                foreach (var e in lo.Properties())
+                {
+                    if (e.Name == "sample") throw new ScenarioException(where + "sample (benchmark NPC subsets) is not implemented until M3");
+                    if (e.Value.Type != JTokenType.String) throw new ScenarioException(where + e.Name + " must be a policy name");
+                    string name = (string)e.Value;
+                    if (level == PolicyLevel.Civilian && name != PolicyRegistry.None) throw new ScenarioException(where + e.Name + " '" + name + "': civilian policies need NPCs (not implemented until M3)");
+                    if (level == PolicyLevel.Institution && name != PolicyRegistry.None) throw new ScenarioException(where + e.Name + " '" + name + "': institution policies need institutions (not implemented until M12)");
+                    if (level == PolicyLevel.Military && name == PolicyRegistry.None) throw new ScenarioException(where + e.Name + ": soldiers must have a policy (none is not allowed)");
+                    try { reg.Validate(level, name); }
+                    catch (PolicyException x) { throw new ScenarioException(x.Message); }
+                    if (e.Name == "default") { a.SetDefault(level, name); continue; }
+                    if (level != PolicyLevel.Faction && level != PolicyLevel.Military) throw new ScenarioException(where + e.Name + ": only the faction and military levels take per-faction entries");
+                    if (!int.TryParse(e.Name, NumberStyles.None, CultureInfo.InvariantCulture, out int f) || f < 0 || f >= FactionInfo.Max)
+                        throw new ScenarioException(where + e.Name + " is not a faction id (0 to " + (FactionInfo.Max - 1) + ") or default");
+                    a.Set(level, f, name);
+                }
+            }
+            return a;
+        }
+
+        /// <summary>The resolved <c>policies</c> block: every level's default and its per-faction entries.</summary>
+        public static JObject PoliciesJson(PolicyAssignment a)
+        {
+            var o = new JObject();
+            foreach (var level in new[] { PolicyLevel.Faction, PolicyLevel.Military, PolicyLevel.Institution, PolicyLevel.Civilian })
+            {
+                var lo = new JObject { ["default"] = a.DefaultOf(level) };
+                foreach (var kv in a.Scoped[(int)level]) lo[kv.Key.ToString(CultureInfo.InvariantCulture)] = kv.Value;
+                o[PolicyRegistry.Lower(level)] = lo;
+            }
+            return o;
         }
 
         private static List<MetricCondition> Conditions(JObject s, string key)
@@ -436,9 +504,10 @@ namespace God.Recording
                     ["lifeScale"] = LifeScale, ["ticksPerDay"] = TicksPerDay, ["daysPerYear"] = DaysPerYear,
                     ["decayFollowsLifeScale"] = DecayFollowsLifeScale, ["disease"] = Disease.ToString().ToLowerInvariant(),
                     ["fullInformation"] = FullInformation, ["victory"] = victory,
+                    ["purpose"] = PurposeNames[(int)EffectivePurpose], ["trueStateOverlay"] = TrueStateOverlayRules.Allowed(EffectivePurpose, TrueStateOverlay),
                 },
                 ["tuning"] = tuning,
-                ["policies"] = new JObject { ["faction"] = new JObject { ["default"] = FactionPolicy } },
+                ["policies"] = PoliciesJson(Policies),
                 ["commands"] = commands,
                 ["record"] = new JObject { ["level"] = RecordingLevels.Name(RecordLevel), ["domains"] = domains, ["sampleEvery"] = SampleEvery },
                 ["metrics"] = new JArray(Metrics),

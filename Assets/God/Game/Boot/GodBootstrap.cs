@@ -1,4 +1,5 @@
 using God.Sim;
+using God.Sim.Information;
 using UnityEngine;
 
 namespace God.Game
@@ -16,6 +17,20 @@ namespace God.Game
 
         public static GodBootstrap Instance { get; private set; }
         public GodSim Sim { get; private set; }
+        /// <summary>
+        /// M1: what the viewing faction (the human one, F0 in watch mode) knows: the HUD's only window on the world, built by
+        /// <see cref="ViewFiller"/> once per game.
+        /// </summary>
+        public FactionKnowledgeView View { get; private set; }
+        /// <summary>M1: where the HUD sends commands (the sim's check and submit).</summary>
+        public ICommandGate Gate => Sim;
+        /// <summary>
+        /// M1 (Q22): the debug true-state overlay, or null where it is not allowed (competitive play). View side only: no
+        /// policy ever gets it, and the HUD shows it only when the player turns it on.
+        /// </summary>
+        public ITrueStateOverlay TrueState { get; private set; }
+        /// <summary>Developer mode (<c>-goddev</c>, or set by tests before the scene loads): the true-state overlay is allowed in any game.</summary>
+        public static bool DeveloperMode;
         /// <summary>The organic island look (P4a): the hexes stay in the sim, the player sees a natural island.</summary>
         public IslandView Island { get; private set; }
         /// <summary>The old hex-tile look, built only with <see cref="legacyHexLook"/> or <c>-godhexlook</c> (kept until the P2/P3 merge).</summary>
@@ -36,8 +51,8 @@ namespace God.Game
         /// <summary>When true the bootstrap steps the sim at 10 Hz times <see cref="Speed"/>. Off by default; <c>-godrun</c> or F3 turns it on.</summary>
         public bool Running = true;
         /// <summary>
-        /// Set by a component that steps the sim itself (the smoke run): the bootstrap then never steps it, not even the held
-        /// step a paused game takes to apply a command, so the game is exactly the runner's game for the same seed (M0).
+        /// Set by a component that steps the sim itself (the smoke run): the bootstrap then never steps it, not even the step
+        /// a paused game takes to apply a person's command, so the game is exactly the runner's game for the same seed (M0).
         /// </summary>
         public bool DrivenExternally;
         /// <summary>The god HUD and input (P5).</summary>
@@ -93,6 +108,8 @@ namespace God.Game
         public float Speed = 1f;
 
         private float _framedAspect = -1f;
+        /// <summary>Set when a command from outside the sim (the HUD, a dev bot) was accepted; a paused game then takes one tick.</summary>
+        private bool _personCommandWaiting;
         private float _acc;
 
         private static bool HasArg(string name) => System.Array.IndexOf(System.Environment.GetCommandLineArgs(), name) >= 0;
@@ -127,6 +144,13 @@ namespace God.Game
             }
             if (SkipStartCard && loaded == null) startAi = true; // tests skip the card: the game starts as after Play
             ShowStartCard = !SkipStartCard && !flagged && !startAi && loaded == null;
+            Sim.ExternalCommandAccepted += _ => _personCommandWaiting = true;
+            // M1 (Q22): what this game is for decides the overlay: developer mode allows it anywhere, watch mode is an
+            // observation game (allowed), a game against the AIs is competitive (never). A host setting, not sim state.
+            var purpose = DeveloperMode || HasArg("-goddev") ? ScenarioPurpose.Developer : TrueStateOverlayRules.DefaultPurpose(Sim.State.Setup);
+            TrueStateOverlayRules.Apply(Sim.State.Setup, purpose);
+            View = ViewFiller.For(Sim, FactionLook.Viewer(Sim.State));
+            TrueState = ViewFiller.Overlay(Sim, View.Faction);
             BoardSpace.Topo = Sim.State.Board.Topology;
             if (legacyHexLook || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-godhexlook") >= 0)
                 LegacyIsland = HexDressingView.Create(Sim.State.Board, transform);
@@ -283,8 +307,11 @@ namespace God.Game
             if (Menu != null && Menu.Blocking) return; // the menu or the start card holds the game
             if (DrivenExternally) return; // the smoke run steps the sim and drains its events
             if (Sim.State.IsGameOver) { PumpEvents(); return; }
-            // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
-            if (!Running) { if (Sim.PendingCommands.Count > 0) { AiHost.StepHeld(Sim); PumpEvents(); } return; }
+            // Paused (M1): a person's command still shows at once, because the game takes one ordinary tick to apply it, the
+            // AI included, exactly as if it ran for 0.1 s. Nothing else moves a paused game, and no tick is special, so a
+            // replay is just commands at ticks (the held ticks of M0's AiHost.StepHeld are gone).
+            if (!Running) { if (_personCommandWaiting) { _personCommandWaiting = false; Sim.Step(); PumpEvents(); } return; }
+            _personCommandWaiting = false;
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using God.Sim.Policy;
 
 namespace God.Sim
 {
@@ -16,6 +17,32 @@ namespace God.Sim
 
         private static readonly ReadOnlyArray<int> RingCos = new ReadOnlyArray<int>(1000, 866, 500, 0, -500, -866, -1000, -866, -500, 0, 500, 866);
         private static readonly ReadOnlyArray<int> RingSin = new ReadOnlyArray<int>(0, 500, 866, 1000, 866, 500, 0, -500, -866, -1000, -866, -500);
+
+        /// <summary>
+        /// The combat policy of each faction's soldiers (M1 seam, MILITARY_DESIGN "IMilitaryPolicy"), indexed by faction id.
+        /// Default Stage3MilitaryPolicy for all; a scenario's policies.military block sets others through SetPolicy.
+        /// Host wiring, not state: a loaded game gets them from its host again.
+        /// </summary>
+        private readonly IMilitaryPolicy[] _policies = new IMilitaryPolicy[FactionInfo.Max];
+
+        // Per-system scratch, reused for every soldier (no allocation per decision).
+        private readonly List<SeenUnit> _seenUnits = new List<SeenUnit>();
+        private readonly List<SeenBuilding> _seenBuildings = new List<SeenBuilding>();
+        private readonly Rng _scratch = new Rng();
+
+        public MilitarySystem()
+        {
+            var stage3 = new Stage3MilitaryPolicy();
+            for (int i = 0; i < _policies.Length; i++) _policies[i] = stage3;
+        }
+
+        public IMilitaryPolicy PolicyOf(Faction f) => _policies[(int)f];
+
+        /// <summary>Sets the combat policy of one faction's soldiers (null is refused: soldiers must decide).</summary>
+        public void SetPolicy(Faction f, IMilitaryPolicy policy)
+        {
+            _policies[(int)f] = policy ?? throw new System.ArgumentNullException(nameof(policy));
+        }
 
         public void Tick(GodState s, EventBuffer ev)
         {
@@ -84,7 +111,12 @@ namespace God.Sim
 
         // ---------------- one unit ----------------
 
-        private static void Think(GodState s, MilUnit u, List<Attack> attacks)
+        /// <summary>
+        /// One soldier's tick: the body (cooldowns), a developer move order if it has one, else its faction's
+        /// <see cref="IMilitaryPolicy"/> decides from what the soldier perceives (<see cref="Perceive"/>) and the intent is
+        /// carried out (<see cref="Execute"/>). With <see cref="Stage3MilitaryPolicy"/> this is exactly the stage 3 Think.
+        /// </summary>
+        private void Think(GodState s, MilUnit u, List<Attack> attacks)
         {
             var m = s.Military; var g = s.Territory.Grid;
             if (u.Health <= 0) return;
@@ -99,14 +131,74 @@ namespace God.Sim
             }
 
             DefendFlag flag = u.GuardFlagId != 0 ? m.DefendById(u.GuardFlagId) : null;
-            Acquire(s, u, flag, out var tk, out int tid, out int tx, out int tz, out int edge);
-            u.TargetKind = tk; u.TargetId = tid;
+            var obs = Perceive(s, u, flag);
+            var policy = _policies[(int)u.Faction];
+            _scratch.SetToFork(s.Rng, "soldier", u.Id, s.Tick);
+            var rng = _scratch;
+            var intent = IntentRules.Require(PolicyLevel.Military, policy.Name, policy.Decide(obs, MindView.Empty, ref rng));
+            Execute(s, u, flag, intent, attacks);
+        }
 
-            if (tk != TargetKind.None)
+        /// <summary>
+        /// What a soldier sees (stage 3 rule 1's filter): enemy units (factions at war with its own) within its sight, and,
+        /// for a guard, only those within GuardChaseMm of its post or already in reach; enemy buildings whose edge is within
+        /// sight (the same guard limit); its faction's marked targets; and where the first of them stands. Lists keep the
+        /// sim's order.
+        /// </summary>
+        private SoldierObservation Perceive(GodState s, MilUnit u, DefendFlag flag)
+        {
+            var m = s.Military;
+            var st = s.Tuning.Military.Of(u.Kit);
+            int sight = st.SightMm, range = st.RangeMm;
+            long sight2 = (long)sight * sight;
+            long chase2 = (long)MilitaryTuning.GuardChaseMm * MilitaryTuning.GuardChaseMm;
+            var fs = s.Factions;
+            bool Hostile(Faction o) => fs != null && fs.AtWar(u.Faction, o);
+
+            _seenUnits.Clear();
+            foreach (var e in m.Units)
+            {
+                if (e.Health <= 0 || !Hostile(e.Faction)) continue;
+                long d = Pathing.Dist2(u.X, u.Z, e.X, e.Z);
+                if (d > sight2) continue;
+                if (flag != null && Pathing.Dist2(e.X, e.Z, flag.X, flag.Z) > chase2 && d > (long)range * range) continue;
+                _seenUnits.Add(new SeenUnit(e.Id, e.X, e.Z, d, Pathing.ISqrt(d)));
+            }
+
+            _seenBuildings.Clear();
+            // Buildings matter only when no enemy unit is in sight (rule 1 takes units first), so the scan is skipped then.
+            if (_seenUnits.Count == 0)
+                foreach (var b in m.Buildings)
+                {
+                    if (!Hostile(b.Faction)) continue;
+                    int c = Pathing.Dist(u.X, u.Z, b.X, b.Z);
+                    int edge = System.Math.Max(0, c - MilitaryTuning.FootprintMm(b.Size));
+                    if (edge > sight) continue;
+                    if (flag != null && Pathing.Dist2(b.X, b.Z, flag.X, flag.Z) > chase2 && edge > range) continue;
+                    _seenBuildings.Add(new SeenBuilding(b.Id, b.X, b.Z, edge));
+                }
+
+            var marks = m.MarkedOf(u.Faction);
+            var first = marks.Count > 0 ? m.BuildingById(marks[0]) : null;
+            return new SoldierObservation(u.Id, u.Faction, u.X, u.Z, s.Tick, range, sight, st.Ranged, flag != null,
+                _seenUnits, _seenBuildings, marks, first != null, first != null ? first.X : 0, first != null ? first.Z : 0);
+        }
+
+        /// <summary>Carries out a combat intent exactly as stage 3 did: fight (strike or close in), guard, march or wait.</summary>
+        private static void Execute(GodState s, MilUnit u, DefendFlag flag, NpcIntent intent, List<Attack> attacks)
+        {
+            var g = s.Territory.Grid;
+            bool fight = (intent.Verb == NpcVerb.Attack || intent.Verb == NpcVerb.Charge)
+                && (intent.Target == IntentTarget.Unit || intent.Target == IntentTarget.Building);
+            var tk = !fight ? TargetKind.None : intent.Target == IntentTarget.Unit ? TargetKind.Unit : TargetKind.Building;
+            u.TargetKind = tk; u.TargetId = fight ? intent.TargetId : 0;
+
+            if (fight)
             {
                 u.Activity = UnitActivity.Fighting;
                 var st = s.Tuning.Military.Of(u.Kit);
-                if (edge <= st.RangeMm)
+                int tx = intent.X, tz = intent.Z, tid = intent.TargetId;
+                if (intent.Verb == NpcVerb.Attack)
                 {
                     // Ranged soldiers stop at their range; melee ones have closed in.
                     if (tx != u.X || tz != u.Z) { u.FaceX = tx - u.X; u.FaceZ = tz - u.Z; }
@@ -125,70 +217,12 @@ namespace God.Sim
             }
             u.EngagedId = 0;
 
-            if (flag != null) { Guard(s, u, flag); return; }
-
-            // Rule 3: march on the faction's first marked target.
-            var marks = m.MarkedOf(u.Faction);
-            if (marks.Count > 0)
+            if (intent.Verb == NpcVerb.HoldPost && flag != null) { Guard(s, u, flag); return; }
+            if (intent.Verb == NpcVerb.Charge && intent.Target == IntentTarget.Point)
             {
-                var b = m.BuildingById(marks[0]);
-                if (b != null) { u.Activity = UnitActivity.Marching; Pathing.MoveToward(s.Tuning.Military, g, u, b.X, b.Z); return; }
+                u.Activity = UnitActivity.Marching; Pathing.MoveToward(s.Tuning.Military, g, u, intent.X, intent.Z); return;
             }
             Wait(s, u);
-        }
-
-        /// <summary>
-        /// Rule 1: an enemy (a faction at war with the unit's) within sight; everyone else is walked past. Enemy units first (nearest, lowest id), else enemy buildings (a marked one first,
-        /// in marked order, else the nearest, lowest id). A guard only takes targets within 15 m of its anchor, or ones it can
-        /// already shoot from where it stands. <paramref name="edge"/> is the distance to the target's edge.
-        /// </summary>
-        private static void Acquire(GodState s, MilUnit u, DefendFlag flag, out TargetKind kind, out int id, out int tx, out int tz, out int edge)
-        {
-            var m = s.Military;
-            var st = s.Tuning.Military.Of(u.Kit);
-            int sight = st.SightMm, range = st.RangeMm;
-            long sight2 = (long)sight * sight;
-            long chase2 = (long)MilitaryTuning.GuardChaseMm * MilitaryTuning.GuardChaseMm;
-            kind = TargetKind.None; id = 0; tx = tz = 0; edge = 0;
-            var fs = s.Factions;
-            bool Hostile(Faction o) => fs != null && fs.AtWar(u.Faction, o);
-
-            long bestD = long.MaxValue;
-            foreach (var e in m.Units)
-            {
-                if (e.Health <= 0 || !Hostile(e.Faction)) continue;
-                long d = Pathing.Dist2(u.X, u.Z, e.X, e.Z);
-                if (d > sight2 || d >= bestD) continue;
-                if (flag != null && Pathing.Dist2(e.X, e.Z, flag.X, flag.Z) > chase2 && d > (long)range * range) continue;
-                bestD = d; kind = TargetKind.Unit; id = e.Id; tx = e.X; tz = e.Z; edge = Pathing.ISqrt(d);
-            }
-            if (kind != TargetKind.None) return;
-
-            BuildingRecord pick = null; int pickEdge = 0;
-            bool Visible(BuildingRecord b, out int edgeMm)
-            {
-                int c = Pathing.Dist(u.X, u.Z, b.X, b.Z);
-                edgeMm = System.Math.Max(0, c - MilitaryTuning.FootprintMm(b.Size));
-                if (edgeMm > sight) return false;
-                if (flag != null && Pathing.Dist2(b.X, b.Z, flag.X, flag.Z) > chase2 && edgeMm > range) return false;
-                return true;
-            }
-            foreach (int mid in m.MarkedOf(u.Faction))
-            {
-                var b = m.BuildingById(mid);
-                if (b != null && Hostile(b.Faction) && Visible(b, out int em)) { pick = b; pickEdge = em; break; }
-            }
-            if (pick == null)
-            {
-                int bestEdge = int.MaxValue;
-                foreach (var b in m.Buildings)
-                {
-                    if (!Hostile(b.Faction)) continue;
-                    if (Visible(b, out int em) && em < bestEdge) { bestEdge = em; pick = b; pickEdge = em; }
-                }
-            }
-            if (pick == null) return;
-            kind = TargetKind.Building; id = pick.Id; tx = pick.X; tz = pick.Z; edge = pickEdge;
         }
 
         /// <summary>Rule 2: stay at the anchor within 8 m; walk back once further than 7 m, to a slot 5 m from the anchor.</summary>

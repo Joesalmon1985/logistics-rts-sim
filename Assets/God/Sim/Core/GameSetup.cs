@@ -41,6 +41,16 @@ namespace God.Sim
         /// <summary>The faction knowledge view is filled almost completely (stage 4: information separation built, not enforced). Unused before M1.</summary>
         public bool FullInformation = true;
         /// <summary>
+        /// What the game is for (Q22, M1): competitive, sandbox, developer, lab or observation. A host setting, not sim state:
+        /// it is neither hashed nor saved (a loaded game gets it from its host again), so it never changes a replay.
+        /// </summary>
+        [JsonIgnore] public Information.ScenarioPurpose Purpose = Information.ScenarioPurpose.Competitive;
+        /// <summary>
+        /// Whether the debug true-state overlay may be shown (Q22; set through <see cref="Information.TrueStateOverlayRules"/>).
+        /// False in competitive play. Like <see cref="Purpose"/> it is neither hashed nor saved.
+        /// </summary>
+        [JsonIgnore] public bool AllowTrueStateOverlay;
+        /// <summary>
         /// The ways to win, checked in order every tick (<see cref="IVictoryCondition"/>). A plain setup keeps the stage 3
         /// rules (10 VP, then last standing) so existing tests keep their meaning; scenario files choose (a sandbox lists
         /// only <see cref="VictoryKind.Sandbox"/>).

@@ -90,13 +90,32 @@ namespace God.Sim
 
         // ---------------- think ----------------
 
-        /// <summary>One decision round. Sends commands only; never steps the sim.</summary>
+        /// <summary>The stream of one think: a fork of the game seed by faction and tick (what the director passes as the policy's rng).</summary>
+        public static Rng ThinkStream(ulong seed, Faction side, long tick) => new Rng(seed).Fork("ai." + (int)side + "." + tick);
+
+        /// <summary>
+        /// One decision round that submits its commands at once (tests and tools). The game drives brains through
+        /// <c>AiBrainFactionPolicy</c> and the director instead, which submits the same commands in the same order.
+        /// </summary>
         public void Think()
+        {
+            var cmds = new List<Command>();
+            Think(ThinkStream(S.Seed, Side, S.Tick), cmds);
+            foreach (var c in cmds) Sim.Submit(c);
+        }
+
+        /// <summary>
+        /// One decision round (M1 policy seam): every command it decides on is checked and appended to
+        /// <paramref name="outCommands"/>, in decision order; nothing is submitted and the sim is never stepped.
+        /// TEMPORARY (removal M14): the brain still reads <see cref="GodState"/> itself instead of the faction's view.
+        /// </summary>
+        public void Think(Rng rng, List<Command> outCommands)
         {
             LastActions.Clear();
             ChecksUsed = 0;
+            _out = outCommands ?? throw new ArgumentNullException(nameof(outCommands));
             if (S.IsGameOver || S.Factions.IsEliminated(Side)) return;
-            ThinkRng = new Rng(S.Seed).Fork("ai." + (int)Side + "." + S.Tick);
+            ThinkRng = rng ?? throw new ArgumentNullException(nameof(rng));
             Look();
             if (_hqs.Count == 0) return;
             Diplomacy();
@@ -120,9 +139,23 @@ namespace God.Sim
                 + " b" + _budget[(int)Ware.Brick] + " m" + _budget[(int)Ware.Mortar] + " st" + _budget[(int)Ware.Steel] + " sites " + _openSites + " army " + _inf;
         }
 
+        private List<Command> _out = new List<Command>();
+
+        /// <summary>
+        /// Decides on a command: kept (appended to this think's output) when the sim would accept it now. Validation reads
+        /// only state, never the queue, so the director's later <see cref="GodSim.Submit"/> of the same command, in the same
+        /// order and with the state unchanged, accepts exactly what was kept here (this is why M1's hashes equal M0's).
+        /// </summary>
+        public bool Emit(Command c)
+        {
+            if (!Sim.Check(c).Ok) return false;
+            _out.Add(c);
+            return true;
+        }
+
         private bool Send(Command c, string note)
         {
-            if (!Sim.Submit(c).Ok) return false;
+            if (!Emit(c)) return false;
             LastActions.Add(note);
             return true;
         }
@@ -674,7 +707,7 @@ namespace God.Sim
                 Claim(c.node);
                 if (road != null)
                 {
-                    Sim.Submit(new BuildRoad(Side, road));
+                    Emit(new BuildRoad(Side, road));
                     foreach (int n in road) _reserved.Add(n);
                 }
                 return true;
@@ -799,7 +832,7 @@ namespace God.Sim
                 var road = PathFromNetwork(fn, new HashSet<int> { node });
                 if (road == null || road.Length < 2) continue;
                 if (!Send(cmd, "hq at corner " + c.corner)) continue;
-                Sim.Submit(new BuildRoad(Side, road));
+                Emit(new BuildRoad(Side, road));
                 Claim(node);
                 foreach (int n in road) _reserved.Add(n);
                 Spend(cost);

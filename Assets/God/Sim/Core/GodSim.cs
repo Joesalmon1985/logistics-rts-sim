@@ -15,7 +15,7 @@ namespace God.Sim
     /// <see cref="TicksPerSecond"/> in integers. Submit validates immediately and queues; queued commands apply at the
     /// start of the next Step. Views read <see cref="State"/> and send commands; they never mutate it.
     /// </summary>
-    public sealed class GodSim
+    public sealed class GodSim : ICommandGate
     {
         public const int TicksPerSecond = 10;
 

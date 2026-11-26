@@ -118,5 +118,19 @@ namespace God.Sim
         }
 
         public Rng Clone() => new Rng(State);
+
+        /// <summary>
+        /// Makes this generator the stream <c>parent.Fork(label, id1, id2)</c> would give, without allocating (a per-system
+        /// scratch stream reused for every decision of a tick). Does not advance <paramref name="parent"/>.
+        /// </summary>
+        public void SetToFork(Rng parent, string label, long id1, long id2)
+        {
+            ulong h = Fnv(label);
+            h = Mix(h, (ulong)id1);
+            h = Mix(h, 0xA5A5A5A5A5A5A5A5UL);
+            h = Mix(h, (ulong)id2);
+            State = parent.State ^ h;
+            State = NextULong();
+        }
     }
 }

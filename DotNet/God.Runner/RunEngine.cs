@@ -56,7 +56,7 @@ namespace God.Runner
         public int SaveEveryDays;
         public SaveFile FromSave;
         public string FromSavePath;
-        /// <summary>Replay mode: commands and holds come from this file, and its checkpoints are checked.</summary>
+        /// <summary>Replay mode: commands come from this file, and its checkpoints are checked.</summary>
         public ReplayFile Replay;
         /// <summary>Stop at this tick (replay <c>--to</c>, verify <c>--ticks</c>); overrides the scenario's length when positive.</summary>
         public long ToTick;
@@ -415,7 +415,8 @@ namespace God.Runner
                     ["wallStart"] = DateTime.UtcNow.AddSeconds(-res.WallSeconds).ToString("o"), ["wallEnd"] = DateTime.UtcNow.ToString("o"),
                     ["ticks"] = res.Ticks, ["ticksPerSecond"] = Math.Round(res.TicksPerSecond, 1), ["wallSeconds"] = Math.Round(res.WallSeconds, 3),
                     ["stopReason"] = res.StopReason, ["finalHash"] = Hex.Of(res.FinalHash), ["exitCode"] = res.ExitCode,
-                    ["recordLevel"] = RecordingLevels.Name(level), ["divergence"] = res.Divergence?.ToString(), ["error"] = res.Error,
+                    ["recordLevel"] = RecordingLevels.Name(level), ["policies"] = Scenario.PoliciesJson(sc.Policies),
+                    ["purpose"] = Scenario.PurposeNames[(int)sc.EffectivePurpose], ["divergence"] = res.Divergence?.ToString(), ["error"] = res.Error,
                     ["messages"] = new JArray(res.Messages.Take(50)),
                 };
                 File.WriteAllText(Path.Combine(dir, "run.json"), run.ToString(Formatting.Indented));

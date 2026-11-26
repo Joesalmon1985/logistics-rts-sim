@@ -34,15 +34,6 @@ namespace God.Game
             return Start(sim, AiDirector.NonHuman(sim.State));
         }
 
-        /// <summary>One sim step with the brains held (they think on no tick of it): for the step a paused game takes to apply a command.</summary>
-        public static void StepHeld(GodSim sim)
-        {
-            var d = Director != null && Director.Sim == sim ? Director : null;
-            if (d != null) d.Held = true;
-            try { sim.Step(); }
-            finally { if (d != null) d.Held = false; }
-        }
-
         /// <summary>True when a brain of the current director plays this faction of this sim.</summary>
         public static bool Drives(GodSim sim, Faction f) =>
             Director != null && Director.Enabled && Director.Sim == sim && Director.BrainOf(f) != null;
