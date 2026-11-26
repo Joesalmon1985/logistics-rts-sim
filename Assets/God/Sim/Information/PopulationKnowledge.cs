@@ -69,6 +69,11 @@ namespace God.Sim.Information
         public int Entries, Conjunctions, Recruits, Evictions, Updates;
         public int LearnedSharePermille, ExploreSharePermille;
         public int[] Traits = new int[Trait.Count];
+        /// <summary>F0.15: life stage (M4 writes it; adult in M3) and the two tabs M4 and M5 fill.</summary>
+        public LifeStage Stage;
+        public HouseholdCard Household = new HouseholdCard();
+        /// <summary>The relations tab (M5). Named Relations because <see cref="Social"/> is the score term.</summary>
+        public SocialCard Relations = new SocialCard();
     }
 
     /// <summary>One weighed option of the last decision: words, and the score terms (Need is the need-driven part of Instinct).</summary>
@@ -171,6 +176,9 @@ namespace God.Sim.Information
             // founders arrive as adults (ages 1.0-2.4 from M4); until then the record counts from the scenario's start
             r.HudAge = SimCalendar.HudAge(r.AgeMilli + (n.Founder ? 1500 : 0));
             for (int d = 0; d < Drive.Count; d++) r.Drives[d] = n.DriveOf(d);
+            r.Stage = n.Stage;
+            HouseholdCards.Fill(_s, n, r); // F0.15: M4's tab
+            SocialCards.Fill(_s, n, r);    // F0.15: M5's tab
             Array.Copy(n.Traits, r.Traits, Trait.Count);
             foreach (var l in n.Carry) if (!l.Empty) r.Carry.Add(new CarriedItem(l.Ware, l.Count, l.SpoilDay, l.Uses));
             if (n.Action.Verb != 0) r.Doing = n.Action.Asleep ? (n.Action.SleepHut != 0 ? "asleep in a hut" : "asleep in the open") : VerbTable.Name(n.Action.Verb) + TargetWords(n.Action.TargetKind, n.Mind?.Last.TargetClass ?? 0, n.Action.Verb);

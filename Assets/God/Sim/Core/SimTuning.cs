@@ -27,6 +27,16 @@ namespace God.Sim
         public Population.EcologyTuning Ecology = new Population.EcologyTuning();
         /// <summary>M3: the associative learning core (NPC_LEARNING). Written only when changed.</summary>
         public Learning.LearningTuning Learning = new Learning.LearningTuning();
+        /// <summary>F0.12 (M4): households, life cycle, care. Written only when changed.</summary>
+        public Population.Households.HouseholdTuning Households = new Population.Households.HouseholdTuning();
+        /// <summary>F0.12 (M4): biological inheritance. Written only when changed.</summary>
+        public Population.Genetics.GeneticsTuning Genetics = new Population.Genetics.GeneticsTuning();
+        /// <summary>F0.12 (M4): estates. Written only when changed.</summary>
+        public Estate.EstateTuning Estate = new Estate.EstateTuning();
+        /// <summary>F0.12 (M5): social memory, exchange and gifts. Written only when changed.</summary>
+        public God.Sim.Social.SocialTuning Social = new God.Sim.Social.SocialTuning();
+        /// <summary>F0.12 (M5): gestures and decoding. Written only when changed.</summary>
+        public Comms.CommsTuning Comms = new Comms.CommsTuning();
 
         /// <summary>A deep, independent copy (through the save format, so every saved field is copied).</summary>
         public SimTuning Clone()

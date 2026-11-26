@@ -77,8 +77,7 @@ namespace God.Sim.Population
             npc.Drives[Drive.Hunger] = hunger * 1000;
             npc.Drives[Drive.Fatigue] = fatigue * 1000;
             Array.Copy(npc.Drives, npc.RewardSnap, Drive.Count);
-            for (int i = 0; i < npc.Carry.Length; i++) npc.Carry[i] = default;
-            return npc;
+            return npc; // a new NPC carries nothing
         }
 
         /// <summary>A source that never runs out in the scenario's time (a large stock that regrows).</summary>

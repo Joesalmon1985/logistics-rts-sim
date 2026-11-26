@@ -36,6 +36,8 @@ namespace God.Sim.Population
         private readonly AssociativeNpcPolicy _assoc = new AssociativeNpcPolicy();
         private readonly SortedDictionary<string, INpcPolicy> _policies = new SortedDictionary<string, INpcPolicy>(StringComparer.Ordinal);
         private readonly Sensed[] _near = new Sensed[96];
+        /// <summary>F0.7: the per-tick snapshot of living people (a cache).</summary>
+        private readonly PeopleIndex _people = new PeopleIndex();
         private long _unitsTick = -1;
 
         /// <summary>Thinks run so far (the runner's decision counter; not state).</summary>
@@ -43,6 +45,12 @@ namespace God.Sim.Population
 
         /// <summary>A read-only hook for tests and tools: called with the NPC id and the think's scratch after Cognition, before the policy decides. It must not change anything.</summary>
         public Action<int, ThinkScratch> Inspect;
+
+        /// <summary>
+        /// A read-only hook for tests (D3): called with the NPC id and its action each time a chosen intent is started (once
+        /// per decision, also when the running intent is continued), before the start's own effects. It must not change anything.
+        /// </summary>
+        public Action<int, NpcAction> Started;
 
         /// <summary>A host profiler (the bench): told where each phase of the update ends. Not state; null in games.</summary>
         public IPopulationProfiler Profiler;
@@ -145,6 +153,8 @@ namespace God.Sim.Population
             Profiler?.Begin();
             if (day > p.DayDone) DayStart(s, ev, (int)day);
             if (p.IndexDirty) RebuildIndex(p);
+            // F0.7: who stands where, once per tick, before anyone moves (perception never depends on id order)
+            _people.Build(p, s.Tick, _cellOf, _cellsX * _cellsZ);
             Profiler?.Mark(PopPhase.Day);
             var tu = s.Tuning.Population;
             for (int i = 0; i < p.Npcs.Count; i++)
@@ -224,7 +234,6 @@ namespace God.Sim.Population
             p.DayDone = day;
             int tpd = SimCalendar.Of(s).TicksPerDay;
             if (rowDue) foreach (var npc in p.Npcs) if (npc.Alive) PersonDay(s, ev, npc, day - 1, tpd);
-            var lt = s.Tuning.Learning;
             // spoiling (ECONOMY A3): carried and ground lots past their day are gone, one Consumed(Spoiled) each
             foreach (var npc in p.Npcs)
             {
@@ -233,16 +242,8 @@ namespace God.Sim.Population
                 {
                     var l = npc.Carry[i];
                     if (l.Empty || l.SpoilDay < 0 || l.SpoilDay >= day) continue;
-                    p.Ledger.Consume(ConsumeReason.Spoiled, l.Ware, l.Count);
-                    ev.Add(new Consumed { Npc = npc.Id, Ware = l.Ware, Count = l.Count, Reason = ConsumeReason.Spoiled });
-                    // goods lost: booked against the decisions that gained this lot (M3b lot episodes), else as a plain reward
-                    int loss = -Worth(s, npc, l.Ware) * l.Count;
-                    bool lotCredit = lt.Goods != GoodsCredit.Immediate;
-                    if (lotCredit) _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, lt.SampleEvery));
-                    if (!lotCredit || Learner.Outcome(npc.Mind.Store, lt, TraitsOf(s, npc), Learner.LotEpisodeKey(l.Id), loss, day, _sink, true) == 0)
-                        Learner.AddReward(npc.Mind.Store, loss);
-                    else CountReward(npc.Mind.Store, loss);
-                    npc.Carry[i] = default;
+                    // goods lost: Goods books the loss against the decisions that gained this lot (M3b lot episodes), else as a plain reward
+                    Goods.Consume(s, ev, Holder.Carry(npc.Id), l.Id, l.Count, ConsumeReason.Spoiled, npc.Id);
                 }
                 // the mind's day: beliefs age, the shares roll over
                 var m = npc.Mind;
@@ -256,10 +257,7 @@ namespace God.Sim.Population
             {
                 var g = p.Lots[i];
                 if (g.Lot.SpoilDay < 0 || g.Lot.SpoilDay >= day) continue;
-                p.Ledger.Consume(ConsumeReason.Spoiled, g.Lot.Ware, g.Lot.Count);
-                ev.Add(new Consumed { Ware = g.Lot.Ware, Count = g.Lot.Count, Reason = ConsumeReason.Spoiled });
-                p.Lots.RemoveAt(i);
-                p.IndexDirty = true;
+                Goods.Consume(s, ev, Holder.Ground(g.Node), g.Lot.Id, g.Lot.Count, ConsumeReason.Spoiled, 0);
             }
             Regrow(s);
         }
@@ -368,22 +366,7 @@ namespace God.Sim.Population
 
         // ---------------- death ----------------
 
-        private void Die(GodState s, EventBuffer ev, Npc npc, DeathCause cause)
-        {
-            var p = s.Population;
-            npc.Alive = false; npc.DiedTick = s.Tick; npc.DeathCause = cause; npc.Health = 0;
-            for (int i = 0; i < npc.Carry.Length; i++) { if (!npc.Carry[i].Empty) PopulationModule.Drop(s, npc.Node, npc.Carry[i]); npc.Carry[i] = default; }
-            foreach (var hut in p.Huts)
-            {
-                for (int i = 0; i < hut.Rights.Length; i++) if (hut.Rights[i] == npc.Id) hut.Rights[i] = 0;
-                hut.Contributors.Remove(npc.Id);
-            }
-            npc.HomeHut = 0; npc.SiteHut = 0; npc.Path = null; npc.Action = default;
-            npc.Mind = null; // the dead keep their record, not their mind
-            p.Stats.Deaths++;
-            p.Stats.DeathsByCause[(int)cause]++;
-            ev.Add(new NpcDied { Npc = npc.Id, Faction = npc.Faction, Cause = cause, Node = npc.Node, AgeTicks = s.Tick - npc.BornTick });
-        }
+        private static void Die(GodState s, EventBuffer ev, Npc npc, DeathCause cause) => PopulationModule.Kill(s, ev, npc, cause);
 
         // ---------------- sleep ----------------
 
@@ -399,7 +382,12 @@ namespace God.Sim.Population
             Profiler?.Mark(PopPhase.Consolidate);
             // sleeping sets tools down beside the sleeper
             for (int i = 0; i < npc.Carry.Length; i++)
-                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == Ware.Axe) { ToolGone(s, ev, npc, npc.Carry[i].Id, day); PopulationModule.Drop(s, npc.Node, npc.Carry[i]); npc.Carry[i] = default; }
+                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == Ware.Axe)
+                {
+                    int toolId = npc.Carry[i].Id;
+                    ToolGone(s, ev, npc, toolId, day);
+                    Goods.Move(s, ev, Holder.Carry(npc.Id), toolId, npc.Carry[i].Count, Holder.Ground(npc.Node), MoveReason.Drop, npc.Id);
+                }
             npc.Path = null; npc.PathGoal = -1;
             npc.Action = new NpcAction { Verb = Verb.Sleep, TargetKind = hut != 0 ? IntentTarget.Hut : IntentTarget.Node, TargetId = hut, TargetNode = npc.Node, Asleep = true, SleepHut = hut, Since = s.Tick };
             s.Population.Stats.Sleeps++;
@@ -530,6 +518,52 @@ namespace God.Sim.Population
             _sc.SeenCount = keep;
         }
 
+        // ---------------- people in sight (F0.7) ----------------
+
+        /// <summary>
+        /// The people in sight from this tick's snapshot: the nearest <see cref="ThinkScratch.MaxPeople"/> within the sight
+        /// radius (ties by lower id), with what anyone can see of them; M4 and M5 fill their own fields through the dispatch.
+        /// Read-only of the sim; nothing in M3 reads it.
+        /// </summary>
+        private void SeePeople(GodState s, Npc npc, int sight)
+        {
+            var p = s.Population;
+            int n = 0;
+            int cell = _cellOf[npc.Node];
+            int cx = cell / _cellsZ, cz = cell % _cellsZ;
+            for (int dx = -1; dx <= 1; dx++)
+                for (int dz = -1; dz <= 1; dz++)
+                {
+                    int x = cx + dx, z = cz + dz;
+                    if (x < 0 || z < 0 || x >= _cellsX || z >= _cellsZ) continue;
+                    foreach (int k in _people.CellOf(x * _cellsZ + z))
+                    {
+                        var e = _people.Entries[k];
+                        if (e.Id == npc.Id) continue;
+                        int d = _g.Distance(npc.Node, e.Node);
+                        if (d > sight) continue;
+                        // insertion into the nearest MaxPeople, ordered by (distance, id)
+                        int at = n;
+                        while (at > 0 && (_sc.People[at - 1].Dist > d || _sc.People[at - 1].Dist == d && _sc.People[at - 1].Id > e.Id)) at--;
+                        if (at >= ThinkScratch.MaxPeople) continue;
+                        int last = Math.Min(n, ThinkScratch.MaxPeople - 1);
+                        for (int j = last; j > at; j--) _sc.People[j] = _sc.People[j - 1];
+                        _sc.People[at] = new SeenPerson
+                        {
+                            Id = e.Id, As = e.Id, Faction = e.Faction, SameFaction = e.Faction == npc.Faction, Node = e.Node, Dist = d, Stage = e.Stage,
+                            Doing = e.Doing, Asleep = e.Asleep, CarryMask = e.CarryMask, HoldsTool = e.HoldsTool,
+                        };
+                        if (n < ThinkScratch.MaxPeople) n++;
+                    }
+                }
+            _sc.PeopleCount = n;
+            for (int i = 0; i < n; i++)
+            {
+                var other = p.Find(_sc.People[i].Id);
+                if (other != null) PopulationExtensions.FillPerson(s, npc, other, ref _sc.People[i]);
+            }
+        }
+
         // ---------------- think ----------------
 
         private void FillSelf(GodState s, Npc npc, int day, int sight)
@@ -559,6 +593,11 @@ namespace God.Sim.Population
                 if (l.Ware == Ware.Log) self.CarryLog = true;
                 if (l.Ware == Ware.Axe) self.CarryTool = true;
             }
+            self.Stage = npc.Stage;
+            self.Household = npc.Household;
+            if (_sc.Carry.Length < npc.Carry.Length) _sc.Carry = new ItemLot[npc.Carry.Length];
+            System.Array.Copy(npc.Carry, _sc.Carry, npc.Carry.Length);
+            _sc.CarryCount = npc.Carry.Length;
             self.CarryFull = PopulationModule.Room(s, npc, Ware.Berries) == 0;
             self.CanCarryLog = PopulationModule.Room(s, npc, Ware.Log) > 0;
             self.CanCarryTool = PopulationModule.Room(s, npc, Ware.Axe) > 0;
@@ -637,6 +676,7 @@ namespace God.Sim.Population
             int sight = TimeOf(SimCalendar.Of(s), s.Tick) == TimeOfDay.Night ? tu.SightNight : tu.SightDay;
             IndexUnits(s);
             Sense(s, npc, sight);
+            SeePeople(s, npc, sight);
             for (int i = 0; i < _sc.SeenCount; i++)
                 if (_sc.Seen[i].Category == ObjCategory.Danger) { Add(npc, Drive.Fear, tu.FearSeenEnemy * 1000); break; }
 
@@ -712,7 +752,7 @@ namespace God.Sim.Population
             Profiler?.Mark(PopPhase.Act);
             // the learned value predicted for this decision (the Learned term, now; only Q, not the whole term set)
             int q = st.Mode == LearningMode.Off ? 0 : (int)((long)st.SumStw(_sc.Keys, cand.KeyOffset, cand.KeyCount, cand.Verb, out _) * lt.LearnGain >> 10);
-            int episodeKey = cand.Verb == Verb.Build ? (npc.SiteHut != 0 ? npc.SiteHut : cand.TargetId) : 0;
+            int episodeKey = cand.Verb == Verb.Build ? (npc.SiteHut != 0 ? npc.SiteHut : cand.TargetId) : PopulationExtensions.EpisodeKey(npc, in cand);
             Learner.OpenTrace(st, lt, tr, (int)s.Tick, cand.Verb, _sc.Keys, cand.KeyOffset, cand.KeyCount, q, episodeKey, day, _sink);
             Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr));
             Profiler?.Mark(PopPhase.LearnUpdate);
@@ -789,6 +829,7 @@ namespace God.Sim.Population
                 npc.Action = new NpcAction { Verb = c.Verb, TargetKind = c.Kind, TargetId = c.TargetId, TargetNode = c.TargetNode, Since = s.Tick };
                 if (npc.PathGoal != c.TargetNode) { npc.Path = null; npc.PathGoal = -1; }
             }
+            Started?.Invoke(npc.Id, npc.Action);
             if (c.Verb == Verb.Build && c.TargetId == 0 && c.Kind == IntentTarget.Node)
             {
                 // found a hut site here
@@ -809,9 +850,10 @@ namespace God.Sim.Population
                 if (npc.DriveOf(Drive.Hunger) < s.Tuning.Population.SatedBelow) { Frustrate(s, npc); return; }
                 npc.Action.BusyUntil = s.Tick + s.Tuning.Population.EatTicks;
             }
+            else PopulationExtensions.TryStart(s, ev, npc, in c, day); // F0.9: M4's and M5's intents
         }
 
-        private int ReachOf(byte verb, IntentTarget kind) => kind == IntentTarget.Lot ? 1 : verb == Verb.Gather ? 2 : 1;
+        private int ReachOf(byte verb, IntentTarget kind) => kind == IntentTarget.Lot ? Reach.Touch : verb == Verb.Gather ? Reach.Gather : Reach.Touch;
 
         /// <summary>Walks one tick along the path to a node. Returns true when within <paramref name="reach"/> of it.</summary>
         private bool WalkTo(GodState s, Npc npc, int goal, int reach)
@@ -845,7 +887,7 @@ namespace God.Sim.Population
             switch (a.Verb)
             {
                 case Verb.Explore:
-                    if (WalkTo(s, npc, a.TargetNode, 0) || npc.Path == null) EndAction(npc);
+                    if (WalkTo(s, npc, a.TargetNode, Reach.Enter) || npc.Path == null) EndAction(npc);
                     return;
                 case Verb.Flee:
                 {
@@ -856,20 +898,20 @@ namespace God.Sim.Population
                         npc.Action.TargetNode = target < 0 ? npc.Node : target;
                         npc.Action.Progress = 1;
                     }
-                    if (WalkTo(s, npc, npc.Action.TargetNode, 0)) EndAction(npc);
+                    if (WalkTo(s, npc, npc.Action.TargetNode, Reach.Enter)) EndAction(npc);
                     return;
                 }
                 case Verb.Sleep:
                 {
                     var hut = p.HutById(a.TargetId);
                     if (hut == null || !hut.Built || !hut.HasRight(npc.Id)) { Frustrate(s, npc); return; }
-                    if (WalkTo(s, npc, hut.Node, 0)) StartSleep(s, ev, npc, hut.Id, false, day);
+                    if (WalkTo(s, npc, hut.Node, Reach.Enter)) StartSleep(s, ev, npc, hut.Id, false, day);
                     return;
                 }
                 case Verb.Eat:
                 {
                     if (a.TargetKind != IntentTarget.Node) return; // eating from carry is a busy action
-                    if (!WalkTo(s, npc, a.TargetNode, 1)) return;
+                    if (!WalkTo(s, npc, a.TargetNode, Reach.Touch)) return;
                     var src = SourceAt(p, a.TargetNode);
                     if (src == null || src.Stock <= 0) { NoteEmpty(npc, a.TargetNode); Frustrate(s, npc); return; }
                     if (npc.DriveOf(Drive.Hunger) < tu.SatedBelow) { Frustrate(s, npc); return; }
@@ -878,7 +920,7 @@ namespace God.Sim.Population
                 }
                 case Verb.ForageAt:
                 {
-                    if (!WalkTo(s, npc, a.TargetNode, 1)) return;
+                    if (!WalkTo(s, npc, a.TargetNode, Reach.Touch)) return;
                     var src = SourceAt(p, a.TargetNode);
                     if (src == null || src.Stock <= 0) { NoteEmpty(npc, a.TargetNode); Frustrate(s, npc); return; }
                     var ware = PopulationModule.WareOf(src.Kind);
@@ -888,13 +930,12 @@ namespace God.Sim.Population
                     int yield = 1 + npc.RngWork.NextInt(2);
                     yield = Math.Min(yield, Math.Min(src.Stock, PopulationModule.Room(s, npc, ware)));
                     src.Stock -= yield;
-                    var lot = PopulationModule.NewLot(s, ware, yield, day + PopulationModule.SpoilDays(s.Tuning.Ecology, ware), 0);
-                    if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("forage: no room after the room check");
-                    p.Ledger.Produce(ProduceReason.Foraged, ware, yield);
+                    // Goods books the ledger, emits Produced and pays the goods reward (nothing now under realised value)
+                    if (Goods.Produce(s, ev, Holder.Carry(npc.Id), ware, yield, day + PopulationModule.SpoilDays(s.Tuning.Ecology, ware), 0,
+                            Owner.Npc(npc.Id), ProduceReason.Foraged, npc.Id, src.Id) == 0)
+                        throw new InvalidOperationException("forage: no room after the room check");
                     p.Stats.Foraged += yield;
-                    ev.Add(new Produced { Npc = npc.Id, Source = src.Id, Ware = ware, Count = yield, Reason = ProduceReason.Foraged });
                     ev.Add(new Foraged { Npc = npc.Id, Source = src.Id, Ware = ware, Count = yield, StockAfter = src.Stock });
-                    if (s.Tuning.Learning.Goods != GoodsCredit.Realised) Learner.AddReward(npc.Mind.Store, Worth(s, npc, ware) * yield);
                     AwaitLot(s, npc, Verb.ForageAt, ware);
                     if (PopulationModule.Room(s, npc, ware) <= 0 || src.Stock <= 0) EndAction(npc);
                     return;
@@ -913,12 +954,10 @@ namespace God.Sim.Population
                     if (npc.Action.Progress < tu.GatherTicks * 1000) return;
                     npc.Action.Progress -= tu.GatherTicks * 1000;
                     if (pile) TakePileUnit(s, hex); else src.Stock--;
-                    var lot = PopulationModule.NewLot(s, Ware.Log, 1, -1, 0);
-                    if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("gather: no room after the room check");
-                    p.Ledger.Produce(ProduceReason.HandGathered, Ware.Log, 1);
+                    // Goods books the ledger, emits Produced and pays the log's worth
+                    if (Goods.Produce(s, ev, Holder.Carry(npc.Id), Ware.Log, 1, -1, 0, Owner.Npc(npc.Id), ProduceReason.HandGathered, npc.Id, src?.Id ?? 0, axe >= 0) == 0)
+                        throw new InvalidOperationException("gather: no room after the room check");
                     p.Stats.LogsGathered++;
-                    ev.Add(new Produced { Npc = npc.Id, Source = src?.Id ?? 0, Ware = Ware.Log, Count = 1, Reason = ProduceReason.HandGathered, WithTool = axe >= 0 });
-                    Learner.AddReward(npc.Mind.Store, Worth(s, npc, Ware.Log));
                     // realised value of a tool (M3b): the decision that took it up learns the tool's share of this log
                     if (axe >= 0 && s.Tuning.Learning.Goods == GoodsCredit.Realised && tu.AxeSpeedPermille > 1000)
                     {
@@ -926,12 +965,10 @@ namespace God.Sim.Population
                         Learner.Accrue(npc.Mind.Store, s.Tuning.Learning, TraitsOf(s, npc), Learner.LotEpisodeKey(npc.Carry[axe].Id),
                             Fx.MulDiv(Worth(s, npc, Ware.Log), tu.AxeSpeedPermille - 1000, tu.AxeSpeedPermille), day, _sink);
                     }
-                    if (axe >= 0 && --npc.Carry[axe].Uses <= 0)
+                    if (axe >= 0)
                     {
-                        ToolGone(s, ev, npc, npc.Carry[axe].Id, day);
-                        p.Ledger.Consume(ConsumeReason.Wear, Ware.Axe, 1);
-                        ev.Add(new Consumed { Npc = npc.Id, Ware = Ware.Axe, Count = 1, Reason = ConsumeReason.Wear });
-                        npc.Carry[axe] = default;
+                        int axeId = npc.Carry[axe].Id;
+                        if (Goods.Wear(s, ev, Holder.Carry(npc.Id), axeId, npc.Id)) ToolGone(s, ev, npc, axeId, day);
                     }
                     if (PopulationModule.Room(s, npc, Ware.Log) <= 0) { npc.Action.Progress = 0; EndAction(npc); }
                     return;
@@ -941,19 +978,16 @@ namespace God.Sim.Population
                 {
                     int li = LotIndex(p, a.TargetId);
                     if (li < 0) { Frustrate(s, npc); return; }
-                    if (!WalkTo(s, npc, p.Lots[li].Node, 1)) return;
+                    if (!WalkTo(s, npc, p.Lots[li].Node, Reach.Touch)) return;
                     li = LotIndex(p, a.TargetId);
                     var g = p.Lots[li];
                     int take = Math.Min(g.Lot.Count, PopulationModule.Room(s, npc, g.Lot.Ware));
                     if (take <= 0) { Frustrate(s, npc); return; }
-                    var lot = g.Lot; lot.Count = take;
-                    if (take < g.Lot.Count) { g.Lot.Count -= take; lot.Id = p.NextLotId++; }
-                    else { p.Lots.RemoveAt(li); }
-                    p.IndexDirty = true;
-                    if (!PopulationModule.PutInCarry(s, npc, lot)) throw new InvalidOperationException("pick up: no room after the room check");
-                    bool realised = s.Tuning.Learning.Goods == GoodsCredit.Realised && (Wares.IsFood(lot.Ware) || lot.Ware == Ware.Axe);
-                    if (!realised) Learner.AddReward(npc.Mind.Store, Worth(s, npc, lot.Ware) * take);
-                    AwaitLot(s, npc, a.Verb, lot.Ware);
+                    var ware = g.Lot.Ware;
+                    // the first to pick up an ownerless lot owns it; Goods pays its worth (nothing now when credited later)
+                    var moved = Goods.Move(s, ev, Holder.Ground(g.Node), g.Lot.Id, take, Holder.Carry(npc.Id), MoveReason.PickUp, npc.Id, OwnerRule.ToReceiver);
+                    if (!moved.Ok) throw new InvalidOperationException("pick up: " + moved.Status + " after the room check");
+                    AwaitLot(s, npc, a.Verb, ware);
                     EndAction(npc);
                     return;
                 }
@@ -961,16 +995,14 @@ namespace God.Sim.Population
                 {
                     var hut = p.HutById(a.TargetId);
                     if (hut == null || hut.Built) { Frustrate(s, npc); return; }
-                    if (!WalkTo(s, npc, hut.Node, 1)) return;
+                    if (!WalkTo(s, npc, hut.Node, Reach.Touch)) return;
                     if (hut.LogsIn < hut.LogsNeeded)
                     {
                         int slot = -1;
                         for (int i = 0; i < npc.Carry.Length; i++) if (!npc.Carry[i].Empty && npc.Carry[i].Ware == Ware.Log) { slot = i; break; }
                         if (slot < 0) { Frustrate(s, npc); return; }
-                        if (--npc.Carry[slot].Count <= 0) npc.Carry[slot] = default;
+                        Goods.Consume(s, ev, Holder.Carry(npc.Id), npc.Carry[slot].Id, 1, ConsumeReason.Built, npc.Id, hut.Id);
                         hut.LogsIn++;
-                        p.Ledger.Consume(ConsumeReason.Built, Ware.Log, 1);
-                        ev.Add(new Consumed { Npc = npc.Id, Hut = hut.Id, Ware = Ware.Log, Count = 1, Reason = ConsumeReason.Built });
                         Contribute(hut, npc);
                         EndAction(npc);
                         return;
@@ -980,6 +1012,9 @@ namespace God.Sim.Population
                     if (++hut.Work >= hut.WorkNeeded) FinishHut(s, ev, hut, day);
                     return;
                 }
+                default:
+                    PopulationExtensions.TryAct(s, ev, npc, day); // F0.9: M4's and M5's intents
+                    return;
             }
         }
 
@@ -1027,9 +1062,8 @@ namespace God.Sim.Population
                 if (slot < 0) { Frustrate(s, npc); return; }
                 var ware = npc.Carry[slot].Ware;
                 int lotId = npc.Carry[slot].Id;
-                bool eatenUp = --npc.Carry[slot].Count <= 0;
-                if (eatenUp) npc.Carry[slot] = default;
-                int relief = Eat(s, ev, npc, ware, true, day);
+                bool eatenUp = npc.Carry[slot].Count <= 1;
+                int relief = Eat(s, ev, npc, ware, lotId, day);
                 var lt = s.Tuning.Learning;
                 if (lt.Goods != GoodsCredit.Immediate)
                 {
@@ -1049,11 +1083,11 @@ namespace God.Sim.Population
                 if (src == null || src.Stock <= 0) { Frustrate(s, npc); return; }
                 var ware = PopulationModule.WareOf(src.Kind);
                 src.Stock--;
-                p.Ledger.Produce(ProduceReason.Foraged, ware, 1);
+                // picked and eaten at once: produced and consumed without ever becoming a lot (no lot id, no goods reward)
+                Goods.ProduceInHand(s, ev, ware, 1, ProduceReason.Foraged, npc.Id, src.Id);
                 p.Stats.Foraged++;
-                ev.Add(new Produced { Npc = npc.Id, Source = src.Id, Ware = ware, Count = 1, Reason = ProduceReason.Foraged });
                 ev.Add(new Foraged { Npc = npc.Id, Source = src.Id, Ware = ware, Count = 1, StockAfter = src.Stock });
-                Eat(s, ev, npc, ware, false, day);
+                Eat(s, ev, npc, ware, 0, day);
                 EndAction(npc);
             }
         }
@@ -1063,8 +1097,9 @@ namespace God.Sim.Population
         /// <c>1000 / (1000 + 250 (n - 1))</c> of the first; ECONOMY A4); nightshade hurts. Returns the hunger relief as the
         /// drive rule pays it (vp; 0 below comfort).
         /// </summary>
-        private int Eat(GodState s, EventBuffer ev, Npc npc, Ware ware, bool fromCarry, int day)
+        private int Eat(GodState s, EventBuffer ev, Npc npc, Ware ware, int fromLot, int day)
         {
+            bool fromCarry = fromLot != 0;
             int hungerBefore = npc.Drives[Drive.Hunger];
             var p = s.Population;
             if (npc.EatenDay != day) { Array.Clear(npc.EatenToday, 0, npc.EatenToday.Length); npc.EatenDay = day; }
@@ -1079,10 +1114,10 @@ namespace God.Sim.Population
                 npc.Drives[Drive.Pain] = Math.Max(npc.Injury, npc.PainExtra);
             }
             Settle(s, npc);
-            p.Ledger.Consume(ConsumeReason.Eaten, ware, 1);
+            if (fromCarry) Goods.Consume(s, ev, Holder.Carry(npc.Id), fromLot, 1, ConsumeReason.Eaten, npc.Id);
+            else Goods.ConsumeInHand(s, ev, ware, 1, ConsumeReason.Eaten, npc.Id);
             p.Stats.Meals++;
             npc.DayMeals++;
-            ev.Add(new Consumed { Npc = npc.Id, Ware = ware, Count = 1, Reason = ConsumeReason.Eaten });
             ev.Add(new Ate { Npc = npc.Id, Ware = ware, Node = npc.Node, FromCarry = fromCarry, Relief = relief, HungerAfter = npc.DriveOf(Drive.Hunger) });
             return Learner.DriveReward(s.Tuning.Learning.WHunger, Thinker.Comfort(s.Tuning.Population, Drive.Hunger) * 1000, hungerBefore, npc.Drives[Drive.Hunger]) / 1000;
         }
@@ -1110,23 +1145,10 @@ namespace God.Sim.Population
                 if (!npc.Carry[i].Empty && npc.Carry[i].Ware == ware) { Learner.AwaitOutcome(npc.Mind.Store, verb, Learner.LotEpisodeKey(npc.Carry[i].Id)); return; }
         }
 
-        /// <summary>Counts a reward that was delivered straight to an episode in the day's reward and punishment sums.</summary>
-        private static void CountReward(AssociationStore st, int vp)
-        {
-            if (vp > 0) st.RewardSumDay += vp; else st.PunishSumDay -= vp;
-        }
-
         public static int VarietyRelief(int nutrition, int nth) => nutrition * 1000 / (1000 + 250 * (nth - 1));
 
         /// <summary>The NPC's own worth of a ware gained or lost (the M3 goods channel): food a little, logs a lot while it needs a hut, tools some.</summary>
-        public static int Worth(GodState s, Npc npc, Ware w)
-        {
-            var tu = s.Tuning.Population;
-            if (Wares.IsFood(w)) return tu.FoodWorth;
-            if (w == Ware.Log) return npc.HomeHut == 0 ? tu.LogWorthNeeded : tu.LogWorthHoused;
-            if (w == Ware.Axe) return tu.ToolWorth;
-            return 0;
-        }
+        public static int Worth(GodState s, Npc npc, Ware w) => GoodsWorth.Of(s, npc, w);
 
         private static ResourceSource SourceAt(PopulationState p, int node)
         {

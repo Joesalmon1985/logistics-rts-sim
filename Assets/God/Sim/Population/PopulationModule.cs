@@ -73,7 +73,37 @@ namespace God.Sim.Population
             int at = p.Npcs.Count;
             while (at > 0 && p.Npcs[at - 1].Id > id) at--;
             p.Npcs.Insert(at, npc);
+            PopulationExtensions.NewMind(s, npc); // F0.13: M4 and M5 give the new mind their parts (no-ops until they land)
             return npc;
+        }
+
+        /// <summary>
+        /// Kills an NPC with one cause (F0.13, extracted from the system's death): mark it dead, emit <see cref="NpcDied"/>,
+        /// let M4 (estate, household) and then M5 react, then the M3 cleanup: what it still carries spills to the ground
+        /// (<see cref="MoveReason.DeathSpill"/>), its hut rights and contributions end, its mind is released.
+        /// </summary>
+        public static void Kill(GodState s, EventBuffer ev, Npc npc, DeathCause cause)
+        {
+            var p = s.Population;
+            npc.Alive = false; npc.DiedTick = s.Tick; npc.DeathCause = cause; npc.Health = 0;
+            p.Stats.Deaths++;
+            p.Stats.DeathsByCause[(int)cause]++;
+            ev.Add(new NpcDied { Npc = npc.Id, Faction = npc.Faction, Cause = cause, Node = npc.Node, AgeTicks = s.Tick - npc.BornTick });
+            PopulationExtensions.OnDeath(s, ev, npc);
+            for (int i = 0; i < npc.Carry.Length; i++)
+            {
+                var l = npc.Carry[i];
+                if (l.Empty) continue;
+                var r = Goods.Move(s, ev, Holder.Carry(npc.Id), l.Id, l.Count, Holder.Ground(npc.Node), MoveReason.DeathSpill, npc.Id);
+                if (!r.Ok) throw new InvalidOperationException("death spill failed: " + r.Status);
+            }
+            foreach (var hut in p.Huts)
+            {
+                for (int i = 0; i < hut.Rights.Length; i++) if (hut.Rights[i] == npc.Id) hut.Rights[i] = 0;
+                hut.Contributors.Remove(npc.Id);
+            }
+            npc.HomeHut = 0; npc.SiteHut = 0; npc.Path = null; npc.Action = default;
+            npc.Mind = null; // the dead keep their record, not their mind
         }
 
         /// <summary>Sets an NPC's nature exactly (controlled tests: identical genomes).</summary>
@@ -118,21 +148,16 @@ namespace God.Sim.Population
             var tu = s.Tuning.Population;
             var eco = s.Tuning.Ecology;
             int day = (int)SimCalendar.Of(s).Day(s.Tick);
+            // before the first tick: no event buffer yet, so the founder packs emit no Produced (their ledger rows are booked)
             if (tu.FounderFood > 0)
-            {
-                var lot = NewLot(s, Ware.Roots, tu.FounderFood, day + eco.RootSpoilDays, 0);
-                PutInCarry(s, npc, lot);
-                s.Population.Ledger.Produce(ProduceReason.Founder, Ware.Roots, tu.FounderFood);
-            }
+                Goods.Produce(s, null, Holder.Carry(npc.Id), Ware.Roots, tu.FounderFood, day + eco.RootSpoilDays, 0, Owner.Npc(npc.Id), ProduceReason.Founder, npc.Id, 0);
             if (r.NextInt(1000) < tu.FounderAxePermille)
-            {
-                PutInCarry(s, npc, NewLot(s, Ware.Axe, 1, -1, tu.AxeUses));
-                s.Population.Ledger.Produce(ProduceReason.Founder, Ware.Axe, 1);
-            }
+                Goods.Produce(s, null, Holder.Carry(npc.Id), Ware.Axe, 1, -1, tu.AxeUses, Owner.Npc(npc.Id), ProduceReason.Founder, npc.Id, 0);
         }
 
         // ---------------- goods ----------------
 
+        /// <summary>Allocates a lot id: called only by <see cref="Goods.Produce"/> (a split in <see cref="Goods.Move"/> takes the next id the same way).</summary>
         public static ItemLot NewLot(GodState s, Ware w, int count, int spoilDay, int uses) =>
             new ItemLot { Id = s.Population.NextLotId++, Ware = w, Count = count, SpoilDay = spoilDay, Uses = uses };
 
@@ -162,24 +187,6 @@ namespace God.Sim.Population
             return slot ? n : 0;
         }
 
-        /// <summary>Puts a lot into the carry: merges with a lot of the same ware and spoil day, else takes a free slot. Returns false when it does not fit.</summary>
-        public static bool PutInCarry(GodState s, Npc npc, ItemLot lot)
-        {
-            if (Room(s, npc, lot.Ware) < lot.Count) return false;
-            // the same ware merges into one lot; a mixed lot rots with its oldest part (the earlier spoil day)
-            for (int i = 0; i < npc.Carry.Length; i++)
-                if (!npc.Carry[i].Empty && npc.Carry[i].Ware == lot.Ware && lot.Ware != Ware.Axe)
-                {
-                    npc.Carry[i].Count += lot.Count;
-                    if (lot.Id < npc.Carry[i].Id) npc.Carry[i].Id = lot.Id;
-                    if (lot.SpoilDay >= 0 && (npc.Carry[i].SpoilDay < 0 || lot.SpoilDay < npc.Carry[i].SpoilDay)) npc.Carry[i].SpoilDay = lot.SpoilDay;
-                    return true;
-                }
-            for (int i = 0; i < npc.Carry.Length; i++)
-                if (npc.Carry[i].Empty) { npc.Carry[i] = lot; return true; }
-            return false;
-        }
-
         public static int CountOf(Npc npc, Ware w)
         {
             int n = 0;
@@ -187,31 +194,15 @@ namespace God.Sim.Population
             return n;
         }
 
-        /// <summary>Drops a lot on a node (merging with an equal lot there).</summary>
-        public static void Drop(GodState s, int node, ItemLot lot)
-        {
-            if (lot.Empty) return;
-            foreach (var g in s.Population.Lots)
-                if (g.Node == node && g.Lot.Ware == lot.Ware && g.Lot.SpoilDay == lot.SpoilDay && lot.Ware != Ware.Axe)
-                {
-                    g.Lot.Count += lot.Count;
-                    if (lot.Id < g.Lot.Id) g.Lot.Id = lot.Id;
-                    return;
-                }
-            s.Population.Lots.Add(new GroundLot { Node = node, Lot = lot });
-            s.Population.Lots.Sort((a, b) => a.Lot.Id.CompareTo(b.Lot.Id));
-            s.Population.IndexDirty = true;
-        }
-
-        /// <summary>A controlled scenario places goods on the ground (counted as <see cref="ProduceReason.Placed"/>).</summary>
+        /// <summary>
+        /// A controlled scenario places goods on the ground (counted as <see cref="ProduceReason.Placed"/>, ownerless). Returns the
+        /// id they lie under (the lower id of an equal lot they merged into). No event: placed outside a tick.
+        /// </summary>
         public static int PlaceLot(GodState s, int node, Ware w, int count)
         {
             int day = (int)SimCalendar.Of(s).Day(s.Tick);
             int spoil = Wares.IsFood(w) ? day + SpoilDays(s.Tuning.Ecology, w) : -1;
-            var lot = NewLot(s, w, count, spoil, w == Ware.Axe ? s.Tuning.Population.AxeUses : 0);
-            s.Population.Ledger.Produce(ProduceReason.Placed, w, count);
-            Drop(s, node, lot);
-            return lot.Id;
+            return Goods.Produce(s, null, Holder.Ground(node), w, count, spoil, w == Ware.Axe ? s.Tuning.Population.AxeUses : 0, Owner.None, ProduceReason.Placed, 0, 0);
         }
 
         public static int SpoilDays(EcologyTuning e, Ware w)
@@ -370,6 +361,7 @@ namespace God.Sim.Population
             var p = s.Population;
             var h = new StateHasher();
             h.Add(p.Npcs.Count); h.Add(p.NextNpcId); h.Add(p.NextLotId); h.Add(p.NextHutId); h.Add(p.NextSourceId); h.Add(p.DayDone); h.Add(p.FoundersAnnounced ? 1 : 0);
+            h.Add(p.NextBinId);
             foreach (var n in p.Npcs)
             {
                 h.Add(n.Id); h.Add((int)n.Faction); h.Add(n.Alive ? 1 : 0); h.Add(n.BornTick); h.Add(n.DiedTick); h.Add((int)n.DeathCause);
@@ -378,7 +370,8 @@ namespace God.Sim.Population
                 h.Add(n.Health); h.Add(n.Nutrition); h.Add(n.Injury); h.Add(n.PainExtra);
                 foreach (int d in n.Drives) h.Add(d);
                 if (n.RewardSnap != null) foreach (int d in n.RewardSnap) h.Add(d);
-                foreach (var l in n.Carry) { h.Add(l.Id); h.Add((int)l.Ware); h.Add(l.Count); h.Add(l.SpoilDay); h.Add(l.Uses); }
+                foreach (var l in n.Carry) { h.Add(l.Id); h.Add((int)l.Ware); h.Add(l.Count); h.Add(l.SpoilDay); h.Add(l.Uses); h.Add((int)l.Owner.Kind); h.Add(l.Owner.Id); }
+                h.Add((int)n.Stage); h.Add(n.Household);
                 h.Add(n.HomeHut); h.Add(n.SiteHut); h.Add(n.EatenDay); foreach (int e in n.EatenToday) h.Add(e);
                 foreach (int t in n.DayTicks) h.Add(t);
                 h.Add(n.DayWalkTicks); h.Add(n.DayMeals); foreach (int d in n.DayDriveSum) h.Add(d);
@@ -397,7 +390,13 @@ namespace God.Sim.Population
                 h.Add(hut.Contributors.Count); foreach (int c in hut.Contributors) h.Add(c);
                 h.Add(hut.FoundedBy); h.Add(hut.BuiltTick);
             }
-            foreach (var g in p.Lots) { h.Add(g.Node); h.Add(g.Lot.Id); h.Add((int)g.Lot.Ware); h.Add(g.Lot.Count); h.Add(g.Lot.SpoilDay); h.Add(g.Lot.Uses); }
+            foreach (var g in p.Lots) { h.Add(g.Node); h.Add(g.Lot.Id); h.Add((int)g.Lot.Ware); h.Add(g.Lot.Count); h.Add(g.Lot.SpoilDay); h.Add(g.Lot.Uses); h.Add((int)g.Lot.Owner.Kind); h.Add(g.Lot.Owner.Id); }
+            h.Add(p.Bins.Count);
+            foreach (var b in p.Bins)
+            {
+                h.Add(b.Id); h.Add((int)b.Kind); h.Add((int)b.Owner.Kind); h.Add(b.Owner.Id); h.Add(b.Node); h.Add(b.WeightCap); h.Add(b.Lots.Count);
+                foreach (var l in b.Lots) { h.Add(l.Id); h.Add((int)l.Ware); h.Add(l.Count); h.Add(l.SpoilDay); h.Add(l.Uses); h.Add((int)l.Owner.Kind); h.Add(l.Owner.Id); }
+            }
             if (p.OpenPileUnits != null) foreach (int u in p.OpenPileUnits) h.Add(u);
             foreach (long v in p.Ledger.Produced) h.Add(v);
             foreach (long v in p.Ledger.Consumed) h.Add(v);

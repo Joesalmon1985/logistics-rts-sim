@@ -1,7 +1,7 @@
 namespace God.Sim
 {
-    /// <summary>Life stages by sim age (POPULATION_DESIGN "Time and life stages").</summary>
-    public enum LifeStage { Child = 0, Adult = 1, Elder = 2 }
+    /// <summary>Life stages by sim age (POPULATION_DESIGN "Time and life stages"). F0.4 renumbered it so that a zeroed record is an adult (M3 NPCs are adults): also <c>Npc.Stage</c>.</summary>
+    public enum LifeStage : byte { Adult = 0, Child = 1, Elder = 2 }
 
     /// <summary>
     /// Days and years from ticks (conventions section 4). A day is <see cref="TicksPerDay"/> ticks (1200 = 2 minutes at 1x),

@@ -234,6 +234,11 @@ namespace God.Sim.Cognition
 
         public const int MaxOpportunities = 8, MaxExperiences = 8;
 
+        /// <summary>F0.5: its believed kin (written only by M4; null without M4). Hashed only when present.</summary>
+        public Population.KinMind Kin;
+        /// <summary>F0.6: its social memory (written only by M5; null without M5). Hashed only when present.</summary>
+        public God.Sim.Social.SocialMind Social;
+
         /// <summary>Remembers an experience (the ring overwrites the oldest).</summary>
         public void Remember(int tick, byte verb, byte cls, int reward, bool episode)
         {
@@ -273,6 +278,9 @@ namespace God.Sim.Cognition
             }
             h.Add(ExperienceCount); h.Add(ExperienceNext);
             for (int i = 0; i < ExperienceCount; i++) { var e = Experiences[i]; h.Add(e.Tick); h.Add(e.Verb | (e.Class << 8) | (e.Episode ? 1 << 16 : 0)); h.Add(e.Reward); }
+            // F0.12: the later modules' parts of a mind, only when present (M3 minds hash exactly as before)
+            if (Kin != null) { h.Add(0x4B494E); Kin.AddTo(ref h); }
+            if (Social != null) { h.Add(0x534F43); Social.AddTo(ref h); }
         }
     }
 }

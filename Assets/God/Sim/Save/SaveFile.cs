@@ -49,11 +49,12 @@ namespace God.Sim
     public sealed class SaveFile
     {
         /// <summary>
-        /// 3 since stage 4 M0: the state carries its <see cref="SimTuning"/>, the setup its calendar (TicksPerDay, DaysPerYear,
+        /// 4 since F0 (lot owners, bins, life stage, household, kin and social slots: SHARED_CONTRACTS 9.3); 5 when M4 and M5
+        /// are both merged. 3 since stage 4 M0: the state carries its <see cref="SimTuning"/>, the setup its calendar (TicksPerDay, DaysPerYear,
         /// LifeScale), disease setting and victory list, and the random streams are keyed. Older saves (2: stage 3; 1: stage 2)
         /// are refused (stage 3 save compatibility is not kept).
         /// </summary>
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         public int Version = CurrentVersion;
         public SaveHeader Header;
