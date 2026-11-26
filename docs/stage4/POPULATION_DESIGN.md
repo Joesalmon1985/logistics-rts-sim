@@ -315,6 +315,19 @@ Recording never changes the hash. See [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_
 - **M9:** soldiers become NPCs ([MILITARY_DESIGN.md](MILITARY_DESIGN.md)).
 - After M6 the flag is on by default. Stage 3 mode stays for the old tests until M14, then it is removed.
 
+### M4 as built (branch `unity/m4`, 26 Nov 2026)
+Implementation decisions this document now records (code: `Sim/Population/Households/LifeCycle.cs`, `Founders.cs`, `Disease.cs`):
+- **Switch.** `SimTuning.Households.Enabled` (default 1) replaces the planned `GameSetup.LifeCycle` (no new setup key, SHARED_CONTRACTS 9.3). With 0, M4 never starts and a game hashes exactly as at F0. Every M4 number sits in nested tuning blocks (`Households.Life`, `.Care`, `.Partner`, `.Disease`, `.Founders`) written only when changed.
+- **Who is an M4 person.** Founders of a game that starts with M4 on, births and immigrants get `Npc.Life` (sex, parents, genome, phenotype, growth, pregnancy, illness). An NPC a test adds directly with `PopulationModule.AddNpc` (M3 fixtures) stays an ageless adult, so M3's controlled scenarios keep their meaning.
+- **Daily jobs** run at each person's slot `1 + (id % 8) x TicksPerDay / 8`, never at a day boundary (so the day's person-day rows and the living agree); births happen on the due tick except at a day boundary.
+- **Founders' ages and households are scenario data** (`Households.Founders.*`): the default is the M3 band (adults 1.0-2.4, each its own household); `m4_*` scenarios set children, elders, couples, same-sex couples, start huts and store food. A founder child is genetically a founder (no known parents) and socially its household's child (kin beliefs from being raised).
+- **Children:** hunger 60% rising to 100% at 1.0, 1.5x starvation damage; below 0.5 years a child cannot pick, forage, gather or take from the store (the act fails); from 0.5 its competence rises from 20% to 100% at 1.0 (a work tick counts that share). Growth `+(Nutrition - 300)/40` a day. The physical phenotype is fixed at 1.0 from the childhood nutrition mean.
+- **Learning by stage:** `AlphaShift` child 1, adult 2, elder 3 (SHARED_CONTRACTS 6); newborns start with an empty store.
+- **Disease calibration:** the daily Health loss is `Severity x 400 / 1000` (`Households.Disease.SeverityScalePermille`) so a fed adult loses the stated 100-300 over an illness; tending lowers that day's loss to 70% and counts the day twice towards recovery. Contacts are hut-mates (same home hut, 15%) and people within 2 nodes (4%); fouling rises 40 per person on a hex a day and falls 20% a day.
+- **Immigration** follows the stated rule from food in members' carries and stores per head and free beds, evaluated first in its tick (tick-of-day 3); off by default. Emigration is not built in M4.
+- **Work hazard:** foraging and gathering carry 1 in 4000 per full work day (a quarter of the day's ticks) for an injury of 100-300; injury above 700 at the day check kills 30%.
+- **Not built in M4:** emigration, elder strength and speed decline (the body has no strength or speed yet), the yearly pyramid snapshot in the sim (the warehouse computes ages from `fact_person_day`).
+
 ## 10. Tests and acceptance criteria
 **Sanity bands, not targets.** Population-level checks (`Capacity_Emerges`, `Stable_10Generations`, `Pyramid_SteadyState`, `Generation_Time`) are wide plausibility bands for the default tuning. A run outside a band is investigated as a possible bug or a degenerate rule. It is never fixed by adding a rule that forces the outcome, and a tuning change made for it records that it serves playability ([VISION_AND_PHILOSOPHY.md](VISION_AND_PHILOSOPHY.md#22-neutrality-binding-on-every-document)).
 

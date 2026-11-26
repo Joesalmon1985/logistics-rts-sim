@@ -287,6 +287,16 @@ Recording never changes the hash of a run.
 - Save version 3 stores genomes of living NPCs (128 bytes each) and all pedigree records of anyone with a living relative within 4 generations; others are pruned.
 - `StateHash` covers every genome and pedigree record.
 
+### M4 as built (branch `unity/m4`, 26 Nov 2026)
+Code: `Sim/Population/Genetics/Genome.cs`. Decisions taken:
+- **Gene map:** slot k of the trait-ordered list sits at locus `23k mod 64` (spreading each trait over chromosomes). Health, Fertility and Lifespan loci have dominance **1000** (the higher allele dominant) and mutation down-bias 600: the design's 750 gave about 10 permille of inbreeding depression at full-sibling mating, below M4.13's 15 (calibration, recorded here).
+- **Developmental noise half-widths** (permille; a centred sum of 4 draws, halved), set from each trait's locus count for the h2 of 4.3: physical 80, Health and Fertility 110, Lifespan 130, appearance 65, personality 125, instinct gains 177, learning 100. Measured: personality phenotypic slope 0.54, genotypic 1.00, segregation variance 0.51 of the population variance.
+- **Personality** = `(GP - 500) / 2` plus noise, clamped to -100..100; instinct gains and learning rates `500 + GP` plus noise. The four gains sit in `Npc.Traits[12..15]` so the mind-side instinct-gain hook can read them without state (a `SelfView` field would be cleaner: contract amendment).
+- **Sex** is drawn with the genome (founders: `genome-founder`; births: `conceive`). The founder mix is drawn from `founder-mix` (npcId), a new keyed stream.
+- **Relatedness** is computed on demand from `PopulationState.Pedigree` (sorted records), depth 4, integer phi in 1/1024; the daily cache of 4.6 is not needed at M4's sizes. `ChildFed` and `CareGiven` carry the true r (analytics).
+- **Resemblance:** `VisibleSpread` 120 gives an AUC of 0.65 (siblings against unrelated pairs).
+- **Not built in M4:** the `GeneticsYearly` snapshot and the population-genetics metrics of 4.9 (the warehouse holds sex, generation, genome hash and the birth phenotype of every person); `GameSetup.Genetics = Fixed` is the tuning path `Genetics.Fixed`.
+
 ## 10. Tests and acceptance criteria
 All run in `DotNet/` and Unity EditMode. Statistical tests use fixed seeds and the tolerances stated, which are about 3 standard errors.
 
