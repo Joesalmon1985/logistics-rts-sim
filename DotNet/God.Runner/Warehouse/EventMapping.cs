@@ -151,6 +151,8 @@ namespace God.Runner.Warehouse
         public SimEvent Event { get; internal set; }
         public God.Sim.EventInfo Info { get; internal set; }
         public bool RowWanted { get; internal set; }
+        /// <summary>The event's domain records at Full (for mappers whose table is written at Full only).</summary>
+        public bool Full { get; internal set; }
         public int Weight { get; internal set; }
         public long Tick => Event.Tick;
         public int Seq => Event.Seq;

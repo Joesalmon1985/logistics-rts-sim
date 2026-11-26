@@ -116,21 +116,32 @@ namespace God.Runner.Tests
             Assert.AreEqual(ev.OfType<AssociationUpdated>().Sum(a => (long)a.Delta), Q(db, "SELECT COALESCE(SUM(delta), 0) FROM fact_learning WHERE kind_code = 1"));
             Assert.AreEqual(ev.OfType<EpisodeClosed>().Sum(a => (long)a.Return), Q(db, "SELECT COALESCE(SUM(return_value), 0) FROM fact_learning WHERE kind_code = 4"));
 
+            // the decision trace (M3b, Full only): one row per DecisionMade, with its terms
+            var dec = ev.OfType<DecisionMade>().ToList();
+            Assert.Greater(dec.Count, 1000, "Full recording traces every decision");
+            Assert.AreEqual(dec.Count, Q(db, "SELECT COUNT(*) FROM fact_decision"));
+            Assert.AreEqual(dec.Sum(x => (long)x.Total), Q(db, "SELECT COALESCE(SUM(total), 0) FROM fact_decision"));
+            Assert.AreEqual(dec.Sum(x => (long)x.Learned), Q(db, "SELECT COALESCE(SUM(learned), 0) FROM fact_decision"));
+            Assert.AreEqual(dec.Count(x => x.ExploreWon), Q(db, "SELECT COUNT(*) FROM fact_decision WHERE explore_won = 1"));
+            foreach (var g in dec.GroupBy(x => x.Verb))
+                Assert.AreEqual(g.Count(), Q(db, "SELECT COUNT(*) FROM fact_decision WHERE verb = " + g.Key), "decisions of verb " + g.Key);
+            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_decision WHERE total <> instinct + learned + social + culture + personality - cost + explore"));
+
             // none of these events also lands in fact_event; counts by code agree with fact_event_day
-            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_event WHERE event_code IN (100, 101, 104, 200, 201, 330, 331, 332, 333)"));
+            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_event WHERE event_code IN (100, 101, 104, 200, 201, 330, 331, 332, 333, 334)"));
             foreach (var g in ev.GroupBy(e => EventCatalog.Of(e.GetType()).Code))
                 Assert.AreEqual(g.Count(), Q(db, "SELECT COALESCE(SUM(events), 0) FROM fact_event_day WHERE event_code = " + g.Key), "fact_event_day " + g.Key);
             using (var d = WarehouseDb.OpenRead(db))
             {
                 Assert.AreEqual(0, WarehouseRecorder.ForeignKeyViolations(d));
-                Assert.AreEqual(5, d.Count("meta_table_grain"));
-                foreach (var t in new[] { "dim_person", "fact_death", "fact_person_day", "fact_production", "fact_learning" })
+                Assert.AreEqual(6, d.Count("meta_table_grain"));
+                foreach (var t in new[] { "dim_person", "fact_death", "fact_person_day", "fact_production", "fact_learning", "fact_decision" })
                     Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM meta_table_grain WHERE table_name = '" + t + "'"), t);
                 Assert.AreEqual("fact_person_day", (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = 104"));
                 Assert.AreEqual("dim_person", (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = 100"));
             }
             TestContext.WriteLine("population warehouse: " + spawned.Count + " persons, " + died.Count + " deaths, " + days.Count + " person-days, " + prod.Count + " produced, "
-                + cons.Count + " consumed, " + upd + "/" + rec + "/" + fre + "/" + epi + " learning events.");
+                + cons.Count + " consumed, " + upd + "/" + rec + "/" + fre + "/" + epi + " learning events, " + dec.Count + " decisions.");
         }
 
         [Test]
@@ -149,6 +160,9 @@ namespace God.Runner.Tests
             long w2 = Q(db, "SELECT COALESCE(SUM(sample_weight), 0) FROM fact_production WHERE direction = 1 AND person_key IS NOT NULL");
             Assert.That(w1, Is.InRange(upd * 0.75, upd * 1.25 + 64));
             Assert.That(w2, Is.InRange(prod * 0.75, prod * 1.25 + 64));
+            // the decision trace is Full only: no event and no row at Summary
+            Assert.AreEqual(0, ev.OfType<DecisionMade>().Count());
+            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_decision"));
             using (var d = WarehouseDb.OpenRead(db)) Assert.AreEqual(0, WarehouseRecorder.ForeignKeyViolations(d));
         }
 

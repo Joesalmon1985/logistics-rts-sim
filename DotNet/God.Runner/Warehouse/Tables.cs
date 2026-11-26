@@ -87,6 +87,10 @@ namespace God.Runner.Warehouse
             "walk_ticks", "meals", "has_bed", "carry_units", "decisions", "learned_share", "explore_share", "reward_sum", "punish_sum", "associations", "conjunctions", "mode_code");
         public static readonly TableDef FactLearning = new TableDef("fact_learning", 63, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "kind_code", "verb", "feature_key",
             "delta", "new_stw", "new_ltw", "origin_code", "slot", "feature_a", "feature_b", "feature_c", "strength", "return_value", "days_elapsed", "sample_weight");
+        /// <summary>The decision trace (M3b DecisionMade, migration 0003): one row per chosen intent, Full only.</summary>
+        public static readonly TableDef FactDecision = new TableDef("fact_decision", 64, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "verb", "target_kind_code",
+            "target_id", "target_location_key", "target_class", "total", "instinct", "need", "learned", "social", "culture", "personality", "cost", "explore",
+            "candidates", "learned_changed_winner", "explore_won", "continued", "second_verb", "second_total", "sample_weight");
         public static readonly TableDef FactMetricDay = new TableDef("fact_metric_day", 59, "run_key", "date_key", "metric", "value");
         public static readonly TableDef FactRunMetric = new TableDef("fact_run_metric", 60, "run_key", "metric", "source", "value", "deterministic");
         public static readonly TableDef MetaLoad = new TableDef("meta_load", 99, "run_key", "first_day", "last_day", "rows_by_table", "dropped_zero_spells", "loaded_at", "wall_seconds");

@@ -311,7 +311,7 @@ namespace God.Runner.Warehouse
             {
                 var p = PlanOf(e.GetType());
                 if (p.Level < RecordingLevel.Summary) continue;
-                _ctx.Event = e; _ctx.Info = p.Info;
+                _ctx.Event = e; _ctx.Info = p.Info; _ctx.Full = p.Level >= RecordingLevel.Full;
                 long date = _ctx.DateKey();
                 AddAggregate(Tables.FactEventDay, new object[] { date, (long)p.Info.Code }, null, new long[] { 1 });
                 if (p.Level >= RecordingLevel.Full || !p.Info.HighVolume) { _ctx.RowWanted = true; _ctx.Weight = 1; }

@@ -15,8 +15,8 @@ namespace God.Runner.Warehouse
     }
 
     /// <summary>
-    /// The M3 population mappers (NpcSpawned, NpcDied, NpcDay, Produced, Consumed and the four learning events), registered
-    /// the same way as the core ones. Tables and grains: see <c>Migrations/0002_population.sql</c> and <see cref="Grains"/>.
+    /// The M3 population mappers (NpcSpawned, NpcDied, NpcDay, Produced, Consumed, the four learning events and M3b's DecisionMade), registered
+    /// the same way as the core ones. Tables and grains: see <c>Migrations/0002_population.sql</c>, <c>0003_decision.sql</c> and <see cref="Grains"/>.
     /// </summary>
     public static class PopulationMapping
     {
@@ -31,6 +31,7 @@ namespace God.Runner.Warehouse
             ("fact_person_day", "one row per living person x sim day (the day that just ended; every person alive at the day start)", "NpcDay"),
             ("fact_production", "one row per WaresProduced (stage 3, building), Produced or Consumed (personal goods, person) event; direction 1 in, -1 out", "WaresProduced, Produced, Consumed"),
             ("fact_learning", "one row per learning event; kind_code says which (association updates are sampled below Full)", "AssociationUpdated, ConjunctionRecruited, ConjunctionFreed, EpisodeClosed"),
+            ("fact_decision", "one row per chosen intent of one person at one think tick (written only when the learning domain records at Full)", "DecisionMade"),
         };
 
         public static void Register(EventMapRegistry r)
@@ -85,6 +86,16 @@ namespace God.Runner.Warehouse
                 (long)e.Slot, (long)e.A, (long)e.B, (long)e.C, null, null, null));
             r.Register<EpisodeClosed>("fact_learning", "learning", (c, e) => Learn(c, e.Npc, LearnEpisode, (long)e.Verb, (long)e.EpisodeKey, null, null, null, null,
                 null, null, null, null, null, (long)e.Return, (long)e.DaysElapsed));
+            // M3b's decision trace: Full only (the sim emits it only then; the level gate here keeps a Summary run of a hand-fed stream empty too)
+            r.Register<DecisionMade>("fact_decision", "decision", (c, e) =>
+            {
+                if (!c.Full || !c.RowWanted) return;
+                var p = c.Person(e.Npc);
+                c.Insert(Tables.FactDecision, c.Tick, c.Seq, c.DateKey(), p.Key, p.FactionKey, (long)e.Verb, (long)(int)e.TargetKind, (long)e.TargetId,
+                    e.TargetNode >= 0 ? (object)c.NodeLocation(e.TargetNode) : null, (long)e.TargetClass, (long)e.Total, (long)e.Instinct, (long)e.Need, (long)e.Learned,
+                    (long)e.Social, (long)e.Culture, (long)e.Personality, (long)e.Cost, (long)e.Explore, (long)e.Candidates,
+                    e.LearnedChangedWinner ? 1L : 0L, e.ExploreWon ? 1L : 0L, e.Continued ? 1L : 0L, (long)e.SecondVerb, (long)e.SecondTotal, (long)c.Weight);
+            });
         }
 
         private static void Learn(MapContext c, int npc, int kind, object verb, object feature, object delta, object stw, object ltw, object origin,
