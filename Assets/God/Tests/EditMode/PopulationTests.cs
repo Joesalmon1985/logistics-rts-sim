@@ -53,7 +53,8 @@ namespace God.Sim.Tests
             Assert.AreEqual(120, p.Npcs.Count);
             Assert.AreEqual(120, p.Stats.Founders);
             Assert.Greater(p.Sources.Count, 30);
-            Assert.AreEqual(GodSim.HashPartNames.Count + 3, sim.StateHashParts().Length);
+            // M4 (SHARED_CONTRACTS 9.3): the "household" part follows the three M3 parts while M4 runs (Households.Enabled, the default)
+            Assert.AreEqual(GodSim.HashPartNames.Count + 3 + (sim.State.Households != null ? 1 : 0), sim.StateHashParts().Length);
             foreach (var f in sim.State.Setup.Factions) Assert.AreEqual(20, p.AliveOf(f));
             Assert.IsEmpty(SimInvariants.Check(sim.State));
         }
