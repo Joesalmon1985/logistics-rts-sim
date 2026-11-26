@@ -122,7 +122,7 @@ When NPC A perceives NPC B (ascending B id), A makes one recognition roll per th
 - **Miss chance** `miss = FailBase × (1000 − Familiarity) / 1000`, with `FailBase` 350 (per mille). Add 100 in darkness and 150 beyond half sight radius. Subtract 100 if B is carrying goods A has just traded with B. Clamp 0..900.
 - **On a miss** B is treated as a stranger for this tick: relation unread, and only a `Seen` entry is made. This is how a cheat hides.
 - **False match** (about one quarter of `miss`, and only if some known C has the same faction colour and gear class): A treats B as C. A acts on C's record. If B then wrongs or helps A, the *update goes to C's record*, until A notices the mismatch (B does something clearly out of character, or A hears B's name used). On noticing, the update is reversed on C at half strength and a new record is made for B.
-- **Familiarity** rises by 100 per completed interaction and 40 per distinct day of contact, up to 1000, and falls by 2 per day without contact.
+- **Familiarity** rises by 180 per completed interaction (I-BS amendment, SHARED_CONTRACTS 12.36: 100 made M5.2's second clause impossible; the M5 evidence is in 8.1) and 40 per distinct day of contact, up to 1000, and falls by 2 per day without contact.
 - **A stranger seen once** gets a `Seen` entry only. The second sighting within 5 days, or the first real interaction, creates a `Relation` (slot rules below).
 
 ### 4.2 Updating a relation (the evidence table)
