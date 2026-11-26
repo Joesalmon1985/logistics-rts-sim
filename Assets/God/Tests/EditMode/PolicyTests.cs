@@ -19,6 +19,7 @@ namespace God.Sim.Tests
         public static readonly Type[] StateTypes =
         {
             typeof(GodState), typeof(EconomyState), typeof(TerritoryState), typeof(MilitaryState), typeof(TradeState), typeof(FactionsState), typeof(GodSim),
+            typeof(Population.PopulationState), typeof(Population.PopulationSystem), typeof(Population.Npc),
         };
 
         /// <summary>The debug overlay and the adapter that builds views and overlays: never reachable from a policy.</summary>
@@ -36,7 +37,7 @@ namespace God.Sim.Tests
             foreach (var t in typeof(GodSim).Assembly.GetTypes())
             {
                 if (t.IsNested) continue; // nested types (closures, lambdas) are scanned with their parent
-                bool inNs = t.Namespace == "God.Sim.Policy";
+                bool inNs = t.Namespace == "God.Sim.Policy" || t.Namespace == "God.Sim.Cognition" || t.Namespace == "God.Sim.Learning"; // M3: the mind (G4.1)
                 bool impl = PolicyInterfaces.Any(i => i.IsAssignableFrom(t));
                 if (inNs || impl) l.Add(t);
             }
@@ -56,6 +57,7 @@ namespace God.Sim.Tests
             ["God.Sim.Information.MilitaryKnowledge"] = "Part of the view (soldiers seen, own flags and marks).",
             ["God.Sim.Information.DiplomacyKnowledge"] = "Part of the view (declarations and standings).",
             ["God.Sim.Information.TradeKnowledge"] = "Part of the view (own trade, envoys seen).",
+            ["God.Sim.Information.PopulationKnowledge"] = "Part of the view (M3: own citizens' inspection cards, sightings of others).",
             ["God.Sim.FactionCommand"] = "Command data; its ValidIn(GodState) helper is called by the handlers, never by a policy.",
         };
 
@@ -65,7 +67,8 @@ namespace God.Sim.Tests
         public void Policies_DoNotReferenceGodState()
         {
             var types = PolicyTypes();
-            Assert.That(types.Select(t => t.Name), Is.SupersetOf(new[] { "IFactionPolicy", "IMilitaryPolicy", "IInstitutionPolicy", "INpcPolicy", "AiBrainFactionPolicy", "Stage3MilitaryPolicy", "PolicyRegistry" }));
+            Assert.That(types.Select(t => t.Name), Is.SupersetOf(new[] { "IFactionPolicy", "IMilitaryPolicy", "IInstitutionPolicy", "INpcPolicy", "AiBrainFactionPolicy", "Stage3MilitaryPolicy", "PolicyRegistry",
+                "AssociativeNpcPolicy", "MindView", "NpcObservation", "Thinker", "ThinkScratch", "NpcMind", "AssociationStore", "Learner" }));
             var bad = new List<string>();
             var forbidden = new HashSet<Type>(StateTypes.Concat(OverlayTypes()));
             foreach (var t in types) bad.AddRange(TypeReferenceScanner.Forbidden(t, forbidden).Select(r => r.ToString()));
@@ -130,7 +133,7 @@ namespace God.Sim.Tests
                 }
         }
 
-        public static Type[] ViewTypes() => new[] { typeof(FactionKnowledgeView), typeof(MapKnowledge), typeof(OwnBooks), typeof(MilitaryKnowledge), typeof(DiplomacyKnowledge), typeof(TradeKnowledge) };
+        public static Type[] ViewTypes() => new[] { typeof(FactionKnowledgeView), typeof(MapKnowledge), typeof(OwnBooks), typeof(MilitaryKnowledge), typeof(DiplomacyKnowledge), typeof(TradeKnowledge), typeof(PopulationKnowledge), typeof(NpcInspection) };
 
         // ---------------------------------------------------------------- M1.6 registry
 
@@ -141,7 +144,8 @@ namespace God.Sim.Tests
             var r = StandardPolicies.Registry(sim);
             CollectionAssert.AreEqual(new[] { "none", "AiBrain" }, r.Names(PolicyLevel.Faction));
             CollectionAssert.AreEqual(new[] { "none", "Stage3MilitaryPolicy" }, r.Names(PolicyLevel.Military));
-            CollectionAssert.AreEqual(new[] { "none" }, r.Names(PolicyLevel.Civilian));
+            CollectionAssert.AreEqual(new[] { "none", "AssociativeNpcPolicy" }, r.Names(PolicyLevel.Civilian), "M3: the default civilian policy");
+            Assert.IsInstanceOf<AssociativeNpcPolicy>(r.Create(PolicyLevel.Civilian, "AssociativeNpcPolicy", -1));
             var p = r.CreateFaction("AiBrain", Faction.F2);
             Assert.IsInstanceOf<AiBrainFactionPolicy>(p);
             Assert.AreEqual(Faction.F2, ((AiBrainFactionPolicy)p).Side);

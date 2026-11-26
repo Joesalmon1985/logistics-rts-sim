@@ -31,6 +31,8 @@ namespace God.Sim.Information
         public MilitaryKnowledge Military { get; }
         public DiplomacyKnowledge Diplomacy { get; }
         public TradeKnowledge Trade { get; }
+        /// <summary>M3: the faction's own people in full (the NPC inspector), anyone else as a sighting.</summary>
+        public PopulationKnowledge Population { get; }
 
         internal FactionKnowledgeView(GodState s, Faction faction, KnowledgeProfile profile)
         {
@@ -42,6 +44,7 @@ namespace God.Sim.Information
             Military = new MilitaryKnowledge(s, faction);
             Diplomacy = new DiplomacyKnowledge(s, faction);
             Trade = new TradeKnowledge(s, faction);
+            Population = new PopulationKnowledge(s, faction);
         }
 
         // ---------------- the game, as everyone knows it ----------------
@@ -99,7 +102,7 @@ namespace God.Sim.Information
         {
             var h = new StateHasher();
             h.Add((int)Faction); h.Add(_s.Tick);
-            Map.AddTo(ref h); Own.AddTo(ref h); Military.AddTo(ref h); Diplomacy.AddTo(ref h); Trade.AddTo(ref h);
+            Map.AddTo(ref h); Own.AddTo(ref h); Military.AddTo(ref h); Diplomacy.AddTo(ref h); Trade.AddTo(ref h); Population.AddTo(ref h);
             foreach (var k in Foreign()) { h.Add((int)k.About); h.Add((int)k.Fact); h.Add(k.Value); h.Add((int)k.Channel); h.Add(k.AsOfTick); h.Add(k.ConfidencePermille); }
             return h.Value;
         }

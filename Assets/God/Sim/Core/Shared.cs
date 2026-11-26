@@ -64,6 +64,8 @@ namespace God.Sim
     /// <summary>System order bands: territory (dice) first, then economy, then military.</summary>
     public static class SystemOrder
     {
+        /// <summary>The population (M3): after the economy, before the military (installed only when the setup has a population).</summary>
+        public const int Population = 250;
         public const int Economy = 200;
         public const int Military = 300;
         /// <summary>The faction system (eliminations, game end), see <see cref="FactionTuning.SystemOrder"/>.</summary>

@@ -96,6 +96,7 @@ namespace God.Runner
                 ["saveBytes"] = bytes.Length, ["saveMs"] = Math.Round(saveMs, 1), ["loadMs"] = Math.Round(loadMs, 1), ["loadSameHash"] = loadedSame,
                 ["machine"] = Environment.MachineName.Length > 0 ? "cores " + Environment.ProcessorCount : "", ["runtime"] = Environment.Version.ToString(),
             };
+            if (sim.State.Population != null) AddPopulationColumns(o, sc, sim, result, done, total.Elapsed.TotalSeconds, memEndCollected);
             o.Log.WriteLine("single: " + done + " ticks, " + tps.ToString("0") + " ticks/s, mean " + ms.Average().ToString("0.000") + " ms, p99 " + Pct(ms, 0.99).ToString("0.000") + " ms, max " + ms.Last().ToString("0.0") + " ms");
 
             // parallel throughput
@@ -123,6 +124,51 @@ namespace God.Runner
             }
             result["parallel"] = par;
             return result;
+        }
+
+        /// <summary>
+        /// The owner's NPC columns (HEADLESS 4.10, ACCEPTANCE M3.24): NPC decisions per second; memory per NPC (the run's
+        /// collected heap minus the same setup without a population after the same ticks, over the NPCs alive); the store's
+        /// fixed bytes per NPC; learning cost per think (the same run with learning Off for the same ticks: the time
+        /// difference over the thinks); path searches per tick; consolidation runs (sleep starts) per sim day.
+        /// </summary>
+        private static void AddPopulationColumns(Options o, Scenario sc, GodSim sim, JObject result, long ticks, double seconds, long memEnd)
+        {
+            var pop = SimBuilder.PopulationOf(sim);
+            var p = sim.State.Population;
+            int alive = p.AliveCount;
+            result["npcs"] = p.Npcs.Count; result["npcsAlive"] = alive;
+            result["npcDecisionsPerSecond"] = Math.Round(pop.Thinks / seconds, 0);
+            result["npcThinks"] = pop.Thinks;
+            result["pathSearchesPerTick"] = Math.Round((double)pop.Pather.Searches / Math.Max(1, ticks), 3);
+            result["pathNodesExpandedPerSearch"] = pop.Pather.Searches > 0 ? Math.Round((double)pop.Pather.Expanded / pop.Pather.Searches, 1) : 0;
+            result["learningStoreBytesPerNpc"] = p.Npcs.First(n => n.Mind != null).Mind.Store.Bytes;
+            result["sleepsPerSimDay"] = Math.Round(p.Stats.Sleeps * (double)sc.TicksPerDay / Math.Max(1, ticks), 1);
+
+            // memory per NPC: the same setup without a population, after the same ticks
+            var setup0 = sc.ToSetup(o.Seed); setup0.Population = false;
+            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+            long m0 = GC.GetTotalMemory(true);
+            var plain = SimBuilder.Create(setup0, sc.ToTuning()).Sim;
+            for (long i = 0; i < ticks; i++) { plain.Step(); plain.DrainEvents(); }
+            long plainBytes = GC.GetTotalMemory(true) - m0;
+            GC.KeepAlive(plain);
+            result["memoryPerNpcBytes"] = alive > 0 ? (memEnd - plainBytes) / alive : 0;
+
+            // learning cost per think: the same game with learning Off, timed over the same ticks
+            var tOff = sc.ToTuning(); tOff.Learning.DefaultMode = God.Sim.Learning.LearningMode.Off;
+            var off = SimBuilder.Create(sc.ToSetup(o.Seed), tOff).Sim;
+            var ev = new List<SimEvent>(256);
+            var sw = Stopwatch.StartNew();
+            for (long i = 0; i < ticks; i++) { off.Step(); ev.Clear(); off.DrainInto(ev); }
+            sw.Stop();
+            long offThinks = SimBuilder.PopulationOf(off).Thinks;
+            double usOn = seconds * 1e6 / Math.Max(1, pop.Thinks), usOff = sw.Elapsed.TotalSeconds * 1e6 / Math.Max(1, offThinks);
+            result["microsPerThinkOn"] = Math.Round(usOn, 2);
+            result["microsPerThinkOff"] = Math.Round(usOff, 2);
+            result["learningMicrosPerThink"] = Math.Round(usOn - usOff, 2);
+            result["learningShareOfThink"] = usOn > 0 ? Math.Round((usOn - usOff) / usOn, 3) : 0;
+            o.Log.WriteLine("npcs " + alive + ": " + pop.Thinks / seconds + " decisions/s, memory/NPC " + result["memoryPerNpcBytes"] + " B, learning " + (usOn - usOff).ToString("0.00") + " us/think of " + usOn.ToString("0.00"));
         }
 
         private static double Pct(double[] sorted, double p)

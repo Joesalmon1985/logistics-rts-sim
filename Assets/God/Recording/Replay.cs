@@ -35,7 +35,7 @@ namespace God.Recording
         public string StartSha256;
         public string StartFile;
         public long CheckpointEvery = 1200;
-        public string[] HashParts = GodSim.HashPartNames.ToArray();
+        public string[] HashParts = GodSim.AllHashPartNames.ToArray();
 
         public JObject ToJson()
         {

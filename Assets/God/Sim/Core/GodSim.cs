@@ -27,6 +27,14 @@ namespace God.Sim
         public static readonly ReadOnlyArray<string> HashPartNames = new ReadOnlyArray<string>(
             "territory", "economy", "military", "factions", "trade", "core", "pending");
 
+        /// <summary>
+        /// Every part name including the modules that exist only in some games: M3's population, cognition and learning parts
+        /// follow <see cref="HashPartNames"/> when the setup has a population, and are absent otherwise, so a stage 3 game's
+        /// parts and hash are exactly as before.
+        /// </summary>
+        public static readonly ReadOnlyArray<string> AllHashPartNames = new ReadOnlyArray<string>(
+            "territory", "economy", "military", "factions", "trade", "core", "pending", "population", "cognition", "learning");
+
         public GodState State { get; }
 
         private readonly List<(int order, int index, ISimSystem system)> _systems = new List<(int, int, ISimSystem)>();
@@ -73,6 +81,7 @@ namespace God.Sim
             MilitaryModule.StartGame(s);
             EconomyModule.StartGame(s);
             TradeModule.StartGame(s);
+            Population.PopulationModule.StartGame(s);
             var sim = new GodSim(s);
             InstallModules(sim);
             return sim;
@@ -86,6 +95,7 @@ namespace God.Sim
             MilitaryModule.Install(sim);
             TradeModule.Install(sim);
             FactionsModule.Install(sim);
+            Population.PopulationModule.Install(sim);
         }
 
         /// <summary>
@@ -124,6 +134,17 @@ namespace God.Sim
 
         public static ulong[] PartsOf(GodState s, IReadOnlyList<Command> pending)
         {
+            if (s.Population == null)
+                return new[]
+                {
+                    TerritoryModule.Hash(s),
+                    EconomyModule.StateHash(s),
+                    s.Military.Hash(s),
+                    FactionsModule.Hash(s),
+                    TradeModule.Hash(s),
+                    CoreHash(s),
+                    PendingHash(pending),
+                };
             return new[]
             {
                 TerritoryModule.Hash(s),
@@ -133,6 +154,9 @@ namespace God.Sim
                 TradeModule.Hash(s),
                 CoreHash(s),
                 PendingHash(pending),
+                Population.PopulationModule.HashPopulation(s),
+                Population.PopulationModule.HashCognition(s),
+                Population.PopulationModule.HashLearning(s),
             };
         }
 

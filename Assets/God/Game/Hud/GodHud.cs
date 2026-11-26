@@ -162,6 +162,7 @@ namespace God.Game
             if (Mode == HudMode.Road && RoadNodes.Count > 1) { ClearRoad(); return; }
             if (Mode != HudMode.Normal) { Mode = HudMode.Normal; PlaceKind = null; ClearRoad(); return; }
             if (SelectedEnvoy != 0) { ClearEnvoy(); return; }
+            if (SelectedNpc != 0) { ClearNpc(); return; }
             if (TradeOpen) { CloseTrade(); return; }
             ClearSelection();
         }
@@ -483,8 +484,10 @@ namespace God.Game
                     bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
                     int b = Mode == HudMode.Place || Mode == HudMode.PlaceHq ? 0 : PickBuilding(mouse);
                     int envoy = Mode == HudMode.Normal ? PickEnvoy(mouse) : 0;
+                    int person = Mode == HudMode.Normal && envoy == 0 ? PickNpc(mouse) : 0;
                     if (envoy != 0) SelectEnvoy(envoy);
-                    else { ClearEnvoy(); WorldClick(HoverNode, b, shift); }
+                    else if (person != 0) SelectNpc(person);
+                    else { ClearEnvoy(); ClearNpc(); WorldClick(HoverNode, b, shift); }
                 }
                 if (Input.GetMouseButtonUp(1) && !Rig.Dragged && !over) Cancel();
             }

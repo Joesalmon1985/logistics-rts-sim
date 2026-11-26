@@ -112,7 +112,24 @@ namespace God.Sim
             new EventInfo(typeof(TradeAccepted), 72, 1, TelemetryDomain.Economy, Generic),
             new EventInfo(typeof(TradeRefused), 73, 1, TelemetryDomain.Economy, Generic),
             new EventInfo(typeof(EnvoyKilled), 74, 1, TelemetryDomain.Economy, Generic),
-            new EventInfo(typeof(EnvoyHome), 75, 1, TelemetryDomain.Economy, Generic));
+            new EventInfo(typeof(EnvoyHome), 75, 1, TelemetryDomain.Economy, Generic),
+            // ---- population, life cycle (100-199), M3 ----
+            new EventInfo(typeof(Population.NpcSpawned), 100, 1, TelemetryDomain.Population, "dim_person", note: "a founder of the scenario (births are NpcBorn from M4)"),
+            new EventInfo(typeof(Population.NpcDied), 101, 1, TelemetryDomain.Population, "fact_death"),
+            new EventInfo(typeof(Population.Ate), 102, 1, TelemetryDomain.Population, Generic, true),
+            new EventInfo(typeof(Population.Slept), 103, 1, TelemetryDomain.Population, Generic, true),
+            new EventInfo(typeof(Population.NpcDay), 104, 1, TelemetryDomain.Population, "fact_person_day", note: "one living person x sim day: needs, body, time allocation, meals, learning outcomes (M3 source; SnapshotBuilder.PersonDay at M13)"),
+            // ---- economy of personal goods (200-299), M3 ----
+            new EventInfo(typeof(Population.Produced), 200, 1, TelemetryDomain.Production, "fact_production", true),
+            new EventInfo(typeof(Population.Consumed), 201, 1, TelemetryDomain.Economy, "fact_production", true),
+            new EventInfo(typeof(Population.Foraged), 202, 1, TelemetryDomain.Production, Generic, true),
+            new EventInfo(typeof(Population.HutBuilt), 203, 1, TelemetryDomain.Economy, Generic),
+            new EventInfo(typeof(Population.HutSiteFounded), 204, 1, TelemetryDomain.Economy, Generic),
+            // ---- learning (300-399), M3 ----
+            new EventInfo(typeof(Learning.AssociationUpdated), 330, 1, TelemetryDomain.Learning, "fact_learning", true),
+            new EventInfo(typeof(Learning.ConjunctionRecruited), 331, 1, TelemetryDomain.Learning, "fact_learning"),
+            new EventInfo(typeof(Learning.ConjunctionFreed), 332, 1, TelemetryDomain.Learning, "fact_learning"),
+            new EventInfo(typeof(Learning.EpisodeClosed), 333, 1, TelemetryDomain.Learning, "fact_learning"));
 
         /// <summary>Lookup over <see cref="All"/>; filled once in the static constructor (allow-listed in the static audit).</summary>
         private static readonly Dictionary<Type, EventInfo> ByType = BuildIndex();

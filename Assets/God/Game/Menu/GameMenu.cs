@@ -114,6 +114,9 @@ namespace God.Game
         /// <summary>True when the Esc menu offers the tutorial tips switch (a tutorial game that is not finished).</summary>
         public bool HasTutorialTips => Boot.Tutorial != null && !Boot.Tutorial.Guide.Finished;
 
+        /// <summary>Start card, Living island: a sandbox with a population on the seed in the field, you as Amber (M3).</summary>
+        public void StartLivingIsland() { ulong seed = ParsedSeed(); Close(); GodBootstrap.StartPopulation(seed, false); }
+
         /// <summary>Start card, Watch: six AIs on the seed in the field.</summary>
         public void StartWatch() => Begin(true);
 
@@ -220,6 +223,7 @@ namespace God.Game
             if (GUILayout.Button("Watch 6 AIs", st.Btn, GUILayout.Height(40f))) StartWatch();
             GUILayout.EndHorizontal();
             if (GUILayout.Button(new GUIContent("Tutorial", "A guided first game on a fixed island, for new players."), st.Btn, GUILayout.Height(30f))) StartTutorial();
+            if (GUILayout.Button(new GUIContent("Living island (people, sandbox)", "Stage 4 preview: 20 people per faction forage, build huts and learn from their own lives. Click a person to inspect them."), st.Btn, GUILayout.Height(30f))) StartLivingIsland();
             if (GUILayout.Button("Load a game", st.Btn, GUILayout.Height(30f))) ShowLoadFromStart();
         }
 

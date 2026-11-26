@@ -206,6 +206,17 @@ namespace God.Sim
             {
                 var p = base.CreateProperty(member, memberSerialization);
                 p.Readable = true; p.Writable = true;
+                if (member is FieldInfo fi && typeof(IOmitWhenDefault).IsAssignableFrom(fi.FieldType))
+                {
+                    var type = fi.FieldType;
+                    p.ShouldSerialize = holder =>
+                    {
+                        var v = fi.GetValue(holder);
+                        if (v == null) return false;
+                        var fresh = Activator.CreateInstance(type);
+                        return JsonConvert.SerializeObject(v, Settings) != JsonConvert.SerializeObject(fresh, Settings);
+                    };
+                }
                 return p;
             }
         }

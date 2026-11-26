@@ -85,7 +85,7 @@ namespace God.Runner.Tests
         [TestCase("{\"military\":{\"default\":\"none\"}}", "soldiers must have a policy")]
         [TestCase("{\"military\":{\"0\":\"AiBrain\"}}", "unknown policy 'AiBrain'")]
         [TestCase("{\"institution\":{\"default\":\"scripted.v1\"}}", "M12")]
-        [TestCase("{\"civilian\":{\"sample\":{\"policy\":\"benchmark.TitForTat\",\"permille\":0}}}", "M3")]
+        [TestCase("{\"civilian\":{\"sample\":{\"policy\":\"benchmark.TitForTat\",\"permille\":0}}}", "M5")]
         [TestCase("{\"diplomat\":{\"default\":\"x\"}}", "policy level")]
         [TestCase("{\"institution\":{\"3\":\"none\"}}", "per-faction")]
         public void PoliciesBlock_RefusesUnusableNamesAtLoad(string block, string mentioned)

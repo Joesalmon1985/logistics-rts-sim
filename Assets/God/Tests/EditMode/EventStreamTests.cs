@@ -20,8 +20,9 @@ namespace God.Sim.Tests
                 Assert.IsFalse(string.IsNullOrEmpty(info.Table), t.Name + " maps to a table");
                 if (info.Table == "analysis-none") Assert.IsFalse(string.IsNullOrEmpty(info.Note), t.Name + ": analysis-none needs a reason");
                 Assert.GreaterOrEqual(info.Version, 1);
-                // Every M0 event is a stage 1-3 system's event: codes 1-99 (DATA_WAREHOUSE 7).
-                var (lo, hi) = EventCatalog.RangeOf(info.Domain, true);
+                // Stage 1-3 events take codes 1-99; the events of stage 4 modules (M3 on) lie in their module's range (DATA_WAREHOUSE 7).
+                bool stage3 = t.Namespace == "God.Sim";
+                var (lo, hi) = EventCatalog.RangeOf(info.Domain, stage3);
                 Assert.That(info.Code, Is.InRange(lo, hi), t.Name);
             }
             Assert.AreEqual(types.Count, EventCatalog.All.Count, "no catalogue row without a type");

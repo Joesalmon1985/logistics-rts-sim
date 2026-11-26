@@ -28,7 +28,6 @@ namespace God.Runner
         {
             ["experiment"] = "M14 (balance sweeps; the full policy suite in stage 6)",
             ["serve"] = "M15 (network readiness)", ["dataset"] = "M15 (network readiness)", ["verify-model"] = "M15 (network readiness)",
-            ["learn-dump"] = "M3 (NPC learning)",
         };
 
         public const string Usage = @"God.Runner - the headless God of the Island simulation (stage 4 M0)
@@ -48,7 +47,9 @@ commands:
                            [--compare FILE] [--update-baseline] [--baseline FILE] [--strict] [--out DIR]
   lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2) | invade | sweep
   export   warehouse out  --from FILE|DIR [--to csv|parquet] --out DIR [--tables a,b]   (SQLite to CSV or a Parquet lake)
-  experiment, serve, dataset, verify-model, learn-dump: later milestones (exit code 9)
+  learn-dump  one NPC's association store as JSON lines --scenario FILE|NAME --seed N --days D --npc ID|all [--out FILE]
+                           or --from-save FILE --npc ID|all
+  experiment, serve, dataset, verify-model: later milestones (exit code 9)
 
 exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 invariant, 6 sim exception,
             7 performance, 8 I/O, 9 not implemented until a later milestone, 130 interrupted";
@@ -75,6 +76,7 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
                     case "replay": return ReplayCmd(a, output, error, cancel);
                     case "bench": return BenchCmd(a, output, error);
                     case "export": return ExportCmd(a, output, error);
+                    case "learn-dump": return LearnDump.Run(a, output, error, cancel);
                     default: error.WriteLine("unknown command '" + cmd + "'\n\n" + Usage); return ExitCodes.Usage;
                 }
             }
@@ -376,11 +378,35 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
                 if (rout != null) { Directory.CreateDirectory(rout); File.WriteAllText(Path.Combine(rout, "bench_recording.json"), rb.ToString(Formatting.Indented)); }
                 return ExitCodes.Ok;
             }
-            if (cases != "bench_stage3_watch6") throw new UsageException("M0 has one bench case, bench_stage3_watch6 (the NPC cases arrive at M3)");
-            var sc = Scenario.Parse(File.ReadAllText(FindScenario(cases)), a.All("set"));
-            var o = new Bench.Options { Scenario = sc, Ticks = a.Long("ticks", 40000), ParallelTicks = a.Long("parallel-ticks", 20000), Log = output, Seed = a.ULong("seed") ?? 1 };
+            var names = cases.Split(',');
+            foreach (var n in names)
+                if (n != "bench_stage3_watch6" && !n.StartsWith("bench_npc_")) throw new UsageException("bench cases: bench_stage3_watch6, bench_npc_120, bench_npc_300, bench_npc_500 (comma-separated)");
+            long ticks = a.Long("ticks", 0), parTicks = a.Long("parallel-ticks", 0);
+            ulong seed = a.ULong("seed") ?? 1;
             string workers = a.Str("workers");
-            if (workers != null) o.Workers = workers.Split(',').Select(x => int.TryParse(x, out int w) && w > 0 ? w : throw new UsageException("--workers takes a list like 1,4,16")).ToArray();
+            int[] w = workers?.Split(',').Select(x => int.TryParse(x, out int k) && k > 0 ? k : throw new UsageException("--workers takes a list like 1,4,16")).ToArray();
+            var sets = a.All("set");
+            if (names.Length > 1)
+            {
+                string outAll = a.Str("out");
+                a.CheckAllUsed(0);
+                var all = new JArray();
+                foreach (var n in names)
+                {
+                    var scn = Scenario.Parse(File.ReadAllText(FindScenario(n)), sets);
+                    bool npc = scn.Population;
+                    var oo = new Bench.Options { Scenario = scn, Ticks = ticks > 0 ? ticks : npc ? 6000 : 40000, ParallelTicks = parTicks > 0 ? parTicks : npc ? 3000 : 20000, Log = output, Seed = seed, Workers = w ?? (npc ? new[] { 1, 4 } : null) };
+                    var r = Bench.Run(oo);
+                    r["gitCommit"] = GitInfo.Commit(); r["date"] = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                    all.Add(r);
+                }
+                output.WriteLine(all.ToString(Formatting.Indented));
+                if (outAll != null) { Directory.CreateDirectory(outAll); File.WriteAllText(Path.Combine(outAll, "bench.json"), all.ToString(Formatting.Indented)); }
+                return ExitCodes.Ok;
+            }
+            var sc = Scenario.Parse(File.ReadAllText(FindScenario(cases)), sets);
+            var o = new Bench.Options { Scenario = sc, Ticks = ticks > 0 ? ticks : sc.Population ? 6000 : 40000, ParallelTicks = parTicks > 0 ? parTicks : sc.Population ? 3000 : 20000, Log = output, Seed = seed };
+            if (w != null) o.Workers = w; else if (sc.Population) o.Workers = new[] { 1, 4 };
             string compare = a.Str("compare");
             bool update = a.Flag("update-baseline"), strict = a.Flag("strict");
             string baselinePath = a.Str("baseline", Path.Combine("DotNet", "God.Runner", "Bench", "baseline.json"));

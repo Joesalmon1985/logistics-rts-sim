@@ -77,7 +77,7 @@ namespace God.Game
             DrawArmy(st, stripH, repaint);
             DrawToastAndHelp(st, vw, vh, stripH, repaint);
             DrawTutorialPointers(vw, vh, repaint);
-            if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); }
+            if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); DrawPeople(st, vw, vh, stripH, repaint); }
             else DrawEnd(st, vw, vh, repaint);
             DrawTrueState(st, vw, vh, repaint);
             DrawTooltip(st, vw, vh);

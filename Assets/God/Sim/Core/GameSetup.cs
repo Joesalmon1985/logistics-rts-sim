@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using Newtonsoft.Json;
 
 namespace God.Sim
@@ -36,6 +37,16 @@ namespace God.Sim
         public int LifeScale = SimCalendar.DefaultLifeScale;
         /// <summary>Whether per-day forgetting (social memory, associations) keeps pace with LifeScale. Default false (owner question 1).</summary>
         public bool DecayFollowsLifeScale;
+        /// <summary>
+        /// M3: the game has a living population (NPCs, wild food, huts). Off: the stage 3 game, unchanged (G6.1). Written to the
+        /// setup's JSON only when set, so every stage 3 hash is unchanged.
+        /// </summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool Population;
+        /// <summary>Founders per faction when <see cref="Population"/> is on (the owner's first scenario: about 20 in each of 6 factions).</summary>
+        [DefaultValue(20)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
+        public int StartNpcsPerFaction = 20;
         /// <summary>Disease setting for the population milestones (unused before M3/M4). On by default; the tutorial uses Mild.</summary>
         public DiseaseSetting Disease = DiseaseSetting.On;
         /// <summary>The faction knowledge view is filled almost completely (stage 4: information separation built, not enforced). Unused before M1.</summary>
