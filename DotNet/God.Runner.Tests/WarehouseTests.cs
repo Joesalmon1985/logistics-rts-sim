@@ -66,11 +66,11 @@ namespace God.Runner.Tests
             {
                 Assert.AreEqual(WarehouseDb.CurrentVersion, d.SchemaVersion());
                 Assert.AreEqual(WarehouseDb.CurrentVersion, (long)d.Scalar("SELECT COUNT(*) FROM meta_schema_version"), "one row per applied migration");
-                Assert.AreEqual(3, WarehouseDb.CurrentVersion, "v3 = the M3 population tables and the M3b decision trace");
+                Assert.AreEqual(4, WarehouseDb.CurrentVersion, "v4 = the M3 population tables, the M3b decision trace and F0's people and goods seams");
                 var tables = d.TableNames();
                 foreach (var t in new[] { "dim_run", "dim_date", "dim_faction", "dim_faction_history", "dim_ware", "dim_building", "dim_location", "dim_code", "dim_kpi",
                     "fact_faction_day", "fact_production", "fact_production_day", "fact_combat", "fact_command", "fact_policy_change", "fact_kpi", "fact_event",
-                    "fact_run_metric", "fact_metric_day", "dim_person", "fact_death", "fact_person_day", "fact_learning", "fact_decision", "meta_table_grain", "meta_event_type", "meta_event_map", "meta_load", "meta_schema_version" })
+                    "fact_run_metric", "fact_metric_day", "dim_person", "fact_death", "fact_person_day", "fact_learning", "fact_decision", "dim_party", "fact_ownership", "fact_social_day", "meta_table_grain", "meta_event_type", "meta_event_map", "meta_load", "meta_schema_version" })
                     CollectionAssert.Contains(tables, t);
                 Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM dim_run"));
                 Assert.AreEqual(res.RunId, (string)d.Scalar("SELECT run_id FROM dim_run"));

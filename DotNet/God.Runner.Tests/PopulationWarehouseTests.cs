@@ -127,15 +127,29 @@ namespace God.Runner.Tests
                 Assert.AreEqual(g.Count(), Q(db, "SELECT COUNT(*) FROM fact_decision WHERE verb = " + g.Key), "decisions of verb " + g.Key);
             Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_decision WHERE total <> instinct + learned + social + culture + personality - cost + explore"));
 
+            // F0.14: one fact_ownership row per OwnershipChanged; the parties are in dim_party; the lots of fact_production
+            var own = ev.OfType<OwnershipChanged>().ToList();
+            Assert.Greater(own.Count, 0, "pick-ups, drops and death spills change owners");
+            Assert.AreEqual(own.Count, Q(db, "SELECT COUNT(*) FROM fact_ownership"));
+            foreach (var g in own.GroupBy(o => (int)o.Basis))
+                Assert.AreEqual(g.Count(), Q(db, "SELECT COUNT(*) FROM fact_ownership WHERE basis_code = " + g.Key), "basis " + (OwnershipBasis)g.Key);
+            Assert.AreEqual(own.Count(o => o.FromKind == OwnerKind.None), Q(db, "SELECT COUNT(*) FROM fact_ownership WHERE from_party_key IS NULL"));
+            Assert.AreEqual(own.Count(o => o.ToKind == OwnerKind.None), Q(db, "SELECT COUNT(*) FROM fact_ownership WHERE to_party_key IS NULL"));
+            Assert.AreEqual(own.Where(o => o.ToKind == OwnerKind.Npc).Select(o => o.ToId).Concat(own.Where(o => o.FromKind == OwnerKind.Npc).Select(o => o.FromId)).Distinct().Count(),
+                Q(db, "SELECT COUNT(*) FROM dim_party WHERE party_kind_code = 1 AND person_key IS NOT NULL"));
+            Assert.AreEqual(prod.Sum(p => (long)p.Lot), Q(db, "SELECT COALESCE(SUM(lot_id), 0) FROM fact_production WHERE direction = 1 AND person_key IS NOT NULL"));
+            Assert.AreEqual(cons.Sum(p => (long)p.Lot), Q(db, "SELECT COALESCE(SUM(lot_id), 0) FROM fact_production WHERE direction = -1"));
+            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_social_day"), "nothing fills the social day before M4 and M5");
+
             // none of these events also lands in fact_event; counts by code agree with fact_event_day
-            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_event WHERE event_code IN (100, 101, 104, 200, 201, 330, 331, 332, 333, 334)"));
+            Assert.AreEqual(0, Q(db, "SELECT COUNT(*) FROM fact_event WHERE event_code IN (100, 101, 104, 200, 201, 206, 330, 331, 332, 333, 334)"));
             foreach (var g in ev.GroupBy(e => EventCatalog.Of(e.GetType()).Code))
                 Assert.AreEqual(g.Count(), Q(db, "SELECT COALESCE(SUM(events), 0) FROM fact_event_day WHERE event_code = " + g.Key), "fact_event_day " + g.Key);
             using (var d = WarehouseDb.OpenRead(db))
             {
                 Assert.AreEqual(0, WarehouseRecorder.ForeignKeyViolations(d));
-                Assert.AreEqual(6, d.Count("meta_table_grain"));
-                foreach (var t in new[] { "dim_person", "fact_death", "fact_person_day", "fact_production", "fact_learning", "fact_decision" })
+                Assert.AreEqual(9, d.Count("meta_table_grain"));
+                foreach (var t in new[] { "dim_person", "fact_death", "fact_person_day", "fact_production", "fact_learning", "fact_decision", "dim_party", "fact_ownership", "fact_social_day" })
                     Assert.AreEqual(1, (long)d.Scalar("SELECT COUNT(*) FROM meta_table_grain WHERE table_name = '" + t + "'"), t);
                 Assert.AreEqual("fact_person_day", (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = 104"));
                 Assert.AreEqual("dim_person", (string)d.Scalar("SELECT target_table FROM meta_event_map WHERE code = 100"));
@@ -225,6 +239,48 @@ namespace God.Runner.Tests
                     foreach (var c in WarehouseExport.Columns(d, t).Where(x => x.IsInteger))
                         Assert.AreEqual(Convert.ToInt64(d.Scalar("SELECT COALESCE(SUM(" + c.Name + "), 0) FROM " + t) ?? 0L), sums.GetValueOrDefault(c.Name), t + "." + c.Name);
                 }
+        }
+
+        // ------------------------------------------------------------------ owner D3: the decision trace is the decisions
+
+        /// <summary>
+        /// D3.1: every DecisionMade is exactly one intent the NPC then started (same NPC, verb and target, in order, tick by
+        /// tick), and tracing them changes nothing: the traced and the untraced sim keep the same hash.
+        /// </summary>
+        [Test]
+        public void DecisionTrace_IsExactlyTheIntentsStarted_AndChangesNoHash()
+        {
+            var setup = new GameSetup(2, GameSetup.NoHuman, 6) { Population = true, StartNpcsPerFaction = 20, Victory = VictorySpec.SandboxOnly() };
+            var traced = SimBuilder.Create(setup).Sim; traced.TraceDecisions = true;
+            var plain = SimBuilder.Create(setup).Sim;
+            var pop = traced.Systems.OfType<PopulationSystem>().Single();
+            var started = new List<(int, byte, God.Sim.Policy.IntentTarget, int)>();
+            pop.Started = (id, a) => started.Add((id, a.Verb, a.TargetKind, a.TargetKind == God.Sim.Policy.IntentTarget.Node ? a.TargetNode : a.TargetId));
+            long decisions = 0;
+            for (int t = 1; t <= 2 * setup.TicksPerDay + 5; t++)
+            {
+                started.Clear();
+                traced.Step(); plain.Step();
+                var dec = traced.DrainEvents().OfType<DecisionMade>()
+                    .Select(d => (d.Npc, d.Verb, d.TargetKind, d.TargetKind == God.Sim.Policy.IntentTarget.Node ? d.TargetNode : d.TargetId)).ToList();
+                plain.DrainEvents();
+                CollectionAssert.AreEqual(started, dec, "tick " + t + ": decisions traced vs intents started");
+                decisions += dec.Count;
+                if (t % 600 == 0) Assert.AreEqual(plain.StateHash(), traced.StateHash(), "tick " + t);
+            }
+            Assert.Greater(decisions, 1000);
+            Assert.AreEqual(plain.StateHash(), traced.StateHash());
+            TestContext.WriteLine(decisions + " decisions, each one started intent");
+        }
+
+        /// <summary>D3.1: recording at Full (with the decision trace and the warehouse) gives the same final hash as recording Off.</summary>
+        [Test]
+        public void FullRecording_WithTheDecisionTrace_HashesLikeOff()
+        {
+            var (full, _, cap) = Run("hfull", 2, Ticks, RecordingLevel.Full);
+            var (off, _, _) = Run("hoff", 2, Ticks, RecordingLevel.Off, sqlite: false);
+            Assert.Greater(cap.Events.OfType<DecisionMade>().Count(), 1000);
+            Assert.AreEqual(off.FinalHash, full.FinalHash);
         }
     }
 }
