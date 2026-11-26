@@ -156,7 +156,40 @@ namespace God.Game
             DrawClock(st, x, y);
         }
 
-        /// <summary>Speed, pause, and the dice tick.</summary>
+        /// <summary>The sim calendar as the cloud strip shows it: "Day 3, year 1" (M0, <see cref="SimCalendar"/>).</summary>
+        public string CalendarText() => SimCalendar.Of(Sim.State).Label(Sim.State.Tick);
+
+        /// <summary>How far through the day (0 to 1) and which day of the year (0-based), for the strip's calendar bar.</summary>
+        public (float dayFraction, int dayOfYear, int daysPerYear) CalendarProgress()
+        {
+            var c = SimCalendar.Of(Sim.State); long t = Sim.State.Tick;
+            return (c.DayPermille(t) / 1000f, c.DayOfYear(t), c.DaysPerYear);
+        }
+
+        /// <summary>
+        /// The calendar on the cloud strip: the day and year, a thin bar that fills as the day goes by, and one pip per day
+        /// of the year, the days gone filled (a small progressive picture of sim time; M0).
+        /// </summary>
+        private void DrawCalendar(float x, float y, bool repaint)
+        {
+            GUI.Label(new Rect(x, y + 6f, 120f, 16f), new GUIContent(CalendarText(), "Sim calendar: a day is " + Sim.State.Setup.TicksPerDay / GodSim.TicksPerSecond + " s at 1x"), _bold);
+            if (!repaint) return;
+            var (frac, day, days) = CalendarProgress();
+            const float w = 112f;
+            var bar = new Rect(x, y + 25f, w, 4f);
+            GUI.DrawTexture(bar, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, new Color(0.35f, 0.30f, 0.22f, 0.35f), Vector4.zero, new Vector4(2f, 2f, 2f, 2f));
+            GUI.DrawTexture(new Rect(bar.x, bar.y, Mathf.Max(2f, w * frac), bar.height), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f,
+                new Color(1f, 0.78f, 0.30f, 0.95f), Vector4.zero, new Vector4(2f, 2f, 2f, 2f));
+            int n = Mathf.Clamp(days, 1, 24);
+            float pip = Mathf.Min(8f, (w - (n - 1) * 3f) / n);
+            for (int i = 0; i < n; i++)
+            {
+                var c = i < day ? new Color(0.55f, 0.42f, 0.22f, 0.9f) : i == day ? new Color(1f, 0.78f, 0.30f, 0.95f) : new Color(0.35f, 0.30f, 0.22f, 0.30f);
+                GUI.DrawTexture(new Rect(x + i * (pip + 3f), y + 33f, pip, pip), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, c, Vector4.zero, new Vector4(pip * 0.5f, pip * 0.5f, pip * 0.5f, pip * 0.5f));
+            }
+        }
+
+        /// <summary>Speed, pause, the dice tick and the sim calendar.</summary>
         private void DrawClock(HudStyle st, float x, float y)
         {
             bool repaint = Event.current.type == EventType.Repaint;
@@ -176,6 +209,7 @@ namespace God.Game
             if (repaint)
                 GUI.DrawTexture(new Rect(x + 12f - size * 0.5f, y + 23f - size * 0.5f, size, size), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f,
                     new Color(1f, 0.80f, 0.25f, 0.45f + 0.55f * k), Vector4.zero, new Vector4(size * 0.3f, size * 0.3f, size * 0.3f, size * 0.3f));
+            DrawCalendar(x + 34f, y, repaint);
         }
 
         // ---------------------------------------------------------------- readout, toast, help

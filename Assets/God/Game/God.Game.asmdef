@@ -2,7 +2,8 @@
     "name": "God.Game",
     "rootNamespace": "God.Game",
     "references": [
-        "God.Sim"
+        "God.Sim",
+        "God.Recording"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

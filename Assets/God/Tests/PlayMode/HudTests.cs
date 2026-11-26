@@ -61,6 +61,28 @@ namespace God.Game.Tests
         private IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
         [UnityTest]
+        public IEnumerator CloudStrip_ShowsTheSimCalendar_DayAndYear()
+        {
+            // M0: the strip shows the sim day and year (SimCalendar) with a bar for the day and a pip per day of the year.
+            yield return Load(true);
+            _boot.Running = false;
+            Assert.AreEqual(1200, Sim.State.Setup.TicksPerDay);
+            long t0 = Sim.State.Tick;
+            Assert.Less(t0, 1200, "a new game starts on its first day");
+            Assert.AreEqual("Day 1, year 1", _hud.CalendarText());
+            Sim.Step((int)(1800 - t0));
+            Sim.DrainEvents();
+            Assert.AreEqual("Day 2, year 1", _hud.CalendarText());
+            var (frac, day, days) = _hud.CalendarProgress();
+            Assert.AreEqual(0.5f, frac, 0.001f, "half way through the day");
+            Assert.AreEqual(1, day); Assert.AreEqual(10, days);
+            Sim.Step(12000);
+            Sim.DrainEvents();
+            Assert.AreEqual("Day 2, year 2", _hud.CalendarText());
+            yield return Frames(3); // and the strip draws it without errors
+        }
+
+        [UnityTest]
         public IEnumerator Game_RunsByDefault_PauseAndSpeedButtonsWork()
         {
             yield return Load(false);
