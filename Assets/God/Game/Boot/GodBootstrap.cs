@@ -89,6 +89,16 @@ namespace God.Game
         public ToastFeed Toasts { get; private set; }
         /// <summary>Tall faction standards over every HQ and Citadel (P10).</summary>
         public StandardLayer Standards { get; private set; }
+        /// <summary>M3: the population drawn in the world (null without a population).</summary>
+        public NpcLayer People { get; private set; }
+        /// <summary>Each faction's own knowledge view, built on demand (watch mode reads the inspected person's faction's records).</summary>
+        private readonly System.Collections.Generic.Dictionary<Faction, FactionKnowledgeView> _views = new System.Collections.Generic.Dictionary<Faction, FactionKnowledgeView>();
+        public FactionKnowledgeView ViewOf(Faction f)
+        {
+            if (View != null && View.Faction == f) return View;
+            if (!_views.TryGetValue(f, out var v)) _views[f] = v = ViewFiller.For(Sim, f);
+            return v;
+        }
         /// <summary>Watch-mode camera keys (P10).</summary>
         public WatchCamera WatchCam { get; private set; }
         /// <summary>Raised for every sim event the bootstrap drains each frame (toasts, effects). Tests may call <see cref="PumpEvents"/>.</summary>
@@ -136,6 +146,8 @@ namespace God.Game
                 if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
                 var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") || HasArg("-godsmoke") ? GameSetup.NoHuman : 0);
                 PendingSetup = null;
+                // M3: -godpopulation starts a game with a living population (founders, wild food, huts) in a sandbox
+                if (HasArg("-godpopulation") && !setup.Population) { setup.Population = true; setup.Victory = VictorySpec.SandboxOnly(); }
                 setup.Seed = seed;
                 // M0: built through SimBuilder, as the headless runner builds it (the AI is attached in StartAi).
                 Sim = SimBuilder.Create(setup, null, attachAi: false).Sim;
@@ -161,6 +173,7 @@ namespace God.Game
             Economy = EconomyView.Create(Sim, transform);
             Military = MilitaryView.Create(Sim, transform);
             Standards = StandardLayer.Create(Sim, transform);
+            if (Sim.State.Population != null) People = NpcLayer.Create(Sim, transform);
             ReadRunArgs();
             SmokeRun.StartIfAsked(this);
             _saveExtras.Add(new ChainBotsSave(this));
@@ -253,6 +266,18 @@ namespace God.Game
         }
 
         /// <summary>
+        /// M3: starts a sandbox with a living population on the next scene load: 20 founders per faction living on wild food,
+        /// building huts and learning; you play Amber (or watch). The stage 3 game is unchanged otherwise.
+        /// </summary>
+        public static void StartPopulation(ulong seed, bool watch)
+        {
+            PendingSeed = seed;
+            PendingSetup = new GameSetup(seed, watch ? GameSetup.NoHuman : 0) { Population = true, StartNpcsPerFaction = 20, Victory = VictorySpec.SandboxOnly() };
+            PendingStartAi = true;
+            ReloadScene();
+        }
+
+        /// <summary>
         /// Starts the tutorial on the next scene load: the fixed island (<see cref="TutorialIsland.Seed"/>), you as Amber,
         /// the AIs at peace with you, and the pop-up cards. The setup carries <c>Tutorial</c>, so a save keeps it.
         /// </summary>
@@ -283,7 +308,9 @@ namespace God.Game
                 next %= 1000000000UL; if (next == seed) next++;
             }
             PendingSeed = next;
-            PendingSetup = new GameSetup(next, Sim.State.Setup.Human, Sim.State.Setup.FactionCount) { Tutorial = tutorial };
+            var old = Sim.State.Setup;
+            PendingSetup = new GameSetup(next, old.Human, old.FactionCount) { Tutorial = tutorial, Population = old.Population, StartNpcsPerFaction = old.StartNpcsPerFaction };
+            if (old.Population) PendingSetup.Victory = VictorySpec.SandboxOnly();
             PendingStartAi = true;
             return next;
         }
