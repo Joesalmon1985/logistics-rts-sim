@@ -122,6 +122,37 @@ namespace God.Sim.Population
         public long Since;
     }
 
+    /// <summary>
+    /// What an NPC spends a tick on (time allocation, for the person-day row): its current intent's purpose, Sleep while
+    /// asleep, Idle with no intent. Walking to a target counts under the target's purpose (and in <see cref="Npc.DayWalkTicks"/>).
+    /// </summary>
+    public static class Activity
+    {
+        public const int Idle = 0, Eat = 1, Forage = 2, Sleep = 3, Rest = 4, Explore = 5, Gather = 6, Build = 7, Flee = 8, Carry = 9, Other = 10;
+        public const int Count = 11;
+        public static readonly ReadOnlyArray<string> Names = new ReadOnlyArray<string>(
+            "idle", "eat", "forage", "sleep", "rest", "explore", "gather", "build", "flee", "carry", "other");
+
+        public static int Of(in NpcAction a)
+        {
+            if (a.Asleep) return Sleep;
+            switch (a.Verb)
+            {
+                case 0: return Idle;
+                case Learning.Verb.Eat: return Eat;
+                case Learning.Verb.ForageAt: return Forage;
+                case Learning.Verb.Sleep: return Sleep;
+                case Learning.Verb.Rest: return Rest;
+                case Learning.Verb.Explore: return Explore;
+                case Learning.Verb.Gather: return Gather;
+                case Learning.Verb.Build: return Build;
+                case Learning.Verb.Flee: return Flee;
+                case Learning.Verb.PickUp: case Learning.Verb.Drop: case Learning.Verb.Equip: case Learning.Verb.Haul: return Carry;
+                default: return Other;
+            }
+        }
+    }
+
     /// <summary>The 12 personality traits (POPULATION_DESIGN "Personality"), -100..100, fixed at birth (random per founder until M4's genome).</summary>
     public static class Trait
     {
@@ -181,6 +212,13 @@ namespace God.Sim.Population
         // ---- now ----
         public NpcAction Action;
         public long LastThinkTick = -1;
+
+        // ---- today (the person-day row, reset at day start) ----
+        /// <summary>Ticks spent per <see cref="Activity"/> today.</summary>
+        public int[] DayTicks = new int[Activity.Count];
+        /// <summary>Ticks spent walking today (any purpose), food units eaten, and the summed drive levels (permille x ticks) for the day's means.</summary>
+        public int DayWalkTicks, DayMeals;
+        public int[] DayDriveSum = new int[Drive.Count];
 
         // ---- streams (keyed: npc id, then purpose) ----
         public Rng RngPolicy, RngWork, RngLearn;

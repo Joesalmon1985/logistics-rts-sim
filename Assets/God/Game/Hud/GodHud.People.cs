@@ -95,12 +95,18 @@ namespace God.Game
             GUILayout.Label(c.Carry.Count == 0 ? "nothing" : string.Join(", ", c.Carry), st.Small);
             Section(st, "Last decision and why");
             GUILayout.Label(c.LastDecision.Length > 0 ? c.LastDecision + " (of " + c.Candidates + " options)" : "none yet", st.Label);
-            GUILayout.Label("instinct " + Signed(c.Instinct) + "   learned " + Signed(c.Learned) + "   personality " + Signed(c.Personality)
+            GUILayout.Label("need " + Signed(c.Need) + "   instinct " + Signed(c.Instinct - c.Need) + "   learned " + Signed(c.Learned) + "   personality " + Signed(c.Personality)
                 + "   cost " + Signed(-c.Cost) + "   explore " + Signed(c.Explore) + "   = " + c.Total, st.Small);
             if (c.LearnedChangedWinner) GUILayout.Label("What it has learned changed this choice.", st.Small);
             if (c.ExploreWon) GUILayout.Label("Curiosity tipped this choice (exploration).", st.Small);
             if (c.RunnerUp.Length > 0) GUILayout.Label("Runner-up: " + c.RunnerUp, st.Small);
             foreach (var h in c.Why) GUILayout.Label("  because: " + h.Text, st.Small);
+            Section(st, "Options it weighed");
+            if (c.Opportunities.Count == 0) GUILayout.Label("none yet", st.Small);
+            foreach (var o in c.Opportunities) GUILayout.Label((o.Chosen ? "> " : "  ") + o.Breakdown, st.Small);
+            Section(st, "Recent experiences");
+            if (c.Experiences.Count == 0) GUILayout.Label("none yet", st.Small);
+            foreach (var e in c.Experiences) GUILayout.Label("  " + e.Text, st.Small);
             Section(st, "Attending to");
             GUILayout.Label(c.Attending.Count == 0 ? "nothing in view" : string.Join(", ", c.Attending), st.Small);
             Section(st, "Believes");

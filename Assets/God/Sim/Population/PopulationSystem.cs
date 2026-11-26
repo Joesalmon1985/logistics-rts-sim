@@ -148,6 +148,7 @@ namespace God.Sim.Population
                 if (!npc.Alive) continue;
                 Body(s, npc, cal);
                 if (npc.Health <= 0) { Die(s, ev, npc, npc.DeathCause == DeathCause.None ? DeathCause.Starvation : npc.DeathCause); continue; }
+                Account(npc);
                 if (npc.Action.Asleep)
                 {
                     // rested, or hungry enough to get up once somewhat rested (exhaustion keeps a starving sleeper asleep)
@@ -171,12 +172,51 @@ namespace God.Sim.Population
             }
         }
 
+        /// <summary>Today's time allocation and need levels: one tick of what the NPC is doing (read-only of the sim; counters only).</summary>
+        private static void Account(Npc npc)
+        {
+            npc.DayTicks[Activity.Of(npc.Action)]++;
+            if (!npc.Action.Asleep && npc.Path != null && npc.PathIdx < npc.Path.Length) npc.DayWalkTicks++;
+            for (int d = 0; d < Drive.Count; d++) npc.DayDriveSum[d] += npc.Drives[d] / 1000;
+        }
+
+        /// <summary>The person-day row of the day that just ended (<see cref="NpcDay"/>), then the counters reset.</summary>
+        private static void PersonDay(GodState s, EventBuffer ev, Npc npc, int endedDay, int tpd)
+        {
+            int ticks = 0;
+            foreach (int t in npc.DayTicks) ticks += t;
+            var m = npc.Mind;
+            int Mean(int d) => ticks == 0 ? 0 : npc.DayDriveSum[d] / ticks;
+            int carry = 0;
+            foreach (var l in npc.Carry) if (!l.Empty) carry += l.Count;
+            var mode = m.Store.Mode;
+            ev.Add(new NpcDay
+            {
+                Npc = npc.Id, Faction = npc.Faction, Day = endedDay, AgeDays = (int)((s.Tick - npc.BornTick) / tpd), Node = npc.Node,
+                Health = npc.HealthPermille, Nutrition = npc.NutritionPermille,
+                Hunger = npc.DriveOf(Drive.Hunger), Fatigue = npc.DriveOf(Drive.Fatigue), Cold = npc.DriveOf(Drive.Cold), Fear = npc.DriveOf(Drive.Fear), Pain = npc.DriveOf(Drive.Pain),
+                MeanHunger = Mean(Drive.Hunger), MeanFatigue = Mean(Drive.Fatigue), MeanCold = Mean(Drive.Cold), MeanFear = Mean(Drive.Fear), MeanPain = Mean(Drive.Pain),
+                Ticks = (int[])npc.DayTicks.Clone(), WalkTicks = npc.DayWalkTicks, Meals = npc.DayMeals, HasBed = npc.HomeHut != 0, CarryUnits = carry,
+                Decisions = m.DayDecisions,
+                LearnedShare = m.DayDecisions > 0 ? m.DayLearnedChanged * 1000 / m.DayDecisions : 0,
+                ExploreShare = m.DayDecisions > 0 ? m.DayExploreWon * 1000 / m.DayDecisions : 0,
+                RewardSum = m.Store.RewardSumDay, PunishSum = m.Store.PunishSumDay, Associations = m.Store.Count, Conjunctions = m.Store.ConjUsed,
+                Mode = mode == LearningMode.On ? LearningModeCode.On : mode == LearningMode.Frozen ? LearningModeCode.Frozen : LearningModeCode.Off,
+            });
+            System.Array.Clear(npc.DayTicks, 0, npc.DayTicks.Length);
+            System.Array.Clear(npc.DayDriveSum, 0, npc.DayDriveSum.Length);
+            npc.DayWalkTicks = 0; npc.DayMeals = 0;
+        }
+
         // ---------------- day start ----------------
 
         private void DayStart(GodState s, EventBuffer ev, int day)
         {
             var p = s.Population;
+            bool rowDue = p.DayDone >= 0; // no row before the first day
             p.DayDone = day;
+            int tpd = SimCalendar.Of(s).TicksPerDay;
+            if (rowDue) foreach (var npc in p.Npcs) if (npc.Alive) PersonDay(s, ev, npc, day - 1, tpd);
             var lt = s.Tuning.Learning;
             // spoiling (ECONOMY A3): carried and ground lots past their day are gone, one Consumed(Spoiled) each
             foreach (var npc in p.Npcs)
@@ -572,6 +612,7 @@ namespace God.Sim.Population
             bool sampled = EventLearningSink.IsSampledDay(npc.Id, day, lt.SampleEvery);
             _sink.Bind(ev, npc.Id, sampled);
 
+            var prev = mind.Last; // the decision the reward since then belongs to (its experience)
             // 2.1-2.2: reward since the last think, credit, close
             Settle(s, npc);
             Learner.BeginThink(st, lt, tr, day, _sink);
@@ -602,12 +643,12 @@ namespace God.Sim.Population
             var rng = npc.RngPolicy;
             NpcIntent intent;
             var why = default(DecisionRecord);
-            if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why);
-            else intent = policy.Decide(obs, view, ref rng);
+            if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
+            else { intent = policy.Decide(obs, view, ref rng); mind.OpportunityCount = 0; }
             IntentRules.Require(PolicyLevel.Civilian, policy.Name, intent);
             p.Stats.Decisions++;
             mind.Decisions++;
-            if (intent.Verb == NpcVerb.None) { Learner.Step(st, lt, tr, 0, day, _sink); EndAction(npc); Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr)); return; }
+            if (intent.Verb == NpcVerb.None) { Experience(mind, st, s.Tick, prev); Learner.Step(st, lt, tr, 0, day, _sink); EndAction(npc); Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr)); return; }
 
             // the intent must be one of the candidates (perception only, M3.12)
             int ci = Match(intent);
@@ -619,6 +660,7 @@ namespace God.Sim.Population
             if (ci < 0)
             {
                 p.Stats.IntentsRefused++;
+                Experience(mind, st, s.Tick, prev);
                 Learner.Step(st, lt, tr, 0, day, _sink);
                 Learner.AddReward(st, lt.Frustration);
                 EndAction(npc);
@@ -642,12 +684,19 @@ namespace God.Sim.Population
             // carries its hut as the episode key).
             bool travelling = cand.IsRunning && npc.Path != null && npc.PathIdx < npc.Path.Length;
             if (travelling) { Start(s, ev, npc, cand, day); return; }
+            Experience(mind, st, s.Tick, prev);
             Learner.Step(st, lt, tr, NextValue(st, lt, cand, why), day, _sink);
             Start(s, ev, npc, cand, day);
             int q = view.Terms(ci).Learned;
             int episodeKey = cand.Verb == Verb.Build ? (npc.SiteHut != 0 ? npc.SiteHut : cand.TargetId) : 0;
             Learner.OpenTrace(st, lt, tr, (int)s.Tick, cand.Verb, _sc.Keys, cand.KeyOffset, cand.KeyCount, q, episodeKey, day, _sink);
             Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr));
+        }
+
+        /// <summary>The reward the previous decision earned (consumed by the next TD step), remembered as an experience when not zero.</summary>
+        private static void Experience(NpcMind mind, AssociationStore st, long tick, in DecisionRecord prev)
+        {
+            if (st.RewardAcc != 0 && prev.Verb != 0) mind.Remember((int)tick, prev.Verb, prev.TargetClass, st.RewardAcc, false);
         }
 
         /// <summary>
@@ -908,6 +957,7 @@ namespace God.Sim.Population
                 // the bed right (an opportunity, 4.4): it closes the Build episodes that waited for it
                 _sink.Bind(ev, npc.Id, EventLearningSink.IsSampledDay(npc.Id, day, s.Tuning.Learning.SampleEvery));
                 Learner.Outcome(npc.Mind.Store, s.Tuning.Learning, TraitsOf(s, npc), hut.Id, s.Tuning.Learning.BedGained, day, _sink);
+                npc.Mind.Remember((int)s.Tick, Verb.Build, ObjClass.Hut, s.Tuning.Learning.BedGained, true);
                 if (npc.Action.Verb == Verb.Build && npc.Action.TargetId == hut.Id) EndAction(npc);
             }
             hut.Contributors.Clear();
@@ -967,6 +1017,7 @@ namespace God.Sim.Population
             Settle(s, npc);
             p.Ledger.Consume(ConsumeReason.Eaten, ware, 1);
             p.Stats.Meals++;
+            npc.DayMeals++;
             ev.Add(new Consumed { Npc = npc.Id, Ware = ware, Count = 1, Reason = ConsumeReason.Eaten });
             ev.Add(new Ate { Npc = npc.Id, Ware = ware, Node = npc.Node, FromCarry = fromCarry, Relief = relief, HungerAfter = npc.DriveOf(Drive.Hunger) });
         }

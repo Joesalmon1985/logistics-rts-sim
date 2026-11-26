@@ -118,6 +118,7 @@ namespace God.Sim
             new EventInfo(typeof(Population.NpcDied), 101, 1, TelemetryDomain.Population, "fact_death"),
             new EventInfo(typeof(Population.Ate), 102, 1, TelemetryDomain.Population, Generic, true),
             new EventInfo(typeof(Population.Slept), 103, 1, TelemetryDomain.Population, Generic, true),
+            new EventInfo(typeof(Population.NpcDay), 104, 1, TelemetryDomain.Population, "fact_person_day", note: "one living person x sim day: needs, body, time allocation, meals, learning outcomes (M3 source; SnapshotBuilder.PersonDay at M13)"),
             // ---- economy of personal goods (200-299), M3 ----
             new EventInfo(typeof(Population.Produced), 200, 1, TelemetryDomain.Production, "fact_production", true),
             new EventInfo(typeof(Population.Consumed), 201, 1, TelemetryDomain.Economy, "fact_production", true),

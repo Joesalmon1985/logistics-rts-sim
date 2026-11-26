@@ -23,8 +23,16 @@ namespace God.Sim.Policy
         }
 
         /// <summary>As <see cref="Decide"/>, also filling the "why" of the decision (terms of the winner, whether learning or exploration changed it).</summary>
-        public NpcIntent DecideExplained(in NpcObservation obs, MindView mind, ref Rng rng, ref DecisionRecord why)
+        public NpcIntent DecideExplained(in NpcObservation obs, MindView mind, ref Rng rng, ref DecisionRecord why) =>
+            DecideExplained(obs, mind, ref rng, ref why, null, out _);
+
+        /// <summary>
+        /// As above, also writing each weighed option's terms into <paramref name="opps"/> (the first <c>opps.Length</c>
+        /// candidates in build order; <paramref name="oppCount"/> how many). Writing them changes nothing in the choice.
+        /// </summary>
+        public NpcIntent DecideExplained(in NpcObservation obs, MindView mind, ref Rng rng, ref DecisionRecord why, OpportunitySlot[] opps, out int oppCount)
         {
+            oppCount = 0;
             var cands = obs.Candidates;
             int n = cands.Count;
             why = default;
@@ -43,12 +51,37 @@ namespace God.Sim.Policy
                 int explore = rng.NextInt(amp + 1) + (t.FamiliarTarget == 0 ? novelty : 0);
                 long total = (long)t.Instinct + t.Learned + t.Social + t.Culture + t.Personality - t.Cost + explore;
                 long noLearn = total - t.Learned, noExplore = total - explore;
+                if (opps != null && i < opps.Length)
+                {
+                    var ci = cands[i];
+                    opps[i] = new OpportunitySlot
+                    {
+                        Verb = ci.Verb, Class = ci.Class, Dist = ci.Dist, Instinct = t.Instinct, Need = t.Need, Learned = t.Learned, Personality = t.Personality,
+                        Cost = t.Cost, Explore = explore, Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, total)), FromBelief = ci.FromBelief,
+                    };
+                    oppCount = i + 1;
+                }
                 if (total > bestScore) { second = best; secondScore = bestScore; best = i; bestScore = total; bestTerms = t; bestExplore = explore; }
                 else if (total > secondScore) { second = i; secondScore = total; }
                 if (noLearn > bestNL) { bestNL = noLearn; bestNoLearn = i; }
                 if (noExplore > bestNE) { bestNE = noExplore; bestNoExplore = i; }
             }
             var c = cands[best];
+            if (opps != null && opps.Length > 0)
+            {
+                if (best < oppCount) opps[best].Chosen = true;
+                else
+                {
+                    // the choice lies past the slots: it takes the last one, so the record always holds the chosen option
+                    opps[opps.Length - 1] = new OpportunitySlot
+                    {
+                        Verb = c.Verb, Class = c.Class, Dist = c.Dist, Instinct = bestTerms.Instinct, Need = bestTerms.Need, Learned = bestTerms.Learned,
+                        Personality = bestTerms.Personality, Cost = bestTerms.Cost, Explore = bestExplore,
+                        Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, bestScore)), FromBelief = c.FromBelief, Chosen = true,
+                    };
+                }
+            }
+            why.Need = bestTerms.Need;
             why.Verb = c.Verb; why.TargetKind = c.Kind; why.TargetId = c.TargetId; why.TargetNode = c.TargetNode; why.TargetClass = c.Class;
             why.Instinct = bestTerms.Instinct; why.Learned = bestTerms.Learned; why.Social = bestTerms.Social; why.Culture = bestTerms.Culture;
             why.Personality = bestTerms.Personality; why.Cost = bestTerms.Cost; why.Explore = bestExplore;

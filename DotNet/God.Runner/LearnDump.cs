@@ -80,6 +80,30 @@ namespace God.Runner
             var head = Summary(s, n);
             head["type"] = "npc";
             w.WriteLine(head.ToString(Formatting.None));
+            // the last decision and why: each weighed option with its score terms (need, instinct, learned, personality,
+            // cost, explore), the same breakdown as the inspector card; then the recent experiences with their rewards
+            var m = n.Mind;
+            var l = m.Last;
+            w.WriteLine(new JObject
+            {
+                ["type"] = "decision", ["tick"] = l.Tick, ["verb"] = VerbTable.Name(l.Verb), ["targetClass"] = Feature.ClassName(l.TargetClass), ["need"] = l.Need,
+                ["instinct"] = l.Instinct - l.Need, ["learned"] = l.Learned, ["personality"] = l.Personality, ["cost"] = -l.Cost, ["explore"] = l.Explore, ["total"] = l.Total,
+                ["candidates"] = l.Candidates, ["learnedChangedWinner"] = l.LearnedChangedWinner, ["exploreWon"] = l.ExploreWon,
+            }.ToString(Formatting.None));
+            for (int i = 0; i < m.OpportunityCount; i++)
+            {
+                var o = m.Opportunities[i];
+                w.WriteLine(new JObject
+                {
+                    ["type"] = "option", ["verb"] = VerbTable.Name(o.Verb), ["targetClass"] = Feature.ClassName(o.Class), ["dist"] = o.Dist, ["remembered"] = o.FromBelief, ["chosen"] = o.Chosen,
+                    ["need"] = o.Need, ["instinct"] = o.Instinct - o.Need, ["learned"] = o.Learned, ["personality"] = o.Personality, ["cost"] = -o.Cost, ["explore"] = o.Explore, ["total"] = o.Total,
+                }.ToString(Formatting.None));
+            }
+            for (int k = 0; k < m.ExperienceCount; k++)
+            {
+                var e = m.Recent(k);
+                w.WriteLine(new JObject { ["type"] = "experience", ["tick"] = e.Tick, ["verb"] = VerbTable.Name(e.Verb), ["targetClass"] = Feature.ClassName(e.Class), ["reward"] = e.Reward, ["episode"] = e.Episode }.ToString(Formatting.None));
+            }
             for (int i = 0; i < st.Count; i++)
             {
                 var e = st.Entries[i];

@@ -52,7 +52,13 @@ namespace God.Sim.Information
         // the last decision and why
         public string LastDecision = "";
         public int Instinct, Learned, Social, Culture, Personality, Cost, Explore, Total, Candidates;
+        /// <summary>The part of <see cref="Instinct"/> a need drives (the rest is situational instinct).</summary>
+        public int Need;
         public bool LearnedChangedWinner, ExploreWon;
+        /// <summary>The options it weighed at its last decision (perceived opportunities) with their score terms; the chosen one is marked.</summary>
+        public List<Opportunity> Opportunities = new List<Opportunity>();
+        /// <summary>Its last experiences with a reward, newest first.</summary>
+        public List<Experience> Experiences = new List<Experience>();
         public string RunnerUp = "";
         /// <summary>The associations that contributed most to the last decision's learned value.</summary>
         public List<Habit> Why = new List<Habit>();
@@ -63,6 +69,32 @@ namespace God.Sim.Information
         public int Entries, Conjunctions, Recruits, Evictions, Updates;
         public int LearnedSharePermille, ExploreSharePermille;
         public int[] Traits = new int[Trait.Count];
+    }
+
+    /// <summary>One weighed option of the last decision: words, and the score terms (Need is the need-driven part of Instinct).</summary>
+    public sealed class Opportunity
+    {
+        public string Text;
+        public byte Verb, Class;
+        public int Dist, Instinct, Need, Learned, Personality, Cost, Explore, Total;
+        public bool Chosen, FromBelief;
+
+        /// <summary>"eat berry bush (2 away): need +600, instinct +0, learned +120, personality +0, cost -40, explore +31 = 711".</summary>
+        public string Breakdown => Text + " (" + Dist + " away" + (FromBelief ? ", remembered" : "") + "): need " + Sg(Need) + ", instinct " + Sg(Instinct - Need)
+            + ", learned " + Sg(Learned) + ", personality " + Sg(Personality) + ", cost " + Sg(-Cost) + ", explore " + Sg(Explore) + " = " + Total;
+
+        private static string Sg(int v) => v >= 0 ? "+" + v : v.ToString();
+        public override string ToString() => Breakdown;
+    }
+
+    /// <summary>One remembered experience: when, what it did, and the reward it got for it (value points).</summary>
+    public sealed class Experience
+    {
+        public int Tick, Reward;
+        public byte Verb, Class;
+        public bool Episode;
+        public string Text;
+        public override string ToString() => Text;
     }
 
     /// <summary>A person seen on the island: where, which faction, and what it visibly does (no mind, no body numbers).</summary>
@@ -150,7 +182,27 @@ namespace God.Sim.Information
             if (last.Verb != 0) r.LastDecision = VerbTable.Name(last.Verb) + TargetWords(last.TargetKind, last.TargetClass, last.Verb);
             r.Instinct = last.Instinct; r.Learned = last.Learned; r.Social = last.Social; r.Culture = last.Culture; r.Personality = last.Personality;
             r.Cost = last.Cost; r.Explore = last.Explore; r.Total = last.Total; r.Candidates = last.Candidates;
-            r.LearnedChangedWinner = last.LearnedChangedWinner; r.ExploreWon = last.ExploreWon;
+            r.LearnedChangedWinner = last.LearnedChangedWinner; r.ExploreWon = last.ExploreWon; r.Need = last.Need;
+            for (int i = 0; i < m.OpportunityCount; i++)
+            {
+                var o = m.Opportunities[i];
+                r.Opportunities.Add(new Opportunity
+                {
+                    Text = VerbTable.Name(o.Verb) + TargetWords(Policy.IntentTarget.Node, o.Class, o.Verb), Verb = o.Verb, Class = o.Class, Dist = o.Dist,
+                    Instinct = o.Instinct, Need = o.Need, Learned = o.Learned, Personality = o.Personality, Cost = o.Cost, Explore = o.Explore, Total = o.Total,
+                    Chosen = o.Chosen, FromBelief = o.FromBelief,
+                });
+            }
+            for (int k = 0; k < m.ExperienceCount; k++)
+            {
+                var e = m.Recent(k);
+                string what = VerbTable.Name(e.Verb) + TargetWords(Policy.IntentTarget.Node, e.Class, e.Verb);
+                r.Experiences.Add(new Experience
+                {
+                    Tick = e.Tick, Reward = e.Reward, Verb = e.Verb, Class = e.Class, Episode = e.Episode,
+                    Text = "tick " + e.Tick + ": " + what + (e.Episode ? " (paid off later)" : "") + " -> " + (e.Reward >= 0 ? "+" : "") + e.Reward,
+                });
+            }
             if (last.SecondVerb != 0) r.RunnerUp = VerbTable.Name(last.SecondVerb) + " (" + last.SecondTotal + ")";
             AddWhy(r, st, last.Key0, last.Verb, last.Stw0);
             AddWhy(r, st, last.Key1, last.Verb, last.Stw1);

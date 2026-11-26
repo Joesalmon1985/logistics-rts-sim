@@ -78,6 +78,58 @@ namespace God.Sim.Tests
             Assert.AreEqual(0, p.Stats.IntentsRefused);
         }
 
+        /// <summary>
+        /// Inspectability (owner, 26 Nov): the card read through the faction view shows the options weighed at the last
+        /// decision with their score terms (need, instinct, learned, personality, cost, explore) adding up to each option's
+        /// total and the chosen one marked, the recent experiences with their rewards, and the strongest associations; one
+        /// person-day row per living person per day carries needs, time allocation and learning outcomes.
+        /// </summary>
+        [Test]
+        public void Inspector_ShowsOptionsWithScoreTerms_RecentExperiences_AndThePersonDayRow()
+        {
+            var sim = GodSim.Create(Setup(3));
+            var p = sim.State.Population;
+            int rows = 0, alive = 0;
+            for (int i = 0; i < 1300; i++)
+            {
+                int before = p.AliveCount;
+                sim.Step();
+                int now = 0;
+                foreach (var e in sim.DrainEvents())
+                    if (e is NpcDay row)
+                    {
+                        now++;
+                        Assert.AreEqual(1199, row.Ticks.Sum(), "a row covers every tick the person lived that day (day 0 starts at tick 1)");
+                        Assert.AreEqual(0, row.Day);
+                    }
+                if (now > 0) { rows += now; alive = before; }
+            }
+            Assert.AreEqual(alive, rows, "one row per living person at the day's end");
+            var view = God.Sim.Information.ViewFiller.For(sim.State, Faction.F0);
+            int withOptions = 0, withExperiences = 0;
+            foreach (var n in p.Npcs.Where(x => x.Alive && x.Faction == Faction.F0))
+            {
+                var card = view.Population.Inspect(n.Id);
+                Assert.IsNotNull(card);
+                if (card.Opportunities.Count > 0)
+                {
+                    withOptions++;
+                    Assert.AreEqual(1, card.Opportunities.Count(o => o.Chosen), "exactly one option is the choice");
+                    foreach (var o in card.Opportunities)
+                    {
+                        Assert.AreEqual(o.Total, o.Instinct + o.Learned + o.Personality - o.Cost + o.Explore, "the terms add up: " + o.Breakdown);
+                        Assert.That(o.Need, Is.InRange(Math.Min(0, o.Instinct), Math.Max(0, o.Instinct)), "need is part of instinct");
+                    }
+                    var chosen = card.Opportunities.First(o => o.Chosen);
+                    Assert.AreEqual(card.Total, chosen.Total);
+                    Assert.AreEqual(card.Need, chosen.Need);
+                }
+                if (card.Experiences.Count > 0) withExperiences++;
+            }
+            Assert.Greater(withOptions, 15, "most people have weighed options");
+            Assert.Greater(withExperiences, 15, "and remember rewarded experiences");
+        }
+
         // ---------------------------------------------------------------- body (M3.14) and food (M3.15)
 
         [Test]

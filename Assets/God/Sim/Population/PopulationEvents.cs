@@ -53,6 +53,43 @@ namespace God.Sim.Population
         public int StockAfter;
     }
 
+    /// <summary>
+    /// One living person's day (the M3 source of <c>fact_person_day</c>; grain: one living person x sim day, emitted at the
+    /// start of the next day for every person alive then). Needs (drive levels at day end and their day means), body,
+    /// survival state, time allocation (ticks per <see cref="Activity"/>), meals, and the day's learning outcomes
+    /// (reward and punishment taken, decisions, the share learning or exploration changed, store size). Integers only.
+    /// </summary>
+    public sealed class NpcDay : DomainEvent
+    {
+        public int Npc;
+        public Faction Faction;
+        /// <summary>The sim day this row describes (the day that just ended).</summary>
+        public int Day;
+        public int AgeDays;
+        public int Node;
+        public int Health, Nutrition;
+        /// <summary>Drive levels at day end (permille): hunger, tiredness, cold, fear, pain.</summary>
+        public int Hunger, Fatigue, Cold, Fear, Pain;
+        /// <summary>Day means of the drives (permille).</summary>
+        public int MeanHunger, MeanFatigue, MeanCold, MeanFear, MeanPain;
+        /// <summary>Ticks per <see cref="Activity"/> (idle, eat, forage, sleep, rest, explore, gather, build, flee, carry, other).</summary>
+        public int[] Ticks;
+        public int WalkTicks;
+        public int Meals;
+        public bool HasBed;
+        public int CarryUnits;
+        public int Decisions;
+        /// <summary>Share of the day's decisions where the learned term changed the winner, and where exploration alone did (permille).</summary>
+        public int LearnedShare, ExploreShare;
+        /// <summary>Reward and punishment taken today (value points, both positive).</summary>
+        public int RewardSum, PunishSum;
+        public int Associations, Conjunctions;
+        public LearningModeCode Mode;
+    }
+
+    /// <summary>The learning mode as an event field (On 0, Frozen 1, Off 2).</summary>
+    public enum LearningModeCode : byte { On = 0, Frozen = 1, Off = 2 }
+
     /// <summary>A hut site was founded by an NPC.</summary>
     public sealed class HutSiteFounded : DomainEvent
     {

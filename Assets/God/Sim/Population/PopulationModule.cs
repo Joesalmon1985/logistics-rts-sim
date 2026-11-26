@@ -369,6 +369,8 @@ namespace God.Sim.Population
                 if (n.RewardSnap != null) foreach (int d in n.RewardSnap) h.Add(d);
                 foreach (var l in n.Carry) { h.Add(l.Id); h.Add((int)l.Ware); h.Add(l.Count); h.Add(l.SpoilDay); h.Add(l.Uses); }
                 h.Add(n.HomeHut); h.Add(n.SiteHut); h.Add(n.EatenDay); foreach (int e in n.EatenToday) h.Add(e);
+                foreach (int t in n.DayTicks) h.Add(t);
+                h.Add(n.DayWalkTicks); h.Add(n.DayMeals); foreach (int d in n.DayDriveSum) h.Add(d);
                 foreach (int t in n.Traits) h.Add(t);
                 h.Add(n.LearnRate); h.Add(n.ForgetRate); h.Add(n.Curiosity); h.Add((int)n.Instincts); h.Add(n.Policy);
                 var a = n.Action;

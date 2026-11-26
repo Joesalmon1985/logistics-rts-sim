@@ -79,7 +79,11 @@ namespace God.Game.Tests
             Assert.Greater(card.Candidates, 0);
             Assert.Greater(card.Entries, 0, "it has learned associations");
             Assert.IsTrue(card.HabitsPositive.Count + card.HabitsNegative.Count > 0, "its strongest habits are listed");
-            Debug.Log("Inspector: " + card.LastDecision + " | why: " + string.Join("; ", card.Why) + " | habits: " + string.Join("; ", card.HabitsPositive));
+            Assert.Greater(card.Opportunities.Count, 0, "the options it weighed, with their score terms");
+            Assert.AreEqual(1, card.Opportunities.Count(o => o.Chosen));
+            Assert.Greater(card.Experiences.Count, 0, "its recent experiences with their rewards");
+            Debug.Log("Inspector: " + card.LastDecision + " | why: " + string.Join("; ", card.Why) + " | habits: " + string.Join("; ", card.HabitsPositive)
+                + " | options: " + string.Join("; ", card.Opportunities) + " | experiences: " + string.Join("; ", card.Experiences));
             var foreign = p.Npcs.First(n => n.Alive && n.Faction != me);
             Assert.IsNull(boot.View.Population.Inspect(foreign.Id), "another faction's people have no card for this player (Q21)");
 

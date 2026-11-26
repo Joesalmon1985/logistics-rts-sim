@@ -8,6 +8,8 @@ namespace God.Sim.Policy
     public struct CandidateScore
     {
         public int Instinct, Learned, Social, Culture, Personality, Cost;
+        /// <summary>The part of <see cref="Instinct"/> a need (a drive) drives; Instinct - Need is situational instinct. Not a separate score term.</summary>
+        public int Need;
         /// <summary>How many of the candidate's keys have an entry for its verb (0: never tried here).</summary>
         public int Familiar;
         /// <summary>How many of its target features have an entry for its verb (0: this kind of target never tried with this verb: novel).</summary>
@@ -60,6 +62,7 @@ namespace God.Sim.Policy
             var c = _sc.Cand[i];
             var st = _sc.Mind.Store;
             r.Instinct = InstinctTable.Prior(_sc.Instincts, _sc.Keys, c.KeyOffset, c.KeyCount, c.Verb);
+            r.Need = InstinctTable.NeedPrior(_sc.Instincts, _sc.Keys, c.KeyOffset, c.KeyCount, c.Verb);
             if (st.Mode != LearningMode.Off)
             {
                 int q = st.SumStw(_sc.Keys, c.KeyOffset, c.KeyCount, c.Verb, out r.Familiar);

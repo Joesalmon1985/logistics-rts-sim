@@ -160,6 +160,8 @@ namespace God.Sim.Cognition
         public int TargetId, TargetNode;
         public byte TargetClass;
         public int Instinct, Learned, Social, Culture, Personality, Cost, Explore, Total;
+        /// <summary>The part of <see cref="Instinct"/> driven by a need (drive-gated instinct rules).</summary>
+        public int Need;
         public int Candidates;
         public bool LearnedChangedWinner, ExploreWon;
         public uint Key0, Key1, Key2;
@@ -169,6 +171,31 @@ namespace God.Sim.Cognition
         /// <summary>The runner-up's verb and total (how close the choice was).</summary>
         public byte SecondVerb;
         public int SecondTotal;
+    }
+
+    /// <summary>
+    /// One option the NPC weighed at its last decision (its perceived opportunities, for the inspector and learn-dump): verb,
+    /// target class and distance, and the score terms. Need is the drive-driven part of Instinct; Total = Instinct + Learned
+    /// + Personality - Cost + Explore.
+    /// </summary>
+    public struct OpportunitySlot
+    {
+        public byte Verb;
+        public byte Class;
+        public int Dist;
+        public int Instinct, Need, Learned, Personality, Cost, Explore, Total;
+        public bool FromBelief, Chosen;
+    }
+
+    /// <summary>One experience the NPC learned from (the reward its last decision earned, or a closed episode): when, what, and the reward.</summary>
+    public struct ExperienceSlot
+    {
+        public int Tick;
+        public byte Verb;
+        public byte Class;
+        public int Reward;
+        /// <summary>True for a deferred outcome (an episode closed, e.g. the hut it helped build was finished).</summary>
+        public bool Episode;
     }
 
     /// <summary>One attended thing (for the inspector): class and place, salience.</summary>
@@ -198,6 +225,25 @@ namespace God.Sim.Cognition
         public int LearnedSharePrev, ExploreSharePrev;
         /// <summary>Thinks counted (rotates the explore direction without a random draw).</summary>
         public int ThinkCount;
+        /// <summary>The options weighed at the last decision (at most <see cref="MaxOpportunities"/>, in candidate order).</summary>
+        public OpportunitySlot[] Opportunities = new OpportunitySlot[MaxOpportunities];
+        public int OpportunityCount;
+        /// <summary>The last experiences with a reward (a ring of <see cref="MaxExperiences"/>; <see cref="ExperienceNext"/> is the next slot).</summary>
+        public ExperienceSlot[] Experiences = new ExperienceSlot[MaxExperiences];
+        public int ExperienceCount, ExperienceNext;
+
+        public const int MaxOpportunities = 8, MaxExperiences = 8;
+
+        /// <summary>Remembers an experience (the ring overwrites the oldest).</summary>
+        public void Remember(int tick, byte verb, byte cls, int reward, bool episode)
+        {
+            Experiences[ExperienceNext] = new ExperienceSlot { Tick = tick, Verb = verb, Class = cls, Reward = reward, Episode = episode };
+            ExperienceNext = (ExperienceNext + 1) % MaxExperiences;
+            if (ExperienceCount < MaxExperiences) ExperienceCount++;
+        }
+
+        /// <summary>The k-th most recent experience (0 = newest), k below <see cref="ExperienceCount"/>.</summary>
+        public ExperienceSlot Recent(int k) => Experiences[((ExperienceNext - 1 - k) % MaxExperiences + MaxExperiences) % MaxExperiences];
 
         public NpcMind() { }
 
@@ -217,6 +263,16 @@ namespace God.Sim.Cognition
             h.Add(AttendedCount);
             for (int i = 0; i < AttendedCount; i++) { h.Add(Attended[i].Class); h.Add(Attended[i].Node); h.Add(Attended[i].Salience); }
             h.Add(DayDecisions); h.Add(DayLearnedChanged); h.Add(DayExploreWon); h.Add(Decisions); h.Add(DayStamp); h.Add(LearnedSharePrev); h.Add(ExploreSharePrev); h.Add(ThinkCount);
+            h.Add(l.Need);
+            h.Add(OpportunityCount);
+            for (int i = 0; i < OpportunityCount; i++)
+            {
+                var o = Opportunities[i];
+                h.Add(o.Verb | (o.Class << 8) | (o.FromBelief ? 1 << 16 : 0) | (o.Chosen ? 1 << 17 : 0)); h.Add(o.Dist);
+                h.Add(o.Instinct); h.Add(o.Need); h.Add(o.Learned); h.Add(o.Personality); h.Add(o.Cost); h.Add(o.Explore); h.Add(o.Total);
+            }
+            h.Add(ExperienceCount); h.Add(ExperienceNext);
+            for (int i = 0; i < ExperienceCount; i++) { var e = Experiences[i]; h.Add(e.Tick); h.Add(e.Verb | (e.Class << 8) | (e.Episode ? 1 << 16 : 0)); h.Add(e.Reward); }
         }
     }
 }

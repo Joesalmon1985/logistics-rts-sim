@@ -63,6 +63,26 @@ namespace God.Sim.Learning
             return sum;
         }
 
+        /// <summary>
+        /// The part of <see cref="Prior"/> that a need drives: the rules whose first condition is a drive (hunger, tiredness,
+        /// pain, fear). The rest of the prior is situational instinct (no bed, carrying a log). For the "why" of a decision.
+        /// </summary>
+        public static int NeedPrior(ReadOnlyArray<Instinct> rules, uint[] keys, int offset, int n, byte verb)
+        {
+            int sum = 0;
+            for (int r = 0; r < rules.Count; r++)
+            {
+                var rule = rules[r];
+                if (rule.Verb != verb) continue;
+                var k = Feature.KindOf(rule.A);
+                if (k != FeatureKind.DriveActive && k != FeatureKind.DriveBand) continue;
+                if (!Contains(keys, offset, n, rule.A)) continue;
+                if (rule.B != 0 && !Contains(keys, offset, n, rule.B)) continue;
+                sum += rule.Prior;
+            }
+            return sum;
+        }
+
         /// <summary>Binary search in a sorted key range.</summary>
         public static bool Contains(uint[] keys, int offset, int n, uint key)
         {
