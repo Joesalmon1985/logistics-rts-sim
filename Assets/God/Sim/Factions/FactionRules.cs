@@ -306,12 +306,16 @@ namespace God.Sim
     // ---------------- system and install ----------------
 
     /// <summary>
-    /// Runs after the military each tick: eliminates factions left without a finished HQ, then ends the game when a
-    /// faction has <see cref="FactionTuning.VictoryPoints"/> VP (most VP wins, ties to the lower id) or only one faction
-    /// is left. Emits <see cref="GameOver"/> once; after that the sim stops.
+    /// Runs after the military each tick: eliminates factions left without a finished HQ, then asks each victory condition
+    /// of <see cref="GameSetup.Victory"/> in order (M0: <see cref="IVictoryCondition"/>; the stage 3 default is 10 VP, most
+    /// VP wins with ties to the lower id, then last standing). The first that returns a result ends the game. Emits
+    /// <see cref="GameOver"/> once; after that the sim stops. A sandbox game never ends.
     /// </summary>
     public sealed class FactionSystem : ISimSystem
     {
+        /// <summary>Built from the setup on the first tick (the setup never changes once the game starts). Not state.</summary>
+        private List<IVictoryCondition> _conditions;
+
         public void Tick(GodState s, EventBuffer ev)
         {
             var fs = s.Factions;
@@ -322,15 +326,17 @@ namespace God.Sim
                 if (!fs.IsEliminated(f) && s.Territory.HqsOf(f).Count == 0) FactionRules.Eliminate(s, f, ev);
             }
             var alive = FactionRules.Alive(s);
-            int winner = -1, bestVp = -1;
-            foreach (var f in alive)
-            {
-                int vp = FactionRules.VictoryPoints(s, f);
-                if (vp >= FactionTuning.VictoryPoints && vp > bestVp) { bestVp = vp; winner = (int)f; }
-            }
+            if (_conditions == null) _conditions = VictoryConditions.Of(s.Setup);
+            var inputs = new VictoryInputs(s, alive);
+            int winner = -1;
             var reason = GameEndReason.None;
-            if (winner >= 0) reason = GameEndReason.VictoryPoints;
-            else if (alive.Count <= 1) { reason = GameEndReason.LastStanding; winner = alive.Count == 1 ? (int)alive[0] : -1; }
+            foreach (var c in _conditions)
+            {
+                var r = c.Evaluate(inputs);
+                if (!r.Ended) continue;
+                winner = r.Winner; reason = r.Reason;
+                break;
+            }
             if (reason == GameEndReason.None) return;
 
             fs.GameOver = true;

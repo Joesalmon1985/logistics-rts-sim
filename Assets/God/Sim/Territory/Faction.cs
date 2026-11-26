@@ -22,12 +22,12 @@ namespace God.Sim
         public const int Max = 6;
 
         /// <summary>Every faction id, ascending.</summary>
-        public static readonly Faction[] All = { Faction.F0, Faction.F1, Faction.F2, Faction.F3, Faction.F4, Faction.F5 };
+        public static readonly ReadOnlyArray<Faction> All = new ReadOnlyArray<Faction>(Faction.F0, Faction.F1, Faction.F2, Faction.F3, Faction.F4, Faction.F5);
 
-        private static readonly string[] Names = { "Amber", "Azure", "Crimson", "Jade", "Violet", "Ivory" };
+        private static readonly ReadOnlyArray<string> Names = new ReadOnlyArray<string>("Amber", "Azure", "Crimson", "Jade", "Violet", "Ivory");
 
         /// <summary>Colours as 0xRRGGBB, matching <see cref="Name"/>. Views turn them into their own colour type.</summary>
-        private static readonly int[] Rgb = { 0xE0A030, 0x3378E8, 0xD23A34, 0x2FA868, 0x8A55C8, 0xE8E2D0 };
+        private static readonly ReadOnlyArray<int> Rgb = new ReadOnlyArray<int>(0xE0A030, 0x3378E8, 0xD23A34, 0x2FA868, 0x8A55C8, 0xE8E2D0);
 
         public static bool IsValid(int id) => id >= 0 && id < Max;
 

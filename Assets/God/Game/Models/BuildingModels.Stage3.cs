@@ -14,7 +14,7 @@ namespace God.Game
     public static partial class BuildingModels
     {
         /// <summary>Model kind of a harvester at a level (level 1 is the plain kind).</summary>
-        public static string KindAtLevel(string kind, int level) => level >= 2 && System.Array.IndexOf(BuildingKinds.Harvesters, kind) >= 0 ? kind + ":" + Mathf.Min(level, 3) : kind;
+        public static string KindAtLevel(string kind, int level) => level >= 2 && BuildingKinds.Harvesters.IndexOf(kind) >= 0 ? kind + ":" + Mathf.Min(level, 3) : kind;
 
         /// <summary>Every kind of the stage 3 groups (harvesters, processors, armouries).</summary>
         public static IEnumerable<string> Stage3Kinds()
@@ -36,7 +36,7 @@ namespace God.Game
                 case BuildingKinds.Tannery: Tannery(mb, st, rig); return true;
                 case BuildingKinds.Weaver: Weaver(mb, st, rig); return true;
             }
-            if (System.Array.IndexOf(BuildingKinds.Armouries, kind) >= 0) { Armoury(mb, kind, st, rig); return true; }
+            if (BuildingKinds.Armouries.IndexOf(kind) >= 0) { Armoury(mb, kind, st, rig); return true; }
             return false;
         }
 

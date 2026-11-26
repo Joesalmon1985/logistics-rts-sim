@@ -64,8 +64,8 @@ namespace God.Sim
             return best;
         }
 
-        private static readonly Ware[] Melee = { Ware.Sword, Ware.Spear, Ware.Axe };
-        private static readonly Ware[] RangedWeapons = { Ware.Bow, Ware.Sling };
+        private static readonly ReadOnlyArray<Ware> Melee = new ReadOnlyArray<Ware>(Ware.Sword, Ware.Spear, Ware.Axe);
+        private static readonly ReadOnlyArray<Ware> RangedWeapons = new ReadOnlyArray<Ware>(Ware.Bow, Ware.Sling);
 
         /// <summary>
         /// The plan: the best melee weapon and the best ranged one; a second melee weapon once both armouries stand and the
@@ -76,7 +76,7 @@ namespace God.Sim
         {
             _weapons.Clear(); _defence.Clear();
             Array.Clear(_byWeapon, 0, _byWeapon.Length);
-            foreach (var u in _mine) { int i = Array.IndexOf(Gear.Attack, MilitaryTuning.Normalize(u.Kit).Weapon); if (i >= 0) _byWeapon[i]++; }
+            foreach (var u in _mine) { int i = Gear.Attack.IndexOf(MilitaryTuning.Normalize(u.Kit).Weapon); if (i >= 0) _byWeapon[i]++; }
             _weapons.Add(Best(Melee, _weapons));
             _weapons.Add(Best(RangedWeapons, _weapons));
             bool armed = Built(ArmouryOf(_weapons[0])) > 0 && Built(ArmouryOf(_weapons[1])) > 0;
@@ -119,7 +119,7 @@ namespace God.Sim
             foreach (var w in _weapons)
             {
                 int share = Gear.IsRanged(w) ? Tune.RangedSharePercent / Math.Max(1, ranged) : (100 - Tune.RangedSharePercent) / Math.Max(1, melee);
-                long gap = (long)share * (total + 1) - 100L * _byWeapon[Array.IndexOf(Gear.Attack, w)];
+                long gap = (long)share * (total + 1) - 100L * _byWeapon[Gear.Attack.IndexOf(w)];
                 if (gap > bestGap) { bestGap = gap; want = w; }
             }
             bool inStock = want != Ware.None && (_free[(int)want] > 0 || b.In[(int)want] > 0 || OutOf(want) > 0);
@@ -145,30 +145,33 @@ namespace God.Sim
         /// the square root of (its damage per tick against a bare sword) times (the hits a bare sword needs to fell it), so
         /// a full kit counts about twice a bare weapon. Integers only.
         /// </summary>
-        public static int KitStrength(Kit kit, int baseStrength)
+        public static int KitStrength(Kit kit, int baseStrength) => KitStrength(new MilitaryTuning(), kit, baseStrength);
+
+        /// <summary>As <see cref="KitStrength(Kit, int)"/> under the game's tuning.</summary>
+        public static int KitStrength(MilitaryTuning tu, Kit kit, int baseStrength)
         {
-            var bare = MilitaryTuning.Of(new Kit(Ware.Sword));
-            var me = MilitaryTuning.Of(kit);
-            long off = Offence(me, bare), offRef = Offence(bare, bare);
-            long tough = Toughness(me, bare), toughRef = Toughness(bare, bare);
+            var bare = tu.Of(new Kit(Ware.Sword));
+            var me = tu.Of(kit);
+            long off = Offence(tu, me, bare), offRef = Offence(tu, bare, bare);
+            long tough = Toughness(tu, me, bare), toughRef = Toughness(tu, bare, bare);
             // per = 100 * sqrt(off / offRef * tough / toughRef)
             int per = Pathing.ISqrt(off * tough * 10000L / Math.Max(1, offRef * toughRef));
             return Math.Max(1, (baseStrength * per + 50) / 100);
         }
 
         /// <summary>Expected damage per 1000 ticks of <paramref name="a"/> against <paramref name="t"/> (no crits).</summary>
-        private static long Offence(in SoldierStats a, in SoldierStats t)
+        private static long Offence(MilitaryTuning tu, in SoldierStats a, in SoldierStats t)
         {
-            long hit = Duel.HitChance(a, t), block = Duel.BlockChance(a, t);
-            long dmg = Duel.HitDamage(a, t, false);
-            long blocked = a.W.Special == WeaponSpecial.ShieldBreaker ? MilitaryTuning.AxeChipDamage : 0;
+            long hit = Duel.HitChance(tu, a, t), block = Duel.BlockChance(tu, a, t);
+            long dmg = Duel.HitDamage(tu, a, t, false);
+            long blocked = a.W.Special == WeaponSpecial.ShieldBreaker ? tu.AxeChipDamage : 0;
             return hit * ((100 - block) * dmg + block * blocked) * 1000 / (10000L * Math.Max(1, a.CooldownTicks)) + 1;
         }
 
         /// <summary>Health over the damage per attack a bare sword deals to <paramref name="t"/> (times 100).</summary>
-        private static long Toughness(in SoldierStats t, in SoldierStats sword)
+        private static long Toughness(MilitaryTuning tu, in SoldierStats t, in SoldierStats sword)
         {
-            long hit = Duel.HitChance(sword, t), block = Duel.BlockChance(sword, t), dmg = Duel.HitDamage(sword, t, false);
+            long hit = Duel.HitChance(tu, sword, t), block = Duel.BlockChance(tu, sword, t), dmg = Duel.HitDamage(tu, sword, t, false);
             long perAttack = hit * (100 - block) * dmg; // times 10000
             return t.MaxHealth * 1000000L / Math.Max(1, perAttack);
         }

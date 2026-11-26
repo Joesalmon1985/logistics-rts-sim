@@ -76,21 +76,18 @@ namespace God.Sim
 
         // ---------------- state hash ----------------
 
-        /// <summary>FNV-1a over the parts of the state the economy and territory drive. Equal for equal seed and commands.</summary>
+        /// <summary>
+        /// FNV-1a over the parts of the state the economy drives (the "economy" part of <see cref="GodSim.StateHashParts"/>).
+        /// M0: the territory moved to <see cref="TerritoryModule.Hash"/> and the tick to the core part.
+        /// </summary>
         public static ulong StateHash(GodState s)
         {
             ulong h = 14695981039346656037UL;
             void Add(long v) { unchecked { for (int i = 0; i < 8; i++) { h ^= (ulong)((v >> (i * 8)) & 0xFF); h *= 1099511628211UL; } } }
             void AddArr(int[] a) { Add(a.Length); foreach (int x in a) Add(x); }
             void AddKit(Kit k) { Add((int)k.Weapon); Add((int)k.Shield); Add((int)k.Head); Add((int)k.Body); }
-            Add(s.Tick);
-            var t = s.Territory;
-            AddArr(t.Piles); Add(t.RollCount); Add(t.WastedPiles); Add(t.NextId);
-            foreach (var b in t.Buildings) { Add(b.Id); Add(b.Node); Add(b.FlagId); Add((int)b.Faction); }
-            foreach (var r in t.Roads) { Add(r.Id); Add((int)r.Faction); AddArr(r.Nodes); }
-            foreach (var f in t.Flags) { Add(f.Id); Add((int)f.Faction); }
-            foreach (var hq in t.Hqs) { Add(hq.Id); Add((int)hq.Faction); Add(hq.Site ? 1 : 0); Add(hq.Citadel ? 1 : 0); }
             var e = s.Economy;
+            Add(e.NextWalkerId); Add(e.UnitsProduced);
             foreach (var b in e.Buildings)
             {
                 Add(b.Id); Add((int)b.Faction); Add(b.Upgrading ? 1 : 0); Add(b.UpgradeProgress); Add(b.Built ? 1 : 0); Add(b.Paused ? 1 : 0); Add(b.BuildProgress); Add(b.WorkLeft); Add(b.Produced);

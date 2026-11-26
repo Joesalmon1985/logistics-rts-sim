@@ -50,8 +50,8 @@ namespace God.Sim
 
         // Corner lattice: X unit = HexEdgeLength*sqrt(3)/2, Z unit = HexEdgeLength/2.
         // Hex centre (q,r) -> (2q + r, 3r). Corner offsets in corner order:
-        private static readonly int[] CornerDx = { 1, 1, 0, -1, -1, 0 };
-        private static readonly int[] CornerDz = { -1, 1, 2, 1, -1, -2 };
+        private static readonly ReadOnlyArray<int> CornerDx = new ReadOnlyArray<int>(1, 1, 0, -1, -1, 0);
+        private static readonly ReadOnlyArray<int> CornerDz = new ReadOnlyArray<int>(-1, 1, 2, 1, -1, -2);
 
         public int Radius { get; }
         public int HexCount => _hexes.Length;

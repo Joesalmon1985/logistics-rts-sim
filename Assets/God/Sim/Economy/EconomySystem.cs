@@ -3,10 +3,15 @@ using System.Collections.Generic;
 
 namespace God.Sim
 {
-    public sealed class BuildingCompleted : SimEvent { public Faction Faction; public int BuildingId; public string Kind; }
-    public sealed class UnitProduced : SimEvent { public Faction Faction; public int BuildingId; public UnitKind Kind; public Kit Kit; }
+    public sealed class BuildingCompleted : DomainEvent { public Faction Faction; public int BuildingId; public string Kind; }
+    public sealed class UnitProduced : DomainEvent { public Faction Faction; public int BuildingId; public UnitKind Kind; public Kit Kit; }
     /// <summary>An HQ disappeared (destroyed): its stock and carriers are gone.</summary>
-    public sealed class HqLost : SimEvent { public Faction Faction; public int HqId; }
+    public sealed class HqLost : DomainEvent { public Faction Faction; public int HqId; }
+    /// <summary>
+    /// M0 telemetry: wares came out of a building (a workshop finished a cycle, a harvester's walker brought its pile home,
+    /// or a level 3 harvester made its trickle ware). Count is the number of units of <c>Ware</c>.
+    /// </summary>
+    public sealed class WaresProduced : DomainEvent { public Faction Faction; public int BuildingId; public string Kind; public Ware Ware; public int Count; }
 
     /// <summary>
     /// The economy tick: keep records in step with the territory, sweep walkers whose job vanished, send builders,
@@ -245,7 +250,7 @@ namespace God.Sim
                 }
                 if (b.Paused) { b.Status = BuildStatus.Paused; continue; }
                 if (b.Upgrading) UpgradeTick(s, b, ev);
-                if (d.Role == BuildingRole.Harvester) HarvestStart(s, e, t, b, d);
+                if (d.Role == BuildingRole.Harvester) HarvestStart(s, e, t, b, d, ev);
                 else if (d.Role == BuildingRole.Workshop || d.Role == BuildingRole.Factory) Cycle(s, e, b, d, ev);
             }
         }
@@ -329,7 +334,7 @@ namespace God.Sim
             ev?.Add(new BuildingCompleted { Faction = b.Faction, BuildingId = b.Id, Kind = b.Kind });
         }
 
-        private void HarvestStart(GodState s, EconomyState e, TerritoryState t, EcoBuilding b, BuildingDef d)
+        private void HarvestStart(GodState s, EconomyState e, TerritoryState t, EcoBuilding b, BuildingDef d, EventBuffer ev)
         {
             if (b.HarvestWalker != 0) { b.Status = BuildStatus.Working; return; }
             int hex = b.Hex;
@@ -344,6 +349,7 @@ namespace God.Sim
                     b.TrickleTicks = 0;
                     b.Out[(int)d.HarvestWare]++;
                     b.Status = BuildStatus.Working;
+                    ev?.Add(new WaresProduced { Faction = b.Faction, BuildingId = b.Id, Kind = b.Kind, Ware = d.HarvestWare, Count = 1 });
                 }
                 return;
             }
@@ -398,6 +404,7 @@ namespace God.Sim
                 b.Working = false;
                 b.Produced++;
                 for (int w = 0; w < Wares.Count; w++) b.Out[w] += d.Out[w];
+                if (d.Makes != Ware.None) ev.Add(new WaresProduced { Faction = b.Faction, BuildingId = b.Id, Kind = b.Kind, Ware = d.Makes, Count = d.Out[(int)d.Makes] });
                 if (d.Role == BuildingRole.Factory)
                 {
                     // The kit was taken from the inputs when the cycle began (LastKit); the soldier walks out wearing it.
@@ -646,9 +653,11 @@ namespace God.Sim
                     {
                         if (home != null)
                         {
-                            home.Out[(int)w.JobWare] += EconomyTuning.WaresPerPileAt(home.Level);
+                            int made = EconomyTuning.WaresPerPileAt(home.Level);
+                            home.Out[(int)w.JobWare] += made;
                             home.Produced++;
                             home.HarvestWalker = 0;
+                            ev?.Add(new WaresProduced { Faction = home.Faction, BuildingId = home.Id, Kind = home.Kind, Ware = w.JobWare, Count = made });
                         }
                         Retire(w);
                     }

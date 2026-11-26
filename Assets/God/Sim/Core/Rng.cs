@@ -76,6 +76,47 @@ namespace God.Sim
             return new Rng(mix.NextULong());
         }
 
+        /// <summary>
+        /// A stream keyed by purpose and entity: <c>Fork("npc", id)</c>, <c>Fork("dice", roll)</c>. Like
+        /// <see cref="Fork(string)"/> it does not advance this generator, so the same state, label and id always give the
+        /// same stream, and adding an entity never shifts another entity's draws (conventions section 3).
+        /// </summary>
+        public Rng Fork(string label, long id)
+        {
+            ulong h = Fnv(label);
+            h = Mix(h, (ulong)id);
+            var mix = new Rng(State ^ h);
+            return new Rng(mix.NextULong());
+        }
+
+        /// <summary>A stream keyed by purpose and two ids (an entity and a tick, or a pair): <c>Fork("duel", unit, tick)</c>.</summary>
+        public Rng Fork(string label, long id1, long id2)
+        {
+            ulong h = Fnv(label);
+            h = Mix(h, (ulong)id1);
+            h = Mix(h, 0xA5A5A5A5A5A5A5A5UL);
+            h = Mix(h, (ulong)id2);
+            var mix = new Rng(State ^ h);
+            return new Rng(mix.NextULong());
+        }
+
+        private static ulong Fnv(string label)
+        {
+            ulong h = 14695981039346656037UL;
+            if (label != null) foreach (char c in label) { h ^= c; h *= 1099511628211UL; }
+            return h;
+        }
+
+        /// <summary>FNV-1a over the eight bytes of a value.</summary>
+        private static ulong Mix(ulong h, ulong v)
+        {
+            unchecked
+            {
+                for (int i = 0; i < 8; i++) { h ^= (v >> (8 * i)) & 0xFF; h *= 1099511628211UL; }
+            }
+            return h;
+        }
+
         public Rng Clone() => new Rng(State);
     }
 }

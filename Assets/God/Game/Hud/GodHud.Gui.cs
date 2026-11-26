@@ -93,7 +93,7 @@ namespace God.Game
         /// <summary>"2 plank, 1 stone".</summary>
         public static string CostText(BuildingDef d) => WareList(d.Cost);
 
-        private static string WareList(int[] counts)
+        private static string WareList(IReadOnlyList<int> counts)
         {
             var sb = new StringBuilder();
             for (int w = 1; w < Wares.Count; w++)
@@ -339,7 +339,7 @@ namespace God.Game
             }
         }
 
-        private void WareLine(string head, int[] have, int[] cap)
+        private void WareLine(string head, IReadOnlyList<int> have, IReadOnlyList<int> cap)
         {
             bool any = false;
             for (int w = 1; w < Wares.Count; w++) if ((cap != null ? cap[w] : have[w]) > 0) any = true;
@@ -396,7 +396,7 @@ namespace God.Game
                 }
 
                 // Priority of each input ware: what the site still wants, or what the workshop consumes (not a harvester's upgrade wares).
-                var wanted = e.Built && e.Upgrading ? new int[Wares.Count] : e.Wanted;
+                var wanted = e.Built && e.Upgrading ? EcoBuilding.NoWares : e.Wanted;
                 for (int w = 1; w < Wares.Count; w++)
                 {
                     if (wanted[w] <= 0) continue;

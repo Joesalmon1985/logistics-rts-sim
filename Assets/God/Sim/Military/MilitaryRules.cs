@@ -41,7 +41,7 @@ namespace God.Sim
         {
             var m = s.Military;
             var k = MilitaryTuning.Normalize(kit);
-            var st = MilitaryTuning.Of(k);
+            var st = s.Tuning.Military.Of(k);
             var u = new MilUnit
             {
                 Id = m.NextUnitId++, Faction = f, Kind = kind, Kit = k, X = x, Z = z,

@@ -48,8 +48,12 @@ namespace God.Sim
     /// </summary>
     public sealed class SaveFile
     {
-        /// <summary>2 since stage 3 (new wares, harvester levels, kits): stage 2 saves (version 1) are refused.</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>
+        /// 3 since stage 4 M0: the state carries its <see cref="SimTuning"/>, the setup its calendar (TicksPerDay, DaysPerYear,
+        /// LifeScale), disease setting and victory list, and the random streams are keyed. Older saves (2: stage 3; 1: stage 2)
+        /// are refused (stage 3 save compatibility is not kept).
+        /// </summary>
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
         public SaveHeader Header;
@@ -106,11 +110,14 @@ namespace God.Sim
             catch (Exception e) { throw new SaveException("The save file is damaged.", e); }
             if (f == null) throw new SaveException("The save file is empty.");
             if (f.Version < CurrentVersion)
-                throw new SaveException("This save is from an older version of the game (save version " + f.Version + ", before the stage 3 economy) and cannot be loaded. Start a new game.");
+                throw new SaveException("This save is from an older version of the game (save version " + f.Version + ", before stage 4) and cannot be loaded. Start a new game.");
             if (f.Version != CurrentVersion) throw new SaveException("The save file is from another version (" + f.Version + ").");
             var s = f.State;
-            if (s == null || s.Board == null || s.Territory == null || s.Economy == null || s.Military == null || s.Factions == null || s.Setup == null || s.Rng == null)
+            if (s == null || s.Board == null || s.Territory == null || s.Economy == null || s.Military == null || s.Factions == null || s.Setup == null || s.Rng == null
+                || s.Tuning == null || s.Tuning.Military == null || s.Tuning.Decay == null || s.Setup.Victory == null)
                 throw new SaveException("The save file is incomplete.");
+            if (s.Setup.TicksPerDay <= 0 || s.Setup.DaysPerYear <= 0 || s.Setup.LifeScale <= 0)
+                throw new SaveException("The save file has an impossible calendar.");
             if (s.Board.HexTerrain == null || s.Board.HexNumber == null || s.Territory.NodeBuilding == null || s.Territory.NodeFlag == null
                 || s.Territory.NodeRoad == null || s.Territory.Piles == null || s.Economy.PilesReserved == null)
                 throw new SaveException("The save file is incomplete.");

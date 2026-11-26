@@ -29,8 +29,8 @@ namespace God.Game
         public BuildTab Tab { get; private set; } = BuildTab.Gather;
 
         /// <summary>The wares of the stock bar's three groups: raws, processed goods and gear.</summary>
-        public static readonly Ware[] StockRaws = Wares.Raws;
-        public static readonly Ware[] StockProcessed = Wares.Processed;
+        public static readonly Ware[] StockRaws = Wares.Raws.ToArray();
+        public static readonly Ware[] StockProcessed = Wares.Processed.ToArray();
         public static readonly Ware[] StockGear = BuildGear();
 
         private static Ware[] BuildGear()
@@ -58,7 +58,7 @@ namespace God.Game
         private static List<BuildTool> BuildAllTools()
         {
             var l = new List<BuildTool>();
-            void Group(string[] kinds, BuildTab tab)
+            void Group(IReadOnlyList<string> kinds, BuildTab tab)
             {
                 foreach (var k in kinds)
                     l.Add(new BuildTool { Label = ToolLabels.TryGetValue(k, out var s) ? s : k, Key = k, Mode = HudMode.Place, Kind = k, Tab = tab, Col = EconomyView.KindColour(k), Dot = EconomyView.KindDot(k) });

@@ -72,9 +72,9 @@ namespace God.Sim
 namespace God.Sim
 {
     /// <summary>A harvester upgrade began: its wares are now carried to it.</summary>
-    public sealed class BuildingUpgradeStarted : SimEvent { public Faction Faction; public int BuildingId; public string Kind; public int ToLevel; }
+    public sealed class BuildingUpgradeStarted : DomainEvent { public Faction Faction; public int BuildingId; public string Kind; public int ToLevel; }
     /// <summary>A harvester reached a new level (the view makes it bigger).</summary>
-    public sealed class BuildingUpgraded : SimEvent { public Faction Faction; public int BuildingId; public string Kind; public int Level; }
+    public sealed class BuildingUpgraded : DomainEvent { public Faction Faction; public int BuildingId; public string Kind; public int Level; }
 
     public sealed class UpgradeBuildingHandler : CommandHandler<UpgradeBuilding>
     {

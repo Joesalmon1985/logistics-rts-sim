@@ -120,17 +120,20 @@ namespace God.Sim
         public bool SiteLike => !Built || Upgrading;
 
         /// <summary>Wares this record asks for: the cost for a site or an upgrade, the cycle inputs for a finished workshop or factory.</summary>
-        public int[] Wanted
+        public ReadOnlyArray<int> Wanted
         {
             get
             {
                 var d = Def;
-                if (d == null) return new int[Wares.Count];
+                if (d == null) return NoWares;
                 if (!Built) return d.Cost;
-                if (Upgrading) return UpgradeDef?.Cost ?? new int[Wares.Count];
+                if (Upgrading) return UpgradeDef?.Cost ?? NoWares;
                 return d.In;
             }
         }
+
+        /// <summary>No wares at all (frozen; shared).</summary>
+        public static readonly ReadOnlyArray<int> NoWares = new ReadOnlyArray<int>(new int[Wares.Count]);
     }
 
     public enum WalkerKind { Carrier = 0, Builder = 1, Harvester = 2 }
