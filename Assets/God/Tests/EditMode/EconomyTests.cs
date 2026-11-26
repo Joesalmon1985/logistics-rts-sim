@@ -482,8 +482,12 @@ namespace God.Sim.Tests
 
     public class EconomyFullChainTests
     {
-        /// <summary>An island where F0's chain bot finishes the whole stage 3 chain inside <see cref="ChainTicks"/> (Q4 seed scan: first soldier at minute 10.2).</summary>
-        public static ulong ChainSeed = 8UL;
+        /// <summary>
+        /// An island where F0's chain bot finishes the whole stage 3 chain inside <see cref="ChainTicks"/>. M0 seed scan (keyed
+        /// dice streams): first soldier at minute 6.1. Before M0 (shared dice stream) it was seed 8 at minute 10.2; seed 8
+        /// now makes its first soldier at minute 28.6.
+        /// </summary>
+        public static ulong ChainSeed = 39UL;
         /// <summary>The chain bot's first soldier on <see cref="ChainSeed"/>: 15 minutes (it places one building at a time, one woodcutter only).</summary>
         public const int ChainTicks = 15 * 600;
         /// <summary>The time the bot gets on every seed of the scan: 30 minutes.</summary>
@@ -544,14 +548,16 @@ namespace God.Sim.Tests
         public void ChainRun_WorksOnSeveralSeeds()
         {
             int ok = 0; var failed = new List<ulong>();
-            for (ulong seed = 1; seed <= 16; seed++)
+            for (ulong seed = 1; seed <= 50; seed++)
             {
                 var (sim, bot) = RunChain(seed, ScanTicks);
                 var q = sim.State.Economy.ProducedLog;
                 if (q.Any(u => u.Kit.IsArmed)) ok++; else failed.Add(seed);
             }
-            // Q4 scan: 10 of 16 (seeds 3, 4, 5, 7, 8, 9, 10, 12, 14, 16); the rest lack a land the bot never trades for.
-            Assert.GreaterOrEqual(ok, 9, "failed seeds: " + string.Join(",", failed));
+            // Q4 scan on seeds 1-16 with the stage 3 dice stream: 10 of 16 (threshold 9). That rate was luck of those 16 seeds:
+            // on the named set S50 the stage 3 dice give 25 of 50 and the M0 keyed dice 24 of 50. M0 re-baseline: S50, at
+            // least 22. The bot fails where it lacks a land it never trades for, or the rolls of that land come late.
+            Assert.GreaterOrEqual(ok, 22, "failed seeds: " + string.Join(",", failed));
         }
     }
 }

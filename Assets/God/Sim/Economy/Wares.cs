@@ -69,15 +69,15 @@ namespace God.Sim
         public const int Count = 28;
 
         /// <summary>The five raws that carriers haul (rock is never hauled).</summary>
-        public static readonly Ware[] Raws = { Ware.Log, Ware.Clay, Ware.Grain, Ware.Stone, Ware.Ore };
+        public static readonly ReadOnlyArray<Ware> Raws = new ReadOnlyArray<Ware>(Ware.Log, Ware.Clay, Ware.Grain, Ware.Stone, Ware.Ore);
 
         /// <summary>The ten processed wares of stage 3, one per pair of raws.</summary>
-        public static readonly Ware[] Processed = { Ware.Plank, Ware.Brick, Ware.Iron, Ware.Bread, Ware.Mortar, Ware.Bronze, Ware.Pottery, Ware.Steel, Ware.Leather, Ware.Cloth };
+        public static readonly ReadOnlyArray<Ware> Processed = new ReadOnlyArray<Ware>(Ware.Plank, Ware.Brick, Ware.Iron, Ware.Bread, Ware.Mortar, Ware.Bronze, Ware.Pottery, Ware.Steel, Ware.Leather, Ware.Cloth);
 
         public static Ware OfRaw(RawKind k) => (Ware)(int)k;
 
         public static bool IsRaw(Ware w) => w == Ware.Log || w == Ware.Clay || w == Ware.Grain || w == Ware.Stone || w == Ware.Ore;
-        public static bool IsProcessed(Ware w) => System.Array.IndexOf(Processed, w) >= 0;
+        public static bool IsProcessed(Ware w) => Processed.IndexOf(w) >= 0;
         public static bool IsGear(Ware w) => w >= Ware.Sword && w <= Ware.LightArmour;
 
         public static string Name(Ware w)
@@ -122,8 +122,8 @@ namespace God.Sim
     /// <summary>Gear rules shared by the economy (barracks) and the military (combat). Stats live in the military tuning.</summary>
     public static class Gear
     {
-        public static readonly Ware[] Attack = { Ware.Sword, Ware.Spear, Ware.Axe, Ware.Bow, Ware.Sling };
-        public static readonly Ware[] Defence = { Ware.BigShield, Ware.Helmet, Ware.SmallShield, Ware.Breastplate, Ware.LightArmour };
+        public static readonly ReadOnlyArray<Ware> Attack = new ReadOnlyArray<Ware>(Ware.Sword, Ware.Spear, Ware.Axe, Ware.Bow, Ware.Sling);
+        public static readonly ReadOnlyArray<Ware> Defence = new ReadOnlyArray<Ware>(Ware.BigShield, Ware.Helmet, Ware.SmallShield, Ware.Breastplate, Ware.LightArmour);
 
         public static GearSlot SlotOf(Ware w)
         {

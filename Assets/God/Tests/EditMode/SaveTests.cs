@@ -163,15 +163,37 @@ namespace God.Sim.Tests
             Assert.IsNull(SaveFile.TryReadHeader(text));
         }
 
-        [Test]
-        public void AStage2Save_IsRefused_WithAClearMessage()
+        [TestCase(1)]
+        [TestCase(2)]
+        public void AStage2OrStage3Save_IsRefused_WithAClearMessage(int oldVersion)
         {
-            Assert.AreEqual(2, SaveFile.CurrentVersion);
-            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":2", "\"Version\":1");
+            // M0: save version 3 (tuning, calendar, victory list); stage 3 saves (2) and stage 2 saves (1) are refused.
+            Assert.AreEqual(3, SaveFile.CurrentVersion);
+            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":3", "\"Version\":" + oldVersion);
             var ex = Assert.Throws<SaveException>(() => SaveFile.FromJson(json));
             StringAssert.Contains("older version", ex.Message);
             StringAssert.Contains("Start a new game", ex.Message);
             Assert.IsNull(SaveFile.TryReadHeader(json), "not listed as a loadable slot");
+        }
+
+        [Test]
+        public void Version3Save_KeepsTuningCalendarAndVictory()
+        {
+            var setup = new GameSetup(5UL, GameSetup.NoHuman) { TicksPerDay = 600, DaysPerYear = 4, LifeScale = 250, Disease = DiseaseSetting.Off, Victory = VictorySpec.SandboxOnly() };
+            var tuning = new SimTuning();
+            Assert.IsTrue(tuning.TrySet("Military.CritPct", 0, out _));
+            Assert.IsTrue(tuning.TrySet("Military.Sword.Damage", 13, out _));
+            var sim = GodSim.Create(setup, tuning);
+            sim.Step(50);
+            var json = SaveFile.From(sim).ToJson();
+            var back = SaveFile.FromJson(json).ToSim();
+            var s = back.State;
+            Assert.AreEqual(600, s.Setup.TicksPerDay); Assert.AreEqual(4, s.Setup.DaysPerYear); Assert.AreEqual(250, s.Setup.LifeScale);
+            Assert.AreEqual(DiseaseSetting.Off, s.Setup.Disease);
+            Assert.AreEqual(1, s.Setup.Victory.Count); Assert.AreEqual(VictoryKind.Sandbox, s.Setup.Victory[0].Kind);
+            Assert.AreEqual(0, s.Tuning.Military.CritPct); Assert.AreEqual(13, s.Tuning.Military.Sword.Damage);
+            Assert.AreEqual(sim.StateHash(), back.StateHash());
+            Assert.AreEqual(json, SaveFile.From(back).ToJson(), "a second save of a loaded game is byte-identical");
         }
 
         [Test]

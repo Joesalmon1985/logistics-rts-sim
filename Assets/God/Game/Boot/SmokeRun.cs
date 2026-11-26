@@ -1,4 +1,5 @@
-using System.Linq;
+using System.Collections.Generic;
+using God.Recording;
 using God.Sim;
 using UnityEngine;
 
@@ -6,11 +7,13 @@ namespace God.Game
 {
     /// <summary>
     /// Headless smoke for the built player: <c>-godsmoke N</c> plays a watch game (six AI brains, see <see cref="AiHost"/>)
-    /// as fast as possible for up to N sim ticks, and logs the standings every 1000 ticks: VP, HQs, Citadels and units per
-    /// faction, the wars, captures and eliminations so far, and the trades (offered, accepted, refused, envoys killed). It quits with exit code 0 when no exception was logged, the
-    /// invariants hold, and either someone won or the game passed the health checks (at least 3 factions expanded, at least
-    /// one war, at least one capture); otherwise 1. Use only with <c>-batchmode -nographics</c>. The view still only reads
-    /// state; the brains send commands.
+    /// as fast as possible for up to N sim ticks, and logs the standings every 1000 ticks. The judgement (counting wars,
+    /// captures, eliminations and trades, the invariants, the verdict) is <see cref="SmokeVerdict"/>, shared with the
+    /// headless runner's <c>run --check smoke</c> (M0). It quits with exit code 0 when the verdict is OK, otherwise 1.
+    /// Use only with <c>-batchmode -nographics</c>.
+    /// <para>M0: at every sim day (1200 ticks) and at the end it logs <c>SMOKE HASH &lt;tick&gt; &lt;hex&gt;</c>, the same
+    /// hash the runner prints for the same seed and ticks; <c>-godrecord FILE</c> also writes a replay (<c>.godr</c>) that
+    /// <c>God.Runner verify --against-unity FILE</c> checks at every checkpoint.</para>
     /// </summary>
     public sealed class SmokeRun : MonoBehaviour
     {
@@ -18,19 +21,23 @@ namespace God.Game
         private GodBootstrap _boot;
         private long _endTick;
         private bool _quit = true;
-        private int _exceptions, _wars, _captures, _eliminations, _invariantFailures, _offered, _accepted, _refused, _killed;
-        private readonly int[] _maxHqs = new int[FactionInfo.Max];
-        private string _invariantNote = "ok";
+        private string _recordPath;
+        private ReplayWriter _replay;
+        private long _checkpointEvery = SimCalendar.DefaultTicksPerDay;
+        private readonly SmokeVerdict _verdict = new SmokeVerdict();
+        private readonly List<SimEvent> _events = new List<SimEvent>(256);
 
         /// <summary>The verdict once finished: null while running.</summary>
-        public bool? Ok { get; private set; }
+        public bool? Ok => _verdict.Ok;
         /// <summary>The last standings line and the end line (for tests).</summary>
-        public string LastLine { get; private set; }
-        public int Wars => _wars;
-        public int Captures => _captures;
+        public string LastLine => _verdict.LastLine;
+        public int Wars => _verdict.Wars;
+        public int Captures => _verdict.Captures;
         /// <summary>Trade offers sent and accepted so far (P11).</summary>
-        public int TradesOffered => _offered;
-        public int TradesAccepted => _accepted;
+        public int TradesOffered => _verdict.Offered;
+        public int TradesAccepted => _verdict.Accepted;
+        /// <summary>The last "SMOKE HASH" line.</summary>
+        public string LastHashLine { get; private set; }
 
         public static void StartIfAsked(GodBootstrap boot)
         {
@@ -39,7 +46,9 @@ namespace God.Game
             if (i < 0) return;
             long ticks = 40000;
             if (i + 1 < args.Length && long.TryParse(args[i + 1], out var n)) ticks = n;
-            Begin(boot, ticks, true);
+            var run = Begin(boot, ticks, true);
+            int r = System.Array.IndexOf(args, "-godrecord");
+            if (r >= 0 && r + 1 < args.Length) run._recordPath = args[r + 1];
         }
 
         /// <summary>Starts a smoke on a loaded game (the PlayMode test calls this; the player uses <c>-godsmoke</c>). <paramref name="quit"/>: quit the application with the verdict.</summary>
@@ -57,16 +66,36 @@ namespace God.Game
 
         private void OnLog(string msg, string stack, LogType type)
         {
-            if (type == LogType.Exception) _exceptions++;
+            if (type == LogType.Exception) _verdict.CountException();
         }
 
         private void Start()
         {
             _boot.Running = false; // the smoke steps the sim itself; the AI thinks inside each step
+            _boot.DrivenExternally = true; // and the bootstrap never steps it (no held steps between frames)
             var s = _boot.Sim.State;
+            _checkpointEvery = s.Setup.TicksPerDay;
             Debug.Log("SMOKE start seed " + _boot.Seed + " ticks " + _endTick + " factions " + s.FactionCount
                 + " brains " + (AiHost.Director != null && AiHost.Director.Sim == _boot.Sim ? AiHost.Director.Brains.Count : 0)
                 + (s.Setup.HasHuman ? " human " + FactionInfo.Name(s.Setup.HumanFaction) : " watch"));
+            if (_recordPath != null) OpenReplay(s);
+        }
+
+        /// <summary>
+        /// The replay of this smoke: the same resolved scenario the runner's <c>watch6</c> gives (six factions, watch, stage 3
+        /// victory, this length), so the runner can rebuild the game and check every checkpoint.
+        /// </summary>
+        private void OpenReplay(GodState s)
+        {
+            try
+            {
+                var sc = Scenario.Watch6(_endTick);
+                sc.FactionCount = s.FactionCount; sc.Human = s.Setup.Human; sc.CheckpointEvery = _checkpointEvery;
+                _replay = new ReplayWriter(_recordPath);
+                _replay.Header(new ReplayHeader { Host = "unity", Scenario = sc.ToJson(), Seed = s.Seed, CheckpointEvery = _checkpointEvery });
+                Debug.Log("SMOKE recording the replay to " + _recordPath);
+            }
+            catch (System.Exception e) { Debug.LogWarning("SMOKE cannot write the replay: " + e.Message); _replay = null; }
         }
 
         private void Update()
@@ -76,62 +105,38 @@ namespace God.Game
             for (int k = 0; k < TicksPerFrame && s.Tick < _endTick && !s.IsGameOver; k++)
             {
                 sim.Step();
-                foreach (var ev in sim.DrainEvents())
-                {
-                    if (ev is WarDeclared) _wars++;
-                    else if (ev is HqCaptured) _captures++;
-                    else if (ev is FactionEliminated) _eliminations++;
-                    else if (ev is TradeOffered) _offered++;
-                    else if (ev is TradeAccepted) _accepted++;
-                    else if (ev is TradeRefused) _refused++;
-                    else if (ev is EnvoyKilled) _killed++;
-                }
-                if (s.Tick % 200 == 0) foreach (var f in s.Setup.Factions) _maxHqs[(int)f] = Mathf.Max(_maxHqs[(int)f], s.Territory.HqsOf(f).Count);
-                if (s.Tick % 500 == 0) CheckInvariants(s);
-                if (s.Tick % 1000 == 0) Debug.Log(LastLine = "SMOKE " + Summary(s));
+                _events.Clear();
+                sim.DrainInto(_events);
+                _verdict.OnEvents(_events);
+                _verdict.AfterTick(s, out var info, out var warning);
+                if (warning != null) Debug.LogWarning(warning);
+                if (info != null) Debug.Log(info);
+                if (s.Tick % _checkpointEvery == 0) Checkpoint(sim);
             }
-            if (s.Tick >= _endTick || s.IsGameOver) Finish(s);
+            if (s.Tick >= _endTick || s.IsGameOver) Finish(sim);
         }
 
-        private void CheckInvariants(GodState s)
+        private void Checkpoint(GodSim sim)
         {
-            var bad = SimInvariants.Check(s);
-            if (bad.Count == 0) return;
-            _invariantFailures++;
-            _invariantNote = "tick " + s.Tick + ": " + string.Join("; ", bad);
-            Debug.LogWarning("SMOKE invariants " + _invariantNote);
+            var parts = sim.StateHashParts();
+            ulong h = GodSim.Fold(parts);
+            Debug.Log(LastHashLine = "SMOKE HASH " + sim.State.Tick + " " + Hex.Of(h));
+            _replay?.Checkpoint(sim.State.Tick, h, parts);
         }
 
-        private string Summary(GodState s)
+        private void Finish(GodSim sim)
         {
-            var parts = FactionRules.Standings(s).Select(st => FactionInfo.Name(st.Faction) + " " + st.VictoryPoints + " VP " + st.Hqs + " HQ "
-                + st.Citadels + " Cit " + s.Military.CountUnits(st.Faction) + " units"
-                + (st.Eliminated ? " (out)" : s.Factions.Enemies(st.Faction).Count > 0 ? " war " + string.Join("/", s.Factions.Enemies(st.Faction).Select(FactionInfo.Name)) : ""));
-            return "tick " + s.Tick + " min " + (s.Tick / 600.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " | " + string.Join(" | ", parts)
-                + " | soldiers made " + s.Economy.UnitsProduced + " harvester upgrades " + s.Economy.Buildings.Count(b => b.Level > 1)
-                + " | wars " + _wars + " captures " + _captures + " eliminations " + _eliminations
-                + " | trades offered " + _offered + " accepted " + _accepted + " refused " + _refused + " killed " + _killed;
-        }
-
-        private void Finish(GodState s)
-        {
-            foreach (var f in s.Setup.Factions) _maxHqs[(int)f] = Mathf.Max(_maxHqs[(int)f], s.Territory.HqsOf(f).Count);
-            CheckInvariants(s);
-            int expanded = s.Setup.Factions.Count(f => _maxHqs[(int)f] >= 2);
-            bool won = s.IsGameOver && s.Factions.Winner >= 0;
-            bool healthy = expanded >= 3 && _wars >= 1 && _captures >= 1;
-            bool ok = _exceptions == 0 && _invariantFailures == 0 && (won || healthy);
-            string over = s.IsGameOver
-                ? "GAME OVER at tick " + s.Factions.GameOverTick + " (minute " + (s.Factions.GameOverTick / 600.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "): "
-                  + (s.Factions.Winner >= 0 ? FactionInfo.Name((Faction)s.Factions.Winner) : "nobody") + " wins by " + s.Factions.EndReason
-                : "no game over by tick " + s.Tick;
-            Debug.Log("SMOKE " + over);
-            LastLine = "SMOKE END " + Summary(s) + " | " + over + " | factions expanded " + expanded + " | invariants " + _invariantNote
-                + " | exceptions " + _exceptions + " | " + (ok ? "OK" : "FAIL");
-            Debug.Log(LastLine);
-            Ok = ok;
+            var s = sim.State;
+            var over = _verdict.Finish(s, out var warning);
+            if (warning != null) Debug.LogWarning(warning);
+            Debug.Log(over);
+            Debug.Log(LastHashLine = "SMOKE HASH END " + s.Tick + " " + Hex.Of(sim.StateHash()));
+            Debug.Log(_verdict.LastLine);
+            if (_replay != null) { _replay.End(s.Tick, sim.StateHash(), s.IsGameOver ? "gameOver" : "maxTicks"); _replay.Dispose(); _replay = null; }
             enabled = false;
-            if (_quit) Application.Quit(ok ? 0 : 1);
+            if (_quit) Application.Quit(_verdict.Ok == true ? 0 : 1);
         }
+
+        private void OnDestroy() { _replay?.Dispose(); _replay = null; }
     }
 }

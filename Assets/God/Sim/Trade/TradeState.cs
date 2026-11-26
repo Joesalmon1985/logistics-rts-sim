@@ -208,25 +208,25 @@ namespace God.Sim
     // ---------------- events ----------------
 
     /// <summary>An offer was sent: the give wares left the HQ and the envoy set out.</summary>
-    public sealed class TradeOffered : SimEvent
+    public sealed class TradeOffered : DomainEvent
     {
         public int OfferId; public Faction From; public Faction To; public WareCount[] Give; public WareCount[] Want; public int HqId;
     }
 
     /// <summary>The envoy reached the target's HQ and the offer is now pending (or answered by the judge this tick).</summary>
-    public sealed class EnvoyArrived : SimEvent
+    public sealed class EnvoyArrived : DomainEvent
     {
         public int OfferId; public int EnvoyId; public Faction From; public Faction To; public int HqId; public WareCount[] Give; public WareCount[] Want;
     }
 
     /// <summary>The target accepted: the give wares went into its stock and the payment is on its way home.</summary>
-    public sealed class TradeAccepted : SimEvent
+    public sealed class TradeAccepted : DomainEvent
     {
         public int OfferId; public Faction From; public Faction To; public WareCount[] Give; public WareCount[] Want;
     }
 
     /// <summary>The offer was refused (see Cause): the envoy brings the goods back.</summary>
-    public sealed class TradeRefused : SimEvent
+    public sealed class TradeRefused : DomainEvent
     {
         public int OfferId; public Faction From; public Faction To; public WareCount[] Give; public WareCount[] Want; public RefusalCause Cause;
     }
@@ -234,13 +234,13 @@ namespace God.Sim
     public enum EnvoyDeathCause { Shot = 0, NoHomeLeft = 1, SenderEliminated = 2 }
 
     /// <summary>An envoy died and its goods are lost. <c>By</c> is the shooter's faction id or -1.</summary>
-    public sealed class EnvoyKilled : SimEvent
+    public sealed class EnvoyKilled : DomainEvent
     {
         public int EnvoyId; public int OfferId; public Faction Owner; public int By; public int X, Z; public WareCount[] Lost; public EnvoyDeathCause Cause;
     }
 
     /// <summary>An envoy reached home and put its cargo into the HQ's stock.</summary>
-    public sealed class EnvoyHome : SimEvent
+    public sealed class EnvoyHome : DomainEvent
     {
         public int EnvoyId; public int OfferId; public Faction Faction; public int HqId; public WareCount[] Cargo; public bool Payment;
     }

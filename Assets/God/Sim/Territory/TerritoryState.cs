@@ -124,8 +124,11 @@ namespace God.Sim
         /// <summary>Piles dropped because a hex was full.</summary>
         public int WastedPiles;
 
-        [JsonIgnore] public NodeGrid Grid => NodeGrid.Get(Radius, Shape);
-        [JsonIgnore] public BoardTopology Topology => BoardTopology.Get(Radius, Shape);
+        /// <summary>M0: the shared grid and topology are looked up once per state (the caches take a lock), never saved.</summary>
+        [JsonIgnore] public NodeGrid Grid => _grid ?? (_grid = NodeGrid.Get(Radius, Shape));
+        [JsonIgnore] public BoardTopology Topology => _topology ?? (_topology = BoardTopology.Get(Radius, Shape));
+        private NodeGrid _grid;
+        private BoardTopology _topology;
 
         public static TerritoryState Create(int radius, BoardShape shape = BoardShape.Hexagon)
         {

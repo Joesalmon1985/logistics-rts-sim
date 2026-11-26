@@ -22,7 +22,8 @@ namespace God.Game
         /// </summary>
         public static AiDirector Start(GodSim sim, IEnumerable<Faction> factions, IAiTrader trader = null)
         {
-            Director = AiDirector.Attach(sim, factions, AiTuning.Default, trader ?? new AiTrader());
+            // M0: the same construction as the headless runner (SimBuilder), so the player and the runner play the same game.
+            Director = SimBuilder.AttachAi(sim, factions, trader);
             return Director;
         }
 

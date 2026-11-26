@@ -290,13 +290,13 @@ namespace God.Sim
 
         // ---------------- wares ----------------
 
-        private bool Afford(int[] cost)
+        private bool Afford(IReadOnlyList<int> cost)
         {
             for (int w = 0; w < Wares.Count; w++) if (cost[w] > 0 && _budget[w] < cost[w]) return false;
             return true;
         }
 
-        private void Spend(int[] cost)
+        private void Spend(IReadOnlyList<int> cost)
         {
             for (int w = 0; w < Wares.Count; w++) _budget[w] -= cost[w];
         }
@@ -819,7 +819,7 @@ namespace God.Sim
             if (_mine.Count * 100 < ArmyWanted(war) * Tune.CitadelArmyPercent) return;
             var cost = EconomyDefs.Citadel.Cost;
             // Steel is not waited for: only the Citadel asks for it, so it is carried in as the forge makes it.
-            var noSteel = (int[])cost.Clone(); noSteel[(int)Ware.Steel] = 0;
+            var noSteel = cost.ToArray(); noSteel[(int)Ware.Steel] = 0;
             if (!Afford(noSteel) || !ActionsLeft) { Spend(cost); return; }
             Hq best = null; int bestDanger = int.MaxValue;
             foreach (var h in _hqs)

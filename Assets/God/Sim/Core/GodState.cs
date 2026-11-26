@@ -11,8 +11,15 @@ namespace God.Sim
         /// <summary>Number of completed <see cref="GodSim.Step()"/> calls. 10 ticks = 1 second.</summary>
         public long Tick;
 
-        /// <summary>Shared deterministic RNG. Prefer <c>Rng.Fork("module")</c> for module-local streams.</summary>
+        /// <summary>
+        /// The root random stream of the game. M0: nothing draws from it directly and it never advances; every draw uses a
+        /// stream keyed by purpose and entity forked from it (<c>Rng.Fork("dice", roll)</c>, <c>Rng.Fork("duel", unit, tick)</c>),
+        /// so adding an entity or a draw never shifts another stream (conventions section 3).
+        /// </summary>
         public Rng Rng = new Rng();
+
+        /// <summary>This game's tuning (M0: replaces the mutable statics). Saved and hashed with the state.</summary>
+        public SimTuning Tuning = new SimTuning();
 
         public Board Board;
     }

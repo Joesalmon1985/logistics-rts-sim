@@ -28,20 +28,18 @@ namespace God.Sim
         public const int NumberShuffleLimit = 100000;
 
         /// <summary>Terrain dealt over the 30 hexes.</summary>
-        public static readonly Terrain[] IslandTerrainPool = Pool(
+        public static readonly ReadOnlyArray<Terrain> IslandTerrainPool = Pool(
             (Terrain.Forest, 8), (Terrain.Hills, 6), (Terrain.Fields, 7), (Terrain.Mountain, 7), (Terrain.Desert, 2));
 
         /// <summary>Numbers dealt over the 28 resource hexes: 2 and 12 twice, every other number but 7 three times.</summary>
-        public static readonly int[] IslandNumberPool =
-        {
-            2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12,
-        };
+        public static readonly ReadOnlyArray<int> IslandNumberPool = new ReadOnlyArray<int>(
+            2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12);
 
-        private static Terrain[] Pool(params (Terrain t, int n)[] parts)
+        private static ReadOnlyArray<Terrain> Pool(params (Terrain t, int n)[] parts)
         {
             var l = new List<Terrain>();
             foreach (var (t, n) in parts) for (int i = 0; i < n; i++) l.Add(t);
-            return l.ToArray();
+            return new ReadOnlyArray<Terrain>(l);
         }
 
         /// <summary>Pips of a number (2/12 = 1 ... 6/8 = 5; 0 for anything else).</summary>

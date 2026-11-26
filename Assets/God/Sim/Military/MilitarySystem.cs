@@ -7,15 +7,15 @@ namespace God.Sim
     /// brain (move, and say whether it attacks this tick), then resolve the attacks one by one in turn order (longer reach
     /// first, then lower unit id; a soldier killed earlier in the tick does not strike), remove the dead, capture HQs and
     /// destroy other buildings, then age rubble. Attacks on soldiers are duels (<see cref="Duel"/>, rolls from
-    /// <see cref="MilitaryState.Rng"/>); attacks on buildings always land for the weapon's building damage. Units fight
+    /// the keyed stream <c>Rng.Fork("duel", attacker, tick)</c>); attacks on buildings always land for the weapon's building damage. Units fight
     /// only factions theirs is at war with. After the game is over nothing runs (the faction system decides the end).
     /// </summary>
     public sealed class MilitarySystem : ISimSystem
     {
         private struct Attack { public MilUnit By; public TargetKind Kind; public int Id; public int ToX, ToZ; public int Reach; }
 
-        private static readonly int[] RingCos = { 1000, 866, 500, 0, -500, -866, -1000, -866, -500, 0, 500, 866 };
-        private static readonly int[] RingSin = { 0, 500, 866, 1000, 866, 500, 0, -500, -866, -1000, -866, -500 };
+        private static readonly ReadOnlyArray<int> RingCos = new ReadOnlyArray<int>(1000, 866, 500, 0, -500, -866, -1000, -866, -500, 0, 500, 866);
+        private static readonly ReadOnlyArray<int> RingSin = new ReadOnlyArray<int>(0, 500, 866, 1000, 866, 500, 0, -500, -866, -1000, -866, -500);
 
         public void Tick(GodState s, EventBuffer ev)
         {
@@ -23,7 +23,6 @@ namespace God.Sim
             if (m == null) return;
             if (s.IsGameOver) { s.UnitQueue.Clear(); return; }
 
-            if (m.Rng == null) m.Rng = s.Rng.Fork("military");
             MilitaryRules.SyncBuildings(s, ev);
             MilitaryRules.DrainQueue(s, ev);
             StaffDefends(s);
@@ -95,7 +94,7 @@ namespace God.Sim
             if (u.HasGoal)
             {
                 u.TargetKind = TargetKind.None; u.TargetId = 0; u.EngagedId = 0; u.Activity = UnitActivity.Moving;
-                if (Pathing.MoveToward(g, u, u.GoalX, u.GoalZ) || (u.X == u.GoalX && u.Z == u.GoalZ)) { u.HasGoal = false; u.Activity = UnitActivity.Idle; }
+                if (Pathing.MoveToward(s.Tuning.Military, g, u, u.GoalX, u.GoalZ) || (u.X == u.GoalX && u.Z == u.GoalZ)) { u.HasGoal = false; u.Activity = UnitActivity.Idle; }
                 return;
             }
 
@@ -106,7 +105,7 @@ namespace God.Sim
             if (tk != TargetKind.None)
             {
                 u.Activity = UnitActivity.Fighting;
-                var st = MilitaryTuning.Of(u.Kit);
+                var st = s.Tuning.Military.Of(u.Kit);
                 if (edge <= st.RangeMm)
                 {
                     // Ranged soldiers stop at their range; melee ones have closed in.
@@ -121,7 +120,7 @@ namespace God.Sim
                     else u.EngagedId = 0;
                     if (u.Cooldown == 0) attacks.Add(new Attack { By = u, Kind = tk, Id = tid, ToX = tx, ToZ = tz, Reach = st.RangeMm });
                 }
-                else { u.EngagedId = 0; Pathing.MoveToward(g, u, tx, tz); }
+                else { u.EngagedId = 0; Pathing.MoveToward(s.Tuning.Military, g, u, tx, tz); }
                 return;
             }
             u.EngagedId = 0;
@@ -133,7 +132,7 @@ namespace God.Sim
             if (marks.Count > 0)
             {
                 var b = m.BuildingById(marks[0]);
-                if (b != null) { u.Activity = UnitActivity.Marching; Pathing.MoveToward(g, u, b.X, b.Z); return; }
+                if (b != null) { u.Activity = UnitActivity.Marching; Pathing.MoveToward(s.Tuning.Military, g, u, b.X, b.Z); return; }
             }
             Wait(s, u);
         }
@@ -146,7 +145,7 @@ namespace God.Sim
         private static void Acquire(GodState s, MilUnit u, DefendFlag flag, out TargetKind kind, out int id, out int tx, out int tz, out int edge)
         {
             var m = s.Military;
-            var st = MilitaryTuning.Of(u.Kit);
+            var st = s.Tuning.Military.Of(u.Kit);
             int sight = st.SightMm, range = st.RangeMm;
             long sight2 = (long)sight * sight;
             long chase2 = (long)MilitaryTuning.GuardChaseMm * MilitaryTuning.GuardChaseMm;
@@ -204,7 +203,7 @@ namespace God.Sim
             if (u.Returning)
             {
                 u.Activity = UnitActivity.Returning;
-                Pathing.MoveToward(g, u, sx, sz);
+                Pathing.MoveToward(s.Tuning.Military, g, u, sx, sz);
                 if (Pathing.Dist2(u.X, u.Z, sx, sz) <= 1500L * 1500L) u.Returning = false;
                 return;
             }
@@ -228,7 +227,7 @@ namespace God.Sim
             if (!Pathing.IsLandPoint(g, sx, sz)) { sx = hq.X; sz = hq.Z; }
             if (Pathing.Dist2(u.X, u.Z, sx, sz) <= 1000L * 1000L) { u.Activity = UnitActivity.Waiting; return; }
             u.Activity = UnitActivity.Waiting;
-            Pathing.MoveToward(g, u, sx, sz);
+            Pathing.MoveToward(s.Tuning.Military, g, u, sx, sz);
         }
 
         // ---------------- damage ----------------
@@ -250,13 +249,16 @@ namespace God.Sim
             {
                 var u = a.By;
                 if (u.Health <= 0) continue;
-                var st = MilitaryTuning.Of(u.Kit);
+                var st = s.Tuning.Military.Of(u.Kit);
                 AttackResult res;
                 if (a.Kind == TargetKind.Unit)
                 {
                     if (!byId.TryGetValue(a.Id, out var t) || t.Health <= 0) continue;
-                    bool close = st.Ranged && Pathing.Dist2(u.X, u.Z, t.X, t.Z) <= (long)MilitaryTuning.CloseQuartersMm * MilitaryTuning.CloseQuartersMm;
-                    res = Duel.Resolve(st, MilitaryTuning.Of(t.Kit), m.Rng, close);
+                    var tu = s.Tuning.Military;
+                    bool close = st.Ranged && Pathing.Dist2(u.X, u.Z, t.X, t.Z) <= (long)tu.CloseQuartersMm * tu.CloseQuartersMm;
+                    // M0: the rolls come from a stream keyed by the attacker and the tick (a unit strikes at most once a tick),
+                    // not from a shared stream, so one fight never shifts another's rolls.
+                    res = Duel.Resolve(tu, st, tu.Of(t.Kit), s.Rng.Fork("duel", u.Id, s.Tick), close);
                     t.Health -= res.Damage;
                     if (t.Health <= 0) killer[t.Id] = u.Id;
                 }
@@ -264,7 +266,7 @@ namespace God.Sim
                 {
                     var b = m.BuildingById(a.Id);
                     if (b == null || b.Health <= 0) continue;
-                    res = new AttackResult(AttackOutcome.Building, MilitaryTuning.BuildingDamage(st.Weapon));
+                    res = new AttackResult(AttackOutcome.Building, s.Tuning.Military.BuildingDamage(st.Weapon));
                     b.Health -= res.Damage;
                     if (b.Health <= 0) fellTo[b.Id] = u.Faction;
                 }
@@ -315,7 +317,7 @@ namespace God.Sim
         /// <summary>Creates the military state with a full health record for every building that exists at the start (the HQs).</summary>
         public static void StartGame(GodState s)
         {
-            s.Military = new MilitaryState { Rng = s.Rng.Fork("military") };
+            s.Military = new MilitaryState();
             MilitaryRules.SyncBuildings(s, new EventBuffer());
         }
     }

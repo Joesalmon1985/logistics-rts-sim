@@ -24,7 +24,7 @@ namespace God.Sim
         }
 
         /// <summary>A soldier's strength by its kit (<see cref="KitStrength"/>): a bare sword counts <see cref="AiTuning.InfantryStrength"/>.</summary>
-        private int UnitStrength(MilUnit u) => KitStrength(u.Kit, Tune.InfantryStrength);
+        private int UnitStrength(MilUnit u) => KitStrength(S.Tuning.Military, u.Kit, Tune.InfantryStrength);
 
         /// <summary>Army strength of a faction (sum over its units), as the AI counts it.</summary>
         public int StrengthOf(Faction f)

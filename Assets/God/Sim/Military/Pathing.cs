@@ -139,8 +139,8 @@ namespace God.Sim
         /// Moves a unit up to its speed towards a goal point, around water. Returns true when it is at the goal.
         /// Updates position, facing and the path cache.
         /// </summary>
-        public static bool MoveToward(NodeGrid g, MilUnit u, int goalX, int goalZ) =>
-            MoveToward(g, u, goalX, goalZ, MilitaryTuning.Of(u.Kit).SpeedMmPerTick);
+        public static bool MoveToward(MilitaryTuning tu, NodeGrid g, MilUnit u, int goalX, int goalZ) =>
+            MoveToward(g, u, goalX, goalZ, tu.Of(u.Kit).SpeedMmPerTick);
 
         /// <summary>As <see cref="MoveToward(NodeGrid, MilUnit, int, int)"/> with an explicit speed in mm per tick (envoys walk on a body that is not a unit).</summary>
         public static bool MoveToward(NodeGrid g, MilUnit u, int goalX, int goalZ, int speed)

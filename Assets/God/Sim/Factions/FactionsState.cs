@@ -105,22 +105,22 @@ namespace God.Sim
     // ---------------- events ----------------
 
     /// <summary><c>By</c> declared war on <c>Against</c>; the pair is at war from this tick.</summary>
-    public sealed class WarDeclared : SimEvent { public Faction By; public Faction Against; }
+    public sealed class WarDeclared : DomainEvent { public Faction By; public Faction Against; }
     /// <summary><c>By</c> offered peace to <c>To</c>. Peace follows once both have offered.</summary>
-    public sealed class PeaceOffered : SimEvent { public Faction By; public Faction To; }
+    public sealed class PeaceOffered : DomainEvent { public Faction By; public Faction To; }
     /// <summary>The pair is at peace again (both offered).</summary>
-    public sealed class PeaceMade : SimEvent { public Faction A; public Faction B; }
+    public sealed class PeaceMade : DomainEvent { public Faction A; public Faction B; }
 
     /// <summary>A Citadel upgrade started on a finished HQ: its wares now flow there like a site's.</summary>
-    public sealed class CitadelStarted : SimEvent { public Faction Faction; public int HqId; }
+    public sealed class CitadelStarted : DomainEvent { public Faction Faction; public int HqId; }
     /// <summary>The HQ is now a Citadel: 2 VP and more health.</summary>
-    public sealed class CitadelCompleted : SimEvent { public Faction Faction; public int HqId; }
+    public sealed class CitadelCompleted : DomainEvent { public Faction Faction; public int HqId; }
 
     /// <summary>
     /// An HQ or Citadel fell to <c>To</c>'s units and passed to it at half health, with everything listed: the buildings
     /// and sites of its build area (the HQ included), the flags in it and the roads wholly inside it.
     /// </summary>
-    public sealed class HqCaptured : SimEvent
+    public sealed class HqCaptured : DomainEvent
     {
         public int HqId; public Faction From; public Faction To; public bool Citadel;
         public int[] BuildingIds; public int[] FlagIds; public int[] RoadIds;
@@ -129,10 +129,10 @@ namespace God.Sim
     }
 
     /// <summary>A faction lost its last HQ. <c>By</c> is the faction that captured its last HQ, or -1.</summary>
-    public sealed class FactionEliminated : SimEvent { public Faction Faction; public int By; }
+    public sealed class FactionEliminated : DomainEvent { public Faction Faction; public int By; }
 
     /// <summary>The game ended: <c>Winner</c> is a faction id (-1 if nobody is left). The sim stops after this tick.</summary>
-    public sealed class GameOver : SimEvent
+    public sealed class GameOver : DomainEvent
     {
         public int Winner;
         public GameEndReason Reason;

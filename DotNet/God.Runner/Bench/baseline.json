@@ -1,0 +1,51 @@
+{
+  "case": "bench_stage3_watch6",
+  "seed": 1,
+  "ticks": 40000,
+  "ticksPerSecond": 9757.9,
+  "realTimeMultiple": 975.8,
+  "simYearsPerRealSecond": 0.8132,
+  "msPerTickMean": 0.1025,
+  "msPerTickP50": 0.0743,
+  "msPerTickP99": 0.3803,
+  "msPerTickMax": 8.488,
+  "allocBytesPerTick": 47193,
+  "memoryBuildBytes": 304696,
+  "memoryEndBytes": 1459192,
+  "memoryEndUncollectedBytes": 17550328,
+  "processWorkingSetBytes": 72032256,
+  "saveBytes": 467429,
+  "saveMs": 88.6,
+  "loadMs": 108.8,
+  "loadSameHash": true,
+  "machine": "cores 16",
+  "runtime": "10.0.12",
+  "parallel": [
+    {
+      "workers": 1,
+      "aggregateTicksPerSecond": 16493.0,
+      "perSimTicksPerSecond": 16493.0,
+      "scaling": 1.0
+    },
+    {
+      "workers": 4,
+      "aggregateTicksPerSecond": 59546.0,
+      "perSimTicksPerSecond": 14887.0,
+      "scaling": 0.903
+    },
+    {
+      "workers": 8,
+      "aggregateTicksPerSecond": 97529.0,
+      "perSimTicksPerSecond": 12191.0,
+      "scaling": 0.739
+    },
+    {
+      "workers": 16,
+      "aggregateTicksPerSecond": 103982.0,
+      "perSimTicksPerSecond": 6499.0,
+      "scaling": 0.394
+    }
+  ],
+  "gitCommit": "46d9fad71d8903eacf773d5968977cae4d0f1c3d",
+  "date": "2026-11-26"
+}

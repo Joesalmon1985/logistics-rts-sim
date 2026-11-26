@@ -18,10 +18,13 @@ namespace God.Sim
         private sealed class Side { public SoldierStats St; public int Health, Cooldown, Pos, Engaged; public bool A; }
 
         /// <summary>Fights one duel starting <paramref name="gapMm"/> apart. Draw when nobody falls within <see cref="MaxTicks"/>.</summary>
-        public static Winner Fight(Kit a, Kit b, int gapMm, Rng rng, out int ticks)
+        public static Winner Fight(Kit a, Kit b, int gapMm, Rng rng, out int ticks) => Fight(new MilitaryTuning(), a, b, gapMm, rng, out ticks);
+
+        /// <summary>As <see cref="Fight(Kit, Kit, int, Rng, out int)"/> under a given tuning.</summary>
+        public static Winner Fight(MilitaryTuning tu, Kit a, Kit b, int gapMm, Rng rng, out int ticks)
         {
-            var sa = new Side { St = MilitaryTuning.Of(a), Pos = 0, A = true };
-            var sb = new Side { St = MilitaryTuning.Of(b), Pos = gapMm };
+            var sa = new Side { St = tu.Of(a), Pos = 0, A = true };
+            var sb = new Side { St = tu.Of(b), Pos = gapMm };
             sa.Health = sa.St.MaxHealth; sb.Health = sb.St.MaxHealth;
             var order = new List<Side>(2);
             for (ticks = 1; ticks <= MaxTicks; ticks++)
@@ -34,7 +37,7 @@ namespace God.Sim
                 {
                     var o = s == sa ? sb : sa;
                     if (s.Health <= 0 || o.Health <= 0) continue;
-                    var r = Duel.Resolve(s.St, o.St, rng, System.Math.Abs(o.Pos - s.Pos) <= MilitaryTuning.CloseQuartersMm);
+                    var r = Duel.Resolve(tu, s.St, o.St, rng, System.Math.Abs(o.Pos - s.Pos) <= tu.CloseQuartersMm);
                     o.Health -= r.Damage;
                     s.Cooldown = s.St.CooldownTicks;
                 }
@@ -61,14 +64,17 @@ namespace God.Sim
         }
 
         /// <summary>Wins of A, wins of B and draws over <paramref name="count"/> duels, each from its own seed (seed, seed+1, ...), sides swapped every other duel so neither goes first by id.</summary>
-        public static (int aWins, int bWins, int draws) Series(Kit a, Kit b, int count, ulong seed, int gapMm)
+        public static (int aWins, int bWins, int draws) Series(Kit a, Kit b, int count, ulong seed, int gapMm) => Series(new MilitaryTuning(), a, b, count, seed, gapMm);
+
+        /// <summary>As <see cref="Series(Kit, Kit, int, ulong, int)"/> under a given tuning.</summary>
+        public static (int aWins, int bWins, int draws) Series(MilitaryTuning tu, Kit a, Kit b, int count, ulong seed, int gapMm)
         {
             int wa = 0, wb = 0, d = 0;
             for (int i = 0; i < count; i++)
             {
                 var rng = new Rng(seed + (ulong)i).Fork("duel");
                 bool swap = (i & 1) == 1;
-                var w = swap ? Fight(b, a, gapMm, rng, out _) : Fight(a, b, gapMm, rng, out _);
+                var w = swap ? Fight(tu, b, a, gapMm, rng, out _) : Fight(tu, a, b, gapMm, rng, out _);
                 if (w == Winner.Draw) d++;
                 else if ((w == Winner.A) != swap) wa++;
                 else wb++;

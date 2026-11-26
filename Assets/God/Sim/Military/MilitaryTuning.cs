@@ -74,51 +74,55 @@ namespace God.Sim
     }
 
     /// <summary>
-    /// Tuning constants of the military. Change here only (package Q4 balances them). Positions are integer millimetres on
+    /// Tuning of the military. Change here only (package Q4 balances them). Positions are integer millimetres on
     /// the ground plane (X, Z as in the node lattice, metres times 1000). Stage 3: no vehicles; every unit is a soldier
     /// whose stats come from its kit.
+    /// <para>M0: the tunable numbers (gear stats and the combat rules, 22 fields) are instance fields of the sim's own copy,
+    /// <c>GodState.Tuning.Military</c> (see <see cref="SimTuning"/>), saved and hashed with the state, so two sims in one
+    /// process can be tuned differently. Numbers that are never tuned stay <c>const</c> and are reached as before
+    /// (<c>MilitaryTuning.HqHealth</c>).</para>
     /// </summary>
-    public static class MilitaryTuning
+    public sealed class MilitaryTuning
     {
         // ---------------- gear (plan stage 3 tables) ----------------
         // Weapon:        damage, pierce, hit %, ticks between attacks, range mm, vs buildings %, special
-        public static WeaponStats Sword = new WeaponStats(11, 1, 80, 9, 2000, 100, WeaponSpecial.Parry);
-        public static WeaponStats Spear = new WeaponStats(11, 4, 90, 10, 3500, 75, WeaponSpecial.FirstStrike);
-        public static WeaponStats Axe = new WeaponStats(19, 3, 75, 13, 2000, 200, WeaponSpecial.ShieldBreaker);
-        public static WeaponStats Bow = new WeaponStats(8, 2, 65, 13, 23000, 25, WeaponSpecial.None);
-        public static WeaponStats Sling = new WeaponStats(6, 1, 75, 8, 16000, 25, WeaponSpecial.Cheap);
+        public WeaponStats Sword = new WeaponStats(11, 1, 80, 9, 2000, 100, WeaponSpecial.Parry);
+        public WeaponStats Spear = new WeaponStats(11, 4, 90, 10, 3500, 75, WeaponSpecial.FirstStrike);
+        public WeaponStats Axe = new WeaponStats(19, 3, 75, 13, 2000, 200, WeaponSpecial.ShieldBreaker);
+        public WeaponStats Bow = new WeaponStats(8, 2, 65, 13, 23000, 25, WeaponSpecial.None);
+        public WeaponStats Sling = new WeaponStats(6, 1, 75, 8, 16000, 25, WeaponSpecial.Cheap);
 
         // Defence:              block %, block vs ranged %, armour, dodge %, speed %, stops crits
-        public static DefenceStats BigShield = new DefenceStats(25, 45, 0, 0, -10, false);
-        public static DefenceStats SmallShield = new DefenceStats(15, 15, 0, 3, 0, false);
-        public static DefenceStats Helmet = new DefenceStats(0, 0, 2, 0, 0, true);
-        public static DefenceStats Breastplate = new DefenceStats(0, 0, 4, -5, -15, false);
-        public static DefenceStats LightArmour = new DefenceStats(0, 0, 1, 5, 0, false);
+        public DefenceStats BigShield = new DefenceStats(25, 45, 0, 0, -10, false);
+        public DefenceStats SmallShield = new DefenceStats(15, 15, 0, 3, 0, false);
+        public DefenceStats Helmet = new DefenceStats(0, 0, 2, 0, 0, true);
+        public DefenceStats Breastplate = new DefenceStats(0, 0, 4, -5, -15, false);
+        public DefenceStats LightArmour = new DefenceStats(0, 0, 1, 5, 0, false);
 
         /// <summary>Every soldier's health.</summary>
-        public static int SoldierHealth = 100;
+        public int SoldierHealth = 100;
         /// <summary>Base walking speed: 3 m/s.</summary>
-        public static int BaseSpeedMmPerTick = 300;
+        public int BaseSpeedMmPerTick = 300;
         /// <summary>Dodge of a soldier with nothing that changes it.</summary>
-        public static int BaseDodgePct = 5;
-        public static int CritPct = 10;
-        public static int CritMultiplier = 2;
+        public int BaseDodgePct = 5;
+        public int CritPct = 10;
+        public int CritMultiplier = 2;
         /// <summary>What an axe still does through a block.</summary>
-        public static int AxeChipDamage = 3;
+        public int AxeChipDamage = 3;
         /// <summary>Sword parry: block added when the swordsman carries no shield.</summary>
-        public static int ParryBonusPct = 10;
+        public int ParryBonusPct = 10;
         /// <summary>Shield breaker: the target's block is divided by this.</summary>
-        public static int ShieldBreakerDivisor = 2;
-        public static int MinDamage = 1;
+        public int ShieldBreakerDivisor = 2;
+        public int MinDamage = 1;
         /// <summary>Close quarters: a foe within this distance of a bow or sling (centre to centre)...</summary>
-        public static int CloseQuartersMm = 4000;
+        public int CloseQuartersMm = 4000;
         /// <summary>...leaves the shooter this percent of its hit chance.</summary>
-        public static int CloseQuartersHitPct = 50;
+        public int CloseQuartersHitPct = 50;
 
         /// <summary>Soldiers strike envoys from at least this far (an envoy is no fighter: no rolls, the weapon's damage).</summary>
-        public static int EnvoyReachMm = 12000;
+        public int EnvoyReachMm = 12000;
 
-        public static WeaponStats WeaponOf(Ware w)
+        public WeaponStats WeaponOf(Ware w)
         {
             switch (w)
             {
@@ -131,7 +135,7 @@ namespace God.Sim
         }
 
         /// <summary>Stats of a defence item; zero for <see cref="Ware.None"/> or anything that is not defence gear.</summary>
-        public static DefenceStats DefenceOf(Ware w)
+        public DefenceStats DefenceOf(Ware w)
         {
             switch (w)
             {
@@ -159,7 +163,7 @@ namespace God.Sim
         }
 
         /// <summary>Derived stats of a kit (normalised first).</summary>
-        public static SoldierStats Of(Kit kit)
+        public SoldierStats Of(Kit kit)
         {
             var k = Normalize(kit);
             var w = WeaponOf(k.Weapon);
@@ -181,7 +185,7 @@ namespace God.Sim
         }
 
         /// <summary>Damage of one strike on a building: the weapon's damage times its building percent, at least 1. No rolls.</summary>
-        public static int BuildingDamage(Ware weapon)
+        public int BuildingDamage(Ware weapon)
         {
             var w = WeaponOf(weapon);
             int d = w.Damage * w.BuildingPct / 100;
@@ -226,7 +230,7 @@ namespace God.Sim
         public const int FireFlashTicks = 3;
 
         /// <summary>Units come out of a flag with a small spread so they do not stack: offsets in mm cycled by unit id.</summary>
-        public static readonly int[] SpawnSpreadX = { 0, 1500, -1500, 0, 1500, -1500, 2500, -2500 };
-        public static readonly int[] SpawnSpreadZ = { 0, 0, 0, 1500, 1500, 1500, -1000, -1000 };
+        public static readonly ReadOnlyArray<int> SpawnSpreadX = new ReadOnlyArray<int>(0, 1500, -1500, 0, 1500, -1500, 2500, -2500);
+        public static readonly ReadOnlyArray<int> SpawnSpreadZ = new ReadOnlyArray<int>(0, 0, 0, 1500, 1500, 1500, -1000, -1000);
     }
 }

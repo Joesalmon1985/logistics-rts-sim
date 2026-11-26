@@ -10,7 +10,7 @@ namespace God.Sim.Tests
     public class DuelTests
     {
         private static SoldierStats St(Ware weapon, Ware shield = Ware.None, Ware head = Ware.None, Ware body = Ware.None) =>
-            MilitaryTuning.Of(new Kit(weapon, shield, head, body));
+            new MilitaryTuning().Of(new Kit(weapon, shield, head, body));
 
         private static List<AttackResult> Many(SoldierStats a, SoldierStats t, int n, ulong seed = 11)
         {
@@ -27,7 +27,7 @@ namespace God.Sim.Tests
         {
             void W(Ware w, int dmg, int pierce, int hit, int cd, int range, int bld, WeaponSpecial sp)
             {
-                var s = MilitaryTuning.WeaponOf(w);
+                var s = new MilitaryTuning().WeaponOf(w);
                 Assert.AreEqual(new[] { dmg, pierce, hit, cd, range, bld, (int)sp }, new[] { s.Damage, s.Pierce, s.HitPct, s.CooldownTicks, s.RangeMm, s.BuildingPct, (int)s.Special }, Wares.Name(w));
             }
             // Q4 balance (plan stage 3, "Combat" table as tuned): fast parrying sword, piercing first-strike spear, heavy
@@ -40,7 +40,7 @@ namespace God.Sim.Tests
 
             void D(Ware w, int block, int vsRanged, int armour, int dodge, int speed, bool crits)
             {
-                var s = MilitaryTuning.DefenceOf(w);
+                var s = new MilitaryTuning().DefenceOf(w);
                 Assert.AreEqual(new[] { block, vsRanged, armour, dodge, speed, crits ? 1 : 0 }, new[] { s.BlockPct, s.BlockVsRangedPct, s.Armour, s.DodgePct, s.SpeedPct, s.StopsCrits ? 1 : 0 }, Wares.Name(w));
             }
             D(Ware.BigShield, 25, 45, 0, 0, -10, false);
@@ -58,11 +58,11 @@ namespace God.Sim.Tests
             Assert.AreEqual(23000, St(Ware.Bow).SightMm, "a bow sees as far as it shoots");
             Assert.AreEqual(23000, MilitaryTuning.SightMm, "and so does everyone: no one is shot by a bow it cannot see");
             Assert.AreEqual(MilitaryTuning.SightMm, St(Ware.Sword).SightMm);
-            Assert.AreEqual(11, MilitaryTuning.BuildingDamage(Ware.Sword));
-            Assert.AreEqual(38, MilitaryTuning.BuildingDamage(Ware.Axe));
-            Assert.AreEqual(8, MilitaryTuning.BuildingDamage(Ware.Spear));
-            Assert.AreEqual(2, MilitaryTuning.BuildingDamage(Ware.Bow));
-            Assert.AreEqual(1, MilitaryTuning.BuildingDamage(Ware.Sling));
+            Assert.AreEqual(11, new MilitaryTuning().BuildingDamage(Ware.Sword));
+            Assert.AreEqual(38, new MilitaryTuning().BuildingDamage(Ware.Axe));
+            Assert.AreEqual(8, new MilitaryTuning().BuildingDamage(Ware.Spear));
+            Assert.AreEqual(2, new MilitaryTuning().BuildingDamage(Ware.Bow));
+            Assert.AreEqual(1, new MilitaryTuning().BuildingDamage(Ware.Sling));
         }
 
         [Test]
@@ -90,9 +90,10 @@ namespace God.Sim.Tests
             Assert.AreEqual(6, Duel.HitDamage(St(Ware.Sword), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "11 - (6 - 1): the sword does not");
             Assert.AreEqual(8, Duel.HitDamage(St(Ware.Bow), St(Ware.Sword, Ware.None, Ware.None, Ware.LightArmour), false), "pierce 2 beats armour 1: no bonus");
             Assert.AreEqual(1, Duel.HitDamage(St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "6 - (6 - 1)");
-            int min = MilitaryTuning.MinDamage;
-            try { MilitaryTuning.MinDamage = 3; Assert.AreEqual(3, Duel.HitDamage(St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "at least the minimum"); }
-            finally { MilitaryTuning.MinDamage = min; }
+            // M0: tuning is per sim (SimTuning), so the test changes its own copy instead of a shared static.
+            var tuned = new MilitaryTuning { MinDamage = 3 };
+            Assert.AreEqual(3, Duel.HitDamage(tuned, St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "at least the minimum");
+            Assert.AreEqual(1, Duel.HitDamage(St(Ware.Sling), St(Ware.Sword, Ware.None, Ware.Helmet, Ware.Breastplate), false), "the default tuning is untouched");
         }
 
         [Test]
@@ -248,7 +249,7 @@ namespace God.Sim.Tests
                 Assert.AreEqual(TargetKind.Building, shot.TargetKind);
                 var rec = b.M.BuildingById(shot.TargetId);
                 int edge = Math.Max(0, Pathing.Dist(u.X, u.Z, rec.X, rec.Z) - MilitaryTuning.FootprintMm(rec.Size));
-                int range = MilitaryTuning.WeaponOf(w).RangeMm;
+                int range = new MilitaryTuning().WeaponOf(w).RangeMm;
                 Assert.LessOrEqual(edge, range, Wares.Name(w));
                 Assert.Greater(edge, range - 400, Wares.Name(w) + " stopped as soon as it was in range");
                 int x = u.X, z = u.Z;
@@ -292,7 +293,7 @@ namespace God.Sim.Tests
 
             var loaded = SaveFile.FromJson(SaveFile.From(c).ToJson()).ToSim();
             Assert.AreEqual(a.StateHash(), loaded.StateHash(), "same hash straight after the load");
-            Assert.AreEqual(a.State.Military.Rng.State, loaded.State.Military.Rng.State, "the duel rolls' stream is saved");
+            Assert.AreEqual(a.State.Rng.State, loaded.State.Rng.State, "the root stream the duel rolls are keyed from (M0: Rng.Fork(\"duel\", unit, tick)) is saved");
             for (int i = 0; i < 200; i++) { a.Step(); loaded.Step(); }
             Assert.AreEqual(a.StateHash(), loaded.StateHash(), "same fight after the load");
             Assert.AreNotEqual(Fight(5).StateHash(), Fight(6).StateHash());

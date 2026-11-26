@@ -56,9 +56,9 @@ namespace God.Sim
         public const string Leatherworker = "leatherworker";
 
         /// <summary>Stage 3 groups (for the build bar and the AI).</summary>
-        public static readonly string[] Harvesters = { Woodcutter, ClayPit, Farm, Quarry, Mine };
-        public static readonly string[] Processors = { Sawmill, Kiln, Smelter, Bakery, MortarMill, Foundry, Pottery, Forge, Tannery, Weaver };
-        public static readonly string[] Armouries = { Swordsmith, Spearmaker, Axesmith, Bowyer, Slingmaker, Shieldwright, Helmsmith, Bucklersmith, Armourer, Leatherworker };
+        public static readonly ReadOnlyArray<string> Harvesters = new ReadOnlyArray<string>(Woodcutter, ClayPit, Farm, Quarry, Mine);
+        public static readonly ReadOnlyArray<string> Processors = new ReadOnlyArray<string>(Sawmill, Kiln, Smelter, Bakery, MortarMill, Foundry, Pottery, Forge, Tannery, Weaver);
+        public static readonly ReadOnlyArray<string> Armouries = new ReadOnlyArray<string>(Swordsmith, Spearmaker, Axesmith, Bowyer, Slingmaker, Shieldwright, Helmsmith, Bucklersmith, Armourer, Leatherworker);
     }
 
     /// <summary>System order bands: territory (dice) first, then economy, then military.</summary>

@@ -23,11 +23,9 @@ namespace God.Sim
         public int Ring => (Math.Abs(Q) + Math.Abs(R) + Math.Abs(S)) / 2;
 
         /// <summary>Axial neighbour directions, index 0..5 (E, NE, NW, W, SW, SE with +Z as north).</summary>
-        public static readonly HexCoord[] Directions =
-        {
+        public static readonly ReadOnlyArray<HexCoord> Directions = new ReadOnlyArray<HexCoord>(
             new HexCoord(1, 0), new HexCoord(0, 1), new HexCoord(-1, 1),
-            new HexCoord(-1, 0), new HexCoord(0, -1), new HexCoord(1, -1),
-        };
+            new HexCoord(-1, 0), new HexCoord(0, -1), new HexCoord(1, -1));
 
         public HexCoord Neighbour(int dir) => new HexCoord(Q + Directions[dir].Q, R + Directions[dir].R);
 

@@ -35,8 +35,11 @@ namespace God.Sim
         /// <summary>Number of reshuffles the number deal needed (for tests; 0 when not dealt).</summary>
         public int DealTriesUsed;
 
+        /// <summary>The shared topology of this board's radius and shape. M0: the reference is kept after the first look-up,
+        /// so hot paths do not take the cache's lock every time (parallel runs). Never saved.</summary>
         [JsonIgnore]
-        public BoardTopology Topology => BoardTopology.Get(Radius, Shape);
+        public BoardTopology Topology => _topology ?? (_topology = BoardTopology.Get(Radius, Shape));
+        private BoardTopology _topology;
 
         public Terrain TerrainAt(int hex) => HexTerrain[hex];
         public int NumberAt(int hex) => HexNumber[hex];

@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace God.Sim.Tests
 {
     /// <summary>
-    /// Q4: the tutorial played end to end on its island (seed 40) with the real building defs and the five AIs (with trade)
+    /// Q4: the tutorial played end to end on its island (seed 111 since M0; 40 before) with the real building defs and the five AIs (with trade)
     /// running. A scripted learner reads the current card and does what it says, with commands only, as a person would
     /// (place, road, HQ, guards, upgrade, trade offer, war, mark, Citadel). It presses Next on cards without a goal and never
     /// presses Skip step.

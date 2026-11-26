@@ -172,8 +172,8 @@ namespace God.Sim.Tests
             var (start, dir) = b.LandLine(b.PlayerHq, 8);
             var bare = b.Spawn(Faction.F0, new Kit(Ware.Sword), start);
             var heavy = b.Spawn(Faction.F0, new Kit(Ware.Sword, Ware.BigShield, Ware.None, Ware.Breastplate), start);
-            Assert.AreEqual(300, MilitaryTuning.Of(bare.Kit).SpeedMmPerTick);
-            Assert.AreEqual(225, MilitaryTuning.Of(heavy.Kit).SpeedMmPerTick, "big shield -10%, breastplate -15%");
+            Assert.AreEqual(300, new MilitaryTuning().Of(bare.Kit).SpeedMmPerTick);
+            Assert.AreEqual(225, new MilitaryTuning().Of(heavy.Kit).SpeedMmPerTick, "big shield -10%, breastplate -15%");
             int gx = Pathing.NodeMmX(b.G, b.Walk(start, dir, 8)), gz = Pathing.NodeMmZ(b.G, b.Walk(start, dir, 8));
             b.Do(new DevMoveUnit(bare.Id, gx, gz)); b.Do(new DevMoveUnit(heavy.Id, gx, gz));
             b.Step(20);

@@ -50,8 +50,8 @@ namespace God.Sim
 
         // Corner lattice: X unit = HexEdgeLength*sqrt(3)/2, Z unit = HexEdgeLength/2.
         // Hex centre (q,r) -> (2q + r, 3r). Corner offsets in corner order:
-        private static readonly int[] CornerDx = { 1, 1, 0, -1, -1, 0 };
-        private static readonly int[] CornerDz = { -1, 1, 2, 1, -1, -2 };
+        private static readonly ReadOnlyArray<int> CornerDx = new ReadOnlyArray<int>(1, 1, 0, -1, -1, 0);
+        private static readonly ReadOnlyArray<int> CornerDz = new ReadOnlyArray<int>(-1, 1, 2, 1, -1, -2);
 
         public int Radius { get; }
         public int HexCount => _hexes.Length;
@@ -437,9 +437,10 @@ namespace God.Sim
 
         private int[] CornerDistances(int src)
         {
-            lock (_cornerDistCache)
+            // M0: lock-free. A miss computes the table (a pure function of the topology) and publishes it once; two threads
+            // that race compute equal tables, and the first one stored wins. Reads take no lock (parallel runs).
             {
-                var d = _cornerDistCache[src];
+                var d = System.Threading.Volatile.Read(ref _cornerDistCache[src]);
                 if (d != null) return d;
                 d = new int[CornerCount];
                 for (int i = 0; i < d.Length; i++) d[i] = -1;
@@ -456,8 +457,7 @@ namespace God.Sim
                         q.Enqueue(n);
                     }
                 }
-                _cornerDistCache[src] = d;
-                return d;
+                return System.Threading.Interlocked.CompareExchange(ref _cornerDistCache[src], d, null) ?? d;
             }
         }
 
@@ -570,9 +570,9 @@ namespace God.Sim
 
         private int[] Distances(int src)
         {
-            lock (_distCache)
+            // M0: lock-free, as CornerDistances.
             {
-                var d = _distCache[src];
+                var d = System.Threading.Volatile.Read(ref _distCache[src]);
                 if (d != null) return d;
                 d = new int[VertexCount];
                 for (int i = 0; i < d.Length; i++) d[i] = -1;
@@ -589,8 +589,7 @@ namespace God.Sim
                         q.Enqueue(n);
                     }
                 }
-                _distCache[src] = d;
-                return d;
+                return System.Threading.Interlocked.CompareExchange(ref _distCache[src], d, null) ?? d;
             }
         }
     }

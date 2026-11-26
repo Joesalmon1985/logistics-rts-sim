@@ -13,8 +13,8 @@ namespace God.Sim
     public sealed class NodeGrid
     {
         /// <summary>The six steps, in the order (0,1), (1,0), (1,-1), (0,-1), (-1,0), (-1,1).</summary>
-        public static readonly int[] DI = { 0, 1, 1, 0, -1, -1 };
-        public static readonly int[] DJ = { 1, 0, -1, -1, 0, 1 };
+        public static readonly ReadOnlyArray<int> DI = new ReadOnlyArray<int>(0, 1, 1, 0, -1, -1);
+        public static readonly ReadOnlyArray<int> DJ = new ReadOnlyArray<int>(1, 0, -1, -1, 0, 1);
 
         /// <summary>Direction index of the south-east neighbour (X up, Z down): where a building's flag stands.</summary>
         public const int SouthEast = 2;

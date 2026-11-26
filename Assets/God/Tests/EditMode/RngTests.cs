@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace God.Sim.Tests
 {
-    public class RngTests
+    public partial class RngTests
     {
         [Test]
         public void SameSeed_SameSequence()

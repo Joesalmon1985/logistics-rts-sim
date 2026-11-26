@@ -1,7 +1,11 @@
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace God.Sim
 {
+    /// <summary>How hard disease bites (POPULATION_DESIGN "Disease"; owner question 3). Unused until the population milestones (M3/M4).</summary>
+    public enum DiseaseSetting { On = 0, Mild = 1, Off = 2 }
+
     /// <summary>
     /// How a game was set up. Stored in <see cref="GodState.Setup"/>; fixed once the game starts. The human faction is
     /// only a hint for views, the HUD and bots (which faction to leave alone): the sim rules never read it.
@@ -21,6 +25,30 @@ namespace God.Sim
 
         /// <summary>Stage 3 tutorial game: the AIs leave the human alone (no war on them) until the tutorial ends or <c>FactionTuning</c> says otherwise.</summary>
         public bool Tutorial;
+
+        // ---------------- M0: calendar, life scale, victory ----------------
+
+        /// <summary>Ticks in a sim day (1200 = 2 minutes at 1x). See <see cref="SimCalendar"/>.</summary>
+        public int TicksPerDay = SimCalendar.DefaultTicksPerDay;
+        /// <summary>Days in a sim year (10).</summary>
+        public int DaysPerYear = SimCalendar.DefaultDaysPerYear;
+        /// <summary>Life speed in percent (100 default; higher = faster lives). Scales only life-cycle durations.</summary>
+        public int LifeScale = SimCalendar.DefaultLifeScale;
+        /// <summary>Whether per-day forgetting (social memory, associations) keeps pace with LifeScale. Default false (owner question 1).</summary>
+        public bool DecayFollowsLifeScale;
+        /// <summary>Disease setting for the population milestones (unused before M3/M4). On by default; the tutorial uses Mild.</summary>
+        public DiseaseSetting Disease = DiseaseSetting.On;
+        /// <summary>The faction knowledge view is filled almost completely (stage 4: information separation built, not enforced). Unused before M1.</summary>
+        public bool FullInformation = true;
+        /// <summary>
+        /// The ways to win, checked in order every tick (<see cref="IVictoryCondition"/>). A plain setup keeps the stage 3
+        /// rules (10 VP, then last standing) so existing tests keep their meaning; scenario files choose (a sandbox lists
+        /// only <see cref="VictoryKind.Sandbox"/>).
+        /// </summary>
+        public List<VictorySpec> Victory = VictorySpec.Stage3Default();
+
+        /// <summary>The calendar these settings give.</summary>
+        [JsonIgnore] public SimCalendar Calendar => SimCalendar.Of(this);
 
         public GameSetup() { }
 

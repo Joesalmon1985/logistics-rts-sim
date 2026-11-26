@@ -32,11 +32,9 @@ namespace God.Sim
         public AiDirector Director;
 
         /// <summary>Order in which needed wares are asked for: the building wares first.</summary>
-        private static readonly Ware[] AskOrder =
-        {
+        private static readonly ReadOnlyArray<Ware> AskOrder = new ReadOnlyArray<Ware>(
             Ware.Stone, Ware.Plank, Ware.Brick, Ware.Mortar, Ware.Steel, Ware.Log, Ware.Clay, Ware.Ore, Ware.Grain,
-            Ware.Iron, Ware.Bread, Ware.Bronze, Ware.Pottery, Ware.Leather, Ware.Cloth,
-        };
+            Ware.Iron, Ware.Bread, Ware.Bronze, Ware.Pottery, Ware.Leather, Ware.Cloth);
 
         /// <summary>What a faction keeps back before it calls a ware surplus: a Citadel and an HQ.</summary>
         public static int Keep(Ware w) => EconomyDefs.Citadel.Cost[(int)w] + EconomyDefs.Hq.Cost[(int)w];

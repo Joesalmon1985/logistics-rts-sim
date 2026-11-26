@@ -29,7 +29,19 @@ namespace God.Sim
         /// <summary>What the armourer's work adds to the value of its two inputs.</summary>
         public const int GearWorkValue = 2;
 
-        private static int[] _values;
+        /// <summary>The value table, filled once by the static constructor (M0: it was filled lazily, a mutable static).</summary>
+        private static readonly ReadOnlyArray<int> Values = BuildValues();
+
+        private static ReadOnlyArray<int> BuildValues()
+        {
+            var v = new int[Wares.Count];
+            v[(int)Ware.Log] = v[(int)Ware.Clay] = v[(int)Ware.Grain] = v[(int)Ware.Rock] = LogValue;
+            v[(int)Ware.Stone] = v[(int)Ware.Ore] = StoneValue;
+            foreach (var p in Wares.Processed) v[(int)p] = InputsValue(v, p);
+            foreach (var g in Gear.Attack) v[(int)g] = InputsValue(v, g) + GearWorkValue;
+            foreach (var g in Gear.Defence) v[(int)g] = InputsValue(v, g) + GearWorkValue;
+            return new ReadOnlyArray<int>(v);
+        }
 
         /// <summary>
         /// Trade value of one unit of a ware, for the default judge and the AI trader. Raws by the table above; a processed
@@ -38,18 +50,8 @@ namespace God.Sim
         /// </summary>
         public static int ValueOf(Ware w)
         {
-            if (_values == null)
-            {
-                var v = new int[Wares.Count];
-                v[(int)Ware.Log] = v[(int)Ware.Clay] = v[(int)Ware.Grain] = v[(int)Ware.Rock] = LogValue;
-                v[(int)Ware.Stone] = v[(int)Ware.Ore] = StoneValue;
-                foreach (var p in Wares.Processed) v[(int)p] = InputsValue(v, p);
-                foreach (var g in Gear.Attack) v[(int)g] = InputsValue(v, g) + GearWorkValue;
-                foreach (var g in Gear.Defence) v[(int)g] = InputsValue(v, g) + GearWorkValue;
-                _values = v;
-            }
             int i = (int)w;
-            return i > 0 && i < _values.Length ? _values[i] : 0;
+            return i > 0 && i < Values.Length ? Values[i] : 0;
         }
 
         private static int InputsValue(int[] v, Ware w)

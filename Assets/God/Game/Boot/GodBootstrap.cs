@@ -35,6 +35,11 @@ namespace God.Game
 
         /// <summary>When true the bootstrap steps the sim at 10 Hz times <see cref="Speed"/>. Off by default; <c>-godrun</c> or F3 turns it on.</summary>
         public bool Running = true;
+        /// <summary>
+        /// Set by a component that steps the sim itself (the smoke run): the bootstrap then never steps it, not even the held
+        /// step a paused game takes to apply a command, so the game is exactly the runner's game for the same seed (M0).
+        /// </summary>
+        public bool DrivenExternally;
         /// <summary>The god HUD and input (P5).</summary>
         public GodHud Hud { get; private set; }
         /// <summary>The god camera controls (P5).</summary>
@@ -115,7 +120,8 @@ namespace God.Game
                 var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") || HasArg("-godsmoke") ? GameSetup.NoHuman : 0);
                 PendingSetup = null;
                 setup.Seed = seed;
-                Sim = GodSim.Create(setup);
+                // M0: built through SimBuilder, as the headless runner builds it (the AI is attached in StartAi).
+                Sim = SimBuilder.Create(setup, null, attachAi: false).Sim;
                 // A script or a flag chose already: the AIs play (the smoke too: it watches six brains; not the dev runs).
                 if (flagged && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
             }
@@ -275,6 +281,7 @@ namespace God.Game
             if (Input.GetKeyDown(KeyCode.F4)) Speed = Mathf.Min(Speed * 2f, 64f);
             if (Input.GetKeyDown(KeyCode.F5)) Speed = Mathf.Max(Speed * 0.5f, 0.25f);
             if (Menu != null && Menu.Blocking) return; // the menu or the start card holds the game
+            if (DrivenExternally) return; // the smoke run steps the sim and drains its events
             if (Sim.State.IsGameOver) { PumpEvents(); return; }
             // Paused: still apply a queued command (a placement) so it shows at once. One tick, no more.
             if (!Running) { if (Sim.PendingCommands.Count > 0) { AiHost.StepHeld(Sim); PumpEvents(); } return; }

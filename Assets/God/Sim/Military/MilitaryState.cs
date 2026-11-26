@@ -69,7 +69,7 @@ namespace God.Sim
 
         public float HealthFraction => MaxHealth <= 0 ? 0f : (float)Health / MaxHealth;
         /// <summary>Fighting stats from the kit (a method, so saves do not carry them).</summary>
-        public SoldierStats Stats() => MilitaryTuning.Of(Kit);
+        public SoldierStats Stats(MilitaryTuning tu) => tu.Of(Kit);
         public bool IsFiring => FireFlash > 0;
         public bool HasTarget => TargetKind != TargetKind.None;
         public double PosX => X / 1000.0;
@@ -125,8 +125,6 @@ namespace God.Sim
     {
         public List<MilUnit> Units = new List<MilUnit>();
         public int NextUnitId = 1;
-        /// <summary>The duel rolls' own stream (forked from the sim Rng at the start), so fights never shift the dice or the AI.</summary>
-        public Rng Rng = new Rng();
 
         /// <summary>Health records of every building and HQ in territory, ascending id.</summary>
         public List<BuildingRecord> Buildings = new List<BuildingRecord>();
@@ -210,14 +208,13 @@ namespace God.Sim
                     for (int i = 0; i < 8; i++) { h ^= (ulong)((v >> (8 * i)) & 0xFF); h *= 1099511628211UL; }
                 }
             }
-            Mix(s.Tick);
+            Mix(NextUnitId); Mix(NextRubbleId);
             foreach (var u in Units)
             {
                 Mix(u.Id); Mix((int)u.Faction); Mix((int)u.Kind); Mix(u.X); Mix(u.Z); Mix(u.Health); Mix(u.Cooldown);
                 Mix(u.FaceX); Mix(u.FaceZ); Mix((int)u.Activity); Mix((int)u.TargetKind); Mix(u.TargetId); Mix(u.GuardFlagId);
                 Mix((int)u.Kit.Weapon); Mix((int)u.Kit.Shield); Mix((int)u.Kit.Head); Mix((int)u.Kit.Body); Mix(u.EngagedId);
             }
-            Mix((long)(Rng?.State ?? 0));
             Mix(-1);
             foreach (var b in Buildings) { Mix(b.Id); Mix((int)b.Faction); Mix(b.Health); Mix(b.MaxHealth); }
             Mix(-2);

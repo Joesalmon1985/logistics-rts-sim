@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Newtonsoft.Json;
 
 namespace God.Sim
 {
@@ -19,6 +19,14 @@ namespace God.Sim
     {
         public const int TicksPerSecond = 10;
 
+        /// <summary>
+        /// Names of <see cref="StateHashParts"/>, in their fixed order. Stage 4 modules append theirs at the end as they land
+        /// (HEADLESS_SIMULATION 4.4). <c>core</c> is the tick, seed, root random stream, setup (calendar, victory list) and
+        /// tuning; <c>pending</c> the commands queued for the next tick.
+        /// </summary>
+        public static readonly ReadOnlyArray<string> HashPartNames = new ReadOnlyArray<string>(
+            "territory", "economy", "military", "factions", "trade", "core", "pending");
+
         public GodState State { get; }
 
         private readonly List<(int order, int index, ISimSystem system)> _systems = new List<(int, int, ISimSystem)>();
@@ -26,25 +34,39 @@ namespace God.Sim
         private readonly List<Command> _pending = new List<Command>();
         private readonly EventBuffer _events = new EventBuffer();
 
+        /// <summary>
+        /// True while <see cref="Step()"/> runs. A command submitted then comes from inside the sim (an AI brain, a system);
+        /// one submitted while it is false is external (the HUD, a scenario schedule, a server), which replays log.
+        /// </summary>
+        public bool InStep { get; private set; }
+
+        /// <summary>
+        /// Raised for every command accepted by <see cref="Submit"/> while <see cref="InStep"/> is false: what a replay
+        /// recorder logs. A host hook; it must never touch state.
+        /// </summary>
+        public event Action<Command> ExternalCommandAccepted;
+
         public GodSim(GodState state)
         {
             State = state ?? throw new ArgumentNullException(nameof(state));
         }
 
-        /// <summary>A new six-faction game from a seed, faction 0 human (see <see cref="Create(GameSetup)"/>).</summary>
+        /// <summary>A new six-faction game from a seed, faction 0 human (see <see cref="Create(GameSetup, SimTuning)"/>).</summary>
         public static GodSim Create(ulong seed) => Create(new GameSetup(seed));
 
         /// <summary>
         /// A new game: the 30-hex island dealt from the setup's seed, one HQ with the start stock per faction on spread-out
-        /// start corners, everyone at peace, every module installed.
+        /// start corners, everyone at peace, every module installed. <paramref name="tuning"/> is copied (default: the
+        /// stage 3 numbers), so the caller's object is never shared with the game.
         /// </summary>
-        public static GodSim Create(GameSetup setup)
+        public static GodSim Create(GameSetup setup, SimTuning tuning = null)
         {
             if (setup == null) throw new ArgumentNullException(nameof(setup));
             if (setup.FactionCount < 2 || setup.FactionCount > FactionInfo.Max) throw new ArgumentOutOfRangeException(nameof(setup), "2 to 6 factions.");
             if (setup.HasHuman && !setup.InGame(setup.Human)) throw new ArgumentOutOfRangeException(nameof(setup), "The human faction is not in the game.");
+            if (setup.TicksPerDay <= 0 || setup.DaysPerYear <= 0 || setup.LifeScale <= 0) throw new ArgumentOutOfRangeException(nameof(setup), "The calendar needs positive TicksPerDay, DaysPerYear and LifeScale.");
             ulong seed = setup.Seed;
-            var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim"), Setup = setup };
+            var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim"), Setup = setup, Tuning = tuning != null ? tuning.Clone() : new SimTuning() };
             s.Board = BoardGenerator.CreateIslandBoard(seed);
             FactionsModule.StartGame(s);
             TerritoryModule.StartGame(s);
@@ -56,7 +78,7 @@ namespace God.Sim
             return sim;
         }
 
-        /// <summary>Registers every module's handlers and systems. Shared by <see cref="Create(GameSetup)"/> and <see cref="FromState"/>.</summary>
+        /// <summary>Registers every module's handlers and systems. Shared by <see cref="Create(GameSetup, SimTuning)"/> and <see cref="FromState"/>.</summary>
         private static void InstallModules(GodSim sim)
         {
             TerritoryModule.Install(sim);
@@ -73,6 +95,7 @@ namespace God.Sim
         public static GodSim FromState(GodState state)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
+            if (state.Tuning == null) state.Tuning = new SimTuning();
             var sim = new GodSim(state);
             InstallModules(sim);
             state.Military?.IndexBuildings();
@@ -82,20 +105,71 @@ namespace God.Sim
         /// <summary>Puts a command back in the queue without validating it (a load restores what was queued).</summary>
         internal void RestorePending(Command c) { _pending.Add(c); }
 
-        /// <summary>One hash over the whole state the modules drive (territory, economy, military, factions, trade). Equal for equal setup and commands.</summary>
-        public ulong StateHash() => StateHashOf(State);
+        // ---------------- hashing ----------------
 
-        public static ulong StateHashOf(GodState s)
+        /// <summary>
+        /// One hash over the whole state the modules drive and the queued commands: the FNV fold of
+        /// <see cref="StateHashParts"/>. Equal for equal setup, tuning and commands.
+        /// </summary>
+        public ulong StateHash() => Fold(StateHashParts());
+
+        /// <summary>
+        /// One hash per module, in the order of <see cref="HashPartNames"/>, so a mismatch names its module
+        /// (HEADLESS_SIMULATION 4.4). Includes the pending command queue (M0).
+        /// </summary>
+        public ulong[] StateHashParts() => PartsOf(State, _pending);
+
+        /// <summary>The hash of a state alone (no command queue: as if it were empty).</summary>
+        public static ulong StateHashOf(GodState s) => Fold(PartsOf(s, null));
+
+        public static ulong[] PartsOf(GodState s, IReadOnlyList<Command> pending)
         {
-            unchecked
+            return new[]
             {
-                ulong h = EconomyModule.StateHash(s);
-                h = h * 1099511628211UL ^ s.Military.Hash(s);
-                h = h * 1099511628211UL ^ FactionsModule.Hash(s);
-                h = h * 1099511628211UL ^ TradeModule.Hash(s);
-                return h;
-            }
+                TerritoryModule.Hash(s),
+                EconomyModule.StateHash(s),
+                s.Military.Hash(s),
+                FactionsModule.Hash(s),
+                TradeModule.Hash(s),
+                CoreHash(s),
+                PendingHash(pending),
+            };
         }
+
+        /// <summary>FNV-1a over the parts in order.</summary>
+        public static ulong Fold(ulong[] parts)
+        {
+            var h = new StateHasher();
+            foreach (var p in parts) h.Add((long)p);
+            return h.Value;
+        }
+
+        /// <summary>Tick, seed, the root random stream, the setup (calendar, life scale, victory list...) and the tuning.</summary>
+        private static ulong CoreHash(GodState s)
+        {
+            var h = new StateHasher();
+            h.Add(s.Tick); h.Add((long)s.Seed); h.Add((long)(s.Rng?.State ?? 0));
+            h.Add(s.Setup != null ? JsonConvert.SerializeObject(s.Setup, SaveFile.Settings) : "");
+            h.Add(s.Tuning != null ? s.Tuning.ToJson() : "");
+            return h.Value;
+        }
+
+        /// <summary>The queued commands, in order: type and fields (the save's form of each command).</summary>
+        public static ulong PendingHash(IReadOnlyList<Command> pending)
+        {
+            var h = new StateHasher();
+            int n = pending?.Count ?? 0;
+            h.Add(n);
+            for (int i = 0; i < n; i++)
+            {
+                var c = pending[i];
+                h.Add(c.GetType().FullName);
+                h.Add(JsonConvert.SerializeObject(c, SaveFile.Settings));
+            }
+            return h.Value;
+        }
+
+        // ---------------- systems and commands ----------------
 
         public IReadOnlyList<Command> PendingCommands => _pending;
 
@@ -141,7 +215,11 @@ namespace God.Sim
         public CommandResult Submit(Command c)
         {
             var r = Check(c);
-            if (r.Ok) _pending.Add(c);
+            if (r.Ok)
+            {
+                _pending.Add(c);
+                if (!InStep) ExternalCommandAccepted?.Invoke(c);
+            }
             return r;
         }
 
@@ -153,24 +231,29 @@ namespace God.Sim
         {
             // The game is over: the sim stops (no tick, no commands, no systems).
             if (State.IsGameOver) { _pending.Clear(); return; }
-            State.Tick++;
-            _events.CurrentTick = State.Tick;
-
-            if (_pending.Count > 0)
+            InStep = true;
+            try
             {
-                var batch = new List<Command>(_pending);
-                _pending.Clear();
-                foreach (var c in batch)
-                {
-                    var h = _handlers[c.GetType()];
-                    var check = h.Validate(State, c);
-                    var r = check.Ok ? h.Apply(State, c, _events) : check;
-                    if (r.Ok) _events.Add(new CommandApplied { Command = c });
-                    else _events.Add(new CommandRejected { Command = c, Result = r });
-                }
-            }
+                State.Tick++;
+                _events.CurrentTick = State.Tick;
 
-            foreach (var s in _systems) s.system.Tick(State, _events);
+                if (_pending.Count > 0)
+                {
+                    var batch = new List<Command>(_pending);
+                    _pending.Clear();
+                    foreach (var c in batch)
+                    {
+                        var h = _handlers[c.GetType()];
+                        var check = h.Validate(State, c);
+                        var r = check.Ok ? h.Apply(State, c, _events) : check;
+                        if (r.Ok) _events.Add(new CommandApplied { Command = c });
+                        else _events.Add(new CommandRejected { Command = c, Result = r });
+                    }
+                }
+
+                foreach (var s in _systems) s.system.Tick(State, _events);
+            }
+            finally { InStep = false; }
         }
 
         public void Step(int ticks)
@@ -180,5 +263,31 @@ namespace God.Sim
 
         /// <summary>Events since the last drain, in emission order.</summary>
         public IReadOnlyList<SimEvent> DrainEvents() => _events.Drain();
+
+        /// <summary>Moves the events since the last drain into <paramref name="into"/> (appended), without allocating.</summary>
+        public void DrainInto(List<SimEvent> into) => _events.DrainInto(into);
+    }
+
+    /// <summary>FNV-1a over 64-bit values and strings: the hash every module's part uses.</summary>
+    public struct StateHasher
+    {
+        private ulong _h;
+        private bool _started;
+
+        public ulong Value => _started ? _h : 14695981039346656037UL;
+
+        public void Add(long v)
+        {
+            if (!_started) { _h = 14695981039346656037UL; _started = true; }
+            unchecked { for (int i = 0; i < 8; i++) { _h ^= (ulong)((v >> (i * 8)) & 0xFF); _h *= 1099511628211UL; } }
+        }
+
+        public void Add(string s)
+        {
+            if (!_started) { _h = 14695981039346656037UL; _started = true; }
+            if (s == null) { Add(-1); return; }
+            Add(s.Length);
+            unchecked { foreach (char c in s) { _h ^= c; _h *= 1099511628211UL; _h ^= (ulong)(c >> 8); _h *= 1099511628211UL; } }
+        }
     }
 }

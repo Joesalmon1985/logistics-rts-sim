@@ -8,14 +8,17 @@ namespace God.Sim
     /// most, so one area never holds all four terrains: the missing one is "next to the first area", which the tutorial's
     /// second-HQ step reaches. The seed is a constant; <see cref="Find"/> is the deterministic search that chose it (a test
     /// checks they agree).
+    /// <para>M0: none of those hexes may carry a 2 or a 12 (<see cref="RareNumber"/>), so the tutorial never waits on the
+    /// rarest rolls. The old island (seed 40) had its only mountain on a 2 and played through only with the stage 3 dice
+    /// stream; with keyed dice streams its learner starved of stone (see the M0 report).</para>
     /// </summary>
     public static class TutorialIsland
     {
         /// <summary>The tutorial seed: the first seed from 1 that <see cref="Qualifies(ulong)"/>.</summary>
-        public const ulong Seed = 40;
+        public const ulong Seed = 111;
 
         /// <summary>A tutorial game setup: Amber is the human, six factions, <see cref="GameSetup.Tutorial"/> set.</summary>
-        public static GameSetup Setup() => new GameSetup(Seed, 0) { Tutorial = true };
+        public static GameSetup Setup() => new GameSetup(Seed, 0) { Tutorial = true, Disease = DiseaseSetting.Mild };
 
         /// <summary>The terrains the build area of a faction's HQs reaches (the hexes of its buildable nodes).</summary>
         public static HashSet<Terrain> TerrainsInArea(GodState s, Faction f)
@@ -43,13 +46,30 @@ namespace God.Sim
             return -1;
         }
 
-        /// <summary>First area with forest, hills and mountain, and a legal second HQ corner touching fields.</summary>
+        /// <summary>
+        /// First area with forest, hills and mountain, and a legal second HQ corner touching fields; no hex of the first area
+        /// and no fields hex of that corner carries a rare number (2 or 12).
+        /// </summary>
         public static bool Qualifies(GodSim sim, Faction f)
         {
-            var have = TerrainsInArea(sim.State, f);
+            var s = sim.State;
+            var have = TerrainsInArea(s, f);
             if (!have.Contains(Terrain.Forest) || !have.Contains(Terrain.Hills) || !have.Contains(Terrain.Mountain)) return false;
-            return SecondHqCornerTouching(sim, f, Terrain.Fields) >= 0;
+            var g = s.Territory.Grid;
+            foreach (int n in s.Territory.BuildableNodes(f))
+            {
+                int hex = g.HexOf(n);
+                if (hex >= 0 && RareNumber(s.Board.HexNumber[hex])) return false;
+            }
+            int corner = SecondHqCornerTouching(sim, f, Terrain.Fields);
+            if (corner < 0) return false;
+            foreach (int hex in s.Territory.Topology.VertexHexes(corner))
+                if (s.Board.HexTerrain[hex] == Terrain.Fields && RareNumber(s.Board.HexNumber[hex])) return false;
+            return true;
         }
+
+        /// <summary>The two rarest dice totals (1 in 36 each).</summary>
+        public static bool RareNumber(int n) => n == 2 || n == 12;
 
         /// <summary>True when the island dealt from this seed suits the tutorial for Amber.</summary>
         public static bool Qualifies(ulong seed) => Qualifies(GodSim.Create(new GameSetup(seed, 0)), Faction.F0);

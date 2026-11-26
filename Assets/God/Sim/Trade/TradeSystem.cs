@@ -139,8 +139,8 @@ namespace God.Sim
             foreach (var u in m.Units)
             {
                 if (u.Health <= 0 || u.Cooldown > 0 || u.TargetKind == TargetKind.Unit) continue;
-                var st = MilitaryTuning.Of(u.Kit);
-                long reach = System.Math.Max(st.RangeMm, MilitaryTuning.EnvoyReachMm);
+                var st = s.Tuning.Military.Of(u.Kit);
+                long reach = System.Math.Max(st.RangeMm, s.Tuning.Military.EnvoyReachMm);
                 long r2 = reach * reach;
                 Envoy pick = null; long bd = long.MaxValue;
                 foreach (var env in t.Envoys)
