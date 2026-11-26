@@ -371,9 +371,9 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             string cases = a.Str("cases", "bench_stage3_watch6");
             if (cases == "recording")
             {
-                long rt = a.Long("ticks", 24000); string rout = a.Str("out");
+                long rt = a.Long("ticks", 24000); string rout = a.Str("out"); string rsc = a.Str("scenario", "bench_stage3_watch6");
                 a.CheckAllUsed(0);
-                var rb = RecordingBench.Run(Scenario.Parse(File.ReadAllText(FindScenario("bench_stage3_watch6")), new List<string>()), rt, a.ULong("seed") ?? 1, output);
+                var rb = RecordingBench.Run(Scenario.Parse(File.ReadAllText(FindScenario(rsc)), new List<string>()), rt, a.ULong("seed") ?? 1, output);
                 output.WriteLine(rb.ToString(Formatting.Indented));
                 if (rout != null) { Directory.CreateDirectory(rout); File.WriteAllText(Path.Combine(rout, "bench_recording.json"), rb.ToString(Formatting.Indented)); }
                 return ExitCodes.Ok;
