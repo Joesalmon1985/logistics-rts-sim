@@ -11,11 +11,34 @@ Rules for this file:
 
 | Item | Value |
 |---|---|
-| Current milestone | **M3** (NPC core with instincts and lifetime learning) in worktree `wt-lrs-m3`. M0, M1 and M2 are done and merged (checkpoint 4A complete). The M13a warehouse core is merged for the stage 3 event set. |
+| Current milestone | **M3** (NPC core with instincts and lifetime learning) in worktree `wt-lrs-m3`, with the D2 acceptance additions (M3.25–M3.29). In parallel, the **L2 Hawk/Bully/Retaliator investigation** is in `wt-lrs-hb` (branch `unity/lab-hb`). M0, M1 and M2 are done and merged (checkpoint 4A complete). The M13a warehouse core is merged for the stage 3 event set. |
 | Current checkpoint | **4A Simulation laboratory** (M0–M2) |
 | Next functional release | **First playable new game**: M0–M7 and M9 ([conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)) |
 | Owner questions | None open: all 23 answered on 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)) |
 | Last updated | 27 Nov 2026 (docs update for the owner's answers) |
+
+## Owner directions D2 (26 Nov 2026)
+
+Given after checkpoint 4A. The criteria live in [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) (rows tagged "Owner D2"). In summary:
+
+1. **L2 discrepancy:** investigate it; never change the model to match the book. The investigation checks:
+   - the payoff matrix, strategies, population size, selection, mutation, drift, starting mix, encounter rules and duration;
+   - many seeds and settings, plus no-drift runs;
+   - explicit invasion tests.
+   It separates our implementation from an exact replication and keeps the actual results. It does not block M3 onwards.
+2. **M3 acceptance needs behaviour, not stored values** (M3.25–M3.29):
+   - twins diverge through experience, then decide differently in identical circumstances;
+   - the repertoire: positive and negative, contextual, reversal, exploration, generalisation, delayed reward, save and load;
+   - a learning on vs frozen control population;
+   - a "why did it choose that" breakdown in the People panel and the dev tools.
+3. **M4 and M5 run in parallel after M3 is accepted,** behind shared contracts written first. The contracts cover identity, inventories, ownership, relationships, households, learning, communication and domain events.
+   - M4: full life cycle, non-biological and shared care, no replacement of the dead, and demographic sweeps (M4.33–M4.35).
+   - M5: compositional gestures; the receiver decides for itself; intention, belief and action stay separate (M5.15–M5.17).
+4. **Integration gate I-BS** after M4 and M5 merge: seven scenarios with real individuals and real goods movements.
+5. **Recording grows with each milestone,** with explicit fact grains, persistent ids, exact reconciliation, and neutrality across Full, Summary and Off recording.
+6. **Continue autonomously** with the same gates. Commit and push to `unity/poc` and the feature branches, never to `main`.
+
+**Date note:** the owner's 23 answers are labelled "27 Nov 2026" across these docs (for example conventions §13). They were in fact given on 26 Nov 2026, as the commit dates show. The label is kept because anchors link to it.
 
 ## Completed milestones
 
@@ -129,7 +152,9 @@ Any change to a milestone's scope, order or acceptance criteria, with the eviden
 
 ## Outstanding work
 - M3 (in progress), then M4 and M5 (both need M3). The M13a warehouse core is in progress beside M3.
-- **Owner finding from M2:** with our default drift, the book's corrected Hawk/Bully result (L2) does not appear; Retaliator stays dominant. The system is bistable, and drift decides the basin. The finding is recorded in STRATEGY_BENCHMARKS and GAME_THEORY.
+- **Owner finding from M2:** with our default drift, the book's corrected Hawk/Bully result (L2) does not appear; Retaliator stays dominant. The system is bistable, and drift decides the basin. The finding is recorded in STRATEGY_BENCHMARKS and GAME_THEORY. **Under investigation (D2 §1)** on `unity/lab-hb`. The write-up will be `research/HAWK_BULLY_RETALIATOR_INVESTIGATION.md`.
+- **Before M4 and M5:** write `docs/stage4/SHARED_CONTRACTS.md` (D2 §3).
+- **After M4 and M5:** the I-BS integration gate.
 - **Unity test runs:** background editor throttling makes each run take 45–100 minutes. Run them at checkpoint boundaries (as at 4A), not after every commit.
 - M0 leftovers: the nightly 200-year recording-neutrality run (M0.2 N), CI wiring for the runner and player smokes, and the owner's manual check (play one stage 3 game from the menu).
 - At M2: check L11's mushroom-call numbers against the book before its status label is final.

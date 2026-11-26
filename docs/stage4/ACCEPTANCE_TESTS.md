@@ -311,6 +311,11 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M3.22 | Mech | **LS4, gathering wood with an axe:** by days 6–8 the learner equips the axe before gathering in ≥ 20 points more trips than `Frozen`, in ≥ 90% of 50 seeds; a conjunction with `ObjClass(LogPile)` is recruited by day 8 in ≥ 80%; with a useless axe, no gain over `Frozen` (± 10 points) | NPC_LEARNING LS4 | RT |
 | M3.23 | Unit | Decay is independent of `LifeScale` and configurable: `LifeScale` 200 leaves a fixture store's daily decay unchanged; `DecayScalePermille` 2000 doubles it (within rounding) and 0 stops it (Q1) | NPC_LEARNING 4.8 | EM |
 | M3.24 | Perf | First benchmark row with NPCs: every owner benchmark column that exists at M3 is recorded in DEV_LOG (NPC decisions/s, memory per NPC, pathfinding, learning cost, save size and load time) | HEADLESS 4.10 | RT |
+| M3.25 | Mech | **Owner D2, twins in identical circumstances:** two NPCs with identical genome, state and RNG key get different scripted experiences, and their learned associations differ. Both are then placed in one identical observation and state, and their chosen intents differ. The score breakdown of the chosen intent attributes the difference to the learned term (instinct and need terms equal). The identical-experience control chooses identically | Owner D2 §2 | RT |
+| M3.26 | Mech | **Owner D2, learning repertoire.** Every item is a behavioural assertion, never only a weight change:<br>• approach after positive reward and avoidance after negative (M3.4);<br>• contextual: the same verb is preferred in context A and not in context B;<br>• reversal: after the rewarded option switches, the choice switches within a stated number of trials;<br>• exploration: an untried option is still sampled at a non-zero rate;<br>• generalisation (M3.11);<br>• delayed reward (M3.3);<br>• save and load (M3.8): the reloaded NPC's next decision equals the uninterrupted one.<br>An item not feasible at M3 is recorded in DEV_LOG as deferred with its milestone, never faked | Owner D2 §2 | RT, EM |
+| M3.27 | Hyp | **Owner D2, learning on vs frozen control population:** same scenario, at least 5 seeds per arm. Survival, need satisfaction and time allocation are reported with intervals in DEV_LOG, whatever the direction. Mechanism check (Mech, must pass): the decision streams differ (M3.6) | Owner D2 §2 | RT |
+| M3.28 | Mech | **Owner D2, "why did it do that":** for a selected NPC, the People panel and the runner `learn-dump` show the top learned associations with their context, perceived opportunities, the last N experiences with reward, and the last decision's candidate scores split into instinct, need, learned and exploration terms. The terms sum to the score that was used (asserted) | Owner D2 §2 | EM, PM |
+| M3.29 | Inv | **Owner D2, recording:** per-NPC needs, actions, learning outcomes, survival and time allocation reach the warehouse at a stated grain (person-day for needs and time use, one row per event for actions and learning outcomes). Recomputed from events, the totals equal the warehouse rows exactly. Full, Summary and Off recording give the same `StateHash` | Owner D2 §5 | RT |
 
 **Manual:** screenshot of the NPC inspector (drives, attention, beliefs, top learned associations) and of a foraging NPC. **Done means:** NPCs live in the game, learn, never read the truth, and the budgets hold at 500 NPCs.
 
@@ -352,6 +357,9 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M4.30 | Unit | **Mutation configurable (Q4):** `MutationPer10k` 10 gives 100 ± 30 events per 100,000 copies; 0 gives exactly 0; per-scenario values are honoured and do not leak between parallel runs | BIOLOGICAL `Mutation_RateHonoured`, `Mutation_ScenarioOverride` | EM, RT |
 | M4.31 | Inv | **Estates (Q13, Q14):** assets transferred, never duplicated (1,000 estates per custom and ladder: id multisets conserved, no new ids); the executor ladder is configurable; no executor receives more than its custom gives it | MATERIAL 20–22 | EM |
 | M4.32 | Inv | **Care is counted (Q12):** unpaid care ticks and the time-use categories are counted from M4 and sum exactly to the ticks of each day | CLASSES 18 | RT |
+| M4.33 | Hyp | **Owner D2, demographic sweeps:** multigenerational runs across starting population (10, 20, 40 per faction), fertility (low, default, high), disease (Off, Mild, On) and `LifeScale` (at least 3 values). Births, deaths by cause, migration, age distribution and extinctions are reported per arm. Population change reconciles exactly: start + births + arrivals − deaths − departures = end. Nothing is tuned to prevent collapse | Owner D2 §3 | RT, N |
+| M4.34 | Mech | **Owner D2, non-biological care:** a child is fed and tended by a non-parent caregiver (foster, step-parent or shared nursery) with real food movements, in the scenario and in at least 10 of 20 seeds | Owner D2 §3 | RT |
+| M4.35 | Inv | **Owner D2, recording:** births, deaths, age distribution (person-day or person-year), household membership intervals, caregiving ticks and inheritance transfers reach the warehouse with persistent person, household and lot ids, and reconcile exactly with the sim events | Owner D2 §5 | RT |
 
 **Manual:** screenshot of a household panel and family tree; owner watches one generation turn over. **Done means:** a population lives, breeds and dies for 15 years without extinction or explosion; inheritances are separate; goods pass to heirs and conservation holds.
 
@@ -375,6 +383,25 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M5.12 | Hyp | S2 resident/intruder by custom (20% resident rule, 20% intruder rule seeded; hut register on/off) and S5 hut-mates share on unlucky days (shared store on/off; stable vs high-turnover huts): 30 seeds per arm. **Mech** checks (the register carries its penalty; the store changes the payoff) must pass | STRATEGY_BENCHMARKS S2, S5 | RT |
 | M5.13 | Mech | **LS2, hungry with no food (producing goods enables a later food exchange):** by days 8–10 the learner, hungry with no food, gathers logs or goes to the trader with them in ≥ 20 points more think ticks than `Frozen`, in ≥ 90% of 50 seeds; with food in sight it still eats first (≥ 90%); with episodes off and traces disabled the gap shrinks by at least half (reported); with a trader who gives nothing, no gain over `Frozen` (± 10 points) | NPC_LEARNING LS2 | RT |
 | M5.14 | Unit | Social-memory decay is independent of `LifeScale` and configurable: test 12 of SOCIAL_MEMORY with `ScalePermille` 2000 and with grudge decay 0 (Q1) | SOCIAL 12 | EM |
+| M5.15 | Inv | **Owner D2, communication decides nothing by itself:**<br>• no exchange, gift or cooperation happens without a preceding `GestureMade` and the receiver's own decision event;<br>• the receiver's response is chosen by its own policy from its own decoded message and beliefs (no shared deal object decides it);<br>• refusal and counter-offer occur naturally (each is non-zero across 20 seeds);<br>• with gestures disabled, barter falls to zero.<br>Compositional: at least request, offer, accept, refuse, cooperate and warn are composed from the gesture parts, not one gesture per transaction | Owner D2 §3 | RT, EM |
+| M5.16 | Inv | **Owner D2, intention vs belief vs action:**<br>• a communicated intention, the receiver's belief about it, and the actual action are three separate records;<br>• a sender can signal an offer and then not deliver (M5.7), and the receiver's belief updates only from what it perceived | Owner D2 §3 | RT |
+| M5.17 | Inv | **Owner D2, recording:** gestures, decoded messages, barter offers and outcomes, gifts and social interactions reach the warehouse with persistent ids, and reconcile exactly with the sim events | Owner D2 §5 | RT |
+
+### I-BS. Integration of biology and society (owner D2 §4; gate after M4 and M5 are merged)
+
+Every scenario uses persistent individuals and actual resource movements, and each is asserted from events (Mech, RT, at least 10 seeds, reported per seed):
+
+| # | Scenario |
+|---|---|
+| I-BS.1 | A parent gathers food and hands it to its dependent child, who eats it (the goods are traced from the source to consumption). |
+| I-BS.2 | Two or more individuals share a shelter and draw on a shared store. |
+| I-BS.3 | Help between related individuals and between unrelated ones both occur, and kin help is more frequent (reported). |
+| I-BS.4 | A relationship strengthens through repeated interactions (trust or familiarity rises, with each step attributed to an event). |
+| I-BS.5 | Two NPCs exchange goods, and each one's believed utility rises from the trade. |
+| I-BS.6 | An individual's behaviour changes after a social or economic experience. This is a behavioural assertion, as in M3.25. |
+| I-BS.7 | On a death, the estate passes to heirs. Lot ids are conserved and none is duplicated. |
+
+The recording-neutrality check (Full, Summary and Off give the same hash) runs on all seven scenarios.
 
 **Manual:** screenshot of gesture animation (the view animates sim events and decides nothing). **Done means:** NPCs recognise, remember and gesture; an exchange can be cheated; gifts happen; nothing enforces honesty.
 
