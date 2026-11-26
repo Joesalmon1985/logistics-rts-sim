@@ -11,7 +11,7 @@ Rules for this file:
 
 | Item | Value |
 |---|---|
-| Current milestone | **M3** (NPC core with instincts and lifetime learning) in worktree `wt-lrs-m3`, plus **M13a infrastructure** (SQLite warehouse core) in `wt-lrs-m13a`, in parallel. M0, M1 and M2 are done and merged, which completes checkpoint 4A. |
+| Current milestone | **M3** (NPC core with instincts and lifetime learning) in worktree `wt-lrs-m3`. M0, M1 and M2 are done and merged (checkpoint 4A complete). The M13a warehouse core is merged for the stage 3 event set. |
 | Current checkpoint | **4A Simulation laboratory** (M0–M2) |
 | Next functional release | **First playable new game**: M0–M7 and M9 ([conventions §10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)) |
 | Owner questions | None open: all 23 answered on 27 Nov 2026 ([conventions §13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)) |
@@ -21,6 +21,7 @@ Rules for this file:
 
 | Milestone | Checkpoint | Completed | Commit | Notes |
 |---|---|---|---|---|
+| M13a (core, stage 3 events) | 4E (pulled forward) | 27 Nov 2026 | `738b10c` (`unity/m13a`: `11e8f4b`, `84cb8cb`) | The SQLite warehouse lives in the runner only (`DotNet/God.Runner/Warehouse`, behind `IRunRecorder`); Unity stays on JSONL. Schema v1 has meta, dimension and fact tables for today's events. The registry maps each event type to its table; unmapped events go to `fact_event`. Recording levels and per-domain switches. `run`/`batch --sqlite`; `export` to CSV or Parquet. Reconciliation from SQL to memory is exact, foreign keys hold, and the content hash is deterministic. Every recording level gives an identical sim hash. **Open:** the NPC-era tables (person, household and onwards) arrive with M3–M8 (M13a.5 and M13a.6). |
 | M2 | 4A | 27 Nov 2026 | merge into `unity/poc` (`unity/m2`: `2b2a972`, `c9d2813`, `0d86851`, `bd42cb9`) | `Sim/Lab`: Q30 fixed point; benchmark state machines; replicator (including two populations with RK4); agent-based engine; tournaments; presets L1–L13 with status labels. Runner `lab` list/run/all --check/report/hash. `lab all --check`: 70 runs, 70 pass, 33.8 s on one core. Nine expectations were **amended with evidence** (see [STRATEGY_BENCHMARKS.md](STRATEGY_BENCHMARKS.md)). One is a finding for the owner: L2's Hawk/Bully claim doesn't hold under default drift (Retaliator stays dominant; the system is bistable). |
 | M1 | 4A | 27 Nov 2026 | merge into `unity/poc` (`unity/m1`: `a112a21`, `324c96b`) | Four policy interfaces; `PolicyRegistry`; `AiBrainFactionPolicy`; `Stage3MilitaryPolicy` (the military seam also done); `FactionKnowledgeView` (live and filtered: own books exact, foreign stores never, Q21); `KnowledgeProfile`; true-state overlay as a host setting (Q22). The HUD reads only the view, and the reflection test's exception list is empty. Pause rule replaces `StepHeld`. Seeds 1–12 replay the M0 hashes exactly. |
 | M0 | 4A | 27 Nov 2026 | merge into `unity/poc` (branch `unity/m0`: `46d9fad`, `d44aa05`, `1dfb80f`, `acae4c1`) | Delivered: `SimTuning` (no mutable statics; audit test), keyed `Rng` streams, `SimCalendar`/`LifeScale`, `VictorySpec` list (VP10 + LastStanding default; Sandbox), `StateHashParts` including pending commands, domain events and `EventCatalog`, the `God.Recording` JSONL recorder (Off/Metrics/Summary/Full), `God.Runner` (run, batch, verify, replay, bench), save v3, `SimBuilder` shared with Unity's SmokeRun, and the HUD calendar. The Unity player and the runner give identical hashes. |
@@ -42,6 +43,7 @@ Branch rules for this run: commit and push tested changes to `unity/poc` and to 
 
 | Date | Commit | Suite | Result | Notes |
 |---|---|---|---|---|
+| 27 Nov 2026 | `738b10c` (M13a merged) | `dotnet test DotNet -c Release` | God.Sim 359/359, God.Runner 110/110 | Rerun by the lead after merging. M13a touched no Unity files, so Unity wasn't rerun. |
 | 27 Nov 2026 | `3463d30` (**checkpoint 4A**, merged tree) | Unity EditMode / PlayMode; Windows build; player smoke vs runner | EditMode 363/363 and PlayMode 77/77. Build OK (87 MB, 0 errors). Player smoke seed 2: Crimson at tick 20161, `4bd54b271857a803`, invariants ok, 0 exceptions. The runner gives the same result. | Run by the lead; closes 4A. |
 | 27 Nov 2026 | `10a7142` (M0+M1+M2) | `dotnet test DotNet -c Release`; `lab all --check` | God.Sim 359/359, God.Runner 90/90; lab 70/70 in 33.8 s | Rerun by the lead after merging. |
 | 27 Nov 2026 | `324c96b` (unity/m1) | Unity EditMode / PlayMode; build; player smoke | 336/336 and 77/77; build OK. Smoke seed 2: tick 20161, `4bd54b271857a803`; seed 1: 17534, `12be0f64cefc59f1`. Both equal the runner. | Run by the M1 agent. Background Unity runs took 45–100 minutes each because of editor throttling. |
@@ -58,6 +60,7 @@ The owner's metrics (27 Nov), measured by `God.Runner bench` ([HEADLESS_SIMULATI
 
 | Date | Commit | Case | Ticks/s | Sim years per real second | NPC decisions/s | Memory per NPC | Pathfinding cost | Learning cost | Communication cost | Telemetry and database overhead | Save size | Load time | Parallel throughput |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 27 Nov 2026 | `84cb8cb` | Recording overhead (`bench --cases recording`): stage 3 watch6, 36,000 ticks, seed 1 | Off 11,582; Metrics 11,423 (1.4%); SQLite metrics 11,208 (3.3%); JSONL summary 11,205 (3.4%); SQLite summary 10,784 (7.4%); JSONL full 11,141 (3.9%); SQLite full 10,899 (6.3%) | | | | | | | **SQLite per sim day:** 12.6 KB metrics, 34.7 KB summary, 54.9 KB full. Same hash in every mode. Not yet measured at NPC scale. | | | |
 | 27 Nov 2026 | `46d9fad`+`d44aa05` | Stage 3 watch6 (sandbox), no NPCs, recording Off, Ryzen 7 5800X | 9,758 (976× real time) | 0.81 (12,000-tick year) | - | - | - | - | - | - | 467 KB (saved in 89 ms) | 109 ms | 1 worker 16,493 ticks/s; 4 workers 59,546 (scaling 0.90); 8 workers 97,529 (0.74, below the 0.8 target); 16 logical 103,982. Per tick: 0.103 ms mean, 0.380 ms at p99; 47 KB allocated. |
 
 ## Design decisions taken during implementation
@@ -104,7 +107,7 @@ Every temporary compatibility mechanism is listed here with its removal mileston
 | `FoundCommunal` explicit interface (only if M12 does not implement autonomous communal founding) | Owner decision Q17 fallback | Stage 5 |
 | `FullInformation` knowledge profile | Stage 4 builds the separation; limited information comes later | Later ages (Stage 6–7), per domain |
 | `TutorialSteps.All` on the static-audit allow-list | Stage 3 tutorial data | M14 (tutorial rewrite) |
-| Runner exit code 9, "not implemented until Mx", for learn-dump (M3), export (M13a), experiment (M14), serve, dataset and verify-model (M15). `lab` was implemented in M2. | Explicit stubs; nothing is faked | The milestone named |
+| Runner exit code 9, "not implemented until Mx", for learn-dump (M3), `export --to sqlite` from JSONL (later; use `replay --record full --sqlite` instead), experiment (M14), serve, dataset and verify-model (M15). `lab` was implemented in M2. | Explicit stubs; nothing is faked | The milestone named |
 | Scenario keys `population`, `startNpcsPerFaction` and `populationBelow` are refused | No NPCs yet | M3 |
 | `MaxLivePartnerships` = 1 | Owner decision Q5: serial partnerships are enough for M4 | Not a removal: raised or set by custom when concurrent partnerships are added |
 

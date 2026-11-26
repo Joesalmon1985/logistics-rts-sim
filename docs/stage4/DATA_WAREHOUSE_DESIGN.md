@@ -165,7 +165,7 @@ abstract class DomainEvent : SimEvent            // SimEvent already carries Tic
 
 ### 3.3 Keys and common columns
 - **Run-scoped tables** carry `run_key`. In the per-run SQLite file every row has the same `run_key`, and each table's own key is `INTEGER PRIMARY KEY` (the rowid, fastest for SQLite). The logical key is `(run_key, x_key)`, which DuckDB and Parquet use when runs are combined.
-- **`date_key`** equals the sim day number (day 0 is the first). `dim_date` is per run because `TicksPerDay` and `DaysPerYear` are scenario parameters.
+- **`date_key`** equals the sim day number (day 0 is the first; as built, an event at tick t belongs to day (t−1)/TicksPerDay, see [8.1](#81-as-built-m13a-27-nov-2026)). `dim_date` is per run because `TicksPerDay` and `DaysPerYear` are scenario parameters.
 - **Every event fact** has `tick` and `date_key`. Every spell has `valid_from_tick`, `valid_to_tick`, `valid_from_day`, `valid_to_day` and `is_current`.
 - **Parties.** Economic actors can be persons, households, enterprises, institutions or factions (the state). `dim_party(party_key, party_kind, person_key, household_key, enterprise_key, institution_key, faction_key)` has exactly one non-null reference. This keeps transactions, ownership and loans to one foreign key per side.
 - **`info_layer`** (1 true, 4 record, 5 published, 7 faction view) appears wherever a row could be either truth or a record.
@@ -459,6 +459,7 @@ At the end of the load: `ANALYZE`, then `PRAGMA optimize`.
   - `export --to sqlite` loads `events.jsonl.gz` plus snapshots, which a Full JSONL stream includes as `"snapshot"` lines;
   - `replay --record LEVEL` re-runs the sim to rebuild any level;
   - both go through the same mapper code as the in-run path.
+  - *As built (M13a, 27 Nov 2026):* only `replay --record full --sqlite` is built; `export --to sqlite` returns exit 9 (see [8.1](#81-as-built-m13a-27-nov-2026)).
 - **Post-load:** the writer computes no analysis inside the load. `dim_strategy` and other derived tables are built by analysis jobs (`god-runner analyse strategy-fingerprint --db FILE`, stage 4 after M13) that write their own tables and record their method version.
 
 ### 4.7 Parquet and DuckDB
@@ -605,6 +606,49 @@ ORDER BY rel.kin_band, rel.trust_band;
 | Stage 6 | `fact_health_encounter` and `fact_referral` at clinic scale, `fact_investigation`, `fact_detention`, currency columns on transactions |
 | Stage 7 | `fact_media_publication`, `fact_exposure`, `fact_outlet_day`, `dim_outlet`, statistics-office records with limited information, very large DuckDB lakes |
 
+### 8.1 As built (M13a, 27 Nov 2026)
+The M13a core is merged in `unity/poc`: code in `DotNet/God.Runner/Warehouse/`, tests in `DotNet/God.Runner.Tests/WarehouseTests.cs`. The design above stands. It was built for the **stage 3 event set** (factions, production, combat, commands), so the person, household and NPC tables are not built yet. The notes below record what settled.
+
+- **Where it lives.** SQLite is in `God.Runner` (net10) behind `IRunRecorder`; `God.Sim` and `God.Game` do not reference it (test `SimAndRecordingAssemblies_DoNotReferenceSqlite`). Unity stays on JSONL. SQLite is opt-in (`--sqlite`), and the scenario schema is unchanged. CLI: [HEADLESS_SIMULATION.md §4.11](HEADLESS_SIMULATION.md#411-the-cli).
+- **Tables in schema v1** (`Warehouse/Migrations/0001_core.sql`):
+
+  | Group | Tables |
+  |---|---|
+  | meta | `meta_schema_version`, `meta_event_type`, `meta_event_map`, `meta_load` |
+  | dimensions | `dim_run`, `dim_date`, `dim_code`, `dim_ware`, `dim_faction`, `dim_faction_history`, `dim_location`, `dim_building`, `dim_kpi` |
+  | facts | `fact_faction_day`, `fact_faction_day_stock`, `fact_production`, `fact_production_day` (faction is part of the key), `fact_combat`, `fact_combat_day`, `fact_command`, `fact_event`, `fact_event_day`, `fact_run_metric` (`run_key`, `metric`, `source`, `value`, `deterministic`), `fact_metric_day` |
+  | structure only | `fact_policy_change`, `fact_kpi` (no rows until their sources exist) |
+  | views | `v_faction_day`, `v_events` |
+
+  `fact_combat` is one table with a `kind_code` (attack, unit_died, building_destroyed), not three tables.
+- **Day convention.** An event at tick t belongs to day (t−1)/TicksPerDay. `dim_date.tick_start` and `tick_end` are inclusive.
+- **Dimensions.** `dim_building` is type 1: an upsert on the day of change, with no history table. Setup HQs are inserted at Begin. An event that drives a dimension also writes a `fact_event` row, so the event log stays complete.
+- **Adding tables (registration pattern).** A later milestone writes a migration (`0002_…sql`), the `TableDef`s, and `EventMapRegistry.Register<T>(table, mapper, handler)` calls. The recorder is not edited (test `ARegisteredMapper_ChangesTheMapAndTheRows_WithoutTouchingTheRecorder`). An event with no registered mapper lands in `fact_event`.
+- **Versions and pins.** The writer refuses a file of a newer schema version (exit 3). `SQLitePCLRaw.lib.e_sqlite3` is pinned at 2.1.14, because 2.1.11 has a known high-severity advisory.
+- **Offline routes.** `export` to CSV and to Parquet (hive-partitioned, with `_global`) is built. `export --to sqlite` from JSONL is not built and returns exit 9; the route is `replay --record full --sqlite` ([4.6](#46-etl)).
+- **Overhead bench** (`bench --cases recording`; stage 3 scenario, no NPCs, 30 sim days, seed 1). Every mode gives the same final hash.
+
+  | Mode | Ticks/s | Overhead vs off |
+  |---|---|---|
+  | off | 11,582 | — |
+  | in-memory metrics | 11,423 | 1.4% |
+  | SQLite metrics | 11,208 | 3.3% |
+  | JSONL summary | 11,205 | 3.4% |
+  | SQLite summary | 10,784 | 7.4% |
+  | JSONL full | 11,141 | 3.9% |
+  | SQLite full | 10,899 | 6.3% |
+
+  SQLite size per sim day: 12.6 KB at metrics, 34.7 KB at summary, 54.9 KB at full. These are stage 3 numbers; the NPC-scale bench (`bench_npc_500`, criteria 10.9 and 10.10) comes after M3.
+- **Not built yet:**
+  - the person, household and other NPC tables (`dim_person`, spells, transactions and the rest of the list in 1.1);
+  - the Experiment level;
+  - `--record-decisions`;
+  - the size-budget test (10.9) and the 200-year nightly run;
+  - appending after `--from-save` (4.6, crash safety);
+  - a DuckDB check of the Parquet lake (10.11 is checked by reading the Parquet files back and comparing row counts and integer sums with SQLite);
+  - the migration-fixture test (10.12), since only schema v1 exists;
+  - the life-history report (10.16).
+
 ## 9. Migration from the existing code
 - **Events:** `SimEvent` and `EventBuffer` stay. `EventBuffer.Add` also stamps `Seq`. Existing event classes gain codes and domains.
 - **Counters:** `SmokeRun`'s event counting becomes the first Metrics recorder's counters ([HEADLESS_SIMULATION.md §9](HEADLESS_SIMULATION.md#9-migration-from-the-existing-code-smokerun)).
@@ -629,6 +673,8 @@ ORDER BY rel.kin_band, rel.trust_band;
 | 10.14 | `Replay_ReRecord_EqualsLiveRecord` | A run recorded live at Full and the same run recorded Off and then `replay --record full` give identical warehouse content (10.8 method) |
 | 10.15 | `TruthFields_OnlyAtFull` | At Summary and below, every event-borne truth-field column (`honest`, `mismatch`, `falsified`, the return's actual value, a record's true value) is NULL; at Full it is filled. Snapshot-built truth (`fact_kpi.actual_value`, `fact_belief_sample.true_value`, layer 1 counts in `fact_institution_day`) is stored at every level that writes the table. No policy references a truth field (reflection, with the conventions' policy test). |
 | 10.16 | `Life_History_Complete` | (M13a) For 20 NPCs sampled by id over a 10-sim-year Full run, the life-history report contains every domain event that names the NPC (birth, household and citizenship spells, employment, ownership, transactions, teaching, relationships, inheritance, death), in tick order, and nothing that does not; spells are half-open and do not overlap |
+
+**As built (M13a, 27 Nov 2026), 10.8 and 10.14:** the content hash excludes the wall-clock columns of `dim_run` and the timestamps of `meta_load`. `dim_run.stop_reason` legitimately differs between a live run (`maxTicks`) and a replay (`toTick`), so 10.14 compares everything else. The tests are `Warehouse_IsDeterministic` and `ReRecording_AReplay_GivesTheSameContentAsTheLiveRecord` in `WarehouseTests.cs`.
 
 **Size estimate behind 10.9** (500 living NPCs on average, 10 days per year, 200 years = 2000 days, about 50,000 persons ever):
 

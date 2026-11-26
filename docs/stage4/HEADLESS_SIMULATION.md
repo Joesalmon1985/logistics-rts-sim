@@ -108,10 +108,11 @@ out/<experiment or "adhoc">/<scenario name>/<seed>/<run id>/
   metrics.jsonl       one line per sim day with the requested metrics
   summary.json        final metrics and counters
   events.jsonl.gz     domain events (when recording is Full or a domain asks for JSONL)
-  warehouse.sqlite    when recording uses SQLite (M13)
+  warehouse.sqlite    when recording uses SQLite (M13; `--sqlite`, as built in M13a)
   saves/day_<n>.json  periodic saves when saveEveryDays > 0
   profile.json        per-system timings (bench, or --profile)
 ```
+- **As built (M13a, 27 Nov 2026):** `run` and `batch` take `--sqlite [--no-jsonl] [--no-index] [--fk]`, and each run then writes `warehouse.sqlite` in its run directory. `--no-jsonl` skips `events.jsonl.gz`, `--no-index` skips the end-of-run indexes, and `--fk` turns on foreign-key enforcement while writing. SQLite is opt-in: without `--sqlite` nothing changes, and the scenario schema is unchanged (no new keys). A batch also writes `batch.sqlite` beside `batch.json`, holding `dim_run` and `fact_run_metric` for all runs, merged in seed order.
 - **Run id:** 16 hex digits of an FNV-1a hash over the resolved scenario hash, the seed, the replicate number and the git commit. The same run gives the same id, so `batch --resume` skips finished runs. Wall time is never part of the id.
 
 ### 3.4 Replay file (`.godr`)
@@ -374,6 +375,13 @@ Level of detail (LOD) is a **sim rule** in `Sim/Population`. It is decided from 
 | `learn-dump` (utility) | `learn-dump --npc N` prints one NPC's association store ([NPC_LEARNING_DESIGN.md](NPC_LEARNING_DESIGN.md)) | M3 |
 | `export` (utility) | Converts per-run SQLite or JSONL to Parquet partitions, or JSONL to SQLite ([DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md#47-parquet-and-duckdb)) | M13 |
 
+**As built (M13a, 27 Nov 2026):**
+- `run` and `batch` accept `--sqlite [--no-jsonl] [--no-index] [--fk]` (section 3.3). `batch.sqlite` holds `dim_run` and `fact_run_metric`, merged in seed order.
+- `export --from FILE|DIR --to csv|parquet --out DIR [--tables]` converts a per-run `warehouse.sqlite` (or a directory of runs). Parquet is written as a hive-partitioned lake with a `_global` folder for global dimensions ([DATA_WAREHOUSE_DESIGN.md §4.7](DATA_WAREHOUSE_DESIGN.md#47-parquet-and-duckdb)).
+- `export --to sqlite` (loading JSONL into SQLite) is **not built** and returns exit code 9 (not implemented). The route to a warehouse for a run recorded without SQLite is `replay --record full --sqlite`.
+- `bench --cases recording` runs the recording-overhead cases (modes off, metrics, summary and full, in memory, JSONL and SQLite) and checks that all modes give one final hash.
+- SQLite lives in `God.Runner` (net10) behind `IRunRecorder`; `God.Sim` and `God.Game` do not reference it, and Unity stays on JSONL.
+
 **Exit codes** (a batch returns the highest-priority code among its runs; priority is the order of this table from the bottom up, so 6 beats 4 and so on):
 
 | Code | Meaning |
@@ -387,6 +395,7 @@ Level of detail (LOD) is a **sim rule** in `Sim/Population`. It is decided from 
 | 6 | An unhandled exception in the sim |
 | 7 | Performance budget missed (`bench --compare`) |
 | 8 | I/O or recorder error (disk full, SQLite failure). The sim result is still valid and the replay was written. |
+| 9 | Not implemented (as built in M13a: `export --to sqlite`) |
 | 130 | Interrupted (Ctrl+C). Partial outputs are flushed and marked `"stopReason":"interrupted"`. |
 
 ### 4.12 Game-theory lab experiments (`lab`)

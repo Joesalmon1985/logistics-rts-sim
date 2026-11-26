@@ -550,6 +550,15 @@ Tables list **numbered criteria**. Column *Kind* is from section 1.3, *Source* i
 | M13a.6 | Perf | M13.13 below for the recorder (budgets and size) | DW 10.9, 10.10 | RT, N |
 | M13a.7 | Unit | M13.14 below (Parquet round trip, migrations) | DW 10.11, 10.12 | RT |
 
+**Status (M13a core merged, 27 Nov 2026).** The M13a.x numbers in the table above map to the content of the same name here (checked against the table, no renumbering needed). Tests are in `DotNet/God.Runner.Tests/WarehouseTests.cs`. Met means met for the **stage 3 event set** (factions, production, combat, commands); each criterion is rerun as the NPC events arrive from M3 onwards.
+- **M13a.1: met.** `EveryEventType_MapsToATable`, `ARegisteredMapper_ChangesTheMapAndTheRows_WithoutTouchingTheRecorder`, `ForeignKeys_Hold_AtFull_AndAtSummary`. Not yet covered: the 5-sim-year `band_village_100` run and `dim_party` (no NPC tables exist).
+- **M13a.2: met.** `Counts_Reconcile_AtFull_ExactlyWithTheEventStreamAndTheMetrics`, `Counts_Reconcile_AtSummary_AggregatesExact_SamplesWithinTenPercent`, `Snapshots_Reconcile_WithState_OnTheLastDay`, `Kpis_FromSql_EqualTheInMemoryMetrics_Exactly`.
+- **M13a.3: met.** `SqliteRecording_NeverChangesTheHashes_AtAnyLevelDomainOrSampleRate`, `SqliteRecording_MakesNoSimCalls_AndTheStateAfterEqualsTheStateWithoutIt`, `Levels_WriteWhatTheyPromise`. The 200-year nightly part waits for the nightly run.
+- **M13a.4: met.** `Warehouse_IsDeterministic`, `ReRecording_AReplay_GivesTheSameContentAsTheLiveRecord` (`dim_run.stop_reason` differs legitimately, `maxTicks` live against `toTick` replay, and is excluded with the wall-clock columns), `SimAndRecordingAssemblies_DoNotReferenceSqlite`. Spell consistency has nothing to test until NPC spells exist.
+- **M13a.5: open.** The life-history report needs the person, household and citizenship events from M3 onwards.
+- **M13a.6: open.** The budgets and size test run on `bench_npc_500` and the 20-year `band_village_500` run, which need the NPC events. Stage 3 numbers (`bench --cases recording`, no NPCs, 30 days): SQLite metrics 3.3%, summary 7.4%, full 6.3% over off, all within the budgets of 3%/15%/60% except that metrics is 0.3 points over 3% on this small scenario; size 12.6, 34.7 and 54.9 KB per sim day. The criterion stays open.
+- **M13a.7: met for what exists.** `Cli_RunWithSqlite_WritesTheWarehouse_AndExportWritesCsvAndParquet` (the Parquet files are read back and the row counts and integer column sums equal SQLite), `Schema_IsCreated_AtTheCurrentVersion_WithTheCoreTables`, `Schema_RefusesAFileOfANewerVersion`. Not yet covered: a DuckDB read of the lake, and a migration from a schema-v1 fixture (only v1 exists).
+
 **Manual:** screenshot of the dev-mode NPC life-history view. **Done means:** any recorded run can be queried, equals the sim to the unit, and switching recording off changes nothing. The criteria M13.1–M13.4, M13.13 and M13.14 below are met here for the tables M13a builds, and again at M13b for the tables it adds.
 
 ### M13b. Institution KPIs and reports (the full M13)
