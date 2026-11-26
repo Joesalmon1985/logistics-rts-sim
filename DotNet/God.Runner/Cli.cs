@@ -25,7 +25,7 @@ namespace God.Runner
 
         private static readonly Dictionary<string, string> Later = new Dictionary<string, string>
         {
-            ["lab"] = "M2 (game-theory lab)", ["experiment"] = "M14 (balance sweeps; the full policy suite in stage 6)",
+            ["experiment"] = "M14 (balance sweeps; the full policy suite in stage 6)",
             ["serve"] = "M15 (network readiness)", ["dataset"] = "M15 (network readiness)", ["verify-model"] = "M15 (network readiness)",
             ["learn-dump"] = "M3 (NPC learning)", ["export"] = "M13 (warehouse export to Parquet and SQLite)",
         };
@@ -45,7 +45,8 @@ commands:
   replay   re-run a replay FILE [--to TICK] [--record LEVEL] [--save-at TICK] [--print-events] [--out DIR]
   bench    benchmark       [--cases bench_stage3_watch6] [--ticks N] [--parallel-ticks N] [--workers 1,4,16]
                            [--compare FILE] [--update-baseline] [--baseline FILE] [--strict] [--out DIR]
-  lab, experiment, serve, dataset, verify-model, learn-dump, export: later milestones (exit code 9)
+  lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2)
+  experiment, serve, dataset, verify-model, learn-dump, export: later milestones (exit code 9)
 
 exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 invariant, 6 sim exception,
             7 performance, 8 I/O, 9 not implemented until a later milestone, 130 interrupted";
@@ -57,6 +58,7 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             string cmd = argv[0];
             try
             {
+                if (cmd == "lab") return LabCommand.Run(argv, output, error, cancel);
                 if (Later.TryGetValue(cmd, out var when))
                 {
                     error.WriteLine("'" + cmd + "' is not implemented until " + when + ".");
