@@ -60,6 +60,7 @@ namespace God.Sim
                 foreach (var u in m.Units) if (s.Factions.IsEliminated(u.Faction)) bad.Add("eliminated faction still has unit " + u.Id);
             CheckTrade(s, bad);
             Population.PopulationInvariants.Check(s, bad);
+            if (s.Population != null) Population.PopulationExtensions.Check(s, bad); // F0.13: M4's and M5's invariants
             return bad;
         }
 

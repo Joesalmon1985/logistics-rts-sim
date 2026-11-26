@@ -20,6 +20,12 @@ namespace God.Game
         private readonly List<NpcSighting> _sightings = new List<NpcSighting>();
         private Rect _personRect;
         private Vector2 _personScroll;
+        /// <summary>F0.15: the card's tab: 0 mind (M3), 1 household (M4), 2 relations (M5).</summary>
+        private int _personTab;
+        private static readonly string[] PersonTabs = { "Mind", "Household", "Relations" };
+
+        /// <summary>The tab shown (tests).</summary>
+        public int PersonTab { get => _personTab; set => _personTab = Mathf.Clamp(value, 0, PersonTabs.Length - 1); }
 
         /// <summary>The person whose card is open, 0 for none.</summary>
         public int SelectedNpc { get; private set; }
@@ -83,8 +89,14 @@ namespace God.Game
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("x", st.Btn, GUILayout.Width(28f))) { ClearNpc(); GUILayout.EndHorizontal(); return; }
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            for (int t = 0; t < PersonTabs.Length; t++)
+                if (GUILayout.Button(PersonTabs[t], t == _personTab ? st.BtnSel : st.Btn)) _personTab = t;
+            GUILayout.EndHorizontal();
             // vertical scrolling only: the content is laid out to the card's width (wrapped labels, flexible drive bars)
-            _personScroll = GUILayout.BeginScrollView(_personScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(height - 60f));
+            _personScroll = GUILayout.BeginScrollView(_personScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(height - 88f));
+            if (_personTab == 1) { DrawHouseholdTab(st, c); GUILayout.EndScrollView(); return; }
+            if (_personTab == 2) { DrawRelationsTab(st, c); GUILayout.EndScrollView(); return; }
             GUILayout.Label((c.Founder ? "Founder, age " : "Age ") + c.HudAge, st.Small);
             GUILayout.Label("Doing: " + (c.Doing.Length > 0 ? c.Doing : "nothing"), st.Label);
             GUILayout.Label("Health " + c.Health / 10 + "%   nutrition " + c.Nutrition / 10 + "%" + (c.Injury > 0 ? "   injury " + c.Injury / 10 + "%" : "")

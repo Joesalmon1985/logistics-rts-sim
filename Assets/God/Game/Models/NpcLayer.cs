@@ -193,6 +193,8 @@ namespace God.Game
                 _alive.Add(n.Id);
                 if (!_figs.TryGetValue(n.Id, out var f)) { f = Take(n.Faction); _figs[n.Id] = f; }
                 Animate(f, n, g, dt);
+                LifeStageLayer.Apply(f.Root.transform, n, _sim.State); // F0.15: M4 (size and look by life stage, displays)
+                GestureLayer.Apply(f.Root.transform, n, _sim.State, _time); // F0.15: M5 (gestures)
             }
             _gone.Clear();
             foreach (var kv in _figs) if (!_alive.Contains(kv.Key)) _gone.Add(kv.Key);

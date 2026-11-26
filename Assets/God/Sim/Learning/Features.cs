@@ -94,6 +94,12 @@ namespace God.Sim.Learning
         public const int FoodRemembered = 1, EnemyInSight = 2, NoFoodKnown = 3, Outdoors = 4;
     }
 
+    /// <summary><see cref="FeatureKind.NpcGroup"/> values (SHARED_CONTRACTS 6.1): M5 1-3, later 4-5, M4 6-7.</summary>
+    public static class NpcGroupValue
+    {
+        public const int OwnFaction = 1, OtherFaction = 2, EnemyFaction = 3, StateStaff = 4, Soldier = 5, Elder = 6, Child = 7;
+    }
+
     /// <summary><see cref="FeatureKind.Time"/> values.</summary>
     public static class TimeOfDay
     {
@@ -120,6 +126,11 @@ namespace God.Sim.Learning
         public static uint PlaceRef(int node) => Make(FeatureKind.PlaceRef, node);
         public static uint Situation(int v) => Make(FeatureKind.Situation, v);
         public static uint Time(int v) => Make(FeatureKind.Time, v);
+        /// <summary>F0: a person's relationship class (<c>NpcRelClass</c>), group, identity (as recognised) and a message act.</summary>
+        public static uint NpcRel(int relClass) => Make(FeatureKind.NpcRel, relClass);
+        public static uint NpcGroup(int group) => Make(FeatureKind.NpcGroup, group);
+        public static uint NpcRef(int npcAs) => Make(FeatureKind.NpcRef, npcAs);
+        public static uint MsgAct(int act) => Make(FeatureKind.MsgAct, act);
         public static uint Conj(int slot, int generation) => Make(FeatureKind.Conj, (slot << 8) | (generation & 0xFF));
 
         public static bool IsDrive(uint f)
@@ -219,7 +230,7 @@ namespace God.Sim.Learning
                     }
                 case FeatureKind.Time: return v == TimeOfDay.Night ? "at night" : v == TimeOfDay.Dusk ? "at dusk" : "by day";
                 case FeatureKind.Conj: return "combination #" + (v >> 8);
-                default: return "feature " + f;
+                default: return Cognition.CognitionExtensions.Describe(f) ?? "feature " + f;
             }
         }
 

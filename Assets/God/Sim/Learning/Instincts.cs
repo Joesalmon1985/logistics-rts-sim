@@ -32,7 +32,7 @@ namespace God.Sim.Learning
         /// flight attractive; having no bed makes gathering materials and building mildly attractive, so an instinct-only
         /// NPC still builds a hut slowly.
         /// </summary>
-        public static readonly ReadOnlyArray<Instinct> Default = new ReadOnlyArray<Instinct>(
+        public static readonly ReadOnlyArray<Instinct> Core = new ReadOnlyArray<Instinct>(
             new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Category(ObjCategory.Food), Verb.Eat, 600),
             new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Category(ObjCategory.Food), Verb.ForageAt, 250),
             new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Category(ObjCategory.Food), Verb.Eat, 250),
@@ -43,6 +43,16 @@ namespace God.Sim.Learning
             new Instinct(Feature.Self(SelfFeature.NoBed), Feature.Category(ObjCategory.Raw), Verb.Gather, 150),
             new Instinct(Feature.Self(SelfFeature.CarryingLog), Feature.Category(ObjCategory.Shelter), Verb.Build, 250),
             new Instinct(Feature.Self(SelfFeature.NoBed), Feature.Class(ObjClass.HutSite), Verb.Build, 100));
+
+        /// <summary>The default table: M3's rules, then M4's (<c>HouseholdHooks.Instincts</c>), then M5's (<c>SocialHooks.Instincts</c>) (F0.11).</summary>
+        public static readonly ReadOnlyArray<Instinct> Default = Concat(Core, Population.Households.HouseholdMindHooks.Instincts, Social.SocialMindHooks.Instincts);
+
+        private static ReadOnlyArray<Instinct> Concat(params ReadOnlyArray<Instinct>[] parts)
+        {
+            var l = new System.Collections.Generic.List<Instinct>();
+            foreach (var p in parts) foreach (var v in p) l.Add(v);
+            return new ReadOnlyArray<Instinct>(l);
+        }
 
         public static readonly ReadOnlyArray<Instinct> Empty = new ReadOnlyArray<Instinct>();
 

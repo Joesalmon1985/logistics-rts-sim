@@ -3,8 +3,9 @@ using God.Sim.Policy;
 namespace God.Sim.Learning
 {
     /// <summary>
-    /// Verb ids of the learning store (NPC_LEARNING_DESIGN 3.2): a byte, at most 64. The numbers are data and never
-    /// reused. M3 uses the survival, gathering and equipment verbs; the rest arrive with their milestones.
+    /// Verb ids of the learning store (NPC_LEARNING_DESIGN 3.2): a byte below <see cref="Max"/> (128 since F0,
+    /// SHARED_CONTRACTS 12.4). The numbers are data and never reused. M3 uses the survival, gathering and equipment verbs;
+    /// ranges: core 0-31, M4 32-47 (and 17, 18), M5 48-59 and Say(act) 64-95, lab 60-62, M6+ 96-127.
     /// </summary>
     public static class Verb
     {
@@ -19,7 +20,7 @@ namespace God.Sim.Learning
         public const byte Explore = 20;
         // controlled lab verbs (NPC_LEARNING L3): never offered on the island
         public const byte TestA = 60, TestB = 61, TestFiller = 62;
-        public const int Max = 64;
+        public const int Max = 128;
     }
 
     /// <summary>The 16 verb groups of <see cref="MindView.AssocSummary"/> (the 10 domains, Survival, Barter and Cooperation split by sign).</summary>
@@ -48,7 +49,8 @@ namespace God.Sim.Learning
     /// <summary>The verb table (data). New verbs are rows; the store never changes for them.</summary>
     public static class VerbTable
     {
-        public static readonly ReadOnlyArray<VerbInfo> Rows = new ReadOnlyArray<VerbInfo>(
+        /// <summary>M3's rows (frozen after F0).</summary>
+        public static readonly ReadOnlyArray<VerbInfo> Core = new ReadOnlyArray<VerbInfo>(
             new VerbInfo(Verb.Eat, "eat", VerbGroup.SurvivalSeek, NpcVerb.Eat),
             new VerbInfo(Verb.Sleep, "sleep", VerbGroup.SurvivalSeek, NpcVerb.Sleep),
             new VerbInfo(Verb.Rest, "rest", VerbGroup.SurvivalSeek, NpcVerb.Rest),
@@ -63,6 +65,16 @@ namespace God.Sim.Learning
             new VerbInfo(Verb.TestA, "test A", VerbGroup.Lab, NpcVerb.LabAct),
             new VerbInfo(Verb.TestB, "test B", VerbGroup.Lab, NpcVerb.LabAct),
             new VerbInfo(Verb.TestFiller, "filler", VerbGroup.Lab, NpcVerb.LabAct));
+
+        /// <summary>Every row: M3's, then M4's (<c>HouseholdHooks.Verbs</c>), then M5's (<c>SocialHooks.Verbs</c>) (F0.11).</summary>
+        public static readonly ReadOnlyArray<VerbInfo> Rows = Concat(Core, Population.Households.HouseholdMindHooks.Verbs, Social.SocialMindHooks.Verbs);
+
+        private static ReadOnlyArray<VerbInfo> Concat(params ReadOnlyArray<VerbInfo>[] parts)
+        {
+            var l = new System.Collections.Generic.List<VerbInfo>();
+            foreach (var p in parts) foreach (var v in p) l.Add(v);
+            return new ReadOnlyArray<VerbInfo>(l);
+        }
 
         public static bool TryGet(byte verb, out VerbInfo info)
         {

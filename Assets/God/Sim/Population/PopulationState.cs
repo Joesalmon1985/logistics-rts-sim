@@ -7,7 +7,10 @@ namespace God.Sim.Population
     /// <summary>Why an NPC died: exactly one cause (POPULATION_DESIGN "Death").</summary>
     public enum DeathCause : byte { None = 0, Starvation = 1, Wound = 2, Disease = 3, OldAge = 4, Childbirth = 5, Exposure = 6, Violence = 7, Accident = 8 }
 
-    /// <summary>A homogeneous quantity of one ware (ECONOMY_DESIGN 3.1, the M3 subset: the holder is the owner).</summary>
+    /// <summary>
+    /// A homogeneous quantity of one ware (ECONOMY_DESIGN 3.1, the M3 subset) with its owner (F0, SHARED_CONTRACTS 2.1).
+    /// Only <see cref="Goods"/> creates, moves, splits, merges, re-owns or ends a lot.
+    /// </summary>
     public struct ItemLot
     {
         /// <summary>ItemLotId, never reused. 0 = empty slot.</summary>
@@ -18,6 +21,8 @@ namespace God.Sim.Population
         public int SpoilDay;
         /// <summary>Uses left (tools), 0 for other wares.</summary>
         public int Uses;
+        /// <summary>Who is entitled to it (F0): a carried lot is its carrier's in M3; a ground lot is always ownerless.</summary>
+        public Owner Owner;
 
         public bool Empty => Id == 0 || Count <= 0;
     }
@@ -70,19 +75,19 @@ namespace God.Sim.Population
         public ItemLot Lot;
     }
 
-    /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1).</summary>
+    /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1). 8 slots (F0): 4-7 reserved.</summary>
     public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3 }
-    /// <summary>Why goods left it.</summary>
-    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3 }
+    /// <summary>Why goods left it. 8 slots (F0): <see cref="Buried"/> for M4 estates; 5-7 reserved.</summary>
+    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4 }
 
     /// <summary>
     /// The one conservation ledger of personal goods (ECONOMY_DESIGN A1): for every ware,
-    /// <c>Σ Produced − Σ Consumed = Σ (carry + ground)</c> exactly, every reason counted. Stage 3 HQ stocks and walkers keep
+    /// <c>Σ Produced − Σ Consumed = Σ (carry + ground + bins)</c> exactly, every reason counted (invariant C1). Stage 3 HQ stocks and walkers keep
     /// their own books until NPC labour replaces them (M6).
     /// </summary>
     public sealed class GoodsLedger
     {
-        public const int ProduceReasons = 4, ConsumeReasons = 4;
+        public const int ProduceReasons = 8, ConsumeReasons = 8;
         public long[] Produced = new long[ProduceReasons * Wares.PersonalCount];
         public long[] Consumed = new long[ConsumeReasons * Wares.PersonalCount];
 
@@ -129,9 +134,11 @@ namespace God.Sim.Population
     public static class Activity
     {
         public const int Idle = 0, Eat = 1, Forage = 2, Sleep = 3, Rest = 4, Explore = 5, Gather = 6, Build = 7, Flee = 8, Carry = 9, Other = 10;
-        public const int Count = 11;
+        /// <summary>F0 (NpcDay v2): caring for others (M4) and social acts (M5).</summary>
+        public const int Care = 11, Social = 12;
+        public const int Count = 13;
         public static readonly ReadOnlyArray<string> Names = new ReadOnlyArray<string>(
-            "idle", "eat", "forage", "sleep", "rest", "explore", "gather", "build", "flee", "carry", "other");
+            "idle", "eat", "forage", "sleep", "rest", "explore", "gather", "build", "flee", "carry", "other", "care", "social");
 
         public static int Of(in NpcAction a)
         {
@@ -148,7 +155,7 @@ namespace God.Sim.Population
                 case Learning.Verb.Build: return Build;
                 case Learning.Verb.Flee: return Flee;
                 case Learning.Verb.PickUp: case Learning.Verb.Drop: case Learning.Verb.Equip: case Learning.Verb.Haul: return Carry;
-                default: return Other;
+                default: return PopulationExtensions.ActivityOf(a.Verb);
             }
         }
     }
@@ -177,6 +184,10 @@ namespace God.Sim.Population
         public DeathCause DeathCause;
         /// <summary>True for a founder of the scenario (no NpcBorn: M4 brings births).</summary>
         public bool Founder;
+        /// <summary>Life stage (F0.4; written only by M4). <see cref="LifeStage.Adult"/> in M3.</summary>
+        public LifeStage Stage;
+        /// <summary>The household it belongs to (F0.4; written only by M4), 0 for none.</summary>
+        public int Household;
 
         // ---- position ----
         public int Node;
@@ -253,6 +264,9 @@ namespace God.Sim.Population
         public List<ResourceSource> Sources = new List<ResourceSource>();
         public List<Hut> Huts = new List<Hut>();
         public List<GroundLot> Lots = new List<GroundLot>();
+        /// <summary>Bins of lots (household stores, estates; F0), sorted by id. Created and removed only by <see cref="Goods"/>.</summary>
+        public List<LotBin> Bins = new List<LotBin>();
+        public int NextBinId = 1;
         /// <summary>Per hex: logs left in the pile an NPC opened by hand (a dice pile holds 4 units, ECONOMY 4.2).</summary>
         public int[] OpenPileUnits;
         public GoodsLedger Ledger = new GoodsLedger();
@@ -263,6 +277,8 @@ namespace God.Sim.Population
         public bool FoundersAnnounced;
         /// <summary>Set when sources, huts or lots change, so the system's spatial index is rebuilt (a cache flag, not state).</summary>
         [Newtonsoft.Json.JsonIgnore] public bool IndexDirty = true;
+        /// <summary>The learning sink <see cref="Goods"/> books spoilage through (a cache, not state).</summary>
+        [Newtonsoft.Json.JsonIgnore] public EventLearningSink GoodsSink = new EventLearningSink();
 
         public Npc Find(int id)
         {

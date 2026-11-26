@@ -158,9 +158,8 @@ namespace God.Sim.Tests
             var sim = LearningFixtures.Empty(2);
             int glade = LearningFixtures.Glade(sim);
             var s = sim.State;
-            var lot = PopulationModule.NewLot(s, Ware.Fish, 2, 0, 0); // its day is day 0: gone at the start of day 1
-            PopulationModule.Drop(s, glade, lot);
-            s.Population.Ledger.Produce(ProduceReason.Placed, Ware.Fish, 2);
+            // its day is day 0: gone at the start of day 1 (placed through the goods API, F0)
+            Goods.Produce(s, null, Holder.Ground(glade), Ware.Fish, 2, 0, 0, Owner.None, ProduceReason.Placed, 0, 0);
             var spoiled = new List<Consumed>();
             for (int i = 0; i < 1300; i++) { sim.Step(); spoiled.AddRange(sim.DrainEvents().OfType<Consumed>().Where(c => c.Reason == ConsumeReason.Spoiled)); }
             Assert.AreEqual(1, spoiled.Count);

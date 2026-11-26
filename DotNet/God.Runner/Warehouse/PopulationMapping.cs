@@ -15,8 +15,8 @@ namespace God.Runner.Warehouse
     }
 
     /// <summary>
-    /// The M3 population mappers (NpcSpawned, NpcDied, NpcDay, Produced, Consumed and the four learning events), registered
-    /// the same way as the core ones. Tables and grains: see <c>Migrations/0002_population.sql</c> and <see cref="Grains"/>.
+    /// The M3 population mappers (NpcSpawned, NpcDied, NpcDay, Produced, Consumed, the four learning events and M3b's DecisionMade), registered
+    /// the same way as the core ones. Tables and grains: see <c>Migrations/0002_population.sql</c>, <c>0003_decision.sql</c> and <see cref="Grains"/>.
     /// </summary>
     public static class PopulationMapping
     {
@@ -31,6 +31,10 @@ namespace God.Runner.Warehouse
             ("fact_person_day", "one row per living person x sim day (the day that just ended; every person alive at the day start)", "NpcDay"),
             ("fact_production", "one row per WaresProduced (stage 3, building), Produced or Consumed (personal goods, person) event; direction 1 in, -1 out", "WaresProduced, Produced, Consumed"),
             ("fact_learning", "one row per learning event; kind_code says which (association updates are sampled below Full)", "AssociationUpdated, ConjunctionRecruited, ConjunctionFreed, EpisodeClosed"),
+            ("fact_decision", "one row per chosen intent of one person at one think tick (written only when the learning domain records at Full)", "DecisionMade"),
+            ("dim_party", "one row per economic party seen in the run (person, household, faction or estate); exactly one reference set", "OwnershipChanged"),
+            ("fact_ownership", "one row per OwnershipChanged: one ownership change of one lot (spells are derived from it)", "OwnershipChanged"),
+            ("fact_social_day", "one row per day x faction x kind x believed kin band (an aggregate of help-like acts; M4 and M5 fill it)", "ChildFed, CareGiven, GiftGiven, HelpGiven, LabourHelped (M4, M5)"),
         };
 
         public static void Register(EventMapRegistry r)
@@ -61,21 +65,21 @@ namespace God.Runner.Warehouse
                     (long)e.MeanHunger, (long)e.MeanFatigue, (long)e.MeanCold, (long)e.MeanFear, (long)e.MeanPain,
                     T(0), T(1), T(2), T(3), T(4), T(5), T(6), T(7), T(8), T(9), T(10),
                     (long)e.WalkTicks, (long)e.Meals, e.HasBed ? 1L : 0L, (long)e.CarryUnits, (long)e.Decisions, (long)e.LearnedShare, (long)e.ExploreShare,
-                    (long)e.RewardSum, (long)e.PunishSum, (long)e.Associations, (long)e.Conjunctions, (long)(int)e.Mode);
+                    (long)e.RewardSum, (long)e.PunishSum, (long)e.Associations, (long)e.Conjunctions, (long)(int)e.Mode, T(11), T(12));
             });
             r.Register<Produced>("fact_production", "person_goods", (c, e) =>
             {
                 if (!c.RowWanted) return;
                 var p = c.Person(e.Npc);
                 c.Insert(Tables.FactProductionPerson, c.Tick, c.Seq, c.DateKey(), p.FactionKey, (long)(int)e.Ware, (long)e.Count, (long)c.Weight,
-                    p.Key, 1L, (long)(int)e.Reason, (long)e.Source, null, e.WithTool ? 1L : 0L);
+                    p.Key, 1L, (long)(int)e.Reason, (long)e.Source, null, e.WithTool ? 1L : 0L, (long)e.Lot, (long)e.IntoLot, (long)(int)e.OwnerKind, (long)e.OwnerId);
             });
             r.Register<Consumed>("fact_production", "person_goods", (c, e) =>
             {
                 if (!c.RowWanted) return;
                 var p = c.Person(e.Npc);
                 c.Insert(Tables.FactProductionPerson, c.Tick, c.Seq, c.DateKey(), p.FactionKey, (long)(int)e.Ware, (long)e.Count, (long)c.Weight,
-                    p.Key, -1L, (long)(int)e.Reason, null, (long)e.Hut, null);
+                    p.Key, -1L, (long)(int)e.Reason, null, (long)e.Hut, null, (long)e.Lot, null, (long)(int)e.OwnerKind, (long)e.OwnerId);
             });
             r.Register<AssociationUpdated>("fact_learning", "learning", (c, e) => Learn(c, e.Npc, LearnUpdated, (long)e.Verb, (long)e.Key, (long)e.Delta, (long)e.NewStw, (long)e.NewLtw, (long)(int)e.Origin,
                 null, null, null, null, null, null, null));
@@ -85,6 +89,24 @@ namespace God.Runner.Warehouse
                 (long)e.Slot, (long)e.A, (long)e.B, (long)e.C, null, null, null));
             r.Register<EpisodeClosed>("fact_learning", "learning", (c, e) => Learn(c, e.Npc, LearnEpisode, (long)e.Verb, (long)e.EpisodeKey, null, null, null, null,
                 null, null, null, null, null, (long)e.Return, (long)e.DaysElapsed));
+            // F0.14: ownership changes (one row each; the parties enter dim_party on first sight)
+            r.Register<OwnershipChanged>("fact_ownership", "ownership", (c, e) =>
+            {
+                long? from = c.Party(e.FromKind, e.FromId), to = c.Party(e.ToKind, e.ToId);
+                if (!c.RowWanted) return;
+                c.Insert(Tables.FactOwnership, c.Tick, c.Seq, c.DateKey(), (long)e.AssetKind, (long)e.Lot, (long)(int)e.Ware, (long)e.Count, from, to, (long)(int)e.Basis,
+                    e.Actor > 0 ? (object)c.Person(e.Actor).Key : null, (long)c.Weight);
+            });
+            // M3b's decision trace: Full only (the sim emits it only then; the level gate here keeps a Summary run of a hand-fed stream empty too)
+            r.Register<DecisionMade>("fact_decision", "decision", (c, e) =>
+            {
+                if (!c.Full || !c.RowWanted) return;
+                var p = c.Person(e.Npc);
+                c.Insert(Tables.FactDecision, c.Tick, c.Seq, c.DateKey(), p.Key, p.FactionKey, (long)e.Verb, (long)(int)e.TargetKind, (long)e.TargetId,
+                    e.TargetNode >= 0 ? (object)c.NodeLocation(e.TargetNode) : null, (long)e.TargetClass, (long)e.Total, (long)e.Instinct, (long)e.Need, (long)e.Learned,
+                    (long)e.Social, (long)e.Culture, (long)e.Personality, (long)e.Cost, (long)e.Explore, (long)e.Candidates,
+                    e.LearnedChangedWinner ? 1L : 0L, e.ExploreWon ? 1L : 0L, e.Continued ? 1L : 0L, (long)e.SecondVerb, (long)e.SecondTotal, (long)c.Weight);
+            });
         }
 
         private static void Learn(MapContext c, int npc, int kind, object verb, object feature, object delta, object stw, object ltw, object origin,

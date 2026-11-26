@@ -34,8 +34,11 @@ namespace God.Runner.Warehouse
         public override string ToString() => Name;
     }
 
-    /// <summary>The statements of the M13a core tables. Column lists name only what the sim writes; the rest take defaults.</summary>
-    public static class Tables
+    /// <summary>
+    /// The statements of the M13a core tables. Column lists name only what the sim writes; the rest take defaults. Partial
+    /// (F0.14): M4 declares its tables in <c>Tables.Households.cs</c>, M5 in <c>Tables.Social.cs</c>.
+    /// </summary>
+    public static partial class Tables
     {
         // ---- dimensions (order 10-30) ----
         public static readonly TableDef DimDate = new TableDef("dim_date", 10, "date_key", "run_key", "sim_year", "day_of_year", "tick_start", "tick_end", "is_year_start");
@@ -72,7 +75,7 @@ namespace God.Runner.Warehouse
         public static readonly TableDef FactProduction = new TableDef("fact_production", 52, "run_key", "tick", "seq", "date_key", "faction_key", "building_key", "ware_key", "quantity", "building_kind", "sample_weight");
         /// <summary>The personal-goods rows of fact_production (Produced, Consumed): same table, the columns the M3 migration added.</summary>
         public static readonly TableDef FactProductionPerson = new TableDef("fact_production", 52, "run_key", "tick", "seq", "date_key", "faction_key", "ware_key", "quantity", "sample_weight",
-            "person_key", "direction", "reason_code", "source_id", "hut_id", "with_tool");
+            "person_key", "direction", "reason_code", "source_id", "hut_id", "with_tool", "lot_id", "into_lot_id", "owner_kind_code", "owner_id");
         public static readonly TableDef FactProductionDay = new TableDef("fact_production_day", 53, "run_key", "date_key", "building_key", "ware_key", "faction_key", "quantity", "cycles");
         public static readonly TableDef FactCombat = new TableDef("fact_combat", 54, "run_key", "tick", "seq", "date_key", "kind_code", "faction_key", "unit_id", "unit_kind_code", "weapon_ware_key",
             "target_kind_code", "target_id", "outcome_code", "damage", "killer_unit_id", "disbanded", "building_key", "x_mm", "z_mm", "sample_weight");
@@ -84,9 +87,19 @@ namespace God.Runner.Warehouse
         public static readonly TableDef FactPersonDay = new TableDef("fact_person_day", 62, "run_key", "date_key", "person_key", "faction_key", "tick", "age_days", "location_key", "health", "nutrition",
             "hunger", "fatigue", "cold", "fear", "pain", "mean_hunger", "mean_fatigue", "mean_cold", "mean_fear", "mean_pain",
             "ticks_idle", "ticks_eat", "ticks_forage", "ticks_sleep", "ticks_rest", "ticks_explore", "ticks_gather", "ticks_build", "ticks_flee", "ticks_carry", "ticks_other",
-            "walk_ticks", "meals", "has_bed", "carry_units", "decisions", "learned_share", "explore_share", "reward_sum", "punish_sum", "associations", "conjunctions", "mode_code");
+            "walk_ticks", "meals", "has_bed", "carry_units", "decisions", "learned_share", "explore_share", "reward_sum", "punish_sum", "associations", "conjunctions", "mode_code",
+            "ticks_care", "ticks_social");
         public static readonly TableDef FactLearning = new TableDef("fact_learning", 63, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "kind_code", "verb", "feature_key",
             "delta", "new_stw", "new_ltw", "origin_code", "slot", "feature_a", "feature_b", "feature_c", "strength", "return_value", "days_elapsed", "sample_weight");
+        /// <summary>The decision trace (M3b DecisionMade, migration 0003): one row per chosen intent, Full only.</summary>
+        public static readonly TableDef FactDecision = new TableDef("fact_decision", 64, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "verb", "target_kind_code",
+            "target_id", "target_location_key", "target_class", "total", "instinct", "need", "learned", "social", "culture", "personality", "cost", "explore",
+            "candidates", "learned_changed_winner", "explore_won", "continued", "second_verb", "second_total", "sample_weight");
+        /// <summary>F0.14 (migration 0004): parties, ownership changes, the social day aggregate.</summary>
+        public static readonly TableDef DimParty = new TableDef("dim_party", 18, "party_key", "run_key", "party_kind_code", "party_id", "person_key", "household_id", "faction_key");
+        public static readonly TableDef FactOwnership = new TableDef("fact_ownership", 65, "run_key", "tick", "seq", "date_key", "asset_kind_code", "asset_id", "ware_key", "quantity",
+            "from_party_key", "to_party_key", "basis_code", "actor_person_key", "sample_weight");
+        public static readonly TableDef FactSocialDay = new TableDef("fact_social_day", 66, "run_key", "date_key", "faction_key", "kind_code", "kin_band_code", "events", "quantity");
         public static readonly TableDef FactMetricDay = new TableDef("fact_metric_day", 59, "run_key", "date_key", "metric", "value");
         public static readonly TableDef FactRunMetric = new TableDef("fact_run_metric", 60, "run_key", "metric", "source", "value", "deterministic");
         public static readonly TableDef MetaLoad = new TableDef("meta_load", 99, "run_key", "first_day", "last_day", "rows_by_table", "dropped_zero_spells", "loaded_at", "wall_seconds");

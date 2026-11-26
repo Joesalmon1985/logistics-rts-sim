@@ -19,10 +19,17 @@ namespace God.Sim.Policy
         Sleep = 40, ForageAt = 41, Gather = 42, Build = 43, PickUp = 44, Equip = 45, Explore = 46, SeekShelter = 47,
         /// <summary>A controlled lab action (NPC_LEARNING L3): never offered on the island.</summary>
         LabAct = 48,
+        // ---- F0 (SHARED_CONTRACTS 6.1): shared generic intents (Detail carries the learning verb) ----
+        HandOver = 100, Interact = 101, UseStore = 102, Claim = 103, Leave = 104, Reproduce = 105,
+        // ---- M4 block (106-139): add members only here, above the sentinel ----
+        M4Reserved = 139,
+        // ---- M5 block (140-169): add members only here, above the sentinel ----
+        M5Reserved = 169,
+        // 170-199 reserved (M6+)
     }
 
     /// <summary>What an intent points at.</summary>
-    public enum IntentTarget { None = 0, Point = 1, Unit = 2, Building = 3, Npc = 4, Faction = 5, Node = 6, Lot = 7, Hut = 8 }
+    public enum IntentTarget { None = 0, Point = 1, Unit = 2, Building = 3, Npc = 4, Faction = 5, Node = 6, Lot = 7, Hut = 8, Bin = 9 }
 
     /// <summary>
     /// One decision of an individual-level policy (<see cref="INpcPolicy"/>, <see cref="IMilitaryPolicy"/>): a verb and
@@ -54,7 +61,8 @@ namespace God.Sim.Policy
         public static bool IsCombat(NpcVerb v) => (int)v >= (int)NpcVerb.HoldPost && (int)v <= (int)NpcVerb.Assist || v == NpcVerb.Gesture;
 
         public static bool IsCivilian(NpcVerb v) =>
-            (int)v >= (int)NpcVerb.Idle && (int)v <= (int)NpcVerb.Gesture || v == NpcVerb.Flee || (int)v >= (int)NpcVerb.Sleep && (int)v <= (int)NpcVerb.LabAct;
+            (int)v >= (int)NpcVerb.Idle && (int)v <= (int)NpcVerb.Gesture || v == NpcVerb.Flee || (int)v >= (int)NpcVerb.Sleep && (int)v <= (int)NpcVerb.LabAct
+            || (int)v >= 100 && (int)v <= 199;
 
         /// <summary>True when a policy of <paramref name="level"/> may return this verb (<see cref="NpcVerb.None"/>, doing nothing, is always allowed).</summary>
         public static bool Allowed(PolicyLevel level, NpcVerb v)

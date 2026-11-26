@@ -165,11 +165,13 @@ namespace God.Sim.Tests
 
         [TestCase(1)]
         [TestCase(2)]
-        public void AStage2OrStage3Save_IsRefused_WithAClearMessage(int oldVersion)
+        [TestCase(3)]
+        public void AStage2OrStage3OrM3Save_IsRefused_WithAClearMessage(int oldVersion)
         {
-            // M0: save version 3 (tuning, calendar, victory list); stage 3 saves (2) and stage 2 saves (1) are refused.
-            Assert.AreEqual(3, SaveFile.CurrentVersion);
-            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":3", "\"Version\":" + oldVersion);
+            // F0: save version 4 (lot owners, bins, life stage, household, kin and social slots); M0-M3 saves (3), stage 3
+            // saves (2) and stage 2 saves (1) are refused.
+            Assert.AreEqual(4, SaveFile.CurrentVersion);
+            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":4", "\"Version\":" + oldVersion);
             var ex = Assert.Throws<SaveException>(() => SaveFile.FromJson(json));
             StringAssert.Contains("older version", ex.Message);
             StringAssert.Contains("Start a new game", ex.Message);

@@ -61,7 +61,7 @@ namespace God.Sim.Policy
             if (_sc == null || i < 0 || i >= _sc.CandCount) return r;
             var c = _sc.Cand[i];
             var st = _sc.Mind.Store;
-            r.Instinct = InstinctTable.Prior(_sc.Instincts, _sc.Keys, c.KeyOffset, c.KeyCount, c.Verb);
+            r.Instinct = CognitionExtensions.InstinctGain(_sc, c.Verb, InstinctTable.Prior(_sc.Instincts, _sc.Keys, c.KeyOffset, c.KeyCount, c.Verb));
             r.Need = InstinctTable.NeedPrior(_sc.Instincts, _sc.Keys, c.KeyOffset, c.KeyCount, c.Verb);
             if (st.Mode != LearningMode.Off)
             {
@@ -71,6 +71,7 @@ namespace God.Sim.Policy
                 r.Learned = (int)((long)q * _sc.LearningTuning.LearnGain >> 10);
                 r.StrongestOrigin = StrongestOrigin(st, c);
             }
+            r.Social = CognitionExtensions.SocialTerm(_sc, i);
             r.Personality = Personality(c.Verb);
             r.Cost = c.Cost;
             return r;
@@ -137,7 +138,7 @@ namespace God.Sim.Policy
                 case Verb.Rest: return -tr[Population.Trait.Industry] / 2;
                 case Verb.Explore: return tr[Population.Trait.Boldness];
                 case Verb.Flee: return -tr[Population.Trait.Boldness] / 2;
-                default: return 0;
+                default: return CognitionExtensions.Personality(verb, tr);
             }
         }
 
@@ -285,6 +286,12 @@ namespace God.Sim.Policy
         public int AttendedCount => _sc?.AttendedCount ?? 0;
         public Sensed Attended(int i) => _sc.Seen[_sc.Attended[i]];
         public CandidateList Candidates => new CandidateList(_sc);
+        /// <summary>F0.7: the people in sight (nearest first). Policies name <see cref="SeenPerson.Id"/> in intents only.</summary>
+        public int PeopleCount => _sc?.PeopleCount ?? 0;
+        public SeenPerson Person(int i) => _sc.People[i];
+        /// <summary>F0.8: the messages decoded this think (M5); 0 without M5.</summary>
+        public int HeardCount => _sc?.HeardCount ?? 0;
+        public Comms.DecodedMessage Heard(int i) => _sc.Heard[i];
     }
 
     /// <summary>Builds observation and mind views over a think's scratch (the population's thinking loop and controlled tests).</summary>

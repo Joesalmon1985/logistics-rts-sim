@@ -8,6 +8,8 @@ M4 (life cycle, households, kinship, `Genome`, basic estates, care) and M5 (soci
 - **Events:** M3b's `DecisionMade` event and its `fact_decision` table stay in the M3 code range.
 - **Gate:** the F0 gate's reference hashes are taken at the post-M3b head, not at `d3aa9fb`.
 
+**F0 as built (branch `unity/f0`, on `cde7e10`).** The details F0 fixed are written into the sections below; departures from this draft are rows 12.15 to 12.30. F0 also folds in the owner's D3 decisions (the decision trace equals the intents started; reach, possession, ownership and permission kept apart) and the accepted WORLD_ONTOLOGY amendments A1 to A10 (marked "A*n*" where they apply).
+
 **Precedence.** For anything that crosses the M4/M5 boundary, this document wins over the design documents. Where it departs from a design document it says so (section 12), and the milestone that implements the item updates that owning document in the same commit ([DEV_LOG.md](DEV_LOG.md) rule). Inside its own boundary each milestone follows its own design documents.
 
 **Words.** *Must* and *never* are binding. "M3 code" means the merged tree at `d3aa9fb`. "Truth" is layer 1 (`GodState`); "belief" is what a mind holds ([conventions §6](DESIGN_CONVENTIONS.md#6-information-layers-one-vocabulary-for-every-doc)).
@@ -30,14 +32,15 @@ Both milestones need the same seams in M3 files (goods movement, lot owners, see
 | F0.6 | Social **slot**: `NpcMind.Social` (type `Social.SocialMind`, stub class) | edit `Mind.cs`; `Sim/Social/SocialMind.cs` (stub) | M5 |
 | F0.7 | Seeing people: `SeenPerson`, `ThinkScratch.People[8]`/`PeopleCount`, a per-tick position snapshot and spatial index of living NPCs, `NpcObservation.PeopleCount/Person(i)`; `ThinkScratch.Carry` (copy of the carry), `SelfView.Stage`, `SelfView.Household` | `Sim/Cognition/People.cs`; edit `Thinker.cs`, `MindView.cs`, `PopulationSystem.cs` | frozen (fields); filling of M4/M5 fields by their owners via hooks |
 | F0.8 | Messages **data**: `GestureAct`, `TopicKind`, `MsgTime`, `DecodedMessage`; `ThinkScratch.Heard[4]`/`HeardCount`; `NpcObservation.HeardCount/Heard(i)` | `Sim/Comms/Message.cs` | layout frozen; filled only by M5 |
-| F0.9 | Extension dispatch (section 0.2) and the two stub hook classes | `Sim/Cognition/Extensions.cs` (frozen); `Sim/Population/Households/HouseholdHooks.cs` (M4); `Sim/Social/SocialHooks.cs` (M5) | as listed |
+| F0.9 | Extension dispatch (section 0.2) and the stub hook classes. Each owner's file holds two classes (12.16): the sim-side `HouseholdHooks` / `SocialHooks` (may read `GodState`) and the mind-side `HouseholdMindHooks` / `SocialMindHooks` (scratch only, G4.1) | `Sim/Cognition/Extensions.cs` (`CognitionExtensions`, `Relations`, `VerbRanges`; frozen); `Sim/Population/PopulationExtensions.cs` (sim-side dispatch; frozen); `Sim/Population/Households/HouseholdHooks.cs` (M4); `Sim/Social/SocialHooks.cs` (M5) | as listed |
 | F0.10 | Id-range plumbing: `ThinkScratch.MaxCand` 16 → 24 with M3 capped at 16 (M3 unchanged); `Verb.Max` 64 → 128; `NpcVerb` generic intents and reserved blocks; `IntentTarget.Bin = 9`; `IntentRules.IsCivilian` covers 100–199; `Activity.Care = 11`, `Activity.Social = 12`, `Count = 13` (`NpcDay` v2) | edit `Thinker.cs`, `Verbs.cs`, `PolicyTypes.cs`, `PopulationState.cs`, `PopulationEvents.cs` | frozen |
 | F0.11 | Catalogue, tables and verbs as concatenations: `EventCatalog.All = Core + HouseholdEvents.Catalog + SocialEvents.Catalog`; `VerbTable.Rows = Core + HouseholdHooks.Verbs + SocialHooks.Verbs`; `InstinctTable.Default = Core + HouseholdHooks.Instincts + SocialHooks.Instincts` | edit `DomainEvent.cs`, `Verbs.cs`, `Instincts.cs`; `Sim/Population/Households/HouseholdEvents.cs` (M4), `Sim/Social/SocialEvents.cs` (M5) | as listed |
 | F0.12 | State, tuning and hash plumbing: `GodState.Households` and `GodState.Social` (partial files, stub classes); `SimTuning.Households/Genetics/Estate/Social/Comms` (stub classes, all `IOmitWhenDefault`); `AllHashPartNames` gains `"household"`, `"social"`, each appended only when its state is non-null; `NpcMind.AddTo` hashes `Kin` and `Social` only when non-null; `SaveFile.CurrentVersion = 4` | `Sim/Core/GodState.Households.cs` (M4), `Sim/Core/GodState.Social.cs` (M5); edit `SimTuning.cs`, `GodSim.cs`, `Mind.cs`, `SaveFile.cs` | stubs to their owners; the edits frozen |
 | F0.13 | Module entry points called from `GodSim.Create`/`StartGame`/`Install`, `PopulationModule.AddNpc`, `Kill` (extracted from `Die`), `SimInvariants.Check`: `HouseholdHooks.StartGame/Install/NewMind/OnDeath/Check`, `SocialHooks.StartGame/Install/NewMind/OnDeath/Check` (all no-ops) | edit `GodSim.cs`, `PopulationModule.cs`, `PopulationSystem.cs`, `SimInvariants.cs` | frozen call sites; bodies to owners |
-| F0.14 | Warehouse: migration `0002_people_goods.sql` (`dim_person` with every M4 column nullable, `dim_party`, `fact_person_day`, `fact_death`, `fact_ownership`, `fact_social_day`); mappers for `NpcSpawned`, `NpcDied`, `NpcDay`, `OwnershipChanged`; `EventMapRegistry.CreateDefault` calls `HouseholdMappings.Register(r)` and `SocialMappings.Register(r)` (stubs); `Tables` made `partial` | `DotNet/God.Runner/Warehouse/...` | stubs to owners |
+| F0.14 | Warehouse: migration `0004_people_goods.sql` (after M3's `0002_population` and M3b's `0003_decision`): it **extends** `dim_person` (every M4 column, nullable), `fact_person_day` (`ticks_care`, `ticks_social`, `life_stage_code`, `household_id`) and `fact_production` (lot and owner columns), and creates `dim_party`, `fact_ownership` (one row per `OwnershipChanged`) and `fact_social_day` (empty until M4/M5). The `NpcSpawned`, `NpcDied` and `NpcDay` mappers exist since M3 (NpcDay v2 writes the two new tick columns); F0 adds the `OwnershipChanged` mapper and `MapContext.Party`. `EventMapRegistry.CreateDefault` calls `HouseholdMappings.Register(r)` and `SocialMappings.Register(r)` (stubs, each with its `Grains`); `Tables` is `partial` | `DotNet/God.Runner/Warehouse/...` | stubs to owners |
 | F0.15 | People panel seams: `NpcInspection.Household` (`HouseholdCard`), `NpcInspection.Social` (`SocialCard`) filled by `HouseholdCards.Fill`/`SocialCards.Fill` stubs; `GodHud.People.cs` draws two tabs that call `DrawHouseholdTab()`/`DrawRelationsTab()` from `GodHud.People.Household.cs` (M4) and `GodHud.People.Social.cs` (M5); `NpcLayer` calls `LifeStageLayer` (M4) and `GestureLayer` (M5) stubs | `Sim/Information/...`, `Game/Hud/...`, `Game/Models/...` | stubs to owners |
-| F0.16 | Test helpers: `GoodsTrace` (follow a lot id through `Produced`, `ItemMoved` splits and merges, to `Consumed`) and `EventProbe` (collect every event at Full) | `Assets/God/Tests/EditMode/Support/GoodsTrace.cs`, `EventProbe.cs` | frozen |
+| F0.16 | Test helpers: `GoodsTrace` (follow a lot id through `Produced`, `ItemMoved` splits and merges, to `Consumed`; `CheckC3`, `CheckC6`, `IdMultiset`, `Follow`) and `EventProbe` (collect every event at Full); `GoodsTests` (API, atomicity, reach, bins, permission, the static write rule) and the runner's `F0GoodsConservationTests` (C1-C6 for 30 days on `band_6x20`, with a save and load) | `Assets/God/Tests/EditMode/Support/GoodsTrace.cs`, `EventProbe.cs` | frozen |
+| F0b (A1, A7, A8) | `Reach` (interaction ranges), `CommsRange.Gesture`, and the affordance seam `Affordances` / `Blocked` / `Affordance` / `Permits.Believed` (stubbed `Affordances.Of`; `Permits.Believed` is the one permission query, D3) | `Sim/Population/Reach.cs`, `Sim/Comms/CommsRange.cs`, `Sim/Cognition/Affordances.cs` | frozen |
 
 ### 0.2 The extension dispatch (frozen order: M3, then M4, then M5)
 
@@ -61,6 +64,8 @@ Both milestones need the same seams in M3 files (goods movement, lot owners, see
 
 A hook in `Sim/Cognition` or `Sim/Policy` receives only `ThinkScratch` (no `GodState`, gate G4.1). `TryStart`, `TryAct`, `OnDeath`, `OnHandOver` and the module entry points are sim code and may read `GodState`.
 
+As built (12.16): the scratch-only hooks (`Recognise`, `FillHeard`, `AddBase`, `AddCandidates`, `KinTerm`, `SocialTerm`, `InstinctGain`, `Personality`, `Describe`, `RelationClass`, and the `Verbs` / `Instincts` rows) are on `HouseholdMindHooks` / `SocialMindHooks`, dispatched by `CognitionExtensions`; the sim-side ones (`StartGame`, `Install`, `NewMind`, `OnDeath`, `Check`, `FillPerson`, `EpisodeKey`, `TryStart`, `TryAct`, `ActivityOf`, `OnHandOver`, `Contest`) are on `HouseholdHooks` / `SocialHooks`, dispatched by `Population.PopulationExtensions`. F0 adds one sim-side hook pair, `FillPerson(GodState, Npc observer, Npc seen, ref SeenPerson)`, by which each owner fills its own `SeenPerson` fields. Candidates are added with `Thinker.AddCandidate` and given target features with `Thinker.TargetFeatures` (any keys, including `Feature.NpcRel/NpcGroup/NpcRef/MsgAct`); the quota is enforced by `ThinkScratch.CandLimit`. `PopulationSystem.Started` (a read-only host hook, like `Inspect`) reports each intent as it starts, so tests can check the decision trace against the actions (D3).
+
 ### 0.3 F0 gate
 - `dotnet test DotNet -c Release` and Unity EditMode green; the stage 3 pinned hashes (`PolicyRunTests`) unchanged.
 - On `band_6x20`, seeds 1–3, 30 days: the `cognition` and `learning` hash parts are identical to `d3aa9fb` at every day boundary, and so are decisions, meals, deaths and the `NpcDay` drive and learning fields. Only the `population` part may change (new fields).
@@ -83,7 +88,7 @@ All ids are `int`, start at 1, are allocated from a counter that is a public fie
 | `MessageId` | M5 `Comms.Emit` | `SocialState.NextMessageId` | each `GestureMade` | Shared by every listener's `MessageDecoded` |
 | `DealId` (exchange id) | M5, allocated by the **speaker's first `Offer`** of a new negotiation | `SocialState.NextDealId` | first offer | Carried in the message; each side remembers it in its own mind; `DealTrace` (telemetry only) is keyed by it. Gifts get a `DealId` too (kind Gift) |
 | `ContestId` | M5 `Contests.Start` | `SocialState.NextContestId` | contest raised | |
-| Episode key | `EpisodeKey.Make(kind, id) = (kind << 24) | (id & 0xFFFFFF)` (F0) | — | trace opening | Kind 0 = M3 hut (the raw hut id, unchanged); 1–7 M4 (1 partnership, 2 care arrangement, 3 child, 4–7 spare); 8–15 M5 (8 deal, 9 reciprocity with a person: id = that NpcId, 10 message, 11–15 spare); 16+ later. An id ≥ 2^24 throws |
+| Episode key | `EpisodeKey.Make(kind, id) = (kind << 24) | (id & 0xFFFFFF)` (F0) | — | trace opening | Kind 0 = M3 hut (the raw hut id, unchanged); 1–7 M4 (1 partnership, 2 care arrangement, 3 child, 4–7 spare); 8–15 M5 (8 deal, 9 reciprocity with a person: id = that NpcId, 10 message, 11–15 spare); **64 = M3b's lot episode** (`EpisodeKey.Lot`; its existing key `1 << 30 | lotId`, 12.15); 16–63 and 65+ later. `Sim/Learning/EpisodeKey.cs` (frozen). An id ≥ 2^24 throws |
 
 ---
 
@@ -111,6 +116,25 @@ public sealed class LotBin { public int Id; public BinKind Kind; public Owner Ow
 | Household store | `LotBin` kind `HouseholdStore`, at the hut node, owner `Household(id)` | same ware, spoil day and owner | created and removed only by M4 |
 | Estate | `LotBin` kind `Estate`, owner `Estate(deceased)` | **never** | created at death and emptied within 2 days by M4 |
 
+As built: `Owner` is a plain struct with public fields (it is saved and hashed with each lot; 12.17), compared with `Same`; `Holder` is a readonly struct. A bin's node is its hut's node (household store) or the death node (estate) (A2). **Equipped** (D3) is not a holder: a tool lot in a person's carry is equipped (`Goods.IsEquipped`: an axe or gear in a carry). M3 has no flag; an explicit `Npc.Equipped` comes with M9.
+
+### 2.6 Spatial and entitlement terms (owner D3; WORLD_ONTOLOGY 1)
+
+Eight things are kept apart in every type and document:
+
+| Term | In the code | Never stands in for |
+|---|---|---|
+| Physical location | `Npc.Node`, `GroundLot.Node`, `LotBin.Node`, `ResourceSource.Node`, `Hut.Node` (`Goods.NodeOf`) | sight, reach |
+| Accessibility | a walkable path (`NodePather`); `Blocked.Unreachable` | reach |
+| Visual perception | `SightDay` / `SightNight`; `Sense`, `SeePeople`; `ThinkScratch.Seen` / `People` | reach: nothing is acted on because it is seen |
+| Communication range | `CommsRange.Gesture` = the listener's current sight (A7) | reach |
+| Physical interaction range | `Reach` (Enter 0, Touch 1, Gather 2, HandOver 1, Store 1), enforced by `Goods` for every person-initiated `Move` and `Consume` (`MoveStatus.OutOfReach`), checked from events by C6 | permission |
+| Ownership | `ItemLot.Owner`, `LotBin.Owner`; changed only by `Goods` (`OwnershipChanged`) | possession |
+| Possession | the holder: `Carry`, `Ground`, `Bin` (and the equipped state of a carried tool) | ownership |
+| Permission to use | `Permits.Believed(sc, owner)`: allowed with basis Own, Household or Ownerless, else not (D3, A8). A query only: `Goods` never checks it, and M3–M5 candidates never offer another party's goods | ownership, reach |
+
+A remembered or seen target always becomes a walk-then-act candidate (`RecallNodes`, `OfferBeliefs`); the act happens only within `Reach` of it.
+
 ### 2.2 The one sanctioned API
 
 No code outside `Goods` may add, remove, split, merge or re-own a lot, or change `NextLotId`. (Static test, added by F0: only `Goods` and `PopulationModule.NewLot` write `Npc.Carry`, `PopulationState.Lots`, `LotBin.Lots`, `ItemLot.Owner`.)
@@ -129,19 +153,22 @@ public static void RemoveBin(GodState s, int binId);                 // throws u
 public enum MoveReason : byte { PickUp = 1, Drop = 2, Deposit = 3, Withdraw = 4, HandOver = 5, EstateIn = 6, EstateOut = 7, Claim = 8, DeathSpill = 9 } // 10–31 reserved
 public enum OwnerRule  : byte { Keep = 0, ToReceiver = 1, ToBinOwner = 2, Set = 3 }
 public enum MergeRule  : byte { Merge = 0, Never = 1 }
-public enum MoveStatus : byte { Ok = 0, NoSuchLot = 1, NotEnough = 2, NoRoom = 3, BadHolder = 4, SameHolder = 5 }
-public struct MoveResult { public MoveStatus Status; public int Lot, IntoLot, ParentLot; public Owner Before, After; }
+public enum MoveStatus : byte { Ok = 0, NoSuchLot = 1, NotEnough = 2, NoRoom = 3, BadHolder = 4, SameHolder = 5, OutOfReach = 6 }
+public struct MoveResult { public MoveStatus Status; public int Lot, IntoLot, EndedLot, ParentLot; public Owner Before, After; }
 ```
+
+As built (F0), additions to the signatures above (12.18): `Produce(..., bool withTool = false)` (M3's `Produced.WithTool`); `Move(..., OwnershipBasis basis = Auto)` (Auto derives the basis from the reason; M5 passes `Exchanged`); `MoveResult.EndedLot` (the id a merge ended, which may be the older lot when the moved id is lower, M3's rule); `Goods.Wear(s, ev, at, lot, actor)` (a tool's use; consumes it at 0 uses); `Goods.ProduceInHand` / `ConsumeInHand` (eating at a source: `Produced` and `Consumed` with `Lot = 0` and no holder, A9); `Goods.InReach`, `Goods.NodeOf`, `Goods.IsEquipped`, `Goods.BinById`, `Goods.CreditedLater`. `GoodsWorth.Of` is in `Goods.cs`. The founder packs and `PopulationModule.PlaceLot` are produced before the first tick with no event buffer (`ev = null`): the ledger books them, no `Produced` is emitted, and `GoodsTrace.Start` takes them from the state.
 
 | Rule | |
 |---|---|
 | Atomic | On any status but `Ok` nothing changes and nothing is emitted. |
 | Immediate | Executes inside the acting NPC's `Act`, in tick order. Never queued, never two-sided: an exchange is two separate `Move`s by two actors on their own think ticks ([ECONOMY 4.5](ECONOMY_DESIGN.md#45-exchange)). |
-| Physical checks only | Lot present in `from`, `count ≤ Count`, room in `to` (carry: `PopulationModule.Room`; bin: `WeightCap`). Reach, consent, perception and rights are the **caller's** checks. Hand-over reach is `Goods.HandOverReach = 1` node. |
+| Physical checks only | Lot present in `from`, `count ≤ Count`, room in `to` (carry: weight and a free or mergeable slot; bin: `WeightCap`), and **reach** (A1, D3): for every person-initiated move the actor must be within `Reach.Of(reason)` of both holders' nodes (its own carry is always in reach), else `OutOfReach`; `Consume` and `Wear` need `Reach.Touch` of the holder. `EstateIn`/`EstateOut` have no person reach. Consent, perception and rights (permission) are the **caller's** checks. `Goods.HandOverReach` aliases `Reach.HandOver` = 1. |
 | Split | `count < Count`: the moved part gets a new id, `ParentLot` = the original. |
 | Merge | If merged on arrival, `IntoLot` is the surviving (lower) id and the moved id ends. `MergeRule.Never` is required for `EstateIn` and `EstateOut`. |
-| Events | `Ok` emits exactly one `ItemMoved`; if the owner changed, also one `OwnershipChanged`. `Produce`/`Consume` emit `Produced`/`Consumed` v2 and update `GoodsLedger`. Purpose events (`ChildFed`, `GiftGiven`, `ExchangeStep`, `EstateTransfer`) are emitted by the caller **after** `Ok`, carrying `MoveResult.Lot`. |
-| Social hook | A `HandOver` whose owner changes from one NPC (or its household) to another NPC calls `SocialHooks.OnHandOver` once, with giver, receiver, ware, count, lot, `purposeRef` and the reason. This is how M5's social memory sees M4's feeding without M4 calling M5. |
+| Events | `Ok` emits exactly one `ItemMoved` (with the actor's and both holders' nodes before the move, for C6); if the owner changed, also one `OwnershipChanged`. `Produce`/`Consume` emit `Produced`/`Consumed` v2 and update `GoodsLedger`. Purpose events (`ChildFed`, `GiftGiven`, `ExchangeStep`, `EstateTransfer`) are emitted by the caller **after** `Ok`, carrying `MoveResult.Lot`. |
+| Social hook | Every `HandOver` from one living person's carry to another's calls `SocialHooks.OnHandOver` once (A3), with giver, receiver, ware, count, lot, `purposeRef`, the reason, both owners and `OwnerChanged`; M5 filters. This is how M5's social memory sees M4's feeding (also from household goods, owner kept) and later loans without M4 calling M5. |
+| Static rule | `GoodsTests.Static_OnlyGoodsWritesLotsCarriesAndOwners` scans `Assets/God/{Sim,Game,Recording}` for writes to a carry slot or array, the ground list, a bin's lots, a ground lot, an owner, `Bins` and `NextLotId`. Allowed: `Goods.cs`; in `PopulationModule.cs` only `NewLot`'s id allocation and `AddNpc`'s empty carry; the counter's declaration; `ThinkScratch.Carry` (a copy, not a holder). |
 
 ### 2.3 The goods reward (the only goods channel into learning)
 
@@ -154,6 +181,8 @@ public struct MoveResult { public MoveStatus Status; public int Lot, IntoLot, Pa
 | Owner changes from X to Y (`Move` or `SetOwner`) | `Npc(a)` = X: a loses; `Npc(b)` = Y: b gains | `∓worth × count`, **except** between an NPC and its own household (deposit, withdraw, feeding from household goods): 0 |
 | `Drop`, `DeathSpill` | nobody | 0 (M3 parity: setting down tools to sleep costs nothing) |
 
+As built (12.19): M3b changed the goods channel after this draft (realised value, `SimTuning.Learning.Goods`), so `Goods` pays exactly M3b's rules: production pays only for `Foraged` and `HandGathered` (founder packs and placed goods pay nothing), and nothing for goods `CreditedLater` (food and tools under `Realised`, which reach the deciding NPC through M3b's lot episodes: `AwaitLot`, the meal's `Accrue`, `ToolGone` stay in `PopulationSystem`); owner changes pay likewise except for goods credited later; spoilage of an NPC's lot is booked against the lot's episodes, else as a plain loss. Eating at a source pays nothing.
+
 `GoodsWorth.Of` stays the M3 rule in both milestones. M5's subjective valuation ([ECONOMY 4.5](ECONOMY_DESIGN.md#45-exchange)) is a separate function used for exchange decisions and telemetry, never for this reward (open decision 13.6).
 
 ### 2.4 Conservation invariants (F0 extends `PopulationInvariants`)
@@ -165,15 +194,18 @@ public struct MoveResult { public MoveStatus Status; public int Lot, IntoLot, Pa
 | C3 | Every id that ever existed is live, consumed (`Consumed.Lot`), or merged (`ItemMoved.IntoLot ≠ Lot`). `GoodsTrace` reconstructs this from events. |
 | C4 | Ground lots are ownerless; no lot is owned by `Npc(x)` with x dead for more than 3 days, nor by `Estate(x)` after its estate settled (G3.2). |
 | C5 | No bin over its cap; no carry over its weight; an `Estate` bin is empty and removed by `EstateSettled`. |
+| C6 | (A1) Every `ItemMoved` other than `EstateIn`, `EstateOut` and `DeathSpill` had its actor within `Reach.Of(reason)` of both holders' nodes (from the event's `ActorNode`, `FromNode`, `ToNode`). |
+
+As built: C1, C2, C4 (ground ownerless; nothing owned by a person dead over 3 days) and C5 (bins, carries) are state checks in `PopulationInvariants` (every `SimInvariants.Check`); C3 and C6 need events and are `GoodsTrace.CheckC3` / `CheckC6`. Lot 0 (eaten in place) is exempt from C2 and C3 (A9). C4's estate clause and C5's estate clause need M4's estates and are M4's (`HouseholdHooks.Check`).
 
 ### 2.5 How each milestone uses it
 
 | Action | Milestone | Calls |
 |---|---|---|
 | Parent hands food to a child or patient (`Feed`) | M4 | `Move(Carry(p), lot, n, Carry(c), HandOver, p, Keep if household-owned else ToReceiver)`, then `ChildFed`/`CareGiven` with the lot |
-| Contribute to / take from the household store | M4 | `Move(Carry(m) → Bin(store), Deposit, ToBinOwner)`; `Move(Bin(store) → Carry(m), Withdraw, Keep)` after M4's `StoreAccess` check |
+| Contribute to / take from the household store | M4 | `Move(Carry(m) → Bin(store), Deposit, ToBinOwner)`; `Move(Bin(store) → Carry(m), Withdraw, Keep)`, both within `Reach.Store`. `StoreAccess.MayTake` is a permission **query** used when building candidates and repeated by the actor on arrival; never a refusal inside `Goods` (A4) |
 | Death | M4 (`OnDeath`) | each carry lot `Move(Carry(d) → Bin(estate), EstateIn, Set(Estate(d)), Never)`; with M4 disabled, M3's `DeathSpill` to the ground |
-| Estate split | M4 | `Move(Bin(estate) → Bin(heir store) or Carry(heir), EstateOut, Set(heir party), Never)` or `SetOwner` in place; `Consume(Buried)` for `BuriedWithDead`; then `EstateTransfer` with `AssetId = lot` |
+| Estate split | M4 | (A2) ownership passes **in place**: `SetOwner(Bin(estate), lot, heir party, Inherited or Escheat)`; heirs then collect by `Move(Bin(estate) → Carry(heir), Withdraw, Keep)` within `Reach.Store`; `Consume(Buried)` for `BuriedWithDead`; then `EstateTransfer` with `AssetId = lot`. A cross-node `EstateOut` is not part of the contract (WORLD_ONTOLOGY G9) |
 | Claim an ownerless lot | M3 `PickUp`, M4 `Claim` | `Move(Ground → Carry, PickUp/Claim, ToReceiver)` |
 | Gift | M5 | `Move(Carry(g) → Carry(r), HandOver, ToReceiver, purposeRef = DealId)`, then `GiftGiven` |
 | Exchange hand-over | M5 | the same, then `ExchangeStep(DealId, step)` |
@@ -196,6 +228,8 @@ public struct MoveResult { public MoveStatus Status; public int Lot, IntoLot, Pa
 | Communal group | `Group` | reserved (no M4/M5 writer; `BackToCommunity` uses `Group(faction community id = FactionId)`) | M4 estates only |
 | Ownerless | `None` | every ground lot | becomes owned by the first `PickUp`/`Claim` |
 | State, Enterprise | `State`, `Enterprise` | not used before M6, M8 | — |
+| **Permission** (A10) | — | the query `Permits.Believed(sc, owner)`: Own, Household, Ownerless allowed; anything else not (D3) | nobody: it is derived from ownership and household membership; WORLD_ONTOLOGY 1 |
+| **Use right** (A10) | — | `Hut.Rights` (sleeping) is a use right, not ownership; M6 work rights later | M3 (built huts), M4 (`HutRights.Grant/Revoke`); WORLD_ONTOLOGY 1 |
 
 | Change | Basis (`OwnershipBasis`) | Event |
 |---|---|---|
@@ -206,8 +240,10 @@ public struct MoveResult { public MoveStatus Status; public int Lot, IntoLot, Pa
 | death, inheritance | `Inherited = 4` (to heir), `Escheat = 12` (to none/group) | `OwnershipChanged` + `EstateTransfer` |
 | first pick-up | `FirstArrival = 0` | `OwnershipChanged` |
 | dissolution split | `Divided = 13` | `OwnershipChanged` |
+| dropped to the ground | `Abandoned = 10` (F0) | `OwnershipChanged` |
+| spilled at death (M3, no estates) | `Spilled = 11` (F0) | `OwnershipChanged` |
 
-`OwnershipBasis` values 0–7 are the design doc's `ClaimBasis`; 8–13 are added by F0; 14–31 reserved. Theft does not exist in M4/M5: no candidate takes a lot owned by another party (M8).
+`OwnershipBasis` values 0–7 are the design doc's `ClaimBasis`; 8–13 are added by F0; 14–31 reserved. Theft does not exist in M4/M5: no candidate takes a lot owned by another party (M8). (A5) M8 theft moves an owned lot with `OwnerRule.Keep`; the sim classifies it (`TheftCommitted`, by its own truth-side permission check), never a `MoveReason`; from M8, C4's "ground lots are ownerless" is relaxed.
 
 ---
 
@@ -312,7 +348,7 @@ The M3 core is closed: neither milestone edits `Learner`, `AssociationStore`, `L
 **Rules (static tests added by M5 to G4):**
 1. **A gesture never moves goods; only an action does.** No type in `God.Sim.Comms` references `Goods`; no message creates an obligation, a transfer or a partnership by itself.
 2. **Three records stay separate:** the speaker's intention (its own mind, plus the analytics-only `Honest` flag), the receiver's belief (its `DecodedMessage`, obligations, relation updates), and the action (`ItemMoved` and its purpose event).
-3. **Delivery:** a message emitted at tick t enters each perceiving listener's inbox at once, but a listener reads it only at its first think tick > t, so the result never depends on id order.
+3. **Delivery:** a message emitted at tick t enters each perceiving listener's inbox at once, but a listener reads it only at its first think tick > t, so the result never depends on id order. A perceiving listener is within `CommsRange.Gesture` of the speaker (its own current sight radius, day or night) and attends it; M4's displays use the same range (A7).
 4. **The receiver decides:** a response is a candidate scored by the receiver's own policy on its own decoded message and beliefs.
 
 ### 7.2 M4 with and without M5
@@ -363,8 +399,10 @@ After merge, M4's suite runs with `Social.Enabled = 0` and M5's with `Households
 
 | Code | Event | Owner | Table | Rec. |
 |---|---|---|---|---|
-| 205 | `ItemMoved` (Lot, IntoLot, ParentLot, Ware, Count, From/To kind and id, Reason, Actor, OwnerBefore/After, PurposeRef) | F0 | `fact_event` | HV |
+| 205 | `ItemMoved` (Lot, IntoLot, EndedLot, ParentLot, Ware, Count, From/To kind and id, Reason, Actor, ActorNode, FromNode, ToNode, OwnerBefore/After, PurposeRef) | F0 | `fact_event` | HV |
 | 206 | `OwnershipChanged` (asset kind Lot, Lot, Ware, Count, From, To, Basis, Actor) | F0 | `fact_ownership` | Summary |
+| 200, 201 v2 | `Produced` (+ Lot, IntoLot, OwnerKind, OwnerId), `Consumed` (+ Lot, OwnerKind, OwnerId, RefId) | F0 | `fact_production` (+ lot and owner columns) | HV |
+| 104 v2 | `NpcDay` (`Ticks` has 13 entries: + Care, Social) | F0 | `fact_person_day` (+ `ticks_care`, `ticks_social`) | Summary |
 | 105 | `NpcBorn` (child, mother, believed father, bio father†, household, faction, node, genome hash) | M4 | `fact_birth`, `dim_person` | Summary |
 | 106 | `NpcMatured` / stage change (npc, from, to) | M4 | `dim_person_history` | Summary |
 | 107, 108 | `PregnancyStarted`, `PregnancyEnded` | M4 | `fact_event` | Summary |
@@ -407,7 +445,7 @@ After merge, M4's suite runs with `Social.Enabled = 0` and M5's with `Households
 
 † analytics-only truth field: never read by sim rules or policies, recorded at Full only.
 
-**Catalogue rules.** Each milestone adds its rows only in its own catalogue file (F0.11), its warehouse mappers only in `HouseholdMappings`/`SocialMappings`, its tables only in `Tables.Households.cs`/`Tables.Social.cs`, and its DDL only in migration `0003_households.sql` (M4) or `0004_social.sql` (M5). Columns that either adds to an F0 table go in its own migration as `ALTER TABLE ... ADD COLUMN` (distinct column names; M4 prefix none, M5 prefix `soc_` on `fact_person_day`). Codes are never reused; a changed field meaning takes a new code; an added field bumps `Version`.
+**Catalogue rules.** Each milestone adds its rows only in its own catalogue file (F0.11), its warehouse mappers only in `HouseholdMappings`/`SocialMappings`, its tables only in `Tables.Households.cs`/`Tables.Social.cs`, and its DDL only in migration `0005_households.sql` (M4) or `0006_social.sql` (M5) (renumbered: M3b took `0003_decision`, F0 `0004_people_goods`; the writer applies whatever numbers exist in order, so a branch with only one of them is fine). Columns that either adds to an F0 table go in its own migration as `ALTER TABLE ... ADD COLUMN` (distinct column names; M4 prefix none, M5 prefix `soc_` on `fact_person_day`). Codes are never reused; a changed field meaning takes a new code; an added field bumps `Version`.
 
 ---
 
@@ -460,7 +498,7 @@ No M4 or M5 code draws from an NPC's saved streams (`RngPolicy`, `RngWork`, `Rng
 |---|---|
 | `Sim/Population/Households/**`, `Sim/Population/Genetics/**`, `Sim/Estate/**`, `Sim/Core/GodState.Households.cs` | `Sim/Social/**`, `Sim/Comms/**` (except the frozen `Message.cs` layout), `Sim/Economy/Exchange/**`, `Sim/Core/GodState.Social.cs` |
 | `Sim/Information/PeopleCards.Household.cs`, `Game/Hud/GodHud.People.Household.cs`, `Game/Models/LifeStageLayer.cs` and household/family-tree views | `Sim/Information/PeopleCards.Social.cs`, `Game/Hud/GodHud.People.Social.cs`, `Game/Models/GestureLayer.cs` and relationship views |
-| `DotNet/God.Runner/Warehouse/HouseholdMappings.cs`, `Tables.Households.cs`, `Migrations/0003_households.sql` | `SocialMappings.cs`, `Tables.Social.cs`, `Migrations/0004_social.sql` |
+| `DotNet/God.Runner/Warehouse/HouseholdMappings.cs`, `Tables.Households.cs`, `Migrations/0005_households.sql` | `SocialMappings.cs`, `Tables.Social.cs`, `Migrations/0006_social.sql` |
 | Tests `Assets/God/Tests/EditMode/Household*`, `Genetics*`, `Estate*`, `HouseholdFixtures.cs`; runner tests `M4*`; scenarios `m4_*.scenario.json` | Tests `Social*`, `Comms*`, `Exchange*`, `SocialFixtures.cs`; runner tests `M5*`; scenarios `m5_*.scenario.json` |
 | Docs: POPULATION, HOUSEHOLDS_AND_KINSHIP, BIOLOGICAL_INHERITANCE, MATERIAL_INHERITANCE | Docs: SOCIAL_MEMORY, COMMUNICATION_AND_COGNITION, ECONOMY §4.5 (exchange), GAME_THEORY island contests |
 
@@ -541,6 +579,22 @@ All seven also run at Off, Summary and Full with the same hash.
 | 12.12 | DATA_WAREHOUSE puts `ChildFed`/`CareGiven` aggregates in `fact_social_day`, a social table | no warehouse NPC tables yet | `fact_social_day` and `dim_person` created by F0 | Both milestones write them |
 | 12.13 | POPULATION: immigration is a scenario key | `GameSetup` is hashed | tuning path `Households.Immigration` (default 0) | Keeps stage 3 hashes |
 | 12.14 | `OwnerKind` has no estate (ECONOMY 3.1) | — | `OwnerKind.Estate = 6` | An estate holds goods for up to 2 days (MATERIAL 4.1) |
+| 12.15 | Sequencing amendment: the lot episode takes episode-key kind 16 | M3b keys lot episodes `1 << 30 \| lotId`, which is kind 64 in `EpisodeKey.Make` | kind 64 (`EpisodeKey.Lot`) | Episode keys are in the `learning` hash part; re-keying to 16 changes every learning hash with no behavioural difference, against the F0 gate. Kind 64 is outside the M4 (1–7) and M5 (8–15) blocks, so the amendment's purpose holds |
+| 12.16 | One hook class per milestone (`HouseholdHooks`, `SocialHooks`) | a class that takes `GodState` anywhere is a frontier type for G4.1 (`PolicyTests`) | two classes per owner file: sim side `XHooks`, mind side `XMindHooks` | Keeps G4.1's reflection test strict without growing its allow-list |
+| 12.17 | `Owner` and `Holder` are `readonly struct`s | the save writes public fields only | `Owner` is a mutable struct (public fields); `Holder` readonly | Lots are saved; readonly fields do not round-trip reliably |
+| 12.18 | §2.2 signatures | M3 needs `WithTool`, eating at a source, tool wear | additions listed under §2.2 "As built" | Behaviour-neutral rewrite of M3's sites |
+| 12.19 | §2.3 reward table (M3's immediate goods reward) | M3b's realised-value credit | `Goods` pays M3b's rules (§2.3 "As built") | Identical effects (gate) |
+| 12.20 | `LifeStage` added by F0 with `Adult = 0` | `God.Sim.LifeStage { Child = 0, Adult = 1, Elder = 2 }` already existed (calendar) | the one enum, renumbered `Adult = 0, Child = 1, Elder = 2` (byte) | One enum; a zeroed record is an adult. Nothing stored or hashed the old numbers |
+| 12.21 | `NpcInspection.Social` is the social card | `NpcInspection.Social` is already the score term | `NpcInspection.Household` (`HouseholdCard`) and `NpcInspection.Relations` (`SocialCard`), plus `NpcInspection.Stage` | Name clash |
+| 12.22 | `ItemMoved.IntoLot ≠ Lot` marks a merge (C3) | M3's merge keeps the **lower** id, which may be the moved one | `ItemMoved.EndedLot` names the id that ended | Without it the older lot's end is invisible to C3 |
+| 12.23 | `fact_ownership` holds spells | — | one row per `OwnershipChanged` (spells derive from it) | Exact reconciliation with the event; M13a may add a spell view |
+| 12.24 | Migration numbers 0002 / 0003 / 0004 | M3's warehouse took 0002, M3b's 0003 | F0 0004, M4 0005, M5 0006 | Sequencing |
+| 12.25 | `OwnershipBasis` 8–13 named | drops and death spills change owners too | `Abandoned = 10`, `Spilled = 11` | Every `OwnershipChanged` has a basis |
+| 12.26 | The founder packs emit `Produced` | they are made in `StartGame`, before any event buffer | no event; ledger booked; `GoodsTrace.Start` reads them from the state | No change to M3's event stream at tick 1 |
+| 12.27 | `SeenPerson` fields unspecified | — | `Id, As, Faction, SameFaction, Node, Dist, Stage, SameHousehold, Doing, Asleep, CarryMask, HoldsTool, Display, DisplayLevel, DisplayTarget, Gesture`; filled from a per-tick `PeopleIndex` snapshot (nearest 8 within sight, ties by id); M4 and M5 fill theirs through `FillPerson` | A6 fields filled in F0 (nothing reads them: neutral) |
+| 12.28 | `SocialHooks.OnHandOver` only on owner change | A3 | every hand-over between two living people, with `OwnerChanged` | A3 |
+| 12.29 | Separate `Permission` seam (D3) | A8 | one seam: `Permits.Believed` in `Affordances.cs` | A8 supersedes it |
+| 12.30 | `SaveFile` v4 refuses older | v3 saves (M0–M3b) exist | refused with the same "older version" message | 9.3 |
 
 ---
 

@@ -108,7 +108,11 @@ namespace God.Sim.Population
         public int[] Rights;
     }
 
-    /// <summary>Goods entered the population's world (ECONOMY "Produced"): the conservation ledger's source side.</summary>
+    /// <summary>
+    /// Goods entered the population's world (ECONOMY "Produced"): the conservation ledger's source side. v2 (F0): the new lot
+    /// (<see cref="Lot"/>, always a fresh id; 0 for goods used at once without becoming a lot), the id it has after merging
+    /// on arrival (<see cref="IntoLot"/>; equal to Lot when it did not merge) and its owner.
+    /// </summary>
     public sealed class Produced : DomainEvent
     {
         public int Npc;
@@ -117,9 +121,15 @@ namespace God.Sim.Population
         public int Count;
         public ProduceReason Reason;
         public bool WithTool;
+        public int Lot, IntoLot;
+        public OwnerKind OwnerKind;
+        public int OwnerId;
     }
 
-    /// <summary>Goods left it (ECONOMY "Consumed"): eaten, spoiled, built into a hut, worn out.</summary>
+    /// <summary>
+    /// Goods left it (ECONOMY "Consumed"): eaten, spoiled, built into a hut, worn out, buried. v2 (F0): the lot they left
+    /// (0 for goods that never were a lot), its owner, and a reference (the hut built with it; <see cref="Hut"/> kept).
+    /// </summary>
     public sealed class Consumed : DomainEvent
     {
         public int Npc;
@@ -127,5 +137,51 @@ namespace God.Sim.Population
         public Ware Ware;
         public int Count;
         public ConsumeReason Reason;
+        public int Lot;
+        public OwnerKind OwnerKind;
+        public int OwnerId;
+        public int RefId;
+    }
+
+    /// <summary>
+    /// A lot moved between holders (F0, code 205; SHARED_CONTRACTS 2.2): exactly one per successful <c>Goods.Move</c>.
+    /// <see cref="Lot"/> is the id the moved goods left with (a split's new id; <see cref="ParentLot"/> the lot split from),
+    /// <see cref="IntoLot"/> the id they have at the destination, <see cref="EndedLot"/> the id a merge ended (0 none).
+    /// </summary>
+    public sealed class ItemMoved : DomainEvent
+    {
+        public int Lot, IntoLot, EndedLot, ParentLot;
+        public Ware Ware;
+        public int Count;
+        public HolderKind FromKind;
+        public int FromId;
+        public HolderKind ToKind;
+        public int ToId;
+        public MoveReason Reason;
+        public int Actor;
+        /// <summary>Where the actor stood and where the two holders were (-1 unknown), before the move: invariant C6 (reach) is checked from these.</summary>
+        public int ActorNode, FromNode, ToNode;
+        public OwnerKind OwnerBeforeKind;
+        public int OwnerBeforeId;
+        public OwnerKind OwnerAfterKind;
+        public int OwnerAfterId;
+        /// <summary>The purpose it served (a DealId, a care arrangement), 0 none.</summary>
+        public int PurposeRef;
+    }
+
+    /// <summary>An asset changed owner (F0, code 206; SHARED_CONTRACTS 3). Asset kind 1 = a lot (its id after the move).</summary>
+    public sealed class OwnershipChanged : DomainEvent
+    {
+        public const byte AssetLot = 1;
+        public byte AssetKind;
+        public int Lot;
+        public Ware Ware;
+        public int Count;
+        public OwnerKind FromKind;
+        public int FromId;
+        public OwnerKind ToKind;
+        public int ToId;
+        public OwnershipBasis Basis;
+        public int Actor;
     }
 }

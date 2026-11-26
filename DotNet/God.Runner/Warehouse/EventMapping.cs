@@ -116,7 +116,9 @@ namespace God.Runner.Warehouse
                 if (c.RowWanted)
                     c.Insert(Tables.FactCombat, c.Tick, c.Seq, date, 3L, f, null, null, null, null, null, null, null, null, null, b.Key, null, null, (long)c.Weight);
             }, "also closes dim_building");
-            PopulationMapping.Register(r);   // M3: person, death, person-day, personal goods, learning
+            PopulationMapping.Register(r);   // M3: person, death, person-day, personal goods, learning; F0: ownership
+            HouseholdMappings.Register(r);   // M4 (F0.14 stub)
+            SocialMappings.Register(r);      // M5 (F0.14 stub)
             return r;
         }
     }
@@ -151,6 +153,8 @@ namespace God.Runner.Warehouse
         public SimEvent Event { get; internal set; }
         public God.Sim.EventInfo Info { get; internal set; }
         public bool RowWanted { get; internal set; }
+        /// <summary>The event's domain records at Full (for mappers whose table is written at Full only).</summary>
+        public bool Full { get; internal set; }
         public int Weight { get; internal set; }
         public long Tick => Event.Tick;
         public int Seq => Event.Seq;
@@ -170,6 +174,9 @@ namespace God.Runner.Warehouse
         public long? FactionKey(int factionId) => _r.FactionKeyOf(factionId);
 
         public BuildingDim Building(int buildingId) => _r.BuildingOf(buildingId);
+
+        /// <summary>The <c>dim_party</c> key of an owner (created on first sight), or null for "nobody" (ownerless).</summary>
+        public long? Party(God.Sim.Population.OwnerKind kind, int id) => _r.PartyOf(kind, id);
         public long NodeLocation(int node) => _r.NodeLocation(node);
         public long? HexLocationOfNode(int node) => _r.HexLocationOfNode(node);
         public long? HexLocation(int hex) => _r.HexLocation(hex);

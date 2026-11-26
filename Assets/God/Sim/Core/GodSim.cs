@@ -33,7 +33,21 @@ namespace God.Sim
         /// parts and hash are exactly as before.
         /// </summary>
         public static readonly ReadOnlyArray<string> AllHashPartNames = new ReadOnlyArray<string>(
-            "territory", "economy", "military", "factions", "trade", "core", "pending", "population", "cognition", "learning");
+            "territory", "economy", "military", "factions", "trade", "core", "pending", "population", "cognition", "learning", "household", "social");
+
+        /// <summary>
+        /// The part names of this state, in the order of <see cref="PartsOf"/> (F0.12): the stage 3 parts; the M3 parts with a
+        /// population; then "household" and "social", each only while its state is non-null.
+        /// </summary>
+        public static string[] PartNamesOf(GodState s)
+        {
+            var l = new List<string>();
+            int n = s.Population == null ? HashPartNames.Count : 10;
+            for (int i = 0; i < n; i++) l.Add(AllHashPartNames[i]);
+            if (s.Population != null && s.Households != null) l.Add("household");
+            if (s.Population != null && s.Social != null) l.Add("social");
+            return l.ToArray();
+        }
 
         public GodState State { get; }
 
@@ -85,6 +99,7 @@ namespace God.Sim
             EconomyModule.StartGame(s);
             TradeModule.StartGame(s);
             Population.PopulationModule.StartGame(s);
+            if (s.Population != null) Population.PopulationExtensions.StartGame(s); // F0.13: M4, then M5
             var sim = new GodSim(s);
             InstallModules(sim);
             return sim;
@@ -99,6 +114,7 @@ namespace God.Sim
             TradeModule.Install(sim);
             FactionsModule.Install(sim);
             Population.PopulationModule.Install(sim);
+            if (sim.State.Population != null) Population.PopulationExtensions.Install(sim); // F0.13: M4, then M5
         }
 
         /// <summary>
@@ -148,7 +164,7 @@ namespace God.Sim
                     CoreHash(s),
                     PendingHash(pending),
                 };
-            return new[]
+            var parts = new List<ulong>
             {
                 TerritoryModule.Hash(s),
                 EconomyModule.StateHash(s),
@@ -161,6 +177,10 @@ namespace God.Sim
                 Population.PopulationModule.HashCognition(s),
                 Population.PopulationModule.HashLearning(s),
             };
+            // F0.12: the later modules' parts, each only while its state exists (so M3 games hash exactly as before)
+            if (s.Households != null) { var h = new StateHasher(); s.Households.AddTo(ref h); parts.Add(h.Value); }
+            if (s.Social != null) { var h = new StateHasher(); s.Social.AddTo(ref h); parts.Add(h.Value); }
+            return parts.ToArray();
         }
 
         /// <summary>FNV-1a over the parts in order.</summary>

@@ -47,6 +47,9 @@ namespace God.Sim.Cognition
         /// <summary>Explore targets in two directions (land nodes about ExploreNodes away), -1 when none.</summary>
         public int ExploreA, ExploreB;
         public int Tick, Day;
+        /// <summary>F0.7: its own life stage and household (0 none); written only by M4's <c>FillSelf</c> fields.</summary>
+        public LifeStage Stage;
+        public int Household;
     }
 
     /// <summary>One candidate intent (COMMUNICATION 3, 4.6): verb, target, its distance and perceived cost, and its context keys.</summary>
@@ -75,7 +78,11 @@ namespace God.Sim.Cognition
     /// </summary>
     public sealed class ThinkScratch
     {
-        public const int MaxSeen = 16, MaxCand = 16, MaxBase = 12, MaxTarget = 6, MaxConj = 8;
+        /// <summary>
+        /// <see cref="MaxCand"/> 24 since F0: M3 offers at most <see cref="M3Cand"/> = 16 (unchanged), M4 and M5 at most 4 each
+        /// after it (<see cref="CognitionExtensions.AddCandidates"/>).
+        /// </summary>
+        public const int MaxSeen = 16, MaxCand = 24, M3Cand = 16, MaxBase = 12, MaxTarget = 6, MaxConj = 8, MaxPeople = 8, MaxHeard = 4;
 
         public SelfView Self;
         public Sensed[] Seen = new Sensed[MaxSeen];
@@ -91,6 +98,18 @@ namespace God.Sim.Cognition
 
         public Candidate[] Cand = new Candidate[MaxCand];
         public int CandCount;
+        /// <summary>How many candidates may exist now (M3's 16; raised by the dispatch for each module's quota).</summary>
+        public int CandLimit = M3Cand;
+
+        /// <summary>F0.7: the people in sight (nearest first, at most <see cref="MaxPeople"/>), filled by the sim before Think.</summary>
+        public SeenPerson[] People = new SeenPerson[MaxPeople];
+        public int PeopleCount;
+        /// <summary>F0.8: the messages this mind decoded this think (M5 fills it; empty otherwise).</summary>
+        public Comms.DecodedMessage[] Heard = new Comms.DecodedMessage[MaxHeard];
+        public int HeardCount;
+        /// <summary>F0.7: a copy of its own carry (the lots and their owners), <see cref="CarryCount"/> slots.</summary>
+        public ItemLot[] Carry = new ItemLot[8];
+        public int CarryCount;
         public uint[] Keys = new uint[MaxCand * AssociationStore.MaxKeys];
         public uint[] TargetKeys = new uint[MaxCand * MaxTarget];
 
@@ -116,8 +135,10 @@ namespace God.Sim.Cognition
         {
             UpdateBeliefs(sc);
             Attend(sc);
+            CognitionExtensions.Recognise(sc);
             BuildBase(sc);
             sc.ArmedCount = Learner.Arm(sc.Mind.Store, sc.Base, sc.BaseCount, sc.Armed);
+            CognitionExtensions.FillHeard(sc);
             BuildCandidates(sc);
         }
 
@@ -312,6 +333,7 @@ namespace God.Sim.Cognition
             if (enemy) AddBase(sc, Feature.Situation(SituationKind.EnemyInSight));
             if (!foodSeen && foodBelieved) AddBase(sc, Feature.Situation(SituationKind.FoodRemembered));
             if (!foodSeen && !foodBelieved && !s.CarryFood) AddBase(sc, Feature.Situation(SituationKind.NoFoodKnown));
+            CognitionExtensions.AddBase(sc);
             Array.Sort(sc.Base, 0, sc.BaseCount);
         }
 
@@ -319,7 +341,7 @@ namespace God.Sim.Cognition
 
         private static int AddCand(ThinkScratch sc, byte verb, IntentTarget kind, int id, int node, byte cls, int dist, bool fromBelief)
         {
-            if (sc.CandCount >= ThinkScratch.MaxCand) return -1;
+            if (sc.CandCount >= sc.CandLimit) return -1;
             for (int i = 0; i < sc.CandCount; i++)
             {
                 var c = sc.Cand[i];
@@ -333,6 +355,33 @@ namespace God.Sim.Cognition
                 IsRunning = sc.Self.RunVerb == verb && sc.Self.RunKind == kind && sc.Self.RunTarget == (kind == IntentTarget.Node ? node : id),
             };
             return at;
+        }
+
+        /// <summary>
+        /// Adds a candidate for a later module's hook (F0): its verb, target and distance. Returns its index, or -1 when the
+        /// module's quota is used up or an identical candidate exists. Give it target features with <see cref="TargetFeatures"/>.
+        /// </summary>
+        public static int AddCandidate(ThinkScratch sc, byte verb, IntentTarget kind, int id, int node, byte cls, int dist, bool fromBelief = false) =>
+            AddCand(sc, verb, kind, id, node, cls, dist, fromBelief);
+
+        /// <summary>
+        /// Sets a candidate's target features (up to <see cref="ThinkScratch.MaxTarget"/> keys, 0 skipped): the M3 kinds plus
+        /// F0's person and message kinds (<see cref="Feature.NpcRel"/>, <see cref="Feature.NpcGroup"/>, <see cref="Feature.NpcRef"/>,
+        /// <see cref="Feature.MsgAct"/>).
+        /// </summary>
+        public static void TargetFeatures(ThinkScratch sc, int at, uint a, uint b = 0, uint c = 0, uint d = 0, uint e = 0, uint f = 0)
+        {
+            if (at < 0) return;
+            ref var cand = ref sc.Cand[at];
+            int o = cand.TargetOffset, n = 0;
+            if (a != 0) sc.TargetKeys[o + n++] = a;
+            if (b != 0) sc.TargetKeys[o + n++] = b;
+            if (c != 0) sc.TargetKeys[o + n++] = c;
+            if (d != 0) sc.TargetKeys[o + n++] = d;
+            if (e != 0) sc.TargetKeys[o + n++] = e;
+            if (f != 0) sc.TargetKeys[o + n++] = f;
+            Array.Sort(sc.TargetKeys, o, n);
+            cand.TargetCount = n;
         }
 
         private static void Target(ThinkScratch sc, int at, int cls, int cat, int state, int placeRefNode)
@@ -382,6 +431,9 @@ namespace God.Sim.Cognition
                 Target(sc, AddCand(sc, Verb.Build, IntentTarget.Node, 0, s.Node, ObjClass.HutSite, 0, false), ObjClass.HutSite, ObjCategory.Shelter, ObjState.Unfinished, -1);
             if (s.ExploreA >= 0) Target(sc, AddCand(sc, Verb.Explore, IntentTarget.Node, 0, s.ExploreA, ObjClass.Unknown, sc.Grid.Distance(s.Node, s.ExploreA), false), ObjClass.Unknown, 0, 0, -1);
             if (s.ExploreB >= 0) Target(sc, AddCand(sc, Verb.Explore, IntentTarget.Node, 0, s.ExploreB, ObjClass.Unknown, sc.Grid.Distance(s.Node, s.ExploreB), false), ObjClass.Unknown, 0, 0, -1);
+
+            // later modules' candidates (M4, then M5), each within its quota
+            CognitionExtensions.AddCandidates(sc);
 
             // costs and full contexts
             for (int i = 0; i < sc.CandCount; i++)

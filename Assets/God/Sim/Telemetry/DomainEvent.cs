@@ -66,7 +66,8 @@ namespace God.Sim
     {
         public const string Generic = "generic";
 
-        public static readonly ReadOnlyArray<EventInfo> All = new ReadOnlyArray<EventInfo>(
+        /// <summary>The rows of stages 1-3, M3 and F0 (frozen after F0).</summary>
+        public static readonly ReadOnlyArray<EventInfo> Core = new ReadOnlyArray<EventInfo>(
             // ---- commands (1-9) ----
             new EventInfo(typeof(CommandApplied), 1, 1, TelemetryDomain.Commands, "fact_command"),
             new EventInfo(typeof(CommandRejected), 2, 1, TelemetryDomain.Commands, "fact_command"),
@@ -118,13 +119,17 @@ namespace God.Sim
             new EventInfo(typeof(Population.NpcDied), 101, 1, TelemetryDomain.Population, "fact_death"),
             new EventInfo(typeof(Population.Ate), 102, 1, TelemetryDomain.Population, Generic, true),
             new EventInfo(typeof(Population.Slept), 103, 1, TelemetryDomain.Population, Generic, true),
-            new EventInfo(typeof(Population.NpcDay), 104, 1, TelemetryDomain.Population, "fact_person_day", note: "one living person x sim day: needs, body, time allocation, meals, learning outcomes (M3 source; SnapshotBuilder.PersonDay at M13)"),
+            new EventInfo(typeof(Population.NpcDay), 104, 2, TelemetryDomain.Population, "fact_person_day", note: "one living person x sim day: needs, body, time allocation, meals, learning outcomes (M3 source; SnapshotBuilder.PersonDay at M13)"),
             // ---- economy of personal goods (200-299), M3 ----
-            new EventInfo(typeof(Population.Produced), 200, 1, TelemetryDomain.Production, "fact_production", true),
-            new EventInfo(typeof(Population.Consumed), 201, 1, TelemetryDomain.Economy, "fact_production", true),
+            new EventInfo(typeof(Population.Produced), 200, 2, TelemetryDomain.Production, "fact_production", true),
+            new EventInfo(typeof(Population.Consumed), 201, 2, TelemetryDomain.Economy, "fact_production", true),
             new EventInfo(typeof(Population.Foraged), 202, 1, TelemetryDomain.Production, Generic, true),
             new EventInfo(typeof(Population.HutBuilt), 203, 1, TelemetryDomain.Economy, Generic),
             new EventInfo(typeof(Population.HutSiteFounded), 204, 1, TelemetryDomain.Economy, Generic),
+            // ---- goods movement and ownership (205-209), F0 ----
+            new EventInfo(typeof(Population.ItemMoved), 205, 1, TelemetryDomain.Economy, Generic, true,
+                note: "one lot moved between holders (Goods.Move); a dedicated fact_item_move is left to M13a (SHARED_CONTRACTS 13.9)"),
+            new EventInfo(typeof(Population.OwnershipChanged), 206, 1, TelemetryDomain.Ownership, "fact_ownership"),
             // ---- learning (300-399), M3 ----
             new EventInfo(typeof(Learning.AssociationUpdated), 330, 1, TelemetryDomain.Learning, "fact_learning", true),
             new EventInfo(typeof(Learning.ConjunctionRecruited), 331, 1, TelemetryDomain.Learning, "fact_learning"),
@@ -132,6 +137,19 @@ namespace God.Sim
             new EventInfo(typeof(Learning.EpisodeClosed), 333, 1, TelemetryDomain.Learning, "fact_learning"),
             new EventInfo(typeof(Learning.DecisionMade), 334, 1, TelemetryDomain.Learning, "fact_decision", true,
                 note: "one chosen intent: verb, target, total score and its terms; emitted only at Full recording of the learning domain (EventBuffer.TraceDecisions)"));
+
+        /// <summary>
+        /// Every event: the core rows above (declared first: static fields initialise in order), then M4's (<c>HouseholdEvents.Catalog</c>), then M5's (<c>SocialEvents.Catalog</c>)
+        /// (F0.11). Each milestone adds rows only in its own catalogue file.
+        /// </summary>
+        public static readonly ReadOnlyArray<EventInfo> All = Concat(Core, Population.Households.HouseholdEvents.Catalog, Social.SocialEvents.Catalog);
+
+        private static ReadOnlyArray<EventInfo> Concat(params ReadOnlyArray<EventInfo>[] parts)
+        {
+            var l = new List<EventInfo>();
+            foreach (var p in parts) foreach (var e in p) l.Add(e);
+            return new ReadOnlyArray<EventInfo>(l);
+        }
 
         /// <summary>Lookup over <see cref="All"/>; filled once in the static constructor (allow-listed in the static audit).</summary>
         private static readonly Dictionary<Type, EventInfo> ByType = BuildIndex();
