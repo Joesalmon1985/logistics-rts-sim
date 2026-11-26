@@ -348,7 +348,7 @@ The EditMode test `Inspector_ShowsOptionsWithScoreTerms_RecentExperiences_AndThe
 | Contextual lab test (set by the M3 agent before measuring; not a design-doc number) | Both contexts ≥ 85% correct in ≥ 90 of 100 seeds | 82/100, with a 95.6% mean. Each seed's window has about 50 trials per context, so the per-seed spread is sampling noise plus about 4% exploration | Mean correct ≥ 90% (measured 95.6%), and both contexts ≥ 80% in ≥ 90 seeds (measured 99) |
 | Twin divergence (set by the M3 agent) | The first single decision differs in ≥ 45/50 pairs | 25/50: one draw is decided by exploration noise, since A's learned gap is about 70 against a noise range of 150 | Distribution over 200 identical draws: choices differ in every pair whose lives differed (49/49); B − A ≥ 20 points in ≥ 80% of them (41/49); the learned term carries the difference in every such pair |
 
-The design-doc criteria not met (LS1 per seed, L2, L3 filler, L5 entries, L8 pairs, L13 80%, LS3, LS4) are listed in the M3 report with their evidence. They sit in the `[Explicit]` category `M3-open`, unweakened.
+The design-doc criteria not met (LS1 per seed, L2, L3 filler, L5 entries, L8 pairs, L13 80%, LS3, LS4) are listed in the M3 report with their evidence. They sit in the `[Explicit]` category `M3-open`, unweakened. (D3 review: superseded, see the last section of this record.)
 
 **M3b update (below):** LS4's useless-axe control is now met. The other criteria stay open, each with a proposed amendment.
 
@@ -521,6 +521,7 @@ Results, 6000 ticks, recording off:
 - **The People card's horizontal scrollbar: fixed.** The drive bars took a fixed 380 px, wider than the scroll view. They now use the available width, and the scroll view has no horizontal bar. Not yet seen in a screenshot.
 
 #### Criteria status after M3b
+*Superseded by the D3 review at the end of this record.*
 - **Met:**
   - LS4 useless-axe control (+9.6, now asserted);
   - LS3 contextual control (50/50);
@@ -541,3 +542,28 @@ Results, 6000 ticks, recording off:
 - Player smoke, stage 3, seed 2: Crimson wins at tick 20161 with `4bd54b271857a803`, as before; invariants ok, 0 exceptions.
 - Player population smoke (`-godpopulation`, seed 2, 60,000 ticks): OK, end hash `b57dcdd8b1837358`, invariants ok, 0 exceptions. A 12,000-tick population smoke ends "FAIL" only because the verdict wants a capture or a game over, which a 10-day sandbox does not reach.
 - The editor was closed afterwards.
+
+### D3 review of the open criteria (branch `unity/m3-amend`, 26 Nov 2026)
+Owner decision D3 §5, applied to LS1 (per seed and the Frozen baseline), L2, L3 (filler), L5, L8 and L13. Tests and docs only: nothing under `Assets/God/Sim` or `Assets/God/Game` changed, so every state hash is unchanged. The full criteria, rationale and controls are in [ACCEPTANCE_TESTS M3, "M3 status after owner decisions D3"](ACCEPTANCE_TESTS.md#m3-status-after-owner-decisions-d3-26-nov-2026). Each criterion was rerun and its per-seed distribution printed (`[Explicit]` category `M3-evidence`, `M3AmendmentEvidence.cs`). Each revised criterion is one function run twice in the normal suite (`M3RevisedCriteriaTests.cs`): on the learner, where it passes, and on a control with learning disabled, where it fails.
+
+Finding types: (a) the threshold was over-ambitious for a mechanism that works; (b) the measure was wrong; (c) the mechanism is weak or defective (not amended).
+
+| Criterion | Category | Original | Observed | Revised | Control (fails) |
+|---|---|---|---|---|---|
+| LS1/L1 per seed (M3.1) | Revised (b, a) | ≥ 95% within 5 thinks, in ≥ 95 of 100 seeds | 90.4% pooled, 37 seeds (about 11 probes each; a learner at exactly 95% would give only 58 seeds); 10 days: 91.6%, 93 seeds ≥ 80% | 10-day run, ≥ 20 probes per seed: ≥ 90% pooled, ≥ 80% in ≥ 90 seeds | Frozen: 64.6%, 6 seeds |
+| LS1 Frozen baseline (M3.20) | Revised (b) | Frozen ≤ 40% | 64.6% (chance among about 4 options) | Paired learner − Frozen, 95% lower bound ≥ 20 points (27.0 [24.6, 29.4]); better in ≥ 90 seeds (99) | Frozen vs Frozen: 0 |
+| L2 (M3.2) | Revised (a); weakness kept as target L2b | ≤ 15% sated eating | 17.7% vs Frozen 30.6%; paired −12.9 [−14.1, −11.6], lower in 98 seeds; levels at 16–18% over 12 days | ≤ 20%, paired upper bound ≤ −10 points, lower in ≥ 90 seeds | Frozen: 30.6%, 0 |
+| L3 filler (M3.3) | Revised (b) | Filler mean Q within ± 100 vp | +222 vp; the filler predicts the reward that follows it (4.5) | Behavioural: TestA ≥ 90% in ≥ 95 seeds through two intervening decisions, and traces off ≤ 65%; filler Q printed | Traces off and Frozen: 0 seeds |
+| L5 (M3.5) | **Outstanding target (c)** | `PlaceRef(A)` `Ltw ≤ 0` or evicted by day 40 | 37 of 40; but Frozen/Off avoid A equally (0.3% vs 0.6%), A's place value is ≤ 2 vp on day 5, decay off changes nothing | Not amended | (the scenario passes without learning) |
+| L8 (M3.7) | Revised (b, a) | ≥ 30 points in ≥ 95% of 50 pairs | 6 choices per twin: 30 pairs | Store frozen as loaded after nurture, 5 test days (median 31 choices): lower bound ≥ 30 points (46.2 [40.1, 52.2]), rich twin higher in ≥ 45 pairs (49) | Frozen from birth: 7.0 [2.3, 11.7], 32 pairs |
+| L13 (M3.11) | Revised (b) | Eat at the spot within 3 thinks ≥ 80% | 71 (28 seeds forage first, then eat from the carry) | First fish meal (spot or carry) within 6 thinks ≥ 80% (92); never-edible control ≤ 40% (1); ≥ 20 seeds above frozen-from-birth (57) | Frozen: 57 |
+| L2b sated eating after repeated hunger | **New outstanding target (c)** | (learner ≤ Frozen) | Probe run: 43.7% vs 25.3%; no hunger feature below comfort | Not amended; fix is a design change (a sated feature) | |
+| LS3, LS4 per seed and conjunction | **Outstanding; redesign scheduled after M4 (D3 §3, §4)** | | unchanged from M3b | Not worked on | |
+| M3.19 25% share | **Aspiration, not a gate (D3 §6)** | | 37.5% / 33.9% | | |
+
+Test changes:
+- `M3-open` is gone. Its six revised criteria are in the normal suite (`M3RevisedCriteriaTests`, 5 criteria and 5 controls); LS3, LS4 per seed, LS4 conjunction, L5 and L2b are `[Explicit]` in category `M3-target` (`LearningTargetsOutstanding`), asserting the original numbers.
+- `L5_L6_ForgettingAndAdaptation` keeps its assertions, relabelled as behaviour regressions that are not evidence of learning.
+- Test helpers gained richer results (`DelayedRewardRun`, `GeneraliseDetail`, `NurtureProbe`, a learning mode for `Moves`); the existing tests use them unchanged.
+
+Test runs (this branch, after the change): `dotnet test DotNet -c Release`: God.Sim.Tests 402/402, God.Runner.Tests 154/154 (baseline at `77fe38e`: 402/402 and 144/144; the 10 new tests are the 5 revised criteria and their 5 controls). The `M3-target` category: 5 run, 5 fail as expected (L5 0 of 36 seeds with a learned place, L2b 43.7% > 25.3%, LS3 1 of 45, LS4 27 of 45, LS4 conjunction 16 of 40). The `M3-evidence` printouts ran. Unity EditMode and PlayMode were not run (no Unity code changed).
