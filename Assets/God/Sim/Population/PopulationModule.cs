@@ -372,6 +372,7 @@ namespace God.Sim.Population
                 if (n.RewardSnap != null) foreach (int d in n.RewardSnap) h.Add(d);
                 foreach (var l in n.Carry) { h.Add(l.Id); h.Add((int)l.Ware); h.Add(l.Count); h.Add(l.SpoilDay); h.Add(l.Uses); h.Add((int)l.Owner.Kind); h.Add(l.Owner.Id); }
                 h.Add((int)n.Stage); h.Add(n.Household);
+                if (n.Life != null) { h.Add(0x4C494645); n.Life.AddTo(ref h); } // M4's part, only when present (M3 NPCs hash as before)
                 h.Add(n.HomeHut); h.Add(n.SiteHut); h.Add(n.EatenDay); foreach (int e in n.EatenToday) h.Add(e);
                 foreach (int t in n.DayTicks) h.Add(t);
                 h.Add(n.DayWalkTicks); h.Add(n.DayMeals); foreach (int d in n.DayDriveSum) h.Add(d);
@@ -389,6 +390,8 @@ namespace God.Sim.Population
                 foreach (int r in hut.Rights) h.Add(r);
                 h.Add(hut.Contributors.Count); foreach (int c in hut.Contributors) h.Add(c);
                 h.Add(hut.FoundedBy); h.Add(hut.BuiltTick);
+                if (hut.RightSource != null) foreach (byte r in hut.RightSource) h.Add(r);
+                if (hut.Lodgers != null) { h.Add(hut.Lodgers.Count); foreach (int c in hut.Lodgers) h.Add(c); }
             }
             foreach (var g in p.Lots) { h.Add(g.Node); h.Add(g.Lot.Id); h.Add((int)g.Lot.Ware); h.Add(g.Lot.Count); h.Add(g.Lot.SpoilDay); h.Add(g.Lot.Uses); h.Add((int)g.Lot.Owner.Kind); h.Add(g.Lot.Owner.Id); }
             h.Add(p.Bins.Count);
@@ -404,6 +407,7 @@ namespace God.Sim.Population
             h.Add(st.Decisions); h.Add(st.IntentsRefused); h.Add(st.NotPerceived); h.Add(st.Meals); h.Add(st.Sleeps); h.Add(st.HutsBuilt); h.Add(st.LogsGathered); h.Add(st.Foraged);
             foreach (int d in st.DeathsByCause) h.Add(d);
             h.Add(st.Founders); h.Add(st.Deaths);
+            if (p.Pedigree != null) { h.Add(p.Pedigree.Count); foreach (var r in p.Pedigree) { h.Add(r.Id); h.Add(r.Mother); h.Add(r.Father); h.Add(r.BornTick); } }
             return h.Value;
         }
 
