@@ -134,7 +134,7 @@ namespace God.Sim.Lab
             // V(3/e - 1) = 0.104 V (it wins whenever the reader quits at once), so a reader's edge 1/e - p(4/e - 1) vanishes at
             // p* = 1/(4 - e) = 0.780; readers spread to that mixed equilibrium, not to fixation.
             ck.Near("readable tell: reader share after 100 generations (start 0.1), against p* = 1/(4 - e)", LabMath.Micro(readerShare), 779800, 50000, kind: CheckKind.Amended,
-                note: "Amended at M2. Published: above 0.9 within 100 generations. A reader's opponent earns V(3/e - 1) = 0.104 V, so readers have an edge only while their share is below p* = 1/(4 - e) = 0.780 (two readers play as normal players); measured 0.77-0.79 in seeds 1-2 before the amendment. Corrected expectation: readers spread from 0.1 to 0.78 +/- 0.05.",
+                note: "Amended at M2. Published: above 0.9 within 100 generations. A reader's opponent earns V(3/e - 1) = 0.104 V, so readers have an edge only while their share is below p* = 1/(4 - e) = 0.780 (two readers play as normal players); measured 0.74-0.78 in seeds 1-5. Corrected expectation: readers spread from 0.1 to 0.78 +/- 0.05.",
                 source: "L3");
 
             notes.Add("Times are Q30 fixed point in units of V; exponential draws use -m ln U with a fixed-point logarithm.");

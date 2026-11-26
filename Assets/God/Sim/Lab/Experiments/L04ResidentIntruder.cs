@@ -86,7 +86,7 @@ namespace God.Sim.Lab
             for (int coin = 0; coin < 2; coin++) confused += Contest.Resolve(ContestKind.Bourgeois, ContestKind.Bourgeois, Role.Resident, Role.Resident, false, false, coin == 0, r).PayA * 1000L;
             confused /= 2;
             ck.Add("Bourgeois against Bourgeois: 25 with clear roles, -25 when both think they are resident", LabMath.MicroX1000(confused),
-                "-25 (from " + Fx.FormatScaled(normal, 1) + ")", normal == 25000 && confused == -25000, decimals: 1);
+                "-25 (from " + Fx.FormatScaled(normal / 100, 1) + ")", normal == 25000 && confused == -25000, decimals: 1);
 
             notes.Add("Replicator with w0 = 500 and mutation 0.0005; the matrix is the turn rules' exact expectation with random roles, which equals the published table (L2b).");
             notes.Add("L4b (paradoxical strategy, optional in the spec) is not built at M2.");

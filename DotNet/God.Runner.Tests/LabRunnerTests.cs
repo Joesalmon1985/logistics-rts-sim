@@ -179,7 +179,7 @@ namespace God.Runner.Tests
             ["L1"] = "7a06f9b04a5c3780",
             ["L2"] = "815ddf13e8116bc9",
             ["L3"] = "b44661d0c0d2772f",
-            ["L4"] = "be140f16fa059b25",
+            ["L4"] = "e0ccb19ea42f22e5",
             ["L5"] = "356f0085c5fee617",
             ["L6"] = "c4c5d73593e25059",
             ["L7"] = "8b0a021d75fb4ff3",
