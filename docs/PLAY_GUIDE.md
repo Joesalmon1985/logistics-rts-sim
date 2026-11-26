@@ -63,7 +63,7 @@ A scripted player who does what each card says reaches the last card at about mi
 
 1. Pick a building on the build bar at the top. Hover a button to see what it costs and what it makes.
 2. The places where it can go glow. Click one. Hold Shift to place several.
-3. **Give it a road.** Pick **Road** (Land tab), click a flag (your HQ has one), then click where the road should end. Nothing gets built or delivered without a road.
+3. **Give it a road.** Right after you place a building, the road tool starts at its flag: click your HQ flag, or any of your roads or flags, to join it. Any time, press **R** or the **Road (R)** button beside the tabs, click a flag (your HQ has one), then click where the road should end. A building card with no road has **Lay a road from here**. Right-click stops. Nothing gets built or delivered without a road.
 4. Builders and carriers do the rest. Each HQ has 6 carriers and 2 builders.
 
 The build bar has five tabs:

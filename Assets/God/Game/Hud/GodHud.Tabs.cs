@@ -77,6 +77,8 @@ namespace God.Game
         /// <summary>Every button of the build bar, in order.</summary>
         public static IReadOnlyList<BuildTool> BuildTools => AllTools;
 
+        private static BuildTool RoadTool { get { foreach (var t in AllTools) if (t.Key == "road") return t; return default; } }
+
         /// <summary>The buttons of one tab.</summary>
         public static List<BuildTool> ToolsOf(BuildTab tab)
         {
@@ -122,6 +124,7 @@ namespace God.Game
         private void HandleTabKeys()
         {
             if (Watching || !CanAct) return;
+            if (Input.GetKeyDown(KeyCode.R)) ToggleTool(HudMode.Road);
             if (Input.GetKeyDown(KeyCode.Tab))
             {
                 bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
@@ -163,6 +166,14 @@ namespace God.Game
                 var r = new Rect(x, y - 2f, 74f, tabH);
                 if (GUI.Button(r, new GUIContent(TabName(tab), (i + 1) + ": " + TabName(tab) + " (Tab cycles)"), tab == Tab ? _tabSel : _tab)) SetTab(tab);
                 x += 78f;
+            }
+            // Road is needed on every tab, so it also sits on the tab row, whichever tab shows.
+            {
+                var rr = new Rect(x + 10f, y - 2f, 96f, tabH);
+                GUI.enabled = HudOn && act;
+                if (GUI.Button(rr, new GUIContent("Road (R)", ToolTip(RoadTool)), Mode == HudMode.Road ? _tabSel : _tab)) ToggleTool(HudMode.Road);
+                GUI.enabled = HudOn;
+                if (repaint) DrawTutorialButtonGlow("road", rr, tab: false);
             }
             float ty = y + tabH + 1f, th = h - tabH - 1f;
             x = ToolsLeft;

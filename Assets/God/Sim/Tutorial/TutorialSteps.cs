@@ -83,8 +83,8 @@ namespace God.Sim
             new TutorialStep
             {
                 Id = "road", Title = "Roads carry everything",
-                Lines = new[] { "Nothing moves without a road. Pick Road on the Land tab, click your HQ flag, then the flag of the woodcutter.",
-                    "Click the last flag to finish. Carriers walk the road and haul wares both ways." },
+                Lines = new[] { "Nothing moves without a road. Right after you place a building, the road tool starts at its flag: click your HQ flag (or any of your roads) to join it.",
+                    "Any time, press R or the Road button beside the tabs, click a flag, then another flag. Carriers walk the road and haul wares both ways." },
                 Goal = "Join the woodcutter to a road.", Button = "road",
                 Done = c => c.RoadJoins(BuildingKinds.Woodcutter),
             },

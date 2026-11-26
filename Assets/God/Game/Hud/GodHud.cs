@@ -151,7 +151,8 @@ namespace God.Game
         /// <summary>Esc or right-click: undo the road in progress, else leave the tool, else close the card.</summary>
         public void Cancel()
         {
-            if (Mode == HudMode.Road && RoadNodes.Count > 0) { ClearRoad(); return; }
+            // A road with more than its first flag is undone first; one only started (as after placing) drops the tool at once.
+            if (Mode == HudMode.Road && RoadNodes.Count > 1) { ClearRoad(); return; }
             if (Mode != HudMode.Normal) { Mode = HudMode.Normal; PlaceKind = null; ClearRoad(); return; }
             if (SelectedEnvoy != 0) { ClearEnvoy(); return; }
             if (TradeOpen) { CloseTrade(); return; }
@@ -217,8 +218,52 @@ namespace God.Game
         public CommandResult ClickPlace(int node, bool keepTool = false)
         {
             var r = Send(new PlaceBuilding(Me, node, PlaceKind));
-            if (r.Ok && !keepTool) { Mode = HudMode.Normal; PlaceKind = null; }
+            if (r.Ok && !keepTool)
+            {
+                Mode = HudMode.Normal; PlaceKind = null;
+                // The site appears when the command is applied (next tick); the road tool is picked up then.
+                _roadAfterPlace = node; _roadAfterPlaceUntil = Time.unscaledTime + 3f;
+                CheckRoadAfterPlace();
+            }
             return r;
+        }
+
+        private int _roadAfterPlace = -1;
+        private float _roadAfterPlaceUntil;
+
+        /// <summary>
+        /// After a single placement: once the site stands and has no road, picks up the road tool starting at its flag.
+        /// Gives up if the player picked another tool meanwhile or the site does not appear within a few seconds.
+        /// </summary>
+        public void CheckRoadAfterPlace()
+        {
+            if (_roadAfterPlace < 0) return;
+            if (Mode != HudMode.Normal || Time.unscaledTime > _roadAfterPlaceUntil) { _roadAfterPlace = -1; return; }
+            var b = Sim.State.Territory.BuildingAtNode(_roadAfterPlace);
+            if (b == null) return;
+            _roadAfterPlace = -1;
+            if (b.Faction != Me || FlagHasRoad(b.FlagNode)) return;
+            BeginRoadFrom(b.FlagNode);
+            Toast("Now give it a road: click one of your flags or roads to join it. Right-click to stop.");
+        }
+
+        /// <summary>True when a road ends at the flag on this node.</summary>
+        public bool FlagHasRoad(int flagNode)
+        {
+            var t = Sim.State.Territory;
+            var f = flagNode >= 0 ? t.FlagAtNode(flagNode) : null;
+            if (f == null) return false;
+            foreach (var rd in t.Roads) if (rd.FlagA == f.Id || rd.FlagB == f.Id) return true;
+            return false;
+        }
+
+        /// <summary>Picks up the road tool with the road already started at one of your flags (a new building's flag).</summary>
+        public void BeginRoadFrom(int flagNode)
+        {
+            BeginRoad();
+            if (Mode != HudMode.Road) return;
+            var f = flagNode >= 0 ? Sim.State.Territory.FlagAtNode(flagNode) : null;
+            if (f != null && f.Faction == Me) RoadNodes.Add(flagNode);
         }
 
         /// <summary>The corner nearest a node that an HQ may stand on (else the nearest corner at all), or -1.</summary>
@@ -413,6 +458,7 @@ namespace God.Game
 
             if (Input.GetKeyDown(KeyCode.Escape)) PressEscape();
             if (Boot.Menu != null && Boot.Menu.Blocking) { HoverNode = -1; return; } // the menu or the start card holds the game
+            CheckRoadAfterPlace();
             if (Input.GetKeyDown(KeyCode.Space)) TogglePause();
             if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus)) StepSpeed(1);
             if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus)) StepSpeed(-1);

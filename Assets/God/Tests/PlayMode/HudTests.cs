@@ -151,6 +151,37 @@ namespace God.Game.Tests
         }
 
         [UnityTest]
+        public IEnumerator PlacingABuilding_StartsARoadAtItsFlag_OneClickOnTheHqFlagJoinsIt()
+        {
+            yield return Load();
+            var hq = T.HqsOf(Faction.F0)[0];
+            var hqFlag = T.Buildings.First(b => b.Id == hq.Id).FlagNode;
+            int node = LegalNode(BuildingKinds.Sawmill);
+            _hud.BeginPlace(BuildingKinds.Sawmill);
+            Assert.IsTrue(_hud.WorldClick(node, 0).Ok);
+            yield return Frames(3);
+            var site = T.BuildingAtNode(node);
+            Assert.IsNotNull(site);
+            Assert.AreEqual(HudMode.Road, _hud.Mode, "the road tool is picked up by itself");
+            Assert.AreEqual(1, _hud.RoadNodes.Count);
+            Assert.AreEqual(site.FlagNode, _hud.RoadNodes[0], "starting at the new building's flag");
+            Assert.IsFalse(_hud.FlagHasRoad(site.FlagNode));
+
+            var r = _hud.WorldClick(hqFlag, hq.Id);
+            Assert.IsTrue(r.Ok, r.ToString());
+            yield return Frames(3);
+            Assert.IsTrue(_hud.FlagHasRoad(site.FlagNode), "one click on the HQ joins it");
+            Assert.AreEqual(0, _hud.RoadNodes.Count);
+
+            // The R key path and the card button both use the same tool.
+            _hud.Cancel(); _hud.Cancel();
+            _hud.ToggleTool(HudMode.Road);
+            Assert.AreEqual(HudMode.Road, _hud.Mode);
+            _hud.ToggleTool(HudMode.Road);
+            Assert.AreEqual(HudMode.Normal, _hud.Mode);
+        }
+
+        [UnityTest]
         public IEnumerator RoadTool_BuildsARoadBetweenTwoFlags_AndPlacesAFlagOnARoad()
         {
             yield return Load();
@@ -210,15 +241,25 @@ namespace God.Game.Tests
             Assert.AreEqual(1, T.Roads.Count);
             Assert.IsNotNull(T.FlagAtNode(far), "the free end got a flag");
 
-            // Esc cancels a road in progress.
+            // Esc undoes a road in progress, keeping the tool; with only its first flag it puts the tool down.
             _hud.BeginRoad();
             _hud.WorldClick(hqFlag, 0);
             Assert.AreEqual(1, _hud.RoadNodes.Count);
+            bool clear(int n) => T.NodeFlag[n] == 0 && T.NodeRoad[n] == 0
+                && Enumerable.Range(0, 6).Select(d => g.Neighbour(n, d)).All(nb => nb < 0 || (T.NodeFlag[nb] == 0 && T.NodeRoad[nb] == 0));
+            int near = T.BuildableNodes(Faction.F0).Where(n => g.Distance(n, hqFlag) >= 3 && clear(n) && _hud.RoadPreview(n) != null)
+                .OrderBy(n => g.Distance(n, hqFlag)).First();
+            _hud.WorldClick(near, 0);
+            Assert.Greater(_hud.RoadNodes.Count, 1);
             _hud.Cancel();
             Assert.AreEqual(0, _hud.RoadNodes.Count);
             Assert.AreEqual(HudMode.Road, _hud.Mode);
             _hud.Cancel();
             Assert.AreEqual(HudMode.Normal, _hud.Mode);
+            _hud.BeginRoad();
+            _hud.WorldClick(hqFlag, 0);
+            _hud.Cancel();
+            Assert.AreEqual(HudMode.Normal, _hud.Mode, "a road with only its first flag: one Esc puts the tool down");
         }
 
         [UnityTest]
@@ -247,6 +288,9 @@ namespace God.Game.Tests
             _hud.WorldClick(node, 0);
             yield return Frames(3);
             var b = T.BuildingAtNode(node);
+            Assert.AreEqual(HudMode.Road, _hud.Mode, "placing picks up the road tool");
+            _hud.Cancel(); // one right-click drops it
+            Assert.AreEqual(HudMode.Normal, _hud.Mode);
             _hud.WorldClick(node, b.Id); // Normal mode: opens its card
             Assert.AreEqual(b.Id, _hud.SelectedBuilding);
 

@@ -367,6 +367,9 @@ namespace God.Game
                 var old = GUI.contentColor;
                 GUILayout.Label(StatusText(e) + (e.Built ? "" : "  " + (Sim.State.Economy.SiteProgressPermille(b.Id) / 10) + "%"), st.Small);
                 GUI.contentColor = old;
+                if (b.Faction == Me && !FlagHasRoad(b.FlagNode)
+                    && GUILayout.Button(new GUIContent("Lay a road from here", "Starts a road at this building's flag. Click one of your flags or roads to join it."), st.Btn, GUILayout.Height(24f)))
+                    BeginRoadFrom(b.FlagNode);
                 if (!e.Built)
                 {
                     var bar = GUILayoutUtility.GetRect(10f, 8f, GUILayout.ExpandWidth(true));
