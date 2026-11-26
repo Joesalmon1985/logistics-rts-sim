@@ -46,7 +46,7 @@ commands:
   replay   re-run a replay FILE [--to TICK] [--record LEVEL] [--save-at TICK] [--print-events] [--out DIR]
   bench    benchmark       [--cases bench_stage3_watch6] [--ticks N] [--parallel-ticks N] [--workers 1,4,16]
                            [--compare FILE] [--update-baseline] [--baseline FILE] [--strict] [--out DIR]
-  lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2)
+  lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2) | invade | sweep
   export   warehouse out  --from FILE|DIR [--to csv|parquet] --out DIR [--tables a,b]   (SQLite to CSV or a Parquet lake)
   experiment, serve, dataset, verify-model, learn-dump: later milestones (exit code 9)
 
