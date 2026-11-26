@@ -249,6 +249,7 @@ namespace God.Sim.Population.Households
             var hs = s.Households;
             var p = s.Population;
             var dt = s.Tuning.Households.Disease;
+            ReproductiveUnions.Daily(s, ev);
             foreach (var h in hs.Households.ToArray())
             {
                 if (h.Members.Count == 0) continue;
@@ -337,8 +338,14 @@ namespace God.Sim.Population.Households
             if (life.TryingUntil < s.Tick || life.TryWith == 0) return;
             var father = s.Population.Find(life.TryWith);
             if (father?.Life == null || !father.Alive || father.Life.Sex != 1 || father.Stage == LifeStage.Child) return;
-            if (Partnerships.Between(s, mother.Id, father.Id) == null) return;
             if (father.Life.TryWith != mother.Id || father.Life.TryingUntil < s.Tick) return;
+            // D4: a conception needs a reproductive relationship between the two. Romantic partners who both hold "try for a
+            // child" with each other have agreed one (formed here, when both have room); others agreed one by offer and acceptance.
+            var union = ReproductiveUnions.Between(s, mother.Id, father.Id);
+            if (union == null && Partnerships.Between(s, mother.Id, father.Id) != null && ReproductiveUnions.HasRoom(s, mother) && ReproductiveUnions.HasRoom(s, father))
+                union = ReproductiveUnions.Form(s, ev, father, mother, father.Id, ReproductiveUnion.Partners);
+            if (union == null) return;
+            union.LastTryTick = s.Tick;
             int chance = DailyPermille(lt, life.Pheno.Fertility, mother.NutritionPermille, (int)age, end);
             if (s.Rng.Fork("fertility", mother.Id, day).NextInt(1000) >= chance) return;
             life.PregFather = father.Id;
@@ -352,6 +359,13 @@ namespace God.Sim.Population.Households
         }
 
         public static int FertileEnd(LifeTuning lt, int fertility) => lt.FertileEndBaseMilli + lt.FertileEndSpanMilli * fertility / 1000;
+
+        /// <summary>
+        /// D4: whether two people could conceive together, as anyone could see: two adults of different sexes (no knowledge of
+        /// fertility). With the conception rule above, the only place outside the phenotype builder that reads sex (M4.28).
+        /// </summary>
+        public static bool MayConceiveWith(Npc a, Npc b) =>
+            a?.Life != null && b?.Life != null && a.Id != b.Id && a.Stage != LifeStage.Child && b.Stage != LifeStage.Child && a.Life.Sex != b.Life.Sex;
 
         /// <summary><c>(Base + Span x Fertility/1000) x NutritionFactor/1000 x AgeFactor/1000</c> permille (POPULATION "Fertility").</summary>
         public static int DailyPermille(LifeTuning lt, int fertility, int nutrition, int age, int end)
@@ -413,6 +427,15 @@ namespace God.Sim.Population.Households
             var h = mother.Household != 0 ? hs.Find(mother.Household) : null;
             if (h == null || !HouseholdModule.Join(s, ev, h, child, JoinReason.Born, 0)) HouseholdModule.Form(s, ev, child, JoinReason.Born);
             KinCues.Birth(s, ev, child, mother, partnerNpc);
+            // D4: the father by a reproductive relationship outside the mother's partnership knows the child (he agreed to it), and it him
+            var union = father != null ? ReproductiveUnions.Between(s, mother.Id, father.Id) : null;
+            if (union != null) union.Children++;
+            bool outside = father != null && father.Alive && father.Id != partner && union != null;
+            if (outside)
+            {
+                KinCues.Believe(s, ev, father, child.Id, KinCues.ChildRole(sex), 800, KinSource.Born);
+                KinCues.Believe(s, ev, child, father.Id, KinRole.Father, 700, KinSource.Told);
+            }
             ml.PregFather = 0;
             ml.LastBirthTick = s.Tick;
             hs.Stats.Births++;
@@ -429,6 +452,11 @@ namespace God.Sim.Population.Households
             {
                 CloseEpisode(s, mother, EpisodeKey.Make(EpisodeKey.Partnership, partner), s.Tuning.Households.Care.ChildBornVp, day, ev);
                 if (partnerNpc.Alive) CloseEpisode(s, partnerNpc, EpisodeKey.Make(EpisodeKey.Partnership, mother.Id), s.Tuning.Households.Care.ChildBornVp, day, ev);
+            }
+            if (outside)
+            {
+                CloseEpisode(s, mother, EpisodeKey.Make(EpisodeKey.Partnership, father.Id), s.Tuning.Households.Care.ChildBornVp, day, ev);
+                CloseEpisode(s, father, EpisodeKey.Make(EpisodeKey.Partnership, mother.Id), s.Tuning.Households.Care.ChildBornVp, day, ev);
             }
             // childbirth hazard (POPULATION "Birth risk"): physical, from nutrition and health, never a quota
             var br = s.Rng.Fork("birth", mother.Id, s.Tick);

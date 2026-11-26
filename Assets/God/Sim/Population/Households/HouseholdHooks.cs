@@ -63,6 +63,7 @@ namespace God.Sim.Population.Households
                 if (hut.Lodgers != null) hut.Lodgers.Remove(npc.Id);
                 if (hut.RightSource != null) for (int i = 0; i < hut.Rights.Length; i++) if (hut.Rights[i] == npc.Id) hut.RightSource[i] = 0;
             }
+            ReproductiveUnions.OnDeath(s, ev, npc);
             HouseholdModule.Leave(s, ev, npc, LeaveReason.Died, 0);
             npc.Life.Display = 0;
         }
@@ -82,7 +83,10 @@ namespace God.Sim.Population.Households
             p.SameHousehold = observer.Household != 0 && seen.Household == observer.Household;
             var l = seen.Life;
             if (l == null || s.Tuning.Households.Care.Off != 0 && observer.Stage != LifeStage.Child && seen.Stage == LifeStage.Child) return;
-            if (l.Display != 0 && l.DisplayUntil >= s.Tick && l.Display != DisplayKind.Trying)
+            // (D4) "wants a child" is seen only by those it could have one with (a visible fact, asked of Reproduction)
+            if (l.Display != 0 && l.DisplayUntil >= s.Tick && l.Display != DisplayKind.Trying
+                && (l.Display != DisplayKind.SeekChild || observer.Stage != LifeStage.Child && Reproduction.MayConceiveWith(observer, seen))
+                && (l.Display != DisplayKind.Beg || CareStructure.MayAnswer(s, observer, seen)))
             { p.Display = l.Display; p.DisplayLevel = l.DisplayLevel; p.DisplayTarget = l.DisplayTarget; return; }
             if (s.Tuning.Households.Care.Off == 0 && (l.Illness == 1 || seen.Injury > 300000))
             {
@@ -105,7 +109,10 @@ namespace God.Sim.Population.Households
                 p.DisplayTarget = observer.Id;
                 return;
             }
-            if (l.Display == DisplayKind.Trying && l.DisplayUntil >= s.Tick) { p.Display = DisplayKind.Trying; p.DisplayLevel = 1; p.DisplayTarget = l.DisplayTarget; return; }
+            // (D4) the person it has a reproductive relationship with: trying with it shows as trying; otherwise the mark of the relationship
+            bool union = hs.Unions.Count > 0 && ReproductiveUnions.Between(s, observer.Id, seen.Id) != null;
+            if (l.Display == DisplayKind.Trying && l.DisplayUntil >= s.Tick && (!union || l.DisplayTarget == observer.Id)) { p.Display = DisplayKind.Trying; p.DisplayLevel = 1; p.DisplayTarget = l.DisplayTarget; return; }
+            if (union) { p.Display = DisplayKind.UnionPartner; p.DisplayLevel = 1; p.DisplayTarget = observer.Id; return; }
             if (Partnerships.Count(s, seen.Id) >= s.Tuning.Households.Partner.MaxLivePartnerships) { p.Display = DisplayKind.Partnered; p.DisplayLevel = 1; }
         }
 
@@ -126,7 +133,7 @@ namespace God.Sim.Population.Households
             {
                 case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Store: case HVerb.TakeFromStore: return Activity.Care;
                 case HVerb.Beg: case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.Leave:
-                case HVerb.AskCare: case HVerb.AcceptCare: case HVerb.EndCare: return Activity.Other;
+                case HVerb.AskCare: case HVerb.AcceptCare: case HVerb.EndCare: case HVerb.SeekChild: case HVerb.AcceptChild: return Activity.Other;
                 default: return Activity.Other;
             }
         }
@@ -158,7 +165,7 @@ namespace God.Sim.Population.Households
         public static int StarvePermille(GodState s, Npc npc) => npc.Stage == LifeStage.Adult ? 1000 : s.Tuning.Households.Life.FrailStarvePermille;
         public static int RecoverPermille(GodState s, Npc npc) => npc.Stage == LifeStage.Elder ? s.Tuning.Households.Life.ElderRecoverPermille : 1000;
 
-        /// <summary>Work competence (D3 §10): 0 below the age a child can pick or forage, then rising to 1000 at adulthood.</summary>
+        /// <summary>Work competence (D3 Â§10): 0 below the age a child can pick or forage, then rising to 1000 at adulthood.</summary>
         public static int Competence(GodState s, Npc npc)
         {
             if (npc.Life == null || npc.Stage != LifeStage.Child) return 1000;
@@ -187,7 +194,7 @@ namespace God.Sim.Population.Households
     /// <summary>
     /// M4's mind-side hooks (OWNER: M4): the verbs and instincts the learning tables concatenate, and the hooks Cognition and
     /// Policy call. They read the think scratch only, never <see cref="GodState"/> (gate G4.1): the person in sight, its stage
-    /// and displays, the mind's own believed kin (r̂, never the pedigree), its carry and its home. A mind without a believed-kin
+    /// and displays, the mind's own believed kin (rÌ‚, never the pedigree), its carry and its home. A mind without a believed-kin
     /// part (M3 fixtures, <c>Households.Enabled = 0</c>) gets nothing from here.
     /// <para>Person-directed candidates name the person by its handle in <c>TargetId</c> and take the actor's own spot as their node:
     /// M3's perception check (<c>Thinker.Known</c>, frozen) knows no people yet, so a person target there would read as unperceived;
@@ -210,7 +217,9 @@ namespace God.Sim.Population.Households
             new VerbInfo(HVerb.Adopt, "take in a child", VerbGroup.CoopGive, NpcVerb.Interact),
             new VerbInfo(HVerb.AskCare, "ask for shared care", VerbGroup.CoopTake, NpcVerb.Interact),
             new VerbInfo(HVerb.AcceptCare, "agree shared care", VerbGroup.CoopGive, NpcVerb.Interact),
-            new VerbInfo(HVerb.EndCare, "end shared care", VerbGroup.Relationships, NpcVerb.Interact));
+            new VerbInfo(HVerb.EndCare, "end shared care", VerbGroup.Relationships, NpcVerb.Interact),
+            new VerbInfo(HVerb.SeekChild, "show it wants a child", VerbGroup.Relationships, NpcVerb.Interact),
+            new VerbInfo(HVerb.AcceptChild, "agree to a child", VerbGroup.Relationships, NpcVerb.Interact));
 
         private static uint RoleF(int v) => Feature.Make(FeatureKind.Role, v);
 
@@ -241,9 +250,13 @@ namespace God.Sim.Population.Households
             new Instinct(Feature.Self(HSelf.Unpartnered), 0, HVerb.Propose, 150),
             new Instinct(Feature.Self(HSelf.HasDependants), 0, HVerb.AskCare, 60),
             new Instinct(Feature.Situation(HSituation.CareOwed2), 0, HVerb.EndCare, 300),
-            new Instinct(Feature.Situation(HSituation.CareOwed3), 0, HVerb.EndCare, 600));
+            new Instinct(Feature.Situation(HSituation.CareOwed3), 0, HVerb.EndCare, 600),
+            // D4: the person it agreed a child with draws trying; wanting a child draws showing it; seeing that draws agreeing
+            new Instinct(Feature.Situation(HSituation.UnionPartner), 0, HVerb.TryForChild, 250),
+            new Instinct(Feature.Self(HSelf.WantsChild), 0, HVerb.SeekChild, 120),
+            new Instinct(Feature.Situation(HSituation.SeekingChild), 0, HVerb.AcceptChild, 300));
 
-        /// <summary>The kin term's scale (permille of r̂ x (100 + KinWeight) / 100): the Hamilton weighting (HOUSEHOLDS "Feeding").</summary>
+        /// <summary>The kin term's scale (permille of rÌ‚ x (100 + KinWeight) / 100): the Hamilton weighting (HOUSEHOLDS "Feeding").</summary>
         public const int KinTermPermille = 600;
 
         // ---------------- perception and cognition (scratch only) ----------------
@@ -331,7 +344,9 @@ namespace God.Sim.Population.Households
                 }
                 return;
             }
-            int proposer = -1, asker = -1, beggar = -1, sick = -1, orphan = -1, partner = -1, mate = -1, other = -1, owed = -1;
+            int proposer = -1, asker = -1, beggar = -1, sick = -1, orphan = -1, partner = -1, mate = -1, other = -1, owed = -1, unionMate = -1, seeker = -1;
+            int dSeeker = int.MaxValue;
+            bool audience = false;
             int begScore = int.MinValue, dMate = int.MaxValue, dOther = int.MaxValue, sickScore = int.MinValue, dOrphan = int.MaxValue;
             bool dependants = false, needing = false;
             bool partnered = HasPartnerBelief(sc);
@@ -363,8 +378,18 @@ namespace God.Sim.Population.Households
                 if (self.Household != 0 && p.Stage != LifeStage.Child && p.SameFaction && !p.SameHousehold && !p.Asleep && p.Display != DisplayKind.CarePartner && p.Dist < dOther)
                 { dOther = p.Dist; other = i; }
                 if (p.Display == DisplayKind.CarePartner && p.DisplayLevel >= 2 && owed < 0) owed = i;
+                // D4: the one it agreed a child with (marked to it, or trying with it), and someone showing that it wants a child
+                if (role != KinRole.Partner && !p.Asleep && unionMate < 0
+                    && (p.Display == DisplayKind.UnionPartner || p.Display == DisplayKind.Trying && p.DisplayTarget == self.Id)) unionMate = i;
+                if (p.Stage == LifeStage.Adult && p.SameFaction && !p.Asleep && role != KinRole.Partner && !CloseKin(sc, p.As)) audience = true;
+                if (p.Display == DisplayKind.SeekChild && p.SameFaction && role != KinRole.Partner && !CloseKin(sc, p.As) && p.Dist < dSeeker) { dSeeker = p.Dist; seeker = i; }
             }
+            // D4: may it look for a child outside a partnership? an adult (not old) with no reproductive relationship, whose
+            // own commitment allows it (its partners' commitments are checked by the act); the wish itself is the instinct's gain
+            bool mayUnion = self.Stage == LifeStage.Adult && sc.Mind.Kin.UnionWith == 0
+                && (!partnered || sc.Traits == null || sc.Traits.Length < Preferences.TraitLength || sc.Traits[Preferences.TraitCommitment] < Preferences.ExclusiveFrom);
             if (proposer >= 0) Person(sc, HVerb.Accept, proposer, Feature.State(HState.Proposing));
+            if (seeker >= 0 && mayUnion) Person(sc, HVerb.AcceptChild, seeker, Feature.Situation(HSituation.SeekingChild));
             if (asker >= 0) Person(sc, HVerb.AcceptCare, asker, Feature.State(HState.AskingCare));
             if (food && beggar >= 0) Person(sc, HVerb.Feed, beggar, Feature.State(HState.Begging1 + Math.Min(2, Math.Max(0, sc.People[beggar].DisplayLevel - 1))));
             else if (food && sick >= 0) Person(sc, HVerb.Feed, sick, Feature.State(HState.Sick));
@@ -376,7 +401,13 @@ namespace God.Sim.Population.Households
                 bool trying = pp.Display == DisplayKind.Trying && pp.DisplayTarget == self.Id;
                 Person(sc, HVerb.TryForChild, partner, trying ? Feature.State(HState.Trying) : 0);
             }
+            if (unionMate >= 0)
+            {
+                var up = sc.People[unionMate];
+                Person(sc, HVerb.TryForChild, unionMate, up.Display == DisplayKind.Trying ? Feature.State(HState.Trying) : Feature.Situation(HSituation.UnionPartner));
+            }
             if (mate >= 0) Person(sc, HVerb.Propose, mate, Feature.Self(HSelf.Unpartnered));
+            if (mayUnion && audience && seeker < 0 && unionMate < 0) SelfAct(sc, HVerb.SeekChild, Feature.Self(HSelf.WantsChild));
             if (home && !food && (hungerBand >= 1 || needing)) Store(sc, HVerb.TakeFromStore);
             if (home && food && hungerBand == 0) Store(sc, HVerb.Store);
             if (owed >= 0) Person(sc, HVerb.EndCare, owed, Feature.Situation(sc.People[owed].DisplayLevel >= 3 ? HSituation.CareOwed3 : HSituation.CareOwed2));
@@ -395,6 +426,14 @@ namespace God.Sim.Population.Households
             Thinker.TargetFeatures(sc, at, Feature.NpcRel((int)rel), group, extra);
         }
 
+        /// <summary>A candidate done where it stands (D4: showing that it wants a child), with one self feature.</summary>
+        private static void SelfAct(ThinkScratch sc, byte verb, uint extra)
+        {
+            int at = Thinker.AddCandidate(sc, verb, IntentTarget.Node, 0, sc.Self.Node, 0, 0);
+            if (at < 0) return;
+            Thinker.TargetFeatures(sc, at, extra);
+        }
+
         /// <summary>A candidate at the household store (its own hut: known to it), with the store's features.</summary>
         private static void Store(ThinkScratch sc, byte verb)
         {
@@ -405,7 +444,7 @@ namespace God.Sim.Population.Households
             Thinker.TargetFeatures(sc, at, Feature.Class(HClass.Store), Feature.Category(ObjCategory.Store), Feature.PlaceRef(self.HomeNode), need);
         }
 
-        /// <summary>The kin term (Hamilton): <c>r̂ x (100 + KinWeight) / 100 x 0.6</c> for care aimed at a person, from its own beliefs only.</summary>
+        /// <summary>The kin term (Hamilton): <c>rÌ‚ x (100 + KinWeight) / 100 x 0.6</c> for care aimed at a person, from its own beliefs only.</summary>
         public static int KinTerm(ThinkScratch sc, int cand)
         {
             if (!M4(sc) || cand < 0 || cand >= sc.CandCount) return 0;
@@ -437,9 +476,18 @@ namespace God.Sim.Population.Households
                 case HVerb.Beg: g = sc.Traits[Trait.Count + 0]; break;
                 case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.AskCare: case HVerb.AcceptCare: g = sc.Traits[Trait.Count + 2]; break;
                 case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: g = sc.Traits[Trait.Count + 3]; break;
+                case HVerb.SeekChild: case HVerb.AcceptChild: g = sc.Traits[Trait.Count + 2]; break;
                 default: return prior;
             }
-            return (int)((long)prior * g / 1000);
+            long v = (long)prior * g / 1000;
+            // D4 preferences (2 x pref / 1000, 500 neutral): companionship on partnering, child desire on everything about a child
+            if (sc.Traits.Length >= Preferences.TraitLength)
+                switch (verb)
+                {
+                    case HVerb.Propose: case HVerb.Accept: v = v * 2 * sc.Traits[Preferences.TraitCompanionship] / 1000; break;
+                    case HVerb.TryForChild: case HVerb.SeekChild: case HVerb.AcceptChild: v = v * 2 * sc.Traits[Preferences.TraitChildDesire] / 1000; break;
+                }
+            return (int)v;
         }
 
         /// <summary>Personality biases of M4's verbs (traits -100..100): generosity on care, boldness on proposing, patience against accepting at once, loyalty against leaving.</summary>
@@ -451,7 +499,7 @@ namespace God.Sim.Population.Households
                 case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: return traits[Trait.Generosity] / 4;
                 case HVerb.Propose: return traits[Trait.Boldness] / 3;
                 case HVerb.Accept: return -traits[Trait.Patience] / 3;
-                case HVerb.TryForChild: return traits[Trait.KinWeight] / 4;
+                case HVerb.TryForChild: case HVerb.SeekChild: case HVerb.AcceptChild: return traits[Trait.KinWeight] / 4;
                 case HVerb.Leave: return -150 - traits[Trait.Loyalty] / 2;
                 case HVerb.AskCare: return traits[Trait.Trustfulness] / 4;
                 case HVerb.EndCare: return traits[Trait.Vengefulness] / 4;
@@ -465,7 +513,7 @@ namespace God.Sim.Population.Households
             switch (Feature.KindOf(f))
             {
                 case FeatureKind.Role: return v == HRole.Child ? "is a child" : v == HRole.Elder ? "is old" : null;
-                case FeatureKind.Self: return v == HSelf.Unpartnered ? "has no partner" : v == HSelf.HasDependants ? "has children at home" : null;
+                case FeatureKind.Self: return v == HSelf.Unpartnered ? "has no partner" : v == HSelf.HasDependants ? "has children at home" : v == HSelf.WantsChild ? "may look for a child" : null;
                 case FeatureKind.ObjClass: return v == HClass.Store ? "household store" : null;
                 case FeatureKind.ObjState:
                     switch (v)
@@ -480,6 +528,7 @@ namespace God.Sim.Population.Households
                     {
                         case HSituation.DependantInNeed: return "a dependant in need"; case HSituation.CareOwed1: return "is owed a little care";
                         case HSituation.CareOwed2: return "is owed care"; case HSituation.CareOwed3: return "is owed much care";
+                        case HSituation.UnionPartner: return "agreed a child with it"; case HSituation.SeekingChild: return "wants a child";
                     }
                     return null;
                 default: return null;

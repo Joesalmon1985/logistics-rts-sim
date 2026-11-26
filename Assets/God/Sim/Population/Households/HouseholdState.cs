@@ -46,11 +46,41 @@ namespace God.Sim.Population.Households
         public int Given, Returned;
     }
 
+    /// <summary>
+    /// A reproductive relationship (owner D4 §2, M4.39): two adults who both agreed to try for a child together. It is the
+    /// only route to a conception and is a record of its own, apart from the romantic <see cref="Partnership"/>, the household,
+    /// biological parenthood (<c>NpcLife.Mother/BioFather</c>, the pedigree) and caregiving (care acts, <see cref="CareArrangement"/>).
+    /// Kind 1: two romantic partners who both chose to try (formed on their second "try"); kind 2: agreed outside any
+    /// partnership (one showed it wanted a child, the other accepted). It lapses when neither has tried with the other for
+    /// <c>Partner.UnionLapseMilli</c>, or at a death; nothing ends it to force anything.
+    /// </summary>
+    public sealed class ReproductiveUnion
+    {
+        public int Id, A, B;
+        public long StartTick, LastTryTick;
+        public int Initiator;
+        public byte Kind;
+        public int Children;
+        public const byte Partners = 1, Independent = 2;
+    }
+
+    /// <summary>
+    /// An economic partnership (owner D4 §2): a STUB record type only. The ontology keeps it apart from the other relationship
+    /// kinds; M5 (barter) and M6 (labour) own its mechanics and nothing in M4 forms one (SHARED_CONTRACTS 12, conflicts table).
+    /// </summary>
+    public sealed class EconomicPartnership
+    {
+        public int Id, A, B;
+        public long StartTick;
+        public byte Kind;
+    }
+
     /// <summary>Counters of the life cycle (tests and reports; reconciled with the events).</summary>
     public sealed class LifeStats
     {
         public int Births, Immigrants, Emigrants, Conceptions, Miscarriages, Partnerships, PartnershipsEnded, Fostered, Orphaned;
         public int Infections, Estates, EstatesSettled;
+        public int Unions, UnionsEnded;
     }
 
     /// <summary>
@@ -63,6 +93,10 @@ namespace God.Sim.Population.Households
         public List<Household> Households = new List<Household>();
         public List<Partnership> Partnerships = new List<Partnership>();
         public List<CareArrangement> Care = new List<CareArrangement>();
+        /// <summary>Reproductive relationships (D4), ascending id; and the economic-partnership stub list (always empty in M4).</summary>
+        public int NextUnionId = 1;
+        public List<ReproductiveUnion> Unions = new List<ReproductiveUnion>();
+        public List<EconomicPartnership> Economic = new List<EconomicPartnership>();
         /// <summary>Open estates, in order of death tick then deceased id (MATERIAL 2.6).</summary>
         public List<Estate.EstateRecord> Estates = new List<Estate.EstateRecord>();
         /// <summary>Per hex: how fouled it is (0..FoulMax), the sanitation term of disease.</summary>
@@ -119,6 +153,12 @@ namespace God.Sim.Population.Households
             h.Add(st.Births); h.Add(st.Immigrants); h.Add(st.Emigrants); h.Add(st.Conceptions); h.Add(st.Miscarriages); h.Add(st.Partnerships);
             h.Add(st.PartnershipsEnded); h.Add(st.Fostered); h.Add(st.Orphaned); h.Add(st.Infections); h.Add(st.Estates); h.Add(st.EstatesSettled);
             h.Add(DayDone); h.Add(ImmigrationDay); h.Add(ImmigrationYear); h.Add(Announced ? 1 : 0); foreach (int n in ImmigrantsThisYear) h.Add(n);
+            // D4 (unity/demog): the relationship records
+            h.Add(NextUnionId); h.Add(Unions.Count);
+            foreach (var u in Unions) { h.Add(u.Id); h.Add(u.A); h.Add(u.B); h.Add(u.StartTick); h.Add(u.LastTryTick); h.Add(u.Initiator); h.Add(u.Kind); h.Add(u.Children); }
+            h.Add(Economic.Count);
+            foreach (var e in Economic) { h.Add(e.Id); h.Add(e.A); h.Add(e.B); h.Add(e.StartTick); h.Add(e.Kind); }
+            h.Add(st.Unions); h.Add(st.UnionsEnded);
         }
     }
 
@@ -126,6 +166,9 @@ namespace God.Sim.Population.Households
     public static class DisplayKind
     {
         public const byte None = 0, Beg = 1, Propose = 2, AskCare = 3, Trying = 4, Sick = 5, NeedsHome = 6, CarePartner = 7, Partnered = 8;
+        /// <summary>D4: wanting a child (shown at its own spot, to no one in particular; seen by those it could conceive with), and
+        /// the observer-relative mark of the person it has a reproductive relationship with.</summary>
+        public const byte SeekChild = 9, UnionPartner = 10;
     }
 
     /// <summary>
@@ -179,6 +222,12 @@ namespace God.Sim.Population.Households
         public int LastDaily = -1;
         /// <summary>Foraged and gathered work ticks yesterday (the work hazard).</summary>
         public int WorkTicks;
+        /// <summary>
+        /// D4 individual preferences (0..1000, 500 typical): companionship (wanting a romantic partner), wanting children, and
+        /// commitment (from <see cref="Preferences.ExclusiveFrom"/> it keeps reproduction inside its partnership and asks the
+        /// same of its partners). Drawn once at its origin; the decider reads them as <c>Npc.Traits</c> 16-18.
+        /// </summary>
+        public int Companionship = 500, ChildDesire = 500, Commitment = 500;
 
         public void AddTo(ref StateHasher h)
         {
@@ -194,6 +243,7 @@ namespace God.Sim.Population.Households
             h.Add(AttendChecks); h.Add(AloneChecks); h.Add(AloneShare); h.Add(CareGiven); h.Add(CareReceived);
             h.Add(Display | (DisplayLevel << 8)); h.Add(DisplayTarget); h.Add(DisplayUntil); h.Add(WorkAcc);
             h.Add(OrphanSince); h.Add((Fostered ? 1 : 0) | (ToldFostered ? 2 : 0)); h.Add(CueCarer); h.Add(CueDays); h.Add(CueDay); h.Add(LastDaily); h.Add(WorkTicks);
+            h.Add(Companionship); h.Add(ChildDesire); h.Add(Commitment);
         }
     }
 }
