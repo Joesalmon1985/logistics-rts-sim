@@ -136,7 +136,7 @@ namespace God.Runner.Tests
             Assert.Less(fullOn, fullFrozen, "the learner eats less than the frozen NPC when not hungry");
         }
 
-        public sealed class NaturalResult { public int ThinksToFirstEat = -1, FullThinks, FullEats, HungryThinks, HungryEats; }
+        public sealed class NaturalResult { public int ThinksToFirstEat = -1, FullThinks, FullEats, HungryThinks, HungryEats; public int[] FullByDay = new int[32], FullEatsByDay = new int[32]; }
 
         public static NaturalResult Natural(ulong seed, LearningMode mode, int days = 5)
         {
@@ -153,7 +153,7 @@ namespace God.Runner.Tests
             foreach (var t in rows)
             {
                 if (t.Day < 2 || !t.Attends(ObjClass.BerryBush)) continue;
-                if (t.Hunger <= comfort) { r.FullThinks++; if (t.Verb == Verb.Eat) r.FullEats++; }
+                if (t.Hunger <= comfort) { r.FullThinks++; if (t.Verb == Verb.Eat) r.FullEats++; r.FullByDay[Math.Min(31, t.Day)]++; if (t.Verb == Verb.Eat) r.FullEatsByDay[Math.Min(31, t.Day)]++; }
                 else { r.HungryThinks++; if (t.Verb == Verb.Eat) r.HungryEats++; }
             }
             return r;

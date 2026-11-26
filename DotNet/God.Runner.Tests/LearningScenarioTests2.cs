@@ -27,10 +27,20 @@ namespace God.Runner.Tests
         /// </summary>
         public static (double aLast50, int fillerQ) DelayedReward(ulong seed, int traceShift, int trials = 200)
         {
+            var r = DelayedRewardRun(seed, traceShift, trials);
+            return (r.ALast50, r.FillerQ);
+        }
+
+        /// <summary>What one L3 run shows: the TestA share, the filler choices and the learned values of all four options.</summary>
+        public sealed class DelayedResult { public double ALast50; public int FillerQ, QA, QB, Q33, Q34, Filler33Last50, FillerLast50; }
+
+        public static DelayedResult DelayedRewardRun(ulong seed, int traceShift, int trials = 200, LearningMode mode = LearningMode.On)
+        {
+            var res = new DelayedResult();
             var tu = new LearningTuning { TraceShift = traceShift };
             var sc = new ThinkScratch
             {
-                Mind = new NpcMind(tu.Caps, 64, LearningMode.On), Instincts = InstinctTable.Empty, Traits = new int[Trait.Count],
+                Mind = new NpcMind(tu.Caps, 64, mode), Instincts = InstinctTable.Empty, Traits = new int[Trait.Count],
                 Learn = LearnTraits.Neutral, LearningTuning = tu, Tuning = new PopulationTuning(), Grid = NodeGrid.Get(3),
             };
             sc.Base[0] = Feature.Place(PlaceKind.Meadow); sc.Base[1] = Feature.Time(TimeOfDay.Day); sc.BaseCount = 2;
@@ -65,12 +75,17 @@ namespace God.Runner.Tests
                     Learner.EndOngoing(st); // a lab act ends at once
                     Learner.DecayTraces(st, Learner.TraceShiftOf(tu, tr));
                     if (step == 0 && c.Verb == Verb.TestA) { pending = tick + 30; if (trial >= trials - 50) aCount++; }
+                    if (step > 0 && trial >= trials - 50) { res.FillerLast50++; if (c.Class == 33) res.Filler33Last50++; }
                 }
             }
-            // the filler's learned value, in its own context
-            AddLabOnly(sc, Verb.TestFiller, 33);
-            int fq = st.SumStw(sc.Keys, sc.Cand[0].KeyOffset, sc.Cand[0].KeyCount, Verb.TestFiller, out _);
-            return (aCount / 50.0, fq);
+            // the learned values, each in its own context
+            int Q(byte verb, int cls) { AddLabOnly(sc, verb, cls); return st.SumStw(sc.Keys, sc.Cand[0].KeyOffset, sc.Cand[0].KeyCount, verb, out _); }
+            res.ALast50 = aCount / 50.0;
+            res.FillerQ = res.Q33 = Q(Verb.TestFiller, 33);
+            res.Q34 = Q(Verb.TestFiller, 34);
+            res.QA = Q(Verb.TestA, 31);
+            res.QB = Q(Verb.TestB, 32);
+            return res;
         }
 
         private static void AddLabOnly(ThinkScratch sc, byte verb, int cls) { sc.CandCount = 0; AddLab(sc, verb, cls); }
@@ -97,6 +112,7 @@ namespace God.Runner.Tests
             double maxOff = off.Max(r => r.aLast50);
             TestContext.WriteLine($"L3 delayed reward 30 ticks, 200 trials, seeds 1-100: TestA in the last 50 trials {meanOn:P1} on average; {seeds90} of 100 seeds at >= 90%");
             TestContext.WriteLine($"L3 traces disabled (TraceShift 16): {meanOff:P1} on average, highest seed {maxOff:P0}; filler mean Q {on.Average(r => r.fillerQ):F0} vp (criterion: within +-100)");
+            // the filler's Q is printed, not asserted: the published +-100 clause is replaced (D3 review, M3RevisedCriteriaTests.L3)
             Assert.GreaterOrEqual(seeds90, 95, "L3: TestA chosen in >= 90% of the last 50 trials in >= 95% of 100 seeds");
             Assert.LessOrEqual(meanOff, 0.65, "with traces disabled the delayed reward is not learned (<= 65%)");
         }
@@ -152,11 +168,11 @@ namespace God.Runner.Tests
         /// nodes from A. With <paramref name="regrowA"/>, A regrows on day 12 and B empties. Trips are decisions to eat or
         /// forage at a bush other than the previous decision's target.
         /// </summary>
-        public static TripResult Moves(ulong seed, bool regrowA, int days)
+        public static TripResult Moves(ulong seed, bool regrowA, int days, Action<SimTuning> tune = null, LearningMode mode = LearningMode.On)
         {
-            var sim = LearningFixtures.Empty(seed);
+            var sim = LearningFixtures.Empty(seed, tune);
             int glade = LearningFixtures.Glade(sim, 9);
-            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, LearningMode.On, hunger: 300);
+            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, mode, hunger: 300);
             int aNode = LearningFixtures.Step(sim, glade, 0, 5), bNode = LearningFixtures.Step(sim, aNode, 2, 6);
             var a = LearningFixtures.Bush(sim, SourceKind.Berries, aNode, 300, 300, 300);
             ResourceSource b = null;
@@ -207,9 +223,12 @@ namespace God.Runner.Tests
             var l6 = Watch.Seeds(1, 40, s => Moves(s, true, 16));
             int a15 = l6.Sum(r => r.ToA[13] + r.ToA[14] + r.ToA[15]), b15 = l6.Sum(r => r.ToB[13] + r.ToB[14] + r.ToB[15]);
             TestContext.WriteLine($"L6 seeds 1-40: days 13-15 trips to A {Watch.Pct(a15, a15 + b15):F1}% (criterion > 50% by day 15); by day " + string.Join(" ", Enumerable.Range(10, 6).Select(d => d + ":" + l6.Sum(r => r.ToA[d]) + "/" + l6.Sum(r => r.ToB[d]))));
-            Assert.LessOrEqual(Watch.Pct(a, a + b), 10.0, "L5: at most 10% of trips go to the emptied bush on days 8-10");
-            Assert.GreaterOrEqual(floor, 36, "L5 (amended, see report): by day 40 A's place entries are non-positive, gone, or at most the decay floor (Shr(Ltw,5) no longer decays below 32), in 90% of seeds");
-            Assert.Greater(Watch.Pct(a15, a15 + b15), 50.0, "L6: trips to A are back above half once it regrows");
+            // D3 review: these behaviours hold just as well with learning Frozen or Off (the NPC sees that A is empty or full),
+            // so they are regression checks of behaviour, not evidence of learning. L5 as a learning criterion is an outstanding
+            // target (LearningTargetsOutstanding.L5_ForgettingOfALearnedPlace).
+            Assert.LessOrEqual(Watch.Pct(a, a + b), 10.0, "L5 behaviour: at most 10% of trips go to the emptied bush on days 8-10");
+            Assert.GreaterOrEqual(floor, 36, "L5 store bound (not a learning test: an empty store passes too): by day 40 A's place entries are non-positive, gone, or at most the decay floor (32), in 90% of seeds");
+            Assert.Greater(Watch.Pct(a15, a15 + b15), 50.0, "L6 behaviour: trips to A are back above half once it regrows");
         }
 
         // ---------------------------------------------------------------- L7: learning On, Off, Frozen
@@ -286,6 +305,43 @@ namespace God.Runner.Tests
             return (share, npc.Mind.Store.HashWeights());
         }
 
+        public sealed class NurtureProbeResult { public double ShadeShare; public int Choices; public bool Died; }
+
+        /// <summary>
+        /// L8 measured on what the nurture taught: as <see cref="Nurture"/>, but at the end of the 5 nurture days the store is
+        /// frozen (NPC_LEARNING 4.16 "as loaded"), so the test days measure the learned rate without the test glade teaching
+        /// it anything new; the test then runs 5 days (days 5-9) and takes every meal choice from a bush there.
+        /// <paramref name="nurtureMode"/> Frozen is the control: nothing is learned in either life.
+        /// </summary>
+        public static NurtureProbeResult NurtureProbe(ulong seed, bool bitter, LearningMode nurtureMode, int testDays = 5)
+        {
+            var sim = LearningFixtures.Empty(seed);
+            int glade = LearningFixtures.Glade(sim);
+            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.Default, nurtureMode, hunger: 400);
+            int near = LearningFixtures.Step(sim, glade, 0, 2), other = LearningFixtures.Step(sim, glade, 3, 2);
+            var first = LearningFixtures.Bush(sim, bitter ? SourceKind.Nightshade : SourceKind.Berries, near);
+            var roots = bitter ? LearningFixtures.Bush(sim, SourceKind.Roots, other) : null;
+            int tpd = sim.State.Setup.TicksPerDay;
+            var w = new Watch(sim, npc.Id);
+            w.RunDays(5 + testDays, tick =>
+            {
+                if (tick == 5L * tpd)
+                {
+                    npc.Mind.Store.Mode = LearningMode.Frozen;
+                    PopulationModule.RemoveSource(sim.State, first);
+                    if (roots != null) PopulationModule.RemoveSource(sim.State, roots);
+                    LearningFixtures.Bush(sim, SourceKind.Nightshade, near);
+                    LearningFixtures.Bush(sim, SourceKind.Roots, other);
+                }
+            });
+            var test = w.Rows[npc.Id].Where(r => r.Day >= 5 && r.Verb == Verb.Eat && r.TargetClass != ObjClass.FoodLot).ToList();
+            return new NurtureProbeResult
+            {
+                Choices = test.Count, Died = !npc.Alive,
+                ShadeShare = test.Count == 0 ? 0 : (double)test.Count(r => r.TargetClass == ObjClass.Nightshade) / test.Count,
+            };
+        }
+
         [Test]
         public void L8_SameNatureDifferentNurture()
         {
@@ -305,9 +361,23 @@ namespace God.Runner.Tests
 
         public static (int thinksToFish, bool conjByDay3) Generalise(ulong seed, bool berriesEdible)
         {
+            var r = GeneraliseDetail(seed, berriesEdible);
+            return (r.ThinksToEatAtSpot, r.ConjByDay3);
+        }
+
+        /// <summary>
+        /// What the L13 NPC does when it first meets fish. Thinks are counted from the first think after the fish appears.
+        /// <c>ThinksToEatAtSpot</c> is the published count (only thinks attending the fish spot, only Eat at the spot);
+        /// <c>FirstFoodAction</c> counts every think and takes either food verb on the fish (Eat at the spot, or ForageAt it);
+        /// <c>FirstMeal</c> is the first think whose choice is a fish meal (Eat at the spot, or Eat of the carried fish).
+        /// </summary>
+        public sealed class GeneraliseResult { public int ThinksToEatAtSpot, FirstFoodAction = -1, FirstMeal = -1; public byte FirstVerbOnFish; public bool ConjByDay3, EatSpotWithin3Attended; }
+
+        public static GeneraliseResult GeneraliseDetail(ulong seed, bool berriesEdible, LearningMode mode = LearningMode.On)
+        {
             var sim = LearningFixtures.Empty(seed);
             int glade = LearningFixtures.Glade(sim);
-            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.None, LearningMode.On, hunger: 600);
+            var npc = LearningFixtures.Npc(sim, glade, InstinctSet.None, mode, hunger: 600);
             int near = LearningFixtures.Step(sim, glade, 0, 2);
             var first = LearningFixtures.Bush(sim, berriesEdible ? SourceKind.Berries : SourceKind.Nightshade, near);
             int tpd = sim.State.Setup.TicksPerDay;
@@ -335,7 +405,17 @@ namespace God.Runner.Tests
             });
             var after = w.Rows[npc.Id].Where(r => r.Tick > shown && r.Attends(ObjClass.FishSpot)).ToList();
             int k = after.FindIndex(r => r.Verb == Verb.Eat && r.TargetClass == ObjClass.FishSpot);
-            return (k < 0 ? 99 : k + 1, conj);
+            var res = new GeneraliseResult { ThinksToEatAtSpot = k < 0 ? 99 : k + 1, ConjByDay3 = conj };
+            res.EatSpotWithin3Attended = res.ThinksToEatAtSpot <= 3;
+            var all = w.Rows[npc.Id].Where(r => r.Tick > shown).ToList();
+            // the carry was emptied when the fish appeared and the berries removed, so any carried lot eaten afterwards is fish
+            int f = all.FindIndex(r => r.TargetClass == ObjClass.FishSpot && (r.Verb == Verb.Eat || r.Verb == Verb.ForageAt));
+            res.FirstFoodAction = f < 0 ? -1 : f + 1;
+            int m = all.FindIndex(r => r.Verb == Verb.Eat && (r.TargetClass == ObjClass.FishSpot || r.TargetClass == ObjClass.FoodLot));
+            res.FirstMeal = m < 0 ? -1 : m + 1;
+            var firstOn = all.FirstOrDefault(r => r.TargetClass == ObjClass.FishSpot);
+            res.FirstVerbOnFish = firstOn.Verb;
+            return res;
         }
 
         [Test]
@@ -448,57 +528,32 @@ namespace God.Runner.Tests
     }
 
     /// <summary>
-    /// The M3 learning criteria that the evidence shows do not hold as written (each asserts the design's number exactly).
-    /// They are explicit, not skipped silently: each reason names the finding, and the report proposes the amendment.
-    /// Run them with <c>--filter Category=M3-open</c> or by name.
+    /// Outstanding M3 improvement targets (owner decision D3: ACCEPTANCE_TESTS M3, "Outstanding improvement targets"). Each
+    /// asserts the original number unweakened. They are explicit, not skipped silently: each reason names the finding and the
+    /// proposed fix. Run them with <c>--filter Category=M3-target</c> or by name. The criteria revised under D3 section 5 are
+    /// in <see cref="M3RevisedCriteriaTests"/>, each with a control that shows it still needs learning.
     /// </summary>
-    [Category("M3-open")]
-    public class LearningCriteriaOpen
+    [Category("M3-target")]
+    public class LearningTargetsOutstanding
     {
-        [Test, Explicit("LS1/L1 per seed (M3b: 90.4% of probes, 37 of 100 seeds at >= 95%): each seed has only about 11 probes, so one slow probe drops a seed below 95%; see DEV_LOG M3 record")]
-        public void LS1_PerSeed95()
+        [Test, Explicit("L5 (M3.5) target, D3 review: the scenario does not depend on learning. Frozen and Off avoid the emptied bush as well as the learner (days 8-10: 0.3% vs 0.6%), because the NPC sees A is empty; A's PlaceRef entries hold at most 2 vp of positive long-term value on day 5 (0 in 36 of 40 seeds), so there is nothing for forgetting to act on, and decay off gives the same result. Fix: put A out of sight of where the NPC gets hungry, so the trip rests on the learned place value, and find out why PlaceRef keys gain no long-term value. See DEV_LOG M3 record")]
+        public void L5_ForgettingOfALearnedPlace()
+        {
+            var on = Watch.Seeds(1, 40, s => LearningScenarioTests2.Moves(s, false, 40));
+            Assert.GreaterOrEqual(on.Count(r => r.ASumLtwDay5 > 32), 36, "A's place was learned by day 5 (positive long-term value above the decay floor in >= 90% of seeds)");
+            Assert.GreaterOrEqual(on.Count(r => r.AEntriesGone), 38, "L5: by day 40 A's PlaceRef entries have Ltw <= 0 or are evicted (>= 95% of seeds)");
+        }
+
+        [Test, Explicit("L2 sated eating after repeated hunger relief, D3 review: in the LS1 probe run (hunger raised to 600 four times a day) the learner eats when sated in 43.7% of thinks against Frozen 25.3%; learning changed the winner in 54.5% of those eats (mean learned term +74 vp, mean hunger 230). Below comfort the context has no hunger feature (Thinker.BuildBase adds DriveBand only for band >= 1), so the value Eat earns when hungry sits on keys the sated state shares. Fix: a sated feature (DriveBand band 0 for hunger) or a conjunction that can carry the sated context; a design change to NPC_LEARNING 3.1, not a tuning")]
+        public void L2b_SatedEatingAfterRepeatedHungerRelief()
         {
             var on = Watch.Seeds(1, 100, s => LearningScenarioTests.ForagerProbes(s, LearningMode.On, InstinctSet.None, 2, 5));
-            Assert.GreaterOrEqual(on.Count(x => x.Probes > 0 && 100.0 * x.Within5 / x.Probes >= 95), 95);
-        }
-
-        [Test, Explicit("LS1 frozen baseline (M3b: 64.7%): a frozen-from-birth naive NPC beside a bush chooses at random among about 4 options, so it eats within 5 thinks by chance; <= 40% depends on the candidate count, not on learning")]
-        public void LS1_FrozenBaseline40()
-        {
             var fr = Watch.Seeds(1, 100, s => LearningScenarioTests.ForagerProbes(s, LearningMode.Frozen, InstinctSet.None, 2, 5));
-            Assert.LessOrEqual(Watch.Pct(fr.Sum(x => x.Within5), fr.Sum(x => x.Probes)), 40.0);
+            Assert.LessOrEqual(Watch.Pct(on.Sum(x => x.FullEats), on.Sum(x => x.FullThinks)), Watch.Pct(fr.Sum(x => x.FullEats), fr.Sum(x => x.FullThinks)),
+                "after repeated hunger relief the learner eats when sated no more often than the frozen NPC");
         }
 
-        [Test, Explicit("L2 (M3b: 17.7%, frozen 30.6%): eating below comfort is unrewarded but its only cost is a small frustration, so exploration noise (ExploreBase 150) still picks it; <= 15% is not reached")]
-        public void L2_Below15()
-        {
-            var nat = Watch.Seeds(1, 100, s => LearningScenarioTests.Natural(s, LearningMode.On));
-            Assert.LessOrEqual(Watch.Pct(nat.Sum(x => x.FullEats), nat.Sum(x => x.FullThinks)), 15.0);
-        }
-
-        [Test, Explicit("L3 filler (M3b: +222 vp): a filler between TestA and its reward learns the reward that reliably follows it; within +-100 contradicts eligibility-trace credit")]
-        public void L3_FillerWithin100()
-        {
-            var on = Watch.Seeds(1, 100, s => LearningScenarioTests2.DelayedReward(s, 2));
-            Assert.LessOrEqual(Math.Abs(on.Average(r => r.fillerQ)), 100);
-        }
-
-        [Test, Explicit("L8 pairs (M3b: means 45.8% vs 1.7%, 30 of 50 pairs >= 30 points): each pair is judged on 6 meal choices, so a 30-point per-pair gap is two choices")]
-        public void L8_Pairs30()
-        {
-            var rich = Watch.Seeds(1, 50, s => LearningScenarioTests2.Nurture(s, false));
-            var bitter = Watch.Seeds(1, 50, s => LearningScenarioTests2.Nurture(s, true));
-            Assert.GreaterOrEqual(Enumerable.Range(0, 50).Count(i => rich[i].shadeShare - bitter[i].shadeShare >= 0.30), 48);
-        }
-
-        [Test, Explicit("L13 (M3b: 71%, 77% under the M3 goods credit; control 1%): with realised goods value, foraging the new fish into the carry competes with eating it on the spot; the count only takes Eat at the fish spot")]
-        public void L13_Fish80()
-        {
-            var raised = Watch.Seeds(1, 100, s => LearningScenarioTests2.Generalise(s, true));
-            Assert.GreaterOrEqual(raised.Count(r => r.thinksToFish <= 3), 80);
-        }
-
-        [Test, Explicit("LS3 (M3b: 0.5% vs 1.3%): the drive-relief rule pays the amount of relief, not its rate, and at default nights a sleeper in the open ends near cold comfort, so the hut pays nothing the reward sees and costs a walk. With colder nights the learner prefers the hut (31% vs 1%)")]
+        [Test, Explicit("LS3 (M3.21) target; redesign scheduled after M4 (D3 section 3: mild, adverse and changing conditions; shelter changes physical circumstances). M3b: 0.5% vs 1.3%; the drive-relief rule pays the amount of relief, not its rate, and at default nights a sleeper in the open ends near cold comfort, so the hut pays nothing the reward sees and costs a walk. With colder nights the learner prefers the hut (31% vs 1%)")]
         public void LS3_Hut20Points()
         {
             var on = Watch.Seeds(1, 50, s => LearningScenarioTests2.Shelter(s, LearningMode.On, 3));
@@ -506,12 +561,19 @@ namespace God.Runner.Tests
             Assert.GreaterOrEqual(Enumerable.Range(0, 50).Count(i => on[i].hutShareDays45 - frozen[i].hutShareDays45 >= 0.20), 45);
         }
 
-        [Test, Explicit("LS4 per seed (M3b realised tool value: 38.4% vs 14.0% frozen, >= 20 points in 27 of 50 seeds): about 15 trips per seed, so per-seed differences carry about 16 points of sampling noise")]
+        [Test, Explicit("LS4 (M3.22) per-seed target; redesign scheduled after M4 (D3 section 4: review the every-seed requirement; make the axe genuinely advantageous; add retaining productive assets). M3b realised tool value: 38.4% vs 14.0% frozen, >= 20 points in 27 of 50 seeds; about 15 trips per seed, so per-seed differences carry about 16 points of sampling noise")]
         public void LS4_Axe20Points()
         {
             var on = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.On, true));
             var frozen = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.Frozen, true));
             Assert.GreaterOrEqual(Enumerable.Range(0, 50).Count(i => on[i].axeShare - frozen[i].axeShare >= 0.20), 45);
+        }
+
+        [Test, Explicit("LS4 (M3.22) conjunction target; redesign scheduled after M4 (D3 section 4). M3b: 16 of 50. The scenario names ObjClass(LogPile) & Self(carrying tool), a pair without a drive, which recruitment (NPC_LEARNING 4.11) cannot form; the test accepts any pair with the wood class or the raw category")]
+        public void LS4_Conjunction80()
+        {
+            var on = Watch.Seeds(1, 50, s => LearningScenarioTests2.Axe(s, LearningMode.On, true));
+            Assert.GreaterOrEqual(on.Count(r => r.conj), 40);
         }
     }
 }
