@@ -683,6 +683,7 @@ namespace God.Sim.Population
             // decision: credit the decisions before it with this one's value (TD), act on it, then open its trace (Build
             // carries its hut as the episode key).
             bool travelling = cand.IsRunning && npc.Path != null && npc.PathIdx < npc.Path.Length;
+            if (ev.TraceDecisions) TraceDecision(ev, npc.Id, why, travelling);
             if (travelling) { Start(s, ev, npc, cand, day); return; }
             Experience(mind, st, s.Tick, prev);
             Learner.Step(st, lt, tr, NextValue(st, lt, cand, why), day, _sink);
@@ -692,6 +693,17 @@ namespace God.Sim.Population
             Learner.OpenTrace(st, lt, tr, (int)s.Tick, cand.Verb, _sc.Keys, cand.KeyOffset, cand.KeyCount, q, episodeKey, day, _sink);
             Learner.DecayTraces(st, Learner.TraceShiftOf(lt, tr));
         }
+
+        /// <summary>The decision trace (<see cref="DecisionMade"/>, Full recording only): one row per chosen intent with its terms.</summary>
+        private static void TraceDecision(EventBuffer ev, int npc, in DecisionRecord w, bool continued) =>
+            ev.Add(new DecisionMade
+            {
+                Npc = npc, Verb = w.Verb, TargetKind = w.TargetKind, TargetId = w.TargetId, TargetNode = w.TargetNode, TargetClass = w.TargetClass,
+                Total = w.Total, Instinct = w.Instinct, Need = w.Need, Learned = w.Learned, Social = w.Social, Culture = w.Culture,
+                Personality = w.Personality, Cost = w.Cost, Explore = w.Explore, Candidates = w.Candidates,
+                LearnedChangedWinner = w.LearnedChangedWinner, ExploreWon = w.ExploreWon, Continued = continued,
+                SecondVerb = w.SecondVerb, SecondTotal = w.SecondTotal,
+            });
 
         /// <summary>The reward the previous decision earned (consumed by the next TD step), remembered as an experience when not zero.</summary>
         private static void Experience(NpcMind mind, AssociationStore st, long tick, in DecisionRecord prev)

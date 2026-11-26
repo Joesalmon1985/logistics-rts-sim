@@ -129,7 +129,9 @@ namespace God.Sim
             new EventInfo(typeof(Learning.AssociationUpdated), 330, 1, TelemetryDomain.Learning, "fact_learning", true),
             new EventInfo(typeof(Learning.ConjunctionRecruited), 331, 1, TelemetryDomain.Learning, "fact_learning"),
             new EventInfo(typeof(Learning.ConjunctionFreed), 332, 1, TelemetryDomain.Learning, "fact_learning"),
-            new EventInfo(typeof(Learning.EpisodeClosed), 333, 1, TelemetryDomain.Learning, "fact_learning"));
+            new EventInfo(typeof(Learning.EpisodeClosed), 333, 1, TelemetryDomain.Learning, "fact_learning"),
+            new EventInfo(typeof(Learning.DecisionMade), 334, 1, TelemetryDomain.Learning, "fact_decision", true,
+                note: "one chosen intent: verb, target, total score and its terms; emitted only at Full recording of the learning domain (EventBuffer.TraceDecisions)"));
 
         /// <summary>Lookup over <see cref="All"/>; filled once in the static constructor (allow-listed in the static audit).</summary>
         private static readonly Dictionary<Type, EventInfo> ByType = BuildIndex();

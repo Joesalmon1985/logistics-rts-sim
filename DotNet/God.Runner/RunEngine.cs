@@ -199,6 +199,9 @@ namespace God.Runner
                 RunId = res.RunId, Seed = spec.Seed, ScenarioName = sc.Name, Level = level, SampleEvery = sc.SampleEvery, Dir = dir,
                 Domains = sc.RecordDomains.ToDictionary(kv => kv.Key, kv => kv.Value),
             };
+            // the decision trace (DecisionMade, fact_decision) is built only at Full recording of the learning domain
+            var learnLevel = info.Domains.TryGetValue("learning", out var ll) ? ll : level;
+            sim.TraceDecisions = learnLevel >= RecordingLevel.Full;
             var metrics = new MetricsRecorder(sc.Metrics);
             var recorders = new List<IRunRecorder> { metrics };
             if (!spec.SkipJsonl && (level >= RecordingLevel.Summary || info.Domains.Values.Any(v => v >= RecordingLevel.Summary))) recorders.Add(new JsonlRecorder());

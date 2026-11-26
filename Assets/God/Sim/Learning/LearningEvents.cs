@@ -41,6 +41,27 @@ namespace God.Sim.Learning
         public int DaysElapsed;
     }
 
+    /// <summary>
+    /// One chosen intent (NPC_LEARNING 7, the decision trace; warehouse <c>fact_decision</c>): the verb and target chosen and
+    /// the score it won with, split into its terms (Total = Instinct + Learned + Social + Culture + Personality - Cost +
+    /// Explore; Need is the drive-gated part of Instinct). Emitted only when the host asks for it
+    /// (<see cref="EventBuffer.TraceDecisions"/>, set by Full recording of the learning domain), so it costs nothing otherwise
+    /// and never changes the sim. <see cref="Continued"/>: the running intent was chosen again on the way to its target.
+    /// </summary>
+    public sealed class DecisionMade : DomainEvent
+    {
+        public int Npc;
+        public byte Verb;
+        public Policy.IntentTarget TargetKind;
+        public int TargetId, TargetNode;
+        public byte TargetClass;
+        public int Total, Instinct, Need, Learned, Social, Culture, Personality, Cost, Explore;
+        public int Candidates;
+        public bool LearnedChangedWinner, ExploreWon, Continued;
+        public byte SecondVerb;
+        public int SecondTotal;
+    }
+
     /// <summary>The learning sink of one NPC's think: turns the core's reports into events on the sim's buffer.</summary>
     public sealed class EventLearningSink : ILearningSink
     {
