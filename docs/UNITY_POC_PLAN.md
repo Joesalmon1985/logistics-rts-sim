@@ -422,3 +422,125 @@ The owner's request after stage 2:
 | Q2 | Combat (Opus): kit stats, duel rounds, block/dodge/crit/armour/pierce, ranged/melee movement, vehicles removed, building damage by weapon, soldier models with kit, duel effects, tests. | S0 |
 | Q3 | Tutorial and HUD (Sonnet): start card Tutorial, tutorial cards and step goals, tabbed build bar, grouped stock bar, models for the 17 new buildings and the harvester levels. | S0 |
 | Q4 | AI and balance (Opus): gear plans, upgrades, trade of processed goods, war with kits, tuning across seeds to the targets, play guide. | Q1, Q2, Q3 |
+
+# Stage 4: a living population under a state (planned 26 Nov 2026, not started)
+
+Stage 4 is a large change, about the size of stages 2 and 3 together:
+- Persistent NPCs replace carriers, builders, harvesters and spawned soldiers.
+- NPCs have drives, perception, memory, personality and a gesture language.
+- They barter, help, lend, promise, lie, fight, forgive, migrate and defect, so the examples from *The Selfish Gene* can arise by themselves.
+- The player becomes a **state**. It acts only through incentives: taxes, wages, purchase offers, contracts, public works, welfare and military pay. The state can also designate sites and commit treasury goods, but nothing is built without NPC labour.
+- A headless runner, policy interfaces and an integer inference engine get the game ready for neural-network training. The training itself is not part of stage 4.
+
+**Start here:** [STAGE_4_HANDOVER.md](STAGE_4_HANDOVER.md). It has the current status, how to begin, and links to every design document.
+
+## Owner decisions (25–26 Nov 2026)
+
+| Question | Answer |
+|---|---|
+| Who does the work | NPCs replace carriers, builders and harvesters. Soldiers are the same persistent NPCs. |
+| Faction membership | NPCs belong to a faction and can change sides: migration, defection, capture. |
+| Control | The player is a state and steers only through incentives. It designates building, road and HQ sites and commits treasury resources, but NPC labour must do the building. |
+| Ownership | State-owned, private (one NPC) and communal (a group of NPCs). Individuals can eventually found their own workshops and businesses without the state. |
+| Money | Barter only at first (goods for goods or labour). Currency comes in a later stage. |
+| Victory | Keep 10 VP for now. Victory conditions become pluggable (prosperity, population, economic development later), and a sandbox mode has no victory limit. |
+| Training | Python and PyTorch. The owner has a GPU. Training itself is not part of stage 4. |
+| Determinism | Exact. Deployed models must replay exactly, so inference uses integers only inside the sim. |
+| Game theory | No ordinary NPC is classed as a Hawk, Sucker and so on. Strategies arise from personality, circumstance, experience and decisions. The named strategies exist only as selectable benchmark policies for experiments. |
+| Experiments | Kept separate: controlled maths experiments with the book's payoffs, and island experiments where payoffs come from real consequences. The island is never forced towards a theoretical equilibrium. |
+| Communication | A non-verbal, compositional gesture language. It is a real sim mechanic: NPCs can lie, break promises, misunderstand and ignore. Animations show the events; they never decide them. |
+| Cognition | Inspired by *Creatures*: drives, local perception, attention, knowledge, situation recognition, social memory, personality, learning from consequences and from imitation. No NPC reads the true game state. |
+
+## The design documents (in `docs/stage4/`)
+
+| Document | What it owns |
+|---|---|
+| [POPULATION_DESIGN.md](stage4/POPULATION_DESIGN.md) | The NPC: body, drives, life cycle, households, personality, citizenship |
+| [COMMUNICATION_AND_COGNITION_DESIGN.md](stage4/COMMUNICATION_AND_COGNITION_DESIGN.md) | Perception, attention, knowledge, decisions, learning, imitation, the gesture language |
+| [SOCIAL_MEMORY_DESIGN.md](stage4/SOCIAL_MEMORY_DESIGN.md) | Relationships, trust, obligations, reputation, gossip, forgetting |
+| [ECONOMY_DESIGN.md](stage4/ECONOMY_DESIGN.md) | Personal goods, property, barter, gifts, loans, jobs, workshops, public goods |
+| [STATE_DESIGN.md](stage4/STATE_DESIGN.md) | Treasury, taxes, wages, contracts, sites, welfare, laws, loyalty, victory conditions |
+| [MILITARY_DESIGN.md](stage4/MILITARY_DESIGN.md) | Enlistment, kit and rations, assignments, morale, retreat, desertion, surrender, defection |
+| [GAME_THEORY_DESIGN.md](stage4/GAME_THEORY_DESIGN.md) | How each example in the book maps onto the game, and what each needs |
+| [STRATEGY_BENCHMARKS.md](stage4/STRATEGY_BENCHMARKS.md) | Exact named strategies, the lab experiments and their expected results |
+| [HEADLESS_SIMULATION.md](stage4/HEADLESS_SIMULATION.md) | The runner: scenarios, parallel runs, replays, hashes, metrics |
+| [AI_TRAINING_DESIGN.md](stage4/AI_TRAINING_DESIGN.md) | Policy interfaces, observations and actions, integer inference, the Python bridge |
+| [ACCEPTANCE_TESTS.md](stage4/ACCEPTANCE_TESTS.md) | Automated tests and acceptance criteria for each milestone |
+| [research/SELFISH_GENE_NOTES.md](stage4/research/SELFISH_GENE_NOTES.md) | Every game-theory example in the book, with page numbers |
+| [research/CREATURES_NOTES.md](stage4/research/CREATURES_NOTES.md) | The *Creatures* brain and biochemistry, and what to borrow |
+
+## Architecture changes
+
+New sim modules, all pure C# with integers, the seeded `Rng`, and fixed iteration order by id:
+- `Sim/Population`: NPCs, bodies, drives, households, life cycle.
+- `Sim/Cognition`: perception, attention, beliefs, decisions, learning.
+- `Sim/Social`: memory, obligations, reputation.
+- `Sim/Comms`: gesture events and interpretation.
+- `Sim/State`: treasury, policies, contracts, laws.
+- `Sim/Lab`: game-theory experiments.
+- `Sim/Policy`: interfaces, the registry, and the integer network.
+
+Existing modules keep their role as the physical world:
+- territory: board, nodes, flags, roads, building footprints;
+- combat resolution (duels);
+- trade between factions, which becomes envoy NPCs;
+- factions (wars, VP).
+
+**Rules that keep it correct:**
+- **NPCs see only their observation.** A policy receives an observation object built by the perception system from what the NPC can see, remember or has been told. Policies cannot reach `GodState`, and a test enforces this.
+- **Policies act only through intents.** Intents (walk, pick up, give, gesture, attack, work, sleep, and so on) are validated and applied by the sim, like commands are now. Scripted policies and trained policies go through the same path.
+- **Three policy seams, each replaceable alone:** `INpcPolicy` (one individual), `IMilitaryPolicy` (an NPC on service), `IFactionPolicy` (the state, for AI factions). The human player is an `IFactionPolicy` fed by the HUD.
+- **Tuning moves to a per-sim object.** Tuning becomes a `SimTuning` object owned by the state, so parallel runs can use different parameters. Today `MilitaryTuning` has 12 mutable static fields, which would clash.
+- **Victory conditions become a list** of `IVictoryCondition` in `GameSetup`: VP (10), sandbox (none), and later prosperity, population and economy.
+- **Exchanges are never atomic between NPCs.** Each hand-over is a separate action, so the other side can always fail to reciprocate. Only institutions, such as a state market or a court, add enforcement.
+- **Staggered thinking.** Each NPC decides on its own tick slot (id mod N), about once a second, with cheap reflexes every tick. Work per tick is bounded and in a fixed order.
+
+## Reuse, refactor or replace
+
+| Existing system | Stage 4 |
+|---|---|
+| Board, territory, nodes, roads, flags, footprints, `FindRoadPath`, `Pathing` | **Reuse.** Roads and flags stay physical; NPCs walk them. |
+| Command gate (`Check`/`Submit`), event buffer, `Rng`, save files, state hash, invariants | **Reuse and extend:** new command and intent types, save version 3, hash takes in new modules. |
+| `EconomySystem` walkers (carrier, builder, harvester) | **Replace** with NPC jobs (haul, build, gather). Removed in M5 once NPC labour passes the same economy tests. |
+| `EcoBuilding` recipes, input/output stores, priorities, upgrades | **Refactor.** Recipes and stores stay; buildings get an owner (state, private, communal), staff slots and wage terms. Priorities become a state purchase or delivery order. |
+| Barracks kit assembly, `Kit`, gear stats, `Duel`, `DuelSim`, `GroupBattle`, `MilitaryRules` damage | **Reuse.** Barracks becomes an armoury that issues kit to enlisted NPCs. |
+| `MilUnit` and its spawning | **Replace:** a soldier is an NPC in a service role. `MilitaryState` keeps combat-only data keyed by NPC id. |
+| Defend flags and targets | **Refactor** into posted military assignments with pay and bounties. |
+| `AiBrain` (economy, gear, military, diplomacy), `AiTrader` | **Refactor into `IFactionPolicy`** in M1. Its economy parts are rewritten for incentives in M11. |
+| Envoys and trade between factions | **Reuse.** The envoy becomes an NPC volunteer paid by the state; offers stay. |
+| HUD (build bar, cards, trade, tutorial) | **Refactor:** placing becomes "designate a site and post a contract". New state panel (taxes, wages, purchases, budget), NPC inspector, gesture animations. The tutorial is rewritten in M11. |
+| `SmokeRun` in the player, `DotNet` tests | **Reuse.** The new `DotNet/God.Runner` console app becomes the main headless tool. |
+
+## Milestones (each leaves a working, tested game)
+
+Order and dependencies. The minimum viable versions come first; later enhancements are listed per document. Acceptance criteria are in [ACCEPTANCE_TESTS.md](stage4/ACCEPTANCE_TESTS.md).
+
+| # | Milestone | Needs | The game afterwards |
+|---|---|---|---|
+| M0 | **Headless runner.** `God.Runner` console app with scenario files, seeded runs, parallel instances, replay files (setup plus command log), hash checkpoints, save/load, JSONL metrics. `SimTuning` per sim (the `MilitaryTuning` statics removed). `IVictoryCondition` with VP and sandbox. | - | Same as stage 3, plus a runner and sandbox mode. |
+| M1 | **Policy seams.** `IFactionPolicy` wraps `AiBrain` unchanged. `PolicyRegistry` by name, observation builders for factions, a policy test that bans `GodState` access. | M0 | Same game; AI chosen per faction from scenario files. |
+| M2 | **Game-theory lab, maths only.** `Sim/Lab` with benchmark strategies and the book's payoff matrices; replicator and agent dynamics; runner `lab` command; [STRATEGY_BENCHMARKS.md](stage4/STRATEGY_BENCHMARKS.md) results reproduced. | M0 | Same game; lab reports. |
+| M3 | **NPC core** (`GameSetup.Population` on; off keeps the stage 3 game). NPCs with bodies, drives (hunger, fatigue, cold, safety), local perception, attention, beliefs about places, a scripted utility `INpcPolicy`, foraging, shared sleeping huts they build from logs, personal inventories, households. Old walkers still run the economy. | M1 | NPCs live, eat and sleep beside the old economy. NPC inspector card. |
+| M4 | **Social memory and gestures.** Relationship records, recognising individuals, trust. Gesture events with a fixed vocabulary and the view's animations. Honest offers, accept or refuse, gifts. Barter as separate hand-overs, so walking away is possible. | M3 | NPCs barter food and raws with each other and are seen gesturing. |
+| M5 | **NPC labour replaces walkers; the state appears.** Treasury, tax, wages, job offers (haul, build, gather, work a shift), construction contracts on designated sites with committed treasury goods, state purchase offers. AI factions and the HUD use them. Walkers are deleted. | M4 | **The first stage 4 game:** the economy runs entirely on NPCs who choose to work. |
+| M6 | **Deferred exchange and reputation.** Promises, loans, obligations, help requests, gossip, reputation, retaliation and forgiveness arising from memory. Lies and broken promises. Misunderstanding. | M4 | Credit, cheating and grudges in villages; island lab scenarios. |
+| M7 | **Ownership.** Private and communal buildings, stockpiles and huts; NPC-founded workshops that sell output; theft with witnesses; communal goods and free-riding. | M5, M6 | Private businesses beside state ones. |
+| M8 | **Soldiers are NPCs.** Enlistment contracts, kit issued from the armoury, rations, pay, posted assignments and bounties, morale, retreat, desertion, surrender, prisoners. `MilUnit` spawning deleted. | M5 | Wars fought by volunteers who can break. |
+| M9 | **Citizenship and loyalty.** Loyalty score, migration between factions, defection, capture of HQs moving people, asking to join a faction. | M6, M8 | People vote with their feet. |
+| M10 | **Families and culture.** Partnerships, courtship, children, kinship and relatedness, inheriting personality with mutation, imitation of successful neighbours (memes), local conventions. | M6 | Generations; strategies spread by inheritance and copying. |
+| M11 | **Incentive AI, balance and tutorial.** `IFactionPolicy` rewritten to play only through state levers; balance across seeds; HUD and tutorial rewritten; play guide. | M5–M10 | **Stage 4 complete as a game.** |
+| M12 | **Neural-network readiness.** Fixed-size observation and action encodings, action masks, the integer network (`IntNet`) as a policy, dataset export from scripted policies, Python bridge and environment wrapper, model verification tool. Training itself is out of scope. | M1, M11 | Trained models can be dropped in and verified. |
+
+Can run in parallel once their needs are met:
+- M2 alongside M3–M5.
+- M7, M8 and M10 alongside each other after M6, as long as their files don't overlap.
+- Parts of M12 (the encodings) can start after M3.
+
+## Minimum viable stage 4
+
+M0 to M5 plus M8 makes the smallest version that is still the new game:
+- NPCs who live, barter and choose jobs;
+- a state that taxes and pays;
+- volunteer soldiers.
+
+M6, M7, M9 and M10 add the depth the game-theory examples need. M11 makes it fun, and M12 makes it trainable.
