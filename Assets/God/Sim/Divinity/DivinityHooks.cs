@@ -161,9 +161,11 @@ namespace God.Sim.Divinity
         public static ReadOnlyArray<VerbInfo> Verbs()
         {
             var l = new List<VerbInfo>();
+            VerbsD2(l); // flagged additive edit (D2)
             VerbsD6(l);
             return new ReadOnlyArray<VerbInfo>(l);
         }
+        static partial void VerbsD2(List<VerbInfo> into);
         static partial void VerbsD6(List<VerbInfo> into);
 
         /// <summary>The instinct rows of this domain, appended to <c>InstinctTable.Default</c>.</summary>

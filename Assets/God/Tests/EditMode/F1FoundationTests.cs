@@ -66,7 +66,10 @@ namespace God.Sim.Tests
             var types = DivineCommandTypes();
             Assert.GreaterOrEqual(types.Count, 18, "every concrete command of contracts 10.2");
             // D1 adjustment: the four configuration commands have D1's handlers; the rest stay handler-less until D2-D7
-            types = types.Where(t => !DivineCommandSet.IsConfiguration(t) && t != typeof(CastMiracle)).ToList(); // D3: CastMiracle has its handler
+            types = types.Where(t => !DivineCommandSet.IsConfiguration(t)).ToList();
+            // D2 adjustment: suggestions, commands and compulsions have D2's handlers
+            types = types.Where(t => t != typeof(IssueSuggestion) && t != typeof(IssueCommand) && t != typeof(IssueCompulsion) && t != typeof(CancelCompulsion)
+                && t != typeof(CastMiracle)).ToList(); // and D3's miracle handler (merge adjustment)
             var sim = Game(11, divinity: 1, humanGod: 1);
             Assert.IsNotNull(sim.State.Divinity, "stub state with the switch on");
             ulong before = sim.StateHash();
@@ -132,14 +135,14 @@ namespace God.Sim.Tests
             var sim = Game(13, divinity: 1, humanGod: 1);
             Assert.AreEqual(DivineReasons.NotYourGod, sim.Submit(new IssueSuggestion { God = 2 }).Reason, "god 2 is not the human's");
             Assert.AreEqual(DivineReasons.NotYourGod, sim.Submit(new IssueSuggestion { God = 0 }).Reason);
-            Assert.AreEqual(Reasons.Disabled, sim.Submit(new IssueSuggestion { God = 1 }).Reason, "the human's god passes the gate (no handler yet)");
+            Assert.AreEqual(DivineReasons.ActUnavailable, sim.Submit(new IssueSuggestion { God = 1 }).Reason, "the human's god passes the gate (D2 adjustment: D2's handler refuses the empty act)");
             var watch = Game(13, divinity: 1, humanGod: 0);
             Assert.AreEqual(DivineReasons.NotYourGod, watch.Submit(new IssueSuggestion { God = 1 }).Reason, "watch mode: no god holds the Human seat");
             // in-step (an AI god through the director, D1): not refused by the authorship gate
             var sys = new InStepSubmitter { Sim = sim, Command = new IssueSuggestion { God = 2 } };
             sim.AddSystem(910, sys);
             sim.Step();
-            Assert.AreEqual(Reasons.Disabled, sys.Result.Reason);
+            Assert.AreEqual(DivineReasons.ActUnavailable, sys.Result.Reason, "D2 adjustment: past the gate, D2's handler refuses the empty act");
             Assert.Throws<ArgumentOutOfRangeException>(() => Game(13, divinity: 1, humanGod: 3));
         }
 
@@ -364,7 +367,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(0x4000_0001, DivinityIds.AvatarBodyId(1));
             Assert.AreEqual(35, EpisodeKey.Possession);
             Assert.AreEqual(VerbTable.Rows.Count, VerbTable.Rows.Select(r => r.Id).Distinct().Count());
-            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id)), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102
+            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && r.Id != Divinity.DivineVerb.Give), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102; D2 adjustment: D2's 119
         }
     }
 }

@@ -1,0 +1,36 @@
+{
+  "scenarioVersion": 1,
+  "name": "d2_command",
+  "description": "D2 headless demonstration: a god-only population game with six gods; god 1 is an AI-seated ScheduleGod issuing instructions to founders (no object named: any candidate of the verb counts): day 0 a suggestion and then a command to gather to founder 1, day 1 a command to eat to founder 2 and one to gather to founder 3, day 2 a compulsion to take on founder 5 (blocked while it knows nothing it can pick up, then times out), day 3 a compulsion to take up a tool on founder 6 (done when it knows an axe it can reach). Every recipient perceives, decodes and decides with its own policy; the compulsions walk, act or stay blocked through the control seam, never teleporting or conjuring.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 10,
+    "victory": [ { "kind": "sandbox" } ],
+    "control": "godonly",
+    "humanGod": 0
+  },
+  "tuning": {
+    "Divinity.Enabled": 1,
+    "Divinity.Mythic.Start": 500000,
+    "Divinity.Mythic.Max": 1000000,
+    "Divinity.Mythic.Schedule.S1.Tick": 600, "Divinity.Mythic.Schedule.S1.God": 1, "Divinity.Mythic.Schedule.S1.Template": 2,
+    "Divinity.Mythic.Schedule.S1.A": 4, "Divinity.Mythic.Schedule.S1.B": 1, "Divinity.Mythic.Schedule.S1.C": 600,
+    "Divinity.Mythic.Schedule.S2.Tick": 660, "Divinity.Mythic.Schedule.S2.God": 1, "Divinity.Mythic.Schedule.S2.Template": 3,
+    "Divinity.Mythic.Schedule.S2.A": 4, "Divinity.Mythic.Schedule.S2.B": 1, "Divinity.Mythic.Schedule.S2.C": 600,
+    "Divinity.Mythic.Schedule.S3.Tick": 1300, "Divinity.Mythic.Schedule.S3.God": 1, "Divinity.Mythic.Schedule.S3.Template": 3,
+    "Divinity.Mythic.Schedule.S3.A": 8, "Divinity.Mythic.Schedule.S3.B": 2, "Divinity.Mythic.Schedule.S3.C": 600,
+    "Divinity.Mythic.Schedule.S4.Tick": 1400, "Divinity.Mythic.Schedule.S4.God": 1, "Divinity.Mythic.Schedule.S4.Template": 3,
+    "Divinity.Mythic.Schedule.S4.A": 4, "Divinity.Mythic.Schedule.S4.B": 3, "Divinity.Mythic.Schedule.S4.C": 600,
+    "Divinity.Mythic.Schedule.S5.Tick": 2500, "Divinity.Mythic.Schedule.S5.God": 1, "Divinity.Mythic.Schedule.S5.Template": 5,
+    "Divinity.Mythic.Schedule.S5.A": 5, "Divinity.Mythic.Schedule.S5.B": 5, "Divinity.Mythic.Schedule.S5.C": 600,
+    "Divinity.Mythic.Schedule.S6.Tick": 3700, "Divinity.Mythic.Schedule.S6.God": 1, "Divinity.Mythic.Schedule.S6.Template": 5,
+    "Divinity.Mythic.Schedule.S6.A": 9, "Divinity.Mythic.Schedule.S6.B": 6, "Divinity.Mythic.Schedule.S6.C": 600
+  },
+  "policies": {
+    "god": { "default": "IdleGod", "1": "ScheduleGod" }
+  },
+  "stop": { "maxDays": 6 },
+  "checks": [ "invariants", "no-exceptions" ]
+}
