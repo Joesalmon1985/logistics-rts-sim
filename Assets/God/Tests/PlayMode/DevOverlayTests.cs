@@ -52,7 +52,7 @@ namespace God.Game.Tests
             var g = new GestureMade { Speaker = speaker.Id, Act = GestureAct.Warn, Target = other.Id };
 
             // overlay off: the gesture is animated, no text, no line
-            GestureLayer.OnEvent(g);
+            GestureLayer.OnEvent(g); PoseLayer.OnEvent(g);
             for (int i = 0; i < 3; i++) yield return null;
             Assert.IsNotNull(GestureLayer.Current(speaker.Id), "the gesture is held for drawing");
             Assert.AreEqual(0, Labels(boot), "no gesture text with the overlay off");

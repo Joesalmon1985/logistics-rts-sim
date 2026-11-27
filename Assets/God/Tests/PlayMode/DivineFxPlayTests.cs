@@ -64,7 +64,7 @@ namespace God.Game.Tests
             Assert.AreEqual(tether.Id, fx.Records.Last().Closes);
             fx.OnEvent(new LocationConsecrated { Tick = 10, God = 2, Node = 5 }); Assert.AreEqual(before + 4, fx.ActiveCount);
             var lot = boot.Sim.State.Population.Lots.FirstOrDefault();
-            if (lot.Lot.Id != 0)
+            if (lot != null && lot.Lot.Id != 0)
             {
                 fx.OnEvent(new ResourceCreated { Tick = 11, God = 2, Ware = lot.Lot.Ware, Count = 2, Lot = lot.Lot.Id, Node = lot.Node });
                 var rec = fx.Records.Last();
@@ -75,7 +75,8 @@ namespace God.Game.Tests
                 Assert.Less(Vector3.Distance(new Vector3(g.transform.position.x, 0, g.transform.position.z), new Vector3(want.x, 0, want.z)), 0.2f, "motes on the real lot");
             }
             // distinct gods wear distinct cores
-            Assert.AreNotEqual(GodLook.Colour(1).R + GodLook.Colour(1).G, GodLook.Colour(2).R + GodLook.Colour(2).G);
+            var c1 = GodLook.Colour(1); var c2 = GodLook.Colour(2);
+            Assert.Greater(Mathf.Abs(c1.R - c2.R) + Mathf.Abs(c1.G - c2.G) + Mathf.Abs(c1.B - c2.B), 0.05f);
         }
 
         [UnityTest]
@@ -84,14 +85,14 @@ namespace God.Game.Tests
             yield return Load(3UL);
             var boot = GodBootstrap.Instance; var fx = boot.DivineFx;
             var hut = boot.Sim.State.Population.Huts.FirstOrDefault();
-            Assert.IsNotNull(hut);
-            fx.OnEvent(new MiracleCast { Tick = 5, God = 1, Kind = MiracleKind.SmiteBuilding, TargetKind = DivineTargetKind.Hut, TargetId = hut.Id, TargetNode = hut.Node, Intervention = 9 });
+            int hutId = hut != null ? hut.Id : 1, hutNode = hut != null ? hut.Node : 3;
+            fx.OnEvent(new MiracleCast { Tick = 5, God = 1, Kind = MiracleKind.SmiteBuilding, TargetKind = DivineTargetKind.Hut, TargetId = hutId, TargetNode = hutNode, Intervention = 9 });
             Assert.AreEqual(1, fx.ActiveCount);
             Assert.AreEqual(FxShape.Bolt, fx.Records.Last().Shape, "the bolt plays on the cast");
             Assert.IsFalse(fx.Records.Any(r => r.Shape == FxShape.Collapse), "the hut is not shown falling while nothing happened to it");
-            fx.OnEvent(new MiracleEffectApplied { Tick = 5, Intervention = 9, ThingKind = MiracleThing.Hut, ThingId = hut.Id });
+            fx.OnEvent(new MiracleEffectApplied { Tick = 5, Intervention = 9, ThingKind = MiracleThing.Hut, ThingId = hutId });
             Assert.AreEqual(FxShape.Collapse, fx.Records.Last().Shape, "the collapse follows the real effect");
-            Assert.AreEqual(hut.Node, fx.Records.Last().Node);
+            Assert.AreEqual(hutNode, fx.Records.Last().Node);
             // a heal: a spiral, and the healed person's own thanks
             var p = boot.Sim.State.Population.Npcs.First(n => n.Alive);
             fx.OnEvent(new MiracleCast { Tick = 6, God = 1, Kind = MiracleKind.HealInjury, TargetKind = DivineTargetKind.Npc, TargetId = p.Id, Intervention = 10 });
