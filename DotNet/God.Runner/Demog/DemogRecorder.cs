@@ -322,11 +322,11 @@ namespace God.Runner.Demog
             var g = _s.Territory.Grid;
             foreach (var n in _s.Population.Npcs)
             {
-                if (!n.Alive || n.Life == null || n.Life.Sex != 0 || n.Id % 8 != slot || n.Life.LastDaily != day || n.Stage == LifeStage.Child) continue;
+                if (!Bodies.IsLivingPerson(n) || n.Life == null || n.Life.Sex != 0 || n.Id % 8 != slot || n.Life.LastDaily != day || n.Stage == LifeStage.Child) continue;
                 var l = n.Life;
                 bool conceived = l.PregFather != 0 && l.PregStart >= t;
                 if (l.PregFather != 0 && !conceived) continue;
-                long age = _cal.AgeMilli(n.BornTick, t);
+                long age = Bodies.AgeMilli(_cal, n, t);
                 int end = Reproduction.FertileEnd(lt, l.Pheno.Fertility);
                 if (age < lt.FertileFromMilli || age > end) continue;
                 if (l.LastBirthTick >= 0 && t - l.LastBirthTick < _cal.TicksForAgeMilli(lt.AfterBirthMilli)) continue;
@@ -334,19 +334,19 @@ namespace God.Runner.Demog
                 // the possible father: the man she is trying with, else her union mate, else a man partner
                 Npc mate = null;
                 bool sheTries = l.TryWith != 0 && l.TryingUntil >= t;
-                if (sheTries) { var m = _s.Population.Find(l.TryWith); if (m?.Life != null && m.Alive && m.Life.Sex == 1 && m.Stage != LifeStage.Child) mate = m; }
+                if (sheTries) { var m = _s.Population.Find(l.TryWith); if (m?.Life != null && Bodies.IsLivingPerson(m) && m.Life.Sex == 1 && m.Stage != LifeStage.Child) mate = m; }
                 if (mate == null)
                     foreach (var u in _s.Households.Unions)
                     {
                         if (u.A != n.Id && u.B != n.Id) continue;
                         var m = _s.Population.Find(u.A == n.Id ? u.B : u.A);
-                        if (m?.Life != null && m.Alive && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
+                        if (m?.Life != null && Bodies.IsLivingPerson(m) && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
                     }
                 if (mate == null)
                     foreach (int o in Partnerships.PartnersOf(_s, n.Id))
                     {
                         var m = _s.Population.Find(o);
-                        if (m?.Life != null && m.Alive && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
+                        if (m?.Life != null && Bodies.IsLivingPerson(m) && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
                     }
                 if (mate == null)
                 {
@@ -372,7 +372,7 @@ namespace God.Runner.Demog
                             int who = u.A == n.Id || u.B == n.Id ? n.Id : u.A == mate.Id || u.B == mate.Id ? mate.Id : 0;
                             if (who == 0) continue;
                             var o = _s.Population.Find(u.A == who ? u.B : u.A);
-                            if (o?.Life == null || !o.Alive) continue;
+                            if (o?.Life == null || !Bodies.IsLivingPerson(o)) continue;
                             if (o.Life.TryWith == who && o.Life.TryingUntil >= t || o.Life.PregFather == who || _s.Population.Find(who)?.Life?.PregFather == o.Id) dormant = false;
                         }
                         if (dormant) y.BothNoUnionDormant++;

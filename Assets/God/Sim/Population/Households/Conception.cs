@@ -37,7 +37,7 @@ namespace God.Sim.Population.Households
                 var u = hs.Unions[i];
                 if (u.A != who.Id && u.B != who.Id) continue;
                 var other = s.Population.Find(u.A == who.Id ? u.B : u.A);
-                if (other?.Life != null && other.Alive)
+                if (other?.Life != null && Bodies.IsLivingPerson(other))
                 {
                     if (other.Life.TryWith == who.Id && other.Life.TryingUntil >= s.Tick) continue;
                     if (other.Life.PregFather == who.Id || who.Life.PregFather == other.Id) continue;
