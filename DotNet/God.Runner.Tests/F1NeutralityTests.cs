@@ -120,7 +120,7 @@ namespace God.Runner.Tests
         [Test]
         public void AllSwitchesOn_StubStateSmoke()
         {
-            var on = TestUtil.Spec("band_6x20", 2, 2400, "tuning.Divinity.Enabled=1", "tuning.Orgs.Enabled=1", "tuning.Civ.Enabled=1");
+            var on = TestUtil.Spec("band_6x20", 2, 2400, "tuning.Divinity.Enabled=1", "tuning.Orgs.Enabled=1", "tuning.Civ.Enabled=1", "tuning.Civ.C1.BuildEnabled=0"); // C1 (flagged edit): stub state = C1 idle
             var off = TestUtil.Spec("band_6x20", 2, 2400);
             on.CheckpointEvery = off.CheckpointEvery = 600;
             var r = TestUtil.RunAll(new[] { on, off });

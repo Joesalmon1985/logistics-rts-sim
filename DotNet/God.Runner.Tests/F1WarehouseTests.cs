@@ -30,7 +30,7 @@ namespace God.Runner.Tests
         {
             var all = WarehouseDb.Migrations();
             Assert.IsTrue(all.Any(m => m.version == 7 && m.name == "0007_divine_core.sql"));
-            Assert.AreEqual(7, WarehouseDb.CurrentVersion, "schema v7 after F1");
+            Assert.GreaterOrEqual(WarehouseDb.CurrentVersion, 7, "schema v7 after F1"); // C1 (flagged edit): 0015 lands later migrations
             string path = Path.Combine(_dir, "v6.sqlite");
             using (var c = new SqliteConnection("Data Source=" + path + ";Pooling=False"))
             {
