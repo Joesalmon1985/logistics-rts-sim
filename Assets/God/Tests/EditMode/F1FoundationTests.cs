@@ -69,7 +69,8 @@ namespace God.Sim.Tests
             types = types.Where(t => !DivineCommandSet.IsConfiguration(t)).ToList();
             // D2 adjustment: suggestions, commands and compulsions have D2's handlers
             types = types.Where(t => t != typeof(IssueSuggestion) && t != typeof(IssueCommand) && t != typeof(IssueCompulsion) && t != typeof(CancelCompulsion)
-                && t != typeof(CastMiracle)).ToList(); // and D3's miracle handler (merge adjustment)
+                && t != typeof(CastMiracle) // and D3's miracle handler (merge adjustment)
+                && t != typeof(RevealCommandment) && t != typeof(ReviseCommandment) && t != typeof(RevokeCommandment)).ToList(); // D6 adjustment: D6's handlers
             var sim = Game(11, divinity: 1, humanGod: 1);
             Assert.IsNotNull(sim.State.Divinity, "stub state with the switch on");
             ulong before = sim.StateHash();
@@ -349,7 +350,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(0, OrgEvents.Catalog.Count, "F1 adds no event rows (organisations)");
             foreach (var e in CivEvents.Catalog) Assert.IsTrue(e.Code >= 270 && e.Code <= 289, "C1 rows stay in C1's block: " + e.Name);
             // D1 adjustment (D3 widens to 800-829): divinity rows stay in their blocks (contracts 15.1)
-            foreach (var e in DivinityEvents.Catalog) Assert.That(e.Code >= 800 && e.Code <= 829, e.Name + " " + e.Code);
+            foreach (var e in DivinityEvents.Catalog) Assert.That(e.Code >= 800 && e.Code <= 829 || e.Code >= 860 && e.Code <= 879, e.Name + " " + e.Code); // D6 adjustment: 860-879
             foreach (var d in new[] { TelemetryDomain.Lending, TelemetryDomain.Organisation, TelemetryDomain.Service }) Assert.AreEqual((500, 599), EventCatalog.RangeOf(d, false), d.ToString());
             for (int d = 60; d <= 66; d++) Assert.AreEqual((800, 899), EventCatalog.RangeOf((TelemetryDomain)d, false), ((TelemetryDomain)d).ToString());
             Assert.AreEqual(2, EventCatalog.Of(typeof(Social.GestureMade)).Version, "GestureMade v2 (DurationTicks)");
@@ -367,7 +368,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(0x4000_0001, DivinityIds.AvatarBodyId(1));
             Assert.AreEqual(35, EpisodeKey.Possession);
             Assert.AreEqual(VerbTable.Rows.Count, VerbTable.Rows.Select(r => r.Id).Distinct().Count());
-            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && r.Id != Divinity.DivineVerb.Give), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102; D2 adjustment: D2's 119
+            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && r.Id != Divinity.DivineVerb.Give && r.Id != Divinity.Doctrine.TellVerb), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102; D2 adjustment: D2's 119
         }
     }
 }

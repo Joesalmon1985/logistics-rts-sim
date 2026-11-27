@@ -83,6 +83,19 @@ namespace God.Sim.Policy
                 case ScheduleTemplate.Compulsion: return new IssueCompulsion { God = god, Act = (DivineAct)slot.A, Target = who, ExpireTicks = slot.C };
                 case ScheduleTemplate.Possess: return new BeginPossession { God = god, Npc = slot.B };
                 case ScheduleTemplate.EndPossession: return new EndPossession { God = god };
+                // D6 (flagged additive edit): commandments from the template table (pure data; the policy reads no state)
+                case ScheduleTemplate.RevealCommandment:
+                {
+                    var t = CommandmentTemplates.Get(slot.A);
+                    return new RevealCommandment { God = god, Template = slot.A, Rules = CommandmentTemplates.RulesOf(slot.A), Importance = t?.Importance ?? 0,
+                        Recipients = new DivineTarget(DivineTargetKind.Npc, slot.B, 0, slot.C) };
+                }
+                case ScheduleTemplate.ReviseCommandment:
+                {
+                    var t = CommandmentTemplates.Get(slot.B);
+                    return new ReviseCommandment { God = god, Commandment = slot.A, Rules = CommandmentTemplates.RulesOf(slot.B), Importance = slot.C != 0 ? slot.C : t?.Importance ?? 0 };
+                }
+                case ScheduleTemplate.RevokeCommandment: return new RevokeCommandment { God = god, Commandment = slot.A };
                 default: return null;
             }
         }

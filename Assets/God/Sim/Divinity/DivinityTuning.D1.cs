@@ -97,6 +97,12 @@ namespace God.Sim.Divinity
         Possess = 6,
         /// <summary><c>EndPossession</c> (D4).</summary>
         EndPossession = 7,
+        /// <summary>D6 (flagged additive edit): <c>RevealCommandment</c> { Template = A (its rules and default importance), Recipients = Npc B with Radius C }.</summary>
+        RevealCommandment = 8,
+        /// <summary>D6: <c>ReviseCommandment</c> { Commandment = A, Rules = template B's, Importance = C (0: the template's) }.</summary>
+        ReviseCommandment = 9,
+        /// <summary>D6: <c>RevokeCommandment</c> { Commandment = A }.</summary>
+        RevokeCommandment = 10,
     }
 
     /// <summary>
