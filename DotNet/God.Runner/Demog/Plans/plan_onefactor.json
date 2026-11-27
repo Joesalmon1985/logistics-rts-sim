@@ -66,6 +66,14 @@
       ]
     },
     {
+      "name": "pairing-partnersex-other-700",
+      "set": [
+        "tuning.Households.Prefs.PartnerSexMode=1",
+        "tuning.Households.Prefs.SeekOtherSexPermille=700",
+        "tuning.Households.Prefs.SeekSameSexPermille=100"
+      ]
+    },
+    {
       "name": "founders-young-band",
       "set": [
         "tuning.Households.Founders.Generator=0",

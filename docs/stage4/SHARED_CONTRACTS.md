@@ -620,6 +620,7 @@ All seven also run at Off, Summary and Full with the same hash.
 | KinMind | `UnionWith` (the mind's believed reproductive partner) | M4 |
 | HouseholdState | reproductive-union and economic-partnership lists and their hash fields (see 71f1f67) | M4 |
 | Tuning | `Households.Prefs`, `Households.Partner.{MaxLiveUnions, UnionLapseMilli, SeekTicks, IndependentUnions, UnionVp}`, `Households.Founders.Generator` and established-band fields, `Households.Care.FeedFrom` | M4 |
+| F2b partner-sex preference | `NpcLife.PartnerSeeks` (0 not drawn, 1 women, 2 men, 3 both; JSON-ignored at 0, hashed only when non-zero), stored with the D4 preferences on `NpcLife`, no new trait slot (`Npc.Traits` stays length 19); `Households.Prefs.{PartnerSexMode, SeekOtherSexPermille, SeekSameSexPermille}` (each JSON-ignored at 0); `SeenPerson.PartnerMismatch` (appended field of the F0.7 struct, filled by M4's `FillPerson`, false unless preferences are drawn): the minimal frozen-surface change, LEAD_RULINGS R61 | M4 (F2b) |
 
 ## 13. Open decisions (each with the default taken)
 

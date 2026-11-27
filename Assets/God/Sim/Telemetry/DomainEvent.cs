@@ -130,7 +130,7 @@ namespace God.Sim
             new EventInfo(typeof(Population.HutBuilt), 203, 1, TelemetryDomain.Economy, Generic),
             new EventInfo(typeof(Population.HutSiteFounded), 204, 1, TelemetryDomain.Economy, Generic),
             // ---- goods movement and ownership (205-209), F0 ----
-            new EventInfo(typeof(Population.ItemMoved), 205, 1, TelemetryDomain.Economy, Generic, true,
+            new EventInfo(typeof(Population.ItemMoved), 205, 2, TelemetryDomain.Economy, Generic, true,
                 note: "one lot moved between holders (Goods.Move); a dedicated fact_item_move is left to M13a (SHARED_CONTRACTS 13.9)"),
             new EventInfo(typeof(Population.OwnershipChanged), 206, 1, TelemetryDomain.Ownership, "fact_ownership"),
             // ---- learning (300-399), M3 ----
@@ -138,7 +138,7 @@ namespace God.Sim
             new EventInfo(typeof(Learning.ConjunctionRecruited), 331, 1, TelemetryDomain.Learning, "fact_learning"),
             new EventInfo(typeof(Learning.ConjunctionFreed), 332, 1, TelemetryDomain.Learning, "fact_learning"),
             new EventInfo(typeof(Learning.EpisodeClosed), 333, 1, TelemetryDomain.Learning, "fact_learning"),
-            new EventInfo(typeof(Learning.DecisionMade), 334, 1, TelemetryDomain.Learning, "fact_decision", true,
+            new EventInfo(typeof(Learning.DecisionMade), 334, 2, TelemetryDomain.Learning, "fact_decision", true,
                 note: "one chosen intent: verb, target, total score and its terms; emitted only at Full recording of the learning domain (EventBuffer.TraceDecisions)"));
 
         /// <summary>

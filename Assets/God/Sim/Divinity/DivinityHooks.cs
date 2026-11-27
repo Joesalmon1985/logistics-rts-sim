@@ -36,11 +36,13 @@ namespace God.Sim.Divinity
             TryStartD2(s, ev, npc, in c, day, ref handled);
             TryStartD4(s, ev, npc, in c, day, ref handled);
             TryStartD5(s, ev, npc, in c, day, ref handled);
+            TryStartD6(s, ev, npc, in c, day, ref handled); // flagged additive edit (D6)
             return handled;
         }
         static partial void TryStartD2(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
         static partial void TryStartD4(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
         static partial void TryStartD5(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
+        static partial void TryStartD6(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
 
         public static bool TryAct(GodState s, EventBuffer ev, Npc npc, int day)
         {
@@ -49,11 +51,13 @@ namespace God.Sim.Divinity
             TryActD2(s, ev, npc, day, ref handled);
             TryActD4(s, ev, npc, day, ref handled);
             TryActD5(s, ev, npc, day, ref handled);
+            TryActD6(s, ev, npc, day, ref handled); // flagged additive edit (D6)
             return handled;
         }
         static partial void TryActD2(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
         static partial void TryActD4(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
         static partial void TryActD5(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
+        static partial void TryActD6(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
 
         /// <summary>The episode key of a decision of this domain (0: none). Each slot sets <c>key</c> only while it is 0.</summary>
         public static int EpisodeKey(Npc npc, in Candidate c)
@@ -162,10 +166,12 @@ namespace God.Sim.Divinity
         {
             var l = new List<VerbInfo>();
             VerbsD2(l); // flagged additive edit (D2)
+            VerbsD4(l); // flagged additive edit (D4)
             VerbsD6(l);
             return new ReadOnlyArray<VerbInfo>(l);
         }
         static partial void VerbsD2(List<VerbInfo> into);
+        static partial void VerbsD4(List<VerbInfo> into);
         static partial void VerbsD6(List<VerbInfo> into);
 
         /// <summary>The instinct rows of this domain, appended to <c>InstinctTable.Default</c>.</summary>
@@ -213,11 +219,30 @@ namespace God.Sim.Divinity
         {
             string t = null;
             DescribeD2(f, ref t);
+            DescribeD4(f, ref t); // flagged additive edit (D4)
             DescribeD6(f, ref t);
             return t;
         }
         static partial void DescribeD2(uint f, ref string text);
+        static partial void DescribeD4(uint f, ref string text);
         static partial void DescribeD6(uint f, ref string text);
+
+        /// <summary>
+        /// R63 (Checkpoint B): the base keys of this domain, from the mind's own memory only (scratch, gate G4.1): having been
+        /// compelled (<c>SelfFeature.Compelled</c>, D2) until <see cref="DivineMind.CompelledUntil"/> (not while the spell
+        /// itself runs: then the candidate carries <c>Feature.Divine(Compelled)</c>), and a divine sign seen (D2's command
+        /// witnesses, D3's miracle signs) until <see cref="DivineMind.SignUntil"/>. Each only while the base has room.
+        /// </summary>
+        public static void AddBase(ThinkScratch sc)
+        {
+            var m = sc.Mind?.Divine;
+            if (m == null) return;
+            long t = sc.Self.Tick;
+            if (m.CompelledUntil > t && sc.Control.Kind != ControlKind.Compelled && sc.BaseCount < ThinkScratch.MaxBase)
+                sc.Base[sc.BaseCount++] = Feature.Self(SelfFeature.Compelled);
+            if (m.SignUntil > t && sc.BaseCount < ThinkScratch.MaxBase)
+                sc.Base[sc.BaseCount++] = Feature.Situation(SituationKind.DivineSign);
+        }
 
         /// <summary>Contracts 10.3 step 2: the decoded instructions read at this think into <c>sc.Divine</c> (D2).</summary>
         public static void FillDivine(ThinkScratch sc)

@@ -83,6 +83,9 @@ namespace God.Sim.Divinity
             var npc = s.Population?.Find(e.Body);
             if (npc != null && npc.Alive) ScaleReward(s, npc);
             npc?.Mind?.Divine?.Remove(e.Intervention);
+            // R63: the mind remembers having been compelled (SelfFeature.Compelled) for MemoryDays after a spell its body acted under
+            if (e.Started && npc != null && npc.Alive && npc.Mind?.Divine != null)
+                npc.Mind.Divine.CompelledUntil = s.Tick + (long)s.Tuning.Divinity.Instruction.MemoryDays * SimCalendar.Of(s).TicksPerDay;
             var reg = s.Divinity.Messages;
             if (reg == null) return;
             for (int i = 0; i < reg.Items.Count; i++) if (reg.Items[i].Id == e.Intervention) { reg.Items.RemoveAt(i); break; }

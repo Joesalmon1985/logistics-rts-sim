@@ -342,6 +342,7 @@ namespace God.Sim.Tests
                 ["HouseholdState.cs"] = "the field itself",
                 ["HouseholdEvents.cs"] = "recorded in events (analytics)",
                 ["HouseholdActs.cs"] = "a raising cue's role name (mother or father) for a fostered child",
+                ["PartnerPreference.cs"] = "F2b (R61): the partner-sex preference, an individual preference about romantic partnership only, off by default",
             };
             var bad = new List<string>();
             foreach (var f in Directory.GetFiles(Path.Combine(root, "Assets", "God", "Sim"), "*.cs", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.Ordinal))

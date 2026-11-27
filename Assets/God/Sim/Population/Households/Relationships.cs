@@ -135,7 +135,7 @@ namespace God.Sim.Population.Households
     /// companionship on proposing and accepting a partner, child desire on trying for a child, showing that it wants one and
     /// accepting such an offer. Commitment from <see cref="ExclusiveFrom"/> means "reproduction only inside my partnership".
     /// </summary>
-    public static class Preferences
+    public static partial class Preferences
     {
         /// <summary>A partnered adult with commitment at or above this keeps reproduction inside its partnership (and its partners respect it).</summary>
         public const int ExclusiveFrom = 500;
@@ -150,6 +150,8 @@ namespace God.Sim.Population.Households
             life.Companionship = One(r, pt.CompanionshipMean, pt.CompanionshipSpread);
             life.ChildDesire = One(r, pt.ChildDesireMean, pt.ChildDesireSpread);
             life.Commitment = One(r, pt.CommitmentMean, pt.CommitmentSpread);
+            // F2b: its own stream, so the three draws above (and every other stream) are unchanged
+            if (pt.PartnerSexMode == 1) DrawPartnerSex(s, npc, life);
         }
 
         private static int One(Rng r, int mean, int spread)

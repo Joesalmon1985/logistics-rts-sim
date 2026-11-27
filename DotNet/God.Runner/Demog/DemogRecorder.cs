@@ -22,6 +22,8 @@ namespace God.Runner.Demog
         public long MaturedTick = -1;
         // D4 preferences (read at the end) and what the person did (M4.40's paired comparison)
         public int ChildDesire = -1, Companionship = -1, Commitment = -1;
+        /// <summary>F2b: the partner-sex preference (0 not drawn).</summary>
+        public int PartnerSeeks;
         public long LastWantTick = -1;
         public int Tries, Wants, PartnershipsFormed, UnionsFormed, UnionsOutside, AdultDays, PartneredDays;
         // household store use (free-riding): food units it put in and took out
@@ -29,6 +31,65 @@ namespace God.Runner.Demog
         public int FedChildren, FedOwnChildren;
         /// <summary>Born to a biological father who was not the mother's romantic partner at the birth.</summary>
         public bool FatherOutside;
+    }
+
+    /// <summary>
+    /// F2b child-starvation diagnosis: what a child (under 1.0) did and got over its last <see cref="DemogRecorder.ChildWindow"/>
+    /// days (a ring keyed by day). Analytics only.
+    /// </summary>
+    public sealed class ChildTrack
+    {
+        public readonly int[] Day = { -1, -1, -1 };
+        public readonly int[] Begs = new int[3], FedUnits = new int[3], Foraged = new int[3], Eaten = new int[3], ForageTicks = new int[3];
+        /// <summary>Begging displays aimed at an adult who carried edible food at the time, and at a household member.</summary>
+        public readonly int[] BegsToCarrier = new int[3], BegsToMember = new int[3];
+        /// <summary>Ticks spent on "take from the household store", and units it took from its store.</summary>
+        public readonly int[] StoreTicks = new int[3], StoreUnits = new int[3];
+        /// <summary>Its household at the last day end (a death leaves the household before the recorder reads the state).</summary>
+        public int Household;
+        /// <summary>Its circumstances on the first day end with nutrition below 300 (the onset of hunger), and its age then.</summary>
+        public ChildCircumstance Onset;
+        public long OnsetAge = -1;
+        public int Slot(int day)
+        {
+            int i = ((day % Day.Length) + Day.Length) % Day.Length;
+            if (Day[i] != day) { Day[i] = day; Begs[i] = FedUnits[i] = Foraged[i] = Eaten[i] = ForageTicks[i] = BegsToCarrier[i] = BegsToMember[i] = StoreTicks[i] = StoreUnits[i] = 0; }
+            return i;
+        }
+        public int Sum(int[] a, int today) { int t = 0; for (int i = 0; i < Day.Length; i++) if (Day[i] >= 0 && today - Day[i] < Day.Length && today >= Day[i]) t += a[i]; return t; }
+    }
+
+    /// <summary>F2b: children's circumstances (at a starvation death, or a daily sample of the living), for one age band.</summary>
+    public sealed class ChildCircumstance
+    {
+        public long N;
+        /// <summary>Over the last 3 days: begging displays made, food units handed to it, units it foraged, units it ate, forage ticks.</summary>
+        public long Begs, FedUnits, Foraged, Eaten, ForageTicks, BegsToCarrier, BegsToMember, StoreTicks, StoreUnits;
+        /// <summary>Cases with no begging display, no feeding, no own foraging (3 days).</summary>
+        public long NoBeg, NoFed, NoForage;
+        /// <summary>Household: none; adult members (sum); an adult member within sight / within 2 nodes; household food (store + adult members' carry) above 0 and its units; an adult member carrying food within sight.</summary>
+        public long NoHousehold, HouseholdAdults, AdultInSight, AdultNear, HouseholdFood, HouseholdFoodUnits, FoodCarrierInSight;
+        /// <summary>Any adult of its faction within sight; mother alive; main carer (raising cue) alive; orphan.</summary>
+        public long AnyAdultInSight, MotherAlive, CarerAlive, Orphan;
+        /// <summary>Distance to the nearest adult household member (sum over cases that have one), and that count.</summary>
+        public long NearestMemberSum, NearestMemberN;
+        public long Nutrition, CarriedFood;
+        /// <summary>A younger living sibling (same mother) under 0.25 years; the main carer (raising cue) unset (nobody fed it on distinct days yet).</summary>
+        public long InfantSibling, NoMainCarer;
+        /// <summary>Ages (0.05-year bins, 0-1.0).</summary>
+        public long[] AgeBins = new long[20];
+
+        public void AddFrom(ChildCircumstance b)
+        {
+            N += b.N; Begs += b.Begs; FedUnits += b.FedUnits; Foraged += b.Foraged; Eaten += b.Eaten; ForageTicks += b.ForageTicks;
+            NoBeg += b.NoBeg; NoFed += b.NoFed; NoForage += b.NoForage; NoHousehold += b.NoHousehold; HouseholdAdults += b.HouseholdAdults;
+            AdultInSight += b.AdultInSight; AdultNear += b.AdultNear; HouseholdFood += b.HouseholdFood; HouseholdFoodUnits += b.HouseholdFoodUnits;
+            FoodCarrierInSight += b.FoodCarrierInSight; AnyAdultInSight += b.AnyAdultInSight; MotherAlive += b.MotherAlive; CarerAlive += b.CarerAlive;
+            Orphan += b.Orphan; NearestMemberSum += b.NearestMemberSum; NearestMemberN += b.NearestMemberN; Nutrition += b.Nutrition; CarriedFood += b.CarriedFood;
+            InfantSibling += b.InfantSibling; NoMainCarer += b.NoMainCarer;
+            BegsToCarrier += b.BegsToCarrier; BegsToMember += b.BegsToMember; StoreTicks += b.StoreTicks; StoreUnits += b.StoreUnits;
+            for (int i = 0; i < AgeBins.Length; i++) AgeBins[i] += b.AgeBins[i];
+        }
     }
 
     /// <summary>A shared-care arrangement as the report saw it (M4.44 free-riding).</summary>
@@ -121,6 +182,16 @@ namespace God.Runner.Demog
         public readonly SortedDictionary<int, DemogPerson> People = new SortedDictionary<int, DemogPerson>();
         public readonly List<DemogYear> Years = new List<DemogYear>();
         public readonly SortedDictionary<int, DemogArrangement> Arrangements = new SortedDictionary<int, DemogArrangement>();
+        /// <summary>F2b: the child-starvation diagnosis window (days) and per-band records: starvation deaths under 1.0, and a daily sample of living children.</summary>
+        public const int ChildWindow = 3;
+        public readonly Dictionary<int, ChildTrack> Kids = new Dictionary<int, ChildTrack>();
+        public readonly ChildCircumstance[] ChildStarved = { new ChildCircumstance(), new ChildCircumstance(), new ChildCircumstance() };
+        public readonly ChildCircumstance[] ChildAlive = { new ChildCircumstance(), new ChildCircumstance(), new ChildCircumstance() };
+        /// <summary>F2b: at the onset of hunger (first day end below nutrition 300), by the band of the onset age: children who then starved before 1.0, and children who reached 1.0.</summary>
+        public readonly ChildCircumstance[] OnsetStarved = { new ChildCircumstance(), new ChildCircumstance(), new ChildCircumstance() };
+        public readonly ChildCircumstance[] OnsetSurvived = { new ChildCircumstance(), new ChildCircumstance(), new ChildCircumstance() };
+        /// <summary>F2b: partnerships formed during the run (not the founders' couples, announced with household 0) by composition: a woman and a man, two women, two men.</summary>
+        public int FormedMixed, FormedWomen, FormedMen;
         public int Start, Final, Births, Deaths, Arrivals, Founders;
         public int[] DeathsByCause = new int[9];
         public long FoodProducedTotal, FoodConsumedTotal, PersonDaysTotal, CareTicksTotal, ChildFedUnitsTotal, HouseholdDaysTotal, HouseholdMemberDaysTotal;
@@ -180,7 +251,7 @@ namespace God.Runner.Demog
             d = new DemogPerson
             {
                 Id = n.Id, Faction = (int)n.Faction, Founder = n.Founder, Born = born, BornTick = n.BornTick,
-                Sex = n.Life?.Sex ?? 255, Mother = n.Life?.Mother ?? 0, Father = n.Life?.BioFather ?? 0, Generation = n.Life?.Generation ?? 0,
+                Sex = n.Life?.Sex ?? 255, Mother = n.Life?.Mother ?? 0, Father = n.Life?.BioFather ?? 0, Generation = n.Life?.Generation ?? 0, PartnerSeeks = n.Life?.PartnerSeeks ?? 0,
                 EntryAgeMilli = born ? 0 : (int)_cal.AgeMilli(n.BornTick, _s.Tick),
             };
             People[n.Id] = d;
@@ -194,6 +265,12 @@ namespace God.Runner.Demog
             long day = _cal.Day(Math.Max(0, _s.Tick - 1));
             var y = YearOf(day);
             if (M4) ConceptionChecks(y, (int)day);
+            if (M4 && Kids.Count > 0)
+                foreach (var kv in Kids)
+                {
+                    var kn = p.Find(kv.Key);
+                    if (kn != null && kn.Alive && kn.Action.Verb == HVerb.TakeFromStore) kv.Value.StoreTicks[kv.Value.Slot((int)day)]++;
+                }
             foreach (var e in events)
             {
                 switch (e)
@@ -219,6 +296,15 @@ namespace God.Runner.Demog
                         long age = n != null ? _cal.AgeMilli(n.BornTick, dd.Tick) : 0;
                         y.DeathsByAgeBand[Band(age)]++;
                         if (dd.Cause == DeathCause.Starvation) StarveContext(y, dd.Node, age);
+                        if (n != null && Kids.TryGetValue(n.Id, out var kd))
+                        {
+                            if (dd.Cause == DeathCause.Starvation && age < 1000)
+                            {
+                                Circumstance(ChildStarved[ChildBand(age)], n, kd, (int)day, age);
+                                if (kd.Onset != null) OnsetStarved[ChildBand(kd.OnsetAge)].AddFrom(kd.Onset);
+                            }
+                            Kids.Remove(n.Id);
+                        }
                         break;
                     }
                     case NpcMatured nm when nm.From == LifeStage.Child:
@@ -233,6 +319,7 @@ namespace God.Runner.Demog
                             long care = nd.Ticks.Length > Activity.Care ? nd.Ticks[Activity.Care] : 0;
                             CareTicksTotal += care; y.CareTicks += care;
                             y.ForageTicks += nd.Ticks[Activity.Forage];
+                            if (Kids.TryGetValue(nd.Npc, out var kt)) kt.ForageTicks[kt.Slot(nd.Day)] += nd.Ticks[Activity.Forage];
                         }
                         y.WalkTicks += nd.WalkTicks;
                         break;
@@ -241,6 +328,7 @@ namespace God.Runner.Demog
                         y.ChildFedActs++; y.ChildFedUnits += cf.Count; ChildFedUnitsTotal += cf.Count;
                         bool parent = People.TryGetValue(cf.Child, out var c) && (c.Mother == cf.Feeder || c.Father == cf.Feeder);
                         if (parent) y.ChildFedByParent++; else y.ChildFedByNonParent++;
+                        if (Kids.TryGetValue(cf.Child, out var kf)) kf.FedUnits[kf.Slot((int)day)] += cf.Count;
                         if (People.TryGetValue(cf.Feeder, out var fp)) { fp.FedChildren++; if (parent) fp.FedOwnChildren++; }
                         y.ChildFedByBand[(int)cf.Band & 7]++;
                         break;
@@ -257,8 +345,26 @@ namespace God.Runner.Demog
                     case TryForChildChosen tc: if (People.TryGetValue(tc.Npc, out var tp)) tp.Tries++; break;
                     case ChildWanted cw: if (People.TryGetValue(cw.Npc, out var wp)) { wp.Wants++; wp.LastWantTick = cw.Tick; } break;
                     case PartnershipFormed pf:
-                        if (People.TryGetValue(pf.A, out var pa)) pa.PartnershipsFormed++;
-                        if (People.TryGetValue(pf.B, out var pb)) pb.PartnershipsFormed++;
+                    {
+                        People.TryGetValue(pf.A, out var pa); People.TryGetValue(pf.B, out var pb);
+                        if (pa != null) pa.PartnershipsFormed++;
+                        if (pb != null) pb.PartnershipsFormed++;
+                        if (pa != null && pb != null && pf.Household != 0) { if (pa.Sex != pb.Sex) FormedMixed++; else if (pa.Sex == 0) FormedWomen++; else FormedMen++; }
+                        break;
+                    }
+                    case BeggingMade bm:
+                        if (Kids.TryGetValue(bm.Child, out var kb))
+                        {
+                            int i = kb.Slot((int)day);
+                            kb.Begs[i]++;
+                            var bt = p.Find(bm.Target);
+                            if (bt != null)
+                            {
+                                foreach (var l in bt.Carry) if (!l.Empty && Edible(l.Ware)) { kb.BegsToCarrier[i]++; break; }
+                                var bc = p.Find(bm.Child);
+                                if (bc != null && bc.Household != 0 && bt.Household == bc.Household) kb.BegsToMember[i]++;
+                            }
+                        }
                         break;
                     case ReproductiveUnionFormed uf:
                         if (People.TryGetValue(uf.A, out var ua)) { ua.UnionsFormed++; if (!uf.Partners) ua.UnionsOutside++; }
@@ -268,11 +374,13 @@ namespace God.Runner.Demog
                         break;
                     case ItemMoved im when Edible(im.Ware) && (im.Reason == MoveReason.Deposit || im.Reason == MoveReason.Withdraw):
                         if (People.TryGetValue(im.Actor, out var sp)) { if (im.Reason == MoveReason.Deposit) sp.Deposited += im.Count; else sp.Withdrawn += im.Count; }
+                        if (im.Reason == MoveReason.Withdraw && Kids.TryGetValue(im.Actor, out var kw)) kw.StoreUnits[kw.Slot((int)day)] += im.Count;
                         break;
                     case ChildFostered _: y.Fostered++; break;
                     case ChildOrphaned _: y.Orphaned++; break;
                     case Foraged fo:
                         _foragedFromSources += fo.Count;
+                        if (Kids.TryGetValue(fo.Npc, out var kg)) kg.Foraged[kg.Slot((int)day)] += fo.Count;
                         _foragedSources.Add(fo.Source);
                         break;
                     case Produced pr when Edible(pr.Ware):
@@ -283,7 +391,7 @@ namespace God.Runner.Demog
                         FoodConsumedTotal += co.Count; ConsumedByReason[(int)co.Reason & 7] += co.Count;
                         switch (co.Reason)
                         {
-                            case ConsumeReason.Eaten: y.FoodEaten += co.Count; break;
+                            case ConsumeReason.Eaten: y.FoodEaten += co.Count; if (Kids.TryGetValue(co.Npc, out var ke)) ke.Eaten[ke.Slot((int)day)] += co.Count; break;
                             case ConsumeReason.Spoiled: y.FoodSpoiled += co.Count; break;
                             case ConsumeReason.Buried: y.FoodBuried += co.Count; break;
                             default: y.FoodOtherOut += co.Count; break;
@@ -382,6 +490,68 @@ namespace God.Runner.Demog
             }
         }
 
+        /// <summary>F2b child bands: 0-0.25, 0.25-0.5, 0.5-1.0.</summary>
+        public static int ChildBand(long ageMilli) => ageMilli < 250 ? 0 : ageMilli < 500 ? 1 : 2;
+        public static readonly string[] ChildBandNames = { "0-0.25", "0.25-0.5", "0.5-1.0" };
+
+        /// <summary>F2b: adds one child's circumstances (read-only) to a band record.</summary>
+        private void Circumstance(ChildCircumstance c, Npc n, ChildTrack k, int today, long age)
+        {
+            c.AgeBins[Math.Max(0, Math.Min(19, (int)(age / 50)))]++;
+            c.BegsToCarrier += k.Sum(k.BegsToCarrier, today); c.BegsToMember += k.Sum(k.BegsToMember, today);
+            c.StoreTicks += k.Sum(k.StoreTicks, today); c.StoreUnits += k.Sum(k.StoreUnits, today);
+            var p = _s.Population; var g = _s.Territory.Grid;
+            int sight = _s.Tuning.Population.SightDay;
+            c.N++;
+            int begs = k.Sum(k.Begs, today), fed = k.Sum(k.FedUnits, today), fo = k.Sum(k.Foraged, today), ft = k.Sum(k.ForageTicks, today);
+            c.Begs += begs; c.FedUnits += fed; c.Foraged += fo; c.Eaten += k.Sum(k.Eaten, today); c.ForageTicks += ft;
+            if (begs == 0) c.NoBeg++;
+            if (fed == 0) c.NoFed++;
+            if (fo == 0 && ft == 0) c.NoForage++;
+            c.Nutrition += n.NutritionPermille;
+            foreach (var l in n.Carry) if (!l.Empty && Edible(l.Ware)) c.CarriedFood += l.Count;
+            var l0 = n.Life;
+            if (l0 != null)
+            {
+                var mo = l0.Mother != 0 ? p.Find(l0.Mother) : null;
+                if (mo != null && mo.Alive) c.MotherAlive++;
+                if (l0.CueCarer == 0) c.NoMainCarer++;
+                if (l0.Mother != 0)
+                    foreach (var sib in p.Npcs)
+                        if (sib.Alive && sib.Id != n.Id && sib.Life != null && sib.Life.Mother == l0.Mother && sib.BornTick > n.BornTick && _cal.AgeMilli(sib.BornTick, _s.Tick) < 250) { c.InfantSibling++; break; }
+                var ca = l0.CueCarer != 0 ? p.Find(l0.CueCarer) : null;
+                if (ca != null && ca.Alive) c.CarerAlive++;
+                if (l0.OrphanSince >= 0) c.Orphan++;
+            }
+            int hid = n.Household != 0 ? n.Household : n.Alive ? 0 : k.Household;
+            var h = hid != 0 ? _s.Households.Find(hid) : null;
+            if (h == null) c.NoHousehold++;
+            else
+            {
+                int adults = 0, nearest = int.MaxValue; long food = 0; bool carrier = false;
+                foreach (int m in h.Members)
+                {
+                    var a = p.Find(m);
+                    if (a == null || !a.Alive || a.Stage == LifeStage.Child) continue;
+                    adults++;
+                    int d = g.Distance(n.Node, a.Node);
+                    nearest = Math.Min(nearest, d);
+                    long carried = 0;
+                    foreach (var l in a.Carry) if (!l.Empty && Edible(l.Ware)) carried += l.Count;
+                    food += carried;
+                    if (carried > 0 && d <= sight) carrier = true;
+                }
+                foreach (var b in p.Bins) if (b.Id == h.Bin) foreach (var l in b.Lots) if (Edible(l.Ware)) food += l.Count;
+                c.HouseholdAdults += adults;
+                if (nearest < int.MaxValue) { c.NearestMemberSum += nearest; c.NearestMemberN++; if (nearest <= sight) c.AdultInSight++; if (nearest <= 2) c.AdultNear++; }
+                if (food > 0) c.HouseholdFood++;
+                c.HouseholdFoodUnits += food;
+                if (carrier) c.FoodCarrierInSight++;
+            }
+            foreach (var a in p.Npcs)
+                if (a.Alive && a.Stage != LifeStage.Child && a.Faction == n.Faction && g.Distance(n.Node, a.Node) <= sight) { c.AnyAdultInSight++; break; }
+        }
+
         private void StarveContext(DemogYear y, int node, long age)
         {
             y.StarveByAgeBand[Band(age)]++;
@@ -423,6 +593,18 @@ namespace God.Runner.Demog
                 if (!n.Alive) continue;
                 long age = _cal.AgeMilli(n.BornTick, _s.Tick);
                 prev.PersonDaysByAgeBand[Band(age)]++;
+                if (M4 && n.Stage == LifeStage.Child && age < 1000)
+                {
+                    if (!Kids.TryGetValue(n.Id, out var kt)) Kids[n.Id] = kt = new ChildTrack();
+                    kt.Household = n.Household;
+                    Circumstance(ChildAlive[ChildBand(age)], n, kt, (int)day - 1, age);
+                    if (kt.Onset == null && n.NutritionPermille < 300) { kt.Onset = new ChildCircumstance(); kt.OnsetAge = age; Circumstance(kt.Onset, n, kt, (int)day - 1, age); }
+                }
+                else if (Kids.TryGetValue(n.Id, out var kr))
+                {
+                    if (kr.Onset != null) OnsetSurvived[ChildBand(kr.OnsetAge)].AddFrom(kr.Onset);
+                    Kids.Remove(n.Id);
+                }
                 if (n.Stage != LifeStage.Child && People.TryGetValue(n.Id, out var dp)) { dp.AdultDays++; if (M4 && Partnerships.Count(_s, n.Id) > 0) dp.PartneredDays++; }
                 if (n.Life == null || n.Life.Sex != 0 || !M4) continue;
                 int end = Reproduction.FertileEnd(lt, n.Life.Pheno.Fertility);
@@ -529,6 +711,7 @@ namespace God.Runner.Demog
                 {
                     d.FertileEndMilli = Reproduction.FertileEnd(lt, n.Life.Pheno.Fertility);
                     d.ChildDesire = n.Life.ChildDesire; d.Companionship = n.Life.Companionship; d.Commitment = n.Life.Commitment;
+                    d.PartnerSeeks = n.Life.PartnerSeeks;
                 }
             }
             // close the last (partial) year

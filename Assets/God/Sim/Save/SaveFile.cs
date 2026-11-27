@@ -49,6 +49,9 @@ namespace God.Sim
     public sealed class SaveFile
     {
         /// <summary>
+        /// 6 since the Checkpoint B re-pin (LEAD_RULINGS R60): <c>Households.Life.ConceptionMode</c> defaults to 1 and is omitted
+        /// at 1, so an omitted field no longer means 0; version 5 saves are refused rather than silently changing rule. R63 adds
+        /// <c>DivineMind.CompelledUntil/SignUntil</c> (default-ignored).
         /// 5 since F1 (contracts 17, written on the lead's instruction): <c>Npc.Kind/God/BioAgeOffset</c> (default-ignored),
         /// <c>NpcMind.Divine/Orgs/Civ</c> and <c>GodState.Divinity/Organisations/Civ</c> (null when off; a null slot is accepted
         /// on load), <c>GameSetup.Control/HumanGod</c> (default-ignored), the ledger at 40 wares. 4 since F0 (lot owners, bins,
@@ -56,7 +59,7 @@ namespace God.Sim
         /// LifeScale), disease setting and victory list, and the random streams are keyed. Older saves (2: stage 3; 1: stage 2)
         /// are refused (stage 3 save compatibility is not kept).
         /// </summary>
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int Version = CurrentVersion;
         public SaveHeader Header;

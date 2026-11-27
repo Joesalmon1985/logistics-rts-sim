@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using God.Sim.Cognition;
 using God.Sim.Divinity;
 using God.Sim.Learning;
 using God.Sim.Population;
@@ -50,7 +51,10 @@ namespace God.Sim.Tests
             var moved = sc.Probe.Of<ItemMoved>().Single(e => e.Lot == lot || e.EndedLot == lot || e.IntoLot == lot);
             Assert.AreEqual(MoveReason.PickUp, moved.Reason);
             Assert.AreEqual(sc.Npc.Id, moved.Actor);
+            Assert.AreEqual((byte)ControlKind.Compelled, moved.Control, "R63: the compelled pick-up carries Control = 1 (control_code)");
             Assert.LessOrEqual(sim.State.Territory.Grid.Distance(moved.ActorNode, far), Reach.Touch, "picked up within reach");
+            Assert.AreEqual(end.Tick + (long)sim.State.Tuning.Divinity.Instruction.MemoryDays * SimCalendar.Of(sim.State).TicksPerDay, sc.Npc.Mind.Divine.CompelledUntil,
+                "R63: the mind remembers having been compelled for MemoryDays");
             Assert.AreEqual(before - sim.State.Tuning.Divinity.Mythic.Costs.IssueCompulsion, sim.State.Divinity.Gods.Of(1).Mythic, "Mythic falls by exactly the configured cost");
             Assert.AreEqual(1, sc.Probe.Of<CompulsionStarted>().Count);
             TestContext.Progress.WriteLine("DP4 take: walked " + steps + " nodes, ended " + end.Reason + " at tick " + sim.State.Tick + ", hunger " + sc.Npc.DriveOf(Drive.Hunger));
@@ -69,6 +73,37 @@ namespace God.Sim.Tests
             Assert.AreEqual(0, sc.Probe.Of<ItemMoved>().Count(e => e.Reason == MoveReason.HandOver), "no ItemMoved hand-over");
             Assert.AreEqual(0, other.Carry.Count(l => !l.Empty && l.Ware == Ware.Fish), "no fish appears");
             Assert.AreEqual(fishBefore, sim.State.Population.Ledger.ProducedOf(Ware.Fish), "no fish produced");
+        }
+
+        // ---------------------------------------------------------------- R63 base slot (Checkpoint B)
+
+        /// <summary>
+        /// R63: the Divinity slot of the base context adds <c>SelfFeature.Compelled</c> while the compulsion memory lasts (not
+        /// during the spell itself) and <c>SituationKind.DivineSign</c> while a seen sign lasts; nothing for a mind without a
+        /// Divine part (Divinity off) or once both have expired.
+        /// </summary>
+        [Test]
+        public void DivinityBaseSlot_CompelledMemoryAndSign_R63()
+        {
+            uint compelled = Feature.Self(SelfFeature.Compelled), sign = Feature.Situation(SituationKind.DivineSign);
+            List<uint> Keys(NpcMind mind, int tick, ControlKind control = ControlKind.Self)
+            {
+                var scr = new God.Sim.Cognition.ThinkScratch { Mind = mind };
+                scr.Self.Tick = tick;
+                scr.Control = new ControlEntry { Kind = control };
+                scr.BaseCount = 0;
+                God.Sim.Cognition.CognitionExtensions.AddBase(scr);
+                return scr.Base.Take(scr.BaseCount).ToList();
+            }
+            var m = new NpcMind();
+            CollectionAssert.IsEmpty(Keys(m, 100), "no Divine part: nothing (Divinity off thinks as before)");
+            m.Divine = new DivineMind();
+            CollectionAssert.IsEmpty(Keys(m, 100), "no memory: nothing");
+            m.Divine.CompelledUntil = 200; m.Divine.SignUntil = 150;
+            CollectionAssert.AreEqual(new[] { compelled, sign }, Keys(m, 100));
+            CollectionAssert.AreEqual(new[] { sign }, Keys(m, 100, ControlKind.Compelled), "while compelled the candidate carries the tag, not the base");
+            CollectionAssert.AreEqual(new[] { compelled }, Keys(m, 160), "the sign has passed");
+            CollectionAssert.IsEmpty(Keys(m, 200), "both expired");
         }
 
         // ---------------------------------------------------------------- D2-T7 (DP5)

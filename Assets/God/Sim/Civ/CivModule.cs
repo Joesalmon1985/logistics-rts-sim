@@ -53,6 +53,14 @@ namespace God.Sim.Civ
                 if (a.Rights.Count > Assets.MaxRights || a.Disputes.Count > Assets.MaxDisputes) bad.Add("CIV1: asset " + a.Id + " has too many rights or disputes");
             }
             foreach (var l in o.Lost) if (l.Count <= 0 || l.Owner.IsNone) bad.Add("CIV1: lost lot " + l.Lot + " without units or owner");
+            CheckC2(s, bad);
+            CheckC3(s, bad);
+            CheckC5(s, bad);
         }
+
+        /// <summary>C1c: the later packages' invariants, each in its own partial file (<c>CivModule.C3.cs</c>, ...), in package order.</summary>
+        static partial void CheckC2(GodState s, List<string> bad);
+        static partial void CheckC3(GodState s, List<string> bad);
+        static partial void CheckC5(GodState s, List<string> bad);
     }
 }

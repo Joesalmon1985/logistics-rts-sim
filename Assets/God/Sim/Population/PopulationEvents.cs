@@ -167,6 +167,8 @@ namespace God.Sim.Population
         public int OwnerAfterId;
         /// <summary>The purpose it served (a DealId, a care arrangement), 0 none.</summary>
         public int PurposeRef;
+        /// <summary>v2 (R63, Checkpoint B): who drove the actor's body at the move (contracts 15: 0 own, 1 compelled, 2 possessed, 3 avatar).</summary>
+        public byte Control;
     }
 
     /// <summary>An asset changed owner (F0, code 206; SHARED_CONTRACTS 3). Asset kind 1 = a lot (its id after the move).</summary>

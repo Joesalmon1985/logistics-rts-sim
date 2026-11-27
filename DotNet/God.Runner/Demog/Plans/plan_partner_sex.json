@@ -1,0 +1,44 @@
+{
+  "title": "F2b (R61) partner-sex preference arms against demog_f2_favourable with ConceptionMode 1. Each arm states the share of people seeking a partner of the other sex / of their own sex / of both (the same distribution for women and men). The default distribution is an owner question; these are experiments, not a proposal.",
+  "scenario": "demog_f2_favourable",
+  "years": 15,
+  "seeds": "1-20",
+  "set": [
+    "tuning.Households.Life.ConceptionMode=1"
+  ],
+  "arms": [
+    {
+      "name": "sexblind-not-drawn"
+    },
+    {
+      "name": "control-all-seek-both",
+      "set": [
+        "tuning.Households.Prefs.PartnerSexMode=1"
+      ]
+    },
+    {
+      "name": "other500-same150-both350",
+      "set": [
+        "tuning.Households.Prefs.PartnerSexMode=1",
+        "tuning.Households.Prefs.SeekOtherSexPermille=500",
+        "tuning.Households.Prefs.SeekSameSexPermille=150"
+      ]
+    },
+    {
+      "name": "other700-same100-both200",
+      "set": [
+        "tuning.Households.Prefs.PartnerSexMode=1",
+        "tuning.Households.Prefs.SeekOtherSexPermille=700",
+        "tuning.Households.Prefs.SeekSameSexPermille=100"
+      ]
+    },
+    {
+      "name": "other900-same50-both50",
+      "set": [
+        "tuning.Households.Prefs.PartnerSexMode=1",
+        "tuning.Households.Prefs.SeekOtherSexPermille=900",
+        "tuning.Households.Prefs.SeekSameSexPermille=50"
+      ]
+    }
+  ]
+}

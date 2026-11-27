@@ -194,6 +194,7 @@ namespace God.Sim.Population
                 FromKind = from.Kind, FromId = from.Id, ToKind = to.Kind, ToId = to.Id, Reason = why, Actor = actor, ActorNode = actorNode,
                 FromNode = fromNode, ToNode = toNode,
                 OwnerBeforeKind = r.Before.Kind, OwnerBeforeId = r.Before.Id, OwnerAfterKind = after.Kind, OwnerAfterId = after.Id, PurposeRef = purposeRef,
+                Control = actor > 0 ? (byte)God.Sim.Divinity.Control.Of(s, actor) : (byte)0, // R63: Self (0) whenever Divinity is off
             });
             if (!r.Before.Same(after))
             {

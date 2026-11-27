@@ -85,6 +85,8 @@ namespace God.Runner.Warehouse
         public string DatabasePath => _opt.Path;
         public MapContext Context => _ctx;
         internal SimCalendar Calendar => _cal;
+        /// <summary>R63: the game has a Divinity state (control codes are written; null without one, F1-T14).</summary>
+        internal bool DivinityOn;
 
         // ---------------- begin ----------------
 
@@ -94,6 +96,7 @@ namespace God.Runner.Warehouse
             if (_opt.Path == null) throw new InvalidOperationException("the warehouse needs a database path");
             var s = sim.State;
             _cal = SimCalendar.Of(s);
+            DivinityOn = s.Divinity != null;
             _territory = s.Territory; _board = s.Board; _factionCount = s.FactionCount;
             _ctx = new MapContext(this);
             _db = WarehouseDb.Create(_opt.Path, _opt.ForeignKeys);

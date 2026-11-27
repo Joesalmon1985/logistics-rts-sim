@@ -1,0 +1,57 @@
+using God.Sim.Cognition;
+using God.Sim.Population;
+
+namespace God.Sim.Divinity
+{
+    /// <summary>
+    /// D5's sim-side hooks (OWNER: D4, which absorbs D5; contracts 4.2): the avatar's take (walk to a ground lot within touch,
+    /// one <c>Goods.Move</c> PickUp with <c>OwnerRule.Keep</c>: an ownerless lot stays ownerless, an owned lot keeps its owner),
+    /// and the avatar's branches of <c>Bodies.Damage</c> and <c>Bodies.Heal</c> (destroyed, never killed).
+    /// </summary>
+    public static partial class DivinityHooks
+    {
+        /// <summary>Ticks the avatar's take may walk before it gives up.</summary>
+        public const int AvatarTakeWalkTicks = 600;
+
+        static partial void TryStartD5(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled)
+        {
+            if (handled || c.Verb != EmbodiedVerb.AvatarTake) return;
+            handled = true; // the walk and the take are in TryActD5
+        }
+
+        static partial void TryActD5(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled)
+        {
+            if (handled || npc.Action.Verb != EmbodiedVerb.AvatarTake) return;
+            handled = true;
+            var p = s.Population;
+            int li = -1;
+            for (int i = 0; i < p.Lots.Count; i++) if (p.Lots[i].Lot.Id == npc.Action.TargetId) { li = i; break; }
+            if (li < 0 || npc.Kind != BodyKind.Avatar || s.Tick - npc.Action.Since > AvatarTakeWalkTicks) { Embodiment.EndAct(s, npc, true); return; }
+            int node = p.Lots[li].Node;
+            if (!Embodiment.Walk(s, npc, node, Reach.Touch))
+            {
+                if (npc.Path == null) Embodiment.EndAct(s, npc, true);
+                return;
+            }
+            var gl = p.Lots[li];
+            int take = System.Math.Min(gl.Lot.Count, PopulationModule.Room(s, npc, gl.Lot.Ware));
+            if (take <= 0) { Embodiment.EndAct(s, npc, true); return; }
+            var r = Goods.Move(s, ev, Holder.Ground(gl.Node), gl.Lot.Id, take, Holder.Carry(npc.Id), MoveReason.PickUp, npc.Id, OwnerRule.Keep);
+            Embodiment.EndAct(s, npc, !r.Ok);
+        }
+
+        static partial void DamageD5(GodState s, EventBuffer ev, Npc body, ref int injuryMicro, DamageCause cause, int actor, int intervention, ref bool handled)
+        {
+            if (handled || body.Kind != BodyKind.Avatar || injuryMicro <= 0) return;
+            handled = true;
+            Avatars.Damage(s, ev, body, injuryMicro, cause, actor, intervention);
+        }
+
+        static partial void HealD5(GodState s, EventBuffer ev, Npc body, HealKind what, int amount, int intervention, ref bool handled)
+        {
+            if (handled || body.Kind != BodyKind.Avatar) return;
+            handled = true;
+            Avatars.Heal(body, what, amount, s.Tuning.Divinity.Avatar.Health);
+        }
+    }
+}

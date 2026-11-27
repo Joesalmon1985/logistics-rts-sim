@@ -22,33 +22,36 @@ namespace God.Runner.Tests
         internal const long Ticks = 12000, Every = 600;
         internal static readonly string[] Scenarios = { "band_6x20", "m4_families", "ibs_families", "watch6", "demog_balanced", "demog_established_6x20", "demog_favourable", "demog_hostile" };
 
-        // "scenario/seed" -> digest of every part of every checkpoint (captured at 11c3e43)
+        // "scenario/seed" -> digest of every part of every checkpoint (captured at 11c3e43; re-pinned at the Checkpoint B
+        // re-pin, LEAD_RULINGS R60: Households.Life.ConceptionMode default 0 -> 1 moves every population scenario, watch6
+        // unchanged; the old values are in DEV_LOG "Checkpoint B record". An explicit mode 0 still reproduces 11c3e43 in every
+        // part except core: DemogConceptionTests.ConceptionMode0_ReproducesPreRepin_F2_T1 and the DEV_LOG attribution run)
         internal static readonly Dictionary<string, ulong> Base = new Dictionary<string, ulong>
         {
-            ["band_6x20/1"] = 0xc059aef8ff82ba20UL,
-            ["band_6x20/2"] = 0x555cfe76c2df33d2UL,
-            ["band_6x20/3"] = 0x2521c9b5e5bd487bUL,
-            ["m4_families/1"] = 0xc7789e9d5fb7dbdeUL,
-            ["m4_families/2"] = 0xff0fb1f1f776af44UL,
-            ["m4_families/3"] = 0x67bb20af51ecd850UL,
-            ["ibs_families/1"] = 0x632d212ca715768fUL,
-            ["ibs_families/2"] = 0x408ad01a3e42b5c3UL,
-            ["ibs_families/3"] = 0xa71e0bece940df89UL,
+            ["band_6x20/1"] = 0x6bbac9dcfd0137b3UL,
+            ["band_6x20/2"] = 0x3c3653f4c2d2a35bUL,
+            ["band_6x20/3"] = 0xdd903fc994492398UL,
+            ["m4_families/1"] = 0x40122cd433f4a31dUL,
+            ["m4_families/2"] = 0x3de0b4a7e2ad168eUL,
+            ["m4_families/3"] = 0xb832e81fbf999e81UL,
+            ["ibs_families/1"] = 0xd87fab3bda6f3e9cUL,
+            ["ibs_families/2"] = 0xe2630ec31a201d26UL,
+            ["ibs_families/3"] = 0x095e5b54c44b56fdUL,
             ["watch6/1"] = 0xdd4001b92780cae8UL,
             ["watch6/2"] = 0xcaddf14aa91c1ffcUL,
             ["watch6/3"] = 0x1ec6d25aa6a6c4fdUL,
-            ["demog_balanced/1"] = 0xd36426cf938bef41UL,
-            ["demog_balanced/2"] = 0x617001cd74b798e0UL,
-            ["demog_balanced/3"] = 0x0f437863c034b866UL,
-            ["demog_established_6x20/1"] = 0xd36426cf938bef41UL,
-            ["demog_established_6x20/2"] = 0x617001cd74b798e0UL,
-            ["demog_established_6x20/3"] = 0x0f437863c034b866UL,
-            ["demog_favourable/1"] = 0x12cdffc50569810eUL,
-            ["demog_favourable/2"] = 0x04ff1cc7e1372e45UL,
-            ["demog_favourable/3"] = 0x2c366048e71dac53UL,
-            ["demog_hostile/1"] = 0x5728f3a6e9d7f59dUL,
-            ["demog_hostile/2"] = 0xd71e16d96ed14d5bUL,
-            ["demog_hostile/3"] = 0xb17c6f10f600fe12UL,
+            ["demog_balanced/1"] = 0xba3762d0ed8a6221UL,
+            ["demog_balanced/2"] = 0xdadc78c02cac6862UL,
+            ["demog_balanced/3"] = 0xbce0285539f077deUL,
+            ["demog_established_6x20/1"] = 0xba3762d0ed8a6221UL,
+            ["demog_established_6x20/2"] = 0xdadc78c02cac6862UL,
+            ["demog_established_6x20/3"] = 0xbce0285539f077deUL,
+            ["demog_favourable/1"] = 0xc3b6c17c26d6160fUL,
+            ["demog_favourable/2"] = 0xc79309e9e3c95a28UL,
+            ["demog_favourable/3"] = 0x0b718a1a569adcf0UL,
+            ["demog_hostile/1"] = 0xebb6d3cd7c9faf51UL,
+            ["demog_hostile/2"] = 0xbdef4504ed248d6dUL,
+            ["demog_hostile/3"] = 0x01b4bcb8678b9b72UL,
         };
 
         internal static string[] OffSets() => SwitchesExist() ? new[] { "tuning.Divinity.Enabled=0", "tuning.Orgs.Enabled=0", "tuning.Civ.Enabled=0" } : new string[0];

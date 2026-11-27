@@ -46,13 +46,24 @@ namespace God.Sim.Cognition
             if (sc.HeardCount < 0 || sc.HeardCount > ThinkScratch.MaxHeard) throw new InvalidOperationException("FillHeard: HeardCount out of range");
         }
 
-        /// <summary>At the end of the base context, before its sort: M4 may add one key while the base has room. M5 adds none.</summary>
+        /// <summary>Keys the Divinity slot of <see cref="AddBase"/> may add (LEAD_RULINGS R63: one self, one situation key).</summary>
+        public const int DivinityBaseQuota = 2;
+
+        /// <summary>
+        /// At the end of the base context, before its sort: M4 may add one key while the base has room. M5 adds none.
+        /// R63 (Checkpoint B, lead amendment to the F1 seams): then Divinity may add up to <see cref="DivinityBaseQuota"/>
+        /// keys (<c>SelfFeature.Compelled</c> for its memory days, <c>SituationKind.DivineSign</c> while a seen sign lasts);
+        /// it adds nothing for a mind without a <c>Divine</c> part, so a game with Divinity off thinks exactly as before.
+        /// </summary>
         public static void AddBase(ThinkScratch sc)
         {
             if (sc.BaseCount >= ThinkScratch.MaxBase) return;
             int before = sc.BaseCount;
             HouseholdMindHooks.AddBase(sc);
             if (sc.BaseCount > before + 1) throw new InvalidOperationException("AddBase: M4 may add at most one base key");
+            before = sc.BaseCount;
+            DivinityMindHooks.AddBase(sc);
+            if (sc.BaseCount > before + DivinityBaseQuota || sc.BaseCount > ThinkScratch.MaxBase) throw new InvalidOperationException("AddBase: Divinity may add at most " + DivinityBaseQuota + " base keys");
         }
 
         /// <summary>
