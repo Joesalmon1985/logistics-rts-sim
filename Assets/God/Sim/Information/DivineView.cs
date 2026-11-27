@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using God.Sim.Divinity;
+
 namespace God.Sim.Information
 {
     /// <summary>Contracts 9: how a god perceives one domain.</summary>
@@ -29,6 +32,38 @@ namespace God.Sim.Information
         public bool Alive;
         public int Node;
         public Faction Faction;
+        /// <summary>D1: the layer the item comes from (<c>DivineObservation</c> for an omniscient god).</summary>
+        public KnowledgeLayer Layer;
+        /// <summary>D1: asleep, and the verb of the visible action (as a sighting shows it).</summary>
+        public bool Asleep;
+        public byte Verb;
+    }
+
+    /// <summary>D1: one god as a divine view shows it (what U2's Mythic meter and the god list read). Plain data, a copy.</summary>
+    public struct DivineGodView
+    {
+        public int God;
+        public string Name;
+        public Faction OriginFaction;
+        public GodSeat Seat;
+        public string PolicyName;
+        /// <summary>Milli-Mythic.</summary>
+        public long Mythic, MythicMax, RegenPerDay;
+        public DivinityMode Mode;
+        /// <summary>Per <see cref="InterventionKind"/>: the tick from which a spend of the kind is allowed (a copy).</summary>
+        public long[] CooldownUntil;
+        public int AvatarBody;
+        public DivinePerception Profile;
+        public KnowledgeLayer Layer;
+
+        /// <summary>Ticks until a kind's cooldown ends (0: ready).</summary>
+        public long CooldownLeft(InterventionKind kind, long now)
+        {
+            int k = (int)kind;
+            if (CooldownUntil == null || k < 0 || k >= CooldownUntil.Length) return 0;
+            long left = CooldownUntil[k] - now;
+            return left > 0 ? left : 0;
+        }
     }
 
     /// <summary>
@@ -43,5 +78,17 @@ namespace God.Sim.Information
         DivineObservationProfile Profile { get; }
         long AsOfTick { get; }
         bool TryPerson(int npc, out DivinePersonView person);
+
+        // ---- D1 additive members (contracts 9 last paragraph) ----
+        /// <summary>The game's current Mythic mode.</summary>
+        DivinityMode Mode { get; }
+        /// <summary>Number of gods (1..GodCount are their ids).</summary>
+        int GodCount { get; }
+        /// <summary>One god (false for an unknown id).</summary>
+        bool TryGod(int god, out DivineGodView view);
+        /// <summary>Every god, ascending id, written into <paramref name="into"/>.</summary>
+        void Gods(List<DivineGodView> into);
+        /// <summary>Every living person as the god perceives them, ascending id, written into <paramref name="into"/>.</summary>
+        void People(List<DivinePersonView> into);
     }
 }

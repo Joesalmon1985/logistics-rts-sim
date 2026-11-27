@@ -62,6 +62,9 @@ namespace God.Recording
         public bool DecayFollowsLifeScale;
         public DiseaseSetting Disease = DiseaseSetting.On;
         public bool FullInformation = true;
+        /// <summary>D1 (contracts 2.1): <c>setup.control</c> (<c>stage3</c> default, <c>godonly</c>) and <c>setup.humanGod</c> (0 watch).</summary>
+        public PlayerControl Control;
+        public int HumanGod;
         public List<VictorySpec> Victory = VictorySpec.Stage3Default();
         /// <summary>What the game is for (Q22): decides whether the true-state overlay is allowed. Null: implied by the setup (<see cref="EffectivePurpose"/>).</summary>
         public ScenarioPurpose? Purpose;
@@ -111,7 +114,7 @@ namespace God.Recording
             var g = new GameSetup(seed, Human, FactionCount)
             {
                 Tutorial = Tutorial, Population = Population, StartNpcsPerFaction = StartNpcsPerFaction, LifeScale = LifeScale, TicksPerDay = TicksPerDay, DaysPerYear = DaysPerYear,
-                DecayFollowsLifeScale = DecayFollowsLifeScale, Disease = Disease, FullInformation = FullInformation,
+                DecayFollowsLifeScale = DecayFollowsLifeScale, Disease = Disease, FullInformation = FullInformation, Control = Control, HumanGod = HumanGod,
                 Victory = Victory.Select(v => new VictorySpec(v.Kind, v.Target)).ToList(),
             };
             return TrueStateOverlayRules.Apply(g, EffectivePurpose, TrueStateOverlay);
@@ -162,7 +165,7 @@ namespace God.Recording
         // ---------------- parsing ----------------
 
         private static readonly string[] TopKeys = { "scenarioVersion", "name", "description", "setup", "tuning", "policies", "commands", "record", "metrics", "checkpointEvery", "saveEveryDays", "stop", "checks" };
-        private static readonly string[] SetupKeys = { "factionCount", "human", "tutorial", "population", "startNpcsPerFaction", "lifeScale", "ticksPerDay", "daysPerYear", "decayFollowsLifeScale", "disease", "fullInformation", "victory", "purpose", "trueStateOverlay" };
+        private static readonly string[] SetupKeys = { "factionCount", "human", "tutorial", "population", "startNpcsPerFaction", "lifeScale", "ticksPerDay", "daysPerYear", "decayFollowsLifeScale", "disease", "fullInformation", "victory", "purpose", "trueStateOverlay", "control", "humanGod" };
         private static readonly string[] StopKeys = { "maxTicks", "maxDays", "maxYears", "onGameOver", "populationBelow", "wallSeconds", "when", "fail" };
         private static readonly string[] RecordKeys = { "level", "domains", "sampleEvery" };
         public static readonly string[] KnownChecks = { "invariants", "no-exceptions", "smoke" };
@@ -232,6 +235,15 @@ namespace God.Recording
                 if (sc.LifeScale <= 0 || sc.TicksPerDay <= 0 || sc.DaysPerYear <= 0) throw new ScenarioException("setup.lifeScale, ticksPerDay and daysPerYear must be positive");
                 sc.DecayFollowsLifeScale = Bool(s, "decayFollowsLifeScale", "setup.", false);
                 sc.FullInformation = Bool(s, "fullInformation", "setup.", true);
+                if (s["control"] != null)
+                {
+                    string ctl = s["control"].Type == JTokenType.String ? (string)s["control"] : null;
+                    if (ctl == "stage3") sc.Control = PlayerControl.Stage3Faction;
+                    else if (ctl == "godonly") sc.Control = PlayerControl.GodOnly;
+                    else throw new ScenarioException("setup.control must be \"stage3\" or \"godonly\"");
+                }
+                sc.HumanGod = (int)Int(s, "humanGod", "setup.", 0);
+                if (sc.HumanGod < 0 || sc.HumanGod > FactionInfo.Max) throw new ScenarioException("setup.humanGod must be 0 (none) to " + FactionInfo.Max);
                 string dis = Str(s, "disease", "setup.", "on").ToLowerInvariant();
                 if (dis == "on") sc.Disease = DiseaseSetting.On; else if (dis == "mild") sc.Disease = DiseaseSetting.Mild; else if (dis == "off") sc.Disease = DiseaseSetting.Off;
                 else throw new ScenarioException("setup.disease must be on, mild or off");
@@ -393,7 +405,15 @@ namespace God.Recording
                     try { reg.Validate(level, name); }
                     catch (PolicyException x) { throw new ScenarioException(x.Message); }
                     if (e.Name == "default") { a.SetDefault(level, name); continue; }
-                    if (level != PolicyLevel.Faction && level != PolicyLevel.Military) throw new ScenarioException(where + e.Name + ": only the faction and military levels take per-faction entries");
+                    if (level == PolicyLevel.God)
+                    {
+                        // D1 (contracts 12): policies.god entries are per GodId (1 to 6)
+                        if (!int.TryParse(e.Name, NumberStyles.None, CultureInfo.InvariantCulture, out int gid) || gid < 1 || gid > FactionInfo.Max)
+                            throw new ScenarioException(where + e.Name + " is not a god id (1 to " + FactionInfo.Max + ") or default");
+                        a.Set(level, gid, name);
+                        continue;
+                    }
+                    if (level != PolicyLevel.Faction && level != PolicyLevel.Military) throw new ScenarioException(where + e.Name + ": only the faction and military levels take per-faction entries (the god level per god id)");
                     if (!int.TryParse(e.Name, NumberStyles.None, CultureInfo.InvariantCulture, out int f) || f < 0 || f >= FactionInfo.Max)
                         throw new ScenarioException(where + e.Name + " is not a faction id (0 to " + (FactionInfo.Max - 1) + ") or default");
                     a.Set(level, f, name);
@@ -411,6 +431,13 @@ namespace God.Recording
                 var lo = new JObject { ["default"] = a.DefaultOf(level) };
                 foreach (var kv in a.Scoped[(int)level]) lo[kv.Key.ToString(CultureInfo.InvariantCulture)] = kv.Value;
                 o[PolicyRegistry.Lower(level)] = lo;
+            }
+            // D1: the god level only when it is not the default (none, no entries), so older outputs stay byte-identical
+            if (a.DefaultOf(PolicyLevel.God) != PolicyRegistry.None || a.Scoped[(int)PolicyLevel.God].Count > 0)
+            {
+                var go = new JObject { ["default"] = a.DefaultOf(PolicyLevel.God) };
+                foreach (var kv in a.Scoped[(int)PolicyLevel.God]) go[kv.Key.ToString(CultureInfo.InvariantCulture)] = kv.Value;
+                o[PolicyRegistry.Lower(PolicyLevel.God)] = go;
             }
             return o;
         }
@@ -503,19 +530,23 @@ namespace God.Recording
                 foreach (var m in l) { var mo = new JObject { ["metric"] = m.Metric }; if (m.Above.HasValue) mo["above"] = m.Above.Value; if (m.Below.HasValue) mo["below"] = m.Below.Value; a.Add(mo); }
                 return a;
             }
+            var setupJson = new JObject
+            {
+                ["factionCount"] = FactionCount, ["human"] = Human, ["tutorial"] = Tutorial, ["population"] = Population, ["startNpcsPerFaction"] = StartNpcsPerFaction,
+                ["lifeScale"] = LifeScale, ["ticksPerDay"] = TicksPerDay, ["daysPerYear"] = DaysPerYear,
+                ["decayFollowsLifeScale"] = DecayFollowsLifeScale, ["disease"] = Disease.ToString().ToLowerInvariant(),
+                ["fullInformation"] = FullInformation, ["victory"] = victory,
+                ["purpose"] = PurposeNames[(int)EffectivePurpose], ["trueStateOverlay"] = TrueStateOverlayRules.Allowed(EffectivePurpose, TrueStateOverlay),
+            };
+            // D1: only when not the default, so older resolved scenarios (and their hashes) stay byte-identical
+            if (Control != PlayerControl.Stage3Faction) setupJson["control"] = "godonly";
+            if (HumanGod != 0) setupJson["humanGod"] = HumanGod;
             return new JObject
             {
                 ["scenarioVersion"] = CurrentVersion,
                 ["name"] = Name,
                 ["description"] = Description,
-                ["setup"] = new JObject
-                {
-                    ["factionCount"] = FactionCount, ["human"] = Human, ["tutorial"] = Tutorial, ["population"] = Population, ["startNpcsPerFaction"] = StartNpcsPerFaction,
-                    ["lifeScale"] = LifeScale, ["ticksPerDay"] = TicksPerDay, ["daysPerYear"] = DaysPerYear,
-                    ["decayFollowsLifeScale"] = DecayFollowsLifeScale, ["disease"] = Disease.ToString().ToLowerInvariant(),
-                    ["fullInformation"] = FullInformation, ["victory"] = victory,
-                    ["purpose"] = PurposeNames[(int)EffectivePurpose], ["trueStateOverlay"] = TrueStateOverlayRules.Allowed(EffectivePurpose, TrueStateOverlay),
-                },
+                ["setup"] = setupJson,
                 ["tuning"] = tuning,
                 ["policies"] = PoliciesJson(Policies),
                 ["commands"] = commands,

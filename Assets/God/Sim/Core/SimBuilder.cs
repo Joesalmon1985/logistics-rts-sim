@@ -9,6 +9,8 @@ namespace God.Sim
     {
         public GodSim Sim;
         public AiDirector Director;
+        /// <summary>D1 (contracts 12, LEAD_RULINGS R31): the god director seating the AI gods (null without divinity state).</summary>
+        public Divinity.GodDirector Gods;
     }
 
     /// <summary>
@@ -30,7 +32,7 @@ namespace God.Sim
         public static BuiltSim Create(GameSetup setup, SimTuning tuning = null, bool attachAi = true, PolicyAssignment policies = null)
         {
             var sim = GodSim.Create(setup, tuning);
-            return new BuiltSim { Sim = sim, Director = attachAi ? AttachPolicies(sim, policies) : null };
+            return AttachDirectors(new BuiltSim { Sim = sim }, attachAi, policies);
         }
 
         /// <summary>A loaded game, with the policies re-attached (brains rebuild from state; the trade judge is bound again).</summary>
@@ -38,7 +40,29 @@ namespace God.Sim
         {
             if (file == null) throw new ArgumentNullException(nameof(file));
             var sim = file.ToSim();
-            return new BuiltSim { Sim = sim, Director = attachAi ? AttachPolicies(sim, policies) : null };
+            return AttachDirectors(new BuiltSim { Sim = sim }, attachAi, policies);
+        }
+
+        /// <summary>
+        /// LEAD_RULINGS R31: the one registration point of the host-attached directors, in system order: the faction
+        /// policies (<see cref="AiDirector"/>, 900), then the god director (D1, 910). C6 adds its <c>InstitutionDirector</c>
+        /// (905) here. Nothing is attached without <paramref name="attachAi"/>.
+        /// </summary>
+        public static BuiltSim AttachDirectors(BuiltSim b, bool attachAi, PolicyAssignment policies)
+        {
+            if (!attachAi) return b;
+            b.Director = AttachPolicies(b.Sim, policies);
+            b.Gods = AttachGods(b.Sim, policies);
+            return b;
+        }
+
+        /// <summary>D1: the god director with the assignment's <c>policies.god</c> (null without divinity state).</summary>
+        public static Divinity.GodDirector AttachGods(GodSim sim, PolicyAssignment policies = null)
+        {
+            if (sim == null) throw new ArgumentNullException(nameof(sim));
+            if (sim.State.Divinity == null) return null;
+            policies = policies ?? PolicyAssignment.Stage3Default();
+            return Divinity.GodDirector.Attach(sim, policies, StandardPolicies.Registry(sim, AiTuning.Default));
         }
 
         /// <summary>
