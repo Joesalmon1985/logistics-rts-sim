@@ -90,5 +90,49 @@ namespace God.Sim.Information
         void Gods(List<DivineGodView> into);
         /// <summary>Every living person as the god perceives them, ascending id, written into <paramref name="into"/>.</summary>
         void People(List<DivinePersonView> into);
+
+        // ---- D4 additive members (contracts 19.2: PossessionView, AvatarView; U1b and U2b read them) ----
+        /// <summary>D4: the god's open possession (false when it holds no one).</summary>
+        bool TryPossession(out PossessionView view);
+        /// <summary>D4b: the god's avatar body (false before its first manifestation; <c>Alive</c> false while not manifested).</summary>
+        bool TryAvatar(out AvatarView view);
+    }
+
+    // ---------------- D4 region (additive, contracts 19.2): read-only views of the god's embodiment ----------------
+
+    /// <summary>D4: the god's possession as its controls read it (a copy, from F1's control table and D4's spell).</summary>
+    public struct PossessionView
+    {
+        public int Intervention, God, Npc, Node;
+        public long StartedTick;
+        /// <summary>Milli-Mythic charged per tick (0 in Unlimited mode: the nominal rate is waived).</summary>
+        public long UpkeepPerTick, NominalUpkeepPerTick;
+        /// <summary>Ticks the god's balance pays at the current rate (long.MaxValue when nothing is charged).</summary>
+        public long TicksLeft;
+        /// <summary>The held movement and action input (Heading 64 = stop), the last tick a heading holds.</summary>
+        public ControlInputKind Input;
+        public byte Heading, Gait;
+        public long LeaseUntil;
+        public DivineAct Act;
+        public int InputsApplied, InputsRefused, Actions;
+    }
+
+    /// <summary>D4b: the god's avatar as its controls read it (a copy).</summary>
+    public struct AvatarView
+    {
+        public int God, Body, Node, Intervention;
+        public bool Alive;
+        /// <summary>Health permille (1000 full).</summary>
+        public int Health;
+        /// <summary>What it carries: up to the carry slots, the ware and count of each non-empty lot.</summary>
+        public Ware[] CarryWares;
+        public int[] CarryCounts;
+        public long StartedTick;
+        public long UpkeepPerTick, NominalUpkeepPerTick, TicksLeft;
+        /// <summary>The tick from which a new manifestation is allowed (the cooldown after a destruction).</summary>
+        public long CooldownUntil;
+        public int Observers, Actions;
+        public ControlInputKind Input;
+        public byte Heading;
     }
 }

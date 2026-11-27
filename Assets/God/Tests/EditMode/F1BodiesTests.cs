@@ -178,7 +178,7 @@ namespace God.Sim.Tests
             var person = s.Population.Npcs.First(Bodies.IsLivingPerson);
             Assert.IsTrue(Control.TryAcquire(s, ev, new ControlEntry { Kind = ControlKind.Possessed, God = 1, Body = person.Id, Intervention = 1 }, out var why), why);
             var h = new DivineControlInputHandler();
-            Assert.IsFalse(sim.HasHandler(typeof(DivineControlInput)), "not registered by F1");
+            Assert.IsTrue(sim.HasHandler(typeof(DivineControlInput)), "registered by D4 (D4 adjustment: F1 left it unregistered)");
             Assert.AreEqual(DivineReasons.BadTarget, h.Validate(s, new DivineControlInput { God = 2, Body = person.Id, Kind = ControlInputKind.Heading, Heading = 0, Gait = 1 }).Reason, "another god's body");
             Assert.AreEqual(DivineReasons.BadTarget, h.Validate(s, new DivineControlInput { God = 1, Body = person.Id, Kind = ControlInputKind.Heading, Heading = 16, Gait = 1 }).Reason, "sector out of range at 16");
             Assert.IsTrue(h.Validate(s, new DivineControlInput { God = 1, Body = person.Id, Kind = ControlInputKind.Heading, Heading = 15, Gait = 1 }).Ok);

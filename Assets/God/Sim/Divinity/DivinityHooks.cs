@@ -166,10 +166,12 @@ namespace God.Sim.Divinity
         {
             var l = new List<VerbInfo>();
             VerbsD2(l); // flagged additive edit (D2)
+            VerbsD4(l); // flagged additive edit (D4)
             VerbsD6(l);
             return new ReadOnlyArray<VerbInfo>(l);
         }
         static partial void VerbsD2(List<VerbInfo> into);
+        static partial void VerbsD4(List<VerbInfo> into);
         static partial void VerbsD6(List<VerbInfo> into);
 
         /// <summary>The instinct rows of this domain, appended to <c>InstinctTable.Default</c>.</summary>
@@ -217,10 +219,12 @@ namespace God.Sim.Divinity
         {
             string t = null;
             DescribeD2(f, ref t);
+            DescribeD4(f, ref t); // flagged additive edit (D4)
             DescribeD6(f, ref t);
             return t;
         }
         static partial void DescribeD2(uint f, ref string text);
+        static partial void DescribeD4(uint f, ref string text);
         static partial void DescribeD6(uint f, ref string text);
 
         /// <summary>

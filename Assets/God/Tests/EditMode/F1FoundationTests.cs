@@ -71,6 +71,9 @@ namespace God.Sim.Tests
             types = types.Where(t => t != typeof(IssueSuggestion) && t != typeof(IssueCommand) && t != typeof(IssueCompulsion) && t != typeof(CancelCompulsion)
                 && t != typeof(CastMiracle) // and D3's miracle handler (merge adjustment)
                 && t != typeof(RevealCommandment) && t != typeof(ReviseCommandment) && t != typeof(RevokeCommandment)).ToList(); // D6 adjustment: D6's handlers
+            // D4 adjustment: possession, the avatar and the control input have D4's handlers
+            types = types.Where(t => t != typeof(BeginPossession) && t != typeof(EndPossession) && t != typeof(DivineControlInput)
+                && t != typeof(ManifestAvatar) && t != typeof(DismissAvatar)).ToList();
             var sim = Game(11, divinity: 1, humanGod: 1);
             Assert.IsNotNull(sim.State.Divinity, "stub state with the switch on");
             ulong before = sim.StateHash();
@@ -368,7 +371,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(0x4000_0001, DivinityIds.AvatarBodyId(1));
             Assert.AreEqual(35, EpisodeKey.Possession);
             Assert.AreEqual(VerbTable.Rows.Count, VerbTable.Rows.Select(r => r.Id).Distinct().Count());
-            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && !Verb.IsOrgs(r.Id) && r.Id != Divinity.DivineVerb.Give && r.Id != Divinity.Doctrine.TellVerb), "rows 96-127 stay reserved until their packages"); // Civ (C1, C3), Orgs (C6), D2's 119, package D6's tell verb
+            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && !Verb.IsOrgs(r.Id) && r.Id != Divinity.DivineVerb.Give && r.Id != Divinity.Doctrine.TellVerb && !Divinity.EmbodiedVerb.IsMine(r.Id)), "rows 96-127 stay reserved until their packages"); // Civ (C1, C3), Orgs (C6), D2's 119, package D6's tell verb, D4's 121-123
         }
     }
 }
