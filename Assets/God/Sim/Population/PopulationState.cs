@@ -84,10 +84,10 @@ namespace God.Sim.Population
         public ItemLot Lot;
     }
 
-    /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1). 8 slots (F0): 4-7 reserved.</summary>
-    public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3 }
-    /// <summary>Why goods left it. 8 slots (F0): <see cref="Buried"/> for M4 estates; 5-7 reserved.</summary>
-    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4 }
+    /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1). 8 slots (F0); F1: 4 Miracle (D3), 5 Crafted; 6-7 reserved.</summary>
+    public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3, Miracle = 4, Crafted = 5 }
+    /// <summary>Why goods left it. 8 slots (F0): <see cref="Buried"/> for M4 estates; F1: 5 Miracle (D3), 6 Treatment (C7), 7 Offering (D6). The ledger arrays stay 8 slots.</summary>
+    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4, Miracle = 5, Treatment = 6, Offering = 7 }
 
     /// <summary>
     /// The one conservation ledger of personal goods (ECONOMY_DESIGN A1): for every ware,

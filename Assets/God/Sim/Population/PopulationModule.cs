@@ -401,14 +401,30 @@ namespace God.Sim.Population
                 foreach (var l in b.Lots) { h.Add(l.Id); h.Add((int)l.Ware); h.Add(l.Count); h.Add(l.SpoilDay); h.Add(l.Uses); h.Add((int)l.Owner.Kind); h.Add(l.Owner.Id); }
             }
             if (p.OpenPileUnits != null) foreach (int u in p.OpenPileUnits) h.Add(u);
-            foreach (long v in p.Ledger.Produced) h.Add(v);
-            foreach (long v in p.Ledger.Consumed) h.Add(v);
+            HashLedger(ref h, p.Ledger); // F1.17: the old 32-ware layout, plus wares 32-39 only when any is non-zero
             var st = p.Stats;
             h.Add(st.Decisions); h.Add(st.IntentsRefused); h.Add(st.NotPerceived); h.Add(st.Meals); h.Add(st.Sleeps); h.Add(st.HutsBuilt); h.Add(st.LogsGathered); h.Add(st.Foraged);
             foreach (int d in st.DeathsByCause) h.Add(d);
             h.Add(st.Founders); h.Add(st.Deaths);
             if (p.Pedigree != null) { h.Add(p.Pedigree.Count); foreach (var r in p.Pedigree) { h.Add(r.Id); h.Add(r.Mother); h.Add(r.Father); h.Add(r.BornTick); } }
             return h.Value;
+        }
+
+        /// <summary>
+        /// F1.17: the ledger in the pre-F1 order (reason-major, wares 0-31: exactly the old array), then, only when any ware
+        /// 32-39 has a non-zero count under any reason, a marker and those slots, so the population part is unchanged until a
+        /// ware beyond 31 (Herbs) is produced or consumed.
+        /// </summary>
+        internal static void HashLedger(ref StateHasher h, GoodsLedger l)
+        {
+            const int Old = Wares.LegacyPersonalCount, W = Wares.PersonalCount;
+            bool extra = false;
+            for (int r = 0; r < GoodsLedger.ProduceReasons; r++) for (int w = 0; w < W; w++) { long v = l.Produced[r * W + w]; if (w < Old) h.Add(v); else if (v != 0) extra = true; }
+            for (int r = 0; r < GoodsLedger.ConsumeReasons; r++) for (int w = 0; w < W; w++) { long v = l.Consumed[r * W + w]; if (w < Old) h.Add(v); else if (v != 0) extra = true; }
+            if (!extra) return;
+            h.Add(0x48455242); // "HERB"
+            for (int r = 0; r < GoodsLedger.ProduceReasons; r++) for (int w = Old; w < W; w++) h.Add(l.Produced[r * W + w]);
+            for (int r = 0; r < GoodsLedger.ConsumeReasons; r++) for (int w = Old; w < W; w++) h.Add(l.Consumed[r * W + w]);
         }
 
         public static ulong HashCognition(GodState s)
