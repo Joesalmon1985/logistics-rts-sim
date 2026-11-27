@@ -103,3 +103,22 @@ The Stage 3 game (player as a faction placing buildings, setting priorities and 
 ## Genuinely open owner questions
 
 None block tomorrow's run. Questions raised while planning are listed in [CIVILISATION_AND_DIVINITY_MASTER_PLAN.md](CIVILISATION_AND_DIVINITY_MASTER_PLAN.md) under "Open questions", each with the default the run will use until the owner answers.
+
+## D7: Terrain and raw materials (owner, 27 Nov 2026, evening) — proposed, to confirm next session
+
+The owner's intended basic economy. Not yet implemented; the next session reconciles it with the current code and earlier decisions (notably D4 §5 "meaningful carrying capacity and depletion" vs infinite forage) before any change.
+
+| Hex (abstract, never visible as hexes) | Raw material (Catan-style roll; appears gradually, not at once) | Infinite forageable food |
+|---|---|---|
+| Forest | Wood | Mushrooms |
+| Mountain | Stone | Roots |
+| Wetland | Clay | Wild eggs |
+| Pasture | Sheep | Rabbit |
+| Field | Hay | Wild vegetables |
+| Desert | nothing | Cactus fruit |
+| Sea | Fish | Seaweed |
+
+- D7.1 The world is 6 land hex types plus sea; the island is one continuous landscape with no visible hex boundaries (consistent with D5.18–D5.20).
+- D7.2 Each hex type yields its raw material on a Catan-style production roll; the material comes into being gradually after a successful roll.
+- D7.3 Every hex has an infinite supply of its forageable food, which can be eaten directly. **Open point:** "infinite" conflicts with D4 §5 (carrying capacity, depletion, commons); options to confirm: infinite total but rate-limited per place, or slowly regenerating.
+- D7.4 Raw materials are not eaten; they are processed and combined into more complex goods to be used, consumed or traded.
