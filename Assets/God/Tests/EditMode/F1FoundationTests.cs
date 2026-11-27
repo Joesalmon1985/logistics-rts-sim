@@ -66,7 +66,7 @@ namespace God.Sim.Tests
             var types = DivineCommandTypes();
             Assert.GreaterOrEqual(types.Count, 18, "every concrete command of contracts 10.2");
             // D1 adjustment: the four configuration commands have D1's handlers; the rest stay handler-less until D2-D7
-            types = types.Where(t => !DivineCommandSet.IsConfiguration(t)).ToList();
+            types = types.Where(t => !DivineCommandSet.IsConfiguration(t) && t != typeof(CastMiracle)).ToList(); // D3: CastMiracle has its handler
             var sim = Game(11, divinity: 1, humanGod: 1);
             Assert.IsNotNull(sim.State.Divinity, "stub state with the switch on");
             ulong before = sim.StateHash();
@@ -344,8 +344,8 @@ namespace God.Sim.Tests
         public void Events_NewDomainsAndRanges_NoRows()
         {
             Assert.AreEqual(0, CivEvents.Catalog.Count + OrgEvents.Catalog.Count, "F1 adds no event rows");
-            // D1 adjustment: D1's rows are 800-809 (contracts 15.1); no other divinity package has rows yet
-            foreach (var e in DivinityEvents.Catalog) Assert.That(e.Code >= 800 && e.Code <= 809, e.Name + " " + e.Code);
+            // D1 adjustment: D1's rows are 800-809, D3's 825-829 (contracts 15.1); no other divinity package has rows yet
+            foreach (var e in DivinityEvents.Catalog) Assert.That(e.Code >= 800 && e.Code <= 829, e.Name + " " + e.Code);
             foreach (var d in new[] { TelemetryDomain.Lending, TelemetryDomain.Organisation, TelemetryDomain.Service }) Assert.AreEqual((500, 599), EventCatalog.RangeOf(d, false), d.ToString());
             for (int d = 60; d <= 66; d++) Assert.AreEqual((800, 899), EventCatalog.RangeOf((TelemetryDomain)d, false), ((TelemetryDomain)d).ToString());
             Assert.AreEqual(2, EventCatalog.Of(typeof(Social.GestureMade)).Version, "GestureMade v2 (DurationTicks)");
