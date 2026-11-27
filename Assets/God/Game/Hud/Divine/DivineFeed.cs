@@ -157,12 +157,12 @@ namespace God.Game
                 if (da.Act != DivineAct.None && c.Act != DivineAct.None && c.Act != da.Act && da.Kind != InterventionKind.Miracle) continue;
                 hit = c; break;
             }
+            var kind = da.Kind == InterventionKind.Suggestion ? CueKind.Suggest : da.Kind == InterventionKind.Command ? CueKind.Command : da.Kind == InterventionKind.Compulsion ? CueKind.Compel : CueKind.None;
+            if (kind != CueKind.None) Emit(new CueSignal { Kind = kind, Person = da.TargetKind == DivineTargetKind.Npc ? da.TargetId : 0, Node = da.TargetNode });
+            if (da.TargetKind == DivineTargetKind.Npc) AddRow(da.TargetId, new DivineRow(Sim.Information.KnowledgeLayer.DivineObservation, "Issued", Describe(da)));
             if (hit == null) return;
             hit.Accepted++; hit.Interventions.Add(da.Intervention); _byIntervention[da.Intervention] = hit;
             if (pendingSpend.TryGetValue(da.Intervention, out var ms)) { hit.Charged += ms.Amount; hit.Nominal += ms.Nominal; pendingSpend.Remove(da.Intervention); }
-            if (da.TargetKind == DivineTargetKind.Npc) AddRow(da.TargetId, new DivineRow(Sim.Information.KnowledgeLayer.DivineObservation, "Issued", Describe(da)));
-            var kind = da.Kind == InterventionKind.Suggestion ? CueKind.Suggest : da.Kind == InterventionKind.Command ? CueKind.Command : da.Kind == InterventionKind.Compulsion ? CueKind.Compel : CueKind.None;
-            if (kind != CueKind.None) Emit(new CueSignal { Kind = kind, Person = da.TargetKind == DivineTargetKind.Npc ? da.TargetId : 0, Node = da.TargetNode });
         }
 
         private static string Describe(DivineActionAccepted da) => da.Kind + (da.Act != DivineAct.None ? " " + da.Act : "") + " (" + da.Charged / 1000 + " Mythic)";

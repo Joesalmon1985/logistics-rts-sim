@@ -130,6 +130,7 @@ namespace God.Game.Tests
             boot.Player.Builder.Factory = new SpendFactory();
             hud.SendRequest(PlayerCommandBuilder.Request(1, new DivineIntent(DivineActs.Command, (int)DivineAct.Gather, 100), PersonSel(p)), "Command");
             boot.StepTicks(1);
+            boot.Divine.Feed.Accept(new DivineActionAccepted { God = 1, Intervention = 99, Kind = InterventionKind.Command, Act = DivineAct.Gather, TargetKind = DivineTargetKind.Npc, TargetId = p, Charged = 4000 });
             var rows = hud.DivineRowsOf(hud.PersonCard);
             Assert.IsTrue(rows.Count >= 1, "the issued command is a row");
             foreach (var r in rows) Assert.AreNotEqual(0, (int)r.Layer, r.Head);
