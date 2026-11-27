@@ -1,0 +1,36 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_shared_store_reconcile",
+  "description": "C6 warehouse reconciliation fixture (ORG-ACC-17, SVC-ACC-17), NOT scenario-4 evidence: org_shared_store with the founding conditions eased (any believed supporter, one day of need evidence) so that organisations exist within 10 days and every C6 fact table gets rows to reconcile against the event stream.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 4,
+    "victory": [ { "kind": "sandbox" } ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Orgs.C6.StartPractices": 2,
+    "Orgs.C6.SupportTrust": 0,
+    "Orgs.C6.NeedThreshold": 1,
+    "Households.Founders.ChildPermille": 0,
+    "Households.Founders.ElderPermille": 0,
+    "Households.Founders.AgeMinMilli": 1000,
+    "Households.Founders.AgeMaxMilli": 2600,
+    "Households.Founders.CouplePermille": 1000,
+    "Households.Founders.SameSexPermille": 0,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 4,
+    "Ecology.BerriesPerForest": 2,
+    "Ecology.BerriesPerMeadow": 1,
+    "Ecology.RootsPerHills": 2,
+    "Ecology.RootsPerFields": 2,
+    "Ecology.BerryRegrowPermille": 250,
+    "Ecology.RootRegrowPermille": 200
+  },
+  "record": { "level": "off" },
+  "stop": { "maxDays": 10, "populationBelow": 1 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

@@ -1,0 +1,18 @@
+{
+  "scenarioVersion": 1,
+  "name": "civ_assets",
+  "description": "C1 demonstration (Checkpoint C, 'operates a productive asset'): the band_6x20 population (six factions of 20 founding adults on foraging, stage 3 AI, sandbox) with Civ.Enabled = 1. People who carry a log they gathered may found a field, a workshop or a store at a free plot, build it from real logs, work it (the output belongs to the asset's owner) and haul logs to their workshop. Nothing scripted. 10 sim days.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "tuning": {
+    "Civ.Enabled": 1
+  },
+  "record": { "level": "off" },
+  "stop": { "maxDays": 10, "populationBelow": 1 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

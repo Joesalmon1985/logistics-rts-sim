@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Recorders, replay files, scenario files and the smoke verdict, shared by the runner and the Unity player.
+       Compiles Assets/God/Recording (source of truth); no UnityEngine. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>God.Recording</RootNamespace>
+    <AssemblyName>God.Recording</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/God/Recording/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../God.Sim/God.Sim.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,52 @@
+{
+  "scenarioVersion": 1,
+  "name": "m4_band_6x20",
+  "description": "M4: the owner's band (six factions of 20) with the life cycle, households and estates; founders are the established band (D4, M4.42: FounderTuning.EstablishedBand: elders, mature couples with their dependent children, young adults, same-sex couples; spread birth dates). Default ecology, disease On (sandbox, Q3), immigration off, sandbox, 15 sim years. The earlier young-adult mix is m4_band_6x20_young.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ]
+  },
+  "tuning": {
+    "Households.Founders.Generator": 1,
+    "Households.Founders.ElderPermille": 100,
+    "Households.Founders.MaturePermille": 300,
+    "Households.Founders.ChildPermille": 300,
+    "Households.Founders.ChildMinMilli": 50,
+    "Households.Founders.ChildMaxMilli": 950,
+    "Households.Founders.AgeMinMilli": 1000,
+    "Households.Founders.AgeMaxMilli": 1900,
+    "Households.Founders.MatureMinMilli": 2000,
+    "Households.Founders.MatureMaxMilli": 2900,
+    "Households.Founders.ElderMinMilli": 3000,
+    "Households.Founders.ElderMaxMilli": 3300,
+    "Households.Founders.CouplePermille": 800,
+    "Households.Founders.YoungCouplePermille": 400,
+    "Households.Founders.SameSexPermille": 100,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 6,
+    "Estate.CustomF0": 1,
+    "Estate.CustomF1": 2,
+    "Estate.CustomF2": 3,
+    "Estate.CustomF3": 4,
+    "Estate.CustomF4": 5,
+    "Estate.CustomF5": 6
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxYears": 15,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}

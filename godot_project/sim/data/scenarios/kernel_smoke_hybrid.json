@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "variant": "hybrid",
-  "seed": 1,
-  "map_file": "maps/tutorial.json",
-  "players": ["p1"],
-  "victory": {"type": "none"},
-  "expected_hash": "sha256:8af93f3df2f05607cd87596c3b1152f89d83db2d243fb8a73dc896b6a0b61723"
-}

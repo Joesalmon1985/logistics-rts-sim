@@ -1,0 +1,59 @@
+{
+  "scenarioVersion": 1,
+  "name": "m4_families",
+  "description": "M4.36 viable families: six factions of 20 founders as the established band (D4, M4.42) with suitable ecology stated here (half again as many berry bushes and root patches, faster regrowth), every founder household starting with a hut and a store of roots, disease Mild. Dependent children, care by decision, no replenishment; 6 sim years (about 3-4 generations). The earlier young-adult mix is m4_families_young.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Households.Founders.Generator": 1,
+    "Households.Founders.ElderPermille": 100,
+    "Households.Founders.MaturePermille": 300,
+    "Households.Founders.ChildPermille": 300,
+    "Households.Founders.ChildMinMilli": 50,
+    "Households.Founders.ChildMaxMilli": 950,
+    "Households.Founders.AgeMinMilli": 1000,
+    "Households.Founders.AgeMaxMilli": 1900,
+    "Households.Founders.MatureMinMilli": 2000,
+    "Households.Founders.MatureMaxMilli": 2900,
+    "Households.Founders.ElderMinMilli": 3000,
+    "Households.Founders.ElderMaxMilli": 3300,
+    "Households.Founders.CouplePermille": 800,
+    "Households.Founders.YoungCouplePermille": 400,
+    "Households.Founders.SameSexPermille": 100,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 10,
+    "Estate.CustomF0": 1,
+    "Estate.CustomF1": 2,
+    "Estate.CustomF2": 3,
+    "Estate.CustomF3": 4,
+    "Estate.CustomF4": 5,
+    "Estate.CustomF5": 6,
+    "Ecology.BerriesPerForest": 8,
+    "Ecology.BerriesPerMeadow": 6,
+    "Ecology.RootsPerHills": 6,
+    "Ecology.RootsPerFields": 6,
+    "Ecology.BerryRegrowPermille": 500,
+    "Ecology.RootRegrowPermille": 400
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxYears": 6,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}

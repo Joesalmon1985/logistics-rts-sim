@@ -1,0 +1,18 @@
+{
+  "title": "M4.41 fertility investigation on demog_favourable (one factor at a time)",
+  "scenario": "demog_favourable",
+  "years": 15,
+  "seeds": "1-10",
+  "arms": [
+    { "name": "base" },
+    { "name": "desire-700", "set": [ "tuning.Households.Prefs.ChildDesireMean=700" ] },
+    { "name": "desire-900", "set": [ "tuning.Households.Prefs.ChildDesireMean=900", "tuning.Households.Prefs.ChildDesireSpread=100" ] },
+    { "name": "try-3days", "set": [ "tuning.Households.Life.TryingTicks=3600" ] },
+    { "name": "conceive-high", "set": [ "tuning.Households.Life.ConceiveBasePermille=600", "tuning.Households.Life.ConceiveSpanPermille=300" ] },
+    { "name": "afterbirth-0.05", "set": [ "tuning.Households.Life.AfterBirthMilli=50" ] },
+    { "name": "fertile-to-2.8", "set": [ "tuning.Households.Life.FertileEndBaseMilli=2800" ] },
+    { "name": "commitment-low", "set": [ "tuning.Households.Prefs.CommitmentMean=200", "tuning.Households.Prefs.CommitmentSpread=200" ] },
+    { "name": "partners-only", "set": [ "tuning.Households.Partner.IndependentUnions=0" ] },
+    { "name": "seek-long", "set": [ "tuning.Households.Partner.SeekTicks=600" ] }
+  ]
+}

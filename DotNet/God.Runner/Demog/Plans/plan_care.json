@@ -1,0 +1,56 @@
+{
+  "title": "M4.44 care arrangements (forms of care a begging child reaches), demog_f2_favourable (F2 biology block) with ConceptionMode 1",
+  "scenario": "demog_f2_favourable",
+  "years": 10,
+  "seeds": "1-10",
+  "arms": [
+    {
+      "name": "all-care"
+    },
+    {
+      "name": "no-care",
+      "set": [
+        "tuning.Households.Care.Off=1"
+      ]
+    },
+    {
+      "name": "parents-only",
+      "set": [
+        "tuning.Households.Care.FeedFrom=1"
+      ]
+    },
+    {
+      "name": "grandparents-and-kin-only",
+      "set": [
+        "tuning.Households.Care.FeedFrom=2"
+      ]
+    },
+    {
+      "name": "adoptive-and-step-only",
+      "set": [
+        "tuning.Households.Care.FeedFrom=16"
+      ]
+    },
+    {
+      "name": "household-mates-only",
+      "set": [
+        "tuning.Households.Care.FeedFrom=4"
+      ]
+    },
+    {
+      "name": "communal-only",
+      "set": [
+        "tuning.Households.Care.FeedFrom=8"
+      ]
+    },
+    {
+      "name": "none-by-display",
+      "set": [
+        "tuning.Households.Care.FeedFrom=0"
+      ]
+    }
+  ],
+  "set": [
+    "tuning.Households.Life.ConceptionMode=1"
+  ]
+}

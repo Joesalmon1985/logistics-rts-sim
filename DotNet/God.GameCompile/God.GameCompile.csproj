@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Unity-free compile check for every Unity assembly under Assets/God that `dotnet test DotNet` does not
+       compile: God.Game, God.Editor and the three test assemblies (Parts/*.csproj, one per asmdef).
+       Run: dotnet build DotNet/God.GameCompile -c Release   (or AgentScripts/check-game-compile.ps1)
+       No tests here. No-ops with a warning when the Unity editor DLLs are not installed.
+       Not in God.sln on purpose, so `dotnet test DotNet` is unaffected. -->
+  <Import Project="Unity.props" />
+  <PropertyGroup>
+    <AssemblyName>God.GameCompile</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <GodUnityRefs>false</GodUnityRefs>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(HaveUnity)' == 'true'">
+    <ProjectReference Include="Parts/God.Editor.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Parts/God.Game.EditTests.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Parts/God.Game.Tests.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="GodNoUnityWarning" BeforeTargets="CoreCompile" Condition="'$(HaveUnity)' != 'true'">
+    <Warning Text="God.GameCompile skipped: Unity editor DLLs not found. Set -p:UnityManagedDir=&lt;Editor&gt;\Data\Managed or UNITY_MANAGED_DIR." />
+  </Target>
+</Project>

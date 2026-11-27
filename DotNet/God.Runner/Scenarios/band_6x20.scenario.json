@@ -1,0 +1,15 @@
+{
+  "scenarioVersion": 1,
+  "name": "band_6x20",
+  "description": "The owner's first population scenario (M3 part): six factions of 20 founding adults living on foraging, the stage 3 AI running each faction's state, sandbox, 10 sim days.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "record": { "level": "off" },
+  "stop": { "maxDays": 10, "populationBelow": 1 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

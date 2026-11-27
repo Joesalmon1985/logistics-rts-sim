@@ -1,0 +1,19 @@
+{
+    "name": "God.Editor",
+    "rootNamespace": "God.Editor",
+    "references": [
+        "God.Sim",
+        "God.Game"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

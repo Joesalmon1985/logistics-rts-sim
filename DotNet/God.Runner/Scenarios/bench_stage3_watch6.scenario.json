@@ -1,0 +1,12 @@
+{
+  "scenarioVersion": 1,
+  "name": "bench_stage3_watch6",
+  "description": "Benchmark: the stage 3 game (no NPCs), six AI factions, sandbox so it never ends early, recording off.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "record": { "level": "off" },
+  "stop": { "maxTicks": 40000 }
+}

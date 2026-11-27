@@ -1,0 +1,17 @@
+{
+    "name": "God.Game",
+    "rootNamespace": "God.Game",
+    "references": [
+        "God.Sim",
+        "God.Recording"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

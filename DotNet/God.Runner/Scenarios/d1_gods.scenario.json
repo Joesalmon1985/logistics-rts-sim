@@ -1,0 +1,34 @@
+{
+  "scenarioVersion": 1,
+  "name": "d1_gods",
+  "description": "D1 headless demonstration: a god-only population game (watch seat, HumanGod 0) with six persistent gods. God 1 is an AI-seated ScheduleGod spending Mythic through the test-only DivineTestSpend command (no effect besides the spend and the intervention record): a miracle-kind spend of 5 Mythic every day from tick 600 and one command-kind spend of 12 Mythic at tick 3000. The other gods are IdleGod. Divinity.Mode can be switched from the command line (2 = Disabled refuses everything).",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 10,
+    "victory": [ { "kind": "sandbox" } ],
+    "control": "godonly",
+    "humanGod": 0
+  },
+  "tuning": {
+    "Divinity.Enabled": 1,
+    "Divinity.Mythic.TestCommand": 1,
+    "Divinity.Mythic.Schedule.S1.Tick": 600,
+    "Divinity.Mythic.Schedule.S1.Every": 1200,
+    "Divinity.Mythic.Schedule.S1.God": 1,
+    "Divinity.Mythic.Schedule.S1.Template": 1,
+    "Divinity.Mythic.Schedule.S1.A": 6,
+    "Divinity.Mythic.Schedule.S1.B": 5000,
+    "Divinity.Mythic.Schedule.S2.Tick": 3000,
+    "Divinity.Mythic.Schedule.S2.God": 1,
+    "Divinity.Mythic.Schedule.S2.Template": 1,
+    "Divinity.Mythic.Schedule.S2.A": 2,
+    "Divinity.Mythic.Schedule.S2.B": 12000
+  },
+  "policies": {
+    "god": { "default": "IdleGod", "1": "ScheduleGod" }
+  },
+  "stop": { "maxDays": 10 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

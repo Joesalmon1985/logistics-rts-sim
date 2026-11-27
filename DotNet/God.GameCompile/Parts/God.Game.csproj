@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Unity.props" />
+  <PropertyGroup>
+    <AssemblyName>God.Game</AssemblyName>
+    <RootNamespace>God.Game</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/God/Game/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <ProjectReference Include="../../God.Sim/God.Sim.csproj" />
+    <ProjectReference Include="../../God.Recording/God.Recording.csproj" />
+  </ItemGroup>
+</Project>

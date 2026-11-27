@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "variant": "economy_trial",
-  "seed": 1,
-  "map_file": "maps/tutorial.json",
-  "players": ["p1"],
-  "victory": {"type": "none"},
-  "expected_hash": "sha256:1d69994a924390478e89397dc3e0ff9b5d65118eeb2995fe1de8c53a5898332b"
-}

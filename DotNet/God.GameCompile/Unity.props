@@ -1,0 +1,61 @@
+<Project>
+  <!-- Shared settings for the Unity-free compile check of the Unity assemblies under Assets/God.
+       Overrides (MSBuild -p:Name=value or environment variable):
+         UnityManagedDir  = <editor>/Data/Managed  (UnityEngine/*.dll and UnityEditor.dll live below it)
+         UnityLibraryDir  = a Unity project Library folder with ScriptAssemblies + PackageCache
+                            (default: this worktree's Library, else any sibling worktree's warm Library). -->
+  <PropertyGroup>
+    <GodRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))</GodRoot>
+    <UnityEditorVersion Condition="'$(UnityEditorVersion)' == ''">6000.3.28f1</UnityEditorVersion>
+    <UnityManagedDir Condition="'$(UnityManagedDir)' == ''">$(UNITY_MANAGED_DIR)</UnityManagedDir>
+    <UnityManagedDir Condition="'$(UnityManagedDir)' == '' And Exists('$(UserProfile)\UnityEditors\$(UnityEditorVersion)\Editor\Data\Managed\UnityEditor.dll')">$(UserProfile)\UnityEditors\$(UnityEditorVersion)\Editor\Data\Managed</UnityManagedDir>
+    <UnityManagedDir Condition="'$(UnityManagedDir)' == '' And Exists('C:\Program Files\Unity\Hub\Editor\$(UnityEditorVersion)\Editor\Data\Managed\UnityEditor.dll')">C:\Program Files\Unity\Hub\Editor\$(UnityEditorVersion)\Editor\Data\Managed</UnityManagedDir>
+    <UnityManagedDir Condition="'$(UnityManagedDir)' == '' And Exists('/Applications/Unity/Hub/Editor/$(UnityEditorVersion)/Unity.app/Contents/Managed/UnityEditor.dll')">/Applications/Unity/Hub/Editor/$(UnityEditorVersion)/Unity.app/Contents/Managed</UnityManagedDir>
+    <UnityManagedDir Condition="'$(UnityManagedDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(UnityManagedDir)'))</UnityManagedDir>
+    <HaveUnity Condition="'$(UnityManagedDir)' != '' And Exists('$(UnityManagedDir)UnityEditor.dll')">true</HaveUnity>
+    <HaveUnity Condition="'$(HaveUnity)' == ''">false</HaveUnity>
+
+    <UnityLibraryDir Condition="'$(UnityLibraryDir)' == ''">$(UNITY_LIBRARY_DIR)</UnityLibraryDir>
+    <UnityLibraryDir Condition="'$(UnityLibraryDir)' == '' And Exists('$(GodRoot)Library\ScriptAssemblies\UnityEngine.TestRunner.dll')">$(GodRoot)Library</UnityLibraryDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1701</NoWarn>
+    <UnityDefines>UNITY_2017_1_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_2022_2_OR_NEWER;UNITY_2022_3_OR_NEWER;UNITY_2023_1_OR_NEWER;UNITY_2023_2_OR_NEWER;UNITY_2023_3_OR_NEWER;UNITY_6000_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_6000_1_OR_NEWER;UNITY_6000_2_OR_NEWER;UNITY_6000_3_OR_NEWER;UNITY_6000_3_28;UNITY_6000_3;UNITY_6000;UNITY_STANDALONE;UNITY_STANDALONE_WIN;ENABLE_MONO;ENABLE_IL2CPP;ENABLE_LEGACY_INPUT_MANAGER;UNITY_EDITOR;UNITY_EDITOR_WIN;UNITY_INCLUDE_TESTS</UnityDefines>
+    <DefineConstants>$(DefineConstants);$(UnityDefines)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(HaveUnity)' == 'true' And '$(GodUnityRefs)' != 'false'">
+    <Reference Include="$(UnityManagedDir)UnityEngine\*.dll" Private="false" />
+  </ItemGroup>
+
+  <!-- Package DLLs (test framework, UI, TMP, nunit) come from a warm Library; resolved at build time. -->
+  <Target Name="GodResolveUnityLibrary" BeforeTargets="ResolveAssemblyReferences;ResolveAssemblyReferencesDesignTime;FindReferenceAssembliesForReferences" Condition="'$(HaveUnity)' == 'true' And '$(GodUnityRefs)' != 'false'">
+    <ItemGroup Condition="'$(UnityLibraryDir)' == ''">
+      <_GodLibCand Include="$(GodRoot)..\*\Library\ScriptAssemblies\UnityEngine.TestRunner.dll" />
+    </ItemGroup>
+    <PropertyGroup Condition="'$(UnityLibraryDir)' == ''">
+      <UnityLibraryDir Condition="'%(_GodLibCand.Identity)' != ''">%(_GodLibCand.RootDir)%(_GodLibCand.Directory)..</UnityLibraryDir>
+    </PropertyGroup>
+    <Error Condition="'$(UnityLibraryDir)' == ''" Text="No Unity Library found (need ScriptAssemblies\UnityEngine.TestRunner.dll and PackageCache). Open the project in Unity once or pass -p:UnityLibraryDir=&lt;path&gt;." />
+    <PropertyGroup>
+      <UnityLibraryDir>$([MSBuild]::EnsureTrailingSlash('$(UnityLibraryDir)'))</UnityLibraryDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_GodNunit Include="$(UnityLibraryDir)PackageCache\com.unity.ext.nunit@*\net40\unity-custom\nunit.framework.dll" />
+    </ItemGroup>
+    <ItemGroup>
+      <Reference Include="@(_GodNunit)" Private="false" Condition="'$(GodNeedNunit)' == 'true'" />
+      <Reference Include="$(UnityLibraryDir)ScriptAssemblies\UnityEngine.TestRunner.dll" Private="false" Condition="'$(GodNeedNunit)' == 'true'" />
+      <Reference Include="$(UnityLibraryDir)ScriptAssemblies\UnityEditor.TestRunner.dll" Private="false" Condition="'$(GodNeedNunit)' == 'true'" />
+      <Reference Include="$(UnityLibraryDir)ScriptAssemblies\UnityEngine.UI.dll" Private="false" />
+      <Reference Include="$(UnityLibraryDir)ScriptAssemblies\Unity.TextMeshPro.dll" Private="false" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "armour_types": {
-    "infantry": {"display_name": "Infantry"},
-    "vehicle": {"display_name": "Vehicle"},
-    "heavy": {"display_name": "Heavy"},
-    "structure": {"display_name": "Structure"}
-  }
-}

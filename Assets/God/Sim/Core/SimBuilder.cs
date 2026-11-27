@@ -1,0 +1,134 @@
+using System;
+using System.Collections.Generic;
+using God.Sim.Policy;
+
+namespace God.Sim
+{
+    /// <summary>A sim as a host gets it from <see cref="SimBuilder"/>: the sim and the AI director playing its bot factions (or null).</summary>
+    public sealed class BuiltSim
+    {
+        public GodSim Sim;
+        public AiDirector Director;
+        /// <summary>D1 (contracts 12, LEAD_RULINGS R31): the god director seating the AI gods (null without divinity state).</summary>
+        public Divinity.GodDirector Gods;
+    }
+
+    /// <summary>
+    /// The one way both hosts build a game (HEADLESS_SIMULATION 9.2): the Unity player (<c>GodBootstrap</c>, <c>AiHost</c>,
+    /// <c>SmokeRun</c>) and the headless runner. A new game is <see cref="GodSim.Create(GameSetup, SimTuning)"/> plus, for
+    /// every faction without a human, an AI brain with <see cref="AiTuning.Default"/> and an <see cref="AiTrader"/> (which
+    /// also becomes the game's trade judge). Because both hosts call this, the player and the runner give the same hash for
+    /// the same setup, seed and external commands.
+    /// </summary>
+    public static class SimBuilder
+    {
+        /// <summary>The policy name of the stage 3 faction AI (<see cref="PolicyAssignment.StageThreeFaction"/>).</summary>
+        public const string StageThreeAi = PolicyAssignment.StageThreeFaction;
+
+        /// <summary>
+        /// A new game; with <paramref name="attachAi"/>, the faction policies of <paramref name="policies"/> (default: the
+        /// stage 3 AI brain) for every faction but the human one, and its military policies.
+        /// </summary>
+        public static BuiltSim Create(GameSetup setup, SimTuning tuning = null, bool attachAi = true, PolicyAssignment policies = null)
+        {
+            var sim = GodSim.Create(setup, tuning);
+            return AttachDirectors(new BuiltSim { Sim = sim }, attachAi, policies);
+        }
+
+        /// <summary>A loaded game, with the policies re-attached (brains rebuild from state; the trade judge is bound again).</summary>
+        public static BuiltSim FromSave(SaveFile file, bool attachAi = true, PolicyAssignment policies = null)
+        {
+            if (file == null) throw new ArgumentNullException(nameof(file));
+            var sim = file.ToSim();
+            return AttachDirectors(new BuiltSim { Sim = sim }, attachAi, policies);
+        }
+
+        /// <summary>
+        /// LEAD_RULINGS R31: the one registration point of the host-attached directors, in system order: the faction
+        /// policies (<see cref="AiDirector"/>, 900), then the god director (D1, 910). C6 adds its <c>InstitutionDirector</c>
+        /// (905) here. Nothing is attached without <paramref name="attachAi"/>.
+        /// </summary>
+        public static BuiltSim AttachDirectors(BuiltSim b, bool attachAi, PolicyAssignment policies)
+        {
+            if (!attachAi) return b;
+            b.Director = AttachPolicies(b.Sim, policies);
+            b.Gods = AttachGods(b.Sim, policies);
+            return b;
+        }
+
+        /// <summary>D1: the god director with the assignment's <c>policies.god</c> (null without divinity state).</summary>
+        public static Divinity.GodDirector AttachGods(GodSim sim, PolicyAssignment policies = null)
+        {
+            if (sim == null) throw new ArgumentNullException(nameof(sim));
+            if (sim.State.Divinity == null) return null;
+            policies = policies ?? PolicyAssignment.Stage3Default();
+            return Divinity.GodDirector.Attach(sim, policies, StandardPolicies.Registry(sim, AiTuning.Default));
+        }
+
+        /// <summary>
+        /// Gives each listed faction (default: every faction but the human one) a brain that trades. Call once per sim. Returns
+        /// the director (a sim system, so brains think on sim ticks whatever steps the sim).
+        /// </summary>
+        public static AiDirector AttachAi(GodSim sim, IEnumerable<Faction> factions = null, IAiTrader trader = null)
+        {
+            if (sim == null) throw new ArgumentNullException(nameof(sim));
+            return AiDirector.Attach(sim, factions ?? AiDirector.NonHuman(sim.State), AiTuning.Default, trader ?? new AiTrader());
+        }
+
+        /// <summary>
+        /// M1: the scenario's policy assignment through the registry (<see cref="StandardPolicies"/>). The military policy of
+        /// every faction is set on the military system; every non-human faction gets the faction policy it is assigned. When
+        /// no faction gets one (all <c>none</c>), no director is attached at all, exactly as before M1. Unknown names throw
+        /// <see cref="PolicyException"/> before the sim is touched.
+        /// </summary>
+        public static AiDirector AttachPolicies(GodSim sim, PolicyAssignment policies = null, IAiTrader trader = null)
+        {
+            if (sim == null) throw new ArgumentNullException(nameof(sim));
+            policies = policies ?? PolicyAssignment.Stage3Default();
+            trader = trader ?? new AiTrader();
+            var registry = StandardPolicies.Registry(sim, AiTuning.Default, trader);
+            policies.Validate(registry);
+            // C6 (flagged additive edit, LEAD_RULINGS R31: move into D1's AttachDirectors at the merge): the institution seats (905)
+            if (policies.Scoped[(int)PolicyLevel.Institution].Count > 0) throw new PolicyException("policies.institution: per-scope institution policies are not supported (C6)");
+            var institution = InstitutionPolicies.Create(policies.Defaults[(int)PolicyLevel.Institution]) ?? throw new PolicyException("policies.institution: unknown policy " + policies.Defaults[(int)PolicyLevel.Institution]);
+            Orgs.InstitutionDirector.Attach(sim, institution);
+            string civilian = policies.Defaults[(int)PolicyLevel.Civilian];
+            if (policies.Scoped[(int)PolicyLevel.Civilian].Count > 0) throw new PolicyException("policies.civilian: per-faction civilian policies are not supported (M3)");
+            if (civilian != PolicyRegistry.None)
+            {
+                if (sim.State.Population == null) throw new PolicyException("policies.civilian: the game has no population (setup.population is off)");
+                var pop = PopulationOf(sim);
+                if (pop != null && registry.Create(PolicyLevel.Civilian, civilian, -1) is INpcPolicy np) pop.SetPolicy(civilian, np);
+                foreach (var n in sim.State.Population.Npcs) if (Population.Bodies.IsPerson(n) && (n.BornTick == sim.State.Tick || n.Policy == null)) n.Policy = civilian;
+            }
+
+            var mil = MilitaryOf(sim);
+            foreach (var f in sim.State.Setup.Factions)
+            {
+                string name = policies.NameFor(PolicyLevel.Military, (int)f);
+                if (name == PolicyRegistry.None) throw new PolicyException("policies.military: soldiers must have a policy ('none' is not allowed)");
+                if (mil != null && name != PolicyAssignment.StageThreeMilitary) mil.SetPolicy(f, registry.CreateMilitary(name, (int)f));
+            }
+
+            var seated = new List<Faction>();
+            foreach (var f in AiDirector.NonHuman(sim.State))
+                if (policies.NameFor(PolicyLevel.Faction, (int)f) != PolicyRegistry.None) seated.Add(f);
+            if (seated.Count == 0) return null;
+            return AiDirector.Attach(sim, seated, policies, registry, AiTuning.Default, trader);
+        }
+
+        /// <summary>The sim's population system (null without a population).</summary>
+        public static Population.PopulationSystem PopulationOf(GodSim sim)
+        {
+            foreach (var sys in sim.Systems) if (sys is Population.PopulationSystem p) return p;
+            return null;
+        }
+
+        /// <summary>The sim's military system (null when a test sim has none).</summary>
+        public static MilitarySystem MilitaryOf(GodSim sim)
+        {
+            foreach (var sys in sim.Systems) if (sys is MilitarySystem m) return m;
+            return null;
+        }
+    }
+}

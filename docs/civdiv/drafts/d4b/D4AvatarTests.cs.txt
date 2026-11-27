@@ -1,0 +1,338 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using God.Sim.Comms;
+using God.Sim.Divinity;
+using God.Sim.Learning;
+using God.Sim.Population;
+using God.Sim.Social;
+using NUnit.Framework;
+
+namespace God.Sim.Tests
+{
+    /// <summary>
+    /// D4b (D4 spec 14, brief §47 scenario 11): the manifested avatar. T9 walk and goods, T10 no biology and destruction, T11
+    /// owners kept, T12 gestures through M5, T13 the same acts by a possessed person and by the avatar, T14 one world across the
+    /// modes, T16 pin P2, the embodiment precedence rows and save/load mid-manifestation. OWNER: D4.
+    /// </summary>
+    public class D4AvatarTests
+    {
+        private static Npc Person(GodSim sim, int node, int hunger = 200) => D4PossessionTests.Person(sim, node, InstinctSet.Default, LearningMode.On, hunger, 150);
+        private static int Body(int god = 1) => DivinityIds.AvatarBodyId(god);
+        private static void NoUpkeep(SimTuning t) { t.Divinity.Mythic.Upkeep.PossessionPerTick = 0; t.Divinity.Mythic.Upkeep.AvatarPerTick = 0; }
+
+        private static Npc Manifest(GodSim sim, DivineProbe probe, int node, int god = 1)
+        {
+            var r = sim.Submit(new ManifestAvatar { God = god, Node = node });
+            Assert.IsTrue(r.Ok, r.Reason);
+            probe.Step(1);
+            var av = sim.State.Population.Find(Body(god));
+            Assert.IsNotNull(av); Assert.IsTrue(av.Alive);
+            return av;
+        }
+
+        /// <summary>Steps until <paramref name="done"/> or the limit; returns the ticks taken.</summary>
+        private static int Until(DivineProbe probe, Func<bool> done, int limit)
+        {
+            int t = 0;
+            for (; t < limit && !done(); t++) probe.Step(1);
+            return t;
+        }
+
+        // ---------------------------------------------------------------- D4-T9 (PA7)
+
+        [Test]
+        public void Avatar_WalksAndHandlesGoods()
+        {
+            var sim = D2Fixtures.Game(71, NoUpkeep);
+            var g = sim.State.Territory.Grid;
+            int c = LearningFixtures.Glade(sim, 12);
+            int far = LearningFixtures.Step(sim, c, 0, 10);
+            var hungry = Person(sim, LearningFixtures.Step(sim, c, 3, 1), 800);
+            D4PossessionTests.Idle(sim, hungry);
+            int fish = D4PossessionTests.GroundLot(sim, c, Ware.Fish);
+            int people = sim.State.Population.AliveCount;
+            var probe = new DivineProbe(sim);
+            var av = Manifest(sim, probe, c);
+            Assert.AreEqual(people, sim.State.Population.AliveCount, "the avatar is in no person count");
+            Assert.AreEqual(BodyKind.Avatar, av.Kind);
+            // 20 nodes: out 10 and back 10, by click-to-move
+            Assert.IsTrue(sim.Submit(D4PossessionTests.MoveTo(av.Id, far)).Ok);
+            int prev = av.Node, steps = 0;
+            int ticksOut = Until(probe, () => { int d = g.Distance(prev, av.Node); steps += d; prev = av.Node; return av.Node == far; }, 400);
+            Assert.IsTrue(sim.Submit(D4PossessionTests.MoveTo(av.Id, c)).Ok);
+            int ticksBack = Until(probe, () => { int d = g.Distance(prev, av.Node); steps += d; prev = av.Node; return av.Node == c; }, 400);
+            Assert.AreEqual(20, steps, "20 nodes");
+            // the same path walked by a possessed person takes the same ticks (same WalkTo step costs)
+            var walker = Person(sim, c);
+            D4PossessionTests.Idle(sim, walker);
+            var pp = new DivineProbe(sim);
+            Assert.IsTrue(sim.Submit(new DismissAvatar { God = 1 }).Ok);
+            pp.Step(1);
+            Assert.IsTrue(sim.Submit(new BeginPossession { God = 1, Npc = walker.Id }).Ok);
+            pp.Step(1);
+            Assert.IsTrue(sim.Submit(D4PossessionTests.MoveTo(walker.Id, far)).Ok);
+            int personOut = Until(pp, () => walker.Node == far, 400);
+            Assert.IsTrue(sim.Submit(D4PossessionTests.MoveTo(walker.Id, c)).Ok);
+            int personBack = Until(pp, () => walker.Node == c, 400);
+            Assert.AreEqual(ticksOut + ticksBack, personOut + personBack, "the same WalkTo step counts as a person on the same path");
+            Assert.IsTrue(sim.Submit(new EndPossession { God = 1 }).Ok);
+            pp.Step(1);
+            // manifest again (the same body record), pick up the ownerless fish, hand it to the hungry person
+            var av2 = Manifest(sim, probe, c);
+            Assert.AreSame(av, av2, "one body record per god, reused");
+            Assert.IsTrue(sim.Submit(D4PossessionTests.Act(av.Id, DivineAct.Take, new DivineTarget(DivineTargetKind.Lot, fish))).Ok);
+            Until(probe, () => av.Carry.Any(l => !l.Empty && l.Ware == Ware.Fish), 60);
+            var take = probe.Of<ItemMoved>().Single(e => e.Reason == MoveReason.PickUp && e.Actor == av.Id);
+            Assert.AreEqual(HolderKind.Ground, take.FromKind); Assert.AreEqual(av.Id, take.ToId);
+            Assert.AreEqual(OwnerKind.None, take.OwnerAfterKind, "an ownerless lot stays ownerless in the avatar's hands");
+            Assert.IsTrue(sim.Submit(D4PossessionTests.Act(av.Id, DivineAct.Give, new DivineTarget(DivineTargetKind.Npc, hungry.Id, (int)Ware.Fish))).Ok);
+            Until(probe, () => probe.Of<ItemMoved>().Any(e => e.Reason == MoveReason.HandOver && e.Actor == av.Id), 60);
+            var give = probe.Of<ItemMoved>().Single(e => e.Reason == MoveReason.HandOver && e.Actor == av.Id);
+            Assert.AreEqual(hungry.Id, give.ToId);
+            Assert.AreEqual(OwnerKind.Npc, give.OwnerAfterKind); Assert.AreEqual(hungry.Id, give.OwnerAfterId, "a gift: the receiver owns it");
+            Assert.IsTrue(hungry.Carry.Any(l => !l.Empty && l.Ware == Ware.Fish));
+            probe.Step(1);
+            Assert.GreaterOrEqual(probe.Of<AvatarActionStarted>().Count, 4, "move, move, take, give");
+            Assert.IsTrue(sim.Submit(new DismissAvatar { God = 1 }).Ok);
+            probe.Step(1);
+            Assert.IsFalse(av.Alive, "dismissed: not manifested");
+            Assert.AreEqual(2, probe.Of<AvatarManifested>().Count); Assert.AreEqual(2, probe.Of<AvatarDismissed>().Count);
+            Assert.AreEqual(people + 1, sim.State.Population.AliveCount, "the person count is people only (plus the walker added)");
+            CollectionAssert.IsEmpty(SimInvariants.Check(sim.State), "C1 and every invariant hold");
+            TestContext.Progress.WriteLine("T9: avatar walked " + steps + " nodes in " + (ticksOut + ticksBack) + " ticks, the possessed person in " + (personOut + personBack)
+                + "; fish ground -> avatar -> person " + hungry.Id);
+        }
+
+        // ---------------------------------------------------------------- D4-T10 (PA8)
+
+        [Test]
+        public void Avatar_NoBiology_CanBeDestroyed()
+        {
+            var sim = D2Fixtures.Game(72, t => t.Divinity.Mythic.Start = 100_000);
+            int c = LearningFixtures.Glade(sim, 8);
+            var owner = Person(sim, LearningFixtures.Step(sim, c, 0, 3));
+            D4PossessionTests.Idle(sim, owner);
+            int lot = D4PossessionTests.GroundLot(sim, c, Ware.Log, Owner.Npc(owner.Id));
+            var probe = new DivineProbe(sim);
+            var av = Manifest(sim, probe, c);
+            var drives0 = (int[])av.Drives.Clone();
+            var stage0 = av.Stage;
+            var god = sim.State.Divinity.Gods.Of(1);
+            string before = god.Name + "|" + god.Seat + "|" + god.PolicyName + "|" + god.MythicMax + "|" + god.AvatarBody;
+            Assert.IsTrue(sim.Submit(D4PossessionTests.Act(av.Id, DivineAct.Take, new DivineTarget(DivineTargetKind.Lot, lot))).Ok);
+            Until(probe, () => av.Carry.Any(l => !l.Empty), 60);
+            Assert.IsTrue(av.Carry.Any(l => !l.Empty && l.Id == lot || !l.Empty && l.Ware == Ware.Log));
+            long m0 = god.Mythic;
+            probe.Step(3 * D2Fixtures.Day);
+            CollectionAssert.AreEqual(drives0, av.Drives, "no hunger, fatigue, cold, fear or pain in 3 days");
+            Assert.AreEqual(stage0, av.Stage, "no ageing");
+            Assert.AreEqual(1_000_000, av.Health);
+            Assert.IsTrue(av.Alive);
+            long upkeep = sim.State.Tuning.Divinity.Mythic.Upkeep.AvatarPerTick;
+            Assert.Less(god.Mythic, m0 + 3 * sim.State.Tuning.Divinity.Mythic.RegenPerDay, "upkeep was paid");
+            // three blows: destroyed at 0, never killed
+            var ev = new EventBuffer();
+            for (int i = 0; i < 3; i++) Bodies.Damage(sim.State, ev, av, 400_000, DamageCause.Violence, owner.Id, 0);
+            var dmg = ev.Events.OfType<AvatarDamaged>().ToList();
+            Assert.AreEqual(3, dmg.Count, "AvatarDamaged per blow");
+            Assert.AreEqual(0, dmg[2].HealthAfter);
+            var gone = ev.Events.OfType<AvatarDestroyed>().Single();
+            Assert.AreEqual(owner.Id, gone.By); Assert.AreEqual(1, gone.LotsDropped);
+            Assert.IsFalse(ev.Events.OfType<NpcDied>().Any(), "no NpcDied");
+            Assert.IsFalse(av.Alive);
+            var drop = ev.Events.OfType<ItemMoved>().Single(e => e.Reason == MoveReason.AvatarDrop);
+            Assert.AreEqual(OwnerKind.Npc, drop.OwnerAfterKind); Assert.AreEqual(owner.Id, drop.OwnerAfterId, "lots on the ground, owners unchanged");
+            Assert.IsTrue(sim.State.Population.Lots.Any(gl => gl.Lot.Ware == Ware.Log && gl.Lot.Owner.Id == owner.Id));
+            Assert.AreEqual(ControlKind.Self, Control.Of(sim.State, av.Id));
+            Assert.AreEqual(before, god.Name + "|" + god.Seat + "|" + god.PolicyName + "|" + god.MythicMax + "|" + god.AvatarBody, "the god persists, unharmed");
+            Assert.AreEqual(0, sim.State.Population.Stats.Deaths, "no death counted");
+            // the cooldown after a destruction, then a new manifestation at full health
+            var early = sim.Submit(new ManifestAvatar { God = 1, Node = c });
+            Assert.IsFalse(early.Ok); Assert.AreEqual(DivineReasons.Cooldown, early.Reason);
+            probe.Step(sim.State.Tuning.Divinity.Mythic.Cooldown.AvatarAfterDestructionTicks);
+            var again = Manifest(sim, probe, c);
+            Assert.AreEqual(1_000_000, again.Health, "health restored at the next manifestation");
+            CollectionAssert.IsEmpty(SimInvariants.Check(sim.State));
+            TestContext.Progress.WriteLine("T10: 3 days no drive or age change; 3 blows, destroyed (lots dropped " + gone.LotsDropped + ", by " + gone.By + "), cooldown until " + gone.CooldownUntil
+                + ", manifested again at " + sim.State.Tick + "; upkeep " + upkeep + "/tick");
+        }
+
+        // ---------------------------------------------------------------- D4-T11
+
+        [Test]
+        public void Avatar_PickUpKeepsOwner()
+        {
+            var sim = D2Fixtures.Game(73, NoUpkeep);
+            int c = LearningFixtures.Glade(sim, 8);
+            var owner = Person(sim, LearningFixtures.Step(sim, c, 1, 4));
+            D4PossessionTests.Idle(sim, owner);
+            int lot = D4PossessionTests.GroundLot(sim, LearningFixtures.Step(sim, c, 2, 2), Ware.Berries, Owner.Npc(owner.Id));
+            var probe = new DivineProbe(sim);
+            var av = Manifest(sim, probe, c);
+            Assert.IsTrue(sim.Submit(D4PossessionTests.Act(av.Id, DivineAct.Take, new DivineTarget(DivineTargetKind.Lot, lot))).Ok);
+            Until(probe, () => av.Carry.Any(l => !l.Empty), 80);
+            var take = probe.Of<ItemMoved>().Single(e => e.Reason == MoveReason.PickUp && e.Actor == av.Id);
+            Assert.AreEqual(OwnerKind.Npc, take.OwnerAfterKind); Assert.AreEqual(owner.Id, take.OwnerAfterId, "an owned lot stays owned (OwnerRule.Keep)");
+            Assert.IsFalse(probe.Of<OwnershipChanged>().Any(e => e.ToKind == OwnerKind.Npc && e.ToId == av.Id), "the avatar never becomes an owner (I-PA-3)");
+            foreach (var n in sim.State.Population.Npcs) foreach (var l in n.Carry) if (!l.Empty) Assert.IsFalse(l.Owner.Kind == OwnerKind.Npc && l.Owner.Id == av.Id);
+            foreach (var gl in sim.State.Population.Lots) Assert.IsFalse(gl.Lot.Owner.Kind == OwnerKind.Npc && gl.Lot.Owner.Id == av.Id);
+        }
+
+        // ---------------------------------------------------------------- D4-T12
+
+        [Test]
+        public void Avatar_Gesture_UsesM5()
+        {
+            var sim = D2Fixtures.Game(74, NoUpkeep);
+            int c = LearningFixtures.Glade(sim, 8);
+            var listener = Person(sim, LearningFixtures.Step(sim, c, 0, 2));
+            var probe = new DivineProbe(sim);
+            var av = Manifest(sim, probe, c);
+            Assert.IsTrue(sim.Submit(D4PossessionTests.Act(av.Id, DivineAct.Communicate, new DivineTarget(DivineTargetKind.Npc, listener.Id, (int)GestureAct.Offer, (int)Ware.Berries))).Ok);
+            Until(probe, () => probe.Of<GestureMade>().Any(e => e.Speaker == av.Id), 30);
+            var gm = probe.Of<GestureMade>().Single(e => e.Speaker == av.Id);
+            Assert.AreEqual(GestureAct.Offer, gm.Act); Assert.AreEqual(listener.Id, gm.Target);
+            var dec = probe.Of<MessageDecoded>().Where(e => e.MessageId == gm.MessageId).ToList();
+            Assert.IsTrue(dec.Any(e => e.Listener == listener.Id), "the listener decoded it (ordinary M5 delivery and noise)");
+            probe.Step(20);
+            Assert.AreEqual(1, probe.Of<GestureMade>().Count(e => e.Speaker == av.Id), "one input, one gesture");
+            Assert.AreEqual(ControlKind.Self, Control.Of(sim.State, listener.Id));
+            Assert.AreEqual(ControlKind.Self, listener.Mind.Last.Control, "the listener chooses its own response");
+            TestContext.Progress.WriteLine("T12: avatar gesture " + gm.Act + " decoded by " + dec.Count + " listener(s) as " + string.Join(",", dec.Select(d => d.Act)));
+        }
+
+        // ---------------------------------------------------------------- D4-T13 (PA11, possession and avatar)
+
+        private static List<string> Trail(bool avatar)
+        {
+            var sim = D2Fixtures.Game(75, NoUpkeep);
+            int c = LearningFixtures.Glade(sim, 10);
+            var receiver = Person(sim, LearningFixtures.Step(sim, c, 3, 4));
+            D4PossessionTests.Idle(sim, receiver);
+            int lot = D4PossessionTests.GroundLot(sim, LearningFixtures.Step(sim, c, 0, 4), Ware.Fish);
+            var probe = new DivineProbe(sim);
+            Npc body;
+            if (avatar) body = Manifest(sim, probe, c);
+            else
+            {
+                body = Person(sim, c); D4PossessionTests.Idle(sim, body);
+                Assert.IsTrue(sim.Submit(new BeginPossession { God = 1, Npc = body.Id }).Ok);
+                probe.Step(1);
+            }
+            var trail = new List<string>();
+            var acts = new[]
+            {
+                D4PossessionTests.MoveTo(body.Id, LearningFixtures.Step(sim, c, 1, 3)),
+                D4PossessionTests.MoveTo(body.Id, LearningFixtures.Step(sim, c, 0, 4)),
+                D4PossessionTests.Act(body.Id, DivineAct.Take, new DivineTarget(DivineTargetKind.Lot, lot)),
+                D4PossessionTests.MoveTo(body.Id, c),
+                D4PossessionTests.Act(body.Id, DivineAct.Give, new DivineTarget(DivineTargetKind.Npc, receiver.Id, (int)Ware.Fish)),
+                D4PossessionTests.MoveTo(body.Id, LearningFixtures.Step(sim, c, 5, 2)),
+            };
+            foreach (var a in acts)
+            {
+                Assert.IsTrue(sim.Submit(a).Ok);
+                probe.Step(80);
+                trail.Add("at " + body.Node + " carry " + string.Join(",", body.Carry.Where(l => !l.Empty).Select(l => l.Ware + "x" + l.Count)));
+            }
+            foreach (var m in probe.Of<ItemMoved>()) trail.Add(m.Reason + " " + m.Ware + "x" + m.Count + " " + m.FromKind + "->" + m.ToKind + (m.ToKind == HolderKind.Carry && m.ToId != body.Id ? " receiver" : ""));
+            trail.Add("receiver fish " + receiver.Carry.Where(l => !l.Empty && l.Ware == Ware.Fish).Sum(l => l.Count));
+            return trail;
+        }
+
+        [Test]
+        public void SameAction_PossessedAndAvatar()
+        {
+            var p = Trail(avatar: false);
+            var a = Trail(avatar: true);
+            CollectionAssert.AreEqual(p, a, "identical goods and position changes apart from the holder");
+            TestContext.Progress.WriteLine("T13 (possession, avatar): " + string.Join(" | ", p));
+        }
+
+        // ---------------------------------------------------------------- D4-T7 embodiment rows, D4-T14 (DP14)
+
+        [Test]
+        public void OneWorld_AcrossModes_OneEmbodiedFocus()
+        {
+            var sim = D2Fixtures.Game(76, NoUpkeep);
+            int c = LearningFixtures.Glade(sim, 8);
+            var a = Person(sim, c); var b = Person(sim, LearningFixtures.Step(sim, c, 2, 2));
+            var probe = new DivineProbe(sim);
+            var ids = sim.State.Population.Npcs.Where(Bodies.IsPerson).Select(n => n.Id).ToList();
+            // overhead -> possession -> avatar (ends the possession) -> possession (dismisses the avatar) -> overhead
+            Assert.IsTrue(sim.Submit(new BeginPossession { God = 1, Npc = a.Id }).Ok);
+            probe.Step(20);
+            var av = Manifest(sim, probe, c);
+            var pe = probe.Of<PossessionEnded>().Single();
+            Assert.AreEqual(ControlEndReason.Superseded, pe.Reason, "a manifestation ends the god's possession");
+            Assert.AreEqual(pe.Intervention, probe.Of<AvatarManifested>().Single().SupersededPossession);
+            probe.Step(20);
+            Assert.IsTrue(sim.Submit(new BeginPossession { God = 1, Npc = b.Id }).Ok);
+            probe.Step(1);
+            var ad = probe.Of<AvatarDismissed>().Single();
+            Assert.AreEqual(ControlEndReason.Superseded, ad.Reason, "a possession dismisses the god's avatar");
+            Assert.IsFalse(av.Alive);
+            probe.Step(20);
+            Assert.IsTrue(sim.Submit(new EndPossession { God = 1 }).Ok);
+            probe.Step(30);
+            Assert.AreEqual(ControlKind.Self, Control.Of(sim.State, a.Id)); Assert.AreEqual(ControlKind.Self, Control.Of(sim.State, b.Id));
+            CollectionAssert.AreEqual(ids, sim.State.Population.Npcs.Where(Bodies.IsPerson).Select(n => n.Id).ToList(), "person ids unchanged");
+            Assert.AreEqual(ids.Count, sim.State.Population.AliveCount, "counts unchanged");
+            Assert.AreEqual(ids.Count + 1, sim.State.Population.Npcs.Count, "one body record more: the avatar");
+            Assert.AreEqual(2, probe.Of<PossessionStarted>().Count); Assert.AreEqual(2, probe.Of<PossessionEnded>().Count);
+            Assert.AreEqual(1, probe.Of<AvatarManifested>().Count); Assert.AreEqual(1, probe.Of<AvatarDismissed>().Count);
+            CollectionAssert.IsEmpty(SimInvariants.Check(sim.State));
+        }
+
+        // ---------------------------------------------------------------- D4-T16 (pin P2)
+
+        [Test]
+        public void P2_NoEmbodiment_PopulationUnchanged()
+        {
+            ulong[] Pop(int divinity)
+            {
+                var t = new SimTuning(); t.Divinity.Enabled = divinity;
+                var setup = new GameSetup(81, GameSetup.NoHuman, 3) { Population = true, StartNpcsPerFaction = 8, Victory = VictorySpec.SandboxOnly() };
+                var sim = GodSim.Create(setup, t);
+                var parts = new List<ulong>();
+                for (int i = 0; i < 6; i++)
+                {
+                    sim.Step(200);
+                    var names = GodSim.PartNamesOf(sim.State);
+                    var h = sim.StateHashParts();
+                    foreach (var n in new[] { "population", "cognition", "learning", "household", "social" }) parts.Add(h[Array.IndexOf(names, n)]);
+                }
+                return parts.ToArray();
+            }
+            CollectionAssert.AreEqual(Pop(0), Pop(1), "with no possession and no manifestation the person parts are those of Divinity off (only divine differs)");
+        }
+
+        // ---------------------------------------------------------------- D4-T15 (avatar half): save/load mid-manifestation
+
+        [Test]
+        public void Control_SaveLoadMidSpell_Avatar()
+        {
+            var sim = D2Fixtures.Game(77);
+            int c = LearningFixtures.Glade(sim, 10);
+            var other = Person(sim, LearningFixtures.Step(sim, c, 3, 3));
+            int lot = D4PossessionTests.GroundLot(sim, c, Ware.Roots);
+            var probe = new DivineProbe(sim);
+            var av = Manifest(sim, probe, c);
+            Assert.IsTrue(sim.Submit(D4PossessionTests.Act(av.Id, DivineAct.Take, new DivineTarget(DivineTargetKind.Lot, lot))).Ok);
+            Until(probe, () => av.Carry.Any(l => !l.Empty), 40);
+            for (int t = 0; t < 9; t++) { if (t % 2 == 0) Assert.IsTrue(sim.Submit(D4PossessionTests.Heading(av.Id, 0)).Ok); probe.Step(1); }
+            Assert.IsTrue(av.Carry.Any(l => !l.Empty), "saved with carried goods");
+            var loaded = SaveFile.FromJson(SaveFile.From(sim).ToJson()).ToSim();
+            CollectionAssert.AreEqual(sim.StateHashParts(), loaded.StateHashParts());
+            for (int t = 0; t < 200; t++)
+            {
+                if (t < 40 && t % 2 == 0) { Assert.IsTrue(sim.Submit(D4PossessionTests.Heading(av.Id, 8)).Ok); Assert.IsTrue(loaded.Submit(D4PossessionTests.Heading(av.Id, 8)).Ok); }
+                if (t == 100) { Assert.IsTrue(sim.Submit(new DismissAvatar { God = 1 }).Ok); Assert.IsTrue(loaded.Submit(new DismissAvatar { God = 1 }).Ok); }
+                sim.Step(); loaded.Step();
+                if (t % 10 == 0) CollectionAssert.AreEqual(sim.StateHashParts(), loaded.StateHashParts(), "tick " + t);
+            }
+            CollectionAssert.AreEqual(sim.StateHashParts(), loaded.StateHashParts());
+        }
+    }
+}

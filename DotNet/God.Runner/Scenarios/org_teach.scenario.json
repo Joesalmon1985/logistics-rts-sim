@@ -1,0 +1,35 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_teach",
+  "description": "C7b (brief 47 scenario 6 at island scale): two factions of six founding adults; one adult per faction (the highest id) can teach gathering wood with an axe (Orgs.C7.StartTeachers = 1, skill 600). Nothing scripted: it offers lessons by gesture to household members and people it trusts, demonstrates to others in sight; learners choose to attend; copied associations (Origin.Imitated / Vicarious) and skill gains are measured on the learners. Civ is on only for the shared skill store (R42; C1 building and C3 hiring off). Control: org_teach_none. 15 sim days.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 6,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Civ.Enabled": 1,
+    "Civ.C1.BuildEnabled": 0,
+    "Civ.C3.HireEnabled": 0,
+    "Orgs.C7.StartTeachers": 1
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxDays": 15,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}
