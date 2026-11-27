@@ -1,6 +1,6 @@
 {
-  "title": "M4.44 care arrangements (forms of care a begging child reaches), demog_favourable (F2 biology block) with ConceptionMode 1",
-  "scenario": "demog_favourable",
+  "title": "M4.44 care arrangements (forms of care a begging child reaches), demog_f2_favourable (F2 biology block) with ConceptionMode 1",
+  "scenario": "demog_f2_favourable",
   "years": 10,
   "seeds": "1-10",
   "arms": [

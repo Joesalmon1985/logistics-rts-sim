@@ -1,7 +1,7 @@
 {
     "scenarioVersion":  1,
     "name":  "demog_hostile",
-    "description":  "D4 (M4.37) ecology \u0027hostile\u0027: a poor island: 40-50% fewer berry bushes and root patches than the default (3/2/2/2 per forest/meadow/hills/fields hex against 5/4/4/4), slower regrowth (berries 300, roots 200 permille a day; default 400, 300), one fish spot per coast hex (default two); disease On. Founders: the established band (6 x 20). Biology: the F2 biology block shared by every ecology scenario (stated here, never tuned per seed), from human natural-fertility biology at 1 sim year = 16 human years: daily conception chance when both partners try 60-90% (a sim day is about 1.6 human years of trying), time after a birth 0.05 years (0.8 human years; with the 0.25-year pregnancy the shortest birth interval is 4.8 human years), fertile span to 2.8-3.2 years (45-51 human years, menopause; the age factor still lowers the chance over the last 0.4). No immigration, no spawning or replenishment; 15 sim years.",
+    "description":  "D4 (M4.37) ecology \u0027hostile\u0027: a poor island: 40-50% fewer berry bushes and root patches than the default (3/2/2/2 per forest/meadow/hills/fields hex against 5/4/4/4), slower regrowth (berries 300, roots 200 permille a day; default 400, 300), one fish spot per coast hex (default two); disease On. Founders: the established band (6 x 20). Biology: the D4 demographic baseline shared by every ecology scenario (stated here, never tuned per seed). No immigration, no spawning or replenishment; 15 sim years.",
     "setup":  {
                   "factionCount":  6,
                   "human":  -1,
@@ -15,10 +15,6 @@
               },
     "tuning":  {
                    "Households.Founders.Generator":  1,
-                   "Households.Life.ConceiveBasePermille":  600,
-                   "Households.Life.ConceiveSpanPermille":  300,
-                   "Households.Life.AfterBirthMilli":  50,
-                   "Households.Life.FertileEndBaseMilli":  2800,
                    "Households.Founders.ElderPermille":  100,
                    "Households.Founders.MaturePermille":  300,
                    "Households.Founders.ChildPermille":  300,

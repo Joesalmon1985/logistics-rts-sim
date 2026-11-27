@@ -12,7 +12,7 @@ namespace God.Runner.Tests
     /// <summary>
     /// F2 (owner D4): <c>Households.Life.ConceptionMode</c>. F2-T1: mode 0 (unset or explicit) hashes exactly as the base
     /// (unity/poc 11c3e43, F0 Checkpoint A); F2-T4: a save taken with mode 1 goes on exactly as the unsaved run; F2-T3
-    /// ([Explicit], long): completed fertility under mode 1 vs mode 0 over 20 seeds, reported with a Mann-Whitney p, no threshold.
+    /// ([Explicit], long): completed fertility under mode 1 vs mode 0 over 20 seeds of demog_f2_favourable, reported with a Mann-Whitney p, no threshold.
     /// </summary>
     [TestFixture]
     public sealed class DemogConceptionTests
@@ -24,21 +24,12 @@ namespace God.Runner.Tests
             [("demog_favourable", 1)] = 0x55a810bf69f22ec1UL, [("demog_favourable", 2)] = 0x08e4eeae3e8ccbc2UL, [("demog_favourable", 3)] = 0xb27453be66bfd56fUL,
         };
 
-        /// <summary>The M4 defaults of the four values the F2 biology block changes in the demog_* scenarios.</summary>
-        public static readonly string[] OldBiology =
-        {
-            "tuning.Households.Life.ConceiveBasePermille=350", "tuning.Households.Life.ConceiveSpanPermille=300",
-            "tuning.Households.Life.AfterBirthMilli=100", "tuning.Households.Life.FertileEndBaseMilli=2400",
-        };
-
         [Test]
         public void ConceptionMode0_IsByteIdentical_F2_T1()
         {
             var keys = Base.Keys.ToList();
-            // demog_favourable now carries the F2 biology block; set back to the M4 defaults its tuning is the base's exactly
-            string[] Sets(string sc, params string[] more) => (sc == "demog_favourable" ? OldBiology : new string[0]).Concat(more).ToArray();
-            var specs = keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000, Sets(k.Item1)))
-                .Concat(keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000, Sets(k.Item1, "tuning.Households.Life.ConceptionMode=0")))).ToList();
+            var specs = keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000))
+                .Concat(keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000, "tuning.Households.Life.ConceptionMode=0"))).ToList();
             var res = TestUtil.RunAll(specs);
             for (int i = 0; i < res.Length; i++)
             {
@@ -51,7 +42,7 @@ namespace God.Runner.Tests
         [Test]
         public void SaveLoad_ConceptionMode1_F2_T4()
         {
-            var sc = TestUtil.Load("demog_favourable", "tuning.Households.Life.ConceptionMode=1");
+            var sc = TestUtil.Load("demog_f2_favourable", "tuning.Households.Life.ConceptionMode=1");
             var sim = SimBuilder.Create(sc.ToSetup(2), sc.ToTuning()).Sim;
             var twin = SimBuilder.Create(sc.ToSetup(2), sc.ToTuning()).Sim;
             Assert.AreEqual(1, sim.State.Tuning.Households.Life.ConceptionMode);
@@ -74,7 +65,7 @@ namespace God.Runner.Tests
             var rows = new Dictionary<int, List<double>>();
             foreach (int mode in new[] { 0, 1 })
             {
-                var sc = TestUtil.Load("demog_favourable", "tuning.Households.Life.ConceptionMode=" + mode);
+                var sc = TestUtil.Load("demog_f2_favourable", "tuning.Households.Life.ConceptionMode=" + mode);
                 sc.MaxTicks = 0; sc.MaxDays = 0; sc.MaxYears = 15;
                 var recs = new DemogRecorder[20];
                 var specs = new List<RunSpec>();

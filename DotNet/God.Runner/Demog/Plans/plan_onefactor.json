@@ -1,6 +1,6 @@
 {
-  "title": "M4.38 one-factor experiments against demog_balanced (default ecology, established band, F2 biology block) with ConceptionMode 1 (F2 proposal) in every arm",
-  "scenario": "demog_balanced",
+  "title": "M4.38 one-factor experiments against demog_f2_balanced (default ecology, established band, F2 biology block) with ConceptionMode 1 (F2 proposal) in every arm",
+  "scenario": "demog_f2_balanced",
   "years": 15,
   "seeds": "1-10",
   "arms": [

@@ -1,5 +1,5 @@
 {
-  "title": "F2 biology block and conception mode on demog_favourable (20 seeds, 15 years) (the M4 biology restored by the plan's base set: the demog_* scenarios now carry the F2 biology block)",
+  "title": "F2 biology block and conception mode on demog_favourable (M4 biology; 20 seeds, 15 years)",
   "scenario": "demog_favourable",
   "years": 15,
   "seeds": "1-20",
@@ -32,11 +32,5 @@
         "tuning.Households.Life.ConceptionMode=1"
       ]
     }
-  ],
-  "set": [
-    "tuning.Households.Life.ConceiveBasePermille=350",
-    "tuning.Households.Life.ConceiveSpanPermille=300",
-    "tuning.Households.Life.AfterBirthMilli=100",
-    "tuning.Households.Life.FertileEndBaseMilli=2400"
   ]
 }

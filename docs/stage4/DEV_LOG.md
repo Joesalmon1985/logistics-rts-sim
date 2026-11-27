@@ -879,7 +879,7 @@ Shared foundation of the Civilisation and Divinity run (spec `docs/civdiv/DEVELO
 **Commits.**
 - `9b97b54` conception-coordination diagnosis in `demog report` (DemogRecorder classifies every daily conception check of an able woman; report text only, CSVs unchanged) and the mechanism: new `Population/Households/Conception.cs`, flag `Households.Life.ConceptionMode` (default 0; `[DefaultValue(0)]` with `DefaultValueHandling.Ignore`, so the tuning JSON and every hash are unchanged at 0), one call in `Reproduction.Daily`.
 - `8e24430` tests F2-T1, F2-T2, F2-T4, F2-T3 (`[Explicit]`) and `plan_biology_block.json`.
-- `5b58660` the biology block in `demog_favourable/balanced/hostile`; `plan_fertility` and `plan_biology_block` restore the M4 biology in their base set; the "no possible father" split in the report.
+- `5b58660` the biology block in `demog_favourable/balanced/hostile` (moved after the F1 merge, see below); the "no possible father" split in the report.
 - `1687f4c` `plan_onefactor` (adds `pairing-commitment-low`, `conception-mode0`) and `plan_care` run with `ConceptionMode` 1.
 - The docs commit with this record: POPULATION "Demography investigation" F2 update, ACCEPTANCE D4 status cells.
 
@@ -889,7 +889,7 @@ Shared foundation of the Civilisation and Divinity run (spec `docs/civdiv/DEVELO
 - `--plan DotNet/God.Runner/Demog/Plans/plan_fertility.json --workers 4` (10 arms x seeds 1-10 x 15 years, M4 biology; at `9b97b54`'s parent tree, i.e. the F0 tree).
 - `--scenario demog_favourable --seeds 1-4 --years 8 --arm base --arm "mode1: tuning.Households.Life.ConceptionMode=1"` and similar 4-6-seed diagnosis runs.
 - `--plan DotNet/God.Runner/Demog/Plans/plan_biology_block.json --workers 4` (base, mode1, block, block+mode1; seeds 1-20 x 15 years).
-- `--scenario demog_<e> --seeds 1-20 --years 15 --workers 6 --arm "<e>-mode0" --arm "<e>-mode1: tuning.Households.Life.ConceptionMode=1"` for favourable, balanced, hostile (the block now in the scenarios; favourable reproduces the plan's block arms exactly).
+- `--scenario demog_<e> --seeds 1-20 --years 15 --workers 6 --arm "<e>-mode0" --arm "<e>-mode1: tuning.Households.Life.ConceptionMode=1"` for favourable, balanced, hostile (run before the merge with the block in `demog_<e>`; now `demog_f2_<e>`, the same tuning; favourable reproduces the plan's block arms exactly).
 - `--plan DotNet/God.Runner/Demog/Plans/plan_onefactor.json --workers 4` (15 arms x 10 seeds x 15 years); `--plan DotNet/God.Runner/Demog/Plans/plan_care.json --workers 6` (8 arms x 10 seeds x 10 years).
 - M4.26: `--scenario m4_band_6x20 --seeds 1-40 --days 40 --arm on --arm "mild: setup.disease=mild" --arm "off: setup.disease=off"`.
 - Mann-Whitney p values from each run's `runs.csv` (column `completed_fertility`, `births`, `child_mortality`), normal approximation with tie correction (the same formula as F2-T3).
@@ -898,15 +898,15 @@ Shared foundation of the Civilisation and Divinity run (spec `docs/civdiv/DEVELO
 
 **Pins.**
 - Both-off neutrality (`HouseholdsOff_Band6x20_EqualsPostF0Hashes`, `M5NeutralityTests`; 8b898d115d8a05a7, 5fa8991b92168385, 66a55d5a67f2ad4e): unchanged by design (the flag is omitted at 0); see the test results below.
-- F2-T1: `m4_families` and `demog_favourable` (with the M4 biology restored) seeds 1-3, 12000 ticks, flag unset and explicit 0, equal the base hashes taken with the `11c3e43` runner: m4_families 4e097b3731e62136, 561a1f8ef03ccfc3, 7d58acabb1163bd5; demog_favourable 55a810bf69f22ec1, 08e4eeae3e8ccbc2, b27453be66bfd56f.
-- **Deliberately moved:** with `ConceptionMode` 1 the hashes move (e.g. `m4_families` seed 1 at 10 days fac329b5477dc2dd); no default sets it. The `demog_*` scenarios' own hashes moved with the biology block (scenario files, not a default); no test pinned them.
+- F2-T1: `m4_families` and `demog_favourable` seeds 1-3, 12000 ticks, flag unset and explicit 0, equal the base hashes taken with the `11c3e43` runner: m4_families 4e097b3731e62136, 561a1f8ef03ccfc3, 7d58acabb1163bd5; demog_favourable 55a810bf69f22ec1, 08e4eeae3e8ccbc2, b27453be66bfd56f.
+- **Deliberately moved:** with `ConceptionMode` 1 the hashes move (e.g. `m4_families` seed 1 at 10 days fac329b5477dc2dd); no default sets it. The `demog_f2_*` scenarios are new (scenario files, not a default); no test pinned them.
 
 **Tests.** Pending: rerun after merging `unity/poc` (F1) in.
 
 **Design decisions taken during implementation.**
 - F2-T2 as written in the spec tests "partners never in sight at the mother's check". The code has no such defect (the check needs no sight; "try" lasts one day and is offered only in sight), and `try-3days` did not help. F2-T2 tests the defect actually found: two partners who both try, one holding a dormant relationship with a third adult, conceive in mode 1 and not in mode 0; one intent alone never conceives; a live intent or a running pregnancy still blocks.
 - The ending reuses `ReproductiveUnionEnded.Lapsed` (no new event or reason code, so the household catalogue is untouched).
-- `ConceptionMode` is not set in any scenario file: the lead decides whether to merge behind the flag or flip it at a re-pin point. The biology block is in the `demog_*` scenario files only; no default changed.
+- `ConceptionMode` is not set in any scenario file: the lead decides whether to merge behind the flag or flip it at a re-pin point. The biology block is in the new `demog_f2_*` scenario files only; no default changed.
 - The M4.38 and M4.44 plans set `ConceptionMode` 1 (the proposal), with a `conception-mode0` arm in M4.38.
 
 **Proposal to the lead.** (a) Merge behind the flag (default 0) now; or (b) flip `ConceptionMode` to 1 at the Checkpoint B re-pin point (m4 hashes move; both-off pins do not). Either way favourable is not yet viable; the next owner-level question is a partner-preference distribution (who one seeks as a romantic partner), and the next mechanism question is the starvation of children aged 0.5-1.0 (M4/C7 care).
