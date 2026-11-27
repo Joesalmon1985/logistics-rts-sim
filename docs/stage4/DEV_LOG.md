@@ -831,3 +831,44 @@ Civdiv package F0 (Checkpoint A), done by the lead's merge helper in `wt-lrs-int
 - **M5.6/L14, M5.11/L16** and the other existing `[Explicit]` targets: unchanged, not run.
 
 **Not done (out of F0's scope or left for the lead):** the merge into `unity/poc` and the tag `civdiv-a`; the I-BS.6/8/10 controlled tests; the M5.9 kin cue; M5.18/M5.19; the demography sweeps (F2); the DEV_LOG "Test results" and "Commits and branches" rows (the lead's at merge). Pre-existing on `unity/poc` (`c1ab594`), not changed here: about 42 double-encoded characters ("§", "–") in this file's earlier sections.
+
+## F2 record (branch unity/f2)
+
+27 Nov 2026. Civdiv package F2 (demographic viability), worktree `wt-lrs-f2`, branch `unity/f2` from `unity/poc` `11c3e43` (Checkpoint A). Owner decisions D4 and D5.33 apply. Nothing pushed; `unity/poc` and `main` untouched. **Not rebased onto F1b** (F1b had not merged when this ran): the one-line call in `LifeCycle.cs` must be re-applied on top of F1b's edits when the lead says to merge `unity/poc` in (R19).
+
+**Commits.**
+- `9b97b54` conception-coordination diagnosis in `demog report` (DemogRecorder classifies every daily conception check of an able woman; report text only, CSVs unchanged) and the mechanism: new `Population/Households/Conception.cs`, flag `Households.Life.ConceptionMode` (default 0; `[DefaultValue(0)]` with `DefaultValueHandling.Ignore`, so the tuning JSON and every hash are unchanged at 0), one call in `Reproduction.Daily`.
+- `8e24430` tests F2-T1, F2-T2, F2-T4, F2-T3 (`[Explicit]`) and `plan_biology_block.json`.
+- `5b58660` the biology block in `demog_favourable/balanced/hostile`; `plan_fertility` and `plan_biology_block` restore the M4 biology in their base set; the "no possible father" split in the report.
+- `1687f4c` `plan_onefactor` (adds `pairing-commitment-low`, `conception-mode0`) and `plan_care` run with `ConceptionMode` 1.
+- The docs commit with this record: POPULATION "Demography investigation" F2 update, ACCEPTANCE D4 status cells.
+
+**Diagnosis.** See POPULATION "F2 update". The conception coordination of "try" is not the bottleneck; a rule is: a reproductive relationship either partner holds with a third adult blocks the pair while it lives (cap 1, lapse 0.5 years), in 25-33% of the checks where both were trying, two thirds of them dormant. `ConceptionMode` 1 ends a dormant one at the check (reason `Lapsed`). The larger remaining cause is pairing: 60% of able-woman checks have no possible father (sex-blind partnership choice, commitments); this is the preference model and was not changed.
+
+**Runs (all `God.Runner demog report`, Release build of this branch, outputs in the scratch folder, not committed).**
+- `--plan DotNet/God.Runner/Demog/Plans/plan_fertility.json --workers 4` (10 arms x seeds 1-10 x 15 years, M4 biology; at `9b97b54`'s parent tree, i.e. the F0 tree).
+- `--scenario demog_favourable --seeds 1-4 --years 8 --arm base --arm "mode1: tuning.Households.Life.ConceptionMode=1"` and similar 4-6-seed diagnosis runs.
+- `--plan DotNet/God.Runner/Demog/Plans/plan_biology_block.json --workers 4` (base, mode1, block, block+mode1; seeds 1-20 x 15 years).
+- `--scenario demog_<e> --seeds 1-20 --years 15 --workers 6 --arm "<e>-mode0" --arm "<e>-mode1: tuning.Households.Life.ConceptionMode=1"` for favourable, balanced, hostile (the block now in the scenarios; favourable reproduces the plan's block arms exactly).
+- `--plan DotNet/God.Runner/Demog/Plans/plan_onefactor.json --workers 4` (15 arms x 10 seeds x 15 years); `--plan DotNet/God.Runner/Demog/Plans/plan_care.json --workers 6` (8 arms x 10 seeds x 10 years).
+- M4.26: `--scenario m4_band_6x20 --seeds 1-40 --days 40 --arm on --arm "mild: setup.disease=mild" --arm "off: setup.disease=off"`.
+- Mann-Whitney p values from each run's `runs.csv` (column `completed_fertility`, `births`, `child_mortality`), normal approximation with tie correction (the same formula as F2-T3).
+
+**Results.** Favourable is **not viable**: with the biology block and `ConceptionMode` 1, 16/20 seeds are never extinct but all collapse (end/year 3 0.11 +- 0.04), completed fertility 1.63 against about 2.3 needed. Balanced: 5/20 not extinct, all collapsed. Hostile: extinct 20/20 by year 7. Full numbers, M4.38, M4.40, M4.41, M4.44 and M4.26 in POPULATION "F2 update" and the ACCEPTANCE D4 status table.
+
+**Pins.**
+- Both-off neutrality (`HouseholdsOff_Band6x20_EqualsPostF0Hashes`, `M5NeutralityTests`; 8b898d115d8a05a7, 5fa8991b92168385, 66a55d5a67f2ad4e): unchanged by design (the flag is omitted at 0); see the test results below.
+- F2-T1: `m4_families` and `demog_favourable` (with the M4 biology restored) seeds 1-3, 12000 ticks, flag unset and explicit 0, equal the base hashes taken with the `11c3e43` runner: m4_families 4e097b3731e62136, 561a1f8ef03ccfc3, 7d58acabb1163bd5; demog_favourable 55a810bf69f22ec1, 08e4eeae3e8ccbc2, b27453be66bfd56f.
+- **Deliberately moved:** with `ConceptionMode` 1 the hashes move (e.g. `m4_families` seed 1 at 10 days fac329b5477dc2dd); no default sets it. The `demog_*` scenarios' own hashes moved with the biology block (scenario files, not a default); no test pinned them.
+
+**Tests.** Pending: rerun after merging `unity/poc` (F1) in.
+
+**Design decisions taken during implementation.**
+- F2-T2 as written in the spec tests "partners never in sight at the mother's check". The code has no such defect (the check needs no sight; "try" lasts one day and is offered only in sight), and `try-3days` did not help. F2-T2 tests the defect actually found: two partners who both try, one holding a dormant relationship with a third adult, conceive in mode 1 and not in mode 0; one intent alone never conceives; a live intent or a running pregnancy still blocks.
+- The ending reuses `ReproductiveUnionEnded.Lapsed` (no new event or reason code, so the household catalogue is untouched).
+- `ConceptionMode` is not set in any scenario file: the lead decides whether to merge behind the flag or flip it at a re-pin point. The biology block is in the `demog_*` scenario files only; no default changed.
+- The M4.38 and M4.44 plans set `ConceptionMode` 1 (the proposal), with a `conception-mode0` arm in M4.38.
+
+**Proposal to the lead.** (a) Merge behind the flag (default 0) now; or (b) flip `ConceptionMode` to 1 at the Checkpoint B re-pin point (m4 hashes move; both-off pins do not). Either way favourable is not yet viable; the next owner-level question is a partner-preference distribution (who one seeks as a romantic partner), and the next mechanism question is the starvation of children aged 0.5-1.0 (M4/C7 care).
+
+**Not done.** No viable favourable scenario. F2c (C6/C7 treatment arms: not merged). F2-T3 was not run as the `[Explicit]` test; its numbers come from the 20-seed report runs with the same formula. Unity was not opened (no Game code changed).
