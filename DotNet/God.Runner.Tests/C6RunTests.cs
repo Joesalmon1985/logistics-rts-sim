@@ -294,7 +294,11 @@ namespace God.Runner.Tests
         {
             for (ulong seed = 1; seed <= 4; seed++)
             {
-                var (_, p) = Run("org_shared_store", seed, 24000);
+                var (_, p) = Run(Environment.GetEnvironmentVariable("C6_DIAG") ?? "org_shared_store", seed, 24000);
+                TestContext.WriteLine("  refusals " + string.Join(",", p.Events.OfType<ServiceRefused>().Select(r => r.ReasonSeen)) + " requestGestures "
+                    + p.Events.OfType<God.Sim.Social.GestureMade>().Count(g => g.Act == GestureAct.NeedFood && g.TopicKind == TopicKind.Service)
+                    + " withdraws " + p.Events.OfType<ItemMoved>().Count(m => m.Reason == MoveReason.Withdraw && m.OwnerBeforeKind == OwnerKind.Org)
+                    + " dissolved " + p.Events.OfType<OrgDissolved>().Count() + " left " + string.Join(",", p.Events.OfType<MemberLeft>().Select(l => l.Reason)));
                 var e = p.Events;
                 TestContext.WriteLine("seed " + seed + ": minds " + p.Minds + " opps " + p.Opps + " maxEvidence " + p.MaxEvidence + " invites " + p.Invites + " accepted " + p.Accepted
                     + " meetingsMax " + p.Meetings + " proposals " + e.OfType<OrgOpportunityAvailable>().Count()
