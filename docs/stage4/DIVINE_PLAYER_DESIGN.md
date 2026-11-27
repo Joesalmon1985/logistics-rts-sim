@@ -339,6 +339,8 @@ Codes and names are SAC §15.1 (D1 800–809, D2 810–824). This document defin
 
 ## 9. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 Package ids are the brief's (§39), as used by SAC; tiers are §42's.
 
 | Capability | Package | Tier |
@@ -350,7 +352,7 @@ Package ids are the brief's (§39), as used by SAC; tiers are §42's.
 | Scopes `Individual`, `Household`, `Group`, `Location` | D2 | 1 |
 | Scope `Org` with relay and organisation decisions | D2 + C6 (C10 for governments) | 2 |
 | Attribution step and exposure ring; causal fields | D2 | 1 |
-| Witnesses' `Praise`/`Warn` about gods (`TopicKind.God`) | D2 + D6 + U4 | 2 |
+| Witnesses' `Praise`/`Warn` about gods (`TopicKind.God`) | D2 + D6 + U3b | 2 |
 | `StewardGod` | D1 | 2 |
 | `Perceived`, `Reported`, `Blind` observation profiles | D1 + Q1 | 3 |
 | Trained god policies | — | later (D5.31) |

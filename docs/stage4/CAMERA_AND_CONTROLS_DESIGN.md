@@ -125,7 +125,7 @@ This is the part that must be exactly right: a person holding `W` for 2.34 secon
 The sim moves a body one lattice edge at a time under its existing movement and action primitives (the same used by NPC intents). The player supplies an intent at tick boundaries; the sim validates and executes it with the entity's own speed, needs and constraints. A possessed NPC keeps the NPC's physical capabilities; an avatar uses the avatar's movement parameters (brief section 6); neither can bypass physical constraints (D5.7 for compulsion applies to physical limits in general).
 
 ### 8.2 The control input command
-`DivineControlInput` (provisional name; owned by D4 and D5), applied at the tick boundary like every command:
+`DivineControlInput` (provisional name; owned by D4, which absorbs D5), applied at the tick boundary like every command:
 
 | Field | Meaning |
 |---|---|
@@ -146,7 +146,7 @@ A `ControlSampler` (view side) runs once per sim tick, not per frame: it is call
 4. Discrete action keys (`E` interact, `G` give, `X` drop, gesture wheel) submit `Act` commands once per press, with the target resolved by `WorldPicker` as an id.
 5. While the sim is paused, no ticks run, so no sampling occurs; held keys are ignored on resume until the next tick sample.
 
-### 8.4 What the sim does (contract for D4 and D5)
+### 8.4 What the sim does (contract for D4a and D4b)
 - A heading input becomes a short-lived movement intent for the entity: choose the lattice neighbour best matching the sector among passable neighbours, move there at the entity's speed, repeat while the lease is valid. With a `Stop` or an expired lease, finish the current edge (bodies never stop mid-edge in the sim) and halt.
 - `MoveTo` paths with the existing pathing and walks until arrival, the next control input, or an interrupt.
 - Each input is recorded in the command stream with its tick, so a replay reproduces the exact path.
@@ -218,11 +218,13 @@ Rules: no sim state mutates in Unity; commands only through `ICommandGate`; no `
 | Time controls | partial (1x, 2x, 4x) | 1x, 2x, 5x, 10x, accelerated, step (PLAYER_UI_DESIGN) |
 | Input abstraction | no | `IInputSource`, `PlayerInputFrame`, `PlayerController` |
 | Third-person cameras | no | avatar and possession cameras, transitions |
-| Control command and sim side | no | `DivineControlInput`, possession and avatar sim (D4, D5), `AvailableActions` |
+| Control command and sim side | no | `DivineControlInput`, possession and avatar sim (D4a, D4b), `AvailableActions` |
 | Command pending visuals | no | pending chips, response chips |
 | Mobile | no | touch adapter (Tier 3) |
 
 ## 12. Tier and package mapping
+
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 
 | Capability | Package | Tier |
 |---|---|---|
@@ -230,10 +232,10 @@ Rules: no sim state mutates in Unity; commands only through `ICommandGate`; no `
 | `SelectionModel` with single, group, household, area, institution, object; click selection of anyone | U1 | 1 |
 | Input layer (`PlayerInputFrame`, intents) and `PlayerCommandBuilder` | U1 | 1 |
 | Contextual radial menu and the pending and response chips | U1/U2 | 1 |
-| `ControlSampler` and the control input command contract | U1 with D4 and D5 | 2 |
+| `ControlSampler` and the control input command contract | U1 with D4 (D4a, D4b) | 2 |
 | Avatar and possession third-person cameras, smooth switching, peek | U1 | 2 |
 | Mobile touch adapter, bottom sheets, gamepad | U1 | 3 |
-| Cinematic transitions and tutorial camera scripts | U6 | 3 |
+| Cinematic transitions and tutorial camera scripts | U6 (deferred, index §0) | 3 |
 
 ## 13. PlayMode-testable acceptance hooks
 

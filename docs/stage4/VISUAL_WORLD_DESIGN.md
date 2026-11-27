@@ -202,17 +202,19 @@ LOD is a function of camera distance only for what is drawn. Cues are produced f
 
 ## 15. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
-| Grid hidden in normal play: producing-hex pulse and hex text off, overlays dev-only, `DevOverlays` flags | U3 | 1 (it supports "functional player controls": the player must not see the grid while playing) |
+| Grid hidden in normal play: producing-hex pulse and hex text off, overlays dev-only, `DevOverlays` flags | U3a | 1 (it supports "functional player controls": the player must not see the grid while playing) |
 | Forest edges, ecotones, coast detail, curved road polish, settlement clusters and distinct buildings | U3 | 2 |
 | Resource-derived skin (depletion, fields tied to land records) | U3 with C1 | 2 |
 | Real hill and mountain relief with figure and building lift | U3 | 2 |
-| Character look: injury, illness, fatigue, pregnancy, carried goods in hands, equipment, hair by age | U4 | 2 |
-| Divine effect set (suggestion, command, compulsion, possession, heal, smite, create, avatar) | U2/U4 with D2 to D5 | 1 for suggestion, command, compulsion, heal, smite, create; 2 for possession and avatar effects, resurrection |
-| Sacred places, memorial markers, prayer threads | U4/U5 with D6, D7 | 2 |
+| Character look: injury, illness, fatigue, pregnancy, carried goods in hands, equipment, hair by age | U3b | 2 |
+| Divine effect set (suggestion, command, compulsion, possession, heal, smite, create, avatar) | U2a (cues) and U3b (rich effects) with D2 to D4 | 1 for suggestion, command, compulsion, heal, smite, create; 2 for possession and avatar effects, resurrection |
+| Sacred places, memorial markers, prayer threads | U3b/U5 with D6, D7 | 2 |
 | Aggregated far-range markers, instancing, ecological decoration, shader coast | U3 | 3 |
-| Emotion posture detail and cap mood rim, per-household clothing | U4 | 3 |
+| Emotion posture detail and cap mood rim, per-household clothing | U3b | 3 |
 
 ## 16. PlayMode-testable acceptance hooks
 

@@ -535,11 +535,13 @@ Channels are `Avatar`, `Possessed`, `Prayer`, `ConsecratedSite`, `Followers`, `R
 Events (names; codes by the contracts document): `DivineObservationAnswered` (god, domain, mode, channel, subject, quality, as-of tick), `DivineProfileChanged`. Both go to `fact_divine_observation` and `dim_god_history` (HV and S). The audit-only fields of 7 stay Full-only. Warehouse tables, KPIs and acceptance hooks: [DATA_WAREHOUSE_DESIGN.md §12](DATA_WAREHOUSE_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026) and [KPI_CATALOGUE.md §15](KPI_CATALOGUE.md#15-owner-d5-civilisation-and-divinity-26-nov-2026).
 
 ### 12.8 Tier and package mapping
+
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 | Part | Package (brief §39) | Tier | Warehouse / KPI work |
 |---|---|---|---|
 | `IDivineView`, `Omniscient` profile, labelled NPC inspector (12.3, 12.4) | D1, U2 | 1 | Q1: `dim_god_history`; DIV-01, DIV-02 |
 | Divine suggestion arriving as a layer 3 message with source "divine"; revealed knowledge as a layer 6 write | D2, D3, D6 | 1 | `fact_command_perception`, `fact_miracle_effect` |
-| `Perceived` and `Reported` modes, channels, `DivineAlert` aggregation | D1, D4, D5, U5 | 2 | `fact_divine_observation` (Tier 3 detail) |
+| `Perceived` and `Reported` modes, channels, `DivineAlert` aggregation | D1, D4, U5 | 2 | `fact_divine_observation` (Tier 3 detail) |
 | Government reports that can be wrong, shown beside truth to the god | C6, U5 | 2 | INS-04..08, SVC-01..06; `fact_record`, `fact_record_audit`, `fact_return` (M13b) |
 | Reflection tests extended to `IGodPolicy` and `IDivineView` | F1, Q3 | 1 | W-D5-10 |
 | `god-runner sql` | Q1 | 2 | views in `0030_kpi_views.sql` |

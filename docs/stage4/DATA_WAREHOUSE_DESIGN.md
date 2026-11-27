@@ -836,19 +836,19 @@ The writer applies the numbers that exist, in order, and a migration may referen
 | `0007_divine_core.sql` | F1, D1 | `dim_god`, `dim_god_history`, `fact_god_faction`, `fact_resource_ledger`, new `dim_code` sets (`control_source`, `cause_kind`, mythic category), `control_code` columns, `intervention_id` columns |
 | `0008_mythic.sql` | D1 | `fact_mythic_balance_day`, `fact_mythic_ledger`, `fact_divine_action`, `fact_divine_observation` |
 | `0009_commands.sql` | D2 | `fact_divine_command`, `_target`, `fact_command_perception`, `fact_command_response`, `fact_compulsion` |
-| `0010_possession.sql` | D4 | `fact_possession` |
-| `0011_avatar.sql` | D5 | `fact_avatar_manifestation` |
+| `0010_possession.sql` | D4a | `fact_possession` |
+| `0011_avatar.sql` | D4b (absorbs D5) | `fact_avatar_manifestation` |
 | `0012_miracles.sql` | D3 | `fact_miracle`, `fact_miracle_effect` |
 | `0013_resurrection.sql` | D7 | `fact_resurrection`, `fact_life_spell`, `fact_npc_archive`, `life_no` on `fact_death` |
 | `0014_commandments_religion.sql` | D6 | commandment, religion, affiliation, belief, prayer and worship tables |
 | `0015_ownership_work.sql` | C1, C3 | `fact_ownership_spell`, `fact_use_right`, `fact_economic_relationship` |
 | `0016_employment.sql` | C3 | `dim_enterprise` (as `dim_org` view), `fact_employment`, `fact_job_day`, `fact_org_day` columns |
-| `0017_lending.sql` | C2, C8 | `fact_loan`, `fact_loan_repayment`, `fact_loan_default`, `fact_promise` columns |
+| `0017_lending.sql` | C2 (C8 banking columns deferred) | `fact_loan`, `fact_loan_repayment`, `fact_loan_default`, `fact_promise` columns |
 | `0018_organisations.sql` | C6 | `dim_org`, `dim_org_history`, `fact_org_membership`, `fact_org_expenditure`, `fact_org_day`, `fact_service_request`, `_delivery`, `_outcome` |
 | `0019_health_education.sql` | C7 | `fact_health_encounter`, `fact_education_enrolment`, `fact_education_assessment` |
-| `0021_justice.sql` | C9 | `fact_investigation`, `fact_court_decision`, `fact_detention`, crime columns |
-| `0022_military.sql` | C4 | `fact_military_service`, `fact_service_day` |
-| `0023_citizenship_politics.sql` | C5 | citizenship spells and migration extensions (affiliation stays separate from citizenship) |
+| `0021_justice.sql` | C9 (deferred, Tier 3) | `fact_investigation`, `fact_court_decision`, `fact_detention`, crime columns |
+| `0022_military.sql` | C4 (deferred, Tier 3) | `fact_military_service`, `fact_service_day` |
+| `0023_citizenship_politics.sql` | C10 (absorbs C5's minimal citizenship) | citizenship spells and migration extensions (affiliation stays separate from citizenship) |
 | `0024_culture_religion_orgs.sql` | C10 | religious-institution columns on `dim_org`, trait and tradition links |
 | `0030_kpi_views.sql` | Q1 | `dim_kpi` rows for the new KPI IDs, the reference-SQL views `v_kpi_*`, the stable analysis views (`v_person_life`, `v_god_day`, `v_intervention_chain`, `v_org_history`), `ANALYZE` hints |
 
@@ -886,6 +886,8 @@ WHERE (o.valid_to_tick IS NULL OR o.valid_to_tick > r.tick) AND o.owner_person_k
 Limits: sampled rows (HV) carry `sample_weight`; analyses must weight them. Truth columns are NULL below Full. Read-only SQL access by a player is described in [INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026).
 
 ### 12.7 Tier and package mapping
+
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 | Group | Tables | Package (brief §39) | Tier | Warehouse package |
 |---|---|---|---|---|
 | Divine identity, Mythic, action ledger | `dim_god*`, `fact_mythic_*`, `fact_divine_action`, `fact_resource_ledger` | F1, D1 | 1 | Q1 |
@@ -893,13 +895,13 @@ Limits: sampled rows (HV) carry `sample_weight`; analyses must weight them. Trut
 | Miracles | `fact_miracle*` | D3 | 1 | Q1 |
 | Commandments and known commandments | `dim_commandment*`, `fact_commandment_known` | D6 | 1 | Q1 |
 | Physical ownership and labour | `fact_ownership_spell`, `fact_use_right`, `fact_economic_relationship` | C1 | 1 | Q1 |
-| Possession, avatar, resurrection | `fact_possession`, `fact_avatar_manifestation`, `fact_resurrection`, `fact_life_spell`, `fact_npc_archive` | D4, D5, D7 | 2 | Q1 |
+| Possession, avatar, resurrection | `fact_possession`, `fact_avatar_manifestation`, `fact_resurrection`, `fact_life_spell`, `fact_npc_archive` | D4 (D4a, D4b), D7 | 2 | Q1 |
 | Religion, belief, prayer | `dim_religion`, `fact_religious_affiliation`, `fact_belief_change`, `fact_prayer`, `fact_commandment_choice` | D6 | 2 | Q1 |
 | Employment, enterprises | `fact_employment`, `fact_job_day` | C3 | 2 | Q1 |
 | Organisations and services | `dim_org*`, `fact_org_*`, `fact_service_*` | C6 | 2 | Q1 |
 | Healthcare, education | `fact_health_encounter`, `fact_education_*` | C7 | 2 | Q1 |
-| Lending | `fact_loan*` | C2, C8 | 2 (default detail 3) | Q1 |
-| Justice, detention, military | `fact_investigation`, `fact_court_decision`, `fact_detention`, `fact_military_service` | C9, C4 | 3 | Q1 |
+| Lending | `fact_loan*` | C2 (C8 banking deferred) | 2 (default detail 3) | Q1 |
+| Justice, detention, military | `fact_investigation`, `fact_court_decision`, `fact_detention`, `fact_military_service` | C9, C4 (deferred) | 3 | Q1 |
 | Worship, divine observation answers | `fact_worship*`, `fact_divine_observation` | D6, U5 | 3 | Q1 |
 | Views, KPI reference SQL, reconciliation suite | `0030_kpi_views.sql`, W-D5 tests | Q1, Q3 | 1 | Q1, Q3 |
 

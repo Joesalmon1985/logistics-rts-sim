@@ -161,6 +161,8 @@ Code units: `Npc.Health` and `Npc.Injury` are micro (0..1,000,000); magnitudes b
 
 ## 8. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
 | Mythic: `TrySpend`, daily regeneration, cap, cooldowns per kind, upkeep, `Standard`/`Unlimited`/`Disabled`, `SetMythicMode`, Mythic events and invariant M1 | D1 | 1 |

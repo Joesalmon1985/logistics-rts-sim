@@ -307,6 +307,8 @@ Hotkeys use a chord (`Ctrl+Shift+D`, then the letter) so no normal-play key is l
 
 ## 22. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
 | Time controls (pause, 1x, 2x, 5x, 10x), queued commands while paused | U1 | 1 |
@@ -315,12 +317,12 @@ Hotkeys use a chord (`Ctrl+Shift+D`, then the letter) so no normal-play key is l
 | Commandment editor and list | U2 (with D6) | 1 for the builder, 2 for the spread view |
 | Names, favourites, follow, roster chips | U1 | 1 |
 | Developer overlays (decode overlay, hex regions, truth channel on the card) | U1/U2 | 1 for decode overlay and truth, 2 for the rest |
-| Possession pill, avatar pill, mode switcher, gesture wheel | U2 (with D4, D5) | 2 |
+| Possession pill, avatar pill, mode switcher, gesture wheel | U2 (with D4a, D4b) | 2 |
 | Family tree, life history, memorial and resurrection panel | U5 (with D7) | 2 |
 | Institutional reports with record versus observation columns, KPI popovers | U5 | 2 |
 | Warehouse read-only query console | U5 (with Q1) | 3 |
 | Accelerated speed with budget, accessibility captions, mobile bottom sheets and touch scaling | U1/U2 | 3 |
-| Tutorial pointers on the new UI | U6 | 3 |
+| Tutorial pointers on the new UI | U6 (deferred, index §0) | 3 |
 
 ## 23. PlayMode-testable acceptance hooks
 

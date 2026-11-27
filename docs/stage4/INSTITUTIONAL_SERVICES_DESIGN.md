@@ -99,8 +99,8 @@ The `Case` record of INSTITUTIONAL_STATE §3 **is** the `ServiceRequest`: its fi
 - **Fees** are offers by gesture valued by each side's own `Valuation` (`Assets/God/Sim/Social/Valuation.cs`); a recipient who cannot or will not pay may be refused, which is measured as exclusion.
 
 ## 4. Telemetry common to all services
-- `ServiceRequested`, `ServiceQueued`, `ServiceStarted`, `ServiceProgress` (HV), `ServiceCompleted` (with the outcome event id), `ServiceRefused` (by whom, reason seen), `ServiceDropped`, `ServiceExpired`, `ServiceFeePaid`;
-- analytics-only truth fields on `ServiceCompleted`: the subject's true need before and true state after;
+- `ServiceRequested` (506), `ServiceAccepted` (507; replaces `ServiceQueued` and `ServiceStarted`), `ServiceDelivered` (508; replaces `ServiceCompleted`, with the outcome event id), `ServiceOutcomeRecorded` (509), `ServiceRefused` (510; by whom, reason seen), `ServiceExpired` (517); names and codes as SAC §15.1 (LEAD_RULINGS R24). `ServiceProgress`, `ServiceDropped` and `ServiceFeePaid` have no code (progress is request state; a fee is a payment event of C2/K2a);
+- analytics-only truth fields on `ServiceOutcomeRecorded` (`TrueOutcome`): the subject's true need before and true state after;
 - daily per organisation and kind: requests opened, served, refused, expired; capacity; true unmet demand (telemetry).
 Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: request), `fact_service_day` (organisation × kind × day).
 
@@ -123,7 +123,7 @@ Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: reque
 - **Later:** several healers, specialisation by skill, remedies as a production chain, hospitals with wards, public health.
 - **Divine healing** (MYTHIC_AND_MIRACLES) is a miracle, not this service; it acts on the same health fields and is recorded separately so healthcare outcomes and miracles are never mixed in KPIs.
 
-**Events:** `TreatmentGiven` (healer, patient, request, skill, remedy lot, severity before and after as known to the sim: truth fields), `HealerSkillChanged`, plus the common service events. `CareGiven` stays for informal `Tend`.
+**Events:** `TreatmentStarted` (520) and `TreatmentEnded` (521) (replace `TreatmentGiven`; healer, patient, request, skill, remedy lot, severity before and after as known to the sim: truth fields), plus the common service events (`HealerSkillChanged` has no code; skill changes use the existing `SkillChanged`). `CareGiven` stays for informal `Tend`.
 
 ### 5.2 Education (brief §20)
 **Tier 2 (C7).** Begins with teaching, demonstration, apprenticeship and shared knowledge; schools later.
@@ -139,7 +139,7 @@ Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: reque
 - **Spread and loss:** knowledge spreads only by these acts and by ordinary imitation (CULTURAL_TRANSMISSION); it is lost when holders die untaught or forget (association decay is per sim day, independent of `LifeScale`, owner Q1).
 - **Later:** schools as organisations with scheduled sessions and places, curricula as organisation policies, examinations (INSTITUTIONAL_STATE's Goodhart example for teaching is kept), advanced institutions.
 
-**Events:** `DemonstrationSeen`, `TeachingGiven` (the existing conventions name; teacher, learner, topic, fidelity), `SkillChanged`, `AssociationsImitated` (existing name), `ApprenticeshipStarted`, `ApprenticeshipEnded`.
+**Events:** `DemonstrationSeen`, `TeachingGiven` (the existing conventions name, kept for informal teaching), `TeachingSession` (522) and `KnowledgeTransferred` (523) for the formal service (teacher, learner, topic, fidelity), `SkillChanged`, `AssociationsImitated` (existing name); `ApprenticeshipStarted` and `ApprenticeshipEnded` have no code (apprenticeship is a role on the record).
 
 ### 5.3 Communal stores and welfare (brief §24)
 **Tier 2 (C8; treatment in F2).** "Communal assistance" in brief §42.
@@ -176,7 +176,7 @@ Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: reque
 - **Insolvency:** an individual or organisation that cannot settle obligations due. For individuals it is a measured state (claims due exceed holdings); for organisations it is the `Insolvent` status. Creditors' remedies are whatever justice exists (5.6); with none, only social consequences.
 - **Ledger rule (brief §21):** creating, defaulting or writing off an obligation changes no goods count; every claim has an equal liability in the registry; settlement only by hand-over (ORG-I2). Interest, monetary accounting, sophisticated credit, deposits and banks are Tier 3 and use the same registry.
 
-**Events:** `LoanAgreed` (DealId, lender, borrower, ware, count, due, collateral lot), `LoanHandedOver`, `LoanRepaid`, `LoanPartlyRepaid`, `LoanDefaulted`, `CollateralPledged`, `CollateralReturned`, `CollateralForfeited`, `InsolvencyObserved`, plus `OrgObligation*` from ORGANISATIONS.
+**Events** (SAC §15.1, C2 block 540–544; LEAD_RULINGS R24): `LoanMade` (540; DealId, lender, borrower, ware, count, due, collateral lot; replaces `LoanAgreed` and `LoanHandedOver`), `LoanRepaid` (541; a part payment is a `LoanRepaid` with the remainder, replacing `LoanPartlyRepaid`), `LoanDefaulted` (542), `LoanWrittenOff` (543), `CollateralSeized` (544; replaces `CollateralForfeited`). Pledging and returning collateral are state of the loan record, and `InsolvencyObserved` has no code. Organisation obligations are the same registry.
 
 ### 5.6 Justice: complaints, arbitration, restitution and detention (brief §22)
 **Tier: informal mediation 2 (C9, low priority); formal courts, policing and detention 3 (C9).**
@@ -197,7 +197,7 @@ Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: reque
 
 **Minimal first version (Tier 2, low priority):** communal mediation by an elder (INSTITUTIONAL_STATE M12 Band-age mediation) through this model: complaint, the elder hears both parties and any witness present, a ruling message, voluntary restitution. No detention.
 
-**Events:** `ComplaintMade`, `WitnessAsked`, `TestimonyGiven` (truth field: honest), `EvidenceObtained`, `RulingMade` (truth field: correct), `RestitutionOrdered`, `RestitutionMade`, `FineLevied`, `FineRefused`, `GoodsSeized`, `Detained`, `DetentionEnded`, `DetaineeEscaped`, `RationGiven` (detention).
+**Events** (Tier 3, C9 deferred; contract block 560–568, R24): `ComplaintMade` (560), `InvestigationOpened` (561), `InvestigationClosed` (562), `AccusationMade` (563), `CaseDecided` (564; replaces `RulingMade`, truth field: correct, and carries the restitution order), `RestitutionMade` (565), `FineImposed` (566; replaces `FineLevied`), `Detained` (567), `Released` (568; replaces `DetentionEnded`). `WitnessAsked`, `TestimonyGiven`, `EvidenceObtained`, `FineRefused`, `GoodsSeized`, `DetaineeEscaped` and `RationGiven` have no code yet.
 
 ### 5.7 Pointers to later services (mostly Tier 3)
 
@@ -223,7 +223,7 @@ Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: reque
 ## 7. Invariants
 | # | Invariant |
 |---|---|
-| SVC-I1 A provider for every outcome | Every `ServiceCompleted` has a provider NPC alive and within the service's reach of the subject (or goods) during the activity ticks. |
+| SVC-I1 A provider for every outcome | Every `ServiceDelivered` has a provider NPC alive and within the service's reach of the subject (or goods) during the activity ticks. |
 | SVC-I2 Real state only | No service changes a faction-level or organisation-level modifier; every outcome event is one of the owning systems' state changes (table 3.3). A static test finds no health, skill or loyalty multiplier keyed by organisation or faction. |
 | SVC-I3 Conservation | Goods used by services are `Consumed` or `ItemMoved`; C1–C6 hold. Loans, fines, fees and restitution orders create no goods (ORG-I2). |
 | SVC-I4 Information separation | Diagnosis, eligibility, credibility and rulings read only the provider's own mind, the evidence it holds and the organisation records it may read (reflection test). `TrueOffender`, true need and true severity are analytics-only. |
@@ -232,19 +232,21 @@ Warehouse (DATA_WAREHOUSE_DESIGN to adopt): `fact_service_request` (grain: reque
 
 ## 8. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Service or capability | Tier (brief §42) | Package | Minimal first version |
 |---|---|---|---|
 | Common service model (request, queue, activity, outcome, record) | 2 | C6 (framework), C7 (first users) | Requests in the organisation ring and informal requests in the mind; first-come and most-severe queues |
 | Healthcare | 2 | C7 | `Treat` = `Tend` + healing skill + optional remedy; private and communal healer |
 | Education | 2 | C7 | `Demonstrate` and `Teach` with imitated associations and skill gain; apprenticeship role |
-| Communal stores and welfare | 2 | C8 | Shared food store with keeper and ration policy |
-| Childcare | 2 | C8, F2 | Formal minding body grown from `CareArrangement` |
-| Primitive lending and deferred obligations | 2 | C2, C8 | Formal obligations for recorded loans; repayment, default, credibility; tool loans with `Keep` |
-| Collateral, insolvency | 2 (collateral), 3 (insolvency procedures) | C2, C8 | `Forfeited` basis; insolvency as a measured state |
-| Deposits, interest, banks | 3 | C8 | Same registry |
-| Mediation | 2 (low priority) | C9 | Elder hears complaint, ruling message, voluntary restitution |
-| Courts, investigation, policing, detention, rehabilitation | 3 | C9 | As 5.6 |
-| Infrastructure, environment, media, statistics, political, trade and workers' organisations | 3 | C5, C10 | Pointers only (5.7) |
+| Communal stores and welfare | 2 | C6 (absorbs C8 Tier 2) | Shared food store with keeper and ration policy |
+| Childcare | 2 | C6 (C8 scope), F2 | Formal minding body grown from `CareArrangement` |
+| Primitive lending and deferred obligations | 2 | C2 (C8 banking deferred) | Formal obligations for recorded loans; repayment, default, credibility; tool loans with `Keep` |
+| Collateral, insolvency | 2 (collateral), 3 (insolvency procedures) | C2 (C8 deferred) | `Forfeited` basis; insolvency as a measured state |
+| Deposits, interest, banks | 3 | C8 (deferred) | Same registry |
+| Mediation | 2 (low priority) | C9 (deferred; mediation is its Tier 2 slice) | Elder hears complaint, ruling message, voluntary restitution |
+| Courts, investigation, policing, detention, rehabilitation | 3 | C9 (deferred) | As 5.6 |
+| Infrastructure, environment, media, statistics, political, trade and workers' organisations | 3 | C5 (beyond minimal citizenship, deferred), C10 | Pointers only (5.7) |
 | Effects of healthcare, welfare and childcare on survival and fertility | 2 | F2 | Used as treatments in viability experiments |
 
 ## 9. Stage 4 milestones and later

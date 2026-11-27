@@ -105,7 +105,7 @@ Each checkpoint is an independently demonstrable build. A later failure does not
 
 ## 8. Mapping the eighteen end-to-end scenarios (brief section 47)
 
-Each is demonstrable headless first (Q2, Q3) and then shown in Unity. "View" is the view that demonstrates it and what the player sees.
+Each is demonstrable headless first (Q1, Q3) and then shown in Unity. "View" is the view that demonstrates it and what the player sees.
 
 | # | Scenario | Scenario file | What the player sees (view) | Checkpoint | Tier |
 |---|---|---|---|---|---|
@@ -139,18 +139,20 @@ Each is demonstrable headless first (Q2, Q3) and then shown in Unity. "View" is 
 
 ## 10. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
-| Scenario page with Normal, Unlimited, Disabled selector; sandbox and unlimited sandbox; autonomous observation | U6 with D1 | 1 |
-| Scenario loader shared with the runner, controlled-experiment files and batch hook | U6 with Q2 | 1 |
-| Generated islands with the viability preview | U6 with F2 | 1 |
-| Tutorial steps 1 to 7 and 10 (builder) | U6 | 1 for the functional steps; 3 for the card polish |
-| Tutorial steps 8, 9, 11, 12 | U6 | 2 |
-| Handcrafted scenario set (First Light plus five) | U6 | 2 |
-| Optional objectives (VP mode kept, new objective list) | U6 | 2 |
-| Replay playback with scrubber and markers | U6 with Q3 | 2 |
-| Timeline branching and compare | U6 with Q3 | 3 |
-| Tutorial polish, camera scripts and presentation | U6 | 3 |
+| Scenario page with Normal, Unlimited, Disabled selector; sandbox and unlimited sandbox; autonomous observation | U6 (deferred, index §0) with D1 | 1 |
+| Scenario loader shared with the runner, controlled-experiment files and batch hook | Q3 (scenario files) with Q1 (runner and batch hook) | 1 |
+| Generated islands with the viability preview | U6 (deferred) with F2 | 1 |
+| Tutorial steps 1 to 7 and 10 (builder) | U6 (deferred; the stage 3 tutorial stays) | 1 for the functional steps; 3 for the card polish |
+| Tutorial steps 8, 9, 11, 12 | U6 (deferred) | 2 |
+| Handcrafted scenario set (First Light plus five) | U6 (deferred) | 2 |
+| Optional objectives (VP mode kept, new objective list) | U6 (deferred) | 2 |
+| Replay playback with scrubber and markers | U6 (deferred) with Q3 | 2 |
+| Timeline branching and compare | U6 (deferred) with Q3 | 3 |
+| Tutorial polish, camera scripts and presentation | U6 (deferred) | 3 |
 
 ## 11. PlayMode-testable acceptance hooks
 
