@@ -17,10 +17,14 @@ namespace God.Sim.Civ
         {
             if (s.Population == null || s.Tuning.Civ.Enabled == 0) return;
             s.Civ = new CivState();
+            s.Civ.Ownership = new OwnershipState(); // C1: assets, the O7 overlay and claims (hashed inside the civ part only)
         }
 
-        /// <summary>Registers handlers and systems (none in F1).</summary>
-        public static void Install(GodSim sim) { }
+        /// <summary>Registers handlers and systems: C1's <see cref="CivSystem"/> (order 257), only while the state exists.</summary>
+        public static void Install(GodSim sim)
+        {
+            if (sim.State.Civ != null) sim.AddSystem(CivSystem.Order, new CivSystem());
+        }
 
         /// <summary>A new mind: its part of this module (none in F1: the mind slot stays null until C1 fills it).</summary>
         public static void NewMind(GodState s, Npc npc) { }
@@ -28,7 +32,27 @@ namespace God.Sim.Civ
         /// <summary>A person died (called by the hooks' <c>OnDeath</c> only while the state exists).</summary>
         public static void OnDeath(GodState s, EventBuffer ev, Npc npc) { }
 
-        /// <summary>The module's invariants (none in F1).</summary>
-        public static void Check(GodState s, List<string> bad) { }
+        /// <summary>C1's invariants: ascending unique asset ids below the counter, each finished asset's store an AssetStore bin, at most 8 rights and 4 disputes.</summary>
+        public static void Check(GodState s, List<string> bad)
+        {
+            var o = s.Civ.Ownership;
+            if (o == null) return;
+            int last = 0;
+            foreach (var a in o.Assets)
+            {
+                if (a.Id <= last) bad.Add("CIV1: asset ids not ascending at " + a.Id);
+                if (a.Id >= o.NextAssetId) bad.Add("CIV1: asset " + a.Id + " not below NextAssetId " + o.NextAssetId);
+                last = a.Id;
+                if (AssetTable.Get(a.Kind) == null) bad.Add("CIV1: asset " + a.Id + " of unknown kind " + a.Kind);
+                if (a.Store != 0)
+                {
+                    var b = Goods.BinById(s.Population, a.Store);
+                    if (b == null || b.Kind != BinKind.AssetStore || b.Node != a.Node) bad.Add("CIV1: asset " + a.Id + " store " + a.Store + " missing or not an AssetStore at its node");
+                }
+                if (a.IsFinished == (a.MaterialsIn != null)) bad.Add("CIV1: asset " + a.Id + " materials record does not match its state");
+                if (a.Rights.Count > Assets.MaxRights || a.Disputes.Count > Assets.MaxDisputes) bad.Add("CIV1: asset " + a.Id + " has too many rights or disputes");
+            }
+            foreach (var l in o.Lost) if (l.Count <= 0 || l.Owner.IsNone) bad.Add("CIV1: lost lot " + l.Lot + " without units or owner");
+        }
     }
 }
