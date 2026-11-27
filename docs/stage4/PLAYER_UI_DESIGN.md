@@ -47,7 +47,7 @@ Nothing divine exists yet: no Mythic, no god identity, no divine commands, no po
 
 ```text
 +----------------------------------------------------------------------------------+
-| [Day 3, yr 1] [pause][1x][2x][5x][10x][>>]        MYTHIC [=======----] 62/100 +1/s | <- top strip
+| [Day 3, yr 1] [pause][1x][2x][5x][10x][>>]        MYTHIC [=======----] 62/100 +20/day | <- top strip
 | alerts column (right, under strip)                                                   |
 |                                                                   +-------------+ |
 |  roster chips (left): favourites and followed, up to 12           | Person card | |
@@ -73,29 +73,29 @@ Nothing divine exists yet: no Mythic, no god identity, no divine commands, no po
 3. Anything the player types or clicks that matters becomes a `Command` in the replay stream. UI-only state (selection, camera, names the player gives, favourites, panel layout) is not in the stream and not in the state hash (section 15).
 
 ### 5.2 Provisional contracts the UI binds to
-Final names and fields come from SHARED_ARCHITECTURAL_CONTRACTS.md and the divine packages. The UI binds to these kinds; spellings may change.
+The names below are the **contracts' names** (SHARED_ARCHITECTURAL_CONTRACTS §9, §10.2, §13 and §19.2; LEAD_RULINGS R13). Where this document's first draft used another name, the row says so. Field lists are the divine packages'.
 
 | Need | Provisional contract | Owner package |
 |---|---|---|
-| God identity, Mythic | `GodView { GodId, Name, Mythic, MythicMax, RegenPerSec, UpkeepPerSec, Mode (Normal, Unlimited, Disabled), Cooldowns }` | D1 |
-| Power catalogue | `IDivineCatalog.Available(selection, target)` returning rows `{ Power, Kind (Suggestion, Command, Compulsion, Possession, Miracle, Commandment, Resurrection, Avatar), Cost, UpkeepPerSec, Cooldown, Valid, Reason }`, computed with `Gate.Check` | D1, D2, D3 |
-| Instruction | `DivineInstruction { Kind, Action (the section 9 vocabulary), Target, Scope (Person, Group, Household, Institution, Area), ExpiryTicks }` | D2 |
-| Divine control input | `DivineControlInput { Entity, Seq, Heading16 or TargetNode, Stop, ActionId, TargetRef }` (see CAMERA_AND_CONTROLS_DESIGN section 8) | D4, D5 |
-| Possession and avatar state | `PossessionView { Npc, MythicPerSec, SecondsLeft, StartedTick }`, `AvatarView { Entity, Node, Health, Carry, Alive, ManifestCost, UpkeepPerSec }` | D4, D5 |
-| Commandments | `CommandmentView { Id, Modality, Action, ObjectClass, AppliesTo, Conditions, Scope, Importance, IssuedTick, Revisions, Revoked, KnownByCount, FollowedShare }` and `Check(RevealCommandment)` | D6 |
-| NPC divine facts | `NpcFaithCard { Beliefs, Faith, Trust, Fear, Loyalty, Affiliation, Citizenship, KnownCommandments, DivineCommandsReceived, Responses }` | D6 |
-| Names and life | `NpcName`, `LifeRecord(npcId)` (bounded, archived for the dead), `FamilyGraph(npcId, depth)` | F1, population |
-| Institutional records | `InstitutionalRecordView { Institution, AsOfTick, Coverage, Rows }` | C6, U5 |
-| Provenance | every field of the above is wrapped as `Sourced<T> { Value, Source (Body, Mind, Record, Truth), AsOfTick }`, or the card carries its source per section | F1 |
+| God identity, Mythic | `IDivineView` (kept, SAC §9): `GodRecord` fields `Mythic` and `MythicMax` (milli-Mythic), `Mode` (`Standard`, `Unlimited`, `Disabled`), cooldowns; rates are tuning `Divinity.Mythic.RegenPerDay` and `Divinity.Upkeep.<Kind>PerTick`. The first draft's `GodView`, `RegenPerSec` and `UpkeepPerSec` are retired; the UI shows per-day rates and time to full | D1 |
+| Power catalogue | **No sim-side `IDivineCatalog`** (R13). U2 builds its catalogue from `Gate.Check` and the tuning costs, upkeep and cooldowns, as rows `{ Power, Kind (Suggestion, Command, Compulsion, Possession, Miracle, Commandment, Resurrection, Avatar), Cost, Upkeep, Cooldown, Valid, Reason }` | U2 (reads D1, D2, D3) |
+| Instruction | commands `IssueSuggestion`, `IssueCommand` and `IssueCompulsion { God, Act (the DivineAct vocabulary), Target, Scope, ExpireTicks }` with `DivineScope { Individual, Household, Group, Org, Location }`; record `Instruction` (SAC §10.2). `DivineInstruction`, `Person`, `Institution` and `Area` are retired names | D2 |
+| Divine control input | `DivineControlInput { God, Body, Kind (Heading, MoveTo, Stop, Action), Heading, Gait, Node, Act, Target }` (SAC §10.2 and §11.3; see CAMERA_AND_CONTROLS_DESIGN section 8) | F1 (handler), D4 (absorbs D5) |
+| Possession and avatar state | `PossessionView` and `AvatarView`: read-only structs of `IDivineView`, filled by `DivineViewFiller` from `ControlTable` (SAC §19.2); fields as the D4 spec (upkeep is per tick; the UI converts to per-day rate and time left) | D4 (absorbs D5) |
+| Commandments | the `Commandment` and `CommandmentRule` records of `DivinityState.Doctrine` (SAC §13.2) read through `IDivineView`; commands `RevealCommandment`, `ReviseCommandment`, `RevokeCommandment`. `CommandmentView` (with `KnownByCount`, `FollowedShare`) is a U2/U5 presentation composition, not a contract type; the sentence is rendered by `CommandmentText.Render` in U2 (R6) | D6 |
+| NPC divine facts | `DivineMind` (`GodBelief` with the five separate fields, `KnownCommandment`; SAC §13.1) through the inspector view; `NpcFaithCard` is a U2 presentation composition of those fields, the affiliation spells and the citizenship record | D6 |
+| Names and life | `Names.Person(seed, npcId)`, `Names.God`, `Names.Org` (F1.18, pure functions; `NpcName` is retired); `LifeRecord(npcId)` and `FamilyGraph(npcId, depth)` are U5 helpers over the archive (`fact_life_spell` lives, SAC §4.4) and the kin views, not contract types | F1, U5 |
+| Institutional records | the organisation's own `OrgRecords` as shown by `InstitutionView` (C6, keyed by `OrgId`) and, to the god, through `IDivineView` in `Reported` mode; `InstitutionalRecordView` is a U5 composition | C6, U5 |
+| Provenance | every field carries its layer tag (SAC §9: inspector cards with their layer tags); `Sourced<T> { Value, Source (Body, Mind, Record, Truth), AsOfTick }` is the U2 wrapper over those tags | F1, U2 |
 | Events | the `SimEvent` stream already raised on `GodBootstrap.SimEventRaised`; divine events listed in VISUAL_WORLD_DESIGN section 11 | D1 to D7 |
 
 ### 5.3 What each view reads
 
 | View | Reads | Writes (commands) |
 |---|---|---|
-| Mythic meter | `GodView`, `MythicChanged` events, `IDivineCatalog` cost of the armed power | none |
-| Toolbar and radial | `IDivineCatalog`, selection | `DivineInstruction`, miracle, reveal, resurrect, embody commands |
-| Selected person card | `NpcInspection`, `NpcFaithCard`, `NpcName`, `Sourced<>` | instructions to that person |
+| Mythic meter | `IDivineView` god fields, `MythicCredited`, `MythicSpent` and `MythicUpkeepCharged` events (804–806), the cost of the armed power from `Gate.Check` | none |
+| Toolbar and radial | the U2 catalogue (`Gate.Check`), selection | `IssueSuggestion`, `IssueCommand`, `IssueCompulsion`, `CastMiracle`, `RevealCommandment`, `Resurrect`, `BeginPossession`, `ManifestAvatar` |
+| Selected person card | `NpcInspection`, the `DivineMind` composition (`NpcFaithCard`), `Names.Person`, layer tags | instructions to that person |
 | Selected object card | object kind, owner, stock (divine observation), affordances | smite, create or destroy resources, consecrate |
 | Group tray | the sim's resolution of scope (`ScopeResolved { Scope, Members }` event or `IDivineView.Resolve(scope)`) | one instruction with a scope, never a list built in Unity |
 | Commandment editor | `CommandmentView`, templates, `Check` reasons | `RevealCommandment`, `ReviseCommandment`, `RevokeCommandment` |
@@ -131,7 +131,7 @@ The armed power's colour and silhouette match its effect (VISUAL_WORLD_DESIGN se
 
 ## 8. Mythic meter
 
-- A bar with current over maximum, numbers shown, a fixed regeneration tick mark ("+1/s" default, from `GodView`), and a draining segment for upkeep while possession or an avatar is active, with seconds left.
+- A bar with current over maximum, numbers shown, a fixed regeneration tick mark (per sim day, "+20/day" default, MYTHIC §4.2; the meter also shows the time to full), and a draining segment for upkeep while possession or an avatar is active, with the time left (LEAD_RULINGS R12).
 - **Cost preview:** hovering an item or arming a power shows a ghost segment of the cost; red if it exceeds the balance.
 - **Modes:** Normal (bar), Unlimited (infinity glyph, spending still logged and shown as the ghost), Disabled (greyed meter, power slots hidden; observation and analysis only).
 - **Warnings** (all configurable): below 20 percent the bar pulses amber; 10 s before possession or avatar upkeep exhausts it, the pill flashes; at zero possession ends (sim) and the meter shows "Exhausted".
@@ -261,7 +261,7 @@ The list view shows every commandment with status, issue date, revision count, h
 
 **Mode switcher** (top left of the toolbar region): A Overhead, B Avatar, C Possession, as three pills with a shared camera (CAMERA_AND_CONTROLS_DESIGN section 5).
 
-**Possession pill** (while active): the person's name and portrait; Mythic per second and seconds left; a Release button (hotkey `Backspace`, also ends on `Esc` after a confirm if the NPC is in danger); the body's needs strip (hunger, tiredness, fear, pain, health) in prominent bars, because the body keeps suffering; a context action bar listing only the actions that NPC can do now (`IDivineView.AvailableActions(npc)`, taken from the existing NPC action primitives, never a second list); a "divinely controlled" tag that appears on the card and in life history afterwards.
+**Possession pill** (while active): the person's name and portrait; Mythic per sim day (upkeep is charged per tick) and the time left; a Release button (hotkey `Backspace`, also ends on `Esc` after a confirm if the NPC is in danger); the body's needs strip (hunger, tiredness, fear, pain, health) in prominent bars, because the body keeps suffering; a context action bar listing only the actions that NPC can do now (`IDivineView.AvailableActions(npc)`, taken from the existing NPC action primitives, never a second list); a "divinely controlled" tag that appears on the card and in life history afterwards.
 
 **Avatar pill** (while manifested): the avatar's divine name, health, Mythic upkeep, carried object slot, the nearest affordance prompt (key `E`), a gesture wheel listing the vocabulary of NPC_ANIMATION_DESIGN (the player selects a composed gesture; it is a sim command), Dismiss. If the avatar is destroyed the event drives a return to overhead and a Critical alert with the cooldown.
 
@@ -314,7 +314,7 @@ Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX
 | Time controls (pause, 1x, 2x, 5x, 10x), queued commands while paused | U1 | 1 |
 | Selection chip, person card for any NPC, instruct popover, Mythic meter, toolbar Instruct and Miracle | U2 | 1 |
 | Alerts with aggregation, group tray with aggregated responses, divine power arming and ghost | U2 | 1 |
-| Commandment editor and list | U2 (with D6) | 1 for the builder, 2 for the spread view |
+| Commandment editor and list | U2 (with D6) | 1 (U2a) for the template picker (choose a template, fill its slots, reveal; LEAD_RULINGS R11), 2 (U2b) for the free structured builder and the spread view |
 | Names, favourites, follow, roster chips | U1 | 1 |
 | Developer overlays (decode overlay, hex regions, truth channel on the card) | U1/U2 | 1 for decode overlay and truth, 2 for the rest |
 | Possession pill, avatar pill, mode switcher, gesture wheel | U2 (with D4a, D4b) | 2 |

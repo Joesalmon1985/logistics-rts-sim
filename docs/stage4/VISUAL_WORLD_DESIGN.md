@@ -156,22 +156,22 @@ The existing figure stays the base. Everything below is a rendering of data read
 
 **What the view reads.** `GodState` (population, economy, territory, board, goods) through the existing views; the divine observation view (PLAYER_UI_DESIGN section 5); and the event stream from `GodBootstrap.SimEventRaised`.
 
-**Provisional divine events the effects bind to** (final names from the divine packages and SHARED_ARCHITECTURAL_CONTRACTS):
+**Divine events the effects bind to** (names and codes as SHARED_ARCHITECTURAL_CONTRACTS §15.1; LEAD_RULINGS R13, R24):
 
-| Event (provisional) | Effect and animation |
+| Event (contracts name) | Effect and animation |
 |---|---|
-| `DivineSuggestionDelivered { God, Npc, Action }` | suggestion halo on `Npc`; the person looks up (then its own response event shows the reaction) |
-| `DivineCommandIssued { God, Target, Action, Scope }` | beam and chevron on each recipient the sim reports; group: one beam each up to a cap, then a district ring |
-| `CompulsionStarted` / `CompulsionEnded { Reason }` | yoke and tether; end effect by reason (completed: release; timeout: fade; cancelled; death) |
-| `PossessionStarted` / `PossessionEnded { Reason }` | rim, glyph and camera transition; end burst |
-| `AvatarManifested` / `AvatarDismissed` / `AvatarDestroyed` | column of light, unmanifest, collapse |
-| `MiracleWrought { Kind, Target, Amount }` plus the authoritative state events (`InjuryHealed`, `ItemMoved` creation lots, `BuildingDestroyed`) | the matching miracle effect; the changed state arrives in its own events so the view never fakes the result |
-| `NpcResurrected { Npc, Variant }` | resurrection column and the person's reborn pose |
-| `CommandmentRevealed` / `Learned` / `Communicated` / `Revised` / `Revoked` | glyph tablet; travelling glyph between speaker and listener |
-| `PrayerMade { Npc, God }` | prayer thread |
-| `PlaceConsecrated` / `Deconsecrated` | sacred ground ring on or off |
-| `MythicChanged { God, Delta, Reason }` | meter animation and cost chips (UI only) |
-| `DivineResponse { Npc, Accepted, Refused, Ignored }` | the NPC's own animation of the answer (NPC_ANIMATION_DESIGN) |
+| `DivineSuggestionIssued` (810) with `CommandPerceived` (813) for the person who perceives it | suggestion halo on `Npc`; the person looks up (then its own response event shows the reaction) |
+| `DivineCommandIssued` (811) | beam and chevron on each recipient the sim reports; group: one beam each up to a cap, then a district ring |
+| `CompulsionStarted` (815) / `CompulsionEnded` (816, reason) | yoke and tether; end effect by reason (completed: release; timeout: fade; cancelled; death) |
+| `PossessionStarted` (845) / `PossessionEnded` (846, reason) | rim, glyph and camera transition; end burst |
+| `AvatarManifested` (850) / `AvatarDismissed` (851) / `AvatarDestroyed` (852) | column of light, unmanifest, collapse |
+| `MiracleCast` (825) and `MiracleEffectApplied` (826) (replace the draft `MiracleWrought`) plus the authoritative state events (`InjuryHealed`, `ItemMoved` creation lots, `BuildingDestroyed`) | the matching miracle effect; the changed state arrives in its own events so the view never fakes the result |
+| `NpcResurrected` (880) | resurrection column and the person's reborn pose |
+| `CommandmentIssued` (860) / `CommandmentRevised` (861) / `CommandmentRevoked` (862) / `CommandmentLearned` (863; a hearing is a `CommandmentLearned` with its source) | glyph tablet; travelling glyph between speaker and listener |
+| `PrayerMade` (870) | prayer thread |
+| `LocationConsecrated` (829; no separate deconsecration event yet) | sacred ground ring on or off |
+| `MythicCredited` (804), `MythicSpent` (805), `MythicUpkeepCharged` (806) (replace the draft `MythicChanged`) | meter animation and cost chips (UI only) |
+| `CommandResponded` (814; replaces the draft `DivineResponse`) | the NPC's own animation of the answer (NPC_ANIMATION_DESIGN) |
 
 **Rules.**
 1. An effect is a deterministic function of an event and the sim state at that event; the same events produce the same effects (a pure `DivineFxPlanner` builds effect records, headless-testable).

@@ -199,7 +199,7 @@ A `GestureMade` composes `Act, Topic (kind, id, sub), Quantity, Counter, Target,
 | `GestureMade.DurationTicks` (or a documented constant per act) | social, M5 | cue length equals the sim cost |
 | `GestureAct.Thank`, `Threaten`, `Greet`, `Alarm` (the candidates with no owner in COMMUNICATION 4.9) | social | gratitude, threatening and attention are listed by the owner and should be sim acts, not view inventions |
 | `PrayerMade`, `TeachingStarted` and `LessonStep` events | D6, C7 | praying and teaching |
-| `DivineResponse` (or the existing `ResponseChosen` extended with a divine source) | D2 | reaction animations |
+| `CommandResponded` (814, SAC §19.2; replaces the draft `DivineResponse`) | D2 | reaction animations |
 | a short `AttentionDirected { Listener, Speaker }` or reuse `MessageDecoded` | social | listener turn |
 | `GestureMade.Presented` carries the lot id shown | social | the displayed item is real |
 

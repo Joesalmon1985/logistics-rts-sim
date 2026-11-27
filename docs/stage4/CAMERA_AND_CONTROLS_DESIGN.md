@@ -109,7 +109,7 @@ Picking uses the drawn positions and screen radius only to choose which id the c
 
 **Hit result.** `ContextTarget { Kind, Id, Node, Point, Owner, Faction }` built by a `WorldPicker`.
 
-**Catalogue.** `IDivineCatalog.Available(selection, target)` (PLAYER_UI_DESIGN section 5.2) returns each action with `Cost`, `Valid` and `Reason` computed with `Gate.Check`. The radial menu, the toolbar tray, the keyboard shortcut layer and the touch bottom sheet are four renderings of this one list; none contains rules.
+**Catalogue.** The U2 catalogue (there is no sim-side `IDivineCatalog`; PLAYER_UI_DESIGN section 5.2, LEAD_RULINGS R13) returns each action with `Cost`, `Valid` and `Reason` computed with `Gate.Check`. The radial menu, the toolbar tray, the keyboard shortcut layer and the touch bottom sheet are four renderings of this one list; none contains rules.
 
 **Command construction.** `PlayerCommandBuilder` creates `Command` objects (suggest, command, compel, miracle, reveal, resurrect, manifest, possess, release, control input) from intents and ids. It is a pure function of the intent and the current selection ids, so a test can drive it with no Unity. The HUD today does the same thing in `WorldClick`, `ClickPlace` and `Send`; those stay for the stage 3 faction mode.
 
@@ -125,7 +125,7 @@ This is the part that must be exactly right: a person holding `W` for 2.34 secon
 The sim moves a body one lattice edge at a time under its existing movement and action primitives (the same used by NPC intents). The player supplies an intent at tick boundaries; the sim validates and executes it with the entity's own speed, needs and constraints. A possessed NPC keeps the NPC's physical capabilities; an avatar uses the avatar's movement parameters (brief section 6); neither can bypass physical constraints (D5.7 for compulsion applies to physical limits in general).
 
 ### 8.2 The control input command
-`DivineControlInput` (provisional name; owned by D4, which absorbs D5), applied at the tick boundary like every command:
+`DivineControlInput` (the name is kept by SAC §19.2; handler in F1's `Control.cs`, registered by D4, which absorbs D5), applied at the tick boundary like every command. **Canonical fields (SAC §10.2, §11.3):** `{ God, Body, Kind (Heading, MoveTo, Stop, Action), Heading, Gait, Node, Act, Target }`, a configurable sector count (default 16), a 3-tick lease, at most one input per body per tick and the last one wins; the table below uses the UI-side spellings (`Entity` is `Body`, `Heading16` is `Heading`, `TargetNode` is `Node`, `Act` is the `Action` kind), and `Seq` is not a contract field (replay order is the command order):
 
 | Field | Meaning |
 |---|---|
@@ -167,7 +167,7 @@ Embodiment caps the speed (default 2x, PLAYER_UI_DESIGN section 15), but at any 
 |---|---|---|
 | Body | the NPC's own, with its needs and limits | a divine body: no hunger or ageing, can be attacked, has its own health |
 | Policy | suspended while the lease holds; resumes on release | none; the avatar acts only on inputs |
-| Mythic | continuous drain per second | manifest cost plus upkeep |
+| Mythic | continuous drain per tick (shown per sim day and as time left) | manifest cost plus upkeep |
 | Camera | possession third person | avatar third person |
 | Gestures | the NPC's body language, recorded as divinely controlled | the avatar gesture set |
 | Commands accepted | `DivineControlInput` for the possessed entity | `DivineControlInput` for the avatar |
@@ -202,7 +202,7 @@ Conflicts are resolved by `PlayerModel`: the stage 3 faction mode keeps the old 
 |---|---|---|
 | CameraDirector | drawn figure positions (`NpcLayer.TryPosition`), avatar and possession state, events for transitions | nothing |
 | SelectionModel, WorldPicker | drawn positions, ids from `Sightings`, building and organisation ids | nothing |
-| PlayerCommandBuilder | selection ids, the armed power, `IDivineCatalog` | commands through `Gate` |
+| PlayerCommandBuilder | selection ids, the armed power, the U2 catalogue (`Gate.Check`) | commands through `Gate` |
 | ControlSampler | `PlayerInputFrame`, camera yaw, the control lease from `PossessionView` or `AvatarView` | `DivineControlInput` once per tick when needed |
 | Cursor ghosts | `Gate.Check` results | none |
 

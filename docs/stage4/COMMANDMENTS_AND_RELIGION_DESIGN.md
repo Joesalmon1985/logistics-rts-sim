@@ -235,7 +235,7 @@ The organisation may adopt such a law because priests, believers or a divine req
 | T8 | Forgive those who repent | Encouraged `Forgive` · Everyone · `TargetApologised` | C2 (M7 acts) |
 | T9 | Protect communal property | Prohibited `TakeFromStore` (18) communal store · Everyone · `NotPermitted` | C1, C8 |
 | T10 | Contribute to public services | Encouraged `Store` (17) into a communal or organisation store · Adults · `HouseholdSurplus` | C8 |
-| T11 | Defend your community | Encouraged `Say(Warn)` (74) and later `Attack` · Adults · `EnemyInSight` and `AtHome` | Tier 1 (warn); C4 (attack) |
+| T11 | Defend your community | Encouraged `Say(Warn)` (74) and later `Attack` · Adults · `EnemyInSight` and `AtHome` | Tier 2 (R5; the warn part needs no new verb); C4 (attack, deferred) |
 | T12 | Treat injured individuals | Encouraged `Tend` (later `Treat` 107) · Adults · `TargetInjured` | Tier 1 (`Tend`); C7 |
 
 ---
@@ -306,14 +306,14 @@ Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX
 
 | Capability | Package | Tier |
 |---|---|---|
-| `Commandment` records with every field, `CommandmentRules.Validate`, templates T1, T3, T4, T6, T7, T11, T12; reveal, revise, revoke | D6 | 1 |
+| `Commandment` records with every field, `CommandmentRules.Validate`, templates T1, T3, T4, T6, T7, T12 (T11 is Tier 2, LEAD_RULINGS R5); reveal, revise, revoke | D6 | 1 |
 | Per-person knowledge (heard, learned, adopted, rejected, forgotten) and variant interpretations | D6 | 1 |
 | The commandment part of the divine term and `Feature.Divine` 5–7 | D6 | 1 |
 | Transmission by telling (`Say(Teach)`, `TopicKind.Commandment`) and the minimal household pass; migrants | D6 (+ U3b animation) | 1 |
 | `GodBelief` five fields with the evidence table; founding religions and affiliation spells | D6 | 1 (minimal evidence) / 2 (full table) |
 | Prayer with episodes, worship, offerings, conversion, several gods | D6 | 2 |
 | Commandment adopted as law | D6 + C10 (C9 deferred to Tier 3) | 2 |
-| Templates T2, T5, T8–T10 as their verbs land | D6 with C1, C2, C7, C6 (C8 Tier 2 absorbed) | 2–3 |
+| Templates T11 (R5), then T2, T5, T8–T10 as their verbs land | D6 with C1, C2, C7, C6 (C8 Tier 2 absorbed) | 2–3 |
 | Religious organisations, canon, priests' interests, schisms | D6 + C6 + C10 | 3 |
 | Commandment exposures through C10's cultural pass; traditions; priests' preaching | C10 | 3 |
 | Worship-fed Mythic | D6 + D1 (amendment) | 3 |
