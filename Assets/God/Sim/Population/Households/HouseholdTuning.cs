@@ -41,12 +41,14 @@ namespace God.Sim.Population.Households
         /// <summary>How long one "try for a child" decision lasts (ticks): both partners must hold it on the mother's day check.</summary>
         public int TryingTicks = 1200;
         /// <summary>
-        /// F2: the conception-coordination rule (<see cref="Conception"/>). 0 (default): the M4/D4 rule. 1: at the check, two
-        /// partners who both hold "try" with each other end a dormant reproductive relationship either holds with a third adult.
-        /// Written only when non-zero, so tunings without it serialise and hash exactly as before.
+        /// F2: the conception-coordination rule (<see cref="Conception"/>). 1 (default since the Checkpoint B re-pin, LEAD_RULINGS
+        /// R60): at the check, two partners who both hold "try" with each other end a dormant reproductive relationship either
+        /// holds with a third adult. 0: the old M4/D4 rule (experiment arm). Written only when not the default, so the default
+        /// tuning serialises (and its <c>core</c> hash part stays) exactly as before; an explicit 0 is written. Saves from before
+        /// the re-pin (version 5, where an omitted field meant 0) are refused by save version 6.
         /// </summary>
-        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
-        public int ConceptionMode;
+        [System.ComponentModel.DefaultValue(1), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int ConceptionMode = 1;
         /// <summary>Pregnancy raises the mother's hunger rate by this (permille).</summary>
         public int PregnantHungerPermille = 300;
         /// <summary>Childbirth hazard per 1000 births (mother and newborn), rising to the max when the mother's nutrition is below 300 at the due date.</summary>

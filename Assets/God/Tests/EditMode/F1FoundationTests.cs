@@ -297,7 +297,7 @@ namespace God.Sim.Tests
         [Test]
         public void Save_V5_RoundTrip_AllSwitchesOff()
         {
-            Assert.AreEqual(5, SaveFile.CurrentVersion);
+            Assert.AreEqual(6, SaveFile.CurrentVersion); // Checkpoint B (R60)
             var sim = Game(16);
             StepN(sim, 40);
             string j1 = SaveFile.From(sim).ToJson();

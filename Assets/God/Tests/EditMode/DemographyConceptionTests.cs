@@ -135,17 +135,21 @@ namespace God.Sim.Tests
         }
 
         [Test]
-        public void ConceptionMode_ZeroIsNotWritten_OneIs()
+        public void ConceptionMode_DefaultOneIsNotWritten_ZeroIs()
         {
+            // Checkpoint B re-pin (LEAD_RULINGS R60): the default is 1 and is omitted, so the default tuning JSON is unchanged
             var t = new SimTuning();
+            Assert.AreEqual(1, t.Households.Life.ConceptionMode, "mode 1 is the default since Checkpoint B");
             string fresh = t.ToJson();
-            t.Households.Life.ConceptionMode = 0;
-            Assert.AreEqual(fresh, t.ToJson(), "mode 0 serialises exactly as before the flag existed");
-            t.Households.Life.TryingTicks = 1300; // a changed Life block writes its fields, still without the flag at 0
-            StringAssert.DoesNotContain("ConceptionMode", t.ToJson());
+            StringAssert.DoesNotContain("ConceptionMode", fresh);
             t.Households.Life.ConceptionMode = 1;
-            StringAssert.Contains("\"ConceptionMode\":1", t.ToJson());
-            Assert.IsTrue(new SimTuning().TrySet("Households.Life.ConceptionMode", 1, out string err), err);
+            Assert.AreEqual(fresh, t.ToJson(), "the default serialises exactly as before the flag existed");
+            t.Households.Life.TryingTicks = 1300; // a changed Life block writes its fields, still without the flag at its default
+            StringAssert.DoesNotContain("ConceptionMode", t.ToJson());
+            t.Households.Life.ConceptionMode = 0;
+            StringAssert.Contains("\"ConceptionMode\":0", t.ToJson());
+            Assert.AreEqual(0, Newtonsoft.Json.JsonConvert.DeserializeObject<SimTuning>(t.ToJson(), SaveFile.Settings).Households.Life.ConceptionMode, "an explicit 0 survives the round trip");
+            Assert.IsTrue(new SimTuning().TrySet("Households.Life.ConceptionMode", 0, out string err), err);
         }
     }
 }
