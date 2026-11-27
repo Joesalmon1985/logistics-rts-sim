@@ -874,7 +874,7 @@ Shared foundation of the Civilisation and Divinity run (spec `docs/civdiv/DEVELO
 
 ## F2 record (branch unity/f2)
 
-27 Nov 2026. Civdiv package F2 (demographic viability), worktree `wt-lrs-f2`, branch `unity/f2` from `unity/poc` `11c3e43` (Checkpoint A). Owner decisions D4 and D5.33 apply. Nothing pushed; `unity/poc` and `main` untouched. **Not rebased onto F1b** (F1b had not merged when this ran): the one-line call in `LifeCycle.cs` must be re-applied on top of F1b's edits when the lead says to merge `unity/poc` in (R19).
+27 Nov 2026. Civdiv package F2 (demographic viability), worktree `wt-lrs-f2`, branch `unity/f2` from `unity/poc` `11c3e43` (Checkpoint A). Owner decisions D4 and D5.33 apply. Nothing pushed; `unity/poc` and `main` untouched. The experiments and the mechanism were built before F1b merged; at the lead's word `unity/poc` (F1a+F1b, `c951b6e`) was merged in (R19), see "Merge of F1" below.
 
 **Commits.**
 - `9b97b54` conception-coordination diagnosis in `demog report` (DemogRecorder classifies every daily conception check of an able woman; report text only, CSVs unchanged) and the mechanism: new `Population/Households/Conception.cs`, flag `Households.Life.ConceptionMode` (default 0; `[DefaultValue(0)]` with `DefaultValueHandling.Ignore`, so the tuning JSON and every hash are unchanged at 0), one call in `Reproduction.Daily`.
@@ -882,6 +882,9 @@ Shared foundation of the Civilisation and Divinity run (spec `docs/civdiv/DEVELO
 - `5b58660` the biology block in `demog_favourable/balanced/hostile` (moved after the F1 merge, see below); the "no possible father" split in the report.
 - `1687f4c` `plan_onefactor` (adds `pairing-commitment-low`, `conception-mode0`) and `plan_care` run with `ConceptionMode` 1.
 - The docs commit with this record: POPULATION "Demography investigation" F2 update, ACCEPTANCE D4 status cells.
+- `05fa4bc` merge `unity/poc` `c951b6e` (F1). One conflict, this file (both sides appended; U1a and F1 records kept, this record last). `LifeCycle.cs` merged cleanly: F1b's `Bodies.IsLivingPerson` / `Bodies.AgeMilli` guards and F2's one call (`Conception.BeforeUnion`, after the father checks) coexist.
+- `481fdc7` `Conception.cs` and the recorder's conception checks use `Bodies.IsLivingPerson` / `Bodies.AgeMilli` like the F1b sweep.
+- `ff76174` the biology block moves to new `demog_f2_favourable/balanced/hostile` (see "Merge of F1"); `demog_*` and `plan_fertility` restored to `11c3e43`; `plan_onefactor`/`plan_care` point at `demog_f2_*`.
 
 **Diagnosis.** See POPULATION "F2 update". The conception coordination of "try" is not the bottleneck; a rule is: a reproductive relationship either partner holds with a third adult blocks the pair while it lives (cap 1, lapse 0.5 years), in 25-33% of the checks where both were trying, two thirds of them dormant. `ConceptionMode` 1 ends a dormant one at the check (reason `Lapsed`). The larger remaining cause is pairing: 60% of able-woman checks have no possible father (sex-blind partnership choice, commitments); this is the preference model and was not changed.
 
@@ -901,7 +904,9 @@ Shared foundation of the Civilisation and Divinity run (spec `docs/civdiv/DEVELO
 - F2-T1: `m4_families` and `demog_favourable` seeds 1-3, 12000 ticks, flag unset and explicit 0, equal the base hashes taken with the `11c3e43` runner: m4_families 4e097b3731e62136, 561a1f8ef03ccfc3, 7d58acabb1163bd5; demog_favourable 55a810bf69f22ec1, 08e4eeae3e8ccbc2, b27453be66bfd56f.
 - **Deliberately moved:** with `ConceptionMode` 1 the hashes move (e.g. `m4_families` seed 1 at 10 days fac329b5477dc2dd); no default sets it. The `demog_f2_*` scenarios are new (scenario files, not a default); no test pinned them.
 
-**Tests.** Pending: rerun after merging `unity/poc` (F1) in.
+**Merge of F1.** F1's P8 pin (`F1NeutralityTests`) runs `demog_balanced`, `demog_favourable` and `demog_hostile` against digests captured at `11c3e43`, so F2's block in those files failed `Civ_Off_Reproduces_Base`, `Divinity_Off_Reproduces_Base` and `Orgs_Off_Reproduces_Base` on the first full run after the merge (Sim 510/510; runner 199/202). The `demog_*` files are F1's pinned scenarios now; they are restored and the block lives in `demog_f2_*` (same ecology, same founders, plus the block). Every F2 result stands: a check run on the merged tree (`demog_f2_favourable`, seed 1, 8 years, mode 1) gives exactly the pre-merge numbers (end 59, births 185, deaths 246), and F2-T1's base hashes recomputed with the `c951b6e` runner equal the `11c3e43` ones. Save v5 / warehouse v7 (F1) need nothing from F2 (no new state).
+
+**Tests.** On `ff76174` (merged with `c951b6e`): `dotnet test DotNet -c Release` **Sim 510/510, runner 202/202** (34 min; the `[Explicit]` targets, F2-T3 among them, did not run), including the both-off pins (`HouseholdsOff_Band6x20_EqualsPostF0Hashes`, `M5NeutralityTests`: 8b898d115d8a05a7 / 5fa8991b92168385 / 66a55d5a67f2ad4e), F1's P1/P4/P8 (`F1NeutralityTests`), F2-T1, F2-T2 (EditMode, also under `dotnet test`), F2-T4. `AgentScripts/check-game-compile.ps1`: 0 errors. Before the merge (`f2aecbf`'s tree): Sim 488/488; the runner suite was stopped part-way for the merge. The first full run after the merge (before `ff76174`): Sim 510/510, runner 199/202 (the three P8 failures above).
 
 **Design decisions taken during implementation.**
 - F2-T2 as written in the spec tests "partners never in sight at the mother's check". The code has no such defect (the check needs no sight; "try" lasts one day and is offered only in sight), and `try-3days` did not help. F2-T2 tests the defect actually found: two partners who both try, one holding a dormant relationship with a third adult, conceive in mode 1 and not in mode 0; one intent alone never conceives; a live intent or a running pregnancy still blocks.
