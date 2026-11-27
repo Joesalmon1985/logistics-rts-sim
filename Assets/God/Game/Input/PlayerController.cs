@@ -34,7 +34,7 @@ namespace God.Game
         public event System.Action<PointerGesture, Vector2> Gestured;
 
         // pointer tracking
-        private bool _leftHeld, _leftOverUi, _leftDragged, _brush, _rightHeld, _rightDragged, _middleHeld;
+        private bool _leftHeld, _leftDragged, _brush, _rightHeld, _rightDragged, _middleHeld;
         private Vector2 _leftStart, _rightStart, _lastPointer;
         private float _clock, _lastClickTime = -10f;
         private Vector2 _lastClickPos;
@@ -132,7 +132,7 @@ namespace God.Game
             // left button: click, double click, box select, area brush (Alt)
             if (f.Left.Pressed && !over)
             {
-                _leftHeld = true; _leftOverUi = false; _leftDragged = false; _leftStart = f.Pointer;
+                _leftHeld = true; _leftDragged = false; _leftStart = f.Pointer;
                 if (f.Alt) { _brush = true; i.Gesture = PointerGesture.BrushBegin; i.GesturePos = f.Pointer; }
             }
             else if (_leftHeld && f.Left.Held)
