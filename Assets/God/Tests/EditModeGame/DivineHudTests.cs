@@ -119,9 +119,11 @@ namespace God.Game.Tests
         public void MythicText_And_CommandmentSentence()
         {
             Assert.AreEqual("50", GodHud.MythicText(50_000)); Assert.AreEqual("12.5", GodHud.MythicText(12_500));
-            var rules = CommandmentTemplateList.Provisional()[0].Rules;
+            // package D6 adjustment: the picker reads D6's templates; T4 "Protect forests" forbids gathering at a low wood stand
+            var rules = System.Linq.Enumerable.First(CommandmentTemplateList.Provisional(), t => t.Id == 4).Rules;
             string s = CommandmentText.Render(rules);
-            StringAssert.Contains("must never", s); StringAssert.Contains("log", s.ToLowerInvariant());
+            StringAssert.Contains("must never", s); StringAssert.Contains("gather", s.ToLowerInvariant()); StringAssert.Contains("stock low", s.ToLowerInvariant());
+            Assert.AreEqual(1, CommandmentTemplateList.Provisional()[0].Id, "Tier 1 templates first (T1)");
             Assert.AreEqual(s, CommandmentText.Render((CommandmentRule[])rules.Clone()), "pure");
         }
 

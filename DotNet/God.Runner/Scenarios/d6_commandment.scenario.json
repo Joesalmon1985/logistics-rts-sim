@@ -1,0 +1,43 @@
+{
+  "scenarioVersion": 1,
+  "name": "d6_commandment",
+  "description": "Package D6 headless demonstration (brief 47 scenario 13): two communities of 20 founders with households, huts, stored food and begging children; gods on with Tier 2 beliefs (founders of each god's people seeded as believers); god 1 is an AI-seated ScheduleGod. Day 1 it reveals T1 'Share surplus food with hungry children' to founder 1 and the people gathered within 3 nodes of it; day 6 it revises the commandment (same rules, importance 5); day 9 it revokes it. People learn, misunderstand, tell, adopt, reject and forget it by their own perception and policy; nothing enforces it.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [ { "kind": "sandbox" } ],
+    "control": "godonly",
+    "humanGod": 0
+  },
+  "tuning": {
+    "Households.Founders.Generator": 1,
+    "Households.Founders.ElderPermille": 100,
+    "Households.Founders.MaturePermille": 300,
+    "Households.Founders.ChildPermille": 300,
+    "Households.Founders.ChildMinMilli": 50,
+    "Households.Founders.ChildMaxMilli": 950,
+    "Households.Founders.CouplePermille": 800,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 10,
+    "Divinity.Enabled": 1,
+    "Divinity.Mythic.Start": 500000,
+    "Divinity.Mythic.Max": 1000000,
+    "Divinity.Doctrine.Beliefs": 1,
+    "Divinity.Doctrine.Founders.Belief": 800,
+    "Divinity.Doctrine.Founders.Faith": 500,
+    "Divinity.Doctrine.Founders.Loyalty": 600,
+    "Divinity.Mythic.Schedule.S1.Tick": 1300, "Divinity.Mythic.Schedule.S1.God": 1, "Divinity.Mythic.Schedule.S1.Template": 8,
+    "Divinity.Mythic.Schedule.S1.A": 1, "Divinity.Mythic.Schedule.S1.B": 1, "Divinity.Mythic.Schedule.S1.C": 3,
+    "Divinity.Mythic.Schedule.S2.Tick": 7300, "Divinity.Mythic.Schedule.S2.God": 1, "Divinity.Mythic.Schedule.S2.Template": 9,
+    "Divinity.Mythic.Schedule.S2.A": 1, "Divinity.Mythic.Schedule.S2.B": 1, "Divinity.Mythic.Schedule.S2.C": 5,
+    "Divinity.Mythic.Schedule.S3.Tick": 10900, "Divinity.Mythic.Schedule.S3.God": 1, "Divinity.Mythic.Schedule.S3.Template": 10,
+    "Divinity.Mythic.Schedule.S3.A": 1
+  },
+  "policies": {
+    "god": { "default": "IdleGod", "1": "ScheduleGod" }
+  },
+  "stop": { "maxDays": 12 },
+  "checks": [ "invariants", "no-exceptions" ]
+}
