@@ -45,7 +45,8 @@ namespace God.Sim.Learning
             new Instinct(Feature.Self(SelfFeature.NoBed), Feature.Class(ObjClass.HutSite), Verb.Build, 100));
 
         /// <summary>The default table: M3's rules, then M4's (<c>HouseholdHooks.Instincts</c>), then M5's (<c>SocialHooks.Instincts</c>) (F0.11).</summary>
-        public static readonly ReadOnlyArray<Instinct> Default = Concat(Core, Population.Households.HouseholdMindHooks.Instincts, Social.SocialMindHooks.Instincts);
+        public static readonly ReadOnlyArray<Instinct> Default = Concat(Core, Population.Households.HouseholdMindHooks.Instincts, Social.SocialMindHooks.Instincts,
+            Civ.CivMindHooks.Instincts(), Orgs.OrgMindHooks.Instincts(), Divinity.DivinityMindHooks.Instincts()); // F1: then Civ, Orgs, Divinity (empty until their packages)
 
         private static ReadOnlyArray<Instinct> Concat(params ReadOnlyArray<Instinct>[] parts)
         {

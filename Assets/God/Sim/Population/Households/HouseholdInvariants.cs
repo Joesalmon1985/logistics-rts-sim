@@ -44,6 +44,7 @@ namespace God.Sim.Population.Households
             }
             foreach (var n in p.Npcs)
             {
+                if (!Bodies.IsPerson(n)) continue; // F1.8: households are of people
                 if (!n.Alive) { if (n.Household != 0) bad.Add("dead npc " + n.Id + " still in household " + n.Household); continue; }
                 if (n.Household != 0 && (!member.TryGetValue(n.Id, out int h) || h != n.Household)) bad.Add("npc " + n.Id + " records household " + n.Household + " but is not listed");
                 if (n.HomeHut != 0) { var hut = p.HutById(n.HomeHut); if (hut == null || !hut.HasRight(n.Id)) bad.Add("npc " + n.Id + " has home hut " + n.HomeHut + " without a right there"); }

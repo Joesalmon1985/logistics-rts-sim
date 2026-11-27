@@ -3,8 +3,11 @@ using God.Sim.Information;
 
 namespace God.Sim.Policy
 {
-    /// <summary>The four policy levels (DESIGN_CONVENTIONS §7). Scenario files name them in lower case.</summary>
-    public enum PolicyLevel { Civilian = 0, Military = 1, Institution = 2, Faction = 3 }
+    /// <summary>
+    /// The policy levels (DESIGN_CONVENTIONS §7). Scenario files name them in lower case. F1 (contracts 12, 20.9): the fifth
+    /// level <see cref="God"/> (one AI god, scope = GodId); <see cref="PolicyAssignment.PolicyLevelCount"/> = 5.
+    /// </summary>
+    public enum PolicyLevel { Civilian = 0, Military = 1, Institution = 2, Faction = 3, God = 4 }
 
     /// <summary>
     /// What every policy has: a registry name and its level. A policy decides only from what its level is given (an
@@ -43,5 +46,14 @@ namespace God.Sim.Policy
     public interface IFactionPolicy : IPolicy
     {
         void Decide(in FactionKnowledgeView view, ref Rng rng, List<Command> outCommands);
+    }
+
+    /// <summary>
+    /// F1 (contracts 12): one AI-seated god. Zero or more divine commands per think, the same commands the human god sends,
+    /// submitted inside <c>Step</c> by the god director (D1). It reads only its <see cref="IDivineView"/> (layer 8), never the state.
+    /// </summary>
+    public interface IGodPolicy : IPolicy
+    {
+        void Decide(in IDivineView view, ref Rng rng, List<Command> outCommands);
     }
 }

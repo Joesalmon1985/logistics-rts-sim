@@ -83,7 +83,8 @@ namespace God.Game
         public float AchievedSpeed { get; private set; }
         /// <summary>U1a stand-in: the god that holds the Human seat. F1a replaces it with the seat holder in the sim (contracts 2.1).</summary>
         public static int StandInHumanGod = 1;
-        public int HumanGod => StandInHumanGod;
+        /// <summary>F1 (flagged edit for U1a's rebase point): the setup's <c>GameSetup.HumanGod</c> when set (D1 moves the seat into <c>GodRecord.Seat</c>), else the stand-in.</summary>
+        public int HumanGod => Sim != null && Sim.State.Setup != null && Sim.State.Setup.HumanGod != 0 ? Sim.State.Setup.HumanGod : StandInHumanGod;
         /// <summary>Commands accepted and waiting for the next tick that runs.</summary>
         public int PendingCommandCount => Sim.PendingCommands.Count;
         /// <summary>Seed for the next scene load (set by the end cards); consumed by the next bootstrap.</summary>
@@ -198,6 +199,7 @@ namespace God.Game
                 if (flagged && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
             }
             if (SkipStartCard && loaded == null) startAi = true; // tests skip the card: the game starts as after Play
+            if (Sim.State.Setup != null && Sim.State.Setup.Control == PlayerControl.GodOnly) GodOnly = true; // F1 (flagged edit, U1a rebase point): a god-only setup (or save) is god-only mode
             ShowStartCard = !SkipStartCard && !flagged && !startAi && loaded == null;
             Sim.ExternalCommandAccepted += _ => _personCommandWaiting = true;
             // M1 (Q22): what this game is for decides the overlay: developer mode allows it anywhere, watch mode is an

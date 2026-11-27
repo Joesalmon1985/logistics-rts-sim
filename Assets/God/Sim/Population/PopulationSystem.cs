@@ -147,7 +147,7 @@ namespace God.Sim.Population
             long day = cal.Day(s.Tick);
             if (!p.FoundersAnnounced)
             {
-                foreach (var n in p.Npcs) if (n.Founder) ev.Add(new NpcSpawned { Npc = n.Id, Faction = n.Faction, Node = n.Node, Founder = true });
+                foreach (var n in p.Npcs) if (n.Founder && Bodies.IsPerson(n)) ev.Add(new NpcSpawned { Npc = n.Id, Faction = n.Faction, Node = n.Node, Founder = true });
                 p.FoundersAnnounced = true;
             }
             Profiler?.Begin();
@@ -161,6 +161,8 @@ namespace God.Sim.Population
             {
                 var npc = p.Npcs[i];
                 if (!npc.Alive) continue;
+                // F1.8 (contracts 4.2): a non-person body (an avatar) runs only while a god controls it; Body() skips its drives
+                if (!Bodies.IsPerson(npc) && !PopulationExtensions.IsControlled(s, npc)) continue;
                 Body(s, npc, cal);
                 if (npc.Health <= 0) { Die(s, ev, npc, npc.DeathCause == DeathCause.None ? DeathCause.Starvation : npc.DeathCause); continue; }
                 Account(npc);
@@ -178,12 +180,14 @@ namespace God.Sim.Population
                     else continue;
                 }
                 Profiler?.Mark(PopPhase.Body);
-                if ((s.Tick + npc.Id) % tu.ThinkEvery == 0)
+                byte verbBefore = npc.Action.Verb; // F1 (contracts 11.3): the ActionEnded site
+                if ((s.Tick + npc.Id) % tu.ThinkEvery == 0 || PopulationExtensions.ForceThink(s, npc))
                 {
                     if (p.IndexDirty) RebuildIndex(p);
                     Think(s, ev, npc, (int)day);
                 }
                 if (npc.Alive && !npc.Action.Asleep && npc.Action.BusyUntil == 0) Act(s, ev, npc, (int)day);
+                if (verbBefore != 0 && npc.Action.Verb != verbBefore && s.Divinity != null) PopulationExtensions.ActionEnded(s, ev, npc, verbBefore, npc.Alive && npc.Action.Verb == 0);
                 if (p.IndexDirty) RebuildIndex(p);
                 Profiler?.Mark(PopPhase.Act);
             }
@@ -209,7 +213,7 @@ namespace God.Sim.Population
             var mode = m.Store.Mode;
             ev.Add(new NpcDay
             {
-                Npc = npc.Id, Faction = npc.Faction, Day = endedDay, AgeDays = (int)((s.Tick - npc.BornTick) / tpd), Node = npc.Node,
+                Npc = npc.Id, Faction = npc.Faction, Day = endedDay, AgeDays = (int)(Bodies.AgeTicks(npc, s.Tick) / tpd), Node = npc.Node,
                 Health = npc.HealthPermille, Nutrition = npc.NutritionPermille,
                 Hunger = npc.DriveOf(Drive.Hunger), Fatigue = npc.DriveOf(Drive.Fatigue), Cold = npc.DriveOf(Drive.Cold), Fear = npc.DriveOf(Drive.Fear), Pain = npc.DriveOf(Drive.Pain),
                 MeanHunger = Mean(Drive.Hunger), MeanFatigue = Mean(Drive.Fatigue), MeanCold = Mean(Drive.Cold), MeanFear = Mean(Drive.Fear), MeanPain = Mean(Drive.Pain),
@@ -233,7 +237,7 @@ namespace God.Sim.Population
             bool rowDue = p.DayDone >= 0; // no row before the first day
             p.DayDone = day;
             int tpd = SimCalendar.Of(s).TicksPerDay;
-            if (rowDue) foreach (var npc in p.Npcs) if (npc.Alive) PersonDay(s, ev, npc, day - 1, tpd);
+            if (rowDue) foreach (var npc in p.Npcs) if (Bodies.IsLivingPerson(npc)) PersonDay(s, ev, npc, day - 1, tpd);
             // spoiling (ECONOMY A3): carried and ground lots past their day are gone, one Consumed(Spoiled) each
             foreach (var npc in p.Npcs)
             {
@@ -291,6 +295,7 @@ namespace God.Sim.Population
 
         private void Body(GodState s, Npc npc, SimCalendar cal)
         {
+            if (!Bodies.IsPerson(npc)) return; // F1.8 (contracts 4.2): no hunger, fatigue, cold, ageing or illness for an avatar (D5)
             var tu = s.Tuning.Population;
             int tpd = cal.TicksPerDay;
             var a = npc.Action;
@@ -509,7 +514,7 @@ namespace God.Sim.Population
                 }
             }
             // I-BS amendment (12.32): bins in sight (household stores, estate goods), perceived through the M4 seam
-            if (p.Bins.Count > 0) n = PopulationExtensions.SenseBins(s, npc, sight, _g, _near, n);
+            n = PopulationExtensions.SenseExtra(s, npc, sight, _g, _near, n); // F1 (contracts 6): M4 bins (when any), then Civ, Orgs, Divinity
             // the nearest PerceiveMax things (ties: the order found, which is fixed)
             int keep = Math.Min(n, Math.Min(tu.PerceiveMax, ThinkScratch.MaxSeen));
             for (int k = 0; k < keep; k++)
@@ -557,6 +562,8 @@ namespace God.Sim.Population
                             Id = e.Id, As = e.Id, Faction = e.Faction, SameFaction = e.Faction == npc.Faction, Node = e.Node, Dist = d, Stage = e.Stage,
                             Doing = e.Doing, Asleep = e.Asleep, CarryMask = e.CarryMask, HoldsTool = e.HoldsTool,
                         };
+                        var body = p.Find(e.Id); // F1.8: the body kind (person or avatar)
+                        if (body != null) _sc.People[at].Body = body.Kind;
                         if (n < ThinkScratch.MaxPeople) n++;
                     }
                 }
@@ -696,6 +703,7 @@ namespace God.Sim.Population
             _sc.LearningTuning = lt;
             _sc.Tuning = tu;
             _sc.Grid = _g;
+            _sc.Control = PopulationExtensions.ControlOf(s, npc); // F1 (contracts 11.3): default Self
             Thinker.Think(_sc);
             Inspect?.Invoke(npc.Id, _sc);
             Profiler?.Mark(PopPhase.Cognition);
@@ -707,8 +715,11 @@ namespace God.Sim.Population
             var rng = npc.RngPolicy;
             NpcIntent intent;
             var why = default(DecisionRecord);
-            if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
+            // F1 (contracts 11.3): possessed and avatar bodies skip the policy (no draw); a compulsion overrides its choice
+            if (PopulationExtensions.SkipsPolicy(s, npc)) { intent = PopulationExtensions.ControlIntent(s, npc, _sc, ref why); mind.OpportunityCount = 0; }
+            else if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
             else { intent = policy.Decide(obs, view, ref rng); mind.OpportunityCount = 0; }
+            PopulationExtensions.OverrideIntent(s, npc, _sc, ref intent, ref why);
             IntentRules.Require(PolicyLevel.Civilian, policy.Name, intent);
             Profiler?.Mark(PopPhase.Decide);
             p.Stats.Decisions++;
@@ -1056,7 +1067,7 @@ namespace God.Sim.Population
                 if (npc.Action.Verb == Verb.Build && npc.Action.TargetId == hut.Id) EndAction(npc);
             }
             hut.Contributors.Clear();
-            foreach (var npc in p.Npcs) if (npc.Alive && npc.SiteHut == hut.Id) npc.SiteHut = 0;
+            foreach (var npc in p.Npcs) if (Bodies.IsLivingPerson(npc) && npc.SiteHut == hut.Id) npc.SiteHut = 0;
             p.Stats.HutsBuilt++;
             p.IndexDirty = true;
             ev.Add(new HutBuilt { Hut = hut.Id, Faction = hut.Faction, Node = hut.Node, Rights = (int[])hut.Rights.Clone() });

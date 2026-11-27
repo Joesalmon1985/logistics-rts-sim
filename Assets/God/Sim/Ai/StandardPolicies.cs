@@ -23,6 +23,7 @@ namespace God.Sim
                 "The stage 3 soldier rules 1-4: nearest enemy in sight, guard, march on the first target, wait at the base.");
             r.Register(PolicyLevel.Civilian, Population.Policies.Associative, ctx => new AssociativeNpcPolicy(),
                 "M3: instincts plus the NPC's own learned associations, personality, perceived cost and seeded exploration (COMMUNICATION 4.7).");
+            GodPolicies.Register(r); // F1.11: IdleGod
             return r;
         }
 

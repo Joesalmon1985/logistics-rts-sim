@@ -10,7 +10,13 @@ namespace God.Sim.Cognition
     /// <summary>The kinds of fact an NPC believes (COMMUNICATION_AND_COGNITION 4.4; M3: places).</summary>
     public enum BeliefKind : byte { None = 0, Food = 1, Wood = 2, Pile = 3, Hut = 4, Tool = 5,
         /// <summary>I-BS amendment (SHARED_CONTRACTS 12.32): a bin it has seen (its household's store, estate goods); <see cref="Belief.Ref"/> = the bin id, Stock = what it may take there as last looked.</summary>
-        Store = 6 }
+        Store = 6,
+        /// <summary>F1.17: a consecrated place (D3/D6).</summary>
+        Shrine = 7,
+        /// <summary>F1.17: an organisation's place (C6).</summary>
+        OrgPlace = 8,
+        /// <summary>F1.17: a productive asset (C1).</summary>
+        Asset = 9 }
 
     /// <summary>
     /// One belief (layer 6): "berries at node 412, plenty, seen 2 days ago". It names a place and a class, never a true
@@ -174,6 +180,10 @@ namespace God.Sim.Cognition
         /// <summary>The runner-up's verb and total (how close the choice was).</summary>
         public byte SecondVerb;
         public int SecondTotal;
+        /// <summary>F1 (contracts 10.3): the winner's divine term; hashed only for a mind with a <c>Divine</c> part.</summary>
+        public int Divine;
+        /// <summary>F1 (contracts 11.3): who drove this decision (<see cref="Divinity.ControlKind.Self"/> = its own policy); hashed only when non-zero.</summary>
+        public Divinity.ControlKind Control;
     }
 
     /// <summary>
@@ -189,6 +199,8 @@ namespace God.Sim.Cognition
         public int Instinct, Need, Learned, Personality, Cost, Explore, Total;
         /// <summary>I-BS amendment (SHARED_CONTRACTS 12.34): the Social term (M4's kin term + M5's social term), so the terms add up to the total.</summary>
         public int Social;
+        /// <summary>F1 (contracts 10.3): the divine term; hashed only for a mind with a <c>Divine</c> part.</summary>
+        public int Divine;
         public bool FromBelief, Chosen;
     }
 
@@ -243,6 +255,12 @@ namespace God.Sim.Cognition
         public Population.KinMind Kin;
         /// <summary>F0.6: its social memory (written only by M5; null without M5). Hashed only when present.</summary>
         public God.Sim.Social.SocialMind Social;
+        /// <summary>F1.9b: its divine mind (D2 inbox, D6 beliefs and commandments); null unless Divinity is on and a D package fills it. Hashed only when present.</summary>
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public Divinity.DivineMind Divine;
+        /// <summary>F1.9b: its organisation beliefs (C6); null unless Orgs is on and C6 fills it. Hashed only when present.</summary>
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public Orgs.OrgMind Orgs;
+        /// <summary>F1.9b: its believed obligations and ownership (C2/C1); null unless Civ is on and a C package fills it. Hashed only when present.</summary>
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public Civ.CivMind Civ;
 
         /// <summary>Remembers an experience (the ring overwrites the oldest).</summary>
         public void Remember(int tick, byte verb, byte cls, int reward, bool episode)
@@ -288,6 +306,11 @@ namespace God.Sim.Cognition
             // F0.12: the later modules' parts of a mind, only when present (M3 minds hash exactly as before)
             if (Kin != null) { h.Add(0x4B494E); Kin.AddTo(ref h); }
             if (Social != null) { h.Add(0x534F43); Social.AddTo(ref h); }
+            // F1: the decision's controller only when not its own (contracts 11.3); the divine column only for a mind with a Divine part
+            if (l.Control != Divinity.ControlKind.Self) { h.Add(0x43544C); h.Add((int)l.Control); }
+            if (Divine != null) { h.Add(0x444956); h.Add(l.Divine); for (int i = 0; i < OpportunityCount; i++) h.Add(Opportunities[i].Divine); Divine.AddTo(ref h); }
+            if (Orgs != null) { h.Add(0x4F5247); Orgs.AddTo(ref h); }
+            if (Civ != null) { h.Add(0x434956); Civ.AddTo(ref h); }
         }
     }
 }

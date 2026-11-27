@@ -642,6 +642,23 @@ Mapping registration: `DivinityMappings.Register` → `D1Mappings` … `D7Mappin
 | 20.12 | HEADLESS §12.2: commands logged only when external | AI gods would be in-step | gods' seats are sim state; `SwitchGod` is a logged command | replay recomputes AI gods only if seats are in state |
 | 20.13 | WORLD_ONTOLOGY C4: ground lots ownerless | — | relaxed from C1 (theft); avatar pick-ups keep owners | brief §16 |
 
+**F1 implementation deviations (branch `unity/f1`, for the lead's review; each is a proposed amendment row).**
+
+| # | Contract says | F1 does | Why |
+|---|---|---|---|
+| 20.F1.1 | F1.3: tuning roots frozen, nested classes partial | the roots `DivinityTuning`, `OrgTuning`, `CivTuning` are **not** partial; each nested block is partial and has fields in one file only (its package's); `Divinity.Control` (`ControlTuning`: `HeadingSectors`, `LeaseTicks`) is not partial | the tuning JSON is part of the `core` hash and reflection field order across partial files depends on the compiler's file order (Unity vs dotnet); D1's costs, upkeep and cooldowns go inside `Divinity.Mythic` |
+| 20.F1.2 | 10.1 last sentence (scripted test god takes the `Human` seat) | LEAD_RULINGS R1: a scripted test god is an `Ai`-seated god inside `GodDirector`; the `Submit` gate checks only external commands | R1 |
+| 20.F1.3 | 10.1 authorship: the seat is `GodRecord.Seat` (D1) | `DivinityModule.HoldsHumanSeat` asks D1 through the partial slot `HumanSeatD1`; until D1 answers, the seat is `GameSetup.HumanGod`. Gate order in `GodSim.Check`: game over, then `divinity_off`, then `not_your_god` (external only), then `god_only` for external `FactionCommand`s in god-only mode, then the handler lookup (`disabled`) | testable before D1 (F1-T3) |
+| 20.F1.4 | 11: `void Release(...)` | `bool Release(...)` (true when a spell ended), so CT1 is testable without events; end events are D2/D4/D5's through the partial slots `Control.EndedD2/D4/D5` | F1 has no event rows |
+| 20.F1.5 | 11: `ControlEntry` fields | adds `Input`, `InputTick`, `LeaseUntil`, `MoveNode` (lease bookkeeping of 11.3) and the `ControlStatus` enum; `ThinkScratch.Control` (the entry, copied before Think) and `ThinkScratch.ControlCand` (index of the controlled candidate a divinity mind hook adds); sites `PopulationExtensions.SkipsPolicy`/`ControlIntent` beside `OverrideIntent`/`ForceThink` | mind hooks cannot read `GodState` (9), so the control candidate needs scratch data |
+| 20.F1.6 | F1.17: `GestureMade.DurationTicks` from `CommsTuning` | from `Social.GestureTicks` (the existing gesture duration, default 3) | no second number for one duration |
+| 20.F1.7 | F1.12: per-package partial **arrays** | per-package static **properties** (`private static ReadOnlyArray<EventInfo> D1 => ...`) | static field initialisers across partial files run in an undefined order |
+| 20.F1.8 | F1.6 slot lists | the listed slots exist; every other hook also has slots for every package of its domain (Civ C1-C5, Orgs C6-C10, Divinity as listed or D2-D7) | supersets cost nothing and save later amendments |
+| 20.F1.9 | 13.2 `CommandmentRule` and its enums | in `Divinity/CommandmentTypes.cs`, OWNER D6: the struct shape is frozen (a field of `RevealCommandment`), D6 appends `ApplySelector`, `ConditionKind`, `CommandmentSource` values | the commands are F1's, the vocabulary D6's |
+| 20.F1.10 | F1.16 `MythicTrace` | reads D1's events by name (`MythicCredited`, `MythicSpent`, `MythicUpkeepCharged`) with fields `int God`, `long Amount` | the events do not exist yet |
+| 20.F1.11 | F1.15 `MapContext.God`, `.Org` | the dimension key is the GodId / OrgId itself | one run per database; ids never reused |
+| 20.F1.12 | R27 `Orgs.C10.SeedGovernments` | `SimTuning.TrySet` refuses every path containing "seed", so that switch cannot be set by `--set` or a scenario | **needs a rename** (for example `C10.Governments`) or a narrower guard; not changed by F1 |
+
 ## 21. Open decisions (each with the default taken)
 
 | # | Decision | Default |

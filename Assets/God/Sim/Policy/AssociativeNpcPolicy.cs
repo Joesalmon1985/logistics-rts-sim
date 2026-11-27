@@ -49,7 +49,7 @@ namespace God.Sim.Policy
                 var t = mind.Terms(i);
                 if (t.Learned > maxLearned) maxLearned = t.Learned;
                 int explore = rng.NextInt(amp + 1) + (t.FamiliarTarget == 0 ? novelty : 0);
-                long total = (long)t.Instinct + t.Learned + t.Social + t.Culture + t.Personality - t.Cost + explore;
+                long total = (long)t.Instinct + t.Learned + t.Social + t.Culture + t.Personality - t.Cost + explore + t.Divine; // F1 (contracts 10.3): Divine is 0 unless a D package fills it
                 long noLearn = total - t.Learned, noExplore = total - explore;
                 if (opps != null && i < opps.Length)
                 {
@@ -57,7 +57,7 @@ namespace God.Sim.Policy
                     opps[i] = new OpportunitySlot
                     {
                         Verb = ci.Verb, Class = ci.Class, Dist = ci.Dist, Instinct = t.Instinct, Need = t.Need, Learned = t.Learned, Personality = t.Personality, Social = t.Social,
-                        Cost = t.Cost, Explore = explore, Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, total)), FromBelief = ci.FromBelief,
+                        Divine = t.Divine, Cost = t.Cost, Explore = explore, Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, total)), FromBelief = ci.FromBelief,
                     };
                     oppCount = i + 1;
                 }
@@ -76,7 +76,7 @@ namespace God.Sim.Policy
                     opps[opps.Length - 1] = new OpportunitySlot
                     {
                         Verb = c.Verb, Class = c.Class, Dist = c.Dist, Instinct = bestTerms.Instinct, Need = bestTerms.Need, Learned = bestTerms.Learned,
-                        Personality = bestTerms.Personality, Social = bestTerms.Social, Cost = bestTerms.Cost, Explore = bestExplore,
+                        Personality = bestTerms.Personality, Social = bestTerms.Social, Divine = bestTerms.Divine, Cost = bestTerms.Cost, Explore = bestExplore,
                         Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, bestScore)), FromBelief = c.FromBelief, Chosen = true,
                     };
                 }
@@ -84,7 +84,7 @@ namespace God.Sim.Policy
             why.Need = bestTerms.Need;
             why.Verb = c.Verb; why.TargetKind = c.Kind; why.TargetId = c.TargetId; why.TargetNode = c.TargetNode; why.TargetClass = c.Class;
             why.Instinct = bestTerms.Instinct; why.Learned = bestTerms.Learned; why.Social = bestTerms.Social; why.Culture = bestTerms.Culture;
-            why.Personality = bestTerms.Personality; why.Cost = bestTerms.Cost; why.Explore = bestExplore;
+            why.Personality = bestTerms.Personality; why.Cost = bestTerms.Cost; why.Explore = bestExplore; why.Divine = bestTerms.Divine;
             why.Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, bestScore));
             why.MaxLearned = maxLearned;
             why.LearnedChangedWinner = bestNoLearn != best;
