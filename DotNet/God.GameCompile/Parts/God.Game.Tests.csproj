@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Unity.props" />
+  <PropertyGroup>
+    <AssemblyName>God.Game.Tests</AssemblyName>
+    <RootNamespace>God.Game.Tests</RootNamespace>
+    <GodNeedNunit>true</GodNeedNunit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/God/Tests/PlayMode/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <ProjectReference Include="God.Game.csproj" />
+    <ProjectReference Include="../../God.Sim/God.Sim.csproj" />
+  </ItemGroup>
+</Project>

@@ -140,6 +140,7 @@ The official list, with what each needs, is in [DESIGN_CONVENTIONS §10](stage4/
   - `LocalData/`, anything derived from Sims 2, the book text, or `Assets/InitTestScene*`.
   - Run `git status` before every commit.
 - **No third-party art or audio.** Names and data are original. Don't copy from `Assets/Bedsit`, `Assets/Characters`, `Assets/RomanVillage`, `Assets/ThirdParty` or WorldMVP's rigged actors.
+  - **Before any Unity open or test run, run `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1`. It must show 0 errors.** It compiles Game, Editor and every test assembly without Unity (about 3 s warm, 20 s cold; `dotnet test DotNet` alone does not cover them).
 - **Unity:**
   - **One editor per folder.** Use the Unity CLI:
     - `unity open .` then poll `unity status` until it reports ready.
