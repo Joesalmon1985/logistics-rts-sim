@@ -329,3 +329,15 @@ Tables are those of [DATA_WAREHOUSE_DESIGN.md §13](DATA_WAREHOUSE_DESIGN.md) (a
 | 7 Rights | `fact_right_event` (applied, granted, refused, assigned, licensed, renewed, lapsed, expired, challenged, revoked), `fact_infringement` († truth, Full) | `dim_right`, `fact_right_holder_spell` (H), `fact_licence` (H) | exactly one open holder spell per live right; licences within parents; no right row in a jurisdiction without a patent-law spell; assignments change no ownership, knowledge or asset row in the same tick |
 | 8 Productive assets | C1 asset facts (`AssetBuilt`, title changes), `fact_vehicle_event` (breakdowns, wrecks), `fact_salvage`, `fact_vehicle_trip`, `fact_production_cycle` | `dim_facility`, `dim_vehicle`, `dim_station`, `dim_power_link`, `fact_vehicle_ownership_spell` (H), `fact_military_asset_spell` (H), `fact_facility_day` (D), `fact_vehicle_day` (D) | every asset has a completed construction with embodied matter = its design's materials; no asset row is caused by an auction, right or knowledge event |
 | 9 Organisations | `fact_org_expenditure`, `fact_service_*` | `dim_org`, `dim_org_history` (H), `fact_org_membership` (H), `fact_org_day` (D), `fact_org_book_day` (D) | an organisation's holdings in each category equal the sums of categories 1, 3, 4, 7, 8 with owner `Org(id)`; book revenue and expense = its payments (BK-I2) |
+
+
+## Owner D8 (28 Nov 2026): unification of the artificial world
+
+Owned by [../unification/UNIFICATION_DESIGN.md](../unification/UNIFICATION_DESIGN.md) (decisions D8.1–D8.18). What changes here when `Unification.Enabled = 1`; with the switch off this document stands as written.
+
+- **Terrain.** The seven hex types (Forest, Mountain, Wetland, Pastures, Fields, Desert, Sea) replace the Stage 3 `Terrain` meanings for the unified board: Hills become Wetland (clay), Meadow becomes Sea, Pasture is dealt, Fields give hay (UNIFICATION §2). Hex and node layers stay internal; the view is one continuous landscape.
+- **Raw materials are physical.** A dice success creates an allowance that materialises gradually into `RawNode` stocks at nodes of the hex; they are perceivable and rememberable, never ground lots, and can be taken only through an operational collection building (UNIFICATION §4, §5.4). This supersedes the hand-gathered wood stands and ground piles for the unified game.
+- **Forage** is a capability of a place (infinite, rate-limited by collection time), not a `ResourceSource` stock (UNIFICATION §3).
+- **Buildings** are C1 assets with a capability model (shelter, storage, collection, production, ownership, access, employment, condition, upgrade). Building ownership, collection right, sleeping right, storage access and ownership of collected goods are five distinct things (UNIFICATION §5.6). Huts become building rows (§5.5).
+- **Permission and ranges** are unchanged; new `Reach` uses: collect at `Reach.Gather`, deposit at `Reach.Store`.
+- **Settlements and roads** own nothing; roads change walking cost only (UNIFICATION §6, §7).

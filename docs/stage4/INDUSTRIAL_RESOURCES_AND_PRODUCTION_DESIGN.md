@@ -528,3 +528,8 @@ The knowledge and money documents need their own block; the lead allocates it (s
 1. Should stage 3 `Ware.Ore` be renamed or merged with `IronOre`? Default: no; separate wares, so no stage 3 or population hash moves.
 2. Should customer-owned inputs be processed for a fee (toll processing)? Default: not in the first version; the facility processes only its owner's lots.
 3. The tool ware for manual mining (ECONOMY's proposed `Pick` collided with F1's `Herbs = 32`). Default: manual extraction works without a tool at the base rate; the tool's number is fixed when ECONOMY's tool set lands.
+
+
+## Owner D8 (28 Nov 2026): unification of the artificial world
+
+Owned by [../unification/UNIFICATION_DESIGN.md](../unification/UNIFICATION_DESIGN.md) (D8.8, D8.12, D8.18). Industry **builds on the unified recipe and building architecture** (`RecipeTable`, `BuildingDef` with levels and capabilities, `ProductiveAsset` ids from C1, the NPC-driven physical economy, no faction economic AI): its mines, smelters, factories and power stations are further rows and capabilities of that architecture, not a separate industrial game. Per D6 sequencing and D8.18, the **unification milestone comes first**; industrial packages start after the long-run unified demonstration passes. Ore, coal and oil re-enter as industrial deposits and recipes on the unified goods range (UNIFICATION §13.4); the Stage 3 ten-processed-ware table is not read in the unified game.

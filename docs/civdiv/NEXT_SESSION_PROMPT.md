@@ -1,5 +1,7 @@
 # Next session prompt
 
+> **Next run: the Unification milestone (owner D8, 28 Nov 2026).** The Industry run described below resumes only after Checkpoint UB. The next session starts with [docs/unification/NEXT_SESSION_PROMPT_UNIFICATION.md](../unification/NEXT_SESSION_PROMPT_UNIFICATION.md) (package index: [UNIFICATION_PACKAGE_INDEX.md](../unification/UNIFICATION_PACKAGE_INDEX.md)). Use the prompt below only to continue the earlier Civilisation, Divinity and Industrialisation run after UB.
+
 Copy the block below into a new Claude Code session opened in `C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs`. It starts the Civilisation, Divinity and Industrialisation run, or continues it from wherever the last session stopped. It is the same prompt in both cases: the session finds its position from DEV_LOG and git.
 
 ```
