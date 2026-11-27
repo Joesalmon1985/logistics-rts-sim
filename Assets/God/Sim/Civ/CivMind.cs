@@ -11,8 +11,10 @@ namespace God.Sim.Civ
         {
             HashC1(ref h);
             HashC2(ref h);
+            HashC3(ref h); // C3 (flagged additive edit, amendment requested): believed contracts; adds nothing while none is believed
         }
         partial void HashC1(ref StateHasher h);
         partial void HashC2(ref StateHasher h);
+        partial void HashC3(ref StateHasher h);
     }
 }
