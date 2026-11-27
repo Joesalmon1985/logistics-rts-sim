@@ -352,3 +352,35 @@ Following the existing pattern (public methods on the HUD, `DebugCursor`, `Input
 | Panels cover the world | docking rules, collapsible cards, all large panels are optional windows |
 | The divine contracts change names | the UI binds to kinds through thin adapters (`DivineViewAdapter`), one file to update |
 | Old stage 3 UI conflicts with the god-only game | a single `PlayerModel` switch (`GodOnly` or `FactionControl`) chosen by the scenario; stage 3 stays testable |
+
+## 25. Owner D6 (27 Nov 2026): industrial interface
+
+Owner decision D6.19 ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)). The world look is [VISUAL_WORLD_DESIGN.md §18](VISUAL_WORLD_DESIGN.md#18-owner-d6-27-nov-2026-industrial-presentation); the sim is owned by the D6 documents ([INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md), [VEHICLES_AND_HARVESTING_DESIGN.md](VEHICLES_AND_HARVESTING_DESIGN.md), [ELECTRICITY_DESIGN.md](ELECTRICITY_DESIGN.md), [INDUSTRIAL_MILITARY_DESIGN.md](INDUSTRIAL_MILITARY_DESIGN.md), [WASTE_AND_CIRCULAR_DESIGN.md](WASTE_AND_CIRCULAR_DESIGN.md)). Decisions UI-1 to UI-9 hold: world first, panels second; reads only through `IDivineView` and events; writes only divine commands through `ICommandGate`; every datum carries its provenance tag (§12). **The god never places a production order, sets a routine, a dispatch rank, a tariff or a budget** (D5.1): industrial panels are inspection and analysis; the only actions offered are the existing divine ones aimed at the people involved (instruct, compel, possess, miracles).
+
+**Inspection cards** (selected-object card, §9; each shows divine observation and, beside it, the owning organisation's own record where one exists, with the difference bar of §20):
+
+| Card | Shows | Divine actions offered (existing ones) |
+|---|---|---|
+| **Deposit** | ware, depth, remaining (as observed: exact under `Omniscient`, a band otherwise), claimant and use rights, who knows of it (count of persons, records) | reveal (Tier 3 miracle), smite source |
+| **Facility** (mine, well, smelter, refinery, factory, recycling plant) | owner organisation and ownership model, design, status and stall reason, **production queue** (orders with recipe, quantity, done, buyer, military or civilian tag, progress bar of the running cycle), inputs and outputs by ware and owner, workers present and their employment, power share this interval, condition, emissions | instruct or compel the manager or a worker; possess a worker; smite |
+| **Vehicle** (vehicle inspection) | owner, operator and crew (names, roles, whether following the routine), routine and current step, cargo by ware and owner, tank level and range, condition and last maintenance, odometer, trips today; military: ammunition and readiness | instruct, compel or **possess the operator** (the possession pill of §18 then shows the vehicle's tank and cargo beside the body's needs) |
+| **Power station** | owner organisation, design and technology, on or off, output and availability, staff on duty vs minimum, **fuel bin by ware and days of fuel left**, ash bin, dispatch rank, customers and meters, bills open and paid (as observed vs the utility's records) | instruct or compel an operator; possess; smite (a nuclear station warns of contamination) |
+| **Industrial organisation** (the C6 card, §20, extended) | facilities and fleets owned, agreements (supply, procurement, electricity, haulage) with deliveries and open obligations, workers and wages, actual payments received and made (never "revenue" from deliveries), insolvency state | the existing organisation-scope instructions (relayed to office-holders, ORGANISATIONS §4.12) |
+| **Waste site, regulator** | stock by ware, capacity, leak class; inspection records | as for facilities |
+
+**Overlays** (toolbar Analysis tray or hotkeys; off by default; none reveals the hex grid):
+
+| Overlay | Content |
+|---|---|
+| **Electricity network** | links coloured by component; energised vs dark; stations with output and fuel bars; consumer rings (full, partial, out); outage and shortage spells highlighted |
+| **Industrial logistics** | routine paths of vehicles as flow ribbons (thickness by units moved today, colour by ware); open supply agreements as dashed links between organisations' facilities; stockpile bars at bins |
+| **Resources** | deposits as observed, with remaining bands and claimants |
+| **Pollution** | the pollution band per region as a soft heat map (contamination separately) |
+
+**Shortage indicators and alerts** (§14 aggregation applies): world glyphs per VISUAL_WORLD §18; alert digest rows for outages beginning and ending, a factory stalled more than a day, a station with under a day of fuel, a deposit depleted, a vehicle broken down far from a depot, a strategic device built or used (always an individual card). At most one digest card per category per day.
+
+**Analysis (Mode D, §20):** an Industry view (output by recipe, capacity utilisation, stall reasons, deposit depletion), an Energy view (generation mix, unserved energy, outage hours, fuel per kEU), a Logistics view (units moved, fuel per unit, routine adherence), a Military production view (military share of factories, fuel and power) and an Environment view (waste flows, pollution bands, illness by band): the I6 KPIs, each with its definition popover.
+
+**Tier and package mapping:** package **I6** (with U2/U5 conventions): facility card with production queue, vehicle inspection, power station card, electricity overlay, shortage indicators and alerts: Tier 2 (D6.18 slice); logistics and pollution overlays, organisation agreements view, Analysis views: Tier 3.
+
+**PlayMode-testable hooks:** **H-UI-13** `Hud.SelectAsset(vehicle)` opens a vehicle card whose cargo, tank and operator equal the observed state, each with a provenance tag; **H-UI-14** a facility card's queue rows equal the facility's orders (count, order, progress ±1%); **H-UI-15** no industrial panel offers a command that is not a divine command (reflection test over the new HUD types; extends H-UI-4); **H-UI-16** toggling every industrial overlay leaves the state hash unchanged; **H-UI-17** cutting a link in a fixture raises exactly one outage alert for the component and clears it on restoration.

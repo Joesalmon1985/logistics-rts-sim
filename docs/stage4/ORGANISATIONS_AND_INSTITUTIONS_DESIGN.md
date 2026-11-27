@@ -427,3 +427,29 @@ Genuinely consequential ones only; each has the default the run uses.
 1. **`OwnerKind.Org` and the `State` alias.** Adding `OwnerKind.Org = 7` touches the frozen goods contract (save, hash, the static goods test). Default: add it in F1 or C1 under the contracts owner, keep `State(f)` as an alias resolved to the faction's government. Decision for SHARED_ARCHITECTURAL_CONTRACTS.
 2. **The AiBrain government seat.** Keeping `AiBrain` as the government's routine procedure is the only practical way to keep the economy running in the run, but it is a faction-level script that does real work. Default: keep it as a declared temporary mechanism attributed to the Head office, require a living Head, and route every individual or divine proposal through the council rule. The owner may prefer that the first god-only builds start with no government and let one be founded; that is a scenario option either way.
 3. **Initial governments.** Whether every faction starts with a government organisation (default yes: council of the oldest adults, D5.2) or some scenarios start without one (supported).
+
+## 14. Owner D6 (27 Nov 2026): industrial organisation types
+
+Owner decision D6.15 ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)) extends the generic framework to new institutions. This section covers **electricity utilities, transport companies, waste authorities, recycling enterprises and environmental regulators**. Universities, research organisations, patent offices and commercial courts are designed in **KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md** (other D6 document).
+
+**No new framework.** Each is an `Organisation` of an existing `OrgType` with any `OwnershipModel` (D5.17); production and service code never branches on the model (ORG-INV-5, extended to `Sim/Industry`). Each is made of NPC members with actual workers, assets, stores, knowledge, budgets, services and responsibilities; it is founded by individuals from need evidence and practice (§4.1–4.2; a threshold only makes the opportunity available, D5.16); the god influences it only through divine mechanics (§4.12).
+
+**New `Purpose` kinds** (appended to §3.2's list): `SupplyPower`, `Transport`, `ManageWaste`, `Recycle`, `Regulate` (with `Ref` = the regulated domain: emissions, waste, extraction).
+
+| Organisation | Usual `OrgType` and models | What it owns and does | Income (only actual payments or agreed funding, D6.2) | Owning design |
+|---|---|---|---|---|
+| **Electricity utility** | Enterprise (private, cooperative) or ServiceBody (public, communal) | stations, links, meters; buys or extracts fuel; staff operate, read meters, bill; invests; may be the network operator of a grid | bills settled by customers (C2 obligations, MONEY doc payments); government budget lines; members' contributions | [ELECTRICITY_DESIGN.md §4.5](ELECTRICITY_DESIGN.md) |
+| **Transport company** | Enterprise | haulers, tankers, depots; hauls for customers (cargo keeps its owner); operators employed (C3) | haulage fees paid by customers | [VEHICLES_AND_HARVESTING_DESIGN.md §4.5](VEHICLES_AND_HARVESTING_DESIGN.md) |
+| **Waste authority** | ServiceBody (public or communal) | collectors, waste sites, incinerators; collection rounds | fees from households and firms; government budget line | [WASTE_AND_CIRCULAR_DESIGN.md §4.4](WASTE_AND_CIRCULAR_DESIGN.md) |
+| **Recycling enterprise** | Enterprise (private, cooperative) | recycling plants; buys or collects scrap and recyclables; sells outputs | sales of recycled materials | WASTE §4.3–4.4 |
+| **Environmental regulator** | ServiceBody (usually public) | inspectors (staff) who visit facilities and sites and write records (layer 4, possibly wrong) | government budget line | WASTE §4.4 |
+
+Industrial **enterprises** (mining companies, smelters, refineries, factories, arsenals) need no new type: they are `OrgType.Enterprise` with `Purpose = Produce` ([INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md §4.6](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md)); military organisations remain `OrgType.Military` ([INDUSTRIAL_MILITARY_DESIGN.md §3.3](INDUSTRIAL_MILITARY_DESIGN.md)).
+
+**Offices** used: `Head`, `Manager`, `Treasurer` (billing, fees, payments), `Keeper` (stores and sites), `Recorder` (meter readings, inspections); roles `Operator` (11), `Crew` (12), `Engineer` (13) proposed in the Industry id ranges ([INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md §9.2](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md)). New `OrgDecision.What` value `Order` (placing a production order, IND §3.7) and agreement decisions (IND §4.9).
+
+**Relations.** `Regulates`/`RegulatedBy` (§3.2) link a regulator to facilities' owners; a regulator's power exists only where a government organisation adopted a law (C10) and its own people enforce it. `ContractsWith` holds supply, haulage and electricity agreements (I3 agreement records; obligations in C2). Military organisations compete with these organisations for the same labour, materials, fuel and power ([INDUSTRIAL_MILITARY_DESIGN.md §4.4](INDUSTRIAL_MILITARY_DESIGN.md)).
+
+**Failure is real.** A utility without fuel or paying customers stops; a waste authority without funding stops collecting and pollution rises; a regulator that is ignored changes nothing physical. None is rescued automatically (§4.13).
+
+**Tier and package mapping:** utility (minimal: one public utility owning one coal station and its links) Tier 2, I4 with C6; mining, smelting and factory enterprises for the vertical slice Tier 2, I1 with C6; transport company Tier 3, I2/I3 with C6; waste authority, recycling enterprise and regulator templates Tier 3, I1 (waste part) with C6 and C10. **Acceptance hooks:** `VS6_PowerReachesFactory` and `ACC_ElectricityNoMoney` (a utility org supplies and bills without money appearing), `ACC_WasteGeneratedCollectedReused`, the ORG-INV-5 static test over `Sim/Industry`.

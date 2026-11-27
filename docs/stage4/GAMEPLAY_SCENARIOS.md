@@ -178,3 +178,40 @@ Each is demonstrable headless first (Q2, Q3) and then shown in Unity. "View" is 
 | Generated islands are unviable | the F2 viability preview and reject-and-regenerate loop; the favourable scenario is a fixed handcrafted seed set |
 | Scenario files diverge between Unity and runner | one loader, one schema, a parity test (H-GS-3) |
 | Unlimited mode hides cost problems | the log still records Mythic spent, so experiments can estimate costs, and Normal remains the default for balance runs |
+
+## 13. Owner D6 (27 Nov 2026): the industrial starting scenario
+
+Owner decision D6.17 ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)): an industrial starting scenario with an established population, appropriate technological knowledge, mines, vehicles, industrial organisations and electricity infrastructure, **on the same simulation as the prehistoric Living Island**; industrial integration tests never wait for prehistoric development; autonomous technological progression stays the long-term objective. Sim content is owned by the D6 documents ([INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md), [VEHICLES_AND_HARVESTING_DESIGN.md](VEHICLES_AND_HARVESTING_DESIGN.md), [ELECTRICITY_DESIGN.md](ELECTRICITY_DESIGN.md), [INDUSTRIAL_MILITARY_DESIGN.md](INDUSTRIAL_MILITARY_DESIGN.md), [WASTE_AND_CIRCULAR_DESIGN.md](WASTE_AND_CIRCULAR_DESIGN.md)); knowledge and designs by KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md, money by MONEY_AND_ACCOUNTING_DESIGN.md.
+
+**Same simulation (GS-2, GS-3).** "Iron Coast" (working name, original) is a `Recording.Scenario` file plus a `PresentationSpec`, loaded by the same loader in Unity and `God.Runner`. It differs from Living Island only in **initial conditions and switches**: `Industry.Enabled = 1` (and `Civ`, `Orgs`, `Divinity` on), explicit deposits, and a setup block that creates founders, organisations, assets and stocks through the ordinary setup paths. It adds no rule, no industrial-only system and no scripted outcome. Everything after tick 0 is the autonomous simulation plus any divine input. A Living Island game that later develops industry by itself runs exactly the same code.
+
+**What it contains (defaults, all editable in the file):**
+
+| Element | Setup | How it is created honestly |
+|---|---|---|
+| Island and land | a generated or fixed seed; 2 factions; coast, hills and one mountain region | existing generator |
+| Population | about 80 people per faction in established households, mixed ages (founders of the F2 favourable demography), skills seeded for some (mining, mechanics, smelting, driving) | M4 `Founders` mixed-age path; skills as founder attributes |
+| Knowledge | specific named NPCs know the designs for mine, smelter, coal station, machine shop, engine works, harvester and hauler; the steel furnace design is open knowledge; one factory owner holds a licence for the harvester design | KNOWLEDGE doc seeding (knowledge held by individuals and records, not by a faction) |
+| Deposits | iron ore and coal (Surface and Shallow) in the hills and mountain; one crude oil deposit near the coast (for the oil test); no uranium by default | the scenario `deposits` block (IND §3.3) |
+| Organisations | a government per faction (C10 or the AiBrain seat); a private **mining company** (owns the mine, two harvesters, claims on the deposits); a **cooperative smelter**; a **public utility** (one coal station, links); a private **factory** (machine shop, engine works, assembly); a small **transport company** (one hauler); optionally a **military organisation** with a commander (I5 tests) | `Orgs.Found` with origin `Seeded` and their founders as members and office-holders; ownership models set |
+| Assets | facilities built (C1 assets with `Embodied` materials recorded as placed), power links station → smelter and station → factory, vehicles parked at the mine and the depot | asset registration with reason `Placed` (`VehicleRegistered` with `Factory = 0`) |
+| Stocks | coal in the station fuel bin (2 days), fuel in the depot, a little steel and parts in the factory input bin, food in households | `Goods.Produce(..., ProduceReason.Placed)` (or `Founder`) into the owners' bins: on the ledger from tick 0 |
+| Employment | operators, miners, smelter workers, station staff and factory workers hold C3 contracts with their organisations | C3 contracts created in setup |
+| Agreements | mining company → smelter (iron ore), mining company → utility (coal), utility → factory (electricity, metered), factory → mining company (one harvester ordered) | I3 agreement records with both office-holders recorded as agreeing |
+| Divine | one human god and AI gods (D1), Normal Mythic by default; a Disabled variant for autonomous observation | D1 |
+
+**Variants used by integration tests** (headless, `DotNet/God.Runner/Scenarios/ind_*.scenario.json`, owned by Q3 with the I packages):
+- `ind_slice`: the minimal vertical slice island (one faction, about 30 people, one of each organisation above, no military), short horizon (5–10 sim days), checkpoints every sim day. Drives VS-1..VS-10.
+- `ind_oil`: adds the well, a tanker and a refinery (`ACC_OilExtractedNoMoney`, `ACC_OilTransportedNoMoney`).
+- `ind_grid`: three consumers, two stations, priorities (`ACC_ElectricityNoMoney`, `ACC_FuelShortageCutsGeneration`).
+- `ind_waste`: waste on, a recycling plant (`ACC_WasteGeneratedCollectedReused`).
+- `ind_military`: the military organisation and a procurement agreement (I5).
+- `ind_full`: the full Iron Coast for Unity demonstration and replay (`Replay_IndustrialScenario_Exact`).
+
+Each test scenario uses fixtures (`IndustrialFixtures`, by analogy with `IntegrationFixtures`) only to set initial conditions; outcomes come from the simulation.
+
+**Autonomous technological progression (long-term objective).** The prehistoric Living Island keeps every industrial rule available: deposits exist (generation on when `Industry.Enabled`), manual extraction works without any design, and designs are discovered, taught and licensed through the KNOWLEDGE doc's research mechanics. Whether a Living Island society reaches industry is measured (first extraction, first smelter, first powered factory, by tick and by seed), never forced (D5.33).
+
+**What the player sees (checkpoint presentation).** A busy industrial coast: harvesters crawling between the hill mine and the smelter with visible ore, smoke from the station, lit factory bays, power lines on poles; the facility, vehicle and station cards; the electricity overlay; an outage when a line is cut or the coal runs out; named workers with households, needs and opinions; the god influencing them only by divine means.
+
+**Tier and package mapping:** `ind_slice` and the variants: Q3 with I1–I4 (Tier 2, after the civilisation and divine Tier 1, D6.18); `ind_full` and its Unity presentation: I6 with U3/U2 (Tier 2 end, or 3); military variant: I5 (Tier 2 end, 3). **Acceptance hooks:** **H-GS-11** `ind_slice` reaches VS-1..VS-9 within 10 sim days on seeds 1–3 and VS-10 reconciles (headless); **H-GS-12** the same file in Unity (batch mode) and in the runner gives equal hashes at day 1, 3 and 10 (extends H-GS-3); **H-GS-13** Iron Coast and Living Island run the same system list (a test compares `GodSim` system registrations: identical apart from switches); **H-GS-14** replay of `ind_full` with a possessed harvester driver and a divine compulsion of a lineman reproduces every checkpoint hash.

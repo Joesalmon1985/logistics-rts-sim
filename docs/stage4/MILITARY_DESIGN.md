@@ -374,3 +374,23 @@ Brief §23 continues towards persistent NPC soldiers. Most of it is already this
 - **Miracles** (healing a wounded soldier, smiting a building) change physical state through the validated miracle commands of MYTHIC_AND_MIRACLES_DESIGN; they do not change morale, loyalty or service records directly.
 
 **Tier and package mapping:** existing M9 design: unchanged milestones; expanded military service (military organisation with Commander office, training, formal service obligations): Tier 3, C4; injured soldiers treated by healers: Tier 2, C7. **Acceptance hooks:** scenario 15 (a commander refuses or modifies a relayed divine instruction: ORG-ACC-15a applied to a military organisation), scenario 1 (soldiers persist, enlist and desert with divine intervention disabled: M-ENL and M-MOR tests kept), scenario 17 (kit and pay reconcile: M-INV-2 and service facts).
+
+## 13. Owner D6 (27 Nov 2026): industrial military production
+
+Owner decisions D6.8 and D6.14 ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)) add an industrial layer to this document's design. It is owned by **[INDUSTRIAL_MILITARY_DESIGN.md](INDUSTRIAL_MILITARY_DESIGN.md)**; this section is a pointer and summary. Everything above (persistent soldiers, service contracts, morale, assignments, desertion, the M9 migration, the untouched duel rules) stays as written.
+
+| D6 item | Where | Summary |
+|---|---|---|
+| OpenRA-inspired categories (infantry, engineers, reconnaissance, armoured carriers, tanks, artillery, aircraft, naval, defences) | INDUSTRIAL_MILITARY §3.1 | Original names and stats. Priority: infantry, carriers, tanks, simple defences (walls, bunkers, gun posts); the rest Tier 3 or later |
+| Infantry are recruited and trained existing NPCs | §4.1 | Enlistment and service exactly as §4 above; industrial kit adds the `Firearm` gear ware and `Ammunition`; training is the education service (§12 above). Nothing spawns a person |
+| Vehicles and equipment are manufactured | §3, §4.2; [INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md) | Made by the one recipe runner in ordinary factories from steel, parts, engines and wire, with workers and power. A tank is a vehicle asset ([VEHICLES_AND_HARVESTING_DESIGN.md](VEHICLES_AND_HARVESTING_DESIGN.md)) that moves only with a living driver and fires only with a gunner aboard and ammunition in its bin |
+| Crew, fuel, ammunition, maintenance, logistics | §4.2–4.3 | All physical: fuel and ammunition hauled to depots and loaded by crews; mechanics and machine parts for maintenance |
+| Production queues, procurement, budgets | §3.3 | Military orders are ordinary factory `ProductionOrder`s, placed by the military organisation's office-holders at its own arsenal or by a factory owner under a procurement agreement; budgets are the organisation's budget lines; no military-only queue or economy |
+| Competition with civilian organisations | §4.4 | Same labour, materials, fuel, capital and power; measured by KPIs IMIL-01..05 |
+| Combat with vehicles and gun posts | §3.2 | `Duel.Resolve` unchanged; a `VehicleCombat` adapter builds `SoldierStats` for a crewed vehicle (one additive `SoldierStats` field requested by amendment). Tier 3, after C4/M9 |
+| Divine influence | §4.6 | Unchanged rule of §12 above: instruct the commander, compel or possess a driver or gunner, miracles; never command the military organisation |
+| Strategic device (fictional nuclear capability) | §4.7 | Built from nuclear fuel, parts and much power under a licensed design; used only by its owning organisation's decision and a physical crew act; deterministic consequences in state (destruction, deaths as `Violence` with attribution, contamination, economic loss, beliefs and institutional reactions). Inspection, disarmament, deterrence and treaties are later hooks |
+
+**Relation to the existing code and M9.** Stage 3 `MilUnit`, the barracks `UnitOrder` path and `MilitaryRules.DrainQueue` stay in stage 3 mode (§9 above). Before C4/M9 lands, industrial crews are employees of a military organisation (C3) and vehicles move and deliver but do not fight; full military service and vehicle combat follow M9.
+
+**Tier and package mapping:** package **I5** (mechanised military production), Tier 2 after the D6.18 industrial vertical slice for firearms, ammunition, procurement and one crewed tank; Tier 3 for vehicle combat, artillery, engineers and the strategic device; aircraft and naval later. **Acceptance hooks:** `IMil_NoSoldierCreated`, `IMil_TankNeedsCrewFuelAmmo`, `IMil_MilitaryOrdersCompete`, `IMil_ProcurementTransfersOwnership`, `VS11_TankFromSameFactory` (INDUSTRIAL_MILITARY §11).
