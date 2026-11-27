@@ -286,3 +286,59 @@ Only consequential ones; each has the default the run uses.
 1. **A healing skill record.** POPULATION_DESIGN owns the skill record, which is not in the code yet. Default: C7 adds `Skill.Healing` and the general skill slots there if no other package has; if none exists when C7 starts, healing skill is represented by the healer's learned association values for `Treat` (outcome-weighted), which is enough for SVC-HEAL-1 and SVC-HEAL-2.
 2. **New ware `Herbs` and `OwnershipBasis.Forfeited`.** Both touch shared enums. Default: request both from the contracts owner in F1; if refused, `Treat` uses no remedy and collateral forfeiture uses `Seized` with a `Forfeit` reason on the event.
 3. **Jurisdiction of communal rules.** Whether a commune's rule can make an act a crime in the sim's truth (default yes, for its members and its property only), or only a norm violation. This decides how justice KPIs count crime.
+
+---
+
+## 12. Owner D6: rights, commercial justice, universities and research (27 Nov 2026)
+**Status: plan only.** Source: owner decisions **D6.9–D6.12, D6.15** ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)). The knowledge, design, artefact and rights records are owned by [KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md](KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md) (KNOW); fees and payments by [MONEY_AND_ACCOUNTING_DESIGN.md](MONEY_AND_ACCOUNTING_DESIGN.md) (MONEY). This section adds services on the common model of section 3, unchanged: request → queue → activity by a person within reach → outcome in real state → record. Principles 1–8 of section 2 hold, in particular **providers see only what they know** (an examiner knows its registry, a judge its evidence) and **claims never create goods** (fees, damages and licence fees are obligations settled by payment).
+
+### 12.1 New service kinds (numbers by the SAC Industry addendum; proposed)
+`RegisterRight = 20`, `ContractResearch = 21`, `CommercialDispute = 22`, `LibraryRead = 23`; `Teach` (2) gains design topics (`Topic = DesignId`).
+
+### 12.2 Patent registration (`RegisterRight`, Tier 2, K1)
+- **Provider:** a patent office organisation (KNOW §13) of a government that has a patent law (KNOW §8.2). No law: the office refuses every application (`no_patent_law`). No office: no patent can exist.
+- **Request:** the applicant (a person, or an officer for an organisation) walks to the office, hands over a specification document of the design (the office now owns that copy, its evidence of priority) and pays the application fee (K2 `Fee` payment, or a `Fee` obligation if the office's policy allows deferral). Queue policy: first come by default.
+- **Activity:** an examiner (office with the `Examine` power) at the office reads the deposit for `ExamineTicks × Complexity` and compares the design with its registry and the documents the office holds. **It cannot read truth**: prior art it has never seen does not count against the application.
+- **Outcome:** a `Right` with status `Granted` (or `Refused`) in the registry (KNOW §8.1), written by the clerk (`RightGranted`/`RightRefused`). Assignment, licence recording and renewal are further requests of the same kind (`Topic` = right id and operation); each changes only the registry (and a K2 payment if a fee or price is involved), never goods, documents, knowledge or assets.
+- **Capacity:** examiner ticks; recorded unmet demand = applications expired or dropped.
+- **Failure and dishonesty:** an examiner may grant on a misread deposit, favour kin or take a bribe (INSTITUTIONAL_STATE oversight applies); wrongful grants are possible and measured (truth: an earlier holder of the design existed).
+
+### 12.3 Commercial disputes (`CommercialDispute`; Tier 2 complaint, Tier 3 process; K1 with C9)
+Covers **unauthorised use of a design** (infringement), **licence breach** (use beyond scope or term, unpaid licence fees or royalties), **unpaid bills and supply-agreement prices** and other contract disputes.
+1. **Potential dispute (truth, analytics):** the sim classifies `UnauthorisedDesignUse` † when a design under a granted patent is built or run in the jurisdiction without a covering licence (KNOW §9). It changes nothing.
+2. **Perception:** the holder or one of its members must perceive the asset or product (sight, inspection, gossip) to believe there is an infringement (`InfringementPerceived`).
+3. **Complaint (Tier 2):** the believer walks to the commercial court (or, with none, a mediator) and accuses (`ComplaintMade`, kind `Infringement`, `LicenceBreach` or `UnpaidObligation`). The Tier 2 path ends here: the complaint is recorded and waits.
+4. **Case (Tier 3):** the judge gathers evidence items (5.6 step 2): the registry entry (the clerk reads the patent office's records or a certified copy), the judge's own inspection of the asset (its design is an inspectable attribute), dated documents (an older document of the design is a prior-art defence), witness testimony, the obligation registry for unpaid amounts. It decides from what it holds; wrongful findings are possible (`true_infringement` †).
+5. **Remedies:** injunction (an order to stop, obeyed by choice or by enforcers' acts; it never removes knowledge or documents), damages or arrears (a `Damages` or existing obligation, K2), a settlement or compulsory licence (if the law allows), seizure of infringing products (basis `Confiscated`, by an enforcer within reach), revocation of an invalid patent.
+6. **Enforcement is physical** (5.6 step 6). Copying and building remain possible throughout (D6.11).
+
+### 12.4 Licence enforcement (Tier 2 records, Tier 3 enforcement)
+- A licence is a registry record (KNOW §8.4) with fee and royalty obligations (C2). **Royalties are billed by the licensor's clerk** from what it knows (the licensee's report, its own inspection), never accrued from truth (MONEY §7.1). Under-reporting is possible and measured.
+- **Breach** (scope, term, exclusivity, non-payment) is classified in truth (†) and becomes a dispute only through 12.3 steps 2–6. A licensor may also refuse renewal or terminate by its own decision (`LicenceEnded`).
+- **Inspection service** (Tier 3): an auditor role of the licensor visits the licensee's facility (if permitted) and counts output, adding evidence.
+
+### 12.5 Universities and research organisations as education and research services
+- **Teaching (Tier 2, C7 + K1):** a university's teachers teach design topics with the 5.2 `Teach` activity; a lecture hall raises the places per session; enrolment is a membership role (`fact_education_enrolment`); fees by K2. Outcomes are measured on the learner (level and fidelity in its `KnowledgeMind`, skill), never as an "educated" flag.
+- **Library reading (`LibraryRead`, Tier 2):** a reader asks for access to the library store; the librarian grants it by the access policy; the reader `Study`s the document on site (documents leave only when lent, a loan with `OwnerRule.Keep`, 5.5). Reading never consumes or alters the document.
+- **Research (`ContractResearch`, Tier 3, K1):** a sponsor commissions a research project (KNOW §10.2) from a research organisation or university for a fee; researchers spend real ticks and materials at a laboratory; the outcome is knowledge in the researchers' minds and, if formalised, documents owned per the contract and the employer's `Work` right. A discovery builds nothing.
+- **Ownership models:** state universities, private laboratories, cooperative research bodies and religious schools use the same code (principle 7).
+
+### 12.6 Invariants and tests
+| # | Invariant or test | Checked |
+|---|---|---|
+| SVC-D6-I1 | No right is granted, assigned or licensed without an examiner or clerk present at the office and the parties' own acts there | events |
+| SVC-D6-I2 | Registering, assigning or licensing a right changes no lot, artefact record, knowledge entry or asset (only the registry and K2 payments) | state diff |
+| SVC-D6-I3 | No `UnauthorisedDesignUse` creates an obligation, a block or a ruling by itself; every ruling has a complaint and a judge | events |
+| SVC-D6-I4 | Examination and rulings read only the provider's own mind, the office or court records and evidence items (reflection; extends SVC-I4) | reflection |
+| SVC-D6-U1 | `RegisterRight` with a prior right on the same design in the office registry is refused; with prior art only in a document unknown to the office it is granted (a measurable wrongful grant) | EM |
+| SVC-D6-U2 | `LibraryRead` raises the reader's level by the KNOW §5.2 rule and leaves the document byte-equal | EM |
+| SVC-D6-ACC | acceptance rows D6.6, D6.7 and D6.8 of [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) | RT |
+
+### 12.7 Tier and package mapping
+| Service | Tier | Package |
+|---|---|---|
+| Patent registration, assignment, licence recording, renewal | 2 | K1 (C6 framework, K2 fees, C10 or a scenario-seeded patent law) |
+| Complaint of infringement, licence breach, unpaid obligation | 2 | K1 + C9 complaint (a recorded stub until C9) |
+| Commercial court process, evidence, remedies, compulsory licences, revocation | 3 | C9 + K1 |
+| University teaching of designs, library reading | 2 | C7 + K1 |
+| Contract research, laboratories | 3 | K1 |

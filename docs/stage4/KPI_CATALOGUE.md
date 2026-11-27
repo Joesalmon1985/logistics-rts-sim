@@ -719,3 +719,126 @@ Every new KPI that is not marked actual-only has a reference SQL view in `0030_k
 | K-D5-4 | `DivineKpi_Replay` | the KPI series of a replayed scenario equal the live series (scenario 18) |
 | K-D5-5 | `Missing_Is_Not_Zero` | with the source tables absent (a package not merged) every new KPI reports `Missing` with its reason, never 0 |
 | K-D5-6 | `MinCell_NewIds` | breakdowns below `MinCell` give `Missing` (extends K4) |
+
+---
+
+## 16. Owner D6: industry, energy, knowledge and money (27 Nov 2026)
+**Status: plan only.** Source: [OWNER_BRIEF_2026-11-27_INDUSTRY.md](../civdiv/OWNER_BRIEF_2026-11-27_INDUSTRY.md) "additional owner decisions" §12 and decisions **D6.2, D6.7, D6.9–D6.13, D6.16**. Conventions of sections 3 and 15 apply unchanged (the five fields; units; `Missing` is not zero; no composite score; actual-only marked). Industrial KPI ids and names are those proposed by the owning documents ([INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md) §7, [VEHICLES_AND_HARVESTING_DESIGN.md](VEHICLES_AND_HARVESTING_DESIGN.md) §7, [ELECTRICITY_DESIGN.md](ELECTRICITY_DESIGN.md) §7, [WASTE_AND_CIRCULAR_DESIGN.md](WASTE_AND_CIRCULAR_DESIGN.md), [INDUSTRIAL_MILITARY_DESIGN.md](INDUSTRIAL_MILITARY_DESIGN.md)); this section gives each its five fields. Knowledge (KNW) and money (MON) KPIs are new here ([KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md](KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md), [MONEY_AND_ACCOUNTING_DESIGN.md](MONEY_AND_ACCOUNTING_DESIGN.md)). Sources are the tables of [DATA_WAREHOUSE_DESIGN.md §13](DATA_WAREHOUSE_DESIGN.md).
+
+**Rules added for D6.**
+- **Physical units first.** Industrial and energy KPIs are in wares, eu, ticks and counts. Any figure in reference value (FE) is a second column, named `_fe`, and never the headline.
+- **Money KPIs are in the unit paid,** never converted between units inside a KPI. A report may show several units side by side.
+- **No revenue from delivery.** No KPI computes revenue, income or profit from goods delivered or energy supplied; only from `fact_payment` (cash) or opened obligations (accrual), and the basis is stated.
+- **Knowledge counts minds, not organisations.** "An organisation knows" is reported only as "members who know" plus "documents it owns".
+
+Columns: **Definition (Num ÷ Den, unit)** · **Period** · **Denominator and eligibility** · **Source** · **Limitations** · **Pkg / tier**.
+
+### 16.1 Industrial production and resources
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| IND-01 | Industrial output per worker-day | units of ware *w* output by recipe *r* ÷ worker-days at cycles of *r* (units per worker-day, pm1000), per recipe, never summed across wares | D, Y | facilities running *r* with ≥ 1 worker-day | `fact_production_cycle` (outputs, workers, ticks) | tool, skill and power effects not separated; compelled and possessed labour included (read with TIM-04) | I1, I6 / 2 |
+| IND-02 | Capacity utilisation | working ticks ÷ available ticks per facility (‰) | D, Y | facilities in operation (not under construction, not destroyed) | `fact_facility_day` status ticks | "available" counts ticks the facility exists; a facility idle by its owner's choice counts as unused | I1, I6 / 2 |
+| IND-03 | Stall ticks by reason | ticks stalled for missing inputs, no workers, no power, output full, no design knowledge ÷ available ticks (‰ each, shown separately) | D, Y | as IND-02 | `fact_facility_day`, `ProductionStalled` | reasons are the first blocking reason found; a facility short of two things shows one | I1, I4, I6 / 2 |
+| IND-04 | Deposit depletion | (initial − remaining) ÷ initial per deposit (‰), and years to exhaustion at the period's extraction rate | Y | deposits discovered by anyone | `dim_deposit`, `fact_extraction` | undiscovered deposits excluded (truth totals shown separately, actual-only); rates of a short period extrapolate badly | I1, I6 / 2 |
+| IND-05 | Extraction-right concentration | remaining deposit quantity controlled by the largest owner ÷ all remaining discovered (‰), per ware; and the Herfindahl index (pm1000) | Y | discovered deposits with an owner or a claimed use right | `dim_deposit`, `fact_ownership_spell`, `fact_use_right` | open-access deposits are their own cell; nominee owners are not resolved | I1, C1, I6 / 2 |
+| IND-06 | Manual vs mechanised extraction | units extracted by persons on foot ÷ all units extracted (‰), per ware | Y | extraction events | `fact_extraction` (actor kind: person, mine facility, harvester) | a person operating a harvester counts as mechanised | I1, I2, I6 / 2 |
+| IND-07 | Military share of factory output | factory working ticks on military recipes ÷ all factory working ticks (‰) | Y | factories | `fact_production_cycle` (recipe class) | recipe classes are content labels; dual-use goods (trucks) are civilian unless ordered by a military organisation | I1, I5, I6 / 2 |
+
+### 16.2 Vehicles and logistics
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| VEH-01 | Load moved per vehicle-day | weight units unloaded at destinations ÷ vehicle-days in service (pm1000) | D, Y | vehicles registered and not wrecked | `fact_vehicle_trip`, `fact_vehicle_day` | weight units are the sim's abstract weights; distance not included (see trips for nodes) | I2, I6 / 2 |
+| VEH-02 | Fuel per unit delivered | fuel units burned by vehicles ÷ weight units delivered (pm1000), by vehicle design | Y | vehicles with ≥ 1 delivery | `fact_vehicle_day.fuel`, `fact_vehicle_trip` | empty return trips are included (true cost) | I2, I6 / 2 |
+| VEH-03 | Operating ticks lost | ticks stopped for breakdown, no fuel, or no operator ÷ ticks assigned to a routine (‰ each) | D, Y | vehicles with a routine | `fact_vehicle_day`, `VehicleStopped` reasons | a vehicle parked by choice is not "lost" | I2, I6 / 2 |
+| VEH-04 | Routine adherence | routine steps chosen by the operator ÷ routine steps offered (‰), by employer ownership model | Y | operators under a routine | `fact_vehicle_trip`, decision rows | operators' own choices (rest, eat) are not failures; reported, not a target | I2, I6 / 2 |
+| VEH-05 | Trips under divine control | trips with any compelled or possessed operator tick ÷ trips (‰) | Y | trips | `fact_vehicle_trip.control_code` | actual-only; see DIV KPIs | I2, D4, I6 / 2 |
+
+### 16.3 Electricity
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| ELE-01 | Unserved energy share | Σ unserved eu ÷ Σ requested eu (‰), by grid component and by priority class | D, Y | ports with demand | `fact_power_delivery_day`, `fact_grid_interval` | demand is from equipment ready to run; equipment idle for other reasons asks for nothing (so unserved can look low in a slump) | I4, I6 / 2 |
+| ELE-02 | Outage hours per consumer | Σ outage ticks over consumer ports ÷ consumer ports (sim hours per consumer), and outages per consumer (n) | Y | ports connected at any time in the period | `fact_outage`, `dim_grid_port` | an outage is any interval with granted < requested; partial and total outages are separate cells | I4, I6 / 2 |
+| ELE-03 | Fuel per delivered energy | fuel units burned ÷ delivered keu, by technology | Y | stations that generated | `fact_station_interval`, `fact_power_delivery_day` | losses and curtailment are charged to the station that burned the fuel | I4, I6 / 2 |
+| ELE-04 | Generation mix | eu generated by technology ÷ all eu generated (‰ each) | D, Y | stations | `fact_station_interval` | capacity mix is a separate breakdown (installed eu per interval) | I4, I6 / 2 |
+| ELE-05 | Utility cash flow from payments | Σ payments received by a utility for energy (purpose `EnergyBill`) and agreed funding (`Grant`, `Contribution`), per unit; beside bills issued and bills outstanding | Y | utilities (orgs with stations) | `fact_payment`, `fact_meter_bill`, `fact_obligation` | **never derived from energy delivered**; bills unpaid are receivables, not revenue (cash basis headline) | I4, K2, I6 / 2 |
+| ELE-06 | Military share of demand | eu requested by facilities of military organisations ÷ all eu requested (‰) | Y | ports | `fact_power_delivery_day`, `dim_org` | ownership as at the day; leased facilities count by owner | I4, I5, I6 / 3 |
+| ELE-07 | Emissions per energy | pollution units emitted by stations ÷ keu generated, by technology | Y | stations | `fact_station_interval`, `fact_pollution_day` | the pollution model is abstract (WASTE); not a health measure (see ENV-02) | I4, I1, I6 / 3 |
+
+### 16.4 Waste and environment
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| WST-01 | Waste generated per person-day | waste units produced (all waste wares) ÷ person-days alive (pm1000), by source kind (consumption, production, salvage) | D, Y | alive residents (person-days) | `fact_waste_flow_day`, `fact_person_day` | consumption waste exists only with `Industry.Waste.Enabled`; industrial waste is attributed to people only through the facility's location | I1 (waste), I6 / 2 |
+| WST-02 | Waste fate | units collected, landfilled, recycled, incinerated, left on the ground ÷ units generated (‰ each) | Y | waste generated in the period | `fact_waste_flow_day` | stocks carried over between periods make the shares not sum to 1000‰ in a short period; shown with opening and closing stock | I1, I6 / 2 |
+| WST-03 | Recycled share of steel supply | steel produced by recycling recipes ÷ all steel produced (‰) | Y | steel output | `fact_production_cycle` | other recycled wares are separate rows | I1, I6 / 2 |
+| ENV-01 | Population-weighted pollution | Σ over persons of the pollution band of their home hex ÷ persons (band mean), and persons in each band (‰) | D, Y | alive residents | `fact_pollution_day`, `fact_person_day` (hex) | home hex only, not exposure while working; bands are model units | I1, I6 / 3 |
+| ENV-02 | Illness by pollution band | illness onsets per person-year in each band, beside matched clean-hex controls | Y | residents by band; `Missing` under 50 person-years | `fact_illness`, `fact_pollution_day` | association, not proof of the model's effect size; small cells | I1, F2, I6 / 3 |
+| ENV-03 | Contaminated area and residents | hexes above the contamination threshold (n) and persons living in them (n, ‰) | D, Y | all hexes; alive residents | `fact_contamination_day` | abstract fictional contamination (D6.14) | I1, I5, I6 / 3 |
+
+### 16.5 Industrial military (pointers; INDUSTRIAL_MILITARY owns the mechanics)
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| IMIL-01 | Military share of factory ticks | as IND-07 (shared definition) | Y | factories | `fact_production_cycle` | — | I5, I6 / 2 |
+| IMIL-02 | Military share of steel and fuel | steel and fuel consumed by military orders and vehicles ÷ all consumed (‰ each) | Y | consumption rows | `fact_production_cycle`, `fact_vehicle_day`, `dim_org` | attribution by the ordering or owning organisation | I5, I6 / 2 |
+| IMIL-03 | Soldiers per 100 adults | persons in military service ÷ adults × 100, with their former occupations | Y | adults | `fact_military_service`, `fact_employment` | service spells from C4 | C4, I5, I6 / 3 |
+| IMIL-04 | Equipment readiness | military vehicles crewed, fuelled and armed ÷ military vehicles (‰) | D | vehicles of military organisations | `fact_military_asset_spell`, `fact_vehicle_day`, `fact_ammunition_day` | readiness at day end only | I5, I6 / 2 |
+| IMIL-05 | Civilian output during mobilisation | civilian factory output in mobilisation periods vs a control seed set (difference, ‰) | E | paired seeds | `fact_production_cycle` | an experiment KPI (POLICY_EXPERIMENTS); never a live figure | I5, Q1 / 3 |
+| IMIL-06 | Strategic-strike consequences | deaths, assets lost, contaminated hexes, displaced persons at 1, 30 and 365 days after a strategic event | E | strategic events | `fact_strategic_effect`, `fact_death`, `fact_migration` | rare; reported per event, never averaged across seeds without the counts | I5, I6 / 3 |
+
+### 16.6 Knowledge and technology (new)
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| KNW-01 | Design diffusion | persons at level "can build" or above for design *d* ÷ adults (‰), per design, and days from first discovery to 10 holders | Y | adults alive; designs known to anyone | `fact_knowledge_spell`, `dim_design` | actual-only (minds); level bands, not skill; a government's census of skills (if any) is the reported figure | K1, Q1 / 2 |
+| KNW-02 | Designs lost | designs with no living holder at "understands" or above and no live document (n), and rediscoveries (n) | Y | designs ever known | `dim_design.lost_tick`, `fact_design_discovery`, `dim_artefact` | archived minds (resurrection) do not count as holders | K1, Q1 / 2 |
+| KNW-03 | Documents per design | live documents of *d* (n) and documents per holder; share of documents owned by organisations vs persons (‰) | D, Y | designs with ≥ 1 document | `dim_artefact`, `fact_ownership_spell` | fidelity shown as a distribution beside the count | K1, Q1 / 2 |
+| KNW-04 | Knowledge acquisitions by channel | acquisitions by channel (taught, observed, read, practice, research, revealed) ÷ all acquisitions (‰ each) | Y | acquisition events | `fact_knowledge_transfer` | observation gains are HV and sampled below Full (`sample_weight`) | K1, C7, Q1 / 2 |
+| KNW-05 | Knowledge–ability gap | operators and builders working a design below its knowledge or skill minimum with a document ÷ all (‰); assets with no living person able to operate them (n) | Y | facilities and vehicles in service | `fact_knowledge_spell`, `fact_skill_spell`, `fact_vehicle_crew_spell`, `fact_production_cycle` | actual-only; "able" uses the envelope minima | K1, I1, I2, Q1 / 2 |
+| KNW-06 | Rights in force | patents in force (n) by jurisdiction; licences in force (n, exclusive and non-exclusive); share of running facilities whose design is patented somewhere (‰) | D, Y | jurisdictions with a patent-law spell; facilities | `dim_right`, `fact_licence`, `fact_patent_law_spell`, `dim_facility` | a jurisdiction with no law has no rows (shown as "no system", not zero) | K1, Q1 / 2 |
+| KNW-07 | Unauthorised use and its follow-up | `UnauthorisedDesignUse` events (n); of these, perceived by the holder (‰), complaints filed (‰), cases decided (‰) | Y | infringements in the period | `fact_infringement` †, C9 case tables | truth KPI (Full only, actual-only); the reported figure is complaints filed | K1, C9, Q1 / 2 (cases 3) |
+| KNW-08 | Rights market | right assignments and licences granted (n), their fees and prices per unit (from payments), and share sold by auction (‰) | Y | rights events | `fact_right_event`, `fact_licence`, `fact_payment`, `fact_auction` | prices are the parties' own; few events: `Missing` under 5 | K1, K2, Q1 / 2 (auctions 3) |
+| KNW-09 | Research productivity | discoveries ÷ research labour days (pm1000); materials consumed per discovery (per ware) | Y | research projects active | `fact_research_project`, `fact_research_day` | failures are part of the cost; tiny numbers per run | K1, Q1 / 3 |
+| KNW-10 | Divinely revealed share | acquisitions with channel revealed ÷ all acquisitions (‰), and designs whose first holder was revealed (n) | Y | acquisitions; discoveries | `fact_knowledge_transfer`, `fact_miracle_effect` | read with DIV-01; separates divinely assisted from autonomous progress (ECONOMY §12) | K1, D3, Q1 / 3 |
+
+### 16.7 Money, claims and accounts (new)
+
+| ID | Name | Definition | Period | Denominator and eligibility | Source | Limitations | Pkg / tier |
+|---|---|---|---|---|---|---|---|
+| MON-01 | Payments by purpose | completed payments (n) and Σ amount per unit, by purpose (sale, wage, tax, fine, fee, licence fee, royalty, auction, energy bill, grant …) | D, Y | completed payments | `fact_payment` | person-to-person barter is not a payment unless recorded (`RecordPersonSales`); compare with `fact_transaction` | K2, Q1 / 2 |
+| MON-02 | Money stock | commodity money: units of the money ware held, by holder class (persons, households, orgs by kind); institutional money: balances + notes outstanding per money | D | all holders | `fact_ownership_spell` (lots by ware), `fact_account_balance_day` | which ware is "money" is the scenario seed or the dominant `Moneyness` ware (stated); institutional money is Tier 3 | K2, Q1 / 2 (3) |
+| MON-03 | Velocity | Σ payments in unit *u* ÷ mean money stock in *u* (per period) | Y | units with stock > 0 | `fact_payment`, MON-02 | commodity-money stock includes hoards and coins used as metal | K2, Q1 / 2 |
+| MON-04 | Monetisation | exchanges settled with the dominant unit ÷ all recorded exchanges (‰), by party kind (person–person, person–org, org–org) | Y | recorded exchanges | `fact_transaction`, `fact_payment` | barter between persons is only in `fact_transaction` (M5 events) | K2, Q1 / 2 |
+| MON-05 | Moneyness | the ECONOMY 4.11 measure per ware: units received by exchange and traded on within 5 days ÷ units received by exchange (‰) | R5, Y | wares with ≥ 20 units exchanged | `fact_transaction_line`, `fact_ownership_spell` | a measure, not a rule; `MediumOfExchangeObserved` when > 500‰ for 10 days | K2, Q1 / 2 |
+| MON-06 | Claims outstanding | Σ open obligations per unit and source; overdue share (‰) | D, Y | open obligations | `fact_obligation`, `fact_claim_balance_day` | registry truth; an organisation's records may differ (`records_differ` †) | K2, C2, Q1 / 2 |
+| MON-07 | Organisation solvency | orgs whose payables due exceed their holdings of the same unit for ≥ 3 days ÷ orgs with payables (‰); recorded vs true | Y | orgs with any payable | `fact_org_book_day`, `fact_obligation`, `fact_record` | per unit (no conversion between units); goods held but not of the owed unit do not count | K2, C6, Q1 / 2 |
+| MON-08 | Issuance and destruction | money issued and destroyed by mechanism (E1–E4, D1–D5) per money; net change | Y | institutional monies | `fact_money_issuance` | Tier 3 | K2b, Q1 / 3 |
+| MON-09 | Price dispersion in money | coefficient of variation (‰) of unit prices of ware *w* across sales paid in unit *u* | Y | wares with ≥ 10 money sales | `fact_payment` (purpose sale), `fact_industrial_sale`, `fact_transaction_line` | prices are the parties' own; volume-weighted and unweighted shown | K2, Q1 / 2 |
+| MON-10 | Money-creation check | money stock change − (Σ issued − Σ destroyed) for institutional money; and money rows with an industrial cause (n) | D | all days | `fact_money_issuance`, `fact_account_balance_day`, cause columns | a check, not an outcome: must be 0 on every day (W-D6-4); actual-only | K2, Q3 / 2 |
+
+### 16.8 Tier and package mapping
+| Group | KPIs | Package | Tier |
+|---|---|---|---|
+| Industrial production | IND-01..07 | I1, I5, I6 | 2 |
+| Vehicles | VEH-01..05 | I2, I6 | 2 |
+| Electricity | ELE-01..05 | I4, K2, I6 | 2 |
+| Electricity (later) | ELE-06, ELE-07 | I4, I5, I6 | 3 |
+| Waste and environment | WST-01..03 (2), ENV-01..03 (3) | I1, I6 | 2, 3 |
+| Industrial military | IMIL-01, 02, 04 (2); 03, 05, 06 (3) | I5, I6 | 2, 3 |
+| Knowledge and rights | KNW-01..08 | K1, Q1 | 2 |
+| Research and revelation | KNW-09, KNW-10 | K1, D3, Q1 | 3 |
+| Money and claims | MON-01..07, 09, 10 | K2, Q1 | 2 |
+| Institutional money | MON-08 | K2b, Q1 | 3 |
+
+### 16.9 Acceptance hooks
+| # | Test | Pass criterion |
+|---|---|---|
+| K-D6-1 | `D6Kpi_SQL_Parity` | for every non-actual-only KPI of 16.1–16.7, the view equals `fact_kpi.actual_value` exactly on the industrial slice scenario |
+| K-D6-2 | `D6Kpi_Reconcile_ToEvents` | IND-02/03 tick sums equal facility-day rows; ELE-01 equals the energy-ledger identity's unserved term; MON-01 counts equal `PaymentMade`; KNW-04 counts equal `KnowledgeAcquired` (Full) |
+| K-D6-3 | `NoRevenueFromDelivery` | no KPI view joins `fact_power_delivery_day`, `fact_extraction` or `fact_supply_delivery` to a revenue or income column except through `fact_payment` or `fact_obligation` (static SQL check) |
+| K-D6-4 | `MonCreationCheck_Zero` | MON-10 is 0 on every day of every D6 acceptance run |
+| K-D6-5 | `Missing_Is_Not_Zero_D6` | with an I or K package absent, its KPIs report `Missing` with the reason |
+| K-D6-6 | `NoComposite_D6` | extends K-D5-3: no template sums or weights IND, ELE, KNW or MON ids across dimensions |

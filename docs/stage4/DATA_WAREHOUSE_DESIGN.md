@@ -920,3 +920,133 @@ New tests, numbered like section 10 and run by Q1 with Q3. They add to, and do n
 | W-D5-8 | `Migration_0007_To_Current` | fixtures at v6 and at each new version migrate forward and the example queries of 12.6 return rows of the right shape |
 | W-D5-9 | `Size_Budget_Civilisation` | a 20-sim-year Summary run of the integrated 500-person scenario stays within 1.3 × the 10.9 budget (still ≤ 1 GB for 200 years); the biggest new tables are the HV ones, which are sampled |
 | W-D5-10 | `Warehouse_NeverFeedsSim` | the existing `SimAndRecordingAssemblies_DoNotReferenceSqlite` test, plus a reflection test that no type implementing `IFactionPolicy`, `IInstitutionPolicy`, `INpcPolicy` or `IGodPolicy` references `God.Runner.Warehouse` or `Microsoft.Data.Sqlite` |
+
+---
+
+## 13. Owner D6: industry, energy, money, claims and knowledge (27 Nov 2026)
+**Status: plan only. Nothing in this section is built.** Source: [OWNER_BRIEF_2026-11-27_INDUSTRY.md](../civdiv/OWNER_BRIEF_2026-11-27_INDUSTRY.md) "additional owner decisions" §§1, 5–9, 12, decisions **D6.2, D6.9–D6.13, D6.16, D6.18**. The nine ontological categories and their one-line reconciliation rules are in [WORLD_ONTOLOGY.md §11](WORLD_ONTOLOGY.md); this section lists the tables that carry them, their grains, levels and exact reconciliation, and the migration numbers by package. Industrial table names are those proposed by their owning documents ([INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md](INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md) §7, [VEHICLES_AND_HARVESTING_DESIGN.md](VEHICLES_AND_HARVESTING_DESIGN.md) §7, [ELECTRICITY_DESIGN.md](ELECTRICITY_DESIGN.md) §7, [INDUSTRIAL_MILITARY_DESIGN.md](INDUSTRIAL_MILITARY_DESIGN.md), [WASTE_AND_CIRCULAR_DESIGN.md](WASTE_AND_CIRCULAR_DESIGN.md)); they are gathered here so the warehouse has one table of contents. Money, claims, knowledge, artefacts, rights and auctions are owned here with [MONEY_AND_ACCOUNTING_DESIGN.md](MONEY_AND_ACCOUNTING_DESIGN.md) and [KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md](KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md). Package ids: **I1–I6** (industrial, provisional), **K1** (knowledge, designs, artefacts, rights), **K2** (money and accounting; K2a Tier 2, K2b Tier 3).
+
+### 13.1 Rules (in addition to 12.1)
+- **Units, never prices.** Money and claim columns carry `unit_kind` (ware or money) and `unit_id` with an integer `amount`. No column stores a price the sim did not record. Reference values (`dim_ware.ref_value`, FE) are joined only in views, and every view that uses them names it (`*_fe`).
+- **Energy is its own unit** (`eu`), in its own tables. No energy column appears in a money table; the only path between them is `fact_meter_bill` → obligation → payment.
+- **Truth fields (Full only, †)** added by D6: `fact_artefact_copy.authorised`, `fact_infringement` (whole table), `fact_knowledge_transfer.trespass`, `fact_court_decision.true_infringement`, `fact_obligation.records_differ` (the org's record differs from the registry), `fact_payment.recorded_by_payer`/`_payee` (whether each side's recorder wrote it). No policy, manager or AI god reads them (W-D5-4 extended).
+- **Information layers.** Org book rows are truth (`info_layer` 1); the organisation's own financial records are `fact_record` rows (layer 4). Reports show both, never mixed (D5.28).
+- **Causality.** Every money, claim, knowledge and rights row carries `cause_kind_code`, `cause_ref` and `intervention_id` (12.1). New `dim_code 'cause_kind'` values: payment, billing act, assessment, ruling, licence grant, auction close, supply-agreement unload, research, teaching, reading, revelation.
+
+### 13.2 Recording levels
+Marks as 12.2. New `TelemetryDomain` names (numbers by the SAC Industry addendum): `industry`, `vehicle`, `energy`, `waste`, `environment`, `industrial_military` (I-packages, codes 1000–1099), `knowledge` 76, `rights` 77, `auction` 78, `money` 79 (K1, K2, codes 1100–1199). `record.domains` switches each alone.
+
+### 13.3 Planned tables
+
+**G. Money and claims (K2; migration `0038_money_claims.sql`, Tier 2)**
+
+| Table | Grain and persistent keys | Time | Level | Reconciles to | Pkg / Tier |
+|---|---|---|---|---|---|
+| `fact_payment` | one payment: `payment_id`, payer and payee parties, `unit_kind`, `unit_id`, amount agreed, amount paid, purpose, `obligation_id`, `deal_id`, ref (agreement, right, auction, request, contract), authoriser and receiver persons, node, status, opened and closed tick, `control_code` | accumulating | S | one row per `PaymentMade`/`PaymentFailed`/`PaymentAbandoned`; `amount_paid` = Σ `fact_payment_lot.count` | K2a / 2 |
+| `fact_payment_lot` | one lot movement of a commodity payment: `payment_id`, `lot_id`, ware, count, from and to holder, step | event | S (HV above 10 per payment) | = `ItemMoved` rows whose `PurposeRef` is the payment (MON-I2) | K2a / 2 |
+| `fact_journal_line` | one line of a double-entry posting for any party (orgs from `OrgBook` postings; persons and households derived): party, account class, unit, purpose, debit, credit, basis (cash, accrual), source (payment, obligation event) | event | S (persons: Summary aggregates by day, Full per line) | per party per unit Σ debit = Σ credit (BK-I1); per org equals `fact_org_book_day` deltas | K2a / 2 |
+| `fact_org_book_day` | one org × day × account class × unit × purpose: debit, credit, balance | day-end snapshot | D | equals the sim's `OrgBook` (exact) on the last day; Receivable and Payable equal open `fact_obligation` rows (MON-I3) | K2a / 2 |
+| `fact_unit_of_account_spell` | one spell per (org, unit of account) and per accepted unit | **H** | S | `UnitOfAccountChanged` | K2a / 2 |
+| `fact_obligation` | one formal obligation of any source (wage, loan, tax, fine, fee, bill, licence fee, royalty, auction price, supply, damages, deposit): `obligation_id`, debtor, creditor, unit, principal, settled, written off, due day, source, ref, status | accumulating (opened to closed) | S | open rows = the C2 registry; `principal − settled − written_off = outstanding`; `fact_loan` (C2, 0017) joins 1:1 for loans | K2a with C2 / 2 |
+| `fact_obligation_event` | one change: opened, adjusted, settled (part or whole, with `payment_id` or delivery `lot_id`), defaulted, written off, forfeited, assigned | event | S | Σ settled per obligation = linked payments + deliveries (MON-I8) | K2a with C2 / 2 |
+| `fact_claim_balance_day` | one unit × source × day: claims open, liabilities open, overdue | day-end | D | claims = liabilities exactly (MON-I3) | K2a / 2 |
+
+**H. Knowledge, designs and artefacts (K1; `0039_knowledge_designs.sql`, Tier 2)**
+
+| Table | Grain and keys | Time | Level | Reconciles to | Pkg / Tier |
+|---|---|---|---|---|---|
+| `dim_design` | one design envelope: `design_id`, key, kind, payload table and row, prerequisites, complexity, knowledge and skill minima; plus `first_known_tick`, `how`, `formalised_tick`, `lost_tick` (type 1 with accumulating columns) | type 1 | S | rows = content table; first-known = first `DesignDiscovered` or seed | K1 / 2 |
+| `fact_knowledge_spell` | one spell per (person, design, level band: heard of, understands, can build, can teach) | **H** | S | open spells at run end = `KnownDesign` entries (Full snapshot `fact_knowledge_snapshot`); no spell of a source closes or drops a band in the tick of a transfer it gave (KN-I1) | K1 / 2 |
+| `fact_knowledge_transfer` | one acquisition: learner, design, channel (seeded, practice, research, taught, observed, read, revealed), source person or artefact lot, level and fidelity before and after, `intervention_id`, † `trespass` | event | S (observation gains HV) | one row per `KnowledgeAcquired`; revealed rows join `fact_miracle_effect` | K1 / 2 |
+| `fact_design_discovery` | one first discovery of a design in the world, and later rediscoveries after loss | event | S | `DesignDiscovered`, `DesignLost` | K1 / 2 (3 for research) |
+| `dim_artefact` | one document: `lot_id`, design, fidelity, origin (written, copied, seeded), maker, source lot, made and closed tick | type 1 accumulating | S | live rows = `Document` holdings in C1 (AR-I1); closed = `Consumed` of the lot | K1 / 2 |
+| `fact_artefact_copy` | one write or copy act: maker, source lot, new lot, design, fidelity, materials, ticks, † `authorised` | event | S | `DesignFormalised`, `ArtefactCopied`; materials = `ConsumedBy(ProcessInput)` rows with this ref | K1 / 2 |
+| `fact_skill_spell` | one spell per (person, skill class, band) if K1 lands the skill slots (else C7's table) | **H** | S | `SkillChanged` | K1 or C7 / 2 |
+| `fact_research_project`, `fact_research_day` | project (sponsor, target, site, team, status); project × day (ticks, materials, progress) | accumulating; D | S | `ResearchProject*`, `ResearchProgress`; materials = `ConsumedBy(Research)` | K1 / 3 |
+
+**I. Rights and licences (K1; `0040_rights_licences.sql`, Tier 2)**
+
+| Table | Grain and keys | Time | Level | Reconciles to | Pkg / Tier |
+|---|---|---|---|---|---|
+| `dim_right` | one right: `right_id`, kind (patent, licence, open dedication, design title), design, jurisdiction org, office org, parent right, scope, exclusive, priority, granted, expires, deposit lot, terms, final status | type 1 accumulating | S | = `RightApplied` … `RightExpired` | K1 / 2 |
+| `fact_right_holder_spell` | one spell per (right, holder) | **H** | S | exactly one open spell per live right (RT-I1); `RightAssigned` closes and opens in one tick; **no `fact_ownership_spell`, `fact_knowledge_spell` or asset row changes in that tick because of it** (D6 test 6) | K1 / 2 |
+| `fact_licence` | one licence spell: licensor, licensee, parent, scope, exclusive, term, fee and royalty terms, fee `obligation_id` | **H** | S | within its parent's scope and term (RT-I2); exclusive spells never overlap (RT-I3) | K1 / 2 |
+| `fact_right_event` | one lifecycle event: applied, examined, granted, refused, assigned, licensed, renewed, lapsed, expired, challenged, revoked, surrendered, with the acting persons | event | S | one row per rights event | K1 / 2 |
+| `fact_patent_law_spell` | one spell per (government org, patent law version) | **H** | S | `LawAdopted`/`LawRepealed` (C10) of kind PatentLaw; no granted right outside a spell (RT-I4) | K1 with C10 / 2 |
+| `fact_infringement` † | one truth classification: user party, design, right, asset or production cycle, jurisdiction, tick; then (joined) perceived by whom, complaint id, case id, finding | event | F (truth) | = `UnauthorisedDesignUse`; perceived rows = `InfringementPerceived`; complaints = C9 `ComplaintMade` of kind infringement | K1 / 2 (case columns 3) |
+
+**J. Industrial tables (owned by the industrial documents; listed for one table of contents)**
+
+| Migration (owner) | Tables | Reconciles to (exact) |
+|---|---|---|
+| `0031_industry_production.sql` (I1) | `dim_deposit`, `fact_deposit_knowledge`, `fact_extraction`, `dim_facility`, `fact_production_order`, `fact_production_cycle` (with `licensed` flag and `design_id`), `fact_facility_day`, `fact_embodied_matter`; `fact_goods_ledger_day` extended to the 16 reasons | initial − Σ extracted = remaining per deposit; Σ extracted = `ProducedBy(Extracted)`; cycle inputs and outputs = `ProcessInput`/`Processed` per ware; Σ embodied = `ConsumedBy(Embodied)` net of releases |
+| `0032_vehicles.sql` (I2) | `dim_vehicle`, `fact_vehicle_ownership_spell` (H), `fact_vehicle_crew_spell` (H), `fact_vehicle_trip`, `fact_vehicle_day` (D), `fact_vehicle_event` | Σ unloaded = `ItemMoved(BinTransfer)` into destination bins; Σ fuel = `ConsumedBy(Combusted)` of tanks; every move row has a living driver |
+| `0033_industrial_trade.sql` (I3) | `fact_supply_agreement`, `fact_supply_delivery`, `fact_industrial_sale` | every delivery = one `OwnershipChanged` basis `SupplyAgreement` and one `fact_obligation` (source supply); Σ sales per seller = Σ `fact_payment` received for them, never more |
+| `0034_energy.sql` (I4) | `dim_station`, `dim_power_link`, `dim_grid_port`, `fact_grid_component_spell` (H), `fact_grid_interval`, `fact_station_interval`, `fact_power_delivery_day`, `fact_outage` (H), `fact_meter_bill`, `fact_energy_ledger_day` (D) | generated = delivered + curtailed + loss per component and interval (ELE-I1); station fuel = `ConsumedBy(Combusted)`; each bill ↔ one `fact_obligation` (source bill); paid = linked `fact_payment` |
+| `0035_military_industry.sql` (I5) | `fact_procurement`, `fact_military_asset_spell` (H), `fact_ammunition_day`, `fact_strategic_event`, `fact_strategic_effect` | procurement deliveries = `OwnershipChanged` to military orgs; ammunition = `ConsumedBy(Expended)`; procurement payments = `fact_payment` purpose sale |
+| `0036_waste_environment.sql` (I1, waste part) | `fact_waste_flow_day`, `fact_waste_site_day`, `fact_salvage`, `fact_pollution_day`, `fact_contamination_day`, `fact_environment_harm_day`, `fact_inspection` | flows = ledger by reason (WST-I1); site stocks = bin contents; pollution recomputes exactly (WST-I3); salvage ≤ embodied |
+| `0037_industry_kpi_views.sql` (I6) | `v_kpi_ind_*`, `v_kpi_veh_*`, `v_kpi_ele_*`, `v_kpi_wst_*`, `v_kpi_imil_*` | K2 parity (KPI §16) |
+
+**K. Monetary institutions and auctions (Tier 3)**
+
+| Table | Grain and keys | Time | Level | Reconciles to | Pkg / Tier |
+|---|---|---|---|---|---|
+| `dim_money` | one institutional money: `money_id`, issuer org, form, redeemable ware and rate, reserve rule, founded, status | type 1 | S | = `MoneyFounded` | K2b / 3 (`0042_monetary_institutions.sql`) |
+| `fact_money_issuance` | one issuance or destruction: money, mechanism (E1–E4, D1–D5), amount, account, counter-entry (loan obligation, reserve lot, expense purpose), officer | event | S | per money: Σ issued − Σ destroyed = Σ balances + notes outstanding (MON-I1) | K2b / 3 |
+| `fact_account_spell`, `fact_account_balance_day` | account (holder, issuer, money) open to closed; account × day balance | **H**; D | S; D | balances = the issuer's `Deposit` obligations | K2b / 3 |
+| `fact_auction` | one auction: auctioneer, seller, item kind and ref, format, unit, reserve, place, open and close, winner, price, `obligation_id`, status | accumulating | S | `AuctionAnnounced` … `AuctionSettled`/`Voided`; settled ⇒ one `fact_payment` purpose auction settlement and one transfer row (`fact_ownership_spell`, `fact_right_holder_spell`, `fact_licence` or asset title) **and no asset creation row** | K1 / 3 (`0043_auctions.sql`) |
+| `fact_auction_bid` | one bid as the auctioneer perceived it | event | HV | `BidMade` | K1 / 3 |
+
+### 13.4 Migration numbering by package (proposal for the SAC Industry addendum)
+The D5 numbers (0007–0030) are untouched. A migration references only lower numbers; a merged file is never edited.
+
+| Migration | Package | Tier | Contents |
+|---|---|---|---|
+| `0031_industry_production.sql` | I1 | 2 | deposits, extraction, facilities, orders, cycles, embodied matter, ledger reasons |
+| `0032_vehicles.sql` | I2 | 2 | vehicles, crews, trips, vehicle days and events |
+| `0033_industrial_trade.sql` | I3 | 2 | supply agreements, deliveries, industrial sales |
+| `0034_energy.sql` | I4 | 2 | stations, links, ports, components, intervals, deliveries, outages, bills, energy ledger |
+| `0035_military_industry.sql` | I5 | 2/3 | procurement, military assets, ammunition, strategic events |
+| `0036_waste_environment.sql` | I1 (waste part) | 2/3 | waste flows and sites, salvage, pollution, contamination, inspections |
+| `0037_industry_kpi_views.sql` | I6 (with Q1) | 2 | industrial KPI views |
+| `0038_money_claims.sql` | **K2a** | 2 | `fact_payment`, `fact_payment_lot`, `fact_journal_line`, `fact_org_book_day`, `fact_unit_of_account_spell`, `fact_obligation`, `fact_obligation_event`, `fact_claim_balance_day`; `dim_code` sets `payment_purpose`, `obligation_source`, `account_class` |
+| `0039_knowledge_designs.sql` | **K1** | 2 | `dim_design`, `fact_knowledge_spell`, `fact_knowledge_transfer`, `fact_design_discovery`, `dim_artefact`, `fact_artefact_copy`, `fact_skill_spell` (if K1 owns skills), research tables (empty until Tier 3) |
+| `0040_rights_licences.sql` | **K1** | 2 | `dim_right`, `fact_right_holder_spell`, `fact_licence`, `fact_right_event`, `fact_patent_law_spell`, `fact_infringement` |
+| `0041_knowledge_money_kpi_views.sql` | Q1 with K1, K2 | 2 | `v_kpi_knw_*`, `v_kpi_mon_*`, `v_ledger_nine_categories` (the 11.3 reconciliation of WORLD_ONTOLOGY as one view) |
+| `0042_monetary_institutions.sql` | **K2b** | 3 | `dim_money`, `fact_money_issuance`, `fact_account_spell`, `fact_account_balance_day` |
+| `0043_auctions.sql` | **K1** | 3 | `fact_auction`, `fact_auction_bid` |
+
+`0044`–`0049` stay free for D6 packages found late (the lead allocates).
+
+### 13.5 Events to add to the catalogue (3.7); codes by the SAC Industry addendum
+| Family | Events | Tables |
+|---|---|---|
+| Money | `PaymentMade`, `PaymentStep`, `PaymentFailed`, `PaymentAbandoned`, `OrgBookDay`, `UnitOfAccountChanged`, `MediumOfExchangeObserved` | G |
+| Claims (C2 with K2) | obligation opened, adjusted, settled, defaulted, written off, forfeited, assigned (C2 names; `LoanMade` etc. stay for loans) | G |
+| Knowledge | `DesignDiscovered`, `KnowledgeAcquired`, `KnowledgeForgotten`, `DesignFormalised`, `ArtefactCopied`, `ArtefactClosed`, `DesignLost`, `SkillChanged`, `ResearchProjectStarted`, `ResearchProgress`, `ResearchProjectEnded` | H |
+| Rights | `RightApplied`, `RightGranted`, `RightRefused`, `RightAssigned`, `LicenceGranted`, `LicenceEnded`, `RightRenewed`, `RightLapsed`, `RightExpired`, `RightChallenged`, `RightRevoked`, `RightSurrendered`, `UnauthorisedDesignUse` †, `InfringementPerceived`, `CompulsoryLicenceGranted`, `InjunctionOrdered` | I |
+| Monetary institutions | `MoneyFounded`, `MoneyIssued`, `MoneyDestroyed`, `AccountOpened`, `AccountClosed`, `AccountTransferred`, `DepositAccepted`, `WithdrawalPaid`, `NotesIssued`, `NotesRedeemed` | K |
+| Auctions | `AuctionAnnounced`, `BidMade`, `AuctionClosed`, `AuctionSettled`, `AuctionVoided` | K |
+| Industry, vehicles, energy, military, waste | as named in the industrial documents (codes 1000–1099) | J |
+
+### 13.6 Reconciliation rules (the nine categories; run by W-D6-1)
+1. **Matter:** per ware and day, start holdings + Σ produced − Σ consumed (16 reasons) = end holdings; extraction = deposit depletion; embodied in = embodied held + released; waste flows = ledger by reason.
+2. **Energy:** per component and interval, generated = delivered + curtailed + loss; station fuel burned matches generation by its rate; **no money or claim row is caused by an energy row** except through `fact_meter_bill`.
+3. **Money:** commodity payments equal their lot movements; per institutional money, issued − destroyed = balances + notes; **no `fact_payment` or `fact_money_issuance` row has a cause of kind extraction, production cycle, delivery, unload or generation**.
+4. **Claims:** per unit and day, claims = liabilities; outstanding = principal − settled − written off; settlement amounts = linked payments and deliveries.
+5. **Knowledge:** open knowledge spells = minds' entries (Full snapshot); every opening has a transfer or discovery row; a transfer never lowers its source.
+6. **Artefacts:** open `dim_artefact` rows = `Document` lots alive (C1 view); every new document has a write or copy row with materials consumed.
+7. **Rights:** one open holder spell per live right; licences within parents; no right outside a patent-law spell; an assignment tick shows no ownership, knowledge or asset change caused by it.
+8. **Productive assets:** every asset has a completed construction whose consumed materials equal its embodied matter; no asset row is caused by an auction, right, licence or knowledge event.
+9. **Organisations:** per org, book revenue and expense by purpose = its payments; Receivable/Payable = its open obligations; its holdings in each category = the category tables filtered by owner `Org(id)`.
+
+### 13.7 Acceptance hooks
+| # | Test | What must hold |
+|---|---|---|
+| W-D6-1 | `Reconciliation_NineCategories` | On a Full run of the industrial slice scenario (D6 VS1–VS10) and the D6.1–D6.9 fixtures, every rule of 13.6 holds exactly; `v_ledger_nine_categories` returns no violation row |
+| W-D6-2 | `Replay_ReRecord_Industry` | live Full record, Off run then `replay --record full`, and save-and-continue give identical warehouse content for every table of 13.3 and the same final hash (extends W-D5-2) |
+| W-D6-3 | `OrgCashIdentity` | BK-I3: per org, commodity unit and day, Δ lots owned = payments in − out + non-payment flows of that ware |
+| W-D6-4 | `NoMoneyFromIndustry` | joined over the run, no money or claim row has an industrial cause, and the money stock measures (MON-02) change only on payment, issuance or destruction rows |
+| W-D6-5 | `Recording_Neutral_D6` | Off, Summary, Full and each new domain alone give one hash (extends P7 and W-D5-3) |
+| W-D6-6 | `TruthFields_D6_OnlyAtFull` | the † columns of 13.1 are NULL below Full; reflection: no policy type references them (extends W-D5-4) |
+| W-D6-7 | `Migration_0031_To_0043` | fixtures at v(0030) migrate forward; the 13.6 view runs on each intermediate version with the tables that exist |
