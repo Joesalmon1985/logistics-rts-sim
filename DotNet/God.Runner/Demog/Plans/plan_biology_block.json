@@ -1,12 +1,42 @@
 {
-  "title": "F2 biology block and conception mode on demog_favourable (20 seeds, 15 years)",
+  "title": "F2 biology block and conception mode on demog_favourable (20 seeds, 15 years) (the M4 biology restored by the plan's base set: the demog_* scenarios now carry the F2 biology block)",
   "scenario": "demog_favourable",
   "years": 15,
   "seeds": "1-20",
   "arms": [
-    { "name": "base" },
-    { "name": "mode1", "set": [ "tuning.Households.Life.ConceptionMode=1" ] },
-    { "name": "block", "set": [ "tuning.Households.Life.ConceiveBasePermille=600", "tuning.Households.Life.ConceiveSpanPermille=300", "tuning.Households.Life.AfterBirthMilli=50", "tuning.Households.Life.FertileEndBaseMilli=2800" ] },
-    { "name": "block+mode1", "set": [ "tuning.Households.Life.ConceiveBasePermille=600", "tuning.Households.Life.ConceiveSpanPermille=300", "tuning.Households.Life.AfterBirthMilli=50", "tuning.Households.Life.FertileEndBaseMilli=2800", "tuning.Households.Life.ConceptionMode=1" ] }
+    {
+      "name": "base"
+    },
+    {
+      "name": "mode1",
+      "set": [
+        "tuning.Households.Life.ConceptionMode=1"
+      ]
+    },
+    {
+      "name": "block",
+      "set": [
+        "tuning.Households.Life.ConceiveBasePermille=600",
+        "tuning.Households.Life.ConceiveSpanPermille=300",
+        "tuning.Households.Life.AfterBirthMilli=50",
+        "tuning.Households.Life.FertileEndBaseMilli=2800"
+      ]
+    },
+    {
+      "name": "block+mode1",
+      "set": [
+        "tuning.Households.Life.ConceiveBasePermille=600",
+        "tuning.Households.Life.ConceiveSpanPermille=300",
+        "tuning.Households.Life.AfterBirthMilli=50",
+        "tuning.Households.Life.FertileEndBaseMilli=2800",
+        "tuning.Households.Life.ConceptionMode=1"
+      ]
+    }
+  ],
+  "set": [
+    "tuning.Households.Life.ConceiveBasePermille=350",
+    "tuning.Households.Life.ConceiveSpanPermille=300",
+    "tuning.Households.Life.AfterBirthMilli=100",
+    "tuning.Households.Life.FertileEndBaseMilli=2400"
   ]
 }

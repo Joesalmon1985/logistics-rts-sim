@@ -24,12 +24,21 @@ namespace God.Runner.Tests
             [("demog_favourable", 1)] = 0x55a810bf69f22ec1UL, [("demog_favourable", 2)] = 0x08e4eeae3e8ccbc2UL, [("demog_favourable", 3)] = 0xb27453be66bfd56fUL,
         };
 
+        /// <summary>The M4 defaults of the four values the F2 biology block changes in the demog_* scenarios.</summary>
+        public static readonly string[] OldBiology =
+        {
+            "tuning.Households.Life.ConceiveBasePermille=350", "tuning.Households.Life.ConceiveSpanPermille=300",
+            "tuning.Households.Life.AfterBirthMilli=100", "tuning.Households.Life.FertileEndBaseMilli=2400",
+        };
+
         [Test]
         public void ConceptionMode0_IsByteIdentical_F2_T1()
         {
             var keys = Base.Keys.ToList();
-            var specs = keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000))
-                .Concat(keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000, "tuning.Households.Life.ConceptionMode=0"))).ToList();
+            // demog_favourable now carries the F2 biology block; set back to the M4 defaults its tuning is the base's exactly
+            string[] Sets(string sc, params string[] more) => (sc == "demog_favourable" ? OldBiology : new string[0]).Concat(more).ToArray();
+            var specs = keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000, Sets(k.Item1)))
+                .Concat(keys.Select(k => TestUtil.Spec(k.Item1, k.Item2, 12000, Sets(k.Item1, "tuning.Households.Life.ConceptionMode=0")))).ToList();
             var res = TestUtil.RunAll(specs);
             for (int i = 0; i < res.Length; i++)
             {

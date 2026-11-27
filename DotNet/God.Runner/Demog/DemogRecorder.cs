@@ -22,6 +22,7 @@ namespace God.Runner.Demog
         public long MaturedTick = -1;
         // D4 preferences (read at the end) and what the person did (M4.40's paired comparison)
         public int ChildDesire = -1, Companionship = -1, Commitment = -1;
+        public long LastWantTick = -1;
         public int Tries, Wants, PartnershipsFormed, UnionsFormed, UnionsOutside, AdultDays, PartneredDays;
         // household store use (free-riding): food units it put in and took out
         public long Deposited, Withdrawn;
@@ -69,6 +70,10 @@ namespace God.Runner.Demog
         public long BothNoUnion;
         /// <summary>F2: of <see cref="BothNoUnion"/>, those where every union in the way was dormant (its other adult not trying in it, no pregnancy by it).</summary>
         public long BothNoUnionDormant;
+        /// <summary>F2: the "no possible father" checks split: single; partnered with women only and free to seek a child outside (every commitment below <see cref="Preferences.ExclusiveFrom"/>); partnered with women only and held by a commitment.</summary>
+        public long[] NoFather = new long[3];
+        /// <summary>F2: of the "no possible father" checks, those where she had shown that she wants a child within the last day.</summary>
+        public long NoFatherSought;
         // care
         public long CareTicks;
         public int UnionsFormed, UnionsOutsideFormed;
@@ -250,7 +255,7 @@ namespace God.Runner.Demog
                         if (Arrangements.TryGetValue(ae.Arrangement, out var arr)) { arr.Given = ae.Given; arr.Returned = ae.Returned; arr.EndedBy = ae.EndedBy; arr.Reason = ae.Reason; arr.EndedTick = ae.Tick; }
                         break;
                     case TryForChildChosen tc: if (People.TryGetValue(tc.Npc, out var tp)) tp.Tries++; break;
-                    case ChildWanted cw: if (People.TryGetValue(cw.Npc, out var wp)) wp.Wants++; break;
+                    case ChildWanted cw: if (People.TryGetValue(cw.Npc, out var wp)) { wp.Wants++; wp.LastWantTick = cw.Tick; } break;
                     case PartnershipFormed pf:
                         if (People.TryGetValue(pf.A, out var pa)) pa.PartnershipsFormed++;
                         if (People.TryGetValue(pf.B, out var pb)) pb.PartnershipsFormed++;
@@ -343,7 +348,14 @@ namespace God.Runner.Demog
                         var m = _s.Population.Find(o);
                         if (m?.Life != null && m.Alive && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
                     }
-                if (mate == null) { y.Checks[0]++; continue; }
+                if (mate == null)
+                {
+                    y.Checks[0]++;
+                    var ps = Partnerships.PartnersOf(_s, n.Id);
+                    y.NoFather[ps.Count == 0 ? 0 : Preferences.AllowsOutside(_s, n, 0) ? 1 : 2]++;
+                    if (People.TryGetValue(n.Id, out var dw) && dw.LastWantTick >= 0 && t - dw.LastWantTick <= tpd) y.NoFatherSought++;
+                    continue;
+                }
                 bool she = sheTries && l.TryWith == mate.Id;
                 bool he = mate.Life.TryWith == n.Id && mate.Life.TryingUntil >= t;
                 int k = she && he ? 4 : she ? 2 : he ? 3 : 1;
