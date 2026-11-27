@@ -231,7 +231,10 @@ namespace God.Runner.Tests
                 var settled = new HashSet<int>(x.Of<EstateSettled>().Select(e => e.Estate));
                 var openBins = new HashSet<int>(x.Of<EstateOpened>().Where(e => !settled.Contains(e.Estate)).Select(e => e.Bin));
                 var allInto = moves.Where(m => m.Reason == MoveReason.EstateIn).ToList();
-                var into = allInto.Where(m => !(m.ToKind == HolderKind.Bin && openBins.Contains(m.ToId))).Select(m => m.Lot).ToList();
+                // Checkpoint B: household goods the deceased carried enter the estate bin still owned by the household
+                // (Estates.Open, OwnerRule.Keep); they are not the deceased's property, so no EstateTransfer names them and a
+                // household member may take them back. Exposed when the R60 re-pin (ConceptionMode 1) changed ibs_families seed 1.
+                var into = allInto.Where(m => !(m.ToKind == HolderKind.Bin && openBins.Contains(m.ToId)) && m.OwnerAfterKind != OwnerKind.Household).Select(m => m.Lot).ToList();
                 int openLots = allInto.Count - into.Count;
                 var shares = moves.Where(m => m.Reason == MoveReason.EstateOut && m.ToKind == HolderKind.Bin).ToList();
                 var tr = x.Of<EstateTransfer>();
