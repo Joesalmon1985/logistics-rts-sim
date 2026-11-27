@@ -163,6 +163,8 @@ namespace God.Runner.Warehouse
         public int Seq => Event.Seq;
         public long RunKey => 1;
         public SimCalendar Calendar => _r.Calendar;
+        /// <summary>R63: a person-action row's <c>control_code</c> (0 own, 1 compelled, 2 possessed, 3 avatar); null in a game without Divinity.</summary>
+        public object ControlCode(byte control) => _r.DivinityOn ? (object)(long)control : null;
 
         /// <summary>The sim day of the event (day 0 first); a row for it is in <c>dim_date</c> once this has been called.</summary>
         public long DateKey() => _r.EnsureDate(_r.DayOf(Event.Tick));

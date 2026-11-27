@@ -32,6 +32,13 @@ namespace God.Sim.Divinity
             return m;
         }
 
+        /// <summary>R63: a person saw a divine sign; its mind holds <c>SituationKind.DivineSign</c> until <paramref name="until"/>.</summary>
+        internal static void SawSign(GodState s, Npc w, long until)
+        {
+            var m = MindOf(s, w);
+            if (m != null && until > m.SignUntil) m.SignUntil = until;
+        }
+
         /// <summary>Binds every divine mind to the game's tuning (after a load).</summary>
         internal static void BindTuning(GodState s)
         {
@@ -253,6 +260,7 @@ namespace God.Sim.Divinity
                 if (d > sight) continue;
                 if (!Messages.Attends(p, g, w, recipient, d, sight, s.Tuning.Comms.AttendPeople)) continue;
                 ev.Add(new DivineSignPerceived { Intervention = ins.Id, Witness = w.Id, Recipient = recipient.Id, Node = recipient.Node });
+                SawSign(s, w, s.Tick + s.Tuning.Divinity.Miracles.SignTicks); // R63: SituationKind.DivineSign in the witness mind
             }
         }
 
