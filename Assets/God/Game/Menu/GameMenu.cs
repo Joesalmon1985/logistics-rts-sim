@@ -115,7 +115,20 @@ namespace God.Game
         public bool HasTutorialTips => Boot.Tutorial != null && !Boot.Tutorial.Guide.Finished;
 
         /// <summary>Start card, Living island: a sandbox with a population on the seed in the field, you as Amber (M3).</summary>
-        public void StartLivingIsland() { ulong seed = ParsedSeed(); Close(); GodBootstrap.StartPopulation(seed, false); }
+        public void StartLivingIsland()
+        {
+            ulong seed = ParsedSeed(); Close();
+            if (LivingIslandGodOnly) GodBootstrap.StartGodOnly(seed, MythicChoice); else GodBootstrap.StartPopulation(seed, false);
+        }
+
+        /// <summary>
+        /// U2a: the one flag of the Checkpoint B flip: true makes the "Living island" button start the god-only game (the player is a god, never a
+        /// government); false keeps the stage 3 "you as Amber" sandbox. The lead may flip it in the re-pin commit.
+        /// </summary>
+        public static bool LivingIslandGodOnly = true;
+
+        /// <summary>U2a: the start card's Mythic mode for the god-only game (Normal, Unlimited, Disabled).</summary>
+        public God.Sim.Divinity.DivinityMode MythicChoice = God.Sim.Divinity.DivinityMode.Standard;
 
         /// <summary>Start card, Watch: six AIs on the seed in the field.</summary>
         public void StartWatch() => Begin(true);
@@ -223,7 +236,16 @@ namespace God.Game
             if (GUILayout.Button("Watch 6 AIs", st.Btn, GUILayout.Height(40f))) StartWatch();
             GUILayout.EndHorizontal();
             if (GUILayout.Button(new GUIContent("Tutorial", "A guided first game on a fixed island, for new players."), st.Btn, GUILayout.Height(30f))) StartTutorial();
-            if (GUILayout.Button(new GUIContent("Living island (people, sandbox)", "Stage 4 preview: 20 people per faction forage, build huts and learn from their own lives. Click a person to inspect them."), st.Btn, GUILayout.Height(30f))) StartLivingIsland();
+            if (GUILayout.Button(new GUIContent(LivingIslandGodOnly ? "Living island (you as a god)" : "Living island (people, sandbox)", "20 people per faction forage, build huts and learn from their own lives." + (LivingIslandGodOnly ? " You are a god: suggest, command, compel and work miracles." : " Click a person to inspect them.")), st.Btn, GUILayout.Height(30f))) StartLivingIsland();
+            if (LivingIslandGodOnly)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Mythic", st.Row, GUILayout.Width(60f));
+                var names = new[] { "Normal", "Unlimited", "Disabled" };
+                var modes = new[] { God.Sim.Divinity.DivinityMode.Standard, God.Sim.Divinity.DivinityMode.Unlimited, God.Sim.Divinity.DivinityMode.Disabled };
+                for (int i = 0; i < 3; i++) if (GUILayout.Button(names[i], MythicChoice == modes[i] ? st.BtnSel : st.Btn)) MythicChoice = modes[i];
+                GUILayout.EndHorizontal();
+            }
             if (GUILayout.Button("Load a game", st.Btn, GUILayout.Height(30f))) ShowLoadFromStart();
         }
 
