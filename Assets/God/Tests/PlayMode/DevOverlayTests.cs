@@ -57,8 +57,8 @@ namespace God.Game.Tests
             Assert.IsNotNull(GestureLayer.Current(speaker.Id), "the gesture is held for drawing");
             Assert.AreEqual(0, Labels(boot), "no gesture text with the overlay off");
             Assert.AreEqual(0, Lines(boot), "no addressee line with the overlay off");
-            var arm = boot.People.GetComponentsInChildren<Transform>(true).Where(t => t.name == "ArmR" && t.parent != null && t.parent.name == "Body").ToList();
-            Assert.IsTrue(arm.Any(a => Quaternion.Angle(a.localRotation, Quaternion.identity) > 90f), "the raised-arm animation still plays");
+            // the body animation (U3b vocabulary) is separate from the text: a cue is queued for the speaker even with the overlay off
+            Assert.IsTrue(PoseLayer.Cues.Any(c => c.Actor == speaker.Id), "the gesture is animated by the vocabulary");
 
             // captions only: a short text, still no line
             DevOverlays.Captions = true;

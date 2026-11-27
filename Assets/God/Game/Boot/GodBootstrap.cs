@@ -126,6 +126,8 @@ namespace God.Game
         public StandardLayer Standards { get; private set; }
         /// <summary>M3: the population drawn in the world (null without a population).</summary>
         public NpcLayer People { get; private set; }
+        /// <summary>U3b: the divine effects drawn from D2/D3 events (null without a population).</summary>
+        public DivineFxLayer DivineFx { get; private set; }
         /// <summary>Each faction's own knowledge view, built on demand (watch mode reads the inspected person's faction's records).</summary>
         private readonly System.Collections.Generic.Dictionary<Faction, FactionKnowledgeView> _views = new System.Collections.Generic.Dictionary<Faction, FactionKnowledgeView>();
         public FactionKnowledgeView ViewOf(Faction f)
@@ -225,7 +227,7 @@ namespace God.Game
             Economy = EconomyView.Create(Sim, transform);
             Military = MilitaryView.Create(Sim, transform);
             Standards = StandardLayer.Create(Sim, transform);
-            if (Sim.State.Population != null) People = NpcLayer.Create(Sim, transform);
+            if (Sim.State.Population != null) { People = NpcLayer.Create(Sim, transform); DivineFx = DivineFxLayer.Create(this, transform); } // U3b
             ReadRunArgs();
             SmokeRun.StartIfAsked(this);
             _saveExtras.Add(new ChainBotsSave(this));
