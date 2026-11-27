@@ -39,31 +39,33 @@ namespace God.Sim.Tests
         [Test]
         public void Command_PerceivedAndDecided()
         {
-            // food values and hunger instinct zeroed (a naive mind: no instincts, nothing learned), hunger 850, food in sight
+            // food values and hunger instinct zeroed (a naive mind: no instincts, nothing learned), hungry (700: band 2, not in pain), food in sight
             var naive = new List<CommandResponded>();
             for (ulong seed = 1; seed <= 100; seed++)
-                naive.Add(CommandOnce(seed, InstinctSet.None, 850, 800, 600, check: sc =>
+                naive.Add(CommandOnce(seed, InstinctSet.None, 700, 800, 600, check: sc =>
                 {
                     Assert.AreEqual(1, sc.Probe.Of<CommandPerceived>().Count, "one CommandPerceived");
                     Assert.AreEqual(1, sc.Probe.Of<CommandResponded>().Count, "one CommandResponded");
                 }));
             int followed = Count(naive, CommandResponse.Followed);
-            TestContext.Progress.WriteLine("DP1 naive (belief 800, trust 600): followed " + followed + "/100, refused " + Count(naive, CommandResponse.Refused));
+            TestContext.Progress.WriteLine("DP1 naive, hunger 700 (belief 800, trust 600): followed " + followed + "/100, refused " + Count(naive, CommandResponse.Refused));
             Assert.GreaterOrEqual(followed, 90, "follows in >= 90% of 100 seeds");
             Assert.IsTrue(naive.Where(r => r.Response == CommandResponse.Followed).All(r => r.Divine == 1440), "the decision carries the Divine term 3000 x 800 x 600 / 1e6");
 
-            // normal instincts, hunger in the pain band (850 >= BandPain 800), the brief's fixture: the term (1440) outweighs
-            // the hunger instinct (600) and this sim's small learned food values, so it still follows (reported, DEV_LOG)
-            var normal = new List<CommandResponded>();
-            for (ulong seed = 1; seed <= 100; seed++) normal.Add(CommandOnce(seed, InstinctSet.Default, 850, 800, 600));
-            TestContext.Progress.WriteLine("DP1 normal, pain band (belief 800, trust 600): followed " + Count(normal, CommandResponse.Followed) + " refused " + Count(normal, CommandResponse.Refused));
+            // normal values, hunger not in pain (700): the command still wins (reported)
+            var hungry = new List<CommandResponded>();
+            for (ulong seed = 1; seed <= 100; seed++) hungry.Add(CommandOnce(seed, InstinctSet.Default, 700, 800, 600));
+            TestContext.Progress.WriteLine("DP1 normal, hunger 700 (belief 800, trust 600): followed " + Count(hungry, CommandResponse.Followed) + " refused " + Count(hungry, CommandResponse.Refused));
+            Assert.GreaterOrEqual(Count(hungry, CommandResponse.Followed), 90, "a strong believer not in pain follows");
 
-            // a weaker believer (belief 300, trust 400: term 360) in the pain band: hunger wins in most seeds, by its own policy
-            var weak = new List<CommandResponded>();
-            for (ulong seed = 1; seed <= 100; seed++) weak.Add(CommandOnce(seed, InstinctSet.Default, 850, 300, 400));
-            int refused = Count(weak, CommandResponse.Refused);
-            TestContext.Progress.WriteLine("DP1 normal, pain band (belief 300, trust 400): refused " + refused + "/100, followed " + Count(weak, CommandResponse.Followed));
+            // normal values, hunger in the pain band (850 >= BandPain 800), the brief's strong believer: survival wins by its own policy
+            // (lead ruling: a command's term is capped below the pain-band instincts, Instruction.PainBandCap 300)
+            var pain = new List<CommandResponded>();
+            for (ulong seed = 1; seed <= 100; seed++) pain.Add(CommandOnce(seed, InstinctSet.Default, 850, 800, 600));
+            int refused = Count(pain, CommandResponse.Refused);
+            TestContext.Progress.WriteLine("DP1 normal, pain band 850 (belief 800, trust 600): refused " + refused + "/100, followed " + Count(pain, CommandResponse.Followed));
             Assert.GreaterOrEqual(refused, 60, "refuses in >= 60%");
+            Assert.IsTrue(pain.Where(r => r.Response == CommandResponse.Followed).All(r => r.Divine == 300), "the capped term");
         }
 
         // ---------------------------------------------------------------- D2-T2 (DP2)
@@ -94,14 +96,14 @@ namespace God.Sim.Tests
             int sf = 0, cf = 0;
             for (ulong seed = 1; seed <= 100; seed++)
             {
-                var s = CommandOnce(seed, InstinctSet.Default, 850, 500, 500, kind: InterventionKind.Suggestion);
-                var c = CommandOnce(seed, InstinctSet.Default, 850, 500, 500, kind: InterventionKind.Command);
+                var s = CommandOnce(seed, InstinctSet.Default, 700, 500, 500, kind: InterventionKind.Suggestion);
+                var c = CommandOnce(seed, InstinctSet.Default, 700, 500, 500, kind: InterventionKind.Command);
                 bool sFol = s != null && s.Response == CommandResponse.Followed, cFol = c != null && c.Response == CommandResponse.Followed;
                 if (sFol) sf++;
                 if (cFol) cf++;
                 Assert.IsFalse(sFol && !cFol, "seed " + seed + ": the suggestion was followed where the command was not");
             }
-            TestContext.Progress.WriteLine("DP3 belief/trust 500: suggestion followed " + sf + "/100, command " + cf + "/100");
+            TestContext.Progress.WriteLine("DP3 belief/trust 500, hunger 700: suggestion followed " + sf + "/100, command " + cf + "/100");
             Assert.Less(sf, cf, "a suggestion weighs less than a command");
         }
 

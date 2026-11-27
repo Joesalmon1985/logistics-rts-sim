@@ -79,12 +79,30 @@ namespace God.Sim.Divinity
             if (m == null || m.ReadTick != sc.Self.Tick || m.ReadCount == 0) return;
             var c = sc.Cand[cand];
             var tu = m.Tuning ?? (m.Tuning = new InstructionTuning()); // bound at delivery; a fixture-made mind gets the defaults
+            bool pain = InPain(sc);
             for (int k = 0; k < m.ReadCount; k++)
             {
                 var r = m.Read[k];
                 if (!r.Matches(c.Verb, c.Kind, c.TargetId, c.TargetNode)) continue;
-                term += Weight(m, tu, r.Kind, r.God);
+                int w = Weight(m, tu, r.Kind, r.God);
+                if (pain) w = System.Math.Min(w, PainCap(tu, r.Kind));
+                term += w;
             }
+        }
+
+        /// <summary>True while any drive of the mind's own body is in the pain band (its felt state, layer 6).</summary>
+        public static bool InPain(ThinkScratch sc)
+        {
+            for (int d = 0; d < Drive.Count; d++) if (Thinker.Band(sc.Tuning, d, Thinker.DriveValue(sc.Self, d)) >= 3) return true;
+            return false;
+        }
+
+        /// <summary>The cap of an instruction's positive term in the pain band (int.MaxValue when off).</summary>
+        public static int PainCap(InstructionTuning tu, InterventionKind kind)
+        {
+            if (tu.PainBandCap < 0) return int.MaxValue;
+            if (kind == InterventionKind.Command) return tu.PainBandCap;
+            return tu.AuthorityCommand <= 0 ? tu.PainBandCap : (int)((long)tu.PainBandCap * tu.AuthoritySuggestion / tu.AuthorityCommand);
         }
 
         /// <summary>The divine weight of an instruction of a kind from a god, by this mind's beliefs (vp, unclamped).</summary>

@@ -20,6 +20,13 @@ namespace God.Sim.Divinity
         /// <summary>The authority weight (vp at full belief and full trust or fear) of a suggestion and of a command (4.3.1).</summary>
         public int AuthoritySuggestion = 1500, AuthorityCommand = 3000;
         /// <summary>
+        /// Lead ruling on DP1 (owner D5: a command influences decisions but can be refused; only compulsion overrides survival):
+        /// while any of the recipient's drives is in the pain band, a command's positive term is capped at this (vp), below the
+        /// pain-band survival instincts (hunger's Eat 600); a suggestion's cap is scaled by AuthoritySuggestion / AuthorityCommand.
+        /// Negative terms (distrust) are not capped. -1: no cap.
+        /// </summary>
+        public int PainBandCap = 300;
+        /// <summary>
         /// The belief and trust a mind without a <c>GodBelief</c> for the sending god gives it (D6 replaces them by the mind's
         /// own beliefs; until D6 lands every mind uses these). Fear defaults to 0.
         /// </summary>
