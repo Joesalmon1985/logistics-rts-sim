@@ -34,6 +34,8 @@ namespace God.Runner.Tests
         public readonly List<(long tick, int actor, int bin, int storeHousehold, int actorHousehold, bool mayTake, int hut, bool ownerKept)> StoreTakes = new List<(long, int, int, int, int, bool, int, bool)>();
         /// <summary>Estate bins (bin -> deceased), from <c>EstateOpened</c> and the share bins seen at the tick.</summary>
         public readonly Dictionary<int, int> EstateBins = new Dictionary<int, int>();
+        /// <summary>Lots (ids) that spoiled anywhere (<c>Consumed</c>, Spoiled); the spoilage events themselves are not kept.</summary>
+        public readonly Dictionary<int, long> SpoiledLots = new Dictionary<int, long>(); // lot -> last spoilage tick
         public long PerceptionChecks, NotPerceived;
         public int TotalEvents;
 
@@ -98,6 +100,7 @@ namespace God.Runner.Tests
                         break;
                     }
                 }
+                if (e is Consumed rot && rot.Reason == ConsumeReason.Spoiled) SpoiledLots[rot.Lot] = rot.Tick;
                 if (Keep(e)) Kept.Add(e);
             }
         }
