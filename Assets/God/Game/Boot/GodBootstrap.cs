@@ -81,10 +81,12 @@ namespace God.Game
         /// <summary>U1a: accelerated mode steps as fast as a per-frame budget allows (see <see cref="ControlTuning"/>).</summary>
         public bool Accelerated;
         public float AchievedSpeed { get; private set; }
-        /// <summary>U1a stand-in: the god that holds the Human seat. F1a replaces it with the seat holder in the sim (contracts 2.1).</summary>
-        public static int StandInHumanGod = 1;
-        /// <summary>F1 (flagged edit for U1a's rebase point): the setup's <c>GameSetup.HumanGod</c> when set (D1 moves the seat into <c>GodRecord.Seat</c>), else the stand-in.</summary>
-        public int HumanGod => Sim != null && Sim.State.Setup != null && Sim.State.Setup.HumanGod != 0 ? Sim.State.Setup.HumanGod : StandInHumanGod;
+        /// <summary>
+        /// D1 (flagged edit, lead's instruction; contracts 2.1): the god holding the Human seat now, read from the sim
+        /// (<c>GodRecord.Seat</c>, moved by <c>SwitchGod</c>); before the registry exists, <c>GameSetup.HumanGod</c>. 0 = watch.
+        /// Replaces U1a's <c>StandInHumanGod</c>.
+        /// </summary>
+        public int HumanGod => Sim != null ? global::God.Sim.Divinity.Gods.HumanSeatHolder(Sim.State) : 0;
         /// <summary>Commands accepted and waiting for the next tick that runs.</summary>
         public int PendingCommandCount => Sim.PendingCommands.Count;
         /// <summary>Seed for the next scene load (set by the end cards); consumed by the next bootstrap.</summary>
