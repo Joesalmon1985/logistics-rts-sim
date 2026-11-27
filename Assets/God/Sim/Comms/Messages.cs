@@ -92,7 +92,7 @@ namespace God.Sim.Comms
             int n = 0;
             foreach (var l in p.Npcs)
             {
-                if (!l.Alive || l.Id == speaker.Id || l.Mind?.Social == null || l.Action.Asleep) continue;
+                if (!Population.Bodies.IsLivingPerson(l) || l.Id == speaker.Id || l.Mind?.Social == null || l.Action.Asleep) continue; // F1.8
                 int d = g.Distance(l.Node, speaker.Node);
                 if (d > sight) continue;
                 bool addressed = m.Target == l.Id;

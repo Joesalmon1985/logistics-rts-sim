@@ -236,7 +236,7 @@ namespace God.Sim.Population.Households
             int days = day - t.Life.OrphanSince;
             t.Life.OrphanSince = -1;
             t.Life.Fostered = true;
-            t.Life.ToldFostered = cal.AgeMilli(t.BornTick, s.Tick) >= s.Tuning.Households.Life.ForageFromMilli;
+            t.Life.ToldFostered = Bodies.AgeMilli(cal, t, s.Tick) >= s.Tuning.Households.Life.ForageFromMilli;
             foreach (int m in h.Members)
             {
                 var a = s.Population.Find(m);

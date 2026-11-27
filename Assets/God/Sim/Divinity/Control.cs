@@ -305,4 +305,134 @@ namespace God.Sim.Divinity
             if (e.Kind == ControlKind.Compelled && e.Started && done) End(s, ev, npc.Id, ControlEndReason.Completed);
         }
     }
+
+
+    /// <summary>
+    /// F1b (contracts 11.3): the movement-input model of <see cref="DivineControlInput"/>, part of the frozen control seam
+    /// (OWNER: F1). One model: a <c>Heading</c> input is an integer sector of the world frame (north = board +Z, clockwise)
+    /// valid for <c>Divinity.Control.LeaseTicks</c> ticks from the tick it applies; <c>MoveTo</c> and <c>Action</c> hold until
+    /// done or replaced; <c>Stop</c> or a lapsed lease halts the body at the end of its current edge. Each tick while the
+    /// lease holds, <see cref="ResolveMovement"/> (run by <c>DivinitySystem</c>, D1, before the population tick) picks among
+    /// the passable lattice neighbours of the body's node the one whose direction is nearest the sector's centre angle
+    /// (integer angle table, ties by the lower node id) as the body's <see cref="ControlEntry.MoveNode"/>. The camera, frame
+    /// rate and time scale never reach the sim.
+    /// </summary>
+    public static partial class Control
+    {
+        /// <summary>The bearing of each lattice direction (<c>NodeGrid.DI/DJ</c> order) in tenths of a degree, clockwise from north (+Z).</summary>
+        public static readonly ReadOnlyArray<int> DirectionAngle = new ReadOnlyArray<int>(0, 600, 1200, 1800, 2400, 3000);
+
+        public const int FullTurn = 3600;
+
+        /// <summary>True for a sector count the model accepts (4, 8, 16, 32 or 64).</summary>
+        public static bool ValidSectors(int sectors) => sectors == 4 || sectors == 8 || sectors == 16 || sectors == 32 || sectors == 64;
+
+        /// <summary>The centre bearing of a sector, in tenths of a degree.</summary>
+        public static int SectorAngle(int heading, int sectors) => heading * FullTurn / sectors;
+
+        /// <summary>
+        /// The passable lattice neighbour of <paramref name="node"/> nearest the sector's centre (ties: the lower node id), or -1
+        /// when no neighbour is land. Pure: the same input always gives the same node.
+        /// </summary>
+        public static int NextNode(NodeGrid g, int node, int heading, int sectors)
+        {
+            int want = SectorAngle(heading, sectors);
+            int best = -1, bestDiff = int.MaxValue;
+            for (int dir = 0; dir < 6; dir++)
+            {
+                int v = g.Neighbour(node, dir);
+                if (v < 0 || !g.IsLand(v)) continue;
+                int d = System.Math.Abs(DirectionAngle[dir] - want) % FullTurn;
+                if (d > FullTurn / 2) d = FullTurn - d;
+                if (d < bestDiff || d == bestDiff && v < best) { best = v; bestDiff = d; }
+            }
+            return best;
+        }
+
+        /// <summary>True while a Heading input still holds at <paramref name="tick"/>.</summary>
+        public static bool LeaseHolds(in ControlEntry e, long tick) => e.Input == ControlInputKind.Heading && e.Heading != ControlEntry.HeadingStop && tick <= e.LeaseUntil;
+
+        /// <summary>
+        /// Per tick, before the population tick (called by <c>DivinitySystem</c>, D1): for every possessed or avatar body with a
+        /// held Heading, the next node; a lapsed lease becomes a stop (MoveNode 0: the body finishes its edge and halts).
+        /// </summary>
+        public static void ResolveMovement(GodState s)
+        {
+            var t = TableOf(s);
+            if (t == null || t.Entries.Count == 0) return;
+            var g = s.Territory.Grid;
+            int sectors = s.Tuning.Divinity.Control.HeadingSectors;
+            for (int i = 0; i < t.Entries.Count; i++)
+            {
+                var e = t.Entries[i];
+                if (e.Kind != ControlKind.Possessed && e.Kind != ControlKind.AvatarBody || e.Input != ControlInputKind.Heading) continue;
+                var body = s.Population?.Find(e.Body);
+                if (body == null) continue;
+                if (LeaseHolds(in e, s.Tick)) e.MoveNode = System.Math.Max(0, NextNode(g, body.Node, e.Heading, sectors));
+                else { e.Input = ControlInputKind.Stop; e.Heading = ControlEntry.HeadingStop; e.MoveNode = 0; }
+                t.Entries[i] = e;
+            }
+        }
+    }
+
+    /// <summary>
+    /// F1b (contracts 11.3): validates and applies a <see cref="DivineControlInput"/> to the god's own spell over the body.
+    /// <b>Not registered by F1</b>: D4 (possession) and D5 (avatar) register it when their spells exist, so until then the
+    /// command is refused <c>disabled</c> like every F1 command. OWNER: F1 (frozen).
+    /// </summary>
+    public sealed class DivineControlInputHandler : CommandHandler<DivineControlInput>
+    {
+        protected override CommandResult Validate(GodState s, DivineControlInput c)
+        {
+            if (s.Divinity == null) return Reject(DivineReasons.DivinityOff);
+            var e = Control.EntryOf(s, c.Body);
+            if (e.Kind != ControlKind.Possessed && e.Kind != ControlKind.AvatarBody || e.God != c.God) return Reject(DivineReasons.BadTarget);
+            switch (c.Kind)
+            {
+                case ControlInputKind.Heading:
+                    int sectors = s.Tuning.Divinity.Control.HeadingSectors;
+                    if (!Control.ValidSectors(sectors) || c.Heading >= sectors) return Reject(DivineReasons.BadTarget);
+                    if (c.Gait < 1 || c.Gait > 2) return Reject(DivineReasons.BadTarget);
+                    return CommandResult.Accept();
+                case ControlInputKind.MoveTo:
+                    return s.Territory.Grid.IsLand(c.Node) ? CommandResult.Accept() : Reject(DivineReasons.BadTarget);
+                case ControlInputKind.Stop:
+                    return CommandResult.Accept();
+                case ControlInputKind.Action:
+                    return c.Act != DivineAct.None ? CommandResult.Accept() : Reject(DivineReasons.ActUnavailable);
+                default:
+                    return Reject(DivineReasons.BadTarget);
+            }
+        }
+
+        protected override CommandResult Apply(GodState s, DivineControlInput c, EventBuffer ev)
+        {
+            var r = Validate(s, c);
+            if (!r.Ok) return r;
+            var t = s.Divinity.Control;
+            int i = t.IndexOf(c.Body);
+            var e = t.Entries[i];
+            e.Input = c.Kind;
+            e.InputTick = s.Tick;
+            switch (c.Kind)
+            {
+                case ControlInputKind.Heading:
+                    e.Heading = c.Heading; e.Gait = c.Gait; e.LeaseUntil = s.Tick + s.Tuning.Divinity.Control.LeaseTicks - 1; e.MoveNode = 0;
+                    break;
+                case ControlInputKind.MoveTo:
+                    e.MoveNode = c.Node; e.LeaseUntil = 0; e.Heading = ControlEntry.HeadingStop;
+                    break;
+                case ControlInputKind.Stop:
+                    e.Heading = ControlEntry.HeadingStop; e.MoveNode = 0; e.LeaseUntil = 0;
+                    break;
+                case ControlInputKind.Action:
+                    e.Act = c.Act; e.Target = c.Target;
+                    break;
+            }
+            t.Entries[i] = e;
+            return CommandResult.Accept();
+        }
+
+        private static CommandResult Reject(string code) => CommandResult.Reject(code, DivineReasons.Sentence(code));
+    }
 }

@@ -147,7 +147,7 @@ namespace God.Sim.Population
             long day = cal.Day(s.Tick);
             if (!p.FoundersAnnounced)
             {
-                foreach (var n in p.Npcs) if (n.Founder) ev.Add(new NpcSpawned { Npc = n.Id, Faction = n.Faction, Node = n.Node, Founder = true });
+                foreach (var n in p.Npcs) if (n.Founder && Bodies.IsPerson(n)) ev.Add(new NpcSpawned { Npc = n.Id, Faction = n.Faction, Node = n.Node, Founder = true });
                 p.FoundersAnnounced = true;
             }
             Profiler?.Begin();
@@ -161,6 +161,8 @@ namespace God.Sim.Population
             {
                 var npc = p.Npcs[i];
                 if (!npc.Alive) continue;
+                // F1.8 (contracts 4.2): a non-person body (an avatar) runs only while a god controls it; Body() skips its drives
+                if (!Bodies.IsPerson(npc) && !PopulationExtensions.IsControlled(s, npc)) continue;
                 Body(s, npc, cal);
                 if (npc.Health <= 0) { Die(s, ev, npc, npc.DeathCause == DeathCause.None ? DeathCause.Starvation : npc.DeathCause); continue; }
                 Account(npc);
@@ -211,7 +213,7 @@ namespace God.Sim.Population
             var mode = m.Store.Mode;
             ev.Add(new NpcDay
             {
-                Npc = npc.Id, Faction = npc.Faction, Day = endedDay, AgeDays = (int)((s.Tick - npc.BornTick) / tpd), Node = npc.Node,
+                Npc = npc.Id, Faction = npc.Faction, Day = endedDay, AgeDays = (int)(Bodies.AgeTicks(npc, s.Tick) / tpd), Node = npc.Node,
                 Health = npc.HealthPermille, Nutrition = npc.NutritionPermille,
                 Hunger = npc.DriveOf(Drive.Hunger), Fatigue = npc.DriveOf(Drive.Fatigue), Cold = npc.DriveOf(Drive.Cold), Fear = npc.DriveOf(Drive.Fear), Pain = npc.DriveOf(Drive.Pain),
                 MeanHunger = Mean(Drive.Hunger), MeanFatigue = Mean(Drive.Fatigue), MeanCold = Mean(Drive.Cold), MeanFear = Mean(Drive.Fear), MeanPain = Mean(Drive.Pain),
@@ -235,7 +237,7 @@ namespace God.Sim.Population
             bool rowDue = p.DayDone >= 0; // no row before the first day
             p.DayDone = day;
             int tpd = SimCalendar.Of(s).TicksPerDay;
-            if (rowDue) foreach (var npc in p.Npcs) if (npc.Alive) PersonDay(s, ev, npc, day - 1, tpd);
+            if (rowDue) foreach (var npc in p.Npcs) if (Bodies.IsLivingPerson(npc)) PersonDay(s, ev, npc, day - 1, tpd);
             // spoiling (ECONOMY A3): carried and ground lots past their day are gone, one Consumed(Spoiled) each
             foreach (var npc in p.Npcs)
             {
@@ -293,6 +295,7 @@ namespace God.Sim.Population
 
         private void Body(GodState s, Npc npc, SimCalendar cal)
         {
+            if (!Bodies.IsPerson(npc)) return; // F1.8 (contracts 4.2): no hunger, fatigue, cold, ageing or illness for an avatar (D5)
             var tu = s.Tuning.Population;
             int tpd = cal.TicksPerDay;
             var a = npc.Action;
@@ -1064,7 +1067,7 @@ namespace God.Sim.Population
                 if (npc.Action.Verb == Verb.Build && npc.Action.TargetId == hut.Id) EndAction(npc);
             }
             hut.Contributors.Clear();
-            foreach (var npc in p.Npcs) if (npc.Alive && npc.SiteHut == hut.Id) npc.SiteHut = 0;
+            foreach (var npc in p.Npcs) if (Bodies.IsLivingPerson(npc) && npc.SiteHut == hut.Id) npc.SiteHut = 0;
             p.Stats.HutsBuilt++;
             p.IndexDirty = true;
             ev.Add(new HutBuilt { Hut = hut.Id, Faction = hut.Faction, Node = hut.Node, Rights = (int[])hut.Rights.Clone() });

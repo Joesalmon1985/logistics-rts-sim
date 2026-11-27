@@ -26,7 +26,7 @@ namespace God.Sim.Population.Households
             if (ft.Generator == 1) { foreach (var f in s.Setup.Factions) Established(s, f); return; }
             foreach (var npc in p.Npcs)
             {
-                if (!npc.Founder) continue;
+                if (!npc.Founder || !Bodies.IsPerson(npc)) continue;
                 var r = s.Rng.Fork("genome-founder", npc.Id);
                 var genome = GenomeOps.Founder(r, gt.FounderSpread);
                 byte sex = (byte)r.NextInt(2);
@@ -98,7 +98,7 @@ namespace God.Sim.Population.Households
             var women = new List<Npc>(); var men = new List<Npc>(); var children = new List<Npc>();
             foreach (var n in p.Npcs)
             {
-                if (!n.Founder || n.Faction != f || n.Life == null) continue;
+                if (!n.Founder || !Bodies.IsPerson(n) || n.Faction != f || n.Life == null) continue;
                 if (n.Stage == LifeStage.Child) children.Add(n);
                 else if (n.Life.Sex == 0) women.Add(n); else men.Add(n);
             }
@@ -191,7 +191,7 @@ namespace God.Sim.Population.Households
             var lt = s.Tuning.Households.Life;
             var map = LifeCycleSystem.MapOf(s);
             var members = new List<Npc>();
-            foreach (var n in p.Npcs) if (n.Founder && n.Faction == f) members.Add(n);
+            foreach (var n in p.Npcs) if (n.Founder && Bodies.IsPerson(n) && n.Faction == f) members.Add(n);
             if (members.Count == 0) return;
             var r = s.Rng.Fork("founder-band", (int)f);
             var order = new List<Npc>(members);
@@ -386,7 +386,7 @@ namespace God.Sim.Population.Households
             var seen = new HashSet<int>();
             foreach (var n in p.Npcs)
             {
-                if (!n.Alive || n.Faction != f) continue;
+                if (!Bodies.IsLivingPerson(n) || n.Faction != f) continue;
                 alive++;
                 foreach (var l in n.Carry) if (!l.Empty && Wares.IsFood(l.Ware)) food += l.Count;
                 if (n.Household != 0 && seen.Add(n.Household))

@@ -87,6 +87,9 @@ namespace God.Sim.Population
         /// </summary>
         public static void OverrideIntent(GodState s, Npc npc, ThinkScratch sc, ref Policy.NpcIntent intent, ref DecisionRecord why) => DivinityHooks.OverrideIntent(s, npc, sc, ref intent, ref why);
 
+        /// <summary>F1.8: true when a god controls the body now (an avatar body runs the tick only then).</summary>
+        public static bool IsControlled(GodState s, Npc npc) => s.Divinity != null && Control.Of(s, npc.Id) != ControlKind.Self;
+
         /// <summary>True when the body's policy must not run at this think (possessed or avatar: no policy draw). False by default.</summary>
         public static bool SkipsPolicy(GodState s, Npc npc) => DivinityHooks.SkipsPolicy(s, npc);
 

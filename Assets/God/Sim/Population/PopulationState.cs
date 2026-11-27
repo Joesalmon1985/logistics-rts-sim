@@ -315,8 +315,8 @@ namespace God.Sim.Population
         public Hut HutById(int id) { foreach (var h in Huts) if (h.Id == id) return h; return null; }
         public ResourceSource SourceById(int id) { foreach (var s in Sources) if (s.Id == id) return s; return null; }
 
-        public int AliveCount { get { int n = 0; foreach (var p in Npcs) if (p.Alive) n++; return n; } }
+        public int AliveCount { get { int n = 0; foreach (var p in Npcs) if (Bodies.IsLivingPerson(p)) n++; return n; } }
 
-        public int AliveOf(Faction f) { int n = 0; foreach (var p in Npcs) if (p.Alive && p.Faction == f) n++; return n; }
+        public int AliveOf(Faction f) { int n = 0; foreach (var p in Npcs) if (Bodies.IsLivingPerson(p) && p.Faction == f) n++; return n; }
     }
 }

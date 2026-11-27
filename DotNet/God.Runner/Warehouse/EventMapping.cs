@@ -119,6 +119,9 @@ namespace God.Runner.Warehouse
             PopulationMapping.Register(r);   // M3: person, death, person-day, personal goods, learning; F0: ownership
             HouseholdMappings.Register(r);   // M4 (F0.14 stub)
             SocialMappings.Register(r);      // M5 (F0.14 stub)
+            CivMappings.Register(r);         // F1.15: C1-C5, then C6-C10, then D1-D7 (stubs)
+            OrgMappings.Register(r);
+            DivinityMappings.Register(r);
             return r;
         }
     }
@@ -169,6 +172,15 @@ namespace God.Runner.Warehouse
 
         /// <summary>The <c>dim_person</c> row of a sim Npc id (created on first sight, so a recorder that starts late still has the person).</summary>
         public PersonDim Person(int npcId) => _r.PersonOf(npcId);
+
+        /// <summary>
+        /// F1.15: the <c>dim_god</c> key of a GodId (null for 0). The key is the GodId itself (one run per database, gods fixed at
+        /// start and never removed), so a mapper needs no lookup; D1 writes the dim_god rows.
+        /// </summary>
+        public long? God(int godId) => godId > 0 ? (long?)godId : null;
+
+        /// <summary>F1.15: the <c>dim_org</c> key of an OrgId (null for 0); the key is the OrgId (ids are never reused). C6 writes the rows.</summary>
+        public long? Org(int orgId) => orgId > 0 ? (long?)orgId : null;
 
         /// <summary>The <c>dim_faction</c> key of a sim faction id, or null for an id outside the game.</summary>
         public long? FactionKey(int factionId) => _r.FactionKeyOf(factionId);

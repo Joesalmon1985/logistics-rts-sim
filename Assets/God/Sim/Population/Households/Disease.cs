@@ -48,7 +48,7 @@ namespace God.Sim.Population.Households
             var g = s.Territory.Grid;
             foreach (var o in p.Npcs)
             {
-                if (!o.Alive || o.Id == npc.Id || o.Life == null || o.Life.Illness != 1) continue;
+                if (!Bodies.IsLivingPerson(o) || o.Id == npc.Id || o.Life == null || o.Life.Illness != 1) continue;
                 if (npc.HomeHut != 0 && o.HomeHut == npc.HomeHut) { contact += dt.ContactHutPerMillion; if (source == 0) source = o.Id; }
                 else if (g.Distance(o.Node, npc.Node) <= dt.NearNodes) { contact += dt.ContactNearPerMillion; if (source == 0) source = o.Id; }
             }

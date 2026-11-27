@@ -6,6 +6,15 @@ using God.Sim.Population;
 
 namespace God.Sim.Information
 {
+    /// <summary>
+    /// F1.14 (contracts 9): the nine knowledge layers of INFORMATION 12.1. Every inspector row and divine-view item carries
+    /// one, so the UI can say whose knowledge it shows.
+    /// </summary>
+    public enum KnowledgeLayer : byte
+    {
+        Truth = 1, Observed = 2, Communicated = 3, InstitutionRecord = 4, Published = 5, Belief = 6, FactionKnowledge = 7, DivineObservation = 8, Analytics = 9,
+    }
+
     /// <summary>One carried lot as the inspector shows it.</summary>
     public readonly struct CarriedItem
     {
@@ -74,6 +83,12 @@ namespace God.Sim.Information
         public HouseholdCard Household = new HouseholdCard();
         /// <summary>The relations tab (M5). Named Relations because <see cref="Social"/> is the score term.</summary>
         public SocialCard Relations = new SocialCard();
+        /// <summary>F1.14: the divine tab (D2 inbox, D6 beliefs and commandments); empty until they fill it.</summary>
+        public DivineCard Divine = new DivineCard();
+        /// <summary>F1.14: the organisations tab (C6); empty until C6 fills it.</summary>
+        public OrgCard Orgs = new OrgCard();
+        /// <summary>F1.14: the economy tab (C1 ownership, C2 obligations, C3 employment); empty until they fill it.</summary>
+        public CivCard Economy = new CivCard();
     }
 
     /// <summary>One weighed option of the last decision: words, and the score terms (Need is the need-driven part of Instinct).</summary>
@@ -129,7 +144,7 @@ namespace God.Sim.Information
         {
             var l = new List<int>();
             if (_s.Population == null) return l;
-            foreach (var n in _s.Population.Npcs) if (n.Alive && n.Faction == _me) l.Add(n.Id);
+            foreach (var n in _s.Population.Npcs) if (Bodies.IsLivingPerson(n) && n.Faction == _me) l.Add(n.Id);
             return l;
         }
 
@@ -140,7 +155,7 @@ namespace God.Sim.Information
         {
             var a = new int[Enum.GetValues(typeof(DeathCause)).Length];
             if (_s.Population == null) return a;
-            foreach (var n in _s.Population.Npcs) if (!n.Alive && n.Faction == _me) a[(int)n.DeathCause]++;
+            foreach (var n in _s.Population.Npcs) if (Bodies.IsPerson(n) && !n.Alive && n.Faction == _me) a[(int)n.DeathCause]++;
             return a;
         }
 
@@ -149,7 +164,7 @@ namespace God.Sim.Information
         {
             into.Clear();
             if (_s.Population == null) return;
-            foreach (var n in _s.Population.Npcs) if (n.Alive) into.Add(new NpcSighting(n.Id, n.Faction, n.Node, n.Action.Asleep, n.Action.Verb));
+            foreach (var n in _s.Population.Npcs) if (Bodies.IsLivingPerson(n)) into.Add(new NpcSighting(n.Id, n.Faction, n.Node, n.Action.Asleep, n.Action.Verb));
         }
 
         /// <summary>A person on the island as anyone can see them (null when unknown).</summary>
@@ -172,7 +187,7 @@ namespace God.Sim.Information
             var r = new NpcInspection
             {
                 Id = n.Id, Faction = n.Faction, Alive = n.Alive, DeathCause = n.DeathCause, Node = n.Node, Founder = n.Founder,
-                AgeMilli = cal.AgeMilli(n.BornTick, _s.Tick), Health = n.HealthPermille, Nutrition = n.NutritionPermille, Injury = n.Injury / 1000,
+                AgeMilli = Bodies.AgeMilli(cal, n, _s.Tick), Health = n.HealthPermille, Nutrition = n.NutritionPermille, Injury = n.Injury / 1000,
                 HomeHut = n.HomeHut, SiteHut = n.SiteHut, Asleep = n.Action.Asleep, InHut = n.Action.Asleep && n.Action.SleepHut != 0, Policy = n.Policy,
             };
             // founders arrive as adults (ages 1.0-2.4 from M4); until then the record counts from the scenario's start
@@ -181,6 +196,9 @@ namespace God.Sim.Information
             r.Stage = n.Stage;
             HouseholdCards.Fill(_s, n, r); // F0.15: M4's tab
             SocialCards.Fill(_s, n, r);    // F0.15: M5's tab
+            DivineCards.Fill(_s, n, r);    // F1.14: stubs until D2/D6, C6, C1 fill them
+            OrgCards.Fill(_s, n, r);
+            CivCards.Fill(_s, n, r);
             Array.Copy(n.Traits, r.Traits, Trait.Count);
             foreach (var l in n.Carry) if (!l.Empty) r.Carry.Add(new CarriedItem(l.Ware, l.Count, l.SpoilDay, l.Uses));
             if (n.Action.Verb != 0) r.Doing = n.Action.Asleep ? (n.Action.SleepHut != 0 ? "asleep in a hut" : "asleep in the open") : VerbTable.Name(n.Action.Verb) + TargetWords(n.Action.TargetKind, n.Mind?.Last.TargetClass ?? 0, n.Action.Verb);
@@ -281,7 +299,7 @@ namespace God.Sim.Information
         internal void AddTo(ref StateHasher h)
         {
             if (_s.Population == null) return;
-            foreach (var n in _s.Population.Npcs) if (n.Faction == _me) { h.Add(n.Id); h.Add(n.Alive ? 1 : 0); h.Add(n.Node); }
+            foreach (var n in _s.Population.Npcs) if (Bodies.IsPerson(n) && n.Faction == _me) { h.Add(n.Id); h.Add(n.Alive ? 1 : 0); h.Add(n.Node); }
         }
     }
 }

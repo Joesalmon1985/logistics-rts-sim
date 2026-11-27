@@ -25,6 +25,9 @@ namespace God.Sim.Population
         /// <summary>Biological age in ticks: calendar age minus the offset (0 for everyone until D7).</summary>
         public static long AgeTicks(Npc n, long tick) => tick - n.BornTick - n.BioAgeOffset;
 
+        /// <summary>Biological age in milli-years at the calendar's life scale: <c>cal.AgeMilli</c> of <see cref="AgeTicks"/> (M4 ageing uses this; neutral at offset 0).</summary>
+        public static long AgeMilli(SimCalendar cal, Npc n, long tick) => cal.AgeMilli(n.BornTick + n.BioAgeOffset, tick);
+
         /// <summary>
         /// Damage to a body: the divinity hooks first (D3 protection, D5 avatar bodies: an avatar is destroyed, never killed);
         /// otherwise a person takes the injury and loses that much health (micro), and dies at 0 (<c>Violence</c> for divine

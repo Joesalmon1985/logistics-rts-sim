@@ -192,7 +192,7 @@ namespace God.Sim.Population.Households
             int f = 1000;
             if (npc.Stage == LifeStage.Child)
             {
-                long age = SimCalendar.Of(s).AgeMilli(npc.BornTick, s.Tick);
+                long age = Bodies.AgeMilli(SimCalendar.Of(s), npc, s.Tick);
                 f = lt.ChildHungerPermille + (int)((1000 - lt.ChildHungerPermille) * Math.Min(1000, age) / 1000);
             }
             if (npc.Life.PregFather != 0) f = f * (1000 + lt.PregnantHungerPermille) / 1000;
@@ -208,7 +208,7 @@ namespace God.Sim.Population.Households
         {
             if (npc.Life == null || npc.Stage != LifeStage.Child) return 1000;
             var lt = s.Tuning.Households.Life;
-            long age = SimCalendar.Of(s).AgeMilli(npc.BornTick, s.Tick);
+            long age = Bodies.AgeMilli(SimCalendar.Of(s), npc, s.Tick);
             if (age < lt.ForageFromMilli) return 0;
             int span = Math.Max(1, 1000 - lt.ForageFromMilli);
             return lt.CompetenceStartPermille + (int)((1000 - lt.CompetenceStartPermille) * Math.Min(span, age - lt.ForageFromMilli) / span);
