@@ -84,6 +84,7 @@ namespace God.Runner
                 ["ticksPerSecond"] = Math.Round(tps, 1),
                 ["realTimeMultiple"] = Math.Round(tps / GodSim.TicksPerSecond, 1),
                 ["simYearsPerRealSecond"] = Math.Round(tps / ticksPerYear, 4),
+                ["simYearsPerRealMinute"] = Math.Round(tps * 60 / ticksPerYear, 3),
                 ["msPerTickMean"] = Math.Round(ms.Average(), 4),
                 ["msPerTickP50"] = Math.Round(Pct(ms, 0.50), 4),
                 ["msPerTickP99"] = Math.Round(Pct(ms, 0.99), 4),

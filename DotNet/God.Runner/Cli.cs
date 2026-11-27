@@ -21,7 +21,7 @@ namespace God.Runner
         private static readonly string[] Flags =
         {
             "quiet", "json", "no-out", "no-replay", "print-events", "check-smoke", "parallel", "save-mid", "record-matrix",
-            "processes", "strict", "update-baseline", "help", "sqlite", "no-index", "fk", "no-jsonl",
+            "processes", "strict", "csv", "kpi", "update-baseline", "help", "sqlite", "no-index", "fk", "no-jsonl",
         };
 
         private static readonly Dictionary<string, string> Later = new Dictionary<string, string>
@@ -48,6 +48,8 @@ commands:
   lab      game-theory lab list | run L1 [--seed N] | all --check [--seeds 1..5] | report DIR | hash L1 (M2) | invade | sweep
   demog    demographic report  report --scenario S --seeds 1-20 --years 15 [--set ..] [--arm ""name: k=v ...""].. [--plan FILE] [--out DIR]
   export   warehouse out  --from FILE|DIR [--to csv|parquet] --out DIR [--tables a,b]   (SQLite to CSV or a Parquet lake)
+  sql      read-only query --db FILE (--query TEXT | --file FILE) [--csv]   one SELECT over a warehouse; anything else is refused (exit 3)
+  kpi      fill fact_kpi   --db FILE   (also: run --sqlite --kpi)   KPI views to fact_kpi; a KPI without source is Missing, never 0
   learn-dump  one NPC's association store as JSON lines --scenario FILE|NAME --seed N --days D --npc ID|all [--out FILE]
                            or --from-save FILE --npc ID|all
   experiment, serve, dataset, verify-model: later milestones (exit code 9)
@@ -78,6 +80,8 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
                     case "replay": return ReplayCmd(a, output, error, cancel);
                     case "bench": return BenchCmd(a, output, error);
                     case "export": return ExportCmd(a, output, error);
+                    case "sql": return Sql.SqlCommand.Run(a, output, error);
+                    case "kpi": return KpiCmd(a, output);
                     case "learn-dump": return LearnDump.Run(a, output, error, cancel);
                     default: error.WriteLine("unknown command '" + cmd + "'\n\n" + Usage); return ExitCodes.Usage;
                 }
@@ -185,11 +189,22 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
                 spec.FromSave = SaveFile.FromJson(text);
                 spec.FromSavePath = from;
             }
+            bool kpi = a.Flag("kpi");
+            if (kpi && spec.Sqlite == null) throw new UsageException("--kpi fills the warehouse, so it needs --sqlite");
             a.CheckAllUsed(0);
             var r = RunEngine.Run(spec);
             if (r.Error != null && r.ExitCode == ExitCodes.InvalidInput) { error.WriteLine("invalid input: " + r.Error); return r.ExitCode; }
             PrintResult(r, output, json, sc);
+            if (kpi && r.WarehousePath != null && r.ExitCode == ExitCodes.Ok) Kpi.KpiEngine.Run(r.WarehousePath, json ? TextWriter.Null : output);
             return r.ExitCode;
+        }
+
+        private static int KpiCmd(Args a, TextWriter output)
+        {
+            string db = a.Str("db") ?? throw new UsageException("--db FILE is required");
+            a.CheckAllUsed(0);
+            if (!File.Exists(db)) throw new ScenarioException("no warehouse at " + db);
+            return Kpi.KpiEngine.Run(db, output);
         }
 
         // ---------------- batch ----------------
@@ -382,7 +397,7 @@ exit codes: 0 ok, 1 check failed, 2 usage, 3 invalid input, 4 divergence, 5 inva
             }
             var names = cases.Split(',');
             foreach (var n in names)
-                if (n != "bench_stage3_watch6" && !n.StartsWith("bench_npc_")) throw new UsageException("bench cases: bench_stage3_watch6, bench_npc_120, bench_npc_300, bench_npc_500, bench_npc_1000 (comma-separated)");
+                if (n != "bench_stage3_watch6" && !n.StartsWith("bench_npc_")) throw new UsageException("bench cases: bench_stage3_watch6, bench_npc_100, bench_npc_120, bench_npc_300, bench_npc_500, bench_npc_1000, bench_npc_2000 (comma-separated)");
             long ticks = a.Long("ticks", 0), parTicks = a.Long("parallel-ticks", 0);
             ulong seed = a.ULong("seed") ?? 1;
             string workers = a.Str("workers");
