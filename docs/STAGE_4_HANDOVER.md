@@ -1,5 +1,7 @@
 # Stage 4 handover (written 27 Nov 2026, updated the same day for the owner's answers)
 
+> **Note (27 Nov 2026): the current run is the Civilisation, Divinity and Industrialisation run (owner decisions D5 and D6).** The lead session is operated by [civdiv/CIVILISATION_AND_DIVINITY_RUNBOOK.md](civdiv/CIVILISATION_AND_DIVINITY_RUNBOOK.md) and started or continued with [civdiv/NEXT_SESSION_PROMPT.md](civdiv/NEXT_SESSION_PROMPT.md); the scope is in [civdiv/CIVILISATION_AND_DIVINITY_MASTER_PLAN.md](civdiv/CIVILISATION_AND_DIVINITY_MASTER_PLAN.md). Read the runbook first. This handover's **working rules (§8)** still apply; its "How to begin" (§9) and milestone plan (§6) are superseded by the runbook and the civdiv package index.
+
 This document gets a fresh Claude session from zero to implementing Stage 4 without this conversation. Read it fully, then follow "How to begin" at the end. **The running record of the implementation is [stage4/DEV_LOG.md](stage4/DEV_LOG.md)**: current milestone, commits, test results, benchmarks, decisions, temporary mechanisms and instructions for the next session. Read it straight after this file.
 
 ## 1. Where things are
