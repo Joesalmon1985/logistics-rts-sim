@@ -717,3 +717,12 @@ Owner decisions **D5** (player is a god only, and more) are recorded in [docs/ci
 3. Write `docs/civdiv/DEVELOPMENT_PACKAGES/` (one spec per package, in parallel), RELEASE_ACCEPTANCE_CHECKLIST.md (and the matching ACCEPTANCE_TESTS additions), CIVILISATION_AND_DIVINITY_RUNBOOK.md, CIVILISATION_AND_DIVINITY_MASTER_PLAN.md (including the open questions above) and NEXT_SESSION_PROMPT.md.
 4. A consistency review across all D5 documents (naming against SHARED_ARCHITECTURAL_CONTRACTS, tiers, package ids); add the superseded notice on INFORMATION_AND_MEDIA layer 7 / I1 text.
 5. Then the implementation run starts with F0 (merge `unity/ibs`, then `unity/demog`) and F1.
+
+## U3a record (branch unity/u3a)
+
+- New `DevOverlays` (Game/Hud): `DecodedMessages`, `Captions`, `GridOverlay`, all default off, session-only (not persisted yet), view-only.
+- Keys: F6 Decode overlay (developer games only: `-goddev` or `GodBootstrap.DeveloperMode`), F7 Captions (any game), F9 Grid overlay (developer games only). Buttons for the three sit beside the True state button in developer games.
+- `GestureLayer`: the raised-arm animation always plays; the label and the addressee line are created and shown only with Decode on; Captions shows a short plain caption (`GestureLayer.Caption`, observable fields only, no truth flag), never a line.
+- Grid hidden: Catan hexes (`HexDressingView`) were already only built with `-godhexlook`; the node lattice (`TerritoryView.ShowDebugOverlay`) and the producing-hex glow (`IslandView.Pulse` via `TerritoryView.PulseProducers`) now follow `GridOverlay`. `IslandView.Pulse` and `HexDressingView.Pulse` themselves are unchanged (existing tests call them directly). Sim untouched.
+- Tests: new `DevOverlayTests` (3 PlayMode: overlay off/captions/decode label and line, grid off by default and no pulse in 1200 ticks, hash equal over 600 ticks with all overlays on or off); `SocialViewTests` now turns Decode on.
+- Run: `dotnet build DotNet -c Release` 0 errors; check-game-compile 0 errors; PlayMode 82/82 passed (before the tooling merge from unity/poc, which changed no code); EditMode 484/484 passed.
