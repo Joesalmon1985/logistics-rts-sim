@@ -71,6 +71,27 @@ namespace God.Game
             }
         }
 
+        /// <summary>
+        /// Accessibility caption: plain words from the observable fields of the gesture only (what a watcher could have seen);
+        /// it carries no truth flag, so it never reveals a lie.
+        /// </summary>
+        public static string Caption(GestureMade g)
+        {
+            switch (g.Act)
+            {
+                case GestureAct.Offer:
+                    if (g.TopicKind != TopicKind.Ware) return "offers " + g.CounterSub + " " + Wares.Name((Ware)g.CounterId);
+                    return "offers " + g.CounterSub + " " + Wares.Name((Ware)g.CounterId) + " for " + g.Quantity + " " + Wares.Name((Ware)g.TopicId);
+                case GestureAct.NeedFood: return "asks for food";
+                case GestureAct.NeedHelp: return "asks for help";
+                case GestureAct.Cooperate: return "offers to work together";
+                case GestureAct.Warn: return "warns of danger";
+                case GestureAct.Accept: return "agrees";
+                case GestureAct.Refuse: return "refuses";
+                default: return g.Act.ToString().ToLowerInvariant();
+            }
+        }
+
         private static Color ColourOf(GestureAct a)
         {
             switch (a)
@@ -97,6 +118,17 @@ namespace God.Game
             if (sh.Since < 0) sh.Since = time;
             if (time - sh.Since > Show) { _bySpeaker.Remove(n.Id); return; }
             var col = ColourOf(sh.E.Act);
+            // the gesture: the right arm raised and swung a little (always; U3b replaces it with the vocabulary)
+            var arm = figure.Find("Body/ArmR");
+            if (arm != null) arm.localRotation = Quaternion.Euler(-150f + 20f * Mathf.Sin((time - sh.Since) * 6f), 0, 0);
+            // text and line only for the developer decode overlay (M5.18) or, text only, the captions option
+            bool decode = DevOverlays.DecodedMessages;
+            if (!decode && !DevOverlays.Captions)
+            {
+                if (label != null) label.gameObject.SetActive(false);
+                if (line != null) line.gameObject.SetActive(false);
+                return;
+            }
             // the message as text above the head (billboarded)
             if (label == null)
             {
@@ -111,13 +143,15 @@ namespace God.Game
             }
             label.gameObject.SetActive(true);
             var text = label.GetComponent<TextMesh>();
-            text.text = sh.Text; text.color = col;
+            text.text = decode ? sh.Text : Caption(sh.E); text.color = col;
             var cam = Camera.main;
             if (cam != null) label.rotation = Quaternion.LookRotation(label.position - cam.transform.position);
-            // the gesture: the right arm raised and swung a little
-            var arm = figure.Find("Body/ArmR");
-            if (arm != null) arm.localRotation = Quaternion.Euler(-150f + 20f * Mathf.Sin((time - sh.Since) * 6f), 0, 0);
-            // a line to the addressee
+            // a line to the addressee (developer overlay only)
+            if (!decode)
+            {
+                if (line != null) line.gameObject.SetActive(false);
+                return;
+            }
             var p = s.Population;
             var target = sh.E.Target != 0 ? p?.Find(sh.E.Target) : null;
             if (target == null || !target.Alive)

@@ -69,10 +69,32 @@ namespace God.Game
         private void HandleTrueStateKey()
         {
             if (Input.GetKeyDown(KeyCode.F8)) ToggleTrueState();
+            if (Input.GetKeyDown(KeyCode.F7)) DevOverlays.Captions = !DevOverlays.Captions;
+            if (Boot != null && Boot.DevPanelAllowed)
+            {
+                if (Input.GetKeyDown(KeyCode.F6)) DevOverlays.DecodedMessages = !DevOverlays.DecodedMessages;
+                if (Input.GetKeyDown(KeyCode.F9)) DevOverlays.GridOverlay = !DevOverlays.GridOverlay;
+            }
+        }
+
+        private void DrawDevToggles(HudStyle st, float vw, float vh, bool repaint)
+        {
+            if (Boot == null || !Boot.DevPanelAllowed) return;
+            float x = 112f;
+            var b = new Rect(x, vh - 40f, 104f, 26f);
+            if (GUI.Button(b, new GUIContent("Decode (F6)", "Developer: decoded message text and addressee line"), DevOverlays.DecodedMessages ? st.BtnSel : st.Btn)) DevOverlays.DecodedMessages = !DevOverlays.DecodedMessages;
+            if (repaint) _ui.Add(b);
+            b = new Rect(x + 108f, vh - 40f, 104f, 26f);
+            if (GUI.Button(b, new GUIContent("Captions (F7)", "Accessibility: short plain caption of a gesture"), DevOverlays.Captions ? st.BtnSel : st.Btn)) DevOverlays.Captions = !DevOverlays.Captions;
+            if (repaint) _ui.Add(b);
+            b = new Rect(x + 216f, vh - 40f, 104f, 26f);
+            if (GUI.Button(b, new GUIContent("Grid (F9)", "Developer: node lattice and producing-hex glow"), DevOverlays.GridOverlay ? st.BtnSel : st.Btn)) DevOverlays.GridOverlay = !DevOverlays.GridOverlay;
+            if (repaint) _ui.Add(b);
         }
 
         private void DrawTrueState(HudStyle st, float vw, float vh, bool repaint)
         {
+            DrawDevToggles(st, vw, vh, repaint);
             if (!TrueStateAvailable) return;
             var b = new Rect(14f, vh - 40f, 92f, 26f);
             if (GUI.Button(b, new GUIContent("True state", "Debug overlay (F8): what is really there, beside what your faction knows"), TrueStateShown ? st.BtnSel : st.Btn)) ToggleTrueState();
