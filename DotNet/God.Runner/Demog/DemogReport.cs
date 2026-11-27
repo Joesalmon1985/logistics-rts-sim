@@ -28,6 +28,10 @@ namespace God.Runner.Demog
         // over the run
         public long PersonDays, CareTicks, ChildFedUnits, FoodForaged, FoodEaten, FoodSpoiled, Regeneration, ForageTicks, WalkTicks;
         public long[] WomanDays = new long[DemogRecorder.WomanStatusNames.Length];
+        public long[] Checks = new long[DemogRecorder.CheckNames.Length];
+        public long ChecksNotBothNear, BothChanceSum, BothNoUnion, BothNoUnionDormant;
+        public long[] NoFather = new long[3];
+        public long NoFatherSought;
         public double MeanDependency, MeanHouseholdSize, MeanReachShare, MeanStockShare, MsyPerDay, EatenPerPersonDay, ForageYield, DensityPerHex;
         public int Unions, UnionsOutside, MaxFounderDeathShare30, MaxFounderDeathShare3;
         public int FounderDeaths;
@@ -85,6 +89,8 @@ namespace God.Runner.Demog
                 s.PersonDays += y.PersonDays; s.CareTicks += y.CareTicks; s.ChildFedUnits += y.ChildFedUnits; s.FoodForaged += y.FoodForaged; s.FoodEaten += y.FoodEaten;
                 s.FoodSpoiled += y.FoodSpoiled; s.Regeneration += y.Regeneration; s.ForageTicks += y.ForageTicks; s.WalkTicks += y.WalkTicks;
                 for (int k = 0; k < s.WomanDays.Length; k++) s.WomanDays[k] += y.WomanDays[k];
+                for (int k = 0; k < s.Checks.Length; k++) s.Checks[k] += y.Checks[k];
+                s.ChecksNotBothNear += y.ChecksNotBothNear; s.BothChanceSum += y.BothChanceSum; s.BothNoUnion += y.BothNoUnion; s.BothNoUnionDormant += y.BothNoUnionDormant; for (int k = 0; k < 3; k++) s.NoFather[k] += y.NoFather[k]; s.NoFatherSought += y.NoFatherSought;
                 s.Unions = Math.Max(s.Unions, y.Unions); s.UnionsOutside = Math.Max(s.UnionsOutside, y.UnionsOutsidePartnership);
             }
             s.MeanDependency = ys.Where(y => y.Adults > 0).Select(y => (double)(y.Children + y.Elders) / y.Adults).DefaultIfEmpty(double.NaN).Average();
@@ -216,6 +222,11 @@ namespace God.Runner.Demog
                 + $"founders who started as adults (left-censored) {arm.Sum(s => s.FounderLateWomen)} women, {F(Ratio(arm.Sum(s => s.FounderLateBirths), arm.Sum(s => s.FounderLateWomen)), 2)}");
             long wd = arm.Sum(s => s.WomanDays.Sum());
             t.AppendLine("   reproductive opportunity (fertile woman-days " + wd + "): " + string.Join(", ", DemogRecorder.WomanStatusNames.Select((nm, i) => nm + " " + F(Ratio(arm.Sum(s => s.WomanDays[i]) * 100.0, wd), 1) + "%")));
+            long ck = arm.Sum(s => s.Checks.Sum());
+            long both = arm.Sum(s => s.Checks[4] + s.Checks[5]);
+            long notBoth = arm.Sum(s => s.Checks[1] + s.Checks[2] + s.Checks[3]);
+            t.AppendLine("   conception checks of able women (" + ck + "): " + string.Join(", ", DemogRecorder.CheckNames.Select((nm, i) => nm + " " + F(Ratio(arm.Sum(s => s.Checks[i]) * 100.0, ck), 1) + "%"))
+                + "; mean chance when both try " + F(Ratio(arm.Sum(s => s.BothChanceSum) / 10.0, both), 1) + "%; both trying but no union could be formed " + F(Ratio(arm.Sum(s => s.BothNoUnion) * 100.0, both), 1) + "% (every union in the way dormant: " + F(Ratio(arm.Sum(s => s.BothNoUnionDormant) * 100.0, arm.Sum(s => s.BothNoUnion)), 1) + "%); no possible father: single " + F(Ratio(arm.Sum(s => s.NoFather[0]) * 100.0, arm.Sum(s => s.Checks[0])), 1) + "%, with women only and free to seek outside " + F(Ratio(arm.Sum(s => s.NoFather[1]) * 100.0, arm.Sum(s => s.Checks[0])), 1) + "%, with women only and held by a commitment " + F(Ratio(arm.Sum(s => s.NoFather[2]) * 100.0, arm.Sum(s => s.Checks[0])), 1) + "% (had shown she wants a child in the last day " + F(Ratio(arm.Sum(s => s.NoFatherSought) * 100.0, arm.Sum(s => s.Checks[0])), 1) + "%); possible father within " + DemogRecorder.NearNodes + " nodes when not both trying " + F(Ratio(arm.Sum(s => s.ChecksNotBothNear) * 100.0, notBoth), 1) + "%");
             t.AppendLine($"child mortality (died before 1.0 / outcome known) {MS(arm.Select(s => s.ChildMortality), 3)}; pooled {F(Ratio(arm.Sum(s => s.ChildDied), arm.Sum(s => s.ChildOutcomeKnown)), 3)} of {arm.Sum(s => s.ChildOutcomeKnown)}; reached adulthood {arm.Sum(s => s.ChildReachedAdult)}; censored {arm.Sum(s => s.ChildCensored)}; causes: "
                 + string.Join(", ", Enumerable.Range(1, 8).Where(i => arm.Sum(s => s.ChildDeathsByCause[i]) > 0).Select(i => Causes[i] + " " + arm.Sum(s => s.ChildDeathsByCause[i]))));
             // age-specific mortality (deaths per person-year), pooled

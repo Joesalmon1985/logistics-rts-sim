@@ -1,21 +1,118 @@
 {
-  "title": "M4.38 one-factor experiments against demog_balanced (default ecology, established band)",
-  "scenario": "demog_balanced",
+  "title": "M4.38 one-factor experiments against demog_f2_balanced (default ecology, established band, F2 biology block) with ConceptionMode 1 (F2 proposal) in every arm",
+  "scenario": "demog_f2_balanced",
   "years": 15,
   "seeds": "1-10",
   "arms": [
-    { "name": "baseline" },
-    { "name": "fertility-low", "set": [ "tuning.Households.Life.ConceiveBasePermille=200", "tuning.Households.Life.ConceiveSpanPermille=150" ] },
-    { "name": "fertility-high", "set": [ "tuning.Households.Life.ConceiveBasePermille=600", "tuning.Households.Life.ConceiveSpanPermille=300" ] },
-    { "name": "mortality-low", "set": [ "tuning.Households.Life.MaxAgeBaseMilli=4000" ] },
-    { "name": "mortality-high", "set": [ "tuning.Households.Life.MaxAgeBaseMilli=3000" ] },
-    { "name": "disease-off", "set": [ "setup.disease=off" ] },
-    { "name": "pairing-partners-only", "set": [ "tuning.Households.Partner.IndependentUnions=0" ] },
-    { "name": "pairing-desire-high", "set": [ "tuning.Households.Prefs.ChildDesireMean=800", "tuning.Households.Prefs.ChildDesireSpread=200" ] },
-    { "name": "founders-young-band", "set": [ "tuning.Households.Founders.Generator=0", "tuning.Households.Founders.ChildPermille=0", "tuning.Households.Founders.ElderPermille=0", "tuning.Households.Founders.AgeMaxMilli=2400", "tuning.Households.Founders.CouplePermille=0" ] },
-    { "name": "resources-rich", "set": [ "tuning.Ecology.BerriesPerForest=8", "tuning.Ecology.BerriesPerMeadow=6", "tuning.Ecology.RootsPerHills=6", "tuning.Ecology.RootsPerFields=6", "tuning.Ecology.FishPerCoast=3", "tuning.Ecology.BerryRegrowPermille=500", "tuning.Ecology.RootRegrowPermille=400" ] },
-    { "name": "resources-poor", "set": [ "tuning.Ecology.BerriesPerForest=3", "tuning.Ecology.BerriesPerMeadow=2", "tuning.Ecology.RootsPerHills=2", "tuning.Ecology.RootsPerFields=2", "tuning.Ecology.FishPerCoast=1", "tuning.Ecology.BerryRegrowPermille=300", "tuning.Ecology.RootRegrowPermille=200" ] },
-    { "name": "density-6x10", "set": [ "setup.startNpcsPerFaction=10" ] },
-    { "name": "density-6x40", "set": [ "setup.startNpcsPerFaction=40" ] }
+    {
+      "name": "baseline"
+    },
+    {
+      "name": "fertility-low",
+      "set": [
+        "tuning.Households.Life.ConceiveBasePermille=200",
+        "tuning.Households.Life.ConceiveSpanPermille=150"
+      ]
+    },
+    {
+      "name": "fertility-high",
+      "set": [
+        "tuning.Households.Life.ConceiveBasePermille=600",
+        "tuning.Households.Life.ConceiveSpanPermille=300"
+      ]
+    },
+    {
+      "name": "mortality-low",
+      "set": [
+        "tuning.Households.Life.MaxAgeBaseMilli=4000"
+      ]
+    },
+    {
+      "name": "mortality-high",
+      "set": [
+        "tuning.Households.Life.MaxAgeBaseMilli=3000"
+      ]
+    },
+    {
+      "name": "disease-off",
+      "set": [
+        "setup.disease=off"
+      ]
+    },
+    {
+      "name": "pairing-partners-only",
+      "set": [
+        "tuning.Households.Partner.IndependentUnions=0"
+      ]
+    },
+    {
+      "name": "pairing-desire-high",
+      "set": [
+        "tuning.Households.Prefs.ChildDesireMean=800",
+        "tuning.Households.Prefs.ChildDesireSpread=200"
+      ]
+    },
+    {
+      "name": "pairing-commitment-low",
+      "set": [
+        "tuning.Households.Prefs.CommitmentMean=200",
+        "tuning.Households.Prefs.CommitmentSpread=200"
+      ]
+    },
+    {
+      "name": "conception-mode0",
+      "set": [
+        "tuning.Households.Life.ConceptionMode=0"
+      ]
+    },
+    {
+      "name": "founders-young-band",
+      "set": [
+        "tuning.Households.Founders.Generator=0",
+        "tuning.Households.Founders.ChildPermille=0",
+        "tuning.Households.Founders.ElderPermille=0",
+        "tuning.Households.Founders.AgeMaxMilli=2400",
+        "tuning.Households.Founders.CouplePermille=0"
+      ]
+    },
+    {
+      "name": "resources-rich",
+      "set": [
+        "tuning.Ecology.BerriesPerForest=8",
+        "tuning.Ecology.BerriesPerMeadow=6",
+        "tuning.Ecology.RootsPerHills=6",
+        "tuning.Ecology.RootsPerFields=6",
+        "tuning.Ecology.FishPerCoast=3",
+        "tuning.Ecology.BerryRegrowPermille=500",
+        "tuning.Ecology.RootRegrowPermille=400"
+      ]
+    },
+    {
+      "name": "resources-poor",
+      "set": [
+        "tuning.Ecology.BerriesPerForest=3",
+        "tuning.Ecology.BerriesPerMeadow=2",
+        "tuning.Ecology.RootsPerHills=2",
+        "tuning.Ecology.RootsPerFields=2",
+        "tuning.Ecology.FishPerCoast=1",
+        "tuning.Ecology.BerryRegrowPermille=300",
+        "tuning.Ecology.RootRegrowPermille=200"
+      ]
+    },
+    {
+      "name": "density-6x10",
+      "set": [
+        "setup.startNpcsPerFaction=10"
+      ]
+    },
+    {
+      "name": "density-6x40",
+      "set": [
+        "setup.startNpcsPerFaction=40"
+      ]
+    }
+  ],
+  "set": [
+    "tuning.Households.Life.ConceptionMode=1"
   ]
 }
