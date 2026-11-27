@@ -712,6 +712,8 @@ Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX
 | Divine core | DIV-01..06, DIV-09, DIV-10, DIV-13 | D1..D3, Q1 | 1 |
 | Divine advanced | DIV-07, DIV-08, DIV-11, DIV-12 | D4 (D4a, D4b), D7, Q1 | 2 |
 
+**Implementation status (Q1, branch `unity/q1kpi`, migration `0026`, 27 Nov 2026).** Reference views and `fact_kpi` rows exist for POP-12, POP-13, HLT-10 (median, p10, share below 300, one code each) and LIV-07 (share short, median days); built from the tables of `0001`-`0007` only. POP-13 omits resurrections until `fact_resurrection` exists (D7); LIV-07 assumes one food unit per member-day (`meta_kpi_param`). Every other Tier 1 ID (POP-14, TIM-04, PRD-01, OWN-01, DIV-01..06, DIV-09, DIV-10, DIV-13, CMD-01, CMD-05) has a `dim_kpi` row and reports `Missing` (status 1, source absent) until its package merges; DIV-10 also needs a ware breakdown column in `fact_kpi`. No composite is computed.
+
 ### 15.9 Acceptance hooks
 | # | Test | Pass criterion |
 |---|---|---|

@@ -106,7 +106,7 @@ namespace God.Runner.Tests
             Assert.Greater(sim.State.Divinity.NextInterventionId, 5, "the scheduled god acted");
             using (var d = WarehouseDb.OpenRead(a.WarehousePath))
             {
-                Assert.AreEqual(8, d.SchemaVersion());
+                Assert.AreEqual(WarehouseDb.CurrentVersion, d.SchemaVersion());
                 long Ev(int code) => Convert.ToInt64(d.Scalar("SELECT COALESCE(SUM(events), 0) FROM fact_event_day WHERE event_code = " + code));
                 long Rows(string sql) => Convert.ToInt64(d.Scalar(sql));
                 Assert.AreEqual(6L, Rows("SELECT COUNT(*) FROM dim_god"));
