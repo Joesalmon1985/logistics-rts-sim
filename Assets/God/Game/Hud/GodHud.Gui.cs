@@ -76,8 +76,8 @@ namespace God.Game
             DrawStrip(st, vw, stripH, repaint);
             DrawArmy(st, stripH, repaint);
             DrawToastAndHelp(st, vw, vh, stripH, repaint);
-            DrawTutorialPointers(vw, vh, repaint);
-            if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); DrawPeople(st, vw, vh, stripH, repaint); }
+            if (!Boot.GodOnly) DrawTutorialPointers(vw, vh, repaint);
+            if (Outcome == GameOutcome.Playing) { if (!Boot.GodOnly) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); } DrawPeople(st, vw, vh, stripH, repaint); } // U2a: no faction cards or trade window in the god-only game
             else DrawEnd(st, vw, vh, repaint);
             DrawTrueState(st, vw, vh, repaint);
             DrawU1(st, vw, vh, stripH, repaint);
@@ -144,6 +144,12 @@ namespace God.Game
             if (Watching)
             {
                 GUI.enabled = HudOn;
+                if (Boot.GodOnly) // U2a: the clock only; the Mythic meter is a registered panel
+                {
+                    GUI.Label(new Rect(x, y + 12f, 190f, 24f), "God of the Island", _bold);
+                    DrawClock(st, x + 200f, y);
+                    return;
+                }
                 GUI.Label(new Rect(x, y + 12f, 190f, 24f), "Watching six AIs play", _bold);
                 x += 200f;
                 DrawWatchJumps(st, x, y, repaint);
@@ -245,6 +251,7 @@ namespace God.Game
 
         private void DrawArmy(HudStyle st, float stripH, bool repaint)
         {
+            if (Boot.GodOnly) return; // U2a: no army line or standings in the god-only game
             var c = new GUIContent(ArmyText());
             var size = _bold.CalcSize(c);
             var r = new Rect(14f, stripH + 2f, size.x + 30f, size.y + 12f);

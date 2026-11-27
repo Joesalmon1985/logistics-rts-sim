@@ -11,7 +11,11 @@ namespace God.Game
     {
         public readonly string Act;
         public readonly int Arg;
-        public DivineIntent(string act, int arg = 0) { Act = act; Arg = arg; }
+        /// <summary>U2a: a second argument (expiry ticks of an instruction, magnitude of a miracle, importance of a commandment).</summary>
+        public readonly int Arg2;
+        /// <summary>U2a: the rules of a commandment (a structured template, never text).</summary>
+        public readonly God.Sim.Divinity.CommandmentRule[] Rules;
+        public DivineIntent(string act, int arg = 0, int arg2 = 0, God.Sim.Divinity.CommandmentRule[] rules = null) { Act = act; Arg = arg; Arg2 = arg2; Rules = rules; }
     }
 
     /// <summary>
@@ -23,6 +27,12 @@ namespace God.Game
         public int God;
         public string Act;
         public int Arg;
+        /// <summary>U2a: see <see cref="DivineIntent.Arg2"/>.</summary>
+        public int Arg2;
+        /// <summary>U2a: commandment rules (RevealCommandment only).</summary>
+        public God.Sim.Divinity.CommandmentRule[] Rules;
+        /// <summary>U2a: what an Object scope id names (building or wild source).</summary>
+        public ObjectKind Object;
         public TargetScope Scope;
         /// <summary>Person and Group scopes only: the explicit hand-picked ids. Null for every other scope.</summary>
         public int[] Persons;
@@ -35,7 +45,8 @@ namespace God.Game
 
         public bool SameAs(DivineRequest o)
         {
-            if (o == null || God != o.God || Act != o.Act || Arg != o.Arg || Scope != o.Scope || Id != o.Id || !Area.Equals(o.Area) || Node != o.Node) return false;
+            if (o == null || God != o.God || Act != o.Act || Arg != o.Arg || Arg2 != o.Arg2 || Scope != o.Scope || Id != o.Id || !Area.Equals(o.Area) || Node != o.Node || Object != o.Object) return false;
+            if ((Rules == null ? 0 : Rules.Length) != (o.Rules == null ? 0 : o.Rules.Length)) return false;
             if ((Persons == null) != (o.Persons == null)) return false;
             if (Persons == null) return true;
             if (Persons.Length != o.Persons.Length) return false;
@@ -89,7 +100,7 @@ namespace God.Game
         public static DivineRequest Request(int god, DivineIntent intent, SelectionSnapshot sel)
         {
             if (sel == null) return null;
-            var r = new DivineRequest { God = god, Act = intent.Act, Arg = intent.Arg };
+            var r = new DivineRequest { God = god, Act = intent.Act, Arg = intent.Arg, Arg2 = intent.Arg2, Rules = intent.Rules };
             switch (sel.Kind)
             {
                 case SelectionKind.Person: r.Scope = TargetScope.Person; r.Persons = new[] { sel.Primary }; break;
@@ -98,7 +109,7 @@ namespace God.Game
                 case SelectionKind.Institution: r.Scope = TargetScope.Institution; r.Id = sel.Primary; break;
                 case SelectionKind.Area: r.Scope = TargetScope.Area; r.Area = sel.Area; break;
                 case SelectionKind.Location: r.Scope = TargetScope.Location; r.Node = sel.Node; break;
-                case SelectionKind.Object: r.Scope = TargetScope.Object; r.Id = sel.Primary; break;
+                case SelectionKind.Object: r.Scope = TargetScope.Object; r.Id = sel.Primary; r.Object = sel.ObjectKind; break;
                 default: return null;
             }
             return r;
@@ -125,6 +136,39 @@ namespace God.Game
             var c = Factory.Create(r);
             if (c == null) return new IssueResult(r, null, CommandResult.Reject(Reasons.Disabled, "That action is not available."), false);
             return Send(r, c);
+        }
+
+        /// <summary>
+        /// U2a: a group request (the hand-picked list) becomes one individual request per person in ascending id (the commands carry
+        /// one target each; the list never enters a command). Every other scope is returned as it is. At most <paramref name="max"/> people.
+        /// </summary>
+        public static System.Collections.Generic.List<DivineRequest> Expand(DivineRequest r, int max = 32)
+        {
+            var l = new System.Collections.Generic.List<DivineRequest>();
+            if (r == null) return l;
+            if (r.Scope != TargetScope.Group || r.Persons == null) { l.Add(r); return l; }
+            for (int i = 0; i < r.Persons.Length && i < max; i++)
+                l.Add(new DivineRequest { God = r.God, Act = r.Act, Arg = r.Arg, Arg2 = r.Arg2, Rules = r.Rules, Scope = TargetScope.Person, Persons = new[] { r.Persons[i] }, Node = -1 });
+            return l;
+        }
+
+        /// <summary>U2a: builds, checks and submits a request that is already made (the popover, the tray and the mode buttons). A refusal comes back with its reason.</summary>
+        public IssueResult Issue(DivineRequest r)
+        {
+            if (r == null) return new IssueResult(null, null, CommandResult.Reject("no_selection", "Select someone or somewhere first."), false);
+            if (Factory == null) return new IssueResult(r, null, CommandResult.Reject(Reasons.Disabled, "That action is not available."), false);
+            var c = Factory.Create(r);
+            if (c == null) return new IssueResult(r, null, CommandResult.Reject(Reasons.Disabled, "That action is not available."), false);
+            return Send(r, c);
+        }
+
+        /// <summary>U2a: what the gate says about a request now, without sending (the ghost, the greyed buttons). Null command: not available.</summary>
+        public CommandResult Check(DivineRequest r)
+        {
+            if (r == null) return CommandResult.Reject("no_selection", "Select someone or somewhere first.");
+            var c = Factory?.Create(r);
+            if (c == null) return CommandResult.Reject(Reasons.Disabled, "That action is not available.");
+            return _gate.Check(c);
         }
 
         /// <summary>Checks a command already built (for example kept from before a SwitchGod) and submits it only when the gate accepts.</summary>

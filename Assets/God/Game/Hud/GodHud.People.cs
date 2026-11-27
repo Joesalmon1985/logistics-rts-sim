@@ -52,6 +52,7 @@ namespace God.Game
         /// <summary>The view that has a card for this person: the viewer's own, or in watch mode the person's own faction's records.</summary>
         private NpcInspection InspectionOf(int id)
         {
+            if (Boot.GodOnly && Boot.Divine != null) return DivineInspectionOf(id); // U2a: a card for anyone, from the divine view
             var seen = View.Population.See(id);
             if (seen == null) return null;
             var card = View.Population.Inspect(id);
