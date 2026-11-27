@@ -30,9 +30,9 @@ namespace God.Sim.Tests
             for (int i = 0; i < CommandmentTemplates.All.Count; i++)
             {
                 var t = CommandmentTemplates.All[i];
-                Assert.IsNull(CommandmentRules.Validate(t.Rules, t.Importance, t.Id), t.Name);
+                Assert.IsNull(CommandmentRules.Validate(CommandmentTemplates.RulesOf(t.Id), t.Importance, t.Id), t.Name);
             }
-            Assert.AreNotSame(CommandmentTemplates.RulesOf(1), CommandmentTemplates.Get(1).Rules, "commands carry their own copy");
+            Assert.AreNotSame(CommandmentTemplates.RulesOf(1), CommandmentTemplates.RulesOf(1), "commands carry their own copy");
         }
 
         [Test]

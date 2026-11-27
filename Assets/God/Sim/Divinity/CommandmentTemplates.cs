@@ -2,16 +2,42 @@ using God.Sim.Learning;
 
 namespace God.Sim.Divinity
 {
-    /// <summary>One row of <see cref="CommandmentTemplates"/>: id (T-number), name for the picker, its rules, default importance, and whether every verb and condition it uses exists on this branch.</summary>
+    /// <summary>One row of <see cref="CommandmentTemplates"/>: id (T-number), name for the picker, its rules, default importance, and whether every verb and condition it uses exists on this branch. Immutable.</summary>
+    /// <summary>An immutable template rule (the static table holds these; commands carry <see cref="CommandmentRule"/> copies).</summary>
+    public readonly struct TemplateRule
+    {
+        public readonly Modality Modality;
+        public readonly byte LearningVerb, ObjClass;
+        public readonly Ware Ware;
+        public readonly ApplySelector Applies;
+        public readonly ConditionKind Condition;
+        public readonly int ConditionParam;
+
+        public TemplateRule(Modality m, byte verb, byte cls, Ware ware, ApplySelector who, ConditionKind when, int param)
+        {
+            Modality = m; LearningVerb = verb; ObjClass = cls; Ware = ware; Applies = who; Condition = when; ConditionParam = param;
+        }
+
+        public CommandmentRule ToRule() => new CommandmentRule
+        {
+            Modality = Modality, LearningVerb = LearningVerb, ObjClass = ObjClass, Ware = Ware, Applies = Applies, Condition = Condition, ConditionParam = ConditionParam,
+        };
+    }
+
     public sealed class CommandmentTemplate
     {
-        public int Id;
-        public string Name;
-        public CommandmentRule[] Rules;
-        public int Importance;
+        public readonly int Id;
+        public readonly string Name;
+        public readonly ReadOnlyArray<TemplateRule> Rules;
+        public readonly int Importance;
         /// <summary>1 Tier 1 (works now), 2 Tier 2, 0 data only: matches nothing until <see cref="WaitsFor"/> lands.</summary>
-        public int Tier;
-        public string WaitsFor;
+        public readonly int Tier;
+        public readonly string WaitsFor;
+
+        public CommandmentTemplate(int id, string name, int tier, int importance, string waitsFor, params TemplateRule[] rules)
+        {
+            Id = id; Name = name; Tier = tier; Importance = importance; WaitsFor = waitsFor; Rules = new ReadOnlyArray<TemplateRule>(rules);
+        }
     }
 
     /// <summary>
@@ -25,38 +51,38 @@ namespace God.Sim.Divinity
     {
         public const byte Feed = 32, Tend = 38, Give = 48, HandOver = 49, SayCooperate = 71, SayWarn = 74, SayForgive = 79, Teach = 108;
 
-        private static CommandmentRule R(Modality m, byte verb, ApplySelector who, ConditionKind when, ConditionKind also = ConditionKind.Always, byte cls = 0, Ware ware = Ware.None) =>
-            new CommandmentRule { Modality = m, LearningVerb = verb, Applies = who, Condition = when, ConditionParam = (int)also, ObjClass = cls, Ware = ware };
+        private static TemplateRule R(Modality m, byte verb, ApplySelector who, ConditionKind when, ConditionKind also = ConditionKind.Always, byte cls = 0, Ware ware = Ware.None) =>
+            new TemplateRule(m, verb, cls, ware, who, when, (int)also);
 
         public static readonly ReadOnlyArray<CommandmentTemplate> All = new ReadOnlyArray<CommandmentTemplate>(
-            new CommandmentTemplate { Id = 1, Name = "Share surplus food with hungry children", Tier = 1, Importance = 3, Rules = new[] {
+            new CommandmentTemplate(1, "Share surplus food with hungry children", 1, 3, null,
                 R(Modality.Encouraged, Feed, ApplySelector.Adults, ConditionKind.TargetBegging),
-                R(Modality.Encouraged, Give, ApplySelector.Adults, ConditionKind.TargetIsChild, ConditionKind.CarryingFood) } },
-            new CommandmentTemplate { Id = 2, Name = "Do not steal", Tier = 0, Importance = 4, WaitsFor = "C1 (unpermitted takes)", Rules = new[] {
+                R(Modality.Encouraged, Give, ApplySelector.Adults, ConditionKind.TargetIsChild, ConditionKind.CarryingFood)),
+            new CommandmentTemplate(2, "Do not steal", 0, 4, "C1 (unpermitted takes)",
                 R(Modality.Prohibited, Verb.PickUp, ApplySelector.Everyone, ConditionKind.NotPermitted),
-                R(Modality.Prohibited, Verb.TakeFromStore, ApplySelector.Everyone, ConditionKind.NotPermitted) } },
-            new CommandmentTemplate { Id = 3, Name = "Honour agreements", Tier = 1, Importance = 3, Rules = new[] {
-                R(Modality.Required, HandOver, ApplySelector.Everyone, ConditionKind.IOwe) } },
-            new CommandmentTemplate { Id = 4, Name = "Protect forests", Tier = 1, Importance = 3, Rules = new[] {
-                R(Modality.Prohibited, Verb.Gather, ApplySelector.Everyone, ConditionKind.StockLow, cls: (byte)ObjClass.WoodStand) } },
-            new CommandmentTemplate { Id = 5, Name = "Teach children", Tier = 0, Importance = 2, WaitsFor = "C7 (Teach)", Rules = new[] {
-                R(Modality.Encouraged, Teach, ApplySelector.Adults, ConditionKind.TargetIsChild) } },
-            new CommandmentTemplate { Id = 6, Name = "Assist strangers", Tier = 1, Importance = 3, Rules = new[] {
+                R(Modality.Prohibited, Verb.TakeFromStore, ApplySelector.Everyone, ConditionKind.NotPermitted)),
+            new CommandmentTemplate(3, "Honour agreements", 1, 3, null,
+                R(Modality.Required, HandOver, ApplySelector.Everyone, ConditionKind.IOwe)),
+            new CommandmentTemplate(4, "Protect forests", 1, 3, null,
+                R(Modality.Prohibited, Verb.Gather, ApplySelector.Everyone, ConditionKind.StockLow, cls: (byte)ObjClass.WoodStand)),
+            new CommandmentTemplate(5, "Teach children", 0, 2, "C7 (Teach)",
+                R(Modality.Encouraged, Teach, ApplySelector.Adults, ConditionKind.TargetIsChild)),
+            new CommandmentTemplate(6, "Assist strangers", 1, 3, null,
                 R(Modality.Encouraged, Give, ApplySelector.Everyone, ConditionKind.TargetIsStranger),
-                R(Modality.Encouraged, SayCooperate, ApplySelector.Everyone, ConditionKind.TargetIsStranger) } },
-            new CommandmentTemplate { Id = 7, Name = "Care for elderly people", Tier = 1, Importance = 3, Rules = new[] {
+                R(Modality.Encouraged, SayCooperate, ApplySelector.Everyone, ConditionKind.TargetIsStranger)),
+            new CommandmentTemplate(7, "Care for elderly people", 1, 3, null,
                 R(Modality.Encouraged, Tend, ApplySelector.Adults, ConditionKind.TargetIsElder),
-                R(Modality.Encouraged, Feed, ApplySelector.Adults, ConditionKind.TargetIsElder) } },
-            new CommandmentTemplate { Id = 8, Name = "Forgive those who repent", Tier = 0, Importance = 2, WaitsFor = "C2 (M7 apologies)", Rules = new[] {
-                R(Modality.Encouraged, SayForgive, ApplySelector.Everyone, ConditionKind.TargetApologised) } },
-            new CommandmentTemplate { Id = 9, Name = "Protect communal property", Tier = 0, Importance = 3, WaitsFor = "C1, C8 (communal stores)", Rules = new[] {
-                R(Modality.Prohibited, Verb.TakeFromStore, ApplySelector.Everyone, ConditionKind.NotPermitted) } },
-            new CommandmentTemplate { Id = 10, Name = "Contribute to public services", Tier = 0, Importance = 2, WaitsFor = "C8 (public stores)", Rules = new[] {
-                R(Modality.Encouraged, Verb.Store, ApplySelector.Adults, ConditionKind.HouseholdSurplus) } },
-            new CommandmentTemplate { Id = 11, Name = "Defend your community", Tier = 2, Importance = 3, WaitsFor = "C4 (attack); the warn part works", Rules = new[] {
-                R(Modality.Encouraged, SayWarn, ApplySelector.Adults, ConditionKind.EnemyInSight) } },
-            new CommandmentTemplate { Id = 12, Name = "Treat injured individuals", Tier = 1, Importance = 3, Rules = new[] {
-                R(Modality.Encouraged, Tend, ApplySelector.Adults, ConditionKind.TargetInjured) } });
+                R(Modality.Encouraged, Feed, ApplySelector.Adults, ConditionKind.TargetIsElder)),
+            new CommandmentTemplate(8, "Forgive those who repent", 0, 2, "C2 (M7 apologies)",
+                R(Modality.Encouraged, SayForgive, ApplySelector.Everyone, ConditionKind.TargetApologised)),
+            new CommandmentTemplate(9, "Protect communal property", 0, 3, "C1, C8 (communal stores)",
+                R(Modality.Prohibited, Verb.TakeFromStore, ApplySelector.Everyone, ConditionKind.NotPermitted)),
+            new CommandmentTemplate(10, "Contribute to public services", 0, 2, "C8 (public stores)",
+                R(Modality.Encouraged, Verb.Store, ApplySelector.Adults, ConditionKind.HouseholdSurplus)),
+            new CommandmentTemplate(11, "Defend your community", 2, 3, "C4 (attack); the warn part works",
+                R(Modality.Encouraged, SayWarn, ApplySelector.Adults, ConditionKind.EnemyInSight)),
+            new CommandmentTemplate(12, "Treat injured individuals", 1, 3, null,
+                R(Modality.Encouraged, Tend, ApplySelector.Adults, ConditionKind.TargetInjured)));
 
         /// <summary>The template with this id (null when none).</summary>
         public static CommandmentTemplate Get(int id)
@@ -69,7 +95,7 @@ namespace God.Sim.Divinity
         public static CommandmentRule[] RulesOf(int id)
         {
             var t = Get(id);
-            return t == null ? null : (CommandmentRule[])t.Rules.Clone();
+            return t == null ? null : System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(t.Rules, r => r.ToRule()));
         }
     }
 

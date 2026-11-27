@@ -76,7 +76,7 @@ namespace God.Sim.Tests
             var s = sim.State;
             int sight = Comms.CommsRange.Gesture(s.Tuning.Population, true);
             int chance = Doctrine.TellChance(s, sight, sight, true); // at night, at the edge of sight
-            int rules = CommandmentTemplates.Get(1).Rules.Length;
+            int rules = CommandmentTemplates.Get(1).Rules.Count;
             double expected = 1 - Math.Pow(1 - chance / 1000.0, rules);
             int hops = 0, altered = 0, passedAsHeld = 0, carried = 0;
             var ev = new EventBuffer();
