@@ -21,6 +21,7 @@ namespace God.Game
         {
             public GameObject Root; public Transform Body, LegL, LegR, ArmL, ArmR;
             public MeshFilter Cargo, Tool, BodyF;
+            public FigureParts P;
             public Vector3 Pos; public float Yaw, Phase; public bool Placed;
             public Ware Shown = (Ware)(-1); public bool ShownAxe; public Faction Faction = (Faction)(-1);
         }
@@ -50,6 +51,9 @@ namespace God.Game
             return l;
         }
 
+        /// <summary>The parts of a drawn person's figure (tests and the inspector); null when not drawn.</summary>
+        public FigureParts PartsOf(int npcId) => _figs.TryGetValue(npcId, out var f) ? f.P : null;
+
         /// <summary>Where a figure stands now (world), for pickers and cameras; false when not drawn.</summary>
         public bool TryPosition(int npcId, out Vector3 p)
         {
@@ -59,13 +63,23 @@ namespace God.Game
 
         // ---------------- meshes ----------------
 
-        private static Mesh BodyMesh(Faction f) => ModelKit.Cached("npc/body/" + (int)f,
-            mb => PeopleModels.Torso(mb, ModelKit.Accent(FactionLook.Colour(f)) * 0.9f, ModelKit.Accent(FactionLook.Colour(f)) * 0.7f));
+        private static Mesh BodyMesh(Faction f) => ModelKit.Cached("npc/body2/" + (int)f,
+            mb => PeopleModels.TorsoOnly(mb, ModelKit.Accent(FactionLook.Colour(f)) * 0.9f));
+        public static Mesh HeadMesh(Faction f, bool grey) => ModelKit.Cached("npc/head/" + (int)f + "/" + grey,
+            mb => PeopleModels.Head(mb, ModelKit.Accent(FactionLook.Colour(f)) * 0.7f, grey));
+        public static Mesh FingerMesh(int n) => ModelKit.Cached("npc/fingers/" + n, mb => PeopleModels.Fingers(mb, n));
+        public static Mesh BellyMesh(Faction f) => ModelKit.Cached("npc/belly/" + (int)f, mb => PeopleModels.Belly(mb, ModelKit.Accent(FactionLook.Colour(f)) * 0.9f));
+        public static Mesh WrapMesh() => ModelKit.Cached("npc/wrap", mb => PeopleModels.Wrap(mb, -0.4f, 0.2f));
+        public static Mesh LegWrapMesh() => ModelKit.Cached("npc/wrapleg", mb => PeopleModels.Wrap(mb, -0.45f, 0.24f));
+        public static Mesh SlingMesh() => ModelKit.Cached("npc/sling", mb => PeopleModels.Sling(mb));
+        public static Mesh AuraMesh() => ModelKit.Cached("npc/aura", mb => PeopleModels.AuraRing(mb));
+        private static Material _ill;
+        public static Material IllMaterial => _ill != null ? _ill : (_ill = MaterialFactory.CreateVertexColored(new Color(0.72f, 0.92f, 0.66f), "Ill tint"));
         private static Mesh LegMesh() => ModelKit.Cached("npc/leg", mb => PeopleModels.Leg(mb, new Color(0.34f, 0.28f, 0.22f)));
         private static Mesh ArmMesh(Faction f) => ModelKit.Cached("npc/arm/" + (int)f, mb => PeopleModels.Arm(mb, ModelKit.Accent(FactionLook.Colour(f)) * 0.85f));
         private static Mesh AxeMesh() => ModelKit.Cached("npc/axe", mb => PeopleModels.Tool(mb, ToolKind.Axe));
 
-        private static Mesh LoadMesh(Ware w) => ModelKit.Cached("npc/load/" + (int)w, mb =>
+        public static Mesh LoadMesh(Ware w) => ModelKit.Cached("npc/load/" + (int)w, mb =>
         {
             if (Wares.IsFood(w))
             {
@@ -156,6 +170,9 @@ namespace God.Game
                 fig.BodyF.sharedMesh = BodyMesh(f);
                 fig.ArmL.GetComponent<MeshFilter>().sharedMesh = ArmMesh(f);
                 fig.ArmR.GetComponent<MeshFilter>().sharedMesh = ArmMesh(f);
+                fig.P.HeadKey = -1; // LifeStageLayer sets the head (faction cap, grey hair)
+                fig.P.HeadF.sharedMesh = HeadMesh(f, false);
+                fig.P.Belly.GetComponent<MeshFilter>().sharedMesh = BellyMesh(f);
             }
             fig.Cargo.sharedMesh = null; fig.Tool.sharedMesh = null;
             fig.Root.SetActive(true);
@@ -167,14 +184,12 @@ namespace God.Game
             var f = new Fig { Root = new GameObject("Npc") };
             f.Root.transform.SetParent(transform, false);
             f.Root.transform.localScale = Vector3.one * Scale;
-            var body = new GameObject("Body"); body.transform.SetParent(f.Root.transform, false); f.Body = body.transform;
-            f.BodyF = ModelKit.Part("Torso", f.Body, null).GetComponent<MeshFilter>();
-            f.LegL = ModelKit.Part("LegL", f.Body, LegMesh()).transform; f.LegL.localPosition = new Vector3(-PeopleModels.LegX, PeopleModels.Hip, 0);
-            f.LegR = ModelKit.Part("LegR", f.Body, LegMesh()).transform; f.LegR.localPosition = new Vector3(PeopleModels.LegX, PeopleModels.Hip, 0);
-            f.ArmL = ModelKit.Part("ArmL", f.Body, null).transform; f.ArmL.localPosition = new Vector3(-PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
-            f.ArmR = ModelKit.Part("ArmR", f.Body, null).transform; f.ArmR.localPosition = new Vector3(PeopleModels.ShoulderX, PeopleModels.Shoulder, 0);
-            f.Cargo = ModelKit.Part("Cargo", f.Body, null).GetComponent<MeshFilter>();
-            f.Tool = ModelKit.Part("Tool", f.ArmR, null).GetComponent<MeshFilter>();
+            var p = FigureParts.Build(f.Root.transform, LegMesh());
+            f.P = p; f.Body = p.Body; f.BodyF = p.BodyF; f.LegL = p.LegL; f.LegR = p.LegR; f.ArmL = p.ArmL; f.ArmR = p.ArmR; f.Cargo = p.Cargo; f.Tool = p.Tool;
+            p.BandageArm.GetComponent<MeshFilter>().sharedMesh = WrapMesh();
+            p.BandageLeg.GetComponent<MeshFilter>().sharedMesh = LegWrapMesh();
+            p.Sling.GetComponent<MeshFilter>().sharedMesh = SlingMesh();
+            p.AuraF.sharedMesh = AuraMesh();
             return f;
         }
 
@@ -193,8 +208,9 @@ namespace God.Game
                 _alive.Add(n.Id);
                 if (!_figs.TryGetValue(n.Id, out var f)) { f = Take(n.Faction); _figs[n.Id] = f; }
                 Animate(f, n, g, dt);
-                LifeStageLayer.Apply(f.Root.transform, n, _sim.State); // F0.15: M4 (size and look by life stage, displays)
+                LifeStageLayer.Apply(f.P, n, _sim.State); // F0.15: M4 (size and look by life stage, displays)
                 GestureLayer.Apply(f.Root.transform, n, _sim.State, _time); // F0.15: M5 (gestures)
+                PoseLayer.Apply(f.P, n, _sim.State, _time, this); // U3b: the gesture vocabulary over the walk and work poses
             }
             _gone.Clear();
             foreach (var kv in _figs) if (!_alive.Contains(kv.Key)) _gone.Add(kv.Key);
