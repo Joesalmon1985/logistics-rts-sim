@@ -84,6 +84,7 @@ namespace God.Sim.Population
         /// </summary>
         public static void Kill(GodState s, EventBuffer ev, Npc npc, DeathCause cause)
         {
+            if (!Bodies.IsPerson(npc)) throw new InvalidOperationException("Kill: only a person dies (an avatar is destroyed by D5, contracts 4.2)");
             var p = s.Population;
             npc.Alive = false; npc.DiedTick = s.Tick; npc.DeathCause = cause; npc.Health = 0;
             p.Stats.Deaths++;
@@ -103,6 +104,7 @@ namespace God.Sim.Population
                 hut.Contributors.Remove(npc.Id);
             }
             npc.HomeHut = 0; npc.SiteHut = 0; npc.Path = null; npc.Action = default;
+            PopulationExtensions.ArchiveMind(s, npc); // F1 (contracts 4.4): D7's archive, just before the mind is released
             npc.Mind = null; // the dead keep their record, not their mind
         }
 
@@ -365,6 +367,7 @@ namespace God.Sim.Population
             foreach (var n in p.Npcs)
             {
                 h.Add(n.Id); h.Add((int)n.Faction); h.Add(n.Alive ? 1 : 0); h.Add(n.BornTick); h.Add(n.DiedTick); h.Add((int)n.DeathCause);
+                if (n.Kind != BodyKind.Person || n.God != 0 || n.BioAgeOffset != 0) { h.Add(0x424F4459); h.Add((int)n.Kind); h.Add(n.God); h.Add(n.BioAgeOffset); } // F1.8: only when non-default
                 h.Add(n.Node); h.Add(n.PathIdx); h.Add(n.PathGoal); h.Add(n.StepTicks);
                 if (n.Path != null) { h.Add(n.Path.Length); foreach (int x in n.Path) h.Add(x); } else h.Add(-1);
                 h.Add(n.Health); h.Add(n.Nutrition); h.Add(n.Injury); h.Add(n.PainExtra);

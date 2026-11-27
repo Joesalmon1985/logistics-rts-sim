@@ -71,6 +71,7 @@ namespace God.Sim.Comms
                 MessageId = id, Speaker = speaker.Id, Act = m.Act, TopicKind = m.Topic.Kind, TopicId = m.Topic.Id, TopicSub = m.Topic.Sub,
                 Quantity = m.Quantity, CounterKind = m.Counter.Kind, CounterId = m.Counter.Id, CounterSub = m.Counter.Sub, Target = m.Target,
                 Time = m.Time, DealId = m.DealId, Node = speaker.Node, Presented = m.Presented, Honest = true,
+                DurationTicks = s.Tuning.Social.GestureTicks, // F1.17: GestureMade v2
             };
             ev?.Add(gm);
             var sm = speaker.Mind?.Social;

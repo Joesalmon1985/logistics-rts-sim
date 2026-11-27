@@ -19,7 +19,7 @@ namespace God.Sim.Social
             new EventInfo(typeof(BetrayalRecorded), 303, 1, TelemetryDomain.Social, "fact_social_interaction"),
             new EventInfo(typeof(PersonDaySocial), 310, 1, TelemetryDomain.Social, "fact_person_day", note: "the soc_ columns of one living person x sim day: relations, trust, messages, gifts, deals"),
             // ---- communication (340-354) ----
-            new EventInfo(typeof(GestureMade), 340, 1, TelemetryDomain.Comms, "fact_social_interaction", true, note: "a composed message (act x topic x quantity x counter x target x time) made by a gesture"),
+            new EventInfo(typeof(GestureMade), 340, 2, TelemetryDomain.Comms, "fact_social_interaction", true, note: "a composed message (act x topic x quantity x counter x target x time) made by a gesture"),
             new EventInfo(typeof(MessageDecoded), 341, 1, TelemetryDomain.Comms, "fact_social_interaction", true, note: "one perceiving listener's decoded message (its belief)"),
             new EventInfo(typeof(ResponseChosen), 342, 1, TelemetryDomain.Comms, "fact_social_interaction", true, note: "the listener's own decision on an addressed message (a response verb, or ignored)"));
     }
@@ -150,6 +150,8 @@ namespace God.Sim.Social
         public int Listeners;
         /// <summary>† Truth, analytics only.</summary>
         public bool Honest = true;
+        /// <summary>F1.17 (version 2): how long the gesture is shown, in ticks (the gesture's duration, <c>Social.GestureTicks</c>), for animation.</summary>
+        public int DurationTicks;
     }
 
     /// <summary>One perceiving listener's decoding of a message (341): its belief, possibly wrong. <see cref="Mismatch"/> is analytics only.</summary>

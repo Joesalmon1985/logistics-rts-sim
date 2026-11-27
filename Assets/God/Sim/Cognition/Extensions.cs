@@ -3,6 +3,9 @@ using God.Sim.Learning;
 using God.Sim.Population;
 using God.Sim.Population.Households;
 using God.Sim.Social;
+using God.Sim.Civ;
+using God.Sim.Orgs;
+using God.Sim.Divinity;
 
 namespace God.Sim.Cognition
 {
@@ -21,7 +24,8 @@ namespace God.Sim.Cognition
 
     /// <summary>
     /// The extension dispatch of cognition (SHARED_CONTRACTS 0.2), frozen by F0: each call site in M3 code calls one method
-    /// here, which calls M4's hook, then M5's, in that order. Hooks here see the think scratch only (gate G4.1).
+    /// here, which calls M4's hook, then M5's, in that order. Hooks here see the think scratch only (gate G4.1). F1 (contracts
+    /// 0.1 F1.6, 14): then Civ (<see cref="CivMindHooks"/>), Orgs (<see cref="OrgMindHooks"/>), Divinity (<see cref="DivinityMindHooks"/>).
     /// </summary>
     public static class CognitionExtensions
     {
@@ -51,14 +55,50 @@ namespace God.Sim.Cognition
             if (sc.BaseCount > before + 1) throw new InvalidOperationException("AddBase: M4 may add at most one base key");
         }
 
-        /// <summary>After M3's candidates, before costs: M4, then M5, each at most <see cref="CandidateQuota"/>.</summary>
+        /// <summary>
+        /// F1 (contracts 10.3): before the candidates, the divine instructions this mind reads now (D2; none by default).
+        /// </summary>
+        public static void FillDivine(ThinkScratch sc)
+        {
+            sc.DivineCount = 0;
+            DivinityMindHooks.FillDivine(sc);
+            if (sc.DivineCount < 0 || sc.DivineCount > ThinkScratch.MaxDivine) throw new InvalidOperationException("FillDivine: DivineCount out of range");
+        }
+
+        /// <summary>After M3's candidates, before costs: M4, M5, then (F1) Civ, Orgs and Divinity, each at most <see cref="CandidateQuota"/>.</summary>
         public static void AddCandidates(ThinkScratch sc)
         {
+            sc.ControlCand = -1;
             sc.CandLimit = Math.Min(sc.CandCount + CandidateQuota, ThinkScratch.MaxCand);
             HouseholdMindHooks.AddCandidates(sc);
             sc.CandLimit = Math.Min(sc.CandCount + CandidateQuota, ThinkScratch.MaxCand);
             SocialMindHooks.AddCandidates(sc);
+            sc.CandLimit = Math.Min(sc.CandCount + CandidateQuota, ThinkScratch.MaxCand);
+            CivMindHooks.AddCandidates(sc);
+            sc.CandLimit = Math.Min(sc.CandCount + CandidateQuota, ThinkScratch.MaxCand);
+            OrgMindHooks.AddCandidates(sc);
+            sc.CandLimit = Math.Min(sc.CandCount + CandidateQuota, ThinkScratch.MaxCand);
+            DivinityMindHooks.AddCandidates(sc);
             sc.CandLimit = ThinkScratch.M3Cand;
+        }
+
+        /// <summary>F1 (contracts 10.3 step 4): the Divine score term (D2's instruction term + D6's commandment term, each clamped by Divinity); 0 by default.</summary>
+        public static int DivineTerm(ThinkScratch sc, int cand) => DivinityMindHooks.DivineTerm(sc, cand);
+
+        /// <summary>
+        /// F1 (contracts 10.3 step 3): whether a target is named by one of the decoded divine instructions of this think
+        /// (communicated knowledge): a place by its node, a person or a thing by its id. False while <see cref="ThinkScratch.DivineCount"/> is 0.
+        /// </summary>
+        public static bool NamedByDivine(ThinkScratch sc, Policy.IntentTarget kind, int id, int node)
+        {
+            for (int i = 0; i < sc.DivineCount; i++)
+            {
+                var t = sc.Divine[i].Topic;
+                if (t.Kind == Comms.TopicKind.Place) { if (kind == Policy.IntentTarget.Node && node == t.Id) return true; }
+                else if (t.Kind == Comms.TopicKind.Npc) { if (kind == Policy.IntentTarget.Npc && id != 0 && id == t.Id) return true; }
+                else if (t.Kind != Comms.TopicKind.None && kind != Policy.IntentTarget.Node && kind != Policy.IntentTarget.Npc && id != 0 && id == t.Id) return true;
+            }
+            return false;
         }
 
         /// <summary>The Social score term: <c>clamp(KinTerm, ±2000) + clamp(SocialTerm, ±2000)</c>.</summary>
@@ -73,6 +113,9 @@ namespace God.Sim.Cognition
         {
             if (VerbRanges.IsHousehold(verb)) return HouseholdMindHooks.Personality(verb, traits);
             if (VerbRanges.IsSocial(verb)) return SocialMindHooks.Personality(verb, traits);
+            if (Learning.Verb.IsCiv(verb)) return CivMindHooks.Personality(verb, traits);
+            if (Learning.Verb.IsOrgs(verb)) return OrgMindHooks.Personality(verb, traits);
+            if (Learning.Verb.IsDivinity(verb)) return DivinityMindHooks.Personality(verb, traits);
             return 0;
         }
 
@@ -80,7 +123,8 @@ namespace God.Sim.Cognition
         /// I-BS amendment (SHARED_CONTRACTS 12.31): whether the mind remembers a person out of sight, by the handle it would
         /// name in an intent: M4's believed kin, then M5's social memory. Used by <see cref="Thinker.Known"/> for person targets.
         /// </summary>
-        public static bool Remembers(ThinkScratch sc, int person) => HouseholdMindHooks.Remembers(sc, person) || SocialMindHooks.Remembers(sc, person);
+        public static bool Remembers(ThinkScratch sc, int person) => HouseholdMindHooks.Remembers(sc, person) || SocialMindHooks.Remembers(sc, person)
+            || CivMindHooks.Remembers(sc, person) || OrgMindHooks.Remembers(sc, person) || DivinityMindHooks.Remembers(sc, person);
 
         /// <summary>
         /// F0 amendment (SHARED_CONTRACTS 12.37): whether a node target is one of the mind's own headings beyond M3's explore
@@ -89,7 +133,8 @@ namespace God.Sim.Cognition
         public static bool OwnHeading(ThinkScratch sc, int node) => HouseholdMindHooks.OwnHeading(sc, node);
 
         /// <summary>Words for a feature M3 does not describe (null: none).</summary>
-        public static string Describe(uint f) => HouseholdMindHooks.Describe(f) ?? SocialMindHooks.Describe(f);
+        public static string Describe(uint f) => HouseholdMindHooks.Describe(f) ?? SocialMindHooks.Describe(f)
+            ?? CivMindHooks.Describe(f) ?? OrgMindHooks.Describe(f) ?? DivinityMindHooks.Describe(f);
     }
 
     /// <summary>The relationship class of a seen person (SHARED_CONTRACTS 4.4), frozen by F0.</summary>

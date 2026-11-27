@@ -37,6 +37,7 @@ namespace God.Sim.Policy
         {
             new SortedDictionary<string, Entry>(StringComparer.Ordinal), new SortedDictionary<string, Entry>(StringComparer.Ordinal),
             new SortedDictionary<string, Entry>(StringComparer.Ordinal), new SortedDictionary<string, Entry>(StringComparer.Ordinal),
+            new SortedDictionary<string, Entry>(StringComparer.Ordinal), // F1: God
         };
 
         /// <summary>Adds a policy. Names are unique per level; <see cref="None"/> and <see cref="External"/> are reserved.</summary>
@@ -100,6 +101,7 @@ namespace God.Sim.Policy
                 case "military": level = PolicyLevel.Military; return true;
                 case "institution": level = PolicyLevel.Institution; return true;
                 case "faction": level = PolicyLevel.Faction; return true;
+                case "god": level = PolicyLevel.God; return true;
                 default: level = PolicyLevel.Civilian; return false;
             }
         }
@@ -117,10 +119,14 @@ namespace God.Sim.Policy
         /// <summary>The stage 3 soldier rules (<c>Stage3MilitaryPolicy</c>), the default military policy until M9.</summary>
         public const string StageThreeMilitary = "Stage3MilitaryPolicy";
 
-        public readonly string[] Defaults = { PolicyRegistry.None, StageThreeMilitary, PolicyRegistry.None, StageThreeFaction };
+        /// <summary>F1 (contracts 20.9): the number of policy levels (the god level is the fifth).</summary>
+        public const int PolicyLevelCount = 5;
+
+        public readonly string[] Defaults = { PolicyRegistry.None, StageThreeMilitary, PolicyRegistry.None, StageThreeFaction, PolicyRegistry.None };
         public readonly SortedDictionary<int, string>[] Scoped =
         {
             new SortedDictionary<int, string>(), new SortedDictionary<int, string>(), new SortedDictionary<int, string>(), new SortedDictionary<int, string>(),
+            new SortedDictionary<int, string>(),
         };
 
         /// <summary>The stage 3 game: the AI brain for every faction, the stage 3 soldier rules, nothing else.</summary>
@@ -141,7 +147,7 @@ namespace God.Sim.Policy
             get
             {
                 var d = new PolicyAssignment();
-                for (int i = 0; i < 4; i++) if (Defaults[i] != d.Defaults[i] || Scoped[i].Count > 0) return false;
+                for (int i = 0; i < PolicyLevelCount; i++) if (Defaults[i] != d.Defaults[i] || Scoped[i].Count > 0) return false;
                 return true;
             }
         }
@@ -149,7 +155,7 @@ namespace God.Sim.Policy
         /// <summary>Checks every name against a registry (throws <see cref="PolicyException"/>).</summary>
         public void Validate(PolicyRegistry registry, bool allowTestOnly = false)
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < PolicyLevelCount; i++)
             {
                 registry.Validate((PolicyLevel)i, Defaults[i], allowTestOnly);
                 foreach (var kv in Scoped[i]) registry.Validate((PolicyLevel)i, kv.Value, allowTestOnly);
@@ -159,16 +165,20 @@ namespace God.Sim.Policy
         public PolicyAssignment Clone()
         {
             var c = new PolicyAssignment();
-            for (int i = 0; i < 4; i++) { c.Defaults[i] = Defaults[i]; foreach (var kv in Scoped[i]) c.Scoped[i][kv.Key] = kv.Value; }
+            for (int i = 0; i < PolicyLevelCount; i++) { c.Defaults[i] = Defaults[i]; foreach (var kv in Scoped[i]) c.Scoped[i][kv.Key] = kv.Value; }
             return c;
         }
 
-        /// <summary>A stable one-line form for logs and manifests: <c>faction=AiBrain,2:none; military=Stage3MilitaryPolicy; ...</c>.</summary>
+        /// <summary>
+        /// A stable one-line form for logs and manifests: <c>faction=AiBrain,2:none; military=Stage3MilitaryPolicy; ...</c>. F1: the
+        /// god level is omitted while it is <c>none</c> with no scoped entry, so every older manifest prints byte-identically.
+        /// </summary>
         public override string ToString()
         {
             var parts = new List<string>();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < PolicyLevelCount; i++)
             {
+                if (i == (int)PolicyLevel.God && Defaults[i] == PolicyRegistry.None && Scoped[i].Count == 0) continue;
                 var s = PolicyRegistry.Lower((PolicyLevel)i) + "=" + Defaults[i];
                 foreach (var kv in Scoped[i]) s += "," + kv.Key + ":" + kv.Value;
                 parts.Add(s);

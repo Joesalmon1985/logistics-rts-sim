@@ -41,6 +41,8 @@ namespace God.Sim.Cognition
         public int DisplayTarget;
         /// <summary>A gesture visibly being made now (M5: the <c>GestureAct</c>, 0 none). Seen, not yet decoded.</summary>
         public byte Gesture;
+        /// <summary>F1.8 (contracts 4.2): what kind of body it is (a person, or a god's avatar). Whether it is recognised as a god is D6 belief.</summary>
+        public Population.BodyKind Body;
     }
 }
 

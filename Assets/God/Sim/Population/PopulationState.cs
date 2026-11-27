@@ -189,6 +189,12 @@ namespace God.Sim.Population
         public int Id;
         public Faction Faction;
         public bool Alive = true;
+        /// <summary>F1.8 (contracts 4.1): a person (0) or a god's avatar body. Written to JSON and hashed only when not a person.</summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public BodyKind Kind;
+        /// <summary>F1.8: the GodId of an avatar body (0 for a person). Written and hashed only when non-zero.</summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public int God;
+        /// <summary>F1.8 (contracts 4.4, 20.3): ticks subtracted from calendar age for biological age (<see cref="Bodies.AgeTicks"/>; D7). Written and hashed only when non-zero.</summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public long BioAgeOffset;
         public long BornTick, DiedTick;
         public DeathCause DeathCause;
         /// <summary>True for a founder of the scenario (no NpcBorn: M4 brings births).</summary>

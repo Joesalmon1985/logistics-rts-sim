@@ -8,6 +8,13 @@ namespace God.Sim
     public enum DiseaseSetting { On = 0, Mild = 1, Off = 2 }
 
     /// <summary>
+    /// Contracts 2.1: what the person at the seat controls. <see cref="Stage3Faction"/> (default): a faction with the stage 3 HUD
+    /// (every existing scenario). <see cref="GodOnly"/>: a god only; every faction is seated by a faction policy, external
+    /// faction commands are refused <c>god_only</c>, <c>Divinity.Enabled</c> must be 1 and <c>Human</c> must be <c>NoHuman</c>.
+    /// </summary>
+    public enum PlayerControl : byte { Stage3Faction = 0, GodOnly = 1 }
+
+    /// <summary>
     /// How a game was set up. Stored in <see cref="GodState.Setup"/>; fixed once the game starts. The human faction is
     /// only a hint for views, the HUD and bots (which faction to leave alone): the sim rules never read it.
     /// </summary>
@@ -67,6 +74,15 @@ namespace God.Sim
         /// only <see cref="VictoryKind.Sandbox"/>).
         /// </summary>
         public List<VictorySpec> Victory = VictorySpec.Stage3Default();
+
+        // ---------------- F1 (contracts 2.1, 20.5): the player seat. Written only when set, so every older hash is unchanged. ----------------
+
+        /// <summary>What the seat controls (default <see cref="PlayerControl.Stage3Faction"/>).</summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public PlayerControl Control;
+        /// <summary>The god whose seat is <c>Human</c> at the start (GodId; 0 = none / watch).</summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public int HumanGod;
 
         /// <summary>The calendar these settings give.</summary>
         [JsonIgnore] public SimCalendar Calendar => SimCalendar.Of(this);

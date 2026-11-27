@@ -10,6 +10,11 @@ namespace God.Sim.Learning
     public static class EpisodeKey
     {
         public const int Hut = 0, Partnership = 1, CareArrangement = 2, Child = 3, Deal = 8, Reciprocity = 9, Message = 10, Lot = 64;
+        // ---- F1 (contracts 1, 14): Civ 16-23, Orgs 24-31, Divinity 32-39; 40-63 and 65+ free ----
+        public const int CivFirst = 16, CivLast = 23, OrgsFirst = 24, OrgsLast = 31, DivinityFirst = 32, DivinityLast = 39;
+        public const int Loan = 16, EmploymentContract = 17, ProductiveAsset = 18;
+        public const int ServiceRequest = 24, Membership = 25;
+        public const int DivineInstruction = 32, Commandment = 33, Compulsion = 34, Possession = 35;
         public const int MaxId = (1 << 24) - 1;
 
         public static int Make(int kind, int id)

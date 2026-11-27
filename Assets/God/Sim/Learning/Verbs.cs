@@ -21,6 +21,12 @@ namespace God.Sim.Learning
         // controlled lab verbs (NPC_LEARNING L3): never offered on the island
         public const byte TestA = 60, TestB = 61, TestFiller = 62;
         public const int Max = 128;
+        // ---- F1 (contracts 14): reserved rows 96-127. Civ 96-103 and 124-126, Orgs 104-115, Divinity 116-123; 127 reserved.
+        //      Each package adds its rows only through its mind-hook partial (CivMindHooks / OrgMindHooks / DivinityMindHooks). ----
+        public const byte CivFirst = 96, CivLast = 103, CivMilitaryFirst = 124, CivMilitaryLast = 126, OrgsFirst = 104, OrgsLast = 115, DivinityFirst = 116, DivinityLast = 123;
+        public static bool IsCiv(byte v) => v >= CivFirst && v <= CivLast || v >= CivMilitaryFirst && v <= CivMilitaryLast;
+        public static bool IsOrgs(byte v) => v >= OrgsFirst && v <= OrgsLast;
+        public static bool IsDivinity(byte v) => v >= DivinityFirst && v <= DivinityLast;
     }
 
     /// <summary>The 16 verb groups of <see cref="MindView.AssocSummary"/> (the 10 domains, Survival, Barter and Cooperation split by sign).</summary>
@@ -66,8 +72,9 @@ namespace God.Sim.Learning
             new VerbInfo(Verb.TestB, "test B", VerbGroup.Lab, NpcVerb.LabAct),
             new VerbInfo(Verb.TestFiller, "filler", VerbGroup.Lab, NpcVerb.LabAct));
 
-        /// <summary>Every row: M3's, then M4's (<c>HouseholdHooks.Verbs</c>), then M5's (<c>SocialHooks.Verbs</c>) (F0.11).</summary>
-        public static readonly ReadOnlyArray<VerbInfo> Rows = Concat(Core, Population.Households.HouseholdMindHooks.Verbs, Social.SocialMindHooks.Verbs);
+        /// <summary>Every row: M3's, then M4's (<c>HouseholdHooks.Verbs</c>), then M5's (<c>SocialHooks.Verbs</c>) (F0.11), then (F1) Civ's, Orgs' and Divinity's.</summary>
+        public static readonly ReadOnlyArray<VerbInfo> Rows = Concat(Core, Population.Households.HouseholdMindHooks.Verbs, Social.SocialMindHooks.Verbs,
+            Civ.CivMindHooks.Verbs(), Orgs.OrgMindHooks.Verbs(), Divinity.DivinityMindHooks.Verbs());
 
         private static ReadOnlyArray<VerbInfo> Concat(params ReadOnlyArray<VerbInfo>[] parts)
         {

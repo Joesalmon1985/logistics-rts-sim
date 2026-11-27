@@ -25,7 +25,12 @@ namespace God.Sim.Policy
         M4Reserved = 139,
         // ---- M5 block (140-169): add members only here, above the sentinel ----
         M5Reserved = 169,
-        // 170-199 reserved (M6+)
+        // ---- F1 (contracts 14): Civ block (C1-C5, 170-178), add members only here, above the sentinel ----
+        CivReserved = 179,
+        // ---- F1: Orgs block (C6-C10, 180-188) ----
+        OrgsReserved = 189,
+        // ---- F1: Divinity block (D1-D7, 190-198) ----
+        DivinityReserved = 199,
     }
 
     /// <summary>What an intent points at.</summary>

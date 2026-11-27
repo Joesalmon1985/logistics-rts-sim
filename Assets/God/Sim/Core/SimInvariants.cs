@@ -61,6 +61,9 @@ namespace God.Sim
             CheckTrade(s, bad);
             Population.PopulationInvariants.Check(s, bad);
             if (s.Population != null) Population.PopulationExtensions.Check(s, bad); // F0.13: M4's and M5's invariants
+            if (s.Civ != null) Civ.CivModule.Check(s, bad);                         // F1.5: Civ, Orgs, Divinity
+            if (s.Organisations != null) Orgs.OrgModule.Check(s, bad);
+            if (s.Divinity != null) Divinity.DivinityModule.Check(s, bad);
             return bad;
         }
 

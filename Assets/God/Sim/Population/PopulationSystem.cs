@@ -178,12 +178,14 @@ namespace God.Sim.Population
                     else continue;
                 }
                 Profiler?.Mark(PopPhase.Body);
-                if ((s.Tick + npc.Id) % tu.ThinkEvery == 0)
+                byte verbBefore = npc.Action.Verb; // F1 (contracts 11.3): the ActionEnded site
+                if ((s.Tick + npc.Id) % tu.ThinkEvery == 0 || PopulationExtensions.ForceThink(s, npc))
                 {
                     if (p.IndexDirty) RebuildIndex(p);
                     Think(s, ev, npc, (int)day);
                 }
                 if (npc.Alive && !npc.Action.Asleep && npc.Action.BusyUntil == 0) Act(s, ev, npc, (int)day);
+                if (verbBefore != 0 && npc.Action.Verb != verbBefore && s.Divinity != null) PopulationExtensions.ActionEnded(s, ev, npc, verbBefore, npc.Alive && npc.Action.Verb == 0);
                 if (p.IndexDirty) RebuildIndex(p);
                 Profiler?.Mark(PopPhase.Act);
             }
@@ -509,7 +511,7 @@ namespace God.Sim.Population
                 }
             }
             // I-BS amendment (12.32): bins in sight (household stores, estate goods), perceived through the M4 seam
-            if (p.Bins.Count > 0) n = PopulationExtensions.SenseBins(s, npc, sight, _g, _near, n);
+            n = PopulationExtensions.SenseExtra(s, npc, sight, _g, _near, n); // F1 (contracts 6): M4 bins (when any), then Civ, Orgs, Divinity
             // the nearest PerceiveMax things (ties: the order found, which is fixed)
             int keep = Math.Min(n, Math.Min(tu.PerceiveMax, ThinkScratch.MaxSeen));
             for (int k = 0; k < keep; k++)
@@ -557,6 +559,8 @@ namespace God.Sim.Population
                             Id = e.Id, As = e.Id, Faction = e.Faction, SameFaction = e.Faction == npc.Faction, Node = e.Node, Dist = d, Stage = e.Stage,
                             Doing = e.Doing, Asleep = e.Asleep, CarryMask = e.CarryMask, HoldsTool = e.HoldsTool,
                         };
+                        var body = p.Find(e.Id); // F1.8: the body kind (person or avatar)
+                        if (body != null) _sc.People[at].Body = body.Kind;
                         if (n < ThinkScratch.MaxPeople) n++;
                     }
                 }
@@ -696,6 +700,7 @@ namespace God.Sim.Population
             _sc.LearningTuning = lt;
             _sc.Tuning = tu;
             _sc.Grid = _g;
+            _sc.Control = PopulationExtensions.ControlOf(s, npc); // F1 (contracts 11.3): default Self
             Thinker.Think(_sc);
             Inspect?.Invoke(npc.Id, _sc);
             Profiler?.Mark(PopPhase.Cognition);
@@ -707,8 +712,11 @@ namespace God.Sim.Population
             var rng = npc.RngPolicy;
             NpcIntent intent;
             var why = default(DecisionRecord);
-            if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
+            // F1 (contracts 11.3): possessed and avatar bodies skip the policy (no draw); a compulsion overrides its choice
+            if (PopulationExtensions.SkipsPolicy(s, npc)) { intent = PopulationExtensions.ControlIntent(s, npc, _sc, ref why); mind.OpportunityCount = 0; }
+            else if (policy is AssociativeNpcPolicy ap) intent = ap.DecideExplained(obs, view, ref rng, ref why, mind.Opportunities, out mind.OpportunityCount);
             else { intent = policy.Decide(obs, view, ref rng); mind.OpportunityCount = 0; }
+            PopulationExtensions.OverrideIntent(s, npc, _sc, ref intent, ref why);
             IntentRules.Require(PolicyLevel.Civilian, policy.Name, intent);
             Profiler?.Mark(PopPhase.Decide);
             p.Stats.Decisions++;
