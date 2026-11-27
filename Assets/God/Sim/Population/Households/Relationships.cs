@@ -135,7 +135,7 @@ namespace God.Sim.Population.Households
     /// companionship on proposing and accepting a partner, child desire on trying for a child, showing that it wants one and
     /// accepting such an offer. Commitment from <see cref="ExclusiveFrom"/> means "reproduction only inside my partnership".
     /// </summary>
-    public static class Preferences
+    public static partial class Preferences
     {
         /// <summary>A partnered adult with commitment at or above this keeps reproduction inside its partnership (and its partners respect it).</summary>
         public const int ExclusiveFrom = 500;
@@ -151,31 +151,7 @@ namespace God.Sim.Population.Households
             life.ChildDesire = One(r, pt.ChildDesireMean, pt.ChildDesireSpread);
             life.Commitment = One(r, pt.CommitmentMean, pt.CommitmentSpread);
             // F2b: its own stream, so the three draws above (and every other stream) are unchanged
-            if (pt.PartnerSexMode == 1) life.PartnerSeeks = PartnerSex(s.Rng.Fork("partnersex", npc.Id).NextInt(1000), life.Sex, pt);
-        }
-
-        /// <summary>F2b partner-sex preference values (<see cref="NpcLife.PartnerSeeks"/>): bits for women and men; 0 = not drawn.</summary>
-        public const int SeeksWomen = 1, SeeksMen = 2, SeeksBoth = 3;
-
-        /// <summary>F2b: the preference for a roll 0..999 and its own sex (0 woman, 1 man): the other sex, its own sex, else both.</summary>
-        public static int PartnerSex(int roll, byte sex, PrefTuning pt)
-        {
-            int other = Math.Max(0, Math.Min(1000, pt.SeekOtherSexPermille)), same = Math.Max(0, Math.Min(1000 - other, pt.SeekSameSexPermille));
-            int own = sex == 0 ? SeeksWomen : SeeksMen, opp = sex == 0 ? SeeksMen : SeeksWomen;
-            return roll < other ? opp : roll < other + same ? own : SeeksBoth;
-        }
-
-        /// <summary>F2b: whether this person seeks a partner of that sex (always, when its preference was not drawn).</summary>
-        public static bool Seeks(NpcLife l, byte sex) => l == null || l.PartnerSeeks == 0 || (l.PartnerSeeks & (sex == 0 ? SeeksWomen : SeeksMen)) != 0;
-
-        /// <summary>
-        /// F2b: whether each of the two seeks the other's sex as a partner (mutual). Asked only of romantic partnership
-        /// (proposing and accepting); true for everyone while the preference is not drawn (<c>PartnerSexMode</c> 0).
-        /// </summary>
-        public static bool PartnerCompatible(Npc a, Npc b)
-        {
-            if (a?.Life == null || b?.Life == null) return true;
-            return Seeks(a.Life, b.Life.Sex) && Seeks(b.Life, a.Life.Sex);
+            if (pt.PartnerSexMode == 1) DrawPartnerSex(s, npc, life);
         }
 
         private static int One(Rng r, int mean, int spread)
