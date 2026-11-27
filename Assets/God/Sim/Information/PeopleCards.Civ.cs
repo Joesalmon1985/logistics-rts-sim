@@ -14,10 +14,10 @@ namespace God.Sim.Information
         public List<CivCardRow> Rows = new List<CivCardRow>();
     }
 
-    /// <summary>One row of the economy tab. Kind: 1 possession, 2 asset owned, 3 use right held, 4 believed owner of an asset.</summary>
+    /// <summary>One row of the economy tab. Kind: 1 possession, 2 asset owned, 3 use right held, 4 believed owner of an asset; C3: 5 contract held, 6 terms as understood, 7 arrears believed.</summary>
     public readonly struct CivCardRow
     {
-        public const byte Possession = 1, AssetOwned = 2, UseRightHeld = 3, BelievedOwner = 4;
+        public const byte Possession = 1, AssetOwned = 2, UseRightHeld = 3, BelievedOwner = 4, ContractHeld = 5, TermsBelieved = 6, ArrearsBelieved = 7;
         public readonly byte Kind;
         public readonly KnowledgeLayer Layer;
         public readonly int Ref;
@@ -58,6 +58,9 @@ namespace God.Sim.Information
                     var def = AssetTable.OfClass(b.Class);
                     Row(CivCardRow.BelievedOwner, KnowledgeLayer.Belief, b.Asset, "believes " + (def?.Name ?? "asset") + " #" + b.Asset + " belongs to " + b.BelievedOwner + " (confidence " + b.Confidence + ")");
                 }
+            FillC3(s, n, c); // C3 (flagged additive edit): contracts held, terms as understood, arrears believed
         }
+
+        static partial void FillC3(GodState s, Npc n, CivCard c);
     }
 }
