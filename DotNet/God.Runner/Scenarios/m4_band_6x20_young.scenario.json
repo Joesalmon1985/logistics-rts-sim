@@ -1,0 +1,43 @@
+{
+  "scenarioVersion": 1,
+  "name": "m4_band_6x20_young",
+  "description": "M4 young-band control (D4, M4.42): the M4 founder mix before the established band became the default: adults aged 1.0-2.6 with some children and elders, couples with and without children, same-sex couples (FounderTuning generator 0). Default ecology, disease On, immigration off, sandbox, 15 sim years.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ]
+  },
+  "tuning": {
+    "Households.Founders.ChildPermille": 250,
+    "Households.Founders.ElderPermille": 50,
+    "Households.Founders.AgeMinMilli": 1000,
+    "Households.Founders.AgeMaxMilli": 2600,
+    "Households.Founders.CouplePermille": 700,
+    "Households.Founders.SameSexPermille": 100,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 6,
+    "Estate.CustomF0": 1,
+    "Estate.CustomF1": 2,
+    "Estate.CustomF2": 3,
+    "Estate.CustomF3": 4,
+    "Estate.CustomF4": 5,
+    "Estate.CustomF5": 6
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxYears": 15,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}

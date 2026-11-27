@@ -17,6 +17,8 @@ namespace God.Sim.Population.Households
         public PartnerTuning Partner = new PartnerTuning();
         public DiseaseTuning Disease = new DiseaseTuning();
         public FounderTuning Founders = new FounderTuning();
+        /// <summary>D4 (unity/demog): individual preferences.</summary>
+        public PrefTuning Prefs = new PrefTuning();
     }
 
     /// <summary>Life stages, growth, fertility, pregnancy and mortality (POPULATION 4). Ages are sim milli-years at LifeScale 100.</summary>
@@ -95,6 +97,8 @@ namespace God.Sim.Population.Households
         public int AcceptedVp = 500, PartneredVp = 300;
         /// <summary>The learned outcome of trying for a child (episode closed at the birth).</summary>
         public int ChildBornVp = 600;
+        /// <summary>D4 (M4.44): the forms of care a begging child's display reaches (<see cref="CareStructure"/> bits: 1 parents, 2 other kin, 4 household mates, 8 anyone, 16 adoptive and step parents); 31 all.</summary>
+        public int FeedFrom = CareStructure.All;
     }
 
     /// <summary>Partnerships (HOUSEHOLDS "Partnership and courtship", Q5, Q6).</summary>
@@ -108,6 +112,22 @@ namespace God.Sim.Population.Households
         public int KinAvoidConfidence = 400;
         /// <summary>1: conception is disabled (the same-sex equality fixtures, M4.28).</summary>
         public int NoConception;
+        /// <summary>
+        /// D4 reproductive relationships (<see cref="ReproductiveUnion"/>): how many one adult may hold at once; how long one lasts
+        /// with neither trying (milli-years); how long a "wants a child" display is shown (ticks). <see cref="IndependentUnions"/>
+        /// 0 is the controlled arm where only romantic partners may agree to try (the M4 rule).
+        /// </summary>
+        public int MaxLiveUnions = 1, UnionLapseMilli = 500, SeekTicks = 240, IndependentUnions = 1;
+        /// <summary>Reward (vp) to both when a reproductive relationship is agreed.</summary>
+        public int UnionVp = 200;
+    }
+
+    /// <summary>D4 individual preferences (<see cref="Preferences"/>): mean and half-width of each draw (0..1000; 500 is neutral).</summary>
+    public sealed class PrefTuning : IOmitWhenDefault
+    {
+        public int CompanionshipMean = 500, CompanionshipSpread = 400;
+        public int ChildDesireMean = 500, ChildDesireSpread = 400;
+        public int CommitmentMean = 500, CommitmentSpread = 500;
     }
 
     /// <summary>Disease (POPULATION "Disease", Q3): one fever. Rates per million per day; Mild halves contact, crowding and sanitation.</summary>
@@ -141,5 +161,26 @@ namespace God.Sim.Population.Households
         public int StartHuts;
         /// <summary>Food units in each founder household's store at the start (roots).</summary>
         public int StoreFood;
+
+        /// <summary>
+        /// D4 (M4.42): the founder generator. 0: the mix above (the M3 band of unrelated young adults by default). 1: the
+        /// established band (<see cref="Founders.Established"/>): elders, mature adults in established households with their
+        /// dependent children (biological where a mixed couple's ages allow, adopted otherwise), young adults, birth dates spread
+        /// within each class. <see cref="EstablishedBand"/> gives the preferred settings.
+        /// </summary>
+        public int Generator;
+        /// <summary>Established band: share of mature adults (permille, aged MatureMin-MatureMax), elders' ages, and the share of young adults (AgeMin-AgeMax) in couples.</summary>
+        public int MaturePermille, MatureMinMilli = 2000, MatureMaxMilli = 2900, ElderMinMilli = 3000, ElderMaxMilli = 3300, YoungCouplePermille;
+
+        /// <summary>The established band (owner D4 §4, the preferred default of population games): 10% elders, 30% mature adults (80% of them in couples), 30% dependent children, 30% young adults (40% in couples); 10% of couples same-sex; a hut and a store of 6 roots per household.</summary>
+        public static void EstablishedBand(FounderTuning t)
+        {
+            t.Generator = 1;
+            t.ElderPermille = 100; t.MaturePermille = 300; t.ChildPermille = 300;
+            t.ChildMinMilli = 50; t.ChildMaxMilli = 950; t.AgeMinMilli = 1000; t.AgeMaxMilli = 1900;
+            t.MatureMinMilli = 2000; t.MatureMaxMilli = 2900; t.ElderMinMilli = 3000; t.ElderMaxMilli = 3300;
+            t.CouplePermille = 800; t.YoungCouplePermille = 400; t.SameSexPermille = 100;
+            t.StartHuts = 1; t.StoreFood = 6;
+        }
     }
 }

@@ -39,6 +39,9 @@ namespace God.Sim.Population.Households
                 case HVerb.Leave: LeavePartner(s, ev, npc); break;
                 case HVerb.AcceptCare: AcceptCare(s, ev, npc); break;
                 case HVerb.EndCare: EndCare(s, ev, npc); break;
+                case HVerb.SeekChild: SeekChild(s, ev, npc); break;
+                case HVerb.AcceptChild: AcceptChild(s, ev, npc); break;
+                case HVerb.RangeFar: RangeFar(s, npc); break;
                 default: End(npc); break;
             }
             return true;
@@ -424,13 +427,62 @@ namespace God.Sim.Population.Households
         {
             var t = Target(s, npc);
             var p = t != null ? Partnerships.Between(s, npc.Id, t.Id) : null;
-            if (p == null || npc.Stage == LifeStage.Child) { Frustrate(s, npc); return; }
+            var u = t != null ? ReproductiveUnions.Between(s, npc.Id, t.Id) : null;
+            if (p == null && u == null || npc.Stage == LifeStage.Child) { Frustrate(s, npc); return; }
             var life = npc.Life;
             bool fresh = life.TryWith != t.Id || life.TryingUntil < s.Tick;
             life.TryWith = t.Id;
             life.TryingUntil = s.Tick + s.Tuning.Households.Life.TryingTicks;
             if (life.Display == 0 || life.DisplayUntil < s.Tick) { life.Display = DisplayKind.Trying; life.DisplayLevel = 1; life.DisplayTarget = t.Id; life.DisplayUntil = life.TryingUntil; }
-            if (fresh) ev.Add(new TryForChildChosen { Npc = npc.Id, Partner = t.Id, Partnership = p.Id });
+            if (fresh) ev.Add(new TryForChildChosen { Npc = npc.Id, Partner = t.Id, Partnership = p?.Id ?? 0 });
+            if (u != null) u.LastTryTick = s.Tick;
+            End(npc);
+        }
+
+        /// <summary>D4 (M4.43): ranging far for food: walk out to the chosen node; on arrival the walk ends and it looks again
+        /// with what it now sees. A blocked path frustrates.</summary>
+        private static void RangeFar(GodState s, Npc npc)
+        {
+            if (WalkTo(s, npc, npc.Action.TargetNode, 1)) { End(npc); return; }
+            if (npc.Path == null) Frustrate(s, npc);
+        }
+
+        /// <summary>
+        /// D4: showing that it wants a child (a display at its own spot, seen by those it could have one with). Nothing happens
+        /// unless someone chooses to accept. Not shown while it cannot take a reproductive relationship (one already, pregnant,
+        /// just given birth), or when the scenario allows reproduction only between romantic partners.
+        /// </summary>
+        private static void SeekChild(GodState s, EventBuffer ev, Npc npc)
+        {
+            var life = npc.Life;
+            var pt = s.Tuning.Households.Partner;
+            if (life == null || npc.Stage != LifeStage.Adult || pt.IndependentUnions == 0 || !ReproductiveUnions.HasRoom(s, npc) || life.PregFather != 0) { End(npc); return; }
+            if (life.Display == DisplayKind.SeekChild && life.DisplayUntil >= s.Tick) { if (s.Tick >= life.DisplayUntil) End(npc); return; }
+            if (life.Display == DisplayKind.SeekChild) { End(npc); return; }
+            if (!Preferences.AllowsOutside(s, npc, 0)) { Frustrate(s, npc); return; }
+            life.Display = DisplayKind.SeekChild; life.DisplayLevel = 1; life.DisplayTarget = 0; life.DisplayUntil = s.Tick + pt.SeekTicks;
+            ev.Add(new ChildWanted { Npc = npc.Id, Desire = life.ChildDesire, Partnered = Partnerships.Count(s, npc.Id) > 0 });
+        }
+
+        /// <summary>
+        /// D4: accepting someone's shown wish for a child. Both adults chose it (the other by showing it, this one now); both must
+        /// have room for a reproductive relationship, and both their commitments must allow one outside their partnerships.
+        /// Nobody's partnership or household changes.
+        /// </summary>
+        private static void AcceptChild(GodState s, EventBuffer ev, Npc npc)
+        {
+            var t = Target(s, npc);
+            if (t?.Life == null || npc.Life == null || t.Life.Display != DisplayKind.SeekChild || t.Life.DisplayUntil < s.Tick || npc.Stage != LifeStage.Adult || t.Stage != LifeStage.Adult)
+            { Frustrate(s, npc); return; }
+            if (!Reach(s, npc, t, s.Tuning.Households.Partner.ProposeNodes)) return;
+            if (!Reproduction.MayConceiveWith(npc, t) || !ReproductiveUnions.HasRoom(s, npc) || !ReproductiveUnions.HasRoom(s, t)
+                || !Preferences.AllowsOutside(s, npc, t.Id) || !Preferences.AllowsOutside(s, t, npc.Id)) { Frustrate(s, npc); return; }
+            var kind = Partnerships.Between(s, npc.Id, t.Id) != null ? ReproductiveUnion.Partners : ReproductiveUnion.Independent;
+            ReproductiveUnions.Form(s, ev, t, npc, t.Id, kind);
+            t.Life.DisplayUntil = s.Tick - 1; t.Life.Display = 0;
+            if (t.Action.Verb == HVerb.SeekChild) End(t);
+            int vp = s.Tuning.Households.Partner.UnionVp;
+            Reward(s, npc, vp); Reward(s, t, vp);
             End(npc);
         }
 

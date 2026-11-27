@@ -23,6 +23,7 @@ namespace God.Sim.Population.Households
             var ft = s.Tuning.Households.Founders;
             var cal = SimCalendar.Of(s);
             var gt = s.Tuning.Genetics;
+            if (ft.Generator == 1) { foreach (var f in s.Setup.Factions) Established(s, f); return; }
             foreach (var npc in p.Npcs)
             {
                 if (!npc.Founder) continue;
@@ -72,8 +73,11 @@ namespace God.Sim.Population.Households
             var life = new NpcLife { Sex = sex, Mother = mother, BioFather = father, Generation = generation, Genome = genome };
             var dev = s.Rng.Fork("develop", npc.Id);
             life.Noise = PhenotypeBuilder.Noise(dev, s.Tuning.Genetics.NoisePermille);
-            var traits = new int[Trait.Count + 4];
+            var traits = new int[Preferences.TraitLength];
             PhenotypeBuilder.Birth(genome, LifeCycleSystem.MapOf(s), life.Noise, ref life.Pheno, traits);
+            // D4: individual preferences (the decider reads them as traits 16-18)
+            Preferences.Draw(s, npc, life);
+            traits[Preferences.TraitCompanionship] = life.Companionship; traits[Preferences.TraitChildDesire] = life.ChildDesire; traits[Preferences.TraitCommitment] = life.Commitment;
             npc.Traits = traits;
             npc.LearnRate = life.Pheno.LearnRate; npc.ForgetRate = life.Pheno.ForgetRate; npc.Curiosity = life.Pheno.Curiosity;
             life.MaxAgeMilli = lt.MaxAgeBaseMilli + life.Pheno.Lifespan + dev.NextRange(-lt.MaxAgeJitterMilli, lt.MaxAgeJitterMilli + 1);
@@ -140,6 +144,14 @@ namespace God.Sim.Population.Households
                     KinCues.Believe(s, null, sib, child.Id, KinRole.FullSibling, 800, KinSource.Raised);
                 }
             }
+            Homes(s, f, homes);
+        }
+
+        /// <summary>A hut (and a store of food) for each founder household with an adult, when the scenario says so.</summary>
+        private static void Homes(GodState s, Faction f, List<Household> homes)
+        {
+            var p = s.Population;
+            var ft = s.Tuning.Households.Founders;
             if (ft.StartHuts == 0) return;
             foreach (var h in homes)
             {
@@ -159,6 +171,181 @@ namespace God.Sim.Population.Households
                     Goods.Produce(s, null, Holder.Bin(h.Bin), Ware.Roots, ft.StoreFood, day + s.Tuning.Ecology.RootSpoilDays, 0, Owner.Household(h.Id), ProduceReason.Founder, 0, 0);
                 }
             }
+        }
+
+        /// <summary>
+        /// The established band (owner D4 §4, M4.42) of one faction. The founders (ascending id) are shuffled with
+        /// <c>Rng.Fork("founder-band", faction)</c> and given classes in that order: elders, mature adults, dependent children,
+        /// young adults; ages are drawn uniformly within each class, so birth dates spread and founder deaths do not fall
+        /// together. Mature adults form couples (some same-sex) and singles; each child joins a mature household as its
+        /// dependant: a mixed couple's own biological child when the woman is at least 1.0 older (its genome from one gamete of
+        /// each, <c>Rng.Fork("conceive", childId)</c>, as a birth), otherwise raised by them as an adopted child (a founder
+        /// genetically). Elders live with a couple as grandparents (believed kin, not genetic). Young adults pair or live alone.
+        /// Every belief has its source (born, raised, partnered); nothing here reads a pedigree to decide a belief.
+        /// </summary>
+        public static void Established(GodState s, Faction f)
+        {
+            var p = s.Population;
+            var ft = s.Tuning.Households.Founders;
+            var gt = s.Tuning.Genetics;
+            var lt = s.Tuning.Households.Life;
+            var map = LifeCycleSystem.MapOf(s);
+            var members = new List<Npc>();
+            foreach (var n in p.Npcs) if (n.Founder && n.Faction == f) members.Add(n);
+            if (members.Count == 0) return;
+            var r = s.Rng.Fork("founder-band", (int)f);
+            var order = new List<Npc>(members);
+            for (int i = order.Count - 1; i > 0; i--) { int j = r.NextInt(i + 1); var t = order[i]; order[i] = order[j]; order[j] = t; }
+            int total = order.Count;
+            int nElder = total * ft.ElderPermille / 1000, nMature = total * ft.MaturePermille / 1000, nChild = total * ft.ChildPermille / 1000;
+            if (nMature == 0 && nChild > 0) nMature = 1;
+            var genomes = new Dictionary<int, byte[]>(); var sexes = new Dictionary<int, byte>(); var ages = new Dictionary<int, int>();
+            foreach (var n in members)
+            {
+                var gr = s.Rng.Fork("genome-founder", n.Id);
+                genomes[n.Id] = GenomeOps.Founder(gr, gt.FounderSpread);
+                sexes[n.Id] = (byte)gr.NextInt(2);
+            }
+            var elders = new List<Npc>(); var mature = new List<Npc>(); var kids = new List<Npc>(); var young = new List<Npc>();
+            for (int i = 0; i < order.Count; i++)
+            {
+                var n = order[i];
+                if (i < nElder) { elders.Add(n); ages[n.Id] = r.NextRange(ft.ElderMinMilli, ft.ElderMaxMilli + 1); }
+                else if (i < nElder + nMature) { mature.Add(n); ages[n.Id] = r.NextRange(ft.MatureMinMilli, ft.MatureMaxMilli + 1); }
+                else if (i < nElder + nMature + nChild) { kids.Add(n); ages[n.Id] = r.NextRange(ft.ChildMinMilli, ft.ChildMaxMilli + 1); }
+                else { young.Add(n); ages[n.Id] = r.NextRange(ft.AgeMinMilli, ft.AgeMaxMilli + 1); }
+            }
+            // couples: mixed first, then same-sex by the scenario's share
+            List<(Npc a, Npc b)> Pair(List<Npc> pool, int permille)
+            {
+                var women = new List<Npc>(); var men = new List<Npc>();
+                foreach (var n in pool) if (sexes[n.Id] == 0) women.Add(n); else men.Add(n);
+                int couples = pool.Count * permille / 2000;
+                int same = (couples * ft.SameSexPermille + 500) / 1000;
+                var res = new List<(Npc, Npc)>();
+                for (int k = 0; k < couples; k++)
+                {
+                    bool wantSame = k >= couples - same;
+                    if (!wantSame && women.Count > 0 && men.Count > 0) { res.Add((women[0], men[0])); women.RemoveAt(0); men.RemoveAt(0); continue; }
+                    var big = women.Count >= men.Count ? women : men;
+                    if (big.Count >= 2) { res.Add((big[0], big[1])); big.RemoveRange(0, 2); continue; }
+                    if (women.Count > 0 && men.Count > 0) { res.Add((women[0], men[0])); women.RemoveAt(0); men.RemoveAt(0); }
+                }
+                foreach (var c in res) { pool.Remove(c.Item1); pool.Remove(c.Item2); }
+                return res;
+            }
+            var matureSingles = new List<Npc>(mature);
+            var matureCouples = Pair(matureSingles, ft.CouplePermille);
+            var youngSingles = new List<Npc>(young);
+            var youngCouples = Pair(youngSingles, ft.YoungCouplePermille);
+            // the households that raise children: mature couples (mixed first), then mature singles
+            var raisers = new List<List<Npc>>();
+            foreach (var c in matureCouples) if (sexes[c.a.Id] != sexes[c.b.Id]) raisers.Add(new List<Npc> { c.a, c.b });
+            foreach (var c in matureCouples) if (sexes[c.a.Id] == sexes[c.b.Id]) raisers.Add(new List<Npc> { c.a, c.b });
+            foreach (var n in matureSingles) raisers.Add(new List<Npc> { n });
+            var parentOf = new Dictionary<int, (int mother, int father)>();
+            var raisedBy = new Dictionary<int, List<Npc>>();
+            for (int c = 0; c < kids.Count; c++)
+            {
+                var kid = kids[c];
+                if (raisers.Count == 0) break;
+                var home = raisers[c % raisers.Count];
+                raisedBy[kid.Id] = home;
+                if (home.Count == 2 && sexes[home[0].Id] != sexes[home[1].Id])
+                {
+                    var mother = sexes[home[0].Id] == 0 ? home[0] : home[1];
+                    var father = mother == home[0] ? home[1] : home[0];
+                    if (ages[mother.Id] - ages[kid.Id] >= lt.FertileFromMilli && ages[father.Id] - ages[kid.Id] >= lt.FertileFromMilli) parentOf[kid.Id] = (mother.Id, father.Id);
+                }
+            }
+            // lives: everyone but the biological children first (their parents' genomes are fixed), then those children
+            foreach (var n in members)
+            {
+                if (parentOf.ContainsKey(n.Id)) continue;
+                if (n.Mind != null) n.Mind.Kin = new KinMind();
+                MakeLife(s, n, sexes[n.Id], genomes[n.Id], 0, 0, 0);
+                SetAge(s, n, ages[n.Id]);
+            }
+            foreach (var n in members)
+            {
+                if (!parentOf.TryGetValue(n.Id, out var par)) continue;
+                var mother = p.Find(par.mother); var father = p.Find(par.father);
+                var cr = s.Rng.Fork("conceive", n.Id);
+                var mat = new byte[GeneMap.Loci]; var pat = new byte[GeneMap.Loci];
+                var muts = new List<Mutation>();
+                GenomeOps.Gamete(mother.Life.Genome, cr, gt, map, mat, muts);
+                GenomeOps.Gamete(father.Life.Genome, cr, gt, map, pat, muts);
+                if (n.Mind != null) n.Mind.Kin = new KinMind();
+                MakeLife(s, n, sexes[n.Id], GenomeOps.Combine(mat, pat), mother.Id, father.Id, 1);
+                SetAge(s, n, ages[n.Id]);
+            }
+            // households
+            var homes = new List<Household>();
+            Household Couple(Npc a, Npc b)
+            {
+                var h = HouseholdModule.Form(s, null, a, JoinReason.Founded);
+                HouseholdModule.Join(s, null, h, b, JoinReason.Founded, 0);
+                Partnerships.Form(s, null, a.Id, b.Id, Math.Min(a.Id, b.Id), h.Id);
+                KinCues.Believe(s, null, a, b.Id, KinRole.Partner, 900, KinSource.Partnered);
+                KinCues.Believe(s, null, b, a.Id, KinRole.Partner, 900, KinSource.Partnered);
+                homes.Add(h);
+                return h;
+            }
+            var homeOf = new Dictionary<List<Npc>, Household>();
+            foreach (var home in raisers)
+            {
+                var h = home.Count == 2 ? Couple(home[0], home[1]) : HouseholdModule.Form(s, null, home[0], JoinReason.Founded);
+                if (home.Count == 1) homes.Add(h);
+                homeOf[home] = h;
+            }
+            foreach (var kid in kids)
+            {
+                if (!raisedBy.TryGetValue(kid.Id, out var home) || !HouseholdModule.Join(s, null, homeOf[home], kid, JoinReason.Founded, 0))
+                { homes.Add(HouseholdModule.Form(s, null, kid, JoinReason.Founded)); continue; }
+                bool bio = parentOf.ContainsKey(kid.Id);
+                if (!bio) { kid.Life.Fostered = true; kid.Life.ToldFostered = ages[kid.Id] >= lt.ForageFromMilli; }
+                foreach (var adult in home)
+                {
+                    if (bio) { KinCues.Believe(s, null, adult, kid.Id, KinCues.ChildRole(kid.Life.Sex), 950, KinSource.Born); KinCues.Believe(s, null, kid, adult.Id, KinCues.ParentRole(adult.Life.Sex), 900, KinSource.Born); }
+                    else if (kid.Life.ToldFostered) { KinCues.Believe(s, null, adult, kid.Id, KinRole.FosterChild, 800, KinSource.Raised); KinCues.Believe(s, null, kid, adult.Id, KinRole.FosterParent, 800, KinSource.Told); }
+                    else { KinCues.Believe(s, null, adult, kid.Id, KinCues.ChildRole(kid.Life.Sex), 900, KinSource.Raised); KinCues.Believe(s, null, kid, adult.Id, KinCues.ParentRole(adult.Life.Sex), 900, KinSource.Raised); }
+                }
+            }
+            // siblings: children raised in one household believe each other siblings (full when both are the couple's own)
+            foreach (var home in raisers)
+            {
+                var h = homeOf[home];
+                foreach (int a in h.Members)
+                    foreach (int b in h.Members)
+                    {
+                        if (a >= b) continue;
+                        var x = p.Find(a); var y = p.Find(b);
+                        if (x.Stage != LifeStage.Child || y.Stage != LifeStage.Child) continue;
+                        KinCues.Believe(s, null, x, y.Id, KinRole.FullSibling, 800, KinSource.Raised);
+                        KinCues.Believe(s, null, y, x.Id, KinRole.FullSibling, 800, KinSource.Raised);
+                    }
+            }
+            // elders: each lives with a couple (those with children first) as a grandparent of its children
+            var withKids = new List<Household>();
+            foreach (var home in raisers) if (home.Count == 2) withKids.Add(homeOf[home]);
+            for (int e = 0; e < elders.Count; e++)
+            {
+                var elder = elders[e];
+                Household h = null;
+                for (int k = 0; k < withKids.Count && h == null; k++) { var c = withKids[(e + k) % withKids.Count]; if (c.Members.Count < Household.MaxMembers) h = c; }
+                if (h == null || !HouseholdModule.Join(s, null, h, elder, JoinReason.Founded, 0)) { homes.Add(HouseholdModule.Form(s, null, elder, JoinReason.Founded)); continue; }
+                foreach (int m in h.Members)
+                {
+                    var o = p.Find(m);
+                    if (o == null || o.Id == elder.Id) continue;
+                    if (o.Stage == LifeStage.Child) { KinCues.Believe(s, null, elder, o.Id, KinRole.Grandchild, 800, KinSource.Told); KinCues.Believe(s, null, o, elder.Id, KinRole.Grandparent, 800, KinSource.Told); }
+                    else { KinCues.Believe(s, null, elder, o.Id, KinRole.InLaw, 700, KinSource.Told); KinCues.Believe(s, null, o, elder.Id, KinRole.InLaw, 700, KinSource.Told); }
+                }
+            }
+            foreach (var c in youngCouples) Couple(c.a, c.b);
+            foreach (var n in youngSingles) homes.Add(HouseholdModule.Form(s, null, n, JoinReason.Founded));
+            homes.Sort((x, y) => x.Id.CompareTo(y.Id));
+            Homes(s, f, homes);
         }
 
         /// <summary>A free node for a founder hut near a node (the hut rules of M3: land, nothing built, no source, away from huts and HQ circles).</summary>

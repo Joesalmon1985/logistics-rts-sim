@@ -11,11 +11,15 @@ namespace God.Sim.Population.Households
         public const byte Store = Verb.Store, TakeFromStore = Verb.TakeFromStore;
         public const byte Feed = 32, Beg = 33, Propose = 34, Accept = 35, TryForChild = 36, Leave = 37, Tend = 38, Adopt = 39,
             AskCare = 40, AcceptCare = 41, EndCare = 42;
+        /// <summary>D4 (unity/demog): show that it wants a child (at its own spot), and accept such an offer (aimed at the person showing it).</summary>
+        public const byte SeekChild = 43, AcceptChild = 44;
+        /// <summary>D4 (M4.43): range far for food: walk a long way out when hungry and no plentiful food is known (the depletion trap near home).</summary>
+        public const byte RangeFar = 45;
 
-        public static bool IsMine(byte v) => v == Store || v == TakeFromStore || v >= Feed && v <= EndCare;
+        public static bool IsMine(byte v) => v == Store || v == TakeFromStore || v >= Feed && v <= RangeFar;
 
         /// <summary>Verbs aimed at a person (a person target: the seen person's handle and its node, see <c>HouseholdMindHooks</c>).</summary>
-        public static bool AtPerson(byte v) => v >= Feed && v <= EndCare;
+        public static bool AtPerson(byte v) => v >= Feed && v <= EndCare || v == AcceptChild;
     }
 
     public static class HClass { public const int Store = 40, Estate = 41; }
@@ -25,9 +29,9 @@ namespace God.Sim.Population.Households
         public const int Begging1 = 16, Begging2 = 17, Begging3 = 18, Proposing = 19, Trying = 20, Sick = 21, NeedsHome = 22, AskingCare = 23;
     }
 
-    public static class HSelf { public const int Unpartnered = 16, HasDependants = 17; }
+    public static class HSelf { public const int Unpartnered = 16, HasDependants = 17, WantsChild = 18; }
 
-    public static class HSituation { public const int DependantInNeed = 16, CareOwed1 = 17, CareOwed2 = 18, CareOwed3 = 19; }
+    public static class HSituation { public const int DependantInNeed = 16, CareOwed1 = 17, CareOwed2 = 18, CareOwed3 = 19, UnionPartner = 20, SeekingChild = 21, NoPlentyKnown = 22; }
 
     public static class HRole { public const int Child = 4, Elder = 5; }
 }
