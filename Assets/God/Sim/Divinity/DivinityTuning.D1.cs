@@ -97,6 +97,17 @@ namespace God.Sim.Divinity
         Possess = 6,
         /// <summary><c>EndPossession</c> (D4).</summary>
         EndPossession = 7,
+        // ---- flagged additive edit (D4): the embodied inputs; the body is the god's possessed person, else its manifested avatar ----
+        /// <summary><c>DivineControlInput</c> Heading { Heading = A, Gait = C (0: walk) } (D4).</summary>
+        ControlHeading = 8,
+        /// <summary><c>DivineControlInput</c> MoveTo { Node = B } (D4).</summary>
+        ControlMoveTo = 9,
+        /// <summary><c>DivineControlInput</c> Action { Act = A, object B (0: the nearest), C = the ware of a Give or the GestureAct of a Communicate } (D4).</summary>
+        ControlAction = 10,
+        /// <summary><c>ManifestAvatar</c> { Node = B; 0: the node of person A } (D4b).</summary>
+        Manifest = 11,
+        /// <summary><c>DismissAvatar</c> (D4b).</summary>
+        Dismiss = 12,
     }
 
     /// <summary>

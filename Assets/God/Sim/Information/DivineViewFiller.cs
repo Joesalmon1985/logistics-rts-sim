@@ -92,6 +92,60 @@ namespace God.Sim.Information
             return true;
         }
 
+        // ---- D4 region (additive): embodiment views ----
+
+        private long Rate(ControlKind kind, out long nominal)
+        {
+            nominal = Mythic.UpkeepOf(_s, kind);
+            return Mode == DivinityMode.Standard ? nominal : 0;
+        }
+
+        private long Left(long rate) => rate <= 0 ? long.MaxValue : (_s.Divinity?.Gods?.Of(God)?.Mythic ?? 0) / rate;
+
+        public bool TryPossession(out PossessionView view)
+        {
+            view = default;
+            var ps = _s.Divinity?.Avatars?.PossessionOfGod(God);
+            if (ps == null) return false;
+            var e = Control.EntryOf(_s, ps.Npc);
+            if (e.Kind != ControlKind.Possessed) return false;
+            long rate = Rate(ControlKind.Possessed, out long nominal);
+            view = new PossessionView
+            {
+                Intervention = ps.Intervention, God = God, Npc = ps.Npc, Node = _s.Population?.Find(ps.Npc)?.Node ?? 0, StartedTick = ps.StartTick,
+                UpkeepPerTick = rate, NominalUpkeepPerTick = nominal, TicksLeft = Left(rate), Input = e.Input, Heading = e.Heading, Gait = e.Gait,
+                LeaseUntil = e.LeaseUntil, Act = e.Act, InputsApplied = ps.InputsApplied, InputsRefused = ps.InputsRefused, Actions = ps.ActionsStarted,
+            };
+            return true;
+        }
+
+        public bool TryAvatar(out AvatarView view)
+        {
+            view = default;
+            var g = _s.Divinity?.Gods?.Of(God);
+            if (g == null || g.AvatarBody == 0) return false;
+            var body = _s.Population?.Find(g.AvatarBody);
+            if (body == null) return false;
+            var av = _s.Divinity.Avatars?.ManifestationOfGod(God);
+            var e = Control.EntryOf(_s, body.Id);
+            long rate = Rate(ControlKind.AvatarBody, out long nominal);
+            if (!body.Alive) { rate = 0; nominal = 0; }
+            int n = 0;
+            foreach (var l in body.Carry) if (!l.Empty) n++;
+            var wares = new Ware[n]; var counts = new int[n];
+            n = 0;
+            foreach (var l in body.Carry) if (!l.Empty) { wares[n] = l.Ware; counts[n] = l.Count; n++; }
+            int k = (int)InterventionKind.Avatar;
+            view = new AvatarView
+            {
+                God = God, Body = body.Id, Node = body.Node, Alive = body.Alive, Intervention = av?.Intervention ?? 0, Health = body.HealthPermille,
+                CarryWares = wares, CarryCounts = counts, StartedTick = av?.StartTick ?? 0, UpkeepPerTick = rate, NominalUpkeepPerTick = nominal,
+                TicksLeft = body.Alive ? Left(rate) : 0, CooldownUntil = g.CooldownUntil != null && k < g.CooldownUntil.Length ? g.CooldownUntil[k] : 0,
+                Observers = av?.Observers.Count ?? 0, Actions = av?.ActionsStarted ?? 0, Input = e.Input, Heading = e.Heading,
+            };
+            return true;
+        }
+
         public void Gods(List<DivineGodView> into)
         {
             into.Clear();

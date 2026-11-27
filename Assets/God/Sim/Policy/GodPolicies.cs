@@ -66,7 +66,7 @@ namespace God.Sim.Policy
             {
                 if (slot.God != 0 && slot.God != god) continue;
                 for (long t = now - _think + 1; t <= now; t++)
-                    if (slot.FiresAt(t)) { var c = Build(slot, god); if (c != null) outCommands.Add(c); }
+                    if (slot.FiresAt(t)) { var c = Build(slot, god, view); if (c != null) outCommands.Add(c); }
             }
         }
 
@@ -83,7 +83,53 @@ namespace God.Sim.Policy
                 case ScheduleTemplate.Compulsion: return new IssueCompulsion { God = god, Act = (DivineAct)slot.A, Target = who, ExpireTicks = slot.C };
                 case ScheduleTemplate.Possess: return new BeginPossession { God = god, Npc = slot.B };
                 case ScheduleTemplate.EndPossession: return new EndPossession { God = god };
+                case ScheduleTemplate.Dismiss: return new DismissAvatar { God = god };
                 default: return null;
+            }
+        }
+
+        /// <summary>
+        /// Flagged additive edit (D4): the templates that need the god's view (the controlled body, a person's node); the others
+        /// as <see cref="Build(ScheduleSlot, int)"/>. Null when the body does not exist (nothing to steer).
+        /// </summary>
+        public static Command Build(ScheduleSlot slot, int god, IDivineView view)
+        {
+            switch (slot.Template)
+            {
+                case ScheduleTemplate.ControlHeading: case ScheduleTemplate.ControlMoveTo: case ScheduleTemplate.ControlAction:
+                {
+                    int body = 0;
+                    if (view != null && view.TryPossession(out var pv)) body = pv.Npc;
+                    else if (view != null && view.TryAvatar(out var av) && av.Alive) body = av.Body;
+                    if (body == 0) return null;
+                    var c = new DivineControlInput { God = god, Body = body };
+                    if (slot.Template == ScheduleTemplate.ControlHeading) { c.Kind = ControlInputKind.Heading; c.Heading = (byte)slot.A; c.Gait = (byte)(slot.C <= 0 ? 1 : slot.C); }
+                    else if (slot.Template == ScheduleTemplate.ControlMoveTo) { c.Kind = ControlInputKind.MoveTo; c.Node = slot.B; }
+                    else { c.Kind = ControlInputKind.Action; c.Act = (DivineAct)slot.A; c.Target = ActionTarget((DivineAct)slot.A, slot.B, slot.C); }
+                    return c;
+                }
+                case ScheduleTemplate.Manifest:
+                {
+                    int node = slot.B;
+                    if (node == 0 && slot.A != 0 && view != null && view.TryPerson(slot.A, out var p)) node = p.Node;
+                    return new ManifestAvatar { God = god, Node = node };
+                }
+                default: return Build(slot, god);
+            }
+        }
+
+        /// <summary>The object of a scheduled action input (D4's input target convention, <c>Embodiment</c>).</summary>
+        public static DivineTarget ActionTarget(DivineAct act, int obj, int extra)
+        {
+            switch (act)
+            {
+                case DivineAct.Take: case DivineAct.Drop: case DivineAct.UseTool:
+                    return obj == 0 ? default : new DivineTarget(DivineTargetKind.Lot, obj);
+                case DivineAct.Give: return new DivineTarget(DivineTargetKind.Npc, obj, extra);
+                case DivineAct.Approach: return new DivineTarget(DivineTargetKind.Npc, obj);
+                case DivineAct.Communicate: return new DivineTarget(DivineTargetKind.Npc, obj, extra);
+                case DivineAct.Sleep: return obj == 0 ? default : new DivineTarget(DivineTargetKind.Hut, obj);
+                default: return obj == 0 ? default : new DivineTarget(DivineTargetKind.Location, 0, obj);
             }
         }
     }
