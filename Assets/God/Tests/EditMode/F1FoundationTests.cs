@@ -66,7 +66,7 @@ namespace God.Sim.Tests
             var types = DivineCommandTypes();
             Assert.GreaterOrEqual(types.Count, 18, "every concrete command of contracts 10.2");
             // D1 adjustment: the four configuration commands have D1's handlers; the rest stay handler-less until D2-D7
-            types = types.Where(t => !DivineCommandSet.IsConfiguration(t)).ToList();
+            types = types.Where(t => !DivineCommandSet.IsConfiguration(t) && t != typeof(CastMiracle)).ToList(); // D3: CastMiracle has its handler
             var sim = Game(11, divinity: 1, humanGod: 1);
             Assert.IsNotNull(sim.State.Divinity, "stub state with the switch on");
             ulong before = sim.StateHash();
