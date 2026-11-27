@@ -79,7 +79,7 @@ namespace God.Sim.Divinity
         public FounderBeliefs Founders = new FounderBeliefs();
         public BeliefEvidence Evidence = new BeliefEvidence();
         /// <summary>Conversion: days the strongest god must lead, and the loyalty it needs; belief below which an affiliation lapses.</summary>
-        public int ConvertDays = 3, ConvertFrom = 400, LapseBelief = 100;
+        public int ConvertDays = 3, ConvertFrom = 200, LapseBelief = 100;
         /// <summary>1: a conversion keeps the other affiliations open.</summary>
         public int KeepOtherAffiliations;
     }

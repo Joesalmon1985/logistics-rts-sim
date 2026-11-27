@@ -72,7 +72,6 @@ namespace God.Sim.Divinity
         {
             var a = n.Action;
             int count = m.MatchCount;
-            m.MatchCount = 0;
             if (a.Verb == 0 || a.Since != s.Tick) return;
             int lastC = 0;
             for (int i = 0; i < count; i++)

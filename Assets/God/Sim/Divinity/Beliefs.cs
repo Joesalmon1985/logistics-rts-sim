@@ -88,6 +88,7 @@ namespace God.Sim.Divinity
             if (from == to) return;
             var tu = s.Tuning.Divinity.Doctrine.Evidence;
             var p = s.Population;
+            List<long> seen = null; // one miracle counts once per person (an effect event per changed field)
             for (int i = from; i < to; i++)
             {
                 switch (items[i])
@@ -111,13 +112,17 @@ namespace God.Sim.Divinity
                         if (!Interventions.TryGet(s, e.Intervention, out var r)) break;
                         var n = p.Find(e.ThingId);
                         if (n == null || !n.Alive || !Bodies.IsPerson(n)) break;
+                        long once = ((long)e.Intervention << 32) | (uint)n.Id;
+                        if (seen == null) seen = new List<long>();
+                        if (seen.Contains(once)) break;
+                        seen.Add(once);
                         var kind = KindOf(s, e.Intervention);
                         bool heal = kind == MiracleKind.HealInjury || kind == MiracleKind.HealDisease || kind == MiracleKind.Bless || kind == MiracleKind.Protect;
                         bool smite = kind == MiracleKind.SmitePerson;
                         if (e.ThingKind == MiracleThing.Person)
                         {
                             if (heal) Move(s, ev, n, r.God, 2, e.Intervention, tu.HealedBelief, tu.HealedFaith, tu.HealedTrust, tu.HealedFear, tu.HealedLoyalty);
-                            else if (smite && e.Field == "injury") Move(s, ev, n, r.God, 3, e.Intervention, tu.SmittenBelief, 0, tu.SmittenTrust, tu.SmittenFear, tu.SmittenLoyalty);
+                            else if (smite) Move(s, ev, n, r.God, 3, e.Intervention, tu.SmittenBelief, 0, tu.SmittenTrust, tu.SmittenFear, tu.SmittenLoyalty);
                         }
                         else
                         {

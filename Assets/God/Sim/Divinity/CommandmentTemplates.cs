@@ -104,7 +104,7 @@ namespace God.Sim.Divinity
             return null;
         }
 
-        /// <summary>A verb of the verb table, or one the contracts reserve for a later package (it then matches nothing until that package lands it).</summary>
-        public static bool KnownVerb(byte v) => v != 0 && (VerbTable.TryGet(v, out _) || Verb.IsCiv(v) || Verb.IsOrgs(v) || Verb.IsDivinity(v));
+        /// <summary>A verb of the verb table, any <c>Say(act)</c> of M5's grammar (64-95), or one the contracts reserve for a later package (it then matches nothing until that package lands it).</summary>
+        public static bool KnownVerb(byte v) => v != 0 && (VerbTable.TryGet(v, out _) || Comms.Messages.IsSay(v) || Verb.IsCiv(v) || Verb.IsOrgs(v) || Verb.IsDivinity(v));
     }
 }
