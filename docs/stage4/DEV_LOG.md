@@ -1,4 +1,4 @@
-﻿# Stage 4 development log
+# Stage 4 development log
 
 The persistent log of the autonomous Stage 4 implementation run. Every session reads it first and updates it before it stops. It records what is true now; the design itself lives in the documents listed in [DESIGN_CONVENTIONS.md Â§11](DESIGN_CONVENTIONS.md#11-document-map-one-owner-topic-each-link-dont-repeat), and the gates in [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md).
 
