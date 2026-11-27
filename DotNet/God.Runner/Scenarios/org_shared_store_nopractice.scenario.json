@@ -1,0 +1,34 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_shared_store_nopractice",
+  "description": "C6 control for org_shared_store (ORG-ACC-4, ORG-INV-6): the same island, people and lean food, but nobody knows the store-food practice (Orgs.C6.StartPractices = 0). The template exists; nothing may be founded.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 4,
+    "victory": [ { "kind": "sandbox" } ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Orgs.C6.StartPractices": 0,
+    "Households.Founders.ChildPermille": 0,
+    "Households.Founders.ElderPermille": 0,
+    "Households.Founders.AgeMinMilli": 1000,
+    "Households.Founders.AgeMaxMilli": 2600,
+    "Households.Founders.CouplePermille": 1000,
+    "Households.Founders.SameSexPermille": 0,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 4,
+    "Ecology.BerriesPerForest": 2,
+    "Ecology.BerriesPerMeadow": 1,
+    "Ecology.RootsPerHills": 2,
+    "Ecology.RootsPerFields": 2,
+    "Ecology.BerryRegrowPermille": 250,
+    "Ecology.RootRegrowPermille": 200
+  },
+  "record": { "level": "off" },
+  "stop": { "maxDays": 20, "populationBelow": 1 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

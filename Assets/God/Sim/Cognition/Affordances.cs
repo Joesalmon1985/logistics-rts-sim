@@ -44,7 +44,7 @@ namespace God.Sim.Cognition
     }
 
     /// <summary>On what basis a mind believes it may use goods: its own, its household's, nobody's, or none of these.</summary>
-    public enum PermissionBasis : byte { None = 0, Own = 1, Household = 2, Ownerless = 3, UseRight = 4 } // C1: 4 a use right on an asset
+    public enum PermissionBasis : byte { None = 0, Own = 1, Household = 2, Ownerless = 3, UseRight = 4, OrgRole = 5 } // C1: 4 a use right on an asset; C6: 5 a role in the owning organisation
 
     /// <summary>The answer of <see cref="Permits.Believed"/>: allowed or not, and the basis.</summary>
     public readonly struct PermissionResult
@@ -70,7 +70,27 @@ namespace God.Sim.Cognition
             if (owner.IsNone) return new PermissionResult(true, PermissionBasis.Ownerless);
             if (owner.Kind == OwnerKind.Npc && owner.Id == sc.Self.Id) return new PermissionResult(true, PermissionBasis.Own);
             if (owner.Kind == OwnerKind.Household && sc.Self.Household != 0 && owner.Id == sc.Self.Household) return new PermissionResult(true, PermissionBasis.Household);
+            if (owner.Kind == OwnerKind.Org) return BelievedOrg(sc, owner.Id);
             return new PermissionResult(false, PermissionBasis.None);
+        }
+
+        /// <summary>
+        /// C6 (spec 5 item 13): may this mind take goods of an organisation, as it believes? From its own <c>OrgBelief</c>: it
+        /// believes it holds a role, and the store access it believes holds allows it (Anyone; Members; Officers for an office;
+        /// MembersByRation only for an office that keeps the store: other members are handed their ration). A query, never enforced.
+        /// </summary>
+        public static PermissionResult BelievedOrg(ThinkScratch sc, int org)
+        {
+            var m = sc.Mind?.Orgs;
+            int i = m == null ? -1 : m.IndexOfOrg(org);
+            if (i < 0) return new PermissionResult(false, PermissionBasis.None);
+            var b = m.Beliefs[i];
+            var access = (Orgs.StoreAccessRule)b.StoreAccess;
+            bool ok = access == Orgs.StoreAccessRule.Anyone
+                || b.MyRole != 0 && access == Orgs.StoreAccessRule.Members
+                || b.MyOffice >= 0 && access == Orgs.StoreAccessRule.Officers
+                || b.MyOffice >= 0 && (b.MyPowers & (uint)Orgs.OrgPower.KeepStore) != 0;
+            return ok ? new PermissionResult(true, PermissionBasis.OrgRole) : new PermissionResult(false, PermissionBasis.None);
         }
 
         /// <summary>

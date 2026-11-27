@@ -346,9 +346,9 @@ namespace God.Sim.Tests
         [Test]
         public void Events_NewDomainsAndRanges_NoRows()
         {
-            Assert.AreEqual(0, OrgEvents.Catalog.Count, "F1 adds no event rows (organisations)");
-            foreach (var e in CivEvents.Catalog) Assert.IsTrue(e.Code >= 270 && e.Code <= 289 || e.Code >= 250 && e.Code <= 269, "C1 and C3 rows stay in their blocks: " + e.Name);
-            // D1 adjustment (D3 widens to 800-829): divinity rows stay in their blocks (contracts 15.1)
+            // Each package's rows stay in its own block (contracts 15.1; R23/R36 for Orgs)
+            foreach (var e in OrgEvents.Catalog) Assert.IsTrue(e.Code >= 500 && e.Code <= 549 || e.Code >= 551 && e.Code <= 559, "Orgs rows stay in their blocks: " + e.Name);
+            foreach (var e in CivEvents.Catalog) Assert.IsTrue(e.Code >= 250 && e.Code <= 289, "C1 and C3 rows stay in their blocks: " + e.Name);
             foreach (var e in DivinityEvents.Catalog) Assert.That(e.Code >= 800 && e.Code <= 829, e.Name + " " + e.Code);
             foreach (var d in new[] { TelemetryDomain.Lending, TelemetryDomain.Organisation, TelemetryDomain.Service }) Assert.AreEqual((500, 599), EventCatalog.RangeOf(d, false), d.ToString());
             for (int d = 60; d <= 66; d++) Assert.AreEqual((800, 899), EventCatalog.RangeOf((TelemetryDomain)d, false), ((TelemetryDomain)d).ToString());
@@ -367,7 +367,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(0x4000_0001, DivinityIds.AvatarBodyId(1));
             Assert.AreEqual(35, EpisodeKey.Possession);
             Assert.AreEqual(VerbTable.Rows.Count, VerbTable.Rows.Select(r => r.Id).Distinct().Count());
-            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && r.Id != Divinity.DivineVerb.Give), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102; D2 adjustment: D2's 119
+            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && !Verb.IsOrgs(r.Id) && r.Id != Divinity.DivineVerb.Give), "rows 96-127 stay reserved until their packages"); // Civ rows (C1, C3), Orgs rows (C6), D2's 119
         }
     }
 }
