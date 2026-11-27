@@ -611,6 +611,7 @@ namespace God.Sim.Cognition
             }
             var s = sc.Self;
             if (kind == IntentTarget.Node && (node == s.Node || node == s.ExploreA || node == s.ExploreB)) return true; // its own spot and its own directions
+            if (kind == IntentTarget.Node && CognitionExtensions.OwnHeading(sc, node)) return true;                      // F0 (12.37): M4's ranging heading
             if (kind == IntentTarget.Lot && (id == s.FoodLot0 || id == s.FoodLot1)) return true;                        // its own carry
             if (kind == IntentTarget.Hut && (id == s.HomeHut || id == s.SiteHut)) return true;                         // its own hut and site
             for (int i = 0; i < sc.SeenCount; i++)

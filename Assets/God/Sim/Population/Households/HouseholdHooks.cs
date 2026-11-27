@@ -498,6 +498,20 @@ namespace God.Sim.Population.Households
         private static void RangeFar(ThinkScratch sc)
         {
             var g = sc.Grid;
+            int cur = RangeFarGoal(sc);
+            if (cur < 0) return;
+            int at = Thinker.AddCandidate(sc, HVerb.RangeFar, IntentTarget.Node, 0, cur, 0, g.Distance(sc.Self.Node, cur));
+            if (at < 0) return;
+            Thinker.TargetFeatures(sc, at, Feature.Situation(HSituation.NoPlentyKnown), Feature.Class(ObjClass.Unknown));
+        }
+
+        /// <summary>
+        /// D4: the end of today's ranging walk (one of six directions, turning with the day and its own id; up to
+        /// <see cref="RangeFarNodes"/> over land), or -1 when the walk would be shorter than half of that.
+        /// </summary>
+        private static int RangeFarGoal(ThinkScratch sc)
+        {
+            var g = sc.Grid;
             int dir = (sc.Self.Day + sc.Self.Id) % 6;
             int cur = sc.Self.Node, steps = 0;
             for (int k = 0; k < RangeFarNodes; k++)
@@ -506,11 +520,14 @@ namespace God.Sim.Population.Households
                 if (v < 0 || !g.IsLand(v)) break;
                 cur = v; steps++;
             }
-            if (steps < RangeFarNodes / 2) return;
-            int at = Thinker.AddCandidate(sc, HVerb.RangeFar, IntentTarget.Node, 0, cur, 0, g.Distance(sc.Self.Node, cur));
-            if (at < 0) return;
-            Thinker.TargetFeatures(sc, at, Feature.Situation(HSituation.NoPlentyKnown), Feature.Class(ObjClass.Unknown));
+            return steps < RangeFarNodes / 2 ? -1 : cur;
         }
+
+        /// <summary>
+        /// F0 (SHARED_CONTRACTS 12.37): a node target that is its own ranging heading (the end of today's ranging walk) is
+        /// its own direction, known as M3's own explore directions are (<c>SelfView.ExploreA/B</c>). Only with M4.
+        /// </summary>
+        public static bool OwnHeading(ThinkScratch sc, int node) => M4(sc) && node >= 0 && RangeFarGoal(sc) == node;
 
         /// <summary>A candidate done where it stands (D4: showing that it wants a child), with one self feature.</summary>
         private static void SelfAct(ThinkScratch sc, byte verb, uint extra)
