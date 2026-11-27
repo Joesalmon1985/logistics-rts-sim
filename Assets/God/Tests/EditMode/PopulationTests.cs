@@ -118,7 +118,7 @@ namespace God.Sim.Tests
                     Assert.AreEqual(1, card.Opportunities.Count(o => o.Chosen), "exactly one option is the choice");
                     foreach (var o in card.Opportunities)
                     {
-                        Assert.AreEqual(o.Total, o.Instinct + o.Learned + o.Personality - o.Cost + o.Explore, "the terms add up: " + o.Breakdown);
+                        Assert.AreEqual(o.Total, o.Instinct + o.Learned + o.Social + o.Personality - o.Cost + o.Explore, "the terms add up: " + o.Breakdown);
                         Assert.That(o.Need, Is.InRange(Math.Min(0, o.Instinct), Math.Max(0, o.Instinct)), "need is part of instinct");
                     }
                     var chosen = card.Opportunities.First(o => o.Chosen);

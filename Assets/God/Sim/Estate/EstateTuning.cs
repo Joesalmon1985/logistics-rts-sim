@@ -26,8 +26,6 @@ namespace God.Sim.Estate
         public int AcknowledgeConfidence = 400;
         /// <summary>A dispute is raised for an heir whose own custom would give it at least this much more (permille).</summary>
         public int DisputeFromPermille = 250;
-        /// <summary>1: lots an heir did not collect by the deadline go to its household store (WORLD_ONTOLOGY O4, a temporary cross-node move); 0: they go ownerless.</summary>
-        public int Delivery = 1;
 
         public Custom CustomOf(Faction f)
         {

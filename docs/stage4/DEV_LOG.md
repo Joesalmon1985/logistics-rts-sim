@@ -213,9 +213,6 @@ Every temporary compatibility mechanism is listed here with its removal mileston
 | Stage 3 mode (`GameSetup.Population` off) and its tests | Keeps the stage 3 game playable and its tests meaningful while NPC systems arrive (G6.1, G6.4) | M14 (owner decides whether to retire it) |
 | Walkers (carriers, builders, harvesters) beside NPCs | The stage 3 economy runs until NPC labour passes the same tests | M6 |
 | `MilUnit` spawning | Soldiers are spawned units until they are NPCs | M9 |
-| Executor delivery (M4, O4): an estate's goods move to an heir's node in one step | Heirs cannot yet walk to collect an estate as a decision (no Sense seam for bins) | When bin perception lands (M4 contract amendment 2; I-BS or M6) |
-| Person-directed candidates target the actor's own node, with the person's handle as id (M4, M5) | `Thinker.Known` does not yet accept people | The contract amendment for person targets (at the M4 + M5 merge) |
-| Genome instinct gains in `Npc.Traits[12..15]` | `SelfView` does not carry them yet | The `SelfView` amendment (at the M4 + M5 merge) |
 | `AiBrain` behind the `IFactionPolicy` adapter, unchanged. It still reads true state internally, **including a Q21 breach**: `AiTrader` reads other factions' stock and needs. `AiTradeJudge` answers offers inside the trade system, outside the seam. It is the only temporary entry in the policy reflection test. | Seam that preserves behaviour (M1.4) | M14 (rewritten for incentives, reading only the view) |
 | Saves don't record the policy assignment; a loaded game gets its policies from its host | Not built in M1 | M3 (when NPC policies are added) |
 | Non-HUD Unity code (world views, models, boot, menu, tutorial cards) still reads the sim directly | Outside the M1 gate | M14 |
@@ -717,3 +714,35 @@ Owner decisions **D5** (player is a god only, and more) are recorded in [docs/ci
 3. Write `docs/civdiv/DEVELOPMENT_PACKAGES/` (one spec per package, in parallel), RELEASE_ACCEPTANCE_CHECKLIST.md (and the matching ACCEPTANCE_TESTS additions), CIVILISATION_AND_DIVINITY_RUNBOOK.md, CIVILISATION_AND_DIVINITY_MASTER_PLAN.md (including the open questions above) and NEXT_SESSION_PROMPT.md.
 4. A consistency review across all D5 documents (naming against SHARED_ARCHITECTURAL_CONTRACTS, tiers, package ids); add the superseded notice on INFORMATION_AND_MEDIA layer 7 / I1 text.
 5. Then the implementation run starts with F0 (merge `unity/ibs`, then `unity/demog`) and F1.
+
+## I-BS integration record (branch unity/ibs)
+
+Run of 26 Nov 2026 on `unity/ibs` (from `unity/poc` 0f978db), stopped early on the owner's pause instruction. Commits: `458a97f` warehouse npc-0 fix, `73a8f63` contract amendments (sim), `676d8fd` I-BS island tests, then the docs commit with this record. Nothing pushed or merged.
+
+**Contract amendments (SHARED_CONTRACTS 12.31-12.36), done:**
+- (a) person targets: `IntentTarget.Npc`, `Thinker.Known` accepts a person in sight or remembered (kin, social memory); M4's own-node workaround and M5's `IntentTarget.None` removed.
+- (b) bin Sense seam `PopulationExtensions.SenseBins` (M4 body), `BeliefKind.Store`, store and estate candidates on `IntentTarget.Bin` from perception or memory, Withdraw within `Reach.Store` with permission per lot. The estate collection reflex and O4 delivery are removed (Temporary mechanisms row retired); leftovers go ownerless at the death node. `Estate.Delivery` deleted.
+- (c) `SelfView` instinct gains; `Npc.Traits[12..15]` no longer written, array length kept at 16 (the demography branch's 16-18 must still grow the array itself; `Founders.MakeLife` lost two lines: a likely small merge overlap with `unity/demog`).
+- (d) `OpportunitySlot.Social` / `Opportunity.Social` (hashed only for minds with M4/M5 parts). `Social.Term` stays 0: L14 20 seeds, term off: baseline 70%, cheat's next five 32%, recovery 7%; term on: 65%, 29%, 4% (target at most 20%). Trust in the score is not what blocks L14.
+- (e) no `dim_person` row for npc 0; tests no longer filter `npc_id > 0`.
+- (f) SOCIAL 4.1 familiarity 180 (doc). Warehouse names were already as built in 8.2.
+
+**Tests that ran (this branch):** `dotnet test God.Sim.Tests` 480/480 after the amendments (run before the I-BS tests were added). Runner subset: M5NeutralityTests, the HouseholdsOff pin, M4WarehouseTests, M5WarehouseTests, SmokeParity, PopulationWarehouseTests: all green after the warehouse test fix (the neutrality pins at 6671592 with both switches off hold). I-BS category, 10 seeds x 15 days: 11 of 13 pass. **Not run:** the full runner suite after the amendments (M4/M5 behaviour tests may move: person intents now continue across re-choice, store use needs perception), Unity EditMode/PlayMode, the Windows build, both player smokes. A baseline full suite of 0f978db was started in a scratch copy; its result was not read.
+
+**I-BS on `ibs_families` (seeds 1-10, 15 days, Full+SQLite, Summary, Off):**
+- Every seed: Full = Summary = Off hash; warehouse reconciles with the events (care, hand-over lines and lot ids, deals, gestures, responses, inheritance, deaths, births, first-arrival claims, meals, FKs): 0 breaks.
+- I-BS.11 met: accounting exact every day, invariants and C3/C6 clean, 10/10.
+- I-BS.1/12 met: complete chains (gathered or withdrawn by the carer -> hand-over -> eaten by the child) in 10/10 seeds (131-294 per seed); a believed parent's gathered food in 10/10 (11-37 per seed).
+- I-BS.2 met 10/10 (28-37 huts whose 2+ sleepers drew on its store). I-BS.14 met: 669-827 withdrawals per seed, 0 by non-members, 0 unpermitted, 0 owner changes.
+- I-BS.3 met: pooled kin help 2035, unrelated 3130 (kin is NOT more frequent in raw counts; per-opportunity rates not computed).
+- I-BS.4 met 10/10 (63-136 pairs with 3+ attributed rises, mostly care).
+- I-BS.5 **partly**: completed mutual exchange with both believed gains > 0 in 5/10 seeds (test fails its 80% threshold).
+- I-BS.7 **test fails** on seed 6 (an estate lot without a transfer: most likely an estate still open at the run end, which the test does not exclude); estates per seed 4-9, few lots (1-2), heirs' collections rare (1 in seed 2). First-arrival claims are the pick-up tick. M4.21 contest clause: **not met** (no contest is raised; tick order decides; `SocialHooks.Contest` is still the stub).
+- I-BS.8 met as occurrence: gesture -> own decision -> gift in 9/10 seeds (0-11 per seed); no gift without a decision.
+- I-BS.13 met: pooled help 1516, no help 8965 (child gestures and begging).
+- I-BS.15 met: about 160k decisions per seed checked, 0 unperceived; 54-55k person and about 3.9k bin decisions; C6 clean.
+- I-BS.6, I-BS.10: **not done** (controlled lab tests not written). I-BS.9: **deferred** to M7/M11 (no observation learning).
+- M5.9: **reported only**, not met: gift recipient choice reads affection and household, not kin (no kin preference in M5's gift initiative).
+- M5.18 developer overlay and M5.19 gesture vocabulary: **not started**.
+
+**Resume in this order:** (1) fix I-BS.7's test to skip estates open at the end, decide I-BS.5's threshold from evidence; (2) full `dotnet test DotNet -c Release` and fix any M4/M5 behaviour tests the amendments moved; (3) controlled 10-seed tests for I-BS.6 (M5.5 twin design), I-BS.7 (fixture family), I-BS.8, I-BS.10 (LS4 axe: acquire, use, re-take the same lot id); (4) M5.9: kin cue in M5's gift recipient choice plus the 20-seed test; (5) M5.18, M5.19 and the PlayMode test; (6) ACCEPTANCE I-BS status table; (7) Unity EditMode, PlayMode, build, smokes (stage 3 `4bd54b271857a803` at 20161, population).

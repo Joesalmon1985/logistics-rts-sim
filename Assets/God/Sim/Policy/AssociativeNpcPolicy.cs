@@ -56,7 +56,7 @@ namespace God.Sim.Policy
                     var ci = cands[i];
                     opps[i] = new OpportunitySlot
                     {
-                        Verb = ci.Verb, Class = ci.Class, Dist = ci.Dist, Instinct = t.Instinct, Need = t.Need, Learned = t.Learned, Personality = t.Personality,
+                        Verb = ci.Verb, Class = ci.Class, Dist = ci.Dist, Instinct = t.Instinct, Need = t.Need, Learned = t.Learned, Personality = t.Personality, Social = t.Social,
                         Cost = t.Cost, Explore = explore, Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, total)), FromBelief = ci.FromBelief,
                     };
                     oppCount = i + 1;
@@ -76,7 +76,7 @@ namespace God.Sim.Policy
                     opps[opps.Length - 1] = new OpportunitySlot
                     {
                         Verb = c.Verb, Class = c.Class, Dist = c.Dist, Instinct = bestTerms.Instinct, Need = bestTerms.Need, Learned = bestTerms.Learned,
-                        Personality = bestTerms.Personality, Cost = bestTerms.Cost, Explore = bestExplore,
+                        Personality = bestTerms.Personality, Social = bestTerms.Social, Cost = bestTerms.Cost, Explore = bestExplore,
                         Total = (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, bestScore)), FromBelief = c.FromBelief, Chosen = true,
                     };
                 }

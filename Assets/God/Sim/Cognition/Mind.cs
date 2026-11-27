@@ -8,7 +8,9 @@ using Newtonsoft.Json;
 namespace God.Sim.Cognition
 {
     /// <summary>The kinds of fact an NPC believes (COMMUNICATION_AND_COGNITION 4.4; M3: places).</summary>
-    public enum BeliefKind : byte { None = 0, Food = 1, Wood = 2, Pile = 3, Hut = 4, Tool = 5 }
+    public enum BeliefKind : byte { None = 0, Food = 1, Wood = 2, Pile = 3, Hut = 4, Tool = 5,
+        /// <summary>I-BS amendment (SHARED_CONTRACTS 12.32): a bin it has seen (its household's store, estate goods); <see cref="Belief.Ref"/> = the bin id, Stock = what it may take there as last looked.</summary>
+        Store = 6 }
 
     /// <summary>
     /// One belief (layer 6): "berries at node 412, plenty, seen 2 days ago". It names a place and a class, never a true
@@ -56,6 +58,7 @@ namespace God.Sim.Cognition
             switch (k)
             {
                 case BeliefKind.Hut: return 4;
+                case BeliefKind.Store: return 4;
                 case BeliefKind.Food: return 3;
                 case BeliefKind.Wood: return 2;
                 case BeliefKind.Tool: return 2;
@@ -184,6 +187,8 @@ namespace God.Sim.Cognition
         public byte Class;
         public int Dist;
         public int Instinct, Need, Learned, Personality, Cost, Explore, Total;
+        /// <summary>I-BS amendment (SHARED_CONTRACTS 12.34): the Social term (M4's kin term + M5's social term), so the terms add up to the total.</summary>
+        public int Social;
         public bool FromBelief, Chosen;
     }
 
@@ -276,6 +281,8 @@ namespace God.Sim.Cognition
                 h.Add(o.Verb | (o.Class << 8) | (o.FromBelief ? 1 << 16 : 0) | (o.Chosen ? 1 << 17 : 0)); h.Add(o.Dist);
                 h.Add(o.Instinct); h.Add(o.Need); h.Add(o.Learned); h.Add(o.Personality); h.Add(o.Cost); h.Add(o.Explore); h.Add(o.Total);
             }
+            // 12.34: the Social column only for a mind with an M4 or M5 part (an M3 mind hashes exactly as before; its Social is 0)
+            if (Kin != null || Social != null) for (int i = 0; i < OpportunityCount; i++) h.Add(Opportunities[i].Social);
             h.Add(ExperienceCount); h.Add(ExperienceNext);
             for (int i = 0; i < ExperienceCount; i++) { var e = Experiences[i]; h.Add(e.Tick); h.Add(e.Verb | (e.Class << 8) | (e.Episode ? 1 << 16 : 0)); h.Add(e.Reward); }
             // F0.12: the later modules' parts of a mind, only when present (M3 minds hash exactly as before)

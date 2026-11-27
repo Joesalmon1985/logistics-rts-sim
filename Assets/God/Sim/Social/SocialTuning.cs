@@ -62,10 +62,11 @@ namespace God.Sim.Social
         [DefaultValue(150), JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)] public int HandOverWalkTicks = 150;
         /// <summary>
         /// 1: the social score term (trust, grudge, affection and a deal's believed surplus per person) is added to the score.
-        /// Default 0: the frozen inspector's option list (<c>OpportunitySlot</c>) has no Social column, so with the term on its
-        /// terms would not add up to the total (M3.28). Proposed amendment: add <c>Social</c> to <c>OpportunitySlot</c>, then
-        /// default this to 1. With 0, trust and grudge act through the relationship class feature (<c>NpcRel</c>) and what was
-        /// learned about the person (<c>NpcRef</c>), and a deal's surplus through the offer-quality feature.
+        /// Default 0. The I-BS amendment (SHARED_CONTRACTS 12.34) gave <c>OpportunitySlot</c> its Social column, so with the
+        /// term on the inspector's terms still add up (M3.28). The default stays 0 on the evidence: with the term on, L14
+        /// (M5.6) moves only from 32% to 29% acceptance of the cheat's next offers (target at most 20%), baseline 70% to 65%,
+        /// 20 seeds (DEV_LOG I-BS record). With 0, trust and grudge act through the relationship class feature (<c>NpcRel</c>)
+        /// and what was learned about the person (<c>NpcRef</c>), and a deal's surplus through the offer-quality feature.
         /// </summary>
         [DefaultValue(0), JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)] public int Term = 0;
         /// <summary>1: each mind keeps a seen-but-unknown ring and makes a relation only at the second sighting within 5 days (SOCIAL 4.1).</summary>

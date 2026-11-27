@@ -14,11 +14,11 @@ namespace God.Sim.Population.Households
 
         public static bool IsMine(byte v) => v == Store || v == TakeFromStore || v >= Feed && v <= EndCare;
 
-        /// <summary>Verbs aimed at a person (target id = the seen person's handle; the candidate's node is the actor's own spot, see <c>HouseholdMindHooks</c>).</summary>
+        /// <summary>Verbs aimed at a person (a person target: the seen person's handle and its node, see <c>HouseholdMindHooks</c>).</summary>
         public static bool AtPerson(byte v) => v >= Feed && v <= EndCare;
     }
 
-    public static class HClass { public const int Store = 40; }
+    public static class HClass { public const int Store = 40, Estate = 41; }
 
     public static class HState
     {

@@ -70,16 +70,18 @@ namespace God.Runner.Warehouse
             r.Register<Produced>("fact_production", "person_goods", (c, e) =>
             {
                 if (!c.RowWanted) return;
-                var p = c.Person(e.Npc);
-                c.Insert(Tables.FactProductionPerson, c.Tick, c.Seq, c.DateKey(), p.FactionKey, (long)(int)e.Ware, (long)e.Count, (long)c.Weight,
-                    p.Key, 1L, (long)(int)e.Reason, (long)e.Source, null, e.WithTool ? 1L : 0L, (long)e.Lot, (long)e.IntoLot, (long)(int)e.OwnerKind, (long)e.OwnerId);
+                // npc 0 (goods the sim itself made: no actor) has no person row (I-BS fix, SHARED_CONTRACTS 12.35)
+                var p = e.Npc > 0 ? c.Person(e.Npc) : null;
+                c.Insert(Tables.FactProductionPerson, c.Tick, c.Seq, c.DateKey(), p?.FactionKey, (long)(int)e.Ware, (long)e.Count, (long)c.Weight,
+                    p?.Key, 1L, (long)(int)e.Reason, (long)e.Source, null, e.WithTool ? 1L : 0L, (long)e.Lot, (long)e.IntoLot, (long)(int)e.OwnerKind, (long)e.OwnerId);
             });
             r.Register<Consumed>("fact_production", "person_goods", (c, e) =>
             {
                 if (!c.RowWanted) return;
-                var p = c.Person(e.Npc);
-                c.Insert(Tables.FactProductionPerson, c.Tick, c.Seq, c.DateKey(), p.FactionKey, (long)(int)e.Ware, (long)e.Count, (long)c.Weight,
-                    p.Key, -1L, (long)(int)e.Reason, null, (long)e.Hut, null, (long)e.Lot, null, (long)(int)e.OwnerKind, (long)e.OwnerId);
+                // npc 0 (the sim's own removals: spoilage in a bin or on the ground, burial) has no person row (I-BS fix, 12.35)
+                var p = e.Npc > 0 ? c.Person(e.Npc) : null;
+                c.Insert(Tables.FactProductionPerson, c.Tick, c.Seq, c.DateKey(), p?.FactionKey, (long)(int)e.Ware, (long)e.Count, (long)c.Weight,
+                    p?.Key, -1L, (long)(int)e.Reason, null, (long)e.Hut, null, (long)e.Lot, null, (long)(int)e.OwnerKind, (long)e.OwnerId);
             });
             r.Register<AssociationUpdated>("fact_learning", "learning", (c, e) => Learn(c, e.Npc, LearnUpdated, (long)e.Verb, (long)e.Key, (long)e.Delta, (long)e.NewStw, (long)e.NewLtw, (long)(int)e.Origin,
                 null, null, null, null, null, null, null));

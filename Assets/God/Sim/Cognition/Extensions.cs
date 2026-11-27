@@ -76,6 +76,12 @@ namespace God.Sim.Cognition
             return 0;
         }
 
+        /// <summary>
+        /// I-BS amendment (SHARED_CONTRACTS 12.31): whether the mind remembers a person out of sight, by the handle it would
+        /// name in an intent: M4's believed kin, then M5's social memory. Used by <see cref="Thinker.Known"/> for person targets.
+        /// </summary>
+        public static bool Remembers(ThinkScratch sc, int person) => HouseholdMindHooks.Remembers(sc, person) || SocialMindHooks.Remembers(sc, person);
+
         /// <summary>Words for a feature M3 does not describe (null: none).</summary>
         public static string Describe(uint f) => HouseholdMindHooks.Describe(f) ?? SocialMindHooks.Describe(f);
     }

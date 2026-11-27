@@ -35,7 +35,7 @@ namespace God.Sim.Social
                 var c = cands[i];
                 if (c.Verb == Learning.Verb.Rest) { rest = i; continue; }
                 // Only binds answers and hand-overs; an offer to anyone watching faces whoever is nearest
-                if (Only != 0 && c.Kind == IntentTarget.None && c.TargetId != Only && c.Verb != SocialVerb.SayOffer) continue;
+                if (Only != 0 && c.Kind == IntentTarget.Npc && c.TargetId != Only && c.Verb != SocialVerb.SayOffer) continue;
                 int pri = 0;
                 switch (c.Verb)
                 {

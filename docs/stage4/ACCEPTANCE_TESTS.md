@@ -502,6 +502,27 @@ Every scenario uses persistent individuals and actual resource movements, and ea
 
 The recording-neutrality check (Full, Summary and Off give the same hash) runs on every I-BS scenario. Every I-BS event reaches the warehouse and reconciles exactly (D4 §9).
 
+#### I-BS status (branch `unity/ibs`, 26 Nov 2026, interim: the run was paused)
+
+Measured by `IbsTests` (`ibs_families`, seeds 1-10, 15 days); per-seed numbers in DEV_LOG "I-BS integration record".
+
+| # | Status |
+|---|---|
+| Neutrality and warehouse | Met: Full = Summary = Off hash and exact reconciliation on all 10 seeds |
+| I-BS.1, I-BS.12 | Met: complete chains 10/10 seeds (131-294 each); a believed parent's gathered food 10/10 |
+| I-BS.2, I-BS.14 | Met 10/10; 0 non-member, unpermitted or re-owned withdrawals |
+| I-BS.3 | Met (both occur); kin 2035 vs unrelated 3130 pooled: kin is not more frequent in raw counts |
+| I-BS.4 | Met 10/10 |
+| I-BS.5 | Partly: 5/10 seeds |
+| I-BS.6, I-BS.10 | Not done (controlled tests not written) |
+| I-BS.7 | Not met yet: the test fails on seed 6 (open estates at the end not excluded); heirs' collection rare on the island |
+| I-BS.8 | Met as occurrence, 9/10 seeds |
+| I-BS.9 | Deferred to M7/M11 (no observation learning) |
+| I-BS.11, I-BS.13, I-BS.15 | Met 10/10 (I-BS.13 pooled help 1516, no help 8965; I-BS.15 0 unperceived of about 1.6M checks) |
+| M4.21 clause | First arrival met (claim = pick-up tick); contest clause not met (no contest raised) |
+| M5.9 | Not met (reported only: M5's gift choice has no kin preference) |
+| M5.18, M5.19 | Not started |
+
 **Manual:** screenshot of gesture animation (the view animates sim events and decides nothing). **Done means:** NPCs recognise, remember and gesture; an exchange can be cheated; gifts happen; nothing enforces honesty.
 
 ### M6. NPC labour, basic state, ownership records

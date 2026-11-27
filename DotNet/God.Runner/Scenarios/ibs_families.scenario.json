@@ -1,0 +1,51 @@
+{
+  "scenarioVersion": 1,
+  "name": "ibs_families",
+  "description": "I-BS integration gate (owner D2 4, D3 12, D4 9): the M4.36 families band (six factions of 20: households with huts and stores of roots, dependent children, elders; the suitable ecology of m4_families, disease Mild) with M4 and M5 both on (gestures, barter, gifts, social memory). Real individuals, real goods; nothing scripted. 15 sim days.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Households.Founders.ChildPermille": 250,
+    "Households.Founders.ElderPermille": 50,
+    "Households.Founders.AgeMinMilli": 1000,
+    "Households.Founders.AgeMaxMilli": 2600,
+    "Households.Founders.CouplePermille": 700,
+    "Households.Founders.SameSexPermille": 100,
+    "Households.Founders.StartHuts": 1,
+    "Households.Founders.StoreFood": 10,
+    "Estate.CustomF0": 1,
+    "Estate.CustomF1": 2,
+    "Estate.CustomF2": 3,
+    "Estate.CustomF3": 4,
+    "Estate.CustomF4": 5,
+    "Estate.CustomF5": 6,
+    "Ecology.BerriesPerForest": 8,
+    "Ecology.BerriesPerMeadow": 6,
+    "Ecology.RootsPerHills": 6,
+    "Ecology.RootsPerFields": 6,
+    "Ecology.BerryRegrowPermille": 500,
+    "Ecology.RootRegrowPermille": 400,
+    "Population.CheckPerception": true
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxDays": 15,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}

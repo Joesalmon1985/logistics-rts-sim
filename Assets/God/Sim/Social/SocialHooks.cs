@@ -82,6 +82,13 @@ namespace God.Sim.Social
             }
         }
 
+        /// <summary>I-BS amendment (12.31): a person with a record in its social memory is remembered (a person target out of sight is then known).</summary>
+        public static bool Remembers(ThinkScratch sc, int person)
+        {
+            var m = sc.Mind?.Social;
+            return m != null && person != 0 && m.Find(person) >= 0;
+        }
+
         /// <summary>M5's candidates (quota 4, after M4's).</summary>
         public static void AddCandidates(ThinkScratch sc) => SocialCandidates.Build(sc);
 
