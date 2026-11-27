@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../Unity.props" />
+  <PropertyGroup>
+    <AssemblyName>God.Editor</AssemblyName>
+    <RootNamespace>God.Editor</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/God/Editor/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <ProjectReference Include="God.Game.csproj" />
+    <ProjectReference Include="../../God.Sim/God.Sim.csproj" />
+  </ItemGroup>
+</Project>
