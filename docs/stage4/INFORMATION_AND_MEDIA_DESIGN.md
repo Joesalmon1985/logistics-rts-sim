@@ -2,6 +2,8 @@
 
 This document owns the seven information layers in detail: records, data collection, how information degrades, media, and the `FactionKnowledgeView`. The measures themselves are in [KPI_CATALOGUE.md](KPI_CATALOGUE.md). Shared names, ages and milestones are in [DESIGN_CONVENTIONS.md](DESIGN_CONVENTIONS.md).
 
+> **Superseded in part by owner decision D5.28** ([OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md), review 27 Nov 2026). Sections 1 to 11 below describe the first Stage 4 plan, in which the player reads the faction's `FactionKnowledgeView` as layer 7 ("the HUD", "the player's information"). In the god-only game the player is a god: layer 7 is read only by faction policies and institution managers, the player's divine UI reads **layer 8** (`IDivineView`, section 12) and never the faction view, and divine and institutional knowledge stay separate. Read "the player" in sections 1 to 11 as the Stage 3 mode's faction seat (a temporary mechanism); section 12 governs the god-only game.
+
 ## 1. Purpose and scope
 
 **Owns:**
@@ -41,7 +43,7 @@ This document owns the seven information layers in detail: records, data collect
 | 4 | Institutional records | `InfoRecord`, `Measurement` in `InstitutionRecords` (`Information`) | the institution and its management policy; report builders | staff (may err or falsify) |
 | 5 | Published | `Publication` by `Outlet` (`Information`) | NPCs in reach | outlet owners and editors |
 | 6 | Beliefs | `Mind.Beliefs` (`Cognition`) | that NPC | layers 2, 3, 5 |
-| 7 | Player and faction | `FactionKnowledgeView` | the HUD, `IFactionPolicy` | `ViewFiller` from layer 4 (and in `FullInformation` from layer 1) |
+| 7 | Faction (was "Player and faction"; **superseded by D5.28**: the god-only player reads layer 8, section 12.1) | `FactionKnowledgeView` | the Stage 3 mode's HUD, `IFactionPolicy` | `ViewFiller` from layer 4 (and in `FullInformation` from layer 1) |
 
 ### 3.2 Institutional records
 
@@ -279,7 +281,7 @@ merge with an existing belief for the same subject by the belief store's rule (h
 
 ### 4.8 `FactionKnowledgeView`
 
-**Rule:** the HUD and every `IFactionPolicy` read this interface and nothing else about the world. The `ViewFiller` (in `Sim/Information`, the only reader of both truth and records on the player side) builds it.
+**Rule** (superseded by D5.28 for the god-only game, where the player's HUD reads `IDivineView` and the institutions' own managers and `IFactionPolicy` read this interface; the sentence stands for the Stage 3 mode): the HUD and every `IFactionPolicy` read this interface and nothing else about the world. The `ViewFiller` (in `Sim/Information`, the only reader of both truth and records on the player side) builds it.
 
 ```csharp
 public interface IFactionKnowledgeView
