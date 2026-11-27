@@ -652,3 +652,330 @@ Mapping registration: `DivinityMappings.Register` → `D1Mappings` … `D7Mappin
 | 21.4 | Divine-observation profile ownership (scenario, player, per god) | per scenario and per god (INFORMATION §12.3) |
 | 21.5 | Worship-based Mythic | none in this run (brief §7) |
 | 21.6 | Gait "run" | equals walk until a running speed exists |
+
+---
+
+## 22. Industry addendum (owner D6, 27 Nov 2026)
+
+**Status: binding.** This section settles, as contracts, every shared number and seam that the owner D6 design documents left provisional: [INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md](../stage4/INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md) ("IND") §9 and §12, [VEHICLES_AND_HARVESTING_DESIGN.md](../stage4/VEHICLES_AND_HARVESTING_DESIGN.md) ("VEH"), [ELECTRICITY_DESIGN.md](../stage4/ELECTRICITY_DESIGN.md) ("ELE"), [INDUSTRIAL_MILITARY_DESIGN.md](../stage4/INDUSTRIAL_MILITARY_DESIGN.md) ("IMIL"), [WASTE_AND_CIRCULAR_DESIGN.md](../stage4/WASTE_AND_CIRCULAR_DESIGN.md) ("WST"), [KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md](../stage4/KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md) ("KNOW") §14, [MONEY_AND_ACCOUNTING_DESIGN.md](../stage4/MONEY_AND_ACCOUNTING_DESIGN.md) ("MONEY") §12, WORLD_ONTOLOGY §11 and DATA_WAREHOUSE_DESIGN §13.4. It closes lead rulings **R15**, **R16** (this half), **R32**, **R33** and **R34** ([LEAD_RULINGS.md](LEAD_RULINGS.md)). Sections 0–21 still hold for everything not listed here. Where a design document differs from this section, this section wins and the document is corrected in review (the R7/R24 pattern). Owner decisions are written **D6.n**; the commandments package is "package D6" (R35). Paths are relative to `Assets/God/Sim/` unless they start with `Assets/`, `DotNet/` or `docs/`.
+
+### 22.0 Why a second foundation commit, and when it lands
+
+Separate worktrees do **not** make shared-contract changes safe. Two branches that each edit `Wares.cs`, `Goods.cs`, `GodState`, `EventCatalog`, `Thinker` or `Mind.cs` both pass their own tests and then break each other, or move every hash, at merge. So, exactly as F1 did for D5, **one behaviour-neutral foundation commit, I1a**, lands the whole industrial and knowledge shared surface, and every I and K package branches from `unity/poc` after it.
+
+| | Rule |
+|---|---|
+| Cut from | `unity/poc` after **F1b** and **C1** have merged (I1a needs F1's slot, dispatch and catalogue pattern, and C1's `AssetId` allocator, asset record and Civ dispatcher bodies) |
+| Merged | only **after the Tier 1 set has merged** (D6.18: F0, F1, F2 experiments, C1, D1, D2, D3, package D6 commandments, U1a, U2a, U3a, Q1 Tier 1, Q3 harness), and **before** any other I or K package starts |
+| Who | one agent (Opus) run for the lead, branch `unity/i1a` in `wt-lrs-i1a`; the lead reviews every frozen-file diff, as for F1 |
+| After it | each stub file has exactly one owner (22.1, column 4); I1–I6, K1 and K2 change only their own files plus the flagged additive rows of 22.9. Any further shared change needs an amendment row in section 20 from the lead; a package never works around a missing seam |
+
+### 22.1 What I1a must contain (all behaviour-neutral)
+
+| # | Item | Files (new unless "edit") | Owner after I1a |
+|---|---|---|---|
+| I1a.1 | **Wares** 40–71 (22.3), `Wares.PersonalCount` 40 → **72**; helpers `IsIndustrial`, `IsWaste`, `IsLiquid`, `IsFuel`, `IsUnique`; the weight column; `WareRefValue` rows (analytics only); population hashing extended by the F1.17 rule (22.3) | edit `Economy/Wares.cs`, `Population/PopulationModule.cs` (`Weight`, `HashPopulation`) | frozen; content (recipes, deposits) I1, `Document`/`Paper` K1, `Coin` K2a |
+| I1a.2 | **Goods ledger** widened to 16 produce and 16 consume reason slots; `ProduceReason` 6–9, `ConsumeReason` 8–13 (22.3); slots 8–15 hashed only when non-zero | edit `Population/PopulationState.cs` | frozen |
+| I1a.3 | **Goods API**: `MoveReason.BinTransfer = 13` (reach `Reach.Store` at both bins); `OwnershipBasis.SupplyAgreement = 25`, `Paid = 26`; `Goods.MoveBin` (22.3); `Wares.IsUnique(w)` replaces `w != Ware.Axe` in `Goods.Mergeable` and the ground merge | edit `Population/Goods.cs`, `Population/Reach.cs` | frozen (amendment row 22.11 #10–13) |
+| I1a.4 | **State slot** `GodState.Industry` (`IndustryState`, partial; sub-objects in 22.4), null unless `Industry.Enabled`; each sub-object null until its package fills it | `Core/GodState.Industry.cs`, `Industry/IndustryState.cs` + partials `IndustryState.I1.cs` … `I5.cs`, `IndustryState.Waste.cs` | container frozen; partials to I1–I5 |
+| I1a.5 | **Civ sub-objects** `CivState.K1`, `CivState.K2` (partial stubs), hashed in the `civ` part after C5 | edit `Civ/CivState.cs`; `Civ/CivState.K1.cs`, `Civ/CivState.K2.cs` | container frozen; partials K1, K2 |
+| I1a.6 | **Hash part** `"industry"` appended to `GodSim.AllHashPartNames` after `"divine"`, present only when `Population != null` and `GodState.Industry != null`; `PartNamesOf`/`PartsOf` extended | edit `Core/GodSim.cs` | frozen |
+| I1a.7 | **Tuning**: root `SimTuning.Industry` (`IOmitWhenDefault`, `Enabled = 0`) with nested classes `Geology`, `Production`, `Waste` (I1), `Vehicles` (I2), `Trade` (I3), `Grid` (I4), `Military` (I5); nested `SimTuning.Civ.Knowledge` (`Enabled = 0`, empty `Designs`) and `SimTuning.Civ.Money` (`Enabled = 0`, `RecordPersonSales = 0`, `SliceCommodity = Bronze`) | edit `Core/SimTuning.cs`; `Industry/IndustryTuning.cs`, `Civ/CivTuning.K1.cs`, `Civ/CivTuning.K2.cs` | root frozen; nested classes to their packages |
+| I1a.8 | **Module entry points** `IndustryModule.StartGame/Install/NewMind/OnDeath/Check`, called after `DivinityModule` at every F1.5 site (no-ops; `StartGame` creates `GodState.Industry` only when the switch is on and the game has a population) | edit `Core/GodSim.cs`, `PopulationModule.cs`, `SimInvariants.cs`; `Industry/IndustryModule.cs` | call sites frozen; bodies I1 |
+| I1a.9 | **Extension dispatch**: `IndustryHooks`/`IndustryMindHooks` called **after Divinity** at every existing site (including the F1.6 sites and `SenseExtra`), and in the `Kill` order (22.4); three new movement sites `PopulationExtensions.StepTicks`, `PathCosts`, `Moved` (22.4); the K1/K2 partial-method slots in C1's Civ dispatchers and in `CivSystem` (flagged additive edits to C1's files) | edit `Cognition/Extensions.cs`, `Population/PopulationExtensions.cs`, `PopulationSystem.cs`, `Thinker.cs`, `Civ/CivHooks.cs`, `Civ/CivMindHooks.cs`, `Civ/CivSystem.cs`; `Industry/IndustryHooks.cs`, `Industry/IndustryMindHooks.cs` | dispatch frozen; Industry bodies I1 (I2–I5 by partial files, fixed order I1 → I2 → I3 → I4 → I5); K1/K2 partials |
+| I1a.10 | **Id ranges** of 22.5; `ThinkScratch.MaxCand` 36 → **40** (Industry quota 4); mind slots `NpcMind.Industry` (`IndustryMind`) and `NpcMind.Know` (`KnowledgeMind`), created lazily (22.4) | edit `Thinker.cs`, `Policy/PolicyTypes.cs`, `Learning/Verbs.cs`, `Learning/EpisodeKey.cs`, `Comms/Message.cs`, `Cognition/Mind.cs`, the files of `ObjClass`, `SituationKind`, `SelfFeature`, `Role`, `NpcGroup`, `Divinity/DivineTypes.cs` (`DivineAct` 22, 23); stubs `Industry/IndustryMind.cs`, `Civ/KnowledgeMind.cs` | enums frozen; mind fields I1/I2 and K1 |
+| I1a.11 | **`DesignId` on C1 asset records** (`ushort`, 0 = common), exposed to inspection by the sense seam (K1-R10) | edit `Civ/Assets.cs` (C1's file, flagged additive) | C1 (field value written by I1–I5) |
+| I1a.12 | **Systems registered as empty shells**: `ElectricitySystem` (262) and `IndustrySystem` (264), each returning at once while `GodState.Industry == null` | edit `Core/GodSim.cs` (registration); `Industry/IndustrySystem.cs`, `Industry/Grid/ElectricitySystem.cs` | bodies I1, I4 |
+| I1a.13 | **Events**: `TelemetryDomain` 70–79 and `RangeOf` (22.6); `IndustryEvents.Catalog` = per-package partial arrays `I1` … `I6` (empty except `BinMoved` 1014); `CivEvents.K1`, `CivEvents.K2` partial arrays (empty); `EventCatalog.All` += `IndustryEvents.Catalog` | edit `Telemetry/DomainEvent.cs`, `Civ/CivEvents.cs`; `Industry/IndustryEvents.cs` (+ `IndustryEvents.I1.cs` … `I6.cs`) | per-package arrays to their packages |
+| I1a.14 | **Warehouse stubs**: `EventMapRegistry.CreateDefault` calls `IndustryMappings.Register(r)` (→ `I1Mappings` … `I6Mappings` stubs); `CivMappings` also calls `K1Mappings`, `K2Mappings` stubs; `Tables.Industry.cs` stub. **No migration** (I1a writes no table) | `DotNet/God.Runner/Warehouse/...` | stubs to their packages |
+| I1a.15 | **Save**: `FromJson` accepts null `Industry`, null `CivState.K1/K2`, null `NpcMind.Industry/Know` (written on the lead's instruction; the lead owns `SaveFile.cs` and the version, 22.8) | edit `Save/SaveFile.cs` (lead) | lead |
+| I1a.16 | **Tests and helpers**: pins P10–P13 (22.8); `Wares_LayoutNeutral`, `Ledger_WideningNeutral`; the static tests of 22.10 in their guarding form (they pass vacuously until code exists, then guard); `IndustrialProbe` (collect industry events) | `DotNet/God.Runner.Tests/I1a*`, `Assets/God/Tests/EditMode/Support/...` | frozen |
+
+**I1a gate** (as 0.2): `dotnet test DotNet -c Release` and Unity EditMode green; `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1` shows 0 errors (the `Ware` enum and `GodState` are used by `God.Game`); stage 3 `PolicyRunTests` hash `4bd54b271857a803` unchanged; P1, P4, P8 and every pin already landed (P2, P3, P5, P9 when present) unchanged; P10–P13 pass; the "no handler, refused" and person-loop static tests still pass.
+
+### 22.2 Binding rules (D6.2, D6.9–D6.12, R33)
+
+| # | Rule |
+|---|---|
+| IA-1 | **One economy.** Industrial goods are ordinary `ItemLot`s moved only by `Goods`; facilities, stations, links and vehicles are C1 productive assets; owners are the existing `Owner` kinds (`Npc`, `Household`, `Org`). There is no industrial inventory, no faction stockpile, no credit balance and no industrial owner type (D6.1) |
+| IA-2 | **One money system; no external buyer.** Money is commodity-money lots (category 1, C1) or institutional money (K2b), created and destroyed **only** by MONEY §4.2 (E1–E4, D1–D5). Production, extraction, refining, delivery, unloading, electricity generation or supply, construction, research, a completed order, a miracle and the passage of time never change a money balance and never create a claim. Revenue is only an actual payment by an NPC, household or organisation in the world. There is no external market, buyer of last resort, sink or converter of goods into money, and no type named or acting as one (static `NoExternalBuyer`, MON-I5). The first brief's simplified external buyer has no successor (D6.2) |
+| IA-3 | **Knowledge gates production; rights are owner policy (R33).** Every industrial runner (recipe cycle, construction, station operation, vehicle drive) checks only physical and knowledge conditions: inputs present and owned, workers or operators present, power, and the knowledge-and-skill rule (a present worker or operator meets the design's knowledge and skill minima, or follows a usable document at the site; `DesignId = 0`, or K1 absent or off, means no knowledge check). Stall reason `NoDesign` means exactly "no present worker knows it and no usable document is at the site". A patent, licence or other right is **never** a truth gate. `Rights.Permits` is called only to set the analytics flag `Licensed` † on `ProductionCycleStarted` and on the asset at `AssetBuilt`, from which K1 classifies `UnauthorisedDesignUse` † (KNOW §9). Respecting rights is the owner's own decision: the organisation policy `RespectRights` (default on), followed by its office-holders by their own scores from believed rights (`Permits.Believed`); an NPC owner weighs it in its own score. Static test `Rights_NeverGate` |
+| IA-4 | **A vehicle is a C1 productive asset, not an `Npc`** (VEH-1). Its `AssetId` comes from C1's allocator (R20); it never enters `PopulationState.Npcs`, never takes an NpcId and never decides. It moves only by its living driver's own step through the I1a movement sites; occupants' `Npc.Node` equals the vehicle node; no `Npc` field is added (occupancy is a derived index) |
+| IA-5 | **Energy is not a good and not money** (ELE-1, ELE-2): never a lot, never owned, never in a bin or the goods ledger; recorded only in the energy ledger. A claim arises only from a person's billing act (a C2 obligation), revenue only from a payment |
+| IA-6 | **Every lot move is a `Goods` call with a living actor within reach.** `Sim/Industry`, `Sim/Civ/Knowledge*` and `Sim/Civ/Money*` never pass `actor <= 0` (which bypasses reach) |
+| IA-7 | **The god acts on industry only through existing divine mechanics**: instruction, compulsion, possession (with `DivineAct` 22 Board and 23 Alight), and D3 miracles with their ledger rows (never `ProduceReason.Extracted`). The god never places an order, sets a routine, dispatch rank, port priority or price, owns nothing and holds no right (SAC G3, RT-I5) |
+| IA-8 | **No ownership-model branch.** ORG-INV-5's static test is extended to `Sim/Industry`, `Sim/Civ/Knowledge*`, `Sim/Civ/Money*` |
+| IA-9 | **No new death cause, faction or person creation.** Soldiers, crews and operators are existing NPCs (IMIL-I1, P-C); strategic deaths use `DeathCause.Violence` with attribution (20.4) |
+
+### 22.3 Goods surface (frozen after I1a)
+
+**Wares** (block 40–71; stage 3 wares 0–27 and `Wares.Count = 28` unchanged; personal 28–39 unchanged; stage 3 books never hold 40–71):
+
+| No. | Ware | Class | Weight | Content owner |
+|---|---|---|---|---|
+| 40 | `IronOre` | geological raw | 4 | I1 |
+| 41 | `CopperOre` | geological raw | 4 | I1 |
+| 42 | `Coal` | geological raw, fuel (new code: stage 3 has no coal; `Ware.Ore` stays separate) | 3 | I1 |
+| 43 | `CrudeOil` | geological raw, liquid | 3 | I1 |
+| 44 | `UraniumOre` | abstract fictional strategic mineral (D6.14) | 5 | I1 |
+| 45 | `Fuel` | refined fuel, liquid | 2 | I1 |
+| 46 | `FuelOil` | refined fuel, liquid | 3 | I1 |
+| 47 | `Copper` | industrial metal | 2 | I1 |
+| 48 | `Wire` | component | 1 | I1 |
+| 49 | `MachineParts` | component | 2 | I1 |
+| 50 | `Engine` | component | 4 | I1 |
+| 51 | `Ammunition` | military consumable (abstract) | 1 | I5 |
+| 52 | `NuclearFuel` | abstract nuclear material | 2 | I1 (Tier 3 recipe) |
+| 53 | `Firearm` | abstract infantry gear | 2 | I5 |
+| 54–55 | spare (industrial) | | | |
+| 56–62 | `Refuse`, `Scrap`, `Recyclables`, `Ash`, `Slag`, `Sludge`, `SpentFuel` | waste | WST | I1 (waste part) |
+| 63 | `Document` | knowledge artefact; **unique** (count 1, never merges) | 1 | K1 |
+| 64 | `Paper` | writing material | 1 | K1 |
+| 65 | `Coin` | commodity-money candidate (optional: no recipe required; acceptance is belief, MONEY §3.1) | 1 | K2a |
+| 66–71 | spare | | | later chains |
+
+Helpers: `IsIndustrial(w)` = 40–55; `IsWaste(w)` = 56–62; `IsLiquid(w)` = {43, 45, 46}; `IsFuel(w)` = {42, 45, 46, 52, 56}; `IsUnique(w)` = {`Axe`, `Document`}. Existing `Iron` (10) and `Steel` (15) are reused; industry adds further recipes for them.
+
+**Hashing (F1.17 rule, extended).** `HashPopulation` hashes the per-ware ledger and holdings in the base order (wares 0–31, then 32–39 only when any is non-zero, as F1.17), then wares 40–71 only when any of their ledger entries or holdings is non-zero. Ledger reason slots 0–7 are hashed exactly as on the base; slots 8–15 only when any is non-zero. The internal array layout may change; the hasher iterates the base order explicitly. With no industrial or knowledge lot, every `population` part equals the base (`Wares_LayoutNeutral`, `Ledger_WideningNeutral`, P10).
+
+**Ledger reasons** (`GoodsLedger.ProduceReasons = ConsumeReasons = 16`):
+
+| Produce | No. | Owner | | Consume | No. | Owner |
+|---|---|---|---|---|---|---|
+| (base) `Founder`, `Foraged`, `HandGathered`, `Placed` | 0–3 | | | (base) `Eaten`, `Spoiled`, `Built`, `Wear`, `Buried` | 0–4 | |
+| (F1) `Miracle`, `Crafted` | 4, 5 | | | (F1) `Miracle`, `Treatment`, `Offering` | 5–7 | |
+| `Extracted` (deposit → lots: mine, well, harvester, manual) | 6 | I1, I2 | | `ProcessInput` (recipe input at cycle start; writing and copying materials) | 8 | I1, K1 |
+| `Processed` (recipe outputs, waste included; ash and spent fuel at stations) | 7 | I1, I4 | | `Combusted` (fuel burned: station, vehicle tank, process heat) | 9 | I2, I4 |
+| `Discarded` (waste arising from consumption) | 8 | I1 waste | | `Embodied` (built into a persistent asset; recorded per asset) | 10 | I1–I5 |
+| `Salvaged` (released by dismantling or destruction, ≤ embodied) | 9 | I1 waste, I2 | | `Disposed` (explicit disposal recipe; goods in bins destroyed by a strategic strike) | 11 | I1 waste, I5 |
+| reserved | 10–15 | | | `Expended` (ammunition fired) | 12 | I5 |
+| | | | | `Research` (experiment materials) | 13 | K1 (Tier 3) |
+| | | | | reserved | 14–15 | |
+
+`ConsumeReason.Built` (2) keeps its meaning for population huts and sites; industrial assets use `Embodied`. Vehicle maintenance consumes `ServiceWares` with the existing `Wear` (3).
+
+**Moves and owners.** `MoveReason.BinTransfer = 13` (a crew member or worker within `Reach.Store` of both bins; loads, unloads, refuelling, station fuel); 14–31 reserved. `OwnershipBasis.SupplyAgreement = 25` (I3: ownership passes at the unload under an agreement; also procurement deliveries, I5), `Paid = 26` (K2a: the generic payment basis); `Purchase 23`, `Wage 16`, `Levy 19`, `Repayment 18`, `Loan 17` keep their meanings; 27–31 reserved.
+
+**`Goods.MoveBin(s, ev, bin, toNode, actor)`** (frozen goods API amendment): relocates one `LotBin` to a lattice neighbour of its node; the lots inside keep holder `Bin(id)` and their owners (nothing is transferred, remotely or otherwise); `actor` is the living driver inside the vehicle; emits `BinMoved { Bin, From, To, Actor }` (1014). **Only caller: `IndustryHooks.Moved`** (static test `MoveBin_OnlyFromIndustryHooks`). `Goods.RemoveBin` still throws on a non-empty bin.
+
+### 22.4 State, switches, minds, systems and dispatch
+
+**`GodState.Industry`** (`IndustryState`) sub-objects, hashed in this fixed order inside the `industry` part, each only when non-null: `Geology` (I1), `Production` (I1: facilities, orders, recipe cycles), `Vehicles` (I2), `Trade` (I3: supply, electricity, procurement and haulage agreements), `Grid` (I4: stations, links, ports, meters, energy ledger), `Military` (I5), `Waste` (I1 waste part: sites, pollution field). Hash part order: `…, "household", "social", "civ", "organisations", "divine", "industry"`.
+
+**`CivState.K1`** (K1: `DesignRegistry`, `Artefacts`, `Rights`, `Projects`, `Auctions`) and **`CivState.K2`** (K2: payments, `OrgBook`s, units of account; K2b monies and accounts), hashed in the `civ` part in the order `C1, C2, C3, C5, K1, K2`, each only when non-null. `CivState` itself exists only when `Civ.Enabled = 1`, so K1 and K2 require `Civ.Enabled = 1`.
+
+**Identity** (section 1 rules: int, from 1, one allocator, public counter in the owning state, never reused):
+
+| Id | Allocator (only path) | Counter |
+|---|---|---|
+| `AssetId` (R20) | C1 `Assets.Register(...)` — **every** productive asset: workshops, mines, wells, smelters, refineries, factories, power stations, power links, depots, laboratories, vehicles, strategic devices. Industry never allocates an asset id | `CivState.C1.NextAssetId` |
+| `DepositId` | I1 `Geology.Add` (generation or scenario block) | `IndustryState.Geology.NextDepositId` |
+| `OrderId` | I1 `Orders.Place` | `IndustryState.Production.NextOrderId` |
+| `AgreementId` | I3 `Agreements.Make` (supply; electricity agreements of I4; procurement of I5; haulage of I2) | `IndustryState.Trade.NextAgreementId` |
+| `LinkId`, `PortId`, `MeterId` | I4 `Grid.AddLink/AddPort/AddMeter` (a link is also a C1 asset) | `IndustryState.Grid.Next*` |
+| `DesignId` | content id (`ushort`; 0 = common knowledge; 1–0x7FFF content, stable across versions; 0x8000+ invented variants, Tier 3, allocated only by `Designs.Formalise`) | none in this run |
+| `RightId`, `ResearchProjectId`, `AuctionId` | K1 `Rights.Grant`, `Research.Start`, `Auctions.Announce` | `CivState.K1.Next*` |
+| `PaymentId` | K2a `Payments.Begin` | `CivState.K2.NextPaymentId` |
+| `MoneyId`, `AccountId` | K2b `Money.Found`, `Accounts.Open` | `CivState.K2.Next*` |
+| `RecipeDef.Id`, `VehicleDef.Id`, `GeneratorDesign.Id` | frozen content tables; appended only (`RecipeBook` rows 1–20 are the stage 3 workshop defs, 21+ industrial) | — |
+
+**Switches** (each default 0 in every existing scenario; the pins of 22.8 hold with them off):
+
+| Switch | Default | Off means | On in |
+|---|---|---|---|
+| `Industry.Enabled` | 0 | no `GodState.Industry`; systems 262 and 264 return at once; every Industry hook returns its default | `ind_*` scenarios ("Iron Coast"), industrial tests |
+| `Industry.Geology.Generate` | 1 (effective only when `Industry.Enabled`) | no generated deposits (a scenario `deposits` block always suppresses generation) | — (P11 sets 0) |
+| `Industry.Waste.Enabled` | 0 | no `Discarded` production, no pollution update (WST-I5) | `ind_waste`, `ind_full` |
+| `Civ.Knowledge.Enabled` | 0 | no `CivState.K1`, no `NpcMind.Know`; every `DesignId` is treated as common (no knowledge check) | `ind_*`; needs `Civ.Enabled = 1` (no effect without it) |
+| `Civ.Money.Enabled` | 0 | no `CivState.K2`, no `Payment` records, no books; M5 barter and C3 wages as before | `ind_*`; needs `Civ.Enabled = 1` |
+| `Civ.Money.RecordPersonSales` | 0 | person-to-person M5 deals get no `Payment` record | `ind_*` |
+| `Civ.Money.SliceCommodity` | `Bronze` | — | `Coin` in `ind_*` (seeded holdings and price beliefs, MONEY §3.2) |
+
+Iron Coast also sets `Civ.Enabled`, `Orgs.Enabled`, `Divinity.Enabled` to 1 and `Orgs.C10.SeedGovernments = 1` (R27).
+
+**Mind slots** (F1.9b pattern): `NpcMind.Industry` (`IndustryMind`: at most 8 deposit beliefs, I1; the operator role `{ Vehicle, RoutineSeen, Since }`, I2; later fields by partial file) and `NpcMind.Know` (`KnowledgeMind`: at most 24 `KnownDesign`, K1; skill slots only if K1 owns the skill store, below). Both are **created lazily** on the first write and are otherwise null, so switching a module on without seeded content changes no mind hash; hashed only when present, after the F1 mind slots, in the order `Industry`, `Know`. `ArchivedLife.Know` (D7's archive) is added by K1 as a flagged additive edit after D7 merges (null-safe, hashed only when non-null); `IndustryMind` is not archived (roles end at death).
+
+**One skill store.** The first of C7 and K1 to merge owns the person skill store; the other reuses it through one accessor (`Skills.Of(s, npc, SkillClass)`, `Skills.Gain(...)`). `SkillClass` keeps the owner's values first and appends the other's (K1: `Construction, Mechanics, Electrical, Driving, Mining, Refining, Chemistry, Metalwork, Reading, Research`; C7: healing as `Medicine`). In the planned order C7 merges first, so the store is C7's and K1 extends it; the lead records the outcome in DEV_LOG. I packages read skills only through the accessor. With K1 absent or off there are no design minima; skill only scales work speed (C1).
+
+**Order within a tick** (extends 11.4):
+
+| Order | System | Owner | Work |
+|---|---|---|---|
+| 250 | `PopulationSystem` | M3 + hooks | unchanged; vehicles move inside it through the movement sites (drivers in ascending NpcId) |
+| 257 | `CivSystem` | C1 (+ C2, C3, C5, **K1, K2** partials, in that order) | K1 day start: forgetting decay (ascending NpcId), right expiry and lapse; K2 day start: `OrgBookDay` snapshots (ascending OrgId). **No separate K system** |
+| 260 | `OrganisationSystem` | C6 | unchanged |
+| **262** | `ElectricitySystem` | I4 | at each interval start: settle the finished interval (energy, fuel burn, meters), recompute components if dirty, demand, dispatch, allocation, `PowerPermille` for the interval (ELE §4.2) |
+| **264** | `IndustrySystem` | I1 (+ I2, I3, I5, waste partials, in that order) | per tick: the recipe runner, facilities in ascending asset id; day start: `FacilityDay`, order expiry, vehicle days (I2), agreement schedules (I3), pollution field (waste) |
+
+**Dispatch order everywhere:** M3 → M4 → M5 → Civ (C1, C2, C3, C5, K1, K2) → Orgs → Divinity → **Industry**. `SenseExtra` adds, after Divinity: Surface deposits, facilities, stations, ports and links, vehicles (`ObjClass` 110–129) with their inspectable `DesignId`. **`Kill` order** (extends 11.4): … → `DivinityHooks.OnDeath` → **`IndustryHooks.OnDeath`** (vacate seat, end operator role) → M3 cleanup → `ArchiveMind` → `Mind = null`.
+
+**Movement sites** (I1a.9; default = base, so neutral without vehicles): `PopulationExtensions.StepTicks(s, npc, from, to, base)` (ticks for one step; a driver gets the vehicle's road/off-road cost and a refused step for impassable nodes or an empty tank); `PopulationExtensions.PathCosts(s, npc, ref profile)` (the cost profile handed to the unchanged `NodePather`); `PopulationExtensions.Moved(s, ev, npc, from, to)` (after a step: moves the vehicle, its bins by `Goods.MoveBin`, the other occupants, burns fuel, adds wear, emits `VehicleMoved`).
+
+### 22.5 Id ranges reserved by I1a (extends section 14)
+
+| Space | Industry (I1–I6) | Knowledge and money (K1, K2) | Notes |
+|---|---|---|---|
+| Learning `Verb` (byte, `Max = 128`) | 21 Board (Alight in its family), 22 Drive, 23 LoadCargo, 24 UnloadCargo, 25 Refuel, 26 Maintain, 27 Survey, 28 Extract, 29 PlaceOrder (also setting a vehicle routine), 30 OperateSwitch (station on/off, link open/close), 31 ReadMeter | 102 Study (read a document), 103 WriteDocument (write and copy), 63 Research (K1); 127 IssueBill (K2a: energy bills, royalties, fees) | reused, no new row: applying for a right = `RequestService` 106 (service kind 20); bidding = M5 `Say(Offer)`; paying = C3 `Pay` 101 (the general payment act, K2-R6); building a link, station or facility = `Build` 12; firing = the military rows. After this only the owned spares 114–115 (Orgs) and 119–123 (Divinity) remain free; any further row needs `Verb.Max` widened (a layout change that moves hashes; not in this run) |
+| Intent `NpcVerb` | 200 Board, 201 Alight, 202 Drive, 203 LoadCargo, 204 UnloadCargo, 205 Refuel, 206 Extract, 207 PlaceOrder (`Detail`: order or routine), 208 OperateAsset (`Detail` = learning verb: Maintain, Survey, OperateSwitch, ReadMeter), sentinel `IndustryReserved = 209` | 210 Study, 211 WriteDocument (`Detail`: write or copy), 212 Research, 213 IssueBill, 214–218 spare (K2b account acts), sentinel `KnowMoneyReserved = 219` | other acts use the F0 generic intents (`Interact`, `UseStore`, `HandOver`) with the learning verb in `Detail` |
+| `ObjClass` | 110 Deposit, 111 Mine, 112 Well, 113 Smelter/Refinery, 114 Factory (industrial workshop), 115 PowerStation, 116 PowerLink (pole, port, line), 117 Vehicle, 118 Depot, 119 WasteSite, 120 RecyclingPlant, 121 StrategicSite | 122 Laboratory | 123–129 spare; C1 keeps 90–99 for its own assets |
+| `TopicKind` | 11 Deposit, 12 Order (jobs and orders at a facility) | 13 Design, 14 Infringement | 15+ free |
+| `SituationKind` | 128 PowerOut, 129 FuelShort, 130 Polluted, 131 VehicleNear, 132 StrategicStrike; 133–143 spare | 144–151 reserved | 152+ free |
+| `SelfFeature` | 72 Driving, 73 InVehicle, 74 IndustrialWork; 75–79 spare | 80–87 reserved | 88+ free |
+| `Role` | 11 Operator, 12 Crew, 13 Engineer | 14–15 reserved | K1's Researcher, Examiner, Clerk, Librarian are C6 **office kinds**, not roles |
+| `NpcGroup` | 11 VehicleCrew | — | 12+ free |
+| `DivineAct` | 22 Board, 23 Alight (VEH §4.7; R15 closed) | — | 24–31 reserved; map rows by I2 (22.9) |
+| `FeatureKind` | none | none | 19–31 stay reserved; a package that needs one asks for an amendment |
+| Episode-key kind | 40 vehicle routine, 41 production order, 42 supply agreement, 43 meter bill; 44–47 spare | 19 right, 20 auction, 21 research project (K1); 22 payment (K2a); 23 spare | inside Civ's 16–23 for K; 48–63, 65+ free |
+| `ServiceKind` (C6's enum) | — | 20 RegisterRight, 21 ContractResearch, 22 CommercialDispute, 23 LibraryRead (R34) | rows added by K1 (22.9) |
+| Candidate quota | Industry 4 → `MaxCand = 40` | K1 and K2 use the **Civ** quota (`CivMindHooks.K1/.K2` partials); no new quota | |
+
+### 22.6 Domain events (extends 15.1)
+
+`TelemetryDomain` (I1a appends): `Industry = 70`, `Vehicle = 71`, `Energy = 72`, `Waste = 73`, `Environment = 74`, `IndustrialMilitary = 75` → `RangeOf` **1000–1099**; `Knowledge = 76`, `Rights = 77`, `Auction = 78`, `Money = 79` → `RangeOf` **1100–1199**. Existing ranges unchanged. The SAC §8 rules apply (own partial catalogue array, own mapper, codes never reused, a changed meaning takes a new code, an added field bumps `Version`); every industrial action event started under control carries `Control`, every divine effect carries `Intervention`.
+
+| Codes | Owner | Domain | Events (names as in the owning document) |
+|---|---|---|---|
+| 1000–1019 | I1 | Industry | 1000 `DepositGenerated` (Full), 1001 `DepositDiscovered`, 1002 `DepositSurveyed`, 1003 `DepositDepleted`, 1004 `ResourceExtracted` (HV), 1005 `ProductionOrderPlaced`, 1006 `ProductionOrderCompleted`, 1007 `ProductionOrderCancelled`, 1008 `ProductionCycleStarted` (HV; carries `Licensed` †), 1009 `ProductionCycleCompleted` (HV), 1010 `ProductionCycleAborted`, 1011 `ProductionStalled`, 1012 `FacilityStatusChanged`, 1013 `FacilityDay`, **1014 `BinMoved` (landed by I1a)**; 1015–1019 spare |
+| 1020–1039 | I2 | Vehicle | 1020 `VehicleRegistered` … 1037 `VehicleDay` as VEH §7; 1038–1039 spare |
+| 1040–1049 | I3 | Industry | 1040 `SupplyAgreementMade`, 1041 `SupplyDelivered`, 1042 `SupplyAgreementBreached`, 1043 `SupplyAgreementEnded`, 1044 `IndustrialSaleClosed`; 1045–1049 spare |
+| 1050–1069 | I4 | Energy | 1050 `GridChanged` … 1065 `PortPriorityChanged` as ELE §7; 1066–1069 spare |
+| 1070–1079 | I5 | IndustrialMilitary | 1070 `ProcurementAgreed` … 1078 `StrategicEffectApplied` as IMIL §7; 1079 spare |
+| 1080–1094 | I1 (waste part) | Waste (1080–1084), Environment (1085–1089) | 1080 `WasteGeneratedDay`, 1081 `WasteCollected`, 1082 `WasteDeposited`, 1083 `WasteIncinerated`, 1084 `SalvageReleased`, 1085 `PollutionDay`, 1086 `PollutionThresholdCrossed`, 1087 `ContaminationDay`, 1088 `EnvironmentalHarmApplied`, 1089 `InspectionRecorded`; 1090–1094 spare |
+| 1095–1099 | I6 | Industry | industrial KPI day rows, if any |
+| 1100–1129 | K1 | Knowledge | 1100 `DesignDiscovered`, 1101 `KnowledgeAcquired`, 1102 `KnowledgeForgotten`, 1103 `DesignFormalised`, 1104 `ArtefactCopied` (`Authorised` †), 1105 `ArtefactClosed`, 1106 `DesignLost`, 1107 `SkillChanged` (only if K1 owns the skill store; otherwise C7's 524), 1110 `ResearchProjectStarted`, 1111 `ResearchProgress` (HV), 1112 `ResearchProjectEnded`; others spare |
+| 1130–1159 | K1 | Rights | 1130 `RightApplied`, 1131 `RightGranted`, 1132 `RightRefused`, 1133 `RightAssigned`, 1134 `LicenceGranted`, 1135 `LicenceEnded`, 1136 `RightRenewed`, 1137 `RightLapsed`, 1138 `RightExpired`, 1139 `RightChallenged`, 1140 `RightRevoked`, 1141 `RightSurrendered`, 1142 `UnauthorisedDesignUse` †, 1143 `InfringementPerceived`, 1144 `CompulsoryLicenceGranted`, 1145 `InjunctionOrdered`; 1146–1159 spare |
+| 1160–1169 | K1 | Auction | 1160 `AuctionAnnounced`, 1161 `BidMade` (HV), 1162 `AuctionClosed`, 1163 `AuctionSettled`, 1164 `AuctionVoided`; 1165–1169 spare |
+| 1170–1179 | K2a | Money | 1170 `PaymentMade`, 1171 `PaymentStep` (HV), 1172 `PaymentFailed`, 1173 `PaymentAbandoned`, 1174 `OrgBookDay`, 1175 `UnitOfAccountChanged`, 1176 `ObligationAccrued` (Tier 3), 1177 `MediumOfExchangeObserved`; 1178–1179 spare |
+| 1180–1189 | K2b | Money | 1180 `MoneyFounded`, 1181 `MoneyIssued`, 1182 `MoneyDestroyed`, 1183 `AccountOpened`, 1184 `AccountClosed`, 1185 `AccountTransferred`, 1186 `DepositAccepted`, 1187 `WithdrawalPaid`, 1188 `NotesIssued`, 1189 `NotesRedeemed` |
+| 1190–1199 | K2a (catalogue), emitted by C2's registry API | Money | **non-loan obligations** (sources `Supply`, `Bill`, `LicenceFee`, `Royalty`, `AuctionPrice`, `Damages`, `Deposit`, `Tax`, `Fee`): 1190 `ObligationOpened`, 1191 `ObligationSettled`, 1192 `ObligationDefaulted`, 1193 `ObligationWrittenOff`, 1194 `ObligationAdjusted` (K2b); 1195–1199 spare. Loans keep C2's 540–544 |
+
+### 22.7 Warehouse migrations (extends 18.2)
+
+| Migration | Owner | Contents |
+|---|---|---|
+| `0031_industry_production.sql` | I1 | `dim_deposit`, `fact_deposit_knowledge`, `fact_extraction`, `dim_facility`, `fact_production_order`, `fact_production_cycle`, `fact_facility_day`, `fact_embodied_matter`, ledger reasons 6–13 in `fact_goods_ledger_day` |
+| `0032_vehicles.sql` | I2 | VEH §7 tables |
+| `0033_industrial_trade.sql` | I3 | `fact_supply_agreement`, `fact_supply_delivery`, `fact_industrial_sale` |
+| `0034_energy.sql` | I4 | ELE §7 tables |
+| `0035_military_industry.sql` | I5 | IMIL §7 tables |
+| `0036_waste_environment.sql` | I1 (waste part) | WST §7 tables |
+| `0037_industry_kpi_views.sql` | I6 (with Q1) | `v_kpi_ind_*`, `v_kpi_veh_*`, `v_kpi_ele_*`, `v_kpi_wst_*`, `v_kpi_imil_*` over 0031–0036 only |
+| `0038_money_claims.sql` | K2a | `fact_payment`, `fact_payment_lot`, `fact_journal_line`, `fact_org_book_day`, `fact_unit_of_account_spell`, `fact_obligation`, `fact_obligation_event`, `fact_claim_balance_day`; `dim_code` sets |
+| `0039_knowledge_designs.sql` | K1 | `dim_design`, `fact_knowledge_spell`, `fact_knowledge_transfer`, `fact_design_discovery`, `dim_artefact`, `fact_artefact_copy`, `fact_skill_spell` (if K1 owns skills), research tables (empty until Tier 3) |
+| `0040_rights_licences.sql` | K1 | `dim_right`, `fact_right_holder_spell`, `fact_licence`, `fact_right_event`, `fact_patent_law_spell`, `fact_infringement` |
+| `0041_knowledge_money_kpi_views.sql` | Q1 (with K1, K2) | `v_kpi_knw_*`, `v_kpi_mon_*`, `v_ledger_nine_categories` and **every view that joins an industrial table to a money, claim, knowledge or rights table** (for example ELE-05 utility cash flow) |
+| `0042_monetary_institutions.sql` | K2b | `dim_money`, `fact_money_issuance`, `fact_account_spell`, `fact_account_balance_day` |
+| `0043_auctions.sql` | K1 (Tier 3) | `fact_auction`, `fact_auction_bid` |
+| `0044`–`0049` | free (lead allocates) | |
+
+**Cross-reference rule.** A migration references only lower numbers (18.2). Where an industrial table needs an id from a higher-numbered table (`0033`'s `payment_id`, `0034`'s `obligation_id` on `fact_meter_bill`, `0031`'s `design_id`), it is a **plain id column with no foreign key and no view**; every join across that boundary lives in `0041` or later. So `0031`–`0037` apply on a run without K1 or K2, and `W-D6-7 Migration_0031_To_0043` checks each intermediate version. R18 is unchanged (`0026` early views, `0030` late views).
+
+### 22.8 Neutrality pins and save
+
+| Pin | Statement | Landed by (re-run by) |
+|---|---|---|
+| **P10** `Industry_Off_Reproduces_Base` | every D5 switch, `Industry.Enabled`, `Civ.Knowledge.Enabled` and `Civ.Money.Enabled` at 0: every part hash of the P1 scenario set (seeds 1–3, every checkpoint) equals the base, i.e. the ware, ledger, enum, `MaxCand` and dispatch widening of I1a is neutral | I1a (every later I/K merge) |
+| **P11** `Industry_Idle_Is_Neutral` | `Industry.Enabled = 1`, no `deposits` block, `Geology.Generate = 0`, `Waste.Enabled = 0`, no seeded assets: every part except `industry` equals P10 | I1a as a stub (I1, I2, I4 re-run it with their systems) |
+| **P12** `Knowledge_Idle_Is_Neutral` | `Civ.Enabled = 1`, `Civ.Knowledge.Enabled = 1`, empty `Designs`, no seeded knowledge: every part except `civ` equals the same run with `Civ.Knowledge.Enabled = 0` | I1a as a stub (K1 re-runs) |
+| **P13** `Money_Idle_Is_Neutral` | `Civ.Enabled = 1`, `Civ.Money.Enabled = 1`, `RecordPersonSales = 0`, no seeded money: every part except `civ` equals the same run with `Civ.Money.Enabled = 0` | I1a as a stub (K2a re-runs) |
+| P6 `Switch_Matrix` | extended with `Industry.Enabled`, `Civ.Knowledge.Enabled`, `Civ.Money.Enabled` (each alone, pairwise with `Civ`, all on) | Q3 after every I/K merge |
+| P7 `Recording_Neutral_On_New_Domains` | extended to domains 70–79 (W-D6-5) | Q1 |
+
+The stage 3 hash `4bd54b271857a803` must hold at every I/K merge. **Save:** I1a changes the saved shape (new optional slots), so the lead bumps `SaveFile.CurrentVersion` in the merge commit of the next checkpoint after it (section 17: **F → 10** if I1a merges before the freeze; otherwise **G → 11**, which then also covers I1–I6, K1 and K2). Each package's `*_SaveLoadParity` saves at its own mid-state: a running cycle with three queued orders (I1); a loaded vehicle mid-trip with its driver (I2); an open supply agreement with an unpaid delivery (I3); mid-interval during an outage (I4); an open procurement (I5); mid-teaching with a live document (K1); a two-step payment in progress and an open bill (K2a).
+
+### 22.9 Additive rows in other packages' owned (not frozen) tables
+
+These are not frozen files, so I1a does not land them. The **requesting** package adds them as a flagged, additive, lead-reviewed edit after the owning package has merged (the R28 pattern); until then the stated fallback holds.
+
+| Row | Table owner | Added by | Fallback until then |
+|---|---|---|---|
+| `JobKind.Operate` (operate vehicle V) | C3 | I2 | owner-operators and cooperative members only |
+| `DivineActs.Map` rows for 22 Board, 23 Alight | D2 | I2 | refused `act_unavailable` |
+| Purposes `SupplyPower` (I4), `Transport` (I2), `WasteService`/`Recycle`/`Regulate` (I1 waste); policies `PortPriority` (I4), `RespectRights` (K1, default on) | C6 | as listed | NPC-owned facilities; rights respected by the owner's own score term |
+| Purposes `Research`, `RegisterRights`, `Adjudicate`; offices `Researcher`, `Examiner`, `Clerk`, `Librarian`; powers `Examine`, `Register`; the four templates (KNOW §13); `ServiceKind` 20–23 | C6 | K1 | no patent office: patents unavailable, contract licences only |
+| `Purpose.Issue`, power `Issue` (K2b); policies `UnitOfAccount`, `AcceptsInPayment`, `PaysWagesIn`, `TariffPer`, `PriceList`; charter term `MayIssueBySpending` (K2b) | C6 | K2a / K2b | commodity money only |
+| Obligation sources `Supply` (I3), `Bill` (I4), `LicenceFee`, `Royalty`, `AuctionPrice`, `Damages` (K1), `Deposit` (K2b), `Tax`, `Fee`; emission of 1190–1194 for non-loan sources; `Books.Post` calls on open, adjust, close; `Accrue`, `Adjust` (Tier 3) | C2 | K2a (the source values requested by I3, I4, K1) | spot payments only; no bills or deliveries on credit |
+| `Pay` (101) as the general payment act creating the `Payment` record | C3 | K2a | wages as today |
+| `Teach` topic extended to `DesignId` | C7 | K1 | knowledge only by reading, practice and seeding |
+| complaint kind `Infringement` | C9 (deferred) | K1 | K1 records a complaint stub at the court organisation (the Tier 2 end point of D6.8) |
+| `Law.Kind = PatentLaw` and its rules | C10 | K1 | a scenario-seeded patent law on the government alias (DEV_LOG temporary mechanism) |
+| `Permits.Believed` extended with rights beliefs | C1 | K1 | no rights beliefs |
+| `ArchivedLife.Know` | D7 | K1 | knowledge not archived |
+| `RevealTechnology` handler body (MiracleKind 11) | D3 (calls K1) | K1 | refused (R4), Tier 3 |
+| `AttackResolved` asset fields (version bump) | Military (400 block) | I5 | no vehicle combat (Tier 3) |
+| KPI rows IND, VEH, ELE, WST, ENV, IMIL; KNW, MON | Q1 (`dim_kpi`, KPI_CATALOGUE) | I6; K1/K2 with Q1 | — |
+| People-panel and inspection tabs for facilities, vehicles, stations | U1 (`GodHud` registration hook, R9) | I6 | — |
+
+### 22.10 Invariants and required tests
+
+| Category | Invariants (owning doc) | Required tests (owner) |
+|---|---|---|
+| **Matter, waste included** | C1 over all 72 wares and all 16 reasons in both directions (IND-I1, WST-I1); extraction = deposit depletion (IND-I2); embodied in = embodied held + released, salvage ≤ embodied (IND-I3, VEH-I6); recipe balance (IND-I4); no lot changes holder without an actor within reach (C8, IA-6) | `Ledger_WideningNeutral` (I1a); `Recipe_ConsumesAtStartProducesAtEnd`, `Extraction_DepletesFinitely`, `Factory_ProducesAssetWithEmbodiedMatter`, `Waste_LedgerExact`, `Industry_NoActorZeroGoodsCalls` (I1); `Vehicle_FuelBurnExact`, `MoveBin_OnlyFromIndustryHooks` (I2) |
+| **Energy** | per interval and component `Σ generated = Σ delivered + Σ curtailed + loss` (ELE-I1); a station-less component gets 0 (ELE-I2); fuel burned ↔ generated within one unit (ELE-I3); no generation below `StaffMin` (ELE-I4); meters ≥ bills (ELE-I6) | `Grid_LedgerIdentity`, `Station_BurnsExactFuel`, `Station_NeedsStaff`, `Grid_ComponentsDeterministic` (I4) |
+| **No money creation** | IA-2; MON-I1 (K2b), MON-I2, MON-I4, MON-I5, MON-I7, MON-I9; BK-I1..I4 | static `Industry_NoMoneyApi`, `Grid_NoMoneyApi`, `NoExternalBuyer`, `MoneyWriters_OnlyK2` (I1a guarding form; owners I1, I4, K2a); MON-U2 (unload creates no money), MON-U3 (generation creates no money; only a billing act opens a bill); W-D6-4 `NoMoneyFromIndustry`; ACCEPTANCE D6.1, D6.3 |
+| **Claims** | per unit Σ claims = Σ liabilities (MON-I3); settlement only by payment, delivery, write-off, forfeiture or ruling (MON-I8) | K2a with C2: `Claims_EqualLiabilities` daily; ACCEPTANCE D6.2 |
+| **Knowledge copy** | no act lowers another person's knowledge (KN-I1, static writer list); AR-I1 (one live record per `Document` lot) | KN-U1 (teacher's entry byte-equal), KN-U2 (copy leaves the source unchanged), KN-U3 (K1); ACCEPTANCE D6.5 |
+| **Rights are not goods** | RT-I1..I5; an assignment or licence changes no lot, asset, `NextLotId` or `KnownDesign`; no asset row is caused by a right, auction or knowledge event (W-D6-1 rules 7, 8); IA-3 | KN-U4, KN-U5, KN-U6, `Rights_NeverGate` (static + D6.8: an unlicensed builder is not blocked; exactly one `UnauthorisedDesignUse`) (K1); ACCEPTANCE D6.6, D6.7, D6.8 |
+| **Vehicles and assets** | VEH-I1..I7; a vehicle is never an `Npc` (IA-4); one running cycle per facility, queue ≤ 8 (IND-I8); labour attributed (IND-I7) | `Vehicle_NoNpcRecord`, `Vehicle_MovesOnlyWithDriver`, `Vehicle_BinsFollow`, `Vehicle_LoadUnloadReachChecked` (I2) |
+| **People** | P-C population conservation; no person created by industry (IMIL-I1) | `IMil_NoSoldierCreated` (I5); `Industry_NoOwnershipModelBranch` (I1) |
+| **Determinism, recording, save** | pins P10–P13 (22.8); recording neutral (P7, W-D6-5); `*_SaveLoadParity` per package (22.8) | `Vehicle_ReplayExact` (I2), `Grid_ReplayExact` (I4), ACCEPTANCE D6.10, W-D6-2, W-D6-7, H-GS-12, H-GS-13 (Q3 with I/K) |
+| **Vertical slice** | D6.18 steps 1–10 in one run on `ind_slice` (seeds 1–3); a step whose package has not merged is reported *not run*, never passed | `IndustrialSlice_EndToEnd` (ACCEPTANCE D6.11) with the per-step `VS1_…` to `VS10_…` (Q3 with I1–I6, K1, K2) |
+
+### 22.11 Decisions on every proposal (accept, renumber, reject)
+
+| # | Proposal (source) | Decision |
+|---|---|---|
+| 1 | `TelemetryDomain` 70–75 → 1000–1099, blocks I1 1000–1019, I2 1020–1039, I3 1040–1049, I4 1050–1069, I5 1070–1079, waste 1080–1094, I6 1095–1099 (IND §12) | **Accepted** (22.6) |
+| 2 | Domains 76–79 → 1100–1199; K1 knowledge 1100–1129, rights 1130–1159, auctions 1160–1169; money 1170–1189 (KNOW K1-R11, MONEY K2-R7) | **Accepted**; block **1190–1199** added for non-loan obligations (row 35) |
+| 3 | Migrations 0031–0037 (IND §12) | **Accepted** |
+| 4 | Migrations 0038 K2a, 0039 K1, 0040 K1, 0041 KPI views, 0042 K2b, 0043 auctions (DATA_WAREHOUSE §13.4, K1-R12, K2-R8) | **Accepted**, with the cross-reference rule (22.7); 0044–0049 free |
+| 5 | Wares 40–53, waste 56–62, coal 42 (IND §3.1, WST) | **Accepted** (coal is a new ware; `Ware.Ore` unchanged, IND open question 1) |
+| 6 | `Document` 63, `Paper` 64 (K1-R4) | **Accepted** |
+| 7 | `Coin` 65 (K2-R9, optional) | **Accepted** as an enum value landed by I1a; no recipe required; tuning default `SliceCommodity = Bronze`, Iron Coast uses `Coin` |
+| 8 | `Wares.PersonalCount` 72 with hash-only-when-non-zero (IND I1a.1) | **Accepted** (22.3) |
+| 9 | Ledger widened to 16 reasons with the same trick; produce 6–9, consume 8–12 (IND §3.2); `ConsumeReason.Research = 13` (K1-R5) | **Accepted** |
+| 10 | `Goods.MoveBin` (IND I1a.4) | **Accepted** as a frozen-API amendment; one caller |
+| 11 | `MoveReason.BinTransfer = 13` | **Accepted** |
+| 12 | `OwnershipBasis.SupplyAgreement = 25` (I3), `Paid = 26` (K2-R3, R34) | **Accepted** |
+| 13 | `Wares.IsUnique` replacing the axe-only check (K1-R4, R34) | **Accepted**, landed by I1a, behaviour-neutral |
+| 14 | Vehicle = C1 productive asset, not an `Npc` (VEH-1) | **Accepted**; `AssetId` is C1's (R20) |
+| 15 | `PopulationExtensions.StepTicks`, `Moved` (IND I1a.7) | **Accepted**, plus a third site **`PathCosts`** for VEH §4.3's cost profile (otherwise an undeclared seam) |
+| 16 | `ThinkScratch.MaxCand` 36 → 40 | **Accepted** |
+| 17 | `NpcMind.Industry` (IND I1a.6), `NpcMind.Know` (K1-R2) | **Accepted**, with **lazy creation** so P11/P12 hold |
+| 18 | `NpcVerb` 200–208 + 209 Industry; 210–219 K1/K2 (IND §9.2, K1-R6, R34) | **Accepted**; members named in 22.5 |
+| 19 | Switches `Industry.Enabled`, `Civ.Knowledge.Enabled`, `Civ.Money.Enabled` (all 0); `Industry.Geology.Generate`, `Industry.Waste.Enabled`, `Civ.Money.RecordPersonSales`, `Civ.Money.SliceCommodity` | **Accepted** (22.4) |
+| 20 | Pins P10, P11 (IND I1a.9) | **Accepted**; **P12, P13 added** for K1 and K2 |
+| 21 | System order 262 `ElectricitySystem`, 264 `IndustrySystem` (IND §4.10, ELE §4.2) | **Accepted**; separate K1/K2 systems **rejected**: their day-start work runs as `CivSystem` (257) partials |
+| 22 | `GodState.Industry` and the `industry` hash part after `divine` (IND I1a.5) | **Accepted** |
+| 23 | `CivState.K1`, `CivState.K2` hashed after C5 (K1-R1, K2-R1, R34) | **Accepted** (order C1, C2, C3, C5, K1, K2) |
+| 24 | `ObjClass` 110–129 incl. `Vehicle = 117` (IND §9.2, R15) | **Accepted**; 122 `Laboratory` added for K1; 123–129 spare |
+| 25 | `DivineAct` 22 Board, 23 Alight (VEH §4.7, R15) | **Accepted**; enum values by I1a, map rows by I2 |
+| 26 | Learning verbs 21–29 incl. 21 Board, 22 Drive (IND §9.2, R15) | **Accepted**; **30 OperateSwitch, 31 ReadMeter added** (ELE's `Operate` and `ReadMeter` acts had no row) |
+| 27 | K1 learning rows 114–119 for Study, CopyDocument, WriteDesign, Research, ApplyForRight, Bid (K1-R6) | **Renumbered and reduced**: 114–115 are Orgs spares and 116–118 are package D6's `Pray`, `Worship`, `MakeOffering`. Now Study **102**, WriteDocument **103** (write and copy share one row), Research **63**; ApplyForRight and Bid **rejected as new rows** (reuse `RequestService` 106 and M5 `Say(Offer)`); K2's billing act gets **127 IssueBill** |
+| 28 | `TopicKind` 11 Deposit, 12 Job/Order (IND §9.2) | **Accepted** (12 named `Order`); 13 `Design`, 14 `Infringement` added for K1 |
+| 29 | `SituationKind` 128–143, `SelfFeature` 72–79, `Role` 11–13, `NpcGroup` 11 (IND §9.2) | **Accepted**; 132 `StrategicStrike` named (IMIL §4.7); K reservations added |
+| 30 | Episode-key kinds 40–47 (IND); 19–21 (K1-R3) | **Accepted**; 22 payment added for K2a |
+| 31 | `ServiceKind` 20–23 (K1-R8, R34) | **Accepted**, rows added by K1 (22.9) |
+| 32 | Licence as a truth gate: IND §4.4 step 1 ("the owner holds a licence or the design is open"), ELE §4.1 ("its owner must hold the design's licence or open access") | **Rejected** (R33, IA-3). Both documents are corrected in this revision |
+| 33 | `Licensed` flag on `ProductionCycleStarted` (IND §11, KNOW §9) | **Accepted** as an analytics truth field † |
+| 34 | External ore buyer for credits (first brief) | **Rejected** (D6.2); no successor, no seeded "market" organisation except a real buyer with real holdings listed as a temporary mechanism (MONEY §10) |
+| 35 | `ObligationAccrued` 1176 "if C2 does not own it"; generic obligation events "C2 names" (MONEY K2-R7, DATA_WAREHOUSE §13.5) | **Accepted at 1176** (Tier 3); non-loan obligation events are **1190–1194**, catalogued by K2a, emitted by C2's API |
+| 36 | `SkillChanged` 1107 "if C7 does not own it"; skill slots "whichever of C7 and K1 merges first" (KNOW §5.3) | **Accepted** with the one-accessor rule (22.4); the lead records the owner in DEV_LOG |
+| 37 | Industry hooks dispatched after Divinity (IND I1a.5) | **Accepted**, including the `Kill` order (22.4) |
+| 38 | K1/K2 candidates in the Civ quota (K1-R6) | **Accepted** |
+| 39 | `ArchivedLife.Know` (K1-R2) | **Accepted** as a K1 additive edit after D7 |
+| 40 | Scenario name: `ind_slice` (GAMEPLAY_SCENARIOS §13) vs `industrial_slice` (ACCEPTANCE D6) | **`ind_slice` is canonical** (`DotNet/God.Runner/Scenarios/ind_slice.scenario.json`, Q3); ACCEPTANCE's name is corrected in review |
+| 41 | Save bump at the checkpoint that merges I1a (IND I1a.10) | **Accepted** (22.8) |
+| 42 | C6, C2, C3, C7, C9, C10, D2, D7 table rows requested by the D6 documents | **Accepted as additive rows by the requesting package** (22.9), not by I1a |
+
+### 22.12 Which package lands which shared change
+
+| Change | Landed by | Never by |
+|---|---|---|
+| Everything in 22.1 (wares, ledger, goods API, state slots, hash parts, tuning roots, module calls, dispatch and sites, id ranges, mind slots, `DesignId` on assets, system shells, domains and catalogue stubs, mapping stubs, pins P10–P13) | **I1a** (lead-reviewed) | any I or K package |
+| `SaveFile.cs` and the version | the lead | any package |
+| Industrial bodies: deposits, recipes, runner, orders, waste (I1); vehicles (I2); agreements, sales (I3); grid (I4); military industry (I5) | their package, in its own partial files | another I package |
+| Game presentation, cards, overlays, KPI views `0037` | I6 (Game layer only; never mutates sim state) | sim packages |
+| Knowledge, documents, rights, auctions (K1); payments, books, monies (K2a/K2b) | their package in `CivState.K1/K2` and own files | I packages (they call the K1/K2 APIs only) |
+| Rows in another package's owned tables | the requesting package by flagged additive edit after the owner merges (22.9) | I1a |
+| Any shared change not listed here | an amendment row in section 20 by the lead | a package branch |

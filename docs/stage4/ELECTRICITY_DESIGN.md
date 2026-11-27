@@ -70,7 +70,7 @@ public sealed class GeneratorDesign                    // frozen table; a KNOWLE
 | 2 | Oil station | fuel oil | 8 000 | 380‰ | 300 | 2/4 | steel 16, brick 20, machine parts 10, wire 8 | 20 | sludge 500 micro |
 | 3 | Hybrid station | coal or fuel oil (coal first, then oil, by bin order) | 11 000 / 9 000 | 300‰ / 340‰ | 350 | 3/5 | steel 22, brick 30, machine parts 12, wire 10 | 28 | ash or sludge |
 | 4 | Waste station | refuse | 25 000 | 180‰ | 150 | 2/3 | steel 12, brick 20, machine parts 8, wire 6 | 40 | ash 6000 micro |
-| 5 | Nuclear station (fictional) | nuclear fuel | 2 (1 unit = 500 000 kEU) | n/a | 1000 | 6/8 | steel 60, brick 40, machine parts 30, wire 30, design licence | 0 | spent fuel 2 micro |
+| 5 | Nuclear station (fictional) | nuclear fuel | 2 (1 unit = 500 000 kEU) | n/a | 1000 | 6/8 | steel 60, brick 40, machine parts 30, wire 30 (design knowledge required; a licence is the owner's policy, R33) | 0 | spent fuel 2 micro |
 | 6 | Wind array | — | 0 | — | 120 × availability | 1/1 | steel 10, machine parts 6, wire 6 | 0 | 0 |
 | 7 | Solar field | — | 0 | — | 100 × daylight | 0/1 | copper 6, wire 8, steel 6 | 0 | 0 |
 | 8 | Hydro (later) | — | 0 | — | 200 | 1/2 | needs a river model | 0 | 0 |
@@ -134,7 +134,7 @@ A **grid** is not stored as an object: it is the connected component of ports jo
 
 ### 4.1 Building and connecting
 
-- A **station** is a facility (IND §3.5) built from its design's materials by NPC labour at a construction site; its owner must hold the design's licence or open access, and the builders and operators must know it (KNOWLEDGE doc). **Winning or buying a design never produces a station** (D6.12): materials, builders and time do.
+- A **station** is a facility (IND §3.5) built from its design's materials by NPC labour at a construction site; the builders and operators must know it (KNOWLEDGE doc §4.3, §5.3: knowledge and skill minima, or a usable document at the site). **A licence is never a gate** (lead ruling R33, SAC §22.2 IA-3): whether to build or run a patented design without a licence is the owner's own `RespectRights` policy; the asset records its `DesignId` and the `Licensed` † classification at `AssetBuilt`, so unlicensed construction becomes an `UnauthorisedDesignUse` and possibly a dispute (D6.8), never a refusal. **Winning or buying a design never produces a station** (D6.12): materials, builders and time do.
 - A **link** is built as a construction site between two ports (`BuildLink` by an NPC at either end; materials `wire 1 + steel 1` per node of length, consumed as `Embodied` on the link asset; `20 × LengthNodes` work ticks). A **pole** (a bare port) lets a line run across country. Links are C1 assets: owned (by a utility, a factory, a cooperative), and their wire can be stolen (taking `Embodied` wire is a dismantling act that releases `Salvaged` wire and breaks the link: a theft with real consequences).
 - **Connecting a consumer** is building a link from the consumer facility's port to any port of a grid, by agreement with the link owner or the network operator (or without it: an illegal connection is possible and classified by C1 as theft of use). **Disconnecting** is opening a link at a switch (`Operate` act by a person at either end), or destroying it. A utility may disconnect a non-paying customer by sending a person to open the link: a physical act, recorded and contestable.
 

@@ -1,6 +1,6 @@
 # Development package index: Civilisation and Divinity run (27 Nov 2026)
 
-The definitive list of work packages for the 18-hour run (owner brief §§39–42, 44). The dependency graph, waves, concurrency, critical path, merge order and cut plan are in [DEVELOPMENT_DEPENDENCY_GRAPH.md](DEVELOPMENT_DEPENDENCY_GRAPH.md). File ownership, ids, switches, event blocks, migration numbers, system order and save rules come from [SHARED_ARCHITECTURAL_CONTRACTS.md](SHARED_ARCHITECTURAL_CONTRACTS.md) ("the contracts"), which is binding. Where this index and the contracts disagree, the contracts win, and the package stops and asks the lead for an amendment row (contracts §20).
+The definitive list of work packages for the 18-hour run (owner brief §§39–42, 44), extended on 27 Nov with the industrial and knowledge packages **I1–I6, K1, K2** and Checkpoint **G** for the second brief ([OWNER_BRIEF_2026-11-27_INDUSTRY.md](OWNER_BRIEF_2026-11-27_INDUSTRY.md), owner decisions D6.1–D6.19). The lead's binding rulings R1–R35 are in [LEAD_RULINGS.md](LEAD_RULINGS.md) and are applied below. The dependency graph, waves, concurrency, critical path, merge order and cut plan are in [DEVELOPMENT_DEPENDENCY_GRAPH.md](DEVELOPMENT_DEPENDENCY_GRAPH.md). File ownership, ids, switches, event blocks, migration numbers, system order and save rules come from [SHARED_ARCHITECTURAL_CONTRACTS.md](SHARED_ARCHITECTURAL_CONTRACTS.md) ("the contracts"), which is binding. Where this index and the contracts disagree, the contracts win, and the package stops and asks the lead for an amendment row (contracts §20).
 
 **Grounding.** This index was written from [CURRENT_IMPLEMENTATION_BASELINE.md](CURRENT_IMPLEMENTATION_BASELINE.md) (the real state at `8617eaa`, the two paused branches and the 11 blockers of §13), the contracts, and the tier and package tables of the D5 design documents. Paths are relative to `Assets/God/Sim/` unless they start with `Assets/`, `DotNet/` or `docs/`.
 
@@ -24,7 +24,24 @@ The brief's list (§39) is a suggestion. The code and the contracts change it as
 | U1, U2 | Kept, each with an **a** part (Tier 1, Checkpoint B) and a **b** part (Tier 2, Checkpoint D) | The same files (camera, HUD) at two times. The b part restarts when D4 merges. |
 | F0, Q4 | Kept, **run by the lead** (integration), each with a helper agent | Merging, suites, Unity runs, builds and smokes are the lead's job (brief §43). |
 
-Result: **20 agent packages** (F1, F2, C1, C2, C3, C6, C7, C10, D1, D2, D3, D4, D6, D7, U1, U2, U3, U5, Q1, Q3) plus the **two lead-run integration packages** F0 and Q4.
+Result: **20 agent packages** (F1, F2, C1, C2, C3, C6, C7, C10, D1, D2, D3, D4, D6, D7, U1, U2, U3, U5, Q1, Q3) plus the **two lead-run integration packages** F0 and Q4, and, for owner D6, **eight industrial and knowledge packages** (I1 with its foundation part I1a, I2, I3, I4, I5, I6, K1, K2 with parts K2a and K2b).
+
+**How the second brief's list was mapped** (its "Documentation and work packages" section and §13):
+
+| Brief item | Package | Note |
+|---|---|---|
+| Industrial content and production recipes | **I1** (I1a foundation + I1 content, including the waste part) | I1a is a second neutral foundation commit, like F1: it lands every shared industrial and knowledge surface (contracts §22.1) |
+| Vehicles and harvesting | **I2** | vehicles are C1 productive assets operated by NPCs (contracts §22.2 IA-4) |
+| Refineries and industrial markets | **I3** "refineries and industrial trade" | **no external buyer** (D6.2): agreements, recorded sales and delivery obligations only |
+| Electricity generation and distribution | **I4** | |
+| Mechanised military production | **I5** | |
+| Industrial presentation and analytics | **I6** | |
+| Knowledge, designs, patents, licences (brief §§5–8) | **K1** (minimal: designs, knowledge, documents, licences; rights beyond the minimum and auctions Tier 3) | owns KNOWLEDGE_AND_TECHNOLOGY_DESIGN |
+| One money and accounting architecture (brief §1) | **K2** (K2a Tier 2, K2b Tier 3) | owns MONEY_AND_ACCOUNTING_DESIGN |
+| Waste and circular production (brief §9) | folded into **I1** (waste part) | WASTE_AND_CIRCULAR_DESIGN |
+| New institutions (brief §11) | organisation **templates** added by the package that needs them on C6's framework (contracts §22.9) | no new package |
+
+**D6.18 priority.** Every I and K package is **Tier 2 after the Tier 1 set** (or Tier 3). Industry is an *opportunistic lane*: it uses only agent slots and merge time that the D5 packages leave free, never takes a Unity slot before Checkpoint E, and never delays a Tier 1 package or the D5 Tier 2 core (D4a, C3, C6, C7 healthcare, U3b). I1a is cut after F1b and C1 merge, but **merges only after the Tier 1 set has merged** (contracts §22.0).
 
 **Lead's defaults applied** (for the contracts' open questions):
 - `Divinity.Enabled` flips on for population and "Living island" games at **Checkpoint B**, with deliberate re-pins (the population smoke hash and the god-mode scenarios). Pins P1–P9 keep naming their switches explicitly, so they are unaffected.
@@ -38,35 +55,53 @@ Result: **20 agent packages** (F1, F2, C1, C2, C3, C6, C7, C10, D1, D2, D3, D4, 
 
 ## 1. Summary table
 
-Effort is in **agent-hours** of focused work, including the agent's own test runs. It excludes the lead's merge time (about 30–40 minutes per merge: review, then the full suite on the merge result) and checkpoint Unity runs (45–100 minutes each). Checkpoints are those of brief §44 (A Living world, B Divine sandbox, C Working economy, D Personal divine interaction, E Institutional society, F Integrated).
+Effort is in **agent-hours** of focused work, including the agent's own test runs. It excludes the lead's merge time (about 30–40 minutes per merge: review, then the full suite on the merge result) and checkpoint Unity runs (45–100 minutes each). Checkpoints are those of brief §44 (A Living world, B Divine sandbox, C Working economy, D Personal divine interaction, E Institutional society, F Integrated) plus **G Industrial slice** (D6.18, section 4 below). Event blocks and migrations follow the contracts (§15.1, §18.2 and, for I and K, §22.6–22.7). Branch names avoid the names already taken in the repository (R17: `unity/q1`, `unity/q2`, `unity/q3`, `unity/f0`, `unity/p10`, `unity/p11` exist).
 
 | ID | Title | Tier | Agent | Prerequisites | Ckpt | Effort (h) | Worktree / branch | Status |
 |---|---|---|---|---|---|---|---|---|
-| **F0** | Integration baseline: merge `unity/ibs` + `unity/demog`, full suites, Unity, build, smokes | 1 | **Lead** + Opus merge helper | — | A | 2.5 (wall) | `wt-lrs-ibs`, `wt-lrs-m3` → `wt-lrs` / `unity/ibs`, `unity/demog` → `unity/poc` | **Partial on branches** (see 2.F0) |
+| **F0** | Integration baseline: merge `unity/ibs` + `unity/demog`, full suites, Unity, build, smokes | 1 | **Lead** + Opus merge helper | — | A | 2.5 (wall) | `wt-lrs-int0` / **`unity/int0`** (R17; `unity/f0` is taken) → `unity/poc` | **In progress** in `wt-lrs-int0` (27 Nov) |
 | **F1** | Shared foundation (contracts §0), merged as F1a then F1b | 1 | Opus (run for the lead; the lead reviews every frozen-file diff) | F0 | B (all) | 5.0 (F1a 3.5, F1b 1.5) | `wt-lrs-f1` / `unity/f1` | Not started |
 | **F2** | Demographic viability and ecology experiments (continues `unity/demog`) | 1 | Opus | F0 (code merges after F1b) | A (results), F | 6.0 (much of it is runner time) | `wt-lrs-f2` / `unity/f2` (may reuse the warm `wt-lrs-m3` folder on a new branch) | **Partial on branch** (see 2.F2) |
-| **C1** | Physical economy: productive assets, labour, ownership beliefs, theft classification | 1 | Opus | F1a (mappers after F1b) | C | 4.5 | `wt-lrs-c1` / `unity/c1` | Not started (seams only: `OwnerKind`, `Verb.WorkShift`, `Permits.Believed`) |
+| **C1** | Physical economy: productive assets (**owns `AssetId`**, R20), labour, ownership beliefs, theft classification | 1 | Opus | F1a (mappers after F1b) | C | 4.5 | `wt-lrs-c1` / `unity/c1` | Not started (seams only: `OwnerKind`, `Verb.WorkShift`, `Permits.Believed`) |
 | **C2** | Obligations, promises, primitive lending, credibility | 2 | Opus | C1 | C (E) | 3.0 | `wt-lrs-c2` / `unity/c2` | Not started |
 | **C3** | Employment between individuals and enterprises, wages | 2 | Opus | C1 (C2 for wage arrears, optional; C6 for the enterprise-org part) | C | 3.5 | `wt-lrs-c3` / `unity/c3` | Not started |
-| **C6** | Organisation framework, service requests, communal store and welfare (absorbs C8's Tier 2) | 2 | Opus | F1b (C1 merged before C6 merges) | E | 5.0 | `wt-lrs-c6` / `unity/c6` | Seam only (`IInstitutionPolicy`, `InstitutionView` placeholders) |
+| **C6** | Organisation framework, service requests, communal store and welfare (absorbs C8's Tier 2); registers its director through D1's `SimBuilder` point (R31) | 2 | Opus | F1b (C1 merged before C6 merges) | E | 5.0 | `wt-lrs-c6` / `unity/c6` | Seam only (`IInstitutionPolicy`, `InstitutionView` placeholders) |
 | **C7** | Healthcare, then education (teaching and imitation) | 2 | Opus | C6 (interim C6a: the service model) | E | 4.0 | `wt-lrs-c7` / `unity/c7` | Not started (M4 `Tend` and care exist) |
-| **C10** | Government organisations, relayed divine instructions, refusal; minimal citizenship (absorbs C5); one temple template | 2 | Opus | C6, D2 (D6 for the temple) | E (F) | 4.0 | `wt-lrs-c10` / `unity/c10` | Not started |
-| **D1** | Gods, Mythic, divine command gate, `IDivineView`, `GodDirector`, idle, schedule and steward gods | 1 | Opus | F1a | B | 2.5 | `wt-lrs-d1` / `unity/d1` | Not started |
+| **C10** | Government organisations (`Orgs.C10.SeedGovernments`: 0 in pinned scenarios, 1 in god-only Living Island and Iron Coast, R27), relayed divine instructions, refusal; minimal citizenship (absorbs C5); one temple template | 2 | Opus | C6, D2 (D6 for the temple) | E (F) | 4.0 | `wt-lrs-c10` / `unity/c10` | Not started |
+| **D1** | Gods, Mythic, divine command gate, `IDivineView`, `GodDirector` (D1 owns the `SimBuilder.cs` director attachment, R31), idle, schedule and steward gods | 1 | Opus | F1a | B | 2.5 | `wt-lrs-d1` / `unity/d1` | Not started |
 | **D2** | Divine suggestions, commands and temporary compulsion | 1 | Opus | D1 (may start from interim D1a) | B | 3.5 | `wt-lrs-d2` / `unity/d2` | Not started |
 | **D3** | Miracles: heal, smite, create and destroy resources, bless and protect (minimal), consecrate | 1 | Sonnet | D1 (may start from D1a) | B | 2.5 | `wt-lrs-d3` / `unity/d3` | Not started |
 | **D4** | Embodiment: possession (D4a), then manifested avatar (D4b) (absorbs D5) | 2 | Opus | D1, F1b | D | 5.0 (D4a 2.5, D4b 2.5) | `wt-lrs-d4` / `unity/d4` | Not started |
 | **D6** | Structured commandments, divine beliefs, minimal affiliation | 1 (commandments), 2 (beliefs, prayer, affiliation) | Opus | D2 (may start from interim D2a) | F (first shown in the C/D build) | 4.0 | `wt-lrs-d6` / `unity/d6` | Not started |
 | **D7** | Mind archive and resurrection | 2 | Opus | D1, F1b (D3 merged first, for the miracle events) | E | 3.0 | `wt-lrs-d7` / `unity/d7` | Not started (blocker 3 resolved by F1's `ArchiveMind` site) |
-| **U1** | Camera, selection, input and time controls (U1a); embodied cameras and control input (U1b) | 1 (a), 2 (b) | Sonnet | U1a: F0 (its command builder rebases on F1a); U1b: D4a | B, D | 6.0 (3.5 + 2.5) | `wt-lrs-u1` / `unity/u1` | Not started (`GodCameraRig`: fixed tilt, no rotation, no follow) |
-| **U2** | Divine HUD: god-only gating, Mythic meter, toolbar, instruct and miracle flows, Divine card (U2a); pills, mode switcher, commandment builder (U2b) | 1 (a), 2 (b) | Sonnet | U2a: F1a, D1 (works against the D1a view); U2b: D4a, D6 | B, D | 6.5 (4.5 + 2.0) | `wt-lrs-u2` / `unity/u2` | Not started |
-| **U3** | World, characters and gestures: grid hidden, decode overlay (U3a); gesture vocabulary, carried goods, body look, divine effects (U3b) (absorbs U4) | 1 (a), 2 (b) | Sonnet | U3a: none (Game only, from `unity/poc`); U3b: F1a (`GestureMade` v2), D3 events for the effects | A or B, D | 6.5 (1.5 + 5.0) | `wt-lrs-u3` / `unity/u3` | Not started (M5.18 and M5.19 were on the I-BS resume list, not done) |
+| **U1** | Camera, selection, input and time controls, the `-godonly`/`-godpopulation` boot flags for the god-mode smoke (R29) (U1a); embodied cameras and control input (U1b) | 1 (a), 2 (b) | Sonnet | U1a: F0 (its command builder rebases on F1a); U1b: D4a | B, D | 6.0 (3.5 + 2.5) | `wt-lrs-u1` / `unity/u1a`, then `unity/u1b` | Not started (`GodCameraRig`: fixed tilt, no rotation, no follow) |
+| **U2** | Divine HUD: god-only gating, Mythic meter, toolbar, instruct and miracle flows, Divine card (U2a); pills, mode switcher, commandment builder (U2b) | 1 (a), 2 (b) | Sonnet | U2a: F1a, D1 (works against the D1a view); U2b: D4a, D6 | B, D | 6.5 (4.5 + 2.0) | `wt-lrs-u2` / `unity/u2a`, then `unity/u2b` | Not started |
+| **U3** | World, characters and gestures: grid hidden, decode overlay (U3a); gesture vocabulary, carried goods, body look, divine effects (U3b) (absorbs U4) | 1 (a), 2 (b) | Sonnet | U3a: none (Game only, from `unity/poc`); U3b: F1a (`GestureMade` v2), D3 events for the effects | A or B, D | 6.5 (1.5 + 5.0) | U3a: `wt-lrs-u3a` / `unity/u3a`; U3b: `wt-lrs-u3` / `unity/u3b` | **U3a in progress** in `wt-lrs-u3a` (cut at `c1ab594`); U3b not started |
 | **U5** | Reports and inspection: Economy tab, life history and memorial, institutional panels with record versus observation | 2 | Sonnet | D1; C1 (Economy tab); C6 (institutional panels); D7 (memorial) | C, E | 3.5 | `wt-lrs-u5` / `unity/u5` | Not started |
-| **Q1** | Analytics: `0030` views, KPI subset, `sql` command, P7, benchmarks (absorbs Q2) | 1 (views, divine KPIs, baselines), 2 (org and divine bench cases) | Sonnet | F0 (baseline bench); F1b (views, P7); each merged package | B–F | 5.0 | `wt-lrs-q1` / `unity/q1` | Not started (migrations 0001–0006; `dim_kpi` empty; `bench` exists) |
-| **Q3** | Integration assurance: end-to-end scenario harness, replay, save/load, conservation, switch matrix | 1 | Sonnet (the lead reviews every failure diagnosis) | D1 (harness), then each merge | B–F | 6.0 (continuous) | `wt-lrs-q3` / `unity/q3` | Not started (`ReplayTests`, `DeterminismTests`, F0 conservation test exist) |
+| **Q1** | Analytics: early views `0026` and late views `0030` (R18), KPI subset (incl. HLT-10, LIV-07, TIM-04, R30), `sql` command, P7, benchmarks (absorbs Q2); later `0041` with K1/K2 | 1 (views, divine KPIs, baselines), 2 (org and divine bench cases) | Sonnet | F0 (baseline bench); F1b and D1 (`0026`, P7); C6/C10/D6 (`0030`); each merged package | B–F (G) | 5.0 | `wt-lrs-q1kpi` / **`unity/q1kpi`** (R17) | Not started (migrations 0001–0006; `dim_kpi` empty; `bench` exists) |
+| **Q3** | Integration assurance: end-to-end scenario harness, replay, save/load, conservation, switch matrix | 1 | Sonnet (the lead reviews every failure diagnosis) | D1 (harness), then each merge | B–F (G: `ind_slice`) | 6.0 (continuous) + 1.5 for G | `wt-lrs-q3int` / **`unity/q3int`** (R17; the stale non-git `wt-lrs-q3` folder is not used) | Not started (`ReplayTests`, `DeterminismTests`, F0 conservation test exist) |
 | **Q4** | Final Windows build, checkpoint builds, handover | 1 | **Lead** + Sonnet doc helper | everything merged by the freeze | F | 3.0 (protected final window) | `wt-lrs` / `unity/poc` | Not started |
 
-**Tier 1 set (protected):** F0, F1, F2 (the experiments), C1, D1, D2, D3, D6 (commandments), U1a, U2a, U3a, Q1 (Tier 1 part), Q3, Q4.
-**Tier 2 set (in priority order):** D4a possession, C3, C6, U3b, D4b avatar, U1b and U2b, D7, C7 healthcare, C2, U5, C7 education, C10.
+**Industrial and knowledge packages (owner D6).** Prerequisites are exact: *hard* ones must be merged into `unity/poc` before the package branches; *soft* ones are used if merged and otherwise have the stated fallback (contracts §22.9). "Tier 1 set merged" is a hard prerequisite of **every** row below (D6.18). Every row's event block and migration is fixed by contracts §22.6–22.7.
+
+| ID | Title | Tier | Agent | Prerequisites (hard; *soft*) | Owned files (summary; detail in 2.I/2.K) | Events | Migration | Ckpt | Effort (h) | Worktree / branch | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **I1a** | Industrial and knowledge **foundation** (neutral, like F1): every shared surface of contracts §22.1 | 2 (first industrial merge) | Opus (run for the lead; the lead reviews every frozen-file diff) | F1b, C1; **merges only after the Tier 1 set has merged** | the I1a column-3 files of contracts §22.1 (frozen after merge) | domains 70–79 and their ranges; row 1014 `BinMoved` only | none | G (prerequisite) | 1.5 | `wt-lrs-i1a` / `unity/i1a` | Not started |
+| **I1** | Industrial content and recipes: wares' content, deposits (scenario-seeded, then generation), facilities as C1 assets, `RecipeBook` (rows 1–20 = stage 3 defs) and the runner (264), orders; waste outputs, waste sites and the pollution field (waste part) | 2 | Opus | I1a, C1, C6 (hard: Iron Coast's facilities belong to organisations whose office-holders place the orders); *C3 (wages), K1 (design minima; else `DesignId = 0`), Q1* | `Industry/Geology*`, `Industry/RecipeBook.cs`, `Industry/Facilities.cs`, `Industry/Production.cs`, `Industry/Orders.cs`, `Industry/IndustrySystem.cs` (body), `Industry/IndustrySetup.cs`, `Industry/Waste/*`, `IndustryState.I1.cs`, `IndustryState.Waste.cs`, `IndustryHooks.cs`/`IndustryMindHooks.cs` (dispatcher bodies), `IndustryMind.cs` (I1 fields), `IndustryEvents.I1.cs`, `IndustryTuning.I1.cs`, `I1Mappings.cs`, `Tables.I1.cs`, migrations, tests | 1000–1019, 1080–1094 | `0031`, `0036` | G | 4.0 (minimal 3.0; waste part +1.0) | `wt-lrs-i1` / `unity/i1` | Not started |
+| **I2** | Vehicles and harvesting: vehicle assets, bins, board/drive/alight, fuel, the harvest routine as an NPC job, maintenance; possession and compulsion of operators | 2 | Opus | I1, C1; *C3 (operator jobs), C6 (fleets), D2 and D4a (only for compelled and possessed driving), Q3* | `Industry/Vehicles/*`, `IndustryHooks.I2.cs`, `IndustryMindHooks.I2.cs`, `IndustryState.I2.cs`, `IndustryEvents.I2.cs`, `IndustryTuning.I2.cs`, `I2Mappings.cs`, `Tables.I2.cs`, flagged rows in C3 (`JobKind.Operate`) and D2 (`DivineActs` 22/23), tests | 1020–1039 | `0032` | G | 4.0 (minimal 3.0) | `wt-lrs-i2` / `unity/i2` | Not started |
+| **I3** | Refineries and industrial trade, **no external buyer**: supply agreements, deliveries with ownership at unload (basis 25), delivery obligations, recorded sales (`IndustrialSaleClosed`) | 2 | Sonnet | I1, C2 (obligations), C6; *I2 (deliveries), K2a (money payment; goods payment works without it)* | `Industry/Trade/*`, `IndustryState.I3.cs`, `IndustryEvents.I3.cs`, `IndustryTuning.I3.cs`, `I3Mappings.cs`, `Tables.I3.cs`, migration, tests | 1040–1049 | `0033` | G (step 4, sale branch) | 2.0 | `wt-lrs-i3` / `unity/i3` | Not started |
+| **I4** | Electricity generation and distribution: coal station as a staffed facility, links, ports, components, interval balance, allocation, shortage and outage, energy ledger; meters and one bill | 2 | Opus | I1, C1; *C6 (utility), C3 (staff), C2 (billing only), I2 (fuel delivery; hand-carry works), K1, K2a, Q1* | `Industry/Grid/*` (incl. `ElectricitySystem.cs` body, 262), `IndustryState.I4.cs`, `IndustryEvents.I4.cs`, `IndustryTuning.I4.cs`, `I4Mappings.cs`, `Tables.I4.cs`, migration, tests | 1050–1069 | `0034` | G | 3.5 (minimal 2.5) | `wt-lrs-i4` / `unity/i4` | Not started |
+| **I5** | Mechanised military production: firearm and ammunition recipes, procurement agreements, military organisation orders, crewed transport and tank (no combat in Tier 2) | 2 (end) / 3 | Sonnet | I1, I2, I3, C6, C3; *I4, D2/D4, K1, K2a; C4/M9 for Tier 3 combat* | `Industry/Military/*`, `IndustryState.I5.cs`, `IndustryEvents.I5.cs`, `IndustryTuning.I5.cs`, `I5Mappings.cs`, `Tables.I5.cs`, migration, tests | 1070–1079 | `0035` | after G (`VS11`) | 3.0 | `wt-lrs-i5` / `unity/i5` | Not started |
+| **I6** | Industrial presentation and analytics: deposits and facilities drawn, harvesters with visible cargo, facility, vehicle and station cards, production queues, electricity and logistics overlays, shortage glyphs (all in the seamless island, grid hidden); KPI views | 2 (cards, overlays and glyphs for the slice) / 3 | Sonnet | I1, U2a, U3a, Q1 (`0030`, `sql`); each I package whose state a view shows (I2 cargo, I4 overlay); *U5 (reports), U1 tab registration (R9)* | `Assets/God/Game/Industry/*`, `Assets/God/Game/Hud/Industry/*` (cards via U1's registration hook), `0037_industry_kpi_views.sql`, KPI rows IND/VEH/ELE/WST/ENV/IMIL, PlayMode tests `Assets/God/Tests/PlayMode/Industry*` | 1095–1099 (if any) | `0037` | G | 3.5 (minimal 2.0) | `wt-lrs-i6` / `unity/i6` | Not started |
+| **K1** | Knowledge, designs, artefacts and licences (**minimal**): `DesignDef` envelopes and loader, seeded known designs, `KnowledgeMind`, knowledge and skill minima, documents (write, copy, read, build from), licences and patents minimal with `UnauthorisedDesignUse` classification; rights beyond the minimum, auctions and research are Tier 3 | 2 (minimal) / 3 (rights beyond the minimum, auctions, research) | Opus | I1a, C1, C6 (patent office template, R33 `RespectRights` policy); *C7 (teaching; skill store), C10 (patent law; else scenario seed), C9 (complaints; else stub), K2a (fees), D7 (`ArchivedLife.Know`)* | `Civ/CivState.K1.cs`, `Civ/Knowledge/*`, `Civ/KnowledgeMind.cs` (fields), `Civ/CivHooks.K1.cs`, `Civ/CivMindHooks.K1.cs`, `CivEvents.K1.cs`, `CivTuning.K1.cs`, `K1Mappings.cs`, `Tables.K1.cs`, migrations, flagged rows (contracts §22.9), tests | 1100–1129, 1130–1159, 1160–1169 (Tier 3) | `0039`, `0040`, `0043` (Tier 3) | G (VS7–VS8 minima); D6.5–D6.8 | 4.0 (minimal 2.5) | `wt-lrs-k1` / `unity/k1` | Not started |
+| **K2** | Money and accounting core. **K2a** (Tier 2): commodity money (seeded `Coin`), `Payment` record and the one payment act, org double-entry books, units of account, settlement of obligations, billing acts. **K2b** (Tier 3): institutional money, issuers, accounts, issuance and destruction | K2a 2; K2b 3 | Opus | K2a: I1a, C1, C3 (`Pay` 101), C6; C2 for obligation settlement (spot payments work without it). K2b: K2a; *C8 (banking services)* | `Civ/CivState.K2.cs`, `Civ/Money/*` (`Payments`, `Books`, K2b `Money`, `Accounts`), `Civ/CivMindHooks.K2.cs`, `CivEvents.K2.cs`, `CivTuning.K2.cs`, `K2Mappings.cs`, `Tables.K2.cs`, migrations, flagged rows in C2, C3, C6, tests | K2a 1170–1179, 1190–1199; K2b 1180–1189 | K2a `0038`; K2b `0042` | G (step 4 sale branch, payments); D6.2, D6.3 | K2a 3.0; K2b 2.5 | `wt-lrs-k2` / `unity/k2a`, then `unity/k2b` | Not started |
+
+Q1 owns `0041_knowledge_money_kpi_views.sql` (with K1, K2), after `0038`–`0040` exist. Q3 owns `DotNet/God.Runner/Scenarios/ind_*.scenario.json` ("Iron Coast", GAMEPLAY_SCENARIOS §13; content blocks supplied by I1, I2, I4, K1, K2a) and the D6 section of ACCEPTANCE_TESTS.
+
+**Tier 1 set (protected):** F0, F1, F2 (the experiments), C1, D1, D2, D3, D6 (commandments), U1a, U2a, U3a, Q1 (Tier 1 part), Q3, Q4. Unchanged by owner D6.
+**Tier 2 set, D5 (in priority order):** D4a possession, C3, C6, U3b, D4b avatar, U1b and U2b, C7 healthcare, C2, U5, C7 education, C10, D7. (Reordered from the first index so that the cut ladder of the graph doc §7 drops from the end: D7 first, then C10, U5, C2.)
+**Tier 2 set, industrial lane (opportunistic, after the Tier 1 set has merged; in order):** I1a, I1 minimal, I2 minimal and I4 minimal (in parallel), Q3 `ind_slice`, I6 minimal, K1 minimal, K2a, I3 (one agreement and one recorded sale), then I1 waste part and the oil chain. Checkpoint G needs only I1a, I1, I2, I4, Q3 `ind_slice` and I6 minimal: step 4 can pass by its "processed" branch (recipe 25) without I3, K2a or C2, and steps 7–8 pass with `DesignId = 0` designs without K1.
+**Tier 3 (kept in the design, not planned for this run):** I5 beyond the procurement test, vehicle combat, strategic device; K1 rights beyond the minimum (challenges, revocation, court process, compulsory licensing), research projects, invented variants, auctions; K2b; I4 oil, hybrid, waste, nuclear and renewable designs, rationing, tariffs; I3 toll processing and marketplaces; waste consumption refuse and contamination.
 
 ---
 
@@ -87,7 +122,7 @@ Every package works only on its own branch in its own worktree. It changes only 
 - **Objective:** one green `unity/poc` with the I-BS and demography branches merged, verified in Unity and the player. This is the "base" every later pin uses.
 - **Scope:** on `unity/ibs`, I-BS resume steps 1, 2 and 6: fix I-BS.7's test so it skips estates still open at the end; set I-BS.5's threshold from evidence; run the full `dotnet test`; fix any M4/M5 behaviour test the amendments moved; update the status table. Merge `unity/ibs`. On `unity/demog`, demography resume steps 1, 2, 6, 7 and 8: merge `unity/poc` into it, keeping the both-off pins `8b898d115d8a05a7`, `5fa8991b92168385` and `66a55d5a67f2ad4e`, and resolving `Npc.Traits` (ibs: 16 entries, 12–15 unwritten; demog: 19), `Founders.MakeLife`, `M4LifeCycleTests` and the four household files. Then the full `dotnet test`, the SHARED_CONTRACTS rows for verb 45 and situation 22, and the merge. Then Unity EditMode and PlayMode, the Windows build and both smokes. The stage 3 hash `4bd54b271857a803` must hold; the population smoke hash is recorded anew.
 - **Excluded:** I-BS steps 3–5 (controlled I-BS.6/8/10 tests, the M5.9 kin cue, M5.18 and M5.19). M5.18 and M5.19 go to U3; the rest is deferred filler (section 3). Demography resume steps 3–5 (the sweeps) go to F2.
-- **Owned:** the merge commits; the DEV_LOG "Current status", "Test results" and "Commits and branches" rows. The helper agent owns the conflict resolution in `wt-lrs-m3` only.
+- **Owned:** the merge commits; the DEV_LOG "Current status", "Test results" and "Commits and branches" rows. The work runs on **`unity/int0` in `wt-lrs-int0`** (R17; `unity/f0` is the old M4/M5 scaffolding branch) and is in progress there; the helper agent owns the conflict resolution on that branch only.
 - **Contracts:** M (lead): it defines the base hashes for P1–P9. No new codes or migrations.
 - **Status:** `unity/ibs` is 4 commits (`81e4f47`); I-BS passes 11 of 13 on the branch; its full runner suite was not read. `unity/demog` is 6 commits (`5aaa255`); it has never run alongside M5; it has 10/10 extinction findings and M4.37 not met; Unity was never opened on it (the `GodBootstrap` change is uncompiled). Both branches are pushed.
 - **Checkpoint:** **A** (tag `civdiv-a`).
@@ -120,6 +155,7 @@ Every package works only on its own branch in its own worktree. It changes only 
 - **Owned:** `Civ/CivState.C1.cs`, `Civ/CivModule.cs` (bodies), `Civ/CivSystem.cs` (257), `Civ/CivHooks.cs` and `Civ/CivMindHooks.cs` (dispatcher bodies; C2, C3 and C5 add partials), `Civ/Assets.cs`, `Civ/Ownership.cs`, `Civ/Work.cs`, `Civ/CivEvents.C1.cs`, `Civ/CivTuning.C1.cs`, `Information/PeopleCards.Civ.cs` (Fill), `DotNet/God.Runner/Warehouse/C1Mappings.cs`, `Tables.C1.cs`, `Migrations/0015_ownership_work.sql`, `Assets/God/Tests/EditMode/Civ/C1*`, `DotNet/God.Runner.Tests/C1*`.
 - **Contracts:** R `Goods`, `Bodies`, sense seam, `Control` (compelled work uses it). M `Permits` (ownership beliefs, contracts §19.1), `CivState` sub-object C1.
 - **Events / migration:** **270–289**; **`0015`**.
+- **`AssetId` (R20):** C1 owns the one id space of every productive asset (buildings, workshops, and later vehicles, power stations, links, depots) through `Assets.Register`; I1–I5 register their assets only through it (contracts §22.4).
 - **Checkpoint:** C.
 
 ### C2 — Obligations, promises and primitive lending
@@ -146,7 +182,8 @@ Every package works only on its own branch in its own worktree. It changes only 
 - **Excluded:** merger, split, Council and Consensus rules, inter-organisation regulation (Tier 3), banks.
 - **Owned:** `Orgs/OrgState.C6.cs`, `Orgs/OrgState.C8.cs`, `Orgs/OrgModule.cs` (bodies), `Orgs/OrgHooks.cs` and `Orgs/OrgMindHooks.cs` (dispatcher bodies), `Orgs/Orgs.cs`, `Orgs/Services.cs`, `Orgs/OrgRecords.cs`, `Orgs/CommunalStore.cs`, `Orgs/OrganisationSystem.cs`, `Orgs/InstitutionDirector.cs`, `Orgs/OrgMind.cs` (fields), `Policy/InstitutionPolicies.cs`, `Policy/Observations.cs` (`InstitutionView`), `Information/PeopleCards.Orgs.cs`, `OrgEvents.C6`, `OrgEvents.C8`, `C6Mappings.cs`, `C8Mappings.cs`, `Tables.C6.cs`, `0018_organisations.sql`, `0020_banking_welfare.sql` (welfare columns only), tests.
 - **Contracts:** R `Goods` (`OwnerKind.Org`, `BinKind.OrgStore`/`CommunalStore`), C1 assets (org buildings), C2 (none required). M `OrgState`, `InstitutionView`, `IInstitutionPolicy` implementations.
-- **Events / migration:** **500–519, 550–551**; **`0018`**, **`0020`**.
+- **Events / migration:** **500–519, 550–551**; **`0018`**, **`0020`**. Under **R23** C6 may extend its organisation codes beyond 519 within 500–549, but only into codes no other package holds (C7 keeps 520–539, C2 keeps 540–549: ask the lead for the exact codes); welfare uses 551–559 and 550 stays reserved for banking.
+- **Director attachment (R31):** C6 registers `InstitutionDirector` through the registration point D1 adds to `SimBuilder.cs`; it does not edit that file itself.
 - **Checkpoint:** E.
 
 ### C7 — Healthcare, then education
@@ -162,6 +199,7 @@ Every package works only on its own branch in its own worktree. It changes only 
 - **Excluded:** AiBrain retirement (M14), elections and political organisations, cultural transmission (M11), migration decisions.
 - **Owned:** `Orgs/OrgState.C10.cs`, `Orgs/Government.cs`, `Orgs/Temples.cs`, `Orgs/Laws.cs`, `Civ/CivState.C5.cs`, `Civ/Citizenship.cs`, `OrgEvents.C10`, `CivEvents.C5`, `C10Mappings.cs`, `C5Mappings.cs`, `0023_citizenship_politics.sql`, `0024_culture_religion_orgs.sql`, tests.
 - **Events / migration:** **290–299, 355–374 (unused unless culture lands), 590–599**; **`0023`**, **`0024`**.
+- **Seeded governments (R27):** `Orgs.C10.SeedGovernments`, default **0** in the pinned scenarios (so P5 holds), **1** in the god-only Living Island and in the industrial scenario (Iron Coast).
 - **Checkpoint:** E; scenarios 15 and 16 at F.
 
 ### D1 — Gods, Mythic and the divine command interface
@@ -170,6 +208,7 @@ Every package works only on its own branch in its own worktree. It changes only 
 - **Owned:** `Divinity/DivinityState.D1.cs`, `Divinity/DivinityModule.cs` (bodies), `Divinity/DivinitySystem.cs`, `Divinity/DivinityHooks.cs` and `Divinity/DivinityMindHooks.cs` (dispatcher bodies; D2–D7 add partials), `Divinity/Gods.cs`, `Divinity/Mythic.cs`, `Divinity/Interventions.cs`, `Divinity/GodDirector.cs`, `Divinity/DivinityTuning.D1.cs`, `Divinity/DivinityEvents.D1.cs`, `Information/DivineView.cs`, `Information/DivineViewFiller.cs`, `Policy/GodPolicies.cs`, `D1Mappings.cs`, `Tables.D1.cs`, `0008_mythic.sql`, tests.
 - **Contracts:** R command gate, control table. M god identity, Mythic, `IDivineView` (additive members).
 - **Events / migration:** **800–809**; **`0008`**.
+- **`SimBuilder.cs` (R31):** D1 owns the director-attachment edit and lands it first, with a registration point that C6 (and later any other director) uses.
 - **Checkpoint:** B.
 
 ### D2 — Suggestions, commands and compulsion
@@ -217,6 +256,7 @@ Every package works only on its own branch in its own worktree. It changes only 
 ### U1 — Camera, selection, input and time; embodied cameras
 - **Objective:** functional player controls (Tier 1), then third-person control of a possessed body or an avatar.
 - **Scope:** U1a: rotation, pitch, close zoom, follow, the `CameraDirector` overhead mode, `SelectionModel` (person, group, household, area, object), `PlayerInputFrame` and `PlayerCommandBuilder` (divine commands stamped with `HumanGod`), time controls pause/1×/2×/5×/10× with commands queued while paused, names, favourites and follow in the non-hashed `ui` save extra (F1.18). U1b: third-person cameras for possession and avatar, the move axis quantised to `DivineControlInput` sectors with hysteresis and the lease rule (contracts §11.3), smooth switching.
+- **Boot flags (R29):** U1a adds `-godonly` (with `-godpopulation`) to the player's command line so the lead can run the god-mode smoke before Checkpoint B. Branches `unity/u1a` and `unity/u1b` in the one folder `wt-lrs-u1`.
 - **Excluded:** touch and gamepad adapters, cinematic transitions (Tier 3).
 - **Owned:** `Assets/God/Game/Camera/*` (new), `Assets/God/Game/Input/*` (new), `Assets/God/Game/Hud/GodCameraRig.cs`, `Assets/God/Game/Hud/WatchCamera.cs`, `Assets/God/Game/Save/UiExtra.cs` (new), PlayMode tests `Assets/God/Tests/PlayMode/Camera*`. New folders need their Unity `.meta` files committed.
 - **Contracts:** R commands, `IDivineView`, `Names`. M the `ui` save extra (not hashed).
@@ -247,16 +287,19 @@ Every package works only on its own branch in its own worktree. It changes only 
 
 ### Q1 — Analytics, KPIs and benchmarks (absorbs Q2)
 - **Objective:** reconciled warehouse views and the Tier 1 KPI subset; benchmarks for brief §48.
-- **Scope:** a baseline `bench` on the base (benchmark slot 1); `0030_kpi_views.sql` with the views `v_god_day`, `v_intervention_chain`, `v_person_life` and `v_org_history`; `dim_kpi` rows for DIV-01..06, DIV-09, DIV-10, DIV-13, POP-12..14, PRD-01, OWN-01 and CMD-01/05; the `sql` read-only command; P7 `Recording_Neutral_On_New_Domains`; `bench_npc_100` and `bench_npc_2000`, then `bench_divine_500` and `bench_org_500` when their packages merge; `simYearsPerRealMinute`; the DEV_LOG performance table.
-- **Owned:** `DotNet/God.Runner/Warehouse/Migrations/0030_kpi_views.sql`, `DotNet/God.Runner/Kpi/*` (new), `DotNet/God.Runner/Sql/*` (new), `DotNet/God.Runner/Bench/*` (new cases; `baseline.json`), `DotNet/God.Runner/Scenarios/bench_*.scenario.json` (new ones), `DotNet/God.Runner.Tests/Q1*`, KPI_CATALOGUE status cells.
+- **Scope:** a baseline `bench` on the base (benchmark slot 1); the early views `0026` (`v_god_day`, `v_intervention_chain`, `v_person_life` and the Tier 1 KPI views) and the late views `0030` (`v_org_history` and the service and religion views) per R18; `dim_kpi` rows for DIV-01..06, DIV-09, DIV-10, DIV-13, POP-12..14, PRD-01, OWN-01, CMD-01/05, HLT-10, LIV-07 and TIM-04 (R30); the `sql` read-only command; P7 `Recording_Neutral_On_New_Domains`; `bench_npc_100` and `bench_npc_2000`, then `bench_divine_500` and `bench_org_500` when their packages merge; `simYearsPerRealMinute`; the DEV_LOG performance table.
+- **Owned:** `DotNet/God.Runner/Warehouse/Migrations/0026_*.sql` (the early views, R18), `0030_kpi_views.sql`, `0041_knowledge_money_kpi_views.sql`, `DotNet/God.Runner/Kpi/*` (new), `DotNet/God.Runner/Sql/*` (new), `DotNet/God.Runner/Bench/*` (new cases; `baseline.json`), `DotNet/God.Runner/Scenarios/bench_*.scenario.json` (new ones), `DotNet/God.Runner.Tests/Q1*`, KPI_CATALOGUE status cells.
 - **Contracts:** R every package's tables. Never writes another package's mapper.
-- **Events / migration:** **700–719** (only if KPI day rows are used); **`0030`**. Migrations `0026`–`0029` stay free for the lead.
+- **Events / migration:** **700–719** (only if KPI day rows are used). **R18:** **`0026`** holds the **early** views (population, divine core, the Tier 1 KPIs), landed after F1b and D1; **`0030`** lands **late** (after C6, C10 and package D6) with the organisation, service and religion views; `0027`–`0029` stay free for the lead. For owner D6, Q1 also owns **`0041_knowledge_money_kpi_views.sql`** (with K1 and K2; after `0038`–`0040`) and helps I6 with `0037`.
+- **Branch (R17):** `unity/q1kpi` in `wt-lrs-q1kpi` (`unity/q1` and `unity/q2` are taken by stage 3).
 - **Checkpoint:** B–F (incrementally).
 
 ### Q3 — Integration assurance
 - **Objective:** prove the end-to-end scenarios headless, and keep replay, save/load and conservation exact across merges.
 - **Scope:** `IntegrationFixtures` (short-horizon fixtures, so divine tests do not wait for viability: blocker 10); scenario files `DotNet/God.Runner/Scenarios/civdiv_s01…s18.scenario.json`, each added when its packages merge; `Replay_DivineScenario_Exact` (grown merge by merge); `Replay_SwitchGod`; P6 `Switch_Matrix` after every merge; conservation C1–C8 checks at day boundaries; `Unity_Agrees_With_Runner` on the divine replay (PlayMode, at checkpoint runs); the ACCEPTANCE_TESTS D5 status table. It runs each package's claims independently and reports any discrepancy to the lead. It does not fix the package's code.
-- **Owned:** `DotNet/God.Runner.Tests/Integration/*` (new), `Assets/God/Tests/EditMode/Integration/*` (new), `DotNet/God.Runner/Scenarios/civdiv_*`, `Assets/God/Tests/PlayMode/UnityAgrees*`, the D5 section of `docs/stage4/ACCEPTANCE_TESTS.md`.
+- **Branch (R17):** `unity/q3int` in `wt-lrs-q3int` (`unity/q3` is taken; the stale non-git `wt-lrs-q3` folder is not used).
+- **Industrial share (owner D6):** the Iron Coast scenario files `DotNet/God.Runner/Scenarios/ind_*.scenario.json` (`ind_slice` first), `IndustrialFixtures`, `IndustrialSlice_EndToEnd` (ACCEPTANCE D6.11) and D6.10 replay, P6 extended with the three new switches, and the D6 status table of ACCEPTANCE_TESTS.
+- **Owned:** `DotNet/God.Runner.Tests/Integration/*` (new), `Assets/God/Tests/EditMode/Integration/*` (new), `DotNet/God.Runner/Scenarios/civdiv_*`, `DotNet/God.Runner/Scenarios/ind_*`, `Assets/God/Tests/PlayMode/UnityAgrees*`, the D5 section of `docs/stage4/ACCEPTANCE_TESTS.md`.
 - **Contracts:** R all.
 - **Checkpoint:** B–F.
 
@@ -265,6 +308,81 @@ Every package works only on its own branch in its own worktree. It changes only 
 - **Scope:** the final window (graph doc §8): no new packages; fixes only; full `dotnet test`; Unity EditMode and PlayMode; the Windows build; both smokes and a god-mode smoke; checkpoint tags and the copies of their builds under `Builds/` (not committed); DEV_LOG, STAGE_4_HANDOVER §1–2 and the ACCEPTANCE status written from what actually ran.
 - **Owned:** merge commits, the save version bumps (contracts §17), DEV_LOG and the handover.
 - **Checkpoint:** F.
+
+### Industrial and knowledge packages (owner D6)
+
+Common rules for every I and K package: branch from `unity/poc` **after I1a has merged** (I1a itself after F1b and C1); never edit a frozen file (contracts §22.12); add rows to another package's tables only by the flagged additive edits of contracts §22.9; never call a money issuance API, never pass `actor <= 0` to `Goods`, never branch on an ownership model, never treat a right as a truth gate (R33, contracts §22.2). Gate at merge as for every package, plus pins **P10–P13**, the static tests of contracts §22.10, and the stage 3 hash. Owning design documents are in `docs/stage4/`.
+
+### I1a — Industrial and knowledge foundation (neutral)
+- **Objective:** land every shared industrial and knowledge surface in one behaviour-neutral commit so that I1–I6, K1 and K2 then touch only their own files. Separate worktrees do not make shared-contract changes safe; this is why I1a exists (contracts §22.0).
+- **Scope:** contracts §22.1, items I1a.1–I1a.16: wares 40–71 and `PersonalCount` 72 with hash-only-when-non-zero; ledger reasons widened to 16 with the same rule; `MoveReason.BinTransfer = 13`, `OwnershipBasis.SupplyAgreement = 25`, `Paid = 26`, `Goods.MoveBin`, `Wares.IsUnique`; `GodState.Industry` and the `industry` hash part; `CivState.K1`, `CivState.K2`; `SimTuning.Industry`, `Civ.Knowledge`, `Civ.Money` (all switches 0); `IndustryModule` entry points; `IndustryHooks`/`IndustryMindHooks` after Divinity; the movement sites `StepTicks`, `PathCosts`, `Moved`; id ranges, `MaxCand` 40, `NpcMind.Industry`, `NpcMind.Know`; `DesignId` on C1 assets; systems 262 and 264 as empty shells; domains 70–79, catalogue and mapping stubs; save null-acceptance (lead); pins P10–P13.
+- **Excluded:** every behaviour; every migration; every row in another package's owned table (contracts §22.9).
+- **Owned:** contracts §22.1 column 3; frozen or handed to the named owner after the merge.
+- **Gate:** the F1 gate plus P10–P13 and the compile check (`Ware` and `GodState` are used by `God.Game`).
+- **Checkpoint:** G (prerequisite).
+- **Risk:** it waits for the Tier 1 set. Cut it from `unity/poc` as soon as F1b and C1 have merged; hold the branch until the Tier 1 set has merged; rebase and re-take pins before merging.
+
+### I1 — Industrial content and recipes (with the waste part)
+- **Objective:** factories and mines with production orders, finite capacity, material inputs, workers and electricity requirements, and completed physical products (D6.5), on one recipe table and one runner (IND-3).
+- **Scope (minimal, for G):** iron ore and coal deposits from the scenario `deposits` block; facilities as C1 assets with input, output, fuel and waste bins; `RecipeBook` rows 1–20 generated from the stage 3 workshop defs (pinned field by field) plus recipes 22, 25, 29, 30, 32; the runner at 264 (consume at start, produce at completion, stall reasons, `Licensed` † flag per R33); production orders placed by an NPC owner and by an organisation's office-holder at the facility; slag and ash outputs into waste bins. **Then:** geology generation, manual extraction, the oil and copper chains, waste sites, recycling (recipe 41), the pollution field (waste part); survey and deposit knowledge spread are Tier 3.
+- **Excluded:** toll processing (I3, Tier 3), nuclear fuel (Tier 3), any money.
+- **Owned:** see the summary row; `docs/stage4/INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md` and `WASTE_AND_CIRCULAR_DESIGN.md` status cells.
+- **Contracts:** R `Goods`, C1 assets and `Work`, C6 decisions, K1 knowledge query (if present). M `IndustryState.Geology`, `.Production`, `.Waste`.
+- **Events / migration:** **1000–1019**, **1080–1094**; **`0031`**, **`0036`**.
+- **Tests:** IND §11 (incl. `Recipes_Stage3RowsEqualBuildingDefs`, `Recipe_ConsumesAtStartProducesAtEnd`, `Extraction_DepletesFinitely`, `Facility_NeedsWorkersPowerInputs`, `Factory_ProducesAssetWithEmbodiedMatter`, the static tests), `VS4_OreProcessed`, `VS7_FactoryBuildsVehicle`, `Waste_LedgerExact`, `Industry_SaveLoadParity`.
+- **Checkpoint:** G.
+
+### I2 — Vehicles and harvesting
+- **Objective:** a persistent NPC operates a harvester that collects physical ore and delivers it (D6.4, slice steps 1–3, 5, 8, 9a).
+- **Scope (minimal):** vehicle defs 1 (harvester) and 2 (hauler); `Vehicles.Register` from a factory cycle or the scenario (`Placed`); cargo, tank and ammunition bins moved with `Goods.MoveBin`; Board, Drive, Alight, Load, Unload, Refuel; fuel burn per node and `OutOfFuel`; the harvest routine as a candidate with a routine term in the operator's own score; maintenance and wear. **Then:** possession and compulsion of operators (D4a, D2 rows 22/23), breakdown draws, tankers.
+- **Excluded:** congestion, haulage for others and transport companies (Tier 3), wrecks and dismantling (with the waste part, Tier 3).
+- **Events / migration:** **1020–1039**; **`0032`**.
+- **Tests:** VEH §11 (`Vehicle_NoNpcRecord`, `Vehicle_MovesOnlyWithDriver`, `Vehicle_BinsFollow`, `Vehicle_FuelBurnExact`, `Vehicle_LoadUnloadReachChecked`, `Vehicle_SaveLoadMidTrip`, `Vehicle_ReplayExact`), `VS1`, `VS2`, `VS3`, `VS5_CoalDelivered`, `VS8`, `VS9_FuelCutStopsHarvester`.
+- **Checkpoint:** G.
+
+### I3 — Refineries and industrial trade (no external buyer)
+- **Objective:** processed goods change hands only through existing mechanisms; a recorded sale is an ownership change plus an actual payment (slice step 4, sale branch; ACCEPTANCE D6.2).
+- **Scope:** `SupplyAgreement` records agreed by both parties' office-holders; deliveries with ownership at the unload (basis 25) and a `Supply` obligation (C2); `IndustrialSaleClosed` linking `OwnershipChanged` and the payment (K2a, or goods); breach recorded, never enforced. **No** external buyer, price table or market sink (D6.2, D6.6).
+- **Events / migration:** **1040–1049**; **`0033`** (payment ids as plain columns, contracts §22.7).
+- **Tests:** `VS4_OreSold`, `ACC_DeliveryUnderAgreement`, ACCEPTANCE D6.2 (with K2a).
+- **Checkpoint:** G (optional branch of step 4).
+
+### I4 — Electricity generation and distribution
+- **Objective:** a power station receives and consumes physical fuel, and electricity reaches a connected factory through built links; disruption matters (slice steps 5, 6, 9b, 9c; ACCEPTANCE D6.3, D6.4).
+- **Scope (minimal):** the coal station design as a staffed facility (on/off by a staff act), ports and links as C1 assets, components by union-find, the interval balance at 262 (demand, dispatch, allocation by priority, shortage, outage), `PowerPermille` to the runner, fuel burn and ash, the energy ledger. **Then:** one meter and one billing act as a C2 `Bill` obligation (needs C2 and K2a), port priorities by policy.
+- **Excluded:** oil, hybrid, waste, nuclear, wind and solar designs, rationing schedules, link capacity, storage (Tier 3).
+- **Events / migration:** **1050–1069**; **`0034`**.
+- **Tests:** ELE §11 (`Grid_LedgerIdentity`, `Station_BurnsExactFuel`, `Station_NeedsStaff`, `Grid_NoMoneyApi`, `Grid_SaveLoadMidInterval`, `Grid_ReplayExact`), `VS5_StationBurnsDeliveredCoal`, `VS6_PowerReachesFactory`, `VS9_FuelOrLinkCut`, `ACC_ElectricityNoMoney`, `ACC_FuelShortageCutsGeneration`.
+- **Checkpoint:** G.
+
+### I5 — Mechanised military production
+- **Objective:** military organisations obtain equipment through the same factories, labour, fuel and power as civilians (D6 "Military production"; no separate military economy).
+- **Scope:** recipes 33 (ammunition) and 34 (firearm); a procurement agreement (an I3 agreement); a military organisation's commander placing orders; delivery with ownership (basis 25) and an obligation; one tank built and crewed by two employees and driven (no combat). `VS11_TankFromSameFactory`.
+- **Excluded:** vehicle combat, engineers, artillery, aircraft, naval, the strategic device (Tier 3).
+- **Events / migration:** **1070–1079**; **`0035`**.
+- **Checkpoint:** after G.
+
+### I6 — Industrial presentation and analytics
+- **Objective:** the player sees industry working inside the seamless island (D6.19), and the warehouse reports it.
+- **Scope (minimal, for G):** deposits drawn as outcrops and seams (grid hidden, U3a conventions); facilities with activity only while `Working` events say so; harvesters interpolated from `VehicleMoved` with visibly heaped cargo; facility, vehicle and power-station cards (owner, workers, queue with progress, stall reason, cargo, tank, output, fuel days left) registered through U1's hook (R9); the electricity overlay (off by default) and shortage glyphs (`NoPower`, fuel can). **Then:** logistics overlay, production queue panel, organisation inspection, `0037` views and the IND/VEH/ELE/WST/ENV/IMIL KPI rows.
+- **Contracts:** R events and inspection cards only (the Game layer never mutates sim state); never reads `GodState` directly (`HudViewOnlyTests`).
+- **Events / migration:** **1095–1099** (only if KPI day rows are used); **`0037`**.
+- **Tests:** PlayMode `Industry*` (cards fill from the view, overlay toggles, no hex text in normal play), compile check, `Unity_Agrees_With_Runner` on `ind_slice` (H-GS-12, with Q3).
+- **Checkpoint:** G.
+
+### K1 — Knowledge, designs, artefacts and licences (minimal)
+- **Objective:** the explicit knowledge ontology of D6.9–D6.11: knowledge copies without loss, documents are goods, rights are legal claims, practical ability is distinct; knowledge (never a right) gates production (R33).
+- **Scope (minimal):** the `DesignDef` envelope and loader with the slice's designs (harvester, smelter, coal station, factory, hauler; others common); founders' seeded knowledge; `KnowledgeMind` with levels and fidelity; the build and operate minima used by I1, I2, I4; teaching through C7's `Teach` with a design topic; documents: write, copy, read, build from a document; a seeded patent law, the patent-office template, grant, assignment and one licence with a `LicenceFee` (K2a); `UnauthorisedDesignUse` classification, `InfringementPerceived` and the complaint candidate (stub record until C9). **Tier 3:** challenges, revocation, court process, compulsory licensing, research projects and discovery by practice, invented variants, `RevealTechnology`, auctions (`0043`).
+- **Events / migration:** **1100–1129**, **1130–1159**; **1160–1169** (Tier 3); **`0039`**, **`0040`**; `0043` (Tier 3).
+- **Tests:** KNOW §16 (KN-U1–U7, KN-INV-1–3, RT-INV, AR-INV), `Rights_NeverGate`, ACCEPTANCE D6.5–D6.8, P12.
+- **Checkpoint:** G (VS7, VS8 minima); D6.5–D6.8 demonstrations.
+
+### K2 — Money and accounting core (K2a, K2b)
+- **Objective:** one monetary and accounting architecture (D6.2): no credits, no external buyer, money only by explicit mechanisms, revenue only from actual payments.
+- **Scope K2a (Tier 2):** the seeded commodity money (`Coin` in Iron Coast; `SliceCommodity` otherwise); the `Payment` record and the one payment act (C3's `Pay` 101 generalised); spot and obligation settlement; organisation double-entry books in native units with records written by treasurers; units of account and accepted units as policies; billing acts (`IssueBill`); the non-loan obligation events 1190–1194 emitted by C2's API; static `NoExternalBuyer`, `MoneyWriters_OnlyK2`; P13. **K2b (Tier 3):** issuers, accounts, issuance E1–E4 and destruction D1–D5, notes.
+- **Events / migration:** K2a **1170–1179**, **1190–1199**, **`0038`**; K2b **1180–1189**, **`0042`**.
+- **Tests:** MONEY §14 (MON-U1–U7, MON-INV, BK-INV), ACCEPTANCE D6.1–D6.3 money halves, W-D6-3, W-D6-4.
+- **Checkpoint:** G (step 4 sale branch, payments); D6.2, D6.3.
 
 ---
 
@@ -288,3 +406,31 @@ None of these is dropped from the design. Each keeps its contract slots (ids, co
 | U5/Q1 deeper institutional analytics, player SQL console, `bench_npc_5000`, nightly long runs with divinity and organisations | 3 | KPI_CATALOGUE §15.8, HEADLESS §12.8 | — |
 | Stage 3 retirement: walkers (M6 in full), `AiBrain` (M14), stage 3 mode (owner decides) | later | DEV_LOG "Temporary mechanisms" | — |
 | I-BS follow-ups not needed for Checkpoint A: controlled I-BS.6/8/10 tests, the M5.9 kin cue; M3 LS3 and LS4 redesigns; M5.6 avoidance | 2 (filler) | ACCEPTANCE_TESTS, DEV_LOG | — (good filler for a free Sonnet slot) |
+| I5 combat and beyond: vehicle combat through `Duel`, engineers, reconnaissance, artillery, aircraft, naval; the strategic device, inspection, disarmament, deterrence | 3 | INDUSTRIAL_MILITARY §4.7, §10 | 1070–1079, `0035`, `FacilityKind.StrategicSite`, `SituationKind` 132 |
+| K1 beyond the minimum: challenges, revocation, court process (with C9), compulsory licensing, research projects, discovery by practice, invented variants, `RevealTechnology`; auctions | 3 | KNOWLEDGE_AND_TECHNOLOGY §8–11 | 1110–1112, 1139–1145, 1160–1169, `0043`, `ConsumeReason.Research` 13, episode kinds 20–21 |
+| K2b institutional money, accounts, issuance, notes, interest; banking with C8 | 3 | MONEY_AND_ACCOUNTING §3.3, §4 | 1180–1189, 1194, `0042`, `MoneyId`, `AccountId` |
+| Industry extensions: survey and deposit knowledge spread, uranium and nuclear fuel, oil/hybrid/waste/nuclear/renewable stations, rationing and tariffs, storage, toll processing, marketplaces, haulage for others, wrecks and dismantling, consumption refuse, contamination, waste authorities and regulators | 3 | IND, VEH, ELE, WST §9–10 | their codes in 1000–1099; `Ware` 44, 52, 62 |
+
+---
+
+## 4. Checkpoint G — Industrial slice (owner D6.18)
+
+**What it is.** The ten-step industrial vertical slice of D6.18, run as one world: the `ind_slice` scenario of "Iron Coast" (GAMEPLAY_SCENARIOS §13: one faction, about 30 people, a mining company, a cooperative smelter, a public utility with one coal station, a private factory, a small transport company, no military; 5–10 sim days; checkpoints every sim day; `Industry`, `Civ`, `Orgs`, `Divinity`, `Civ.Knowledge`, `Civ.Money` on; `Orgs.C10.SeedGovernments = 1`). It is the same simulation as Living Island with different initial conditions (H-GS-13).
+
+| Step (D6.18) | Test (ACCEPTANCE D6.11) | Packages |
+|---|---|---|
+| 1 A persistent NPC operates a harvester | `VS1_NpcOperatesHarvester` | I2 (C3 for the contract; K1 for the skill minimum if merged) |
+| 2 The harvester collects physical ore | `VS2_HarvesterCollectsOre` | I2, I1 |
+| 3 It delivers the ore to a refinery | `VS3_DeliversToSmelter` | I2 |
+| 4 The ore is processed or sold through a recorded transaction | `VS4_OreProcessed` (I1) **or** `VS4_OreSold` (I3 + K2a + C2) | I1 (processed branch suffices for G) |
+| 5 A power station receives and consumes fuel | `VS5_CoalDelivered`, `VS5_StationBurnsDeliveredCoal` | I2, I4 |
+| 6 Electricity reaches a connected factory | `VS6_PowerReachesFactory` | I4 |
+| 7 The factory produces a vehicle from actual materials, labour and power | `VS7_FactoryBuildsVehicle` | I1, I4 (K1 minima if merged) |
+| 8 An existing NPC operates the completed vehicle | `VS8_NewVehicleOperated` | I2 |
+| 9 Disrupting fuel or connectivity affects production | `VS9_FuelCutStopsHarvester`, `VS9_FuelOrLinkCut` | I1, I2, I4 |
+| 10 Everything reconciles and replays | `VS10_IndustryReconciles`, `VS10_EnergyReconciles`, W-D6-1, D6.10 replay | Q3 with all merged I/K packages |
+
+- **Packages required:** I1a, I1 (minimal), I2 (minimal), I4 (minimal), Q3 (`ind_slice`, `IndustrialSlice_EndToEnd`), I6 (minimal). **Used if merged:** K1 minimal, K2a, I3, C2, C3.
+- **Demo:** the god watches a harvester crawl from the hill mine to the smelter with visible ore, coal delivered to the station, a lit factory bay assembling a harvester, a named worker boarding the new vehicle; the player opens the facility, vehicle and station cards and the electricity overlay, then cuts a link (by compelling a lineman, or by the station's coal running out) and sees the outage glyphs and the factory's queue stall, then recover.
+- **Gate:** the checkpoint gate of the graph doc §9 plus D6.11's own gate: every step on seeds 1–3 in one run each; a step whose package has not merged is reported **not run**, never passed.
+- **When:** after the D5 checkpoints; the graph doc §6 projects it **after the 18-hour window**, in the continuation run, unless the D5 packages finish early. G never displaces A–F.
