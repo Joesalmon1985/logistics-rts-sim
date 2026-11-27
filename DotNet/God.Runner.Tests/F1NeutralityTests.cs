@@ -106,5 +106,29 @@ namespace God.Runner.Tests
         [Test] public void Divinity_Off_Reproduces_Base() => AssertBase("P1");
         [Test] public void Orgs_Off_Reproduces_Base() => AssertBase("P4");
         [Test] public void Civ_Off_Reproduces_Base() => AssertBase("P8");
+
+        /// <summary>F1-T10: with MaxCand 36 (24 at the base) the candidate lists, decisions and hashes of ibs_families seeds 1-3 equal the base (all switches 0).</summary>
+        [Test]
+        public void MaxCand36_Neutral()
+        {
+            Assert.AreEqual(36, God.Sim.Cognition.ThinkScratch.MaxCand);
+            var cur = Current();
+            for (int seed = 1; seed <= 3; seed++) Assert.AreEqual(Base["ibs_families/" + seed], cur["ibs_families/" + seed], "ibs_families seed " + seed);
+        }
+
+        /// <summary>The spec's smoke (14, not a pin): all three switches on, band_6x20 seed 2: the three parts appear; every other part except core equals the off run.</summary>
+        [Test]
+        public void AllSwitchesOn_StubStateSmoke()
+        {
+            var on = TestUtil.Spec("band_6x20", 2, 2400, "tuning.Divinity.Enabled=1", "tuning.Orgs.Enabled=1", "tuning.Civ.Enabled=1");
+            var off = TestUtil.Spec("band_6x20", 2, 2400);
+            on.CheckpointEvery = off.CheckpointEvery = 600;
+            var r = TestUtil.RunAll(new[] { on, off });
+            Assert.AreEqual(0, r[0].ExitCode, r[0].Error); Assert.AreEqual(0, r[1].ExitCode, r[1].Error);
+            Assert.AreEqual(r[1].FinalParts.Length + 3, r[0].FinalParts.Length, "civ, organisations, divine appended");
+            for (int c = 0; c < r[1].Checkpoints.Count; c++)
+                for (int i = 0; i < r[1].Checkpoints[c].Parts.Length; i++)
+                    if (God.Sim.GodSim.AllHashPartNames[i] != "core") Assert.AreEqual(r[1].Checkpoints[c].Parts[i], r[0].Checkpoints[c].Parts[i], "checkpoint " + c + " part " + God.Sim.GodSim.AllHashPartNames[i]);
+        }
     }
 }

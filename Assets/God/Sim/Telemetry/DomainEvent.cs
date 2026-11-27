@@ -20,6 +20,9 @@ namespace God.Sim
         Crime = 30, Justice = 31, Health = 32, Education = 33, Finance = 34, Politics = 35,
         Records = 40, Media = 41, Policy = 42, Institutions = 43, Kpi = 44,
         Lab = 50,
+        // ---- F1.12 (contracts 15.1) ----
+        Lending = 36, Organisation = 45, Service = 46,
+        Divine = 60, Possession = 61, Avatar = 62, Miracle = 63, Ledger = 64, Commandment = 65, Religion = 66,
     }
 
     /// <summary>
@@ -142,7 +145,8 @@ namespace God.Sim
         /// Every event: the core rows above (declared first: static fields initialise in order), then M4's (<c>HouseholdEvents.Catalog</c>), then M5's (<c>SocialEvents.Catalog</c>)
         /// (F0.11). Each milestone adds rows only in its own catalogue file.
         /// </summary>
-        public static readonly ReadOnlyArray<EventInfo> All = Concat(Core, Population.Households.HouseholdEvents.Catalog, Social.SocialEvents.Catalog);
+        public static readonly ReadOnlyArray<EventInfo> All = Concat(Core, Population.Households.HouseholdEvents.Catalog, Social.SocialEvents.Catalog,
+            Civ.CivEvents.Catalog, Orgs.OrgEvents.Catalog, Divinity.DivinityEvents.Catalog); // F1.12: then Civ, Orgs, Divinity (empty in F1)
 
         private static ReadOnlyArray<EventInfo> Concat(params ReadOnlyArray<EventInfo>[] parts)
         {
@@ -182,7 +186,10 @@ namespace God.Sim
                 case TelemetryDomain.Social: case TelemetryDomain.Contest: case TelemetryDomain.Comms: case TelemetryDomain.Learning: case TelemetryDomain.Culture: return (300, 399);
                 case TelemetryDomain.Military: return (400, 499);
                 case TelemetryDomain.Institutions: case TelemetryDomain.Justice: case TelemetryDomain.Health: case TelemetryDomain.Education:
-                case TelemetryDomain.Finance: case TelemetryDomain.Politics: case TelemetryDomain.Crime: return (500, 599);
+                case TelemetryDomain.Finance: case TelemetryDomain.Politics: case TelemetryDomain.Crime:
+                case TelemetryDomain.Lending: case TelemetryDomain.Organisation: case TelemetryDomain.Service: return (500, 599); // F1.12
+                case TelemetryDomain.Divine: case TelemetryDomain.Possession: case TelemetryDomain.Avatar: case TelemetryDomain.Miracle:
+                case TelemetryDomain.Ledger: case TelemetryDomain.Commandment: case TelemetryDomain.Religion: return (800, 899);    // F1.12: the new block
                 case TelemetryDomain.Records: case TelemetryDomain.Media: return (600, 699);
                 case TelemetryDomain.Policy: case TelemetryDomain.Kpi: return (700, 799);
                 case TelemetryDomain.Lab: return (900, 999);
