@@ -63,6 +63,15 @@ namespace God.Sim.Divinity
         public KnownCommandment[] Known;
         public int KnownCount;
 
+        /// <summary>
+        /// R63 (Checkpoint B, lead amendment): the tick until which the mind remembers having been compelled
+        /// (<c>SelfFeature.Compelled</c>, D2: spell end + <c>Instruction.MemoryDays</c>) and until which it holds a divine
+        /// sign it saw (<c>SituationKind.DivineSign</c>: D2 command witnesses, D3 miracle signs, <c>Miracles.SignTicks</c>).
+        /// 0: never. Hashed only once either is set, so minds without these memories hash as before.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public long CompelledUntil;
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public long SignUntil;
+
         public void AddTo(ref StateHasher h)
         {
             h.Add(InboxCount);
@@ -71,6 +80,7 @@ namespace God.Sim.Divinity
             for (int i = 0; i < GodCount; i++) Gods[i].AddTo(ref h);
             h.Add(KnownCount);
             HashKnownD6(ref h);
+            if (CompelledUntil != 0 || SignUntil != 0) { h.Add(0x523633); h.Add(CompelledUntil); h.Add(SignUntil); } // R63
         }
         partial void HashKnownD6(ref StateHasher h);
     }

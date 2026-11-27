@@ -60,6 +60,8 @@ namespace God.Sim.Learning
         public bool LearnedChangedWinner, ExploreWon, Continued;
         public byte SecondVerb;
         public int SecondTotal;
+        /// <summary>v2 (R63, Checkpoint B): who drove the decision (contracts 15: 0 own, 1 compelled, 2 possessed, 3 avatar); warehouse <c>control_code</c>.</summary>
+        public byte Control;
     }
 
     /// <summary>The learning sink of one NPC's think: turns the core's reports into events on the sim's buffer.</summary>

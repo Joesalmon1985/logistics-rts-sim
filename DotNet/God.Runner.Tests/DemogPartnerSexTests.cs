@@ -21,11 +21,15 @@ namespace God.Runner.Tests
     {
         private const string Mode = "tuning.Households.Prefs.PartnerSexMode=";
 
-        /// <summary>The F2-T1 base hashes (tick 12000), taken with the 11c3e43 runner.</summary>
+        /// <summary>
+        /// The F2-T1 base hashes (tick 12000). Re-pinned at Checkpoint B (R60, ConceptionMode default 1): were
+        /// 4e097b3731e62136, 561a1f8ef03ccfc3, 55a810bf69f22ec1, 08e4eeae3e8ccbc2 (11c3e43 runner); now the re-pinned values of
+        /// <c>DemogConceptionTests.Repinned</c>.
+        /// </summary>
         private static readonly Dictionary<(string, ulong), ulong> Base = new Dictionary<(string, ulong), ulong>
         {
-            [("m4_families", 1)] = 0x4e097b3731e62136UL, [("m4_families", 2)] = 0x561a1f8ef03ccfc3UL,
-            [("demog_favourable", 1)] = 0x55a810bf69f22ec1UL, [("demog_favourable", 2)] = 0x08e4eeae3e8ccbc2UL,
+            [("m4_families", 1)] = 0x8345d448306f8459UL, [("m4_families", 2)] = 0x94ac3afc879cf416UL,
+            [("demog_favourable", 1)] = 0xfd03d50ba778738aUL, [("demog_favourable", 2)] = 0xc2f7eb1255fcdba5UL,
         };
 
         [Test]

@@ -167,11 +167,12 @@ namespace God.Sim.Tests
         [TestCase(2)]
         [TestCase(3)]
         [TestCase(4)]
+        [TestCase(5)]
         public void AStage2OrStage3OrM3Save_IsRefused_WithAClearMessage(int oldVersion)
         {
-            // F1: save version 5 (contracts 17); F0 saves (4), M0-M3 saves (3), stage 3 saves (2) and stage 2 saves (1) are refused.
-            Assert.AreEqual(5, SaveFile.CurrentVersion);
-            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":5", "\"Version\":" + oldVersion);
+            // Checkpoint B: save version 6 (R60); F1 saves (5), F0 saves (4), M0-M3 saves (3), stage 3 saves (2) and stage 2 saves (1) are refused.
+            Assert.AreEqual(6, SaveFile.CurrentVersion); // Checkpoint B (R60): version 6
+            var json = SaveFile.From(GodSim.Create(4UL)).ToJson().Replace("\"Version\":6", "\"Version\":" + oldVersion);
             var ex = Assert.Throws<SaveException>(() => SaveFile.FromJson(json));
             StringAssert.Contains("older version", ex.Message);
             StringAssert.Contains("Start a new game", ex.Message);

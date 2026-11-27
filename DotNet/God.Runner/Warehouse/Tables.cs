@@ -94,7 +94,7 @@ namespace God.Runner.Warehouse
         /// <summary>The decision trace (M3b DecisionMade, migration 0003): one row per chosen intent, Full only.</summary>
         public static readonly TableDef FactDecision = new TableDef("fact_decision", 64, "run_key", "tick", "seq", "date_key", "person_key", "faction_key", "verb", "target_kind_code",
             "target_id", "target_location_key", "target_class", "total", "instinct", "need", "learned", "social", "culture", "personality", "cost", "explore",
-            "candidates", "learned_changed_winner", "explore_won", "continued", "second_verb", "second_total", "sample_weight");
+            "candidates", "learned_changed_winner", "explore_won", "continued", "second_verb", "second_total", "sample_weight", "control_code");
         /// <summary>F0.14 (migration 0004): parties, ownership changes, the social day aggregate.</summary>
         public static readonly TableDef DimParty = new TableDef("dim_party", 18, "party_key", "run_key", "party_kind_code", "party_id", "person_key", "household_id", "faction_key");
         public static readonly TableDef FactOwnership = new TableDef("fact_ownership", 65, "run_key", "tick", "seq", "date_key", "asset_kind_code", "asset_id", "ware_key", "quantity",

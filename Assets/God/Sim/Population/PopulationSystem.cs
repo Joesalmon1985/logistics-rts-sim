@@ -783,7 +783,7 @@ namespace God.Sim.Population
                 Total = w.Total, Instinct = w.Instinct, Need = w.Need, Learned = w.Learned, Social = w.Social, Culture = w.Culture,
                 Personality = w.Personality, Cost = w.Cost, Explore = w.Explore, Candidates = w.Candidates,
                 LearnedChangedWinner = w.LearnedChangedWinner, ExploreWon = w.ExploreWon, Continued = continued,
-                SecondVerb = w.SecondVerb, SecondTotal = w.SecondTotal,
+                SecondVerb = w.SecondVerb, SecondTotal = w.SecondTotal, Control = (byte)w.Control,
             });
 
         /// <summary>The reward the previous decision earned (consumed by the next TD step), remembered as an experience when not zero.</summary>
