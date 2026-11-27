@@ -241,6 +241,24 @@ namespace God.Sim.Tests
             Assert.AreEqual(a0.Id, w.Of<Produced>().Last().OwnerId, "even then the output is the owner's");
         }
 
+        [Test]
+        public void CivCard_ListsPossessionsAssetsRightsAndBeliefs_LayerTagged()
+        {
+            var w = World();
+            var a0 = Person(w, w.Glade);
+            var c = Person(w, At(w, 1, 2));
+            var shop = BuildWorkshop(w, a0);
+            Assets.GrantUse(w.S, w.Ev, shop.Id, Owner.Npc(c.Id), UseKind.Work, Owner.Npc(a0.Id), -1);
+            Give(w, a0, Ware.Berries, 2);
+            var ca = new Information.NpcInspection(); Information.CivCards.Fill(w.S, a0, ca);
+            Assert.That(ca.Economy.Lines, Has.Some.EqualTo("[Truth] carries 2 berries"));
+            Assert.That(ca.Economy.Lines, Has.Some.StartsWith("[Truth] own workshop #" + shop.Id));
+            Assert.That(ca.Economy.Lines, Has.Some.StartsWith("[Belief] believes workshop #" + shop.Id + " belongs to Npc " + a0.Id));
+            var cc = new Information.NpcInspection(); Information.CivCards.Fill(w.S, c, cc);
+            Assert.That(cc.Economy.Lines, Has.Some.StartsWith("[Truth] work right on workshop #" + shop.Id));
+            Assert.IsTrue(cc.Economy.Rows.Any(r => r.Kind == Information.CivCardRow.BelievedOwner && r.Layer == Information.KnowledgeLayer.Belief));
+        }
+
         // ---------------------------------------------------------------- C1-T7
 
         [Test]

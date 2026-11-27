@@ -69,7 +69,7 @@ namespace God.Runner.Tests
             CollectionAssert.AreEqual(TestUtil.Seq(b), TestUtil.Seq(a), "recording at Full with the divine core schema changes no hash");
             using (var d = WarehouseDb.OpenRead(a.WarehousePath))
             {
-                Assert.AreEqual(7, d.SchemaVersion());
+                Assert.GreaterOrEqual(d.SchemaVersion(), 7); // C1 (flagged edit): 0015 lands later migrations
                 foreach (var t in NewTables) Assert.AreEqual(0L, Convert.ToInt64(d.Scalar("SELECT COUNT(*) FROM " + t)), t);
                 foreach (var t in ActionTables)
                     Assert.AreEqual(0L, Convert.ToInt64(d.Scalar("SELECT COUNT(*) FROM " + t + " WHERE control_code IS NOT NULL OR intervention_id IS NOT NULL")), t);
