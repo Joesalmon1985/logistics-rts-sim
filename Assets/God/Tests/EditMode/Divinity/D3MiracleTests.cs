@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using God.Sim.Divinity;
+using God.Sim.Cognition;
 using God.Sim.Learning;
 using God.Sim.Population;
 using God.Sim.Population.Households;
@@ -275,6 +276,21 @@ namespace God.Sim.Tests
             sim.State.Divinity.Gods.Of(1).Seat = GodSeat.Ai; sim.State.Divinity.Gods.Of(2).Seat = GodSeat.Human; // test-only seat switch
             var other = new CastMiracle { God = 2, Kind = MiracleKind.Consecrate, Target = new DivineTarget(DivineTargetKind.Location, 0, LearningFixtures.Step(sim, node, 0, 3)) };
             Assert.AreEqual(Miracles.TooClose, sim.Check(other).Reason, "a second god's place within SacredSpacing is refused");
+        }
+
+
+        [Test]
+        public void RevealKnowledge_PutsTrueNodeInOwnMind()
+        {
+            var sim = Game(42);
+            int node = LearningFixtures.Glade(sim);
+            var n = Person(sim, node);
+            var src = LearningFixtures.Bush(sim, SourceKind.Berries, LearningFixtures.Step(sim, node, 0, 25), 60, 80, 400);
+            Assert.AreEqual(-1, n.Mind.Beliefs.IndexOf(BeliefKind.Food, src.Node));
+            Assert.IsTrue(Cast(sim, MiracleKind.RevealKnowledge, Npc(n.Id), src.Id).Ok);
+            sim.Step();
+            Assert.GreaterOrEqual(n.Mind.Beliefs.IndexOf(BeliefKind.Food, src.Node), 0);
+            Assert.AreEqual(Miracles.NoEffect, Cast(sim, MiracleKind.RevealKnowledge, Npc(n.Id), src.Id).Reason, "already known");
         }
 
         // ---------------------------------------------------------------- T13: the static rule
