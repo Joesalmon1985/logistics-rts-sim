@@ -44,7 +44,7 @@ namespace God.Sim.Cognition
     }
 
     /// <summary>On what basis a mind believes it may use goods: its own, its household's, nobody's, or none of these.</summary>
-    public enum PermissionBasis : byte { None = 0, Own = 1, Household = 2, Ownerless = 3 }
+    public enum PermissionBasis : byte { None = 0, Own = 1, Household = 2, Ownerless = 3, UseRight = 4 } // C1: 4 a use right on an asset
 
     /// <summary>The answer of <see cref="Permits.Believed"/>: allowed or not, and the basis.</summary>
     public readonly struct PermissionResult
@@ -72,5 +72,33 @@ namespace God.Sim.Cognition
             if (owner.Kind == OwnerKind.Household && sc.Self.Household != 0 && owner.Id == sc.Self.Household) return new PermissionResult(true, PermissionBasis.Household);
             return new PermissionResult(false, PermissionBasis.None);
         }
+
+        /// <summary>
+        /// C1 (spec 5.7): may this mind use an asset in a way, as it believes? From its ownership beliefs only (<c>NpcMind.Civ</c>,
+        /// formed by perception): it believes it or its household owns it (Own, Household), or it believes it holds that use
+        /// right (UseRight); no belief or another believed owner: not allowed. A query, never enforced.
+        /// </summary>
+        public static PermissionResult BelievedAsset(ThinkScratch sc, int asset, Civ.UseKind kind)
+        {
+            var cm = sc.Mind?.Civ;
+            int i = cm == null ? -1 : cm.IndexOfAsset(asset);
+            if (i < 0) return new PermissionResult(false, PermissionBasis.None);
+            var b = cm.Own[i];
+            var own = Believed(sc, b.BelievedOwner);
+            if (own.Allowed && own.Basis != PermissionBasis.Ownerless) return own;
+            if ((b.MyRights & (1 << (int)kind)) != 0) return new PermissionResult(true, PermissionBasis.UseRight);
+            return new PermissionResult(false, PermissionBasis.None);
+        }
+
+        /// <summary>C1: the believed owner of an asset (none when it has no belief), from the mind's own beliefs.</summary>
+        public static Owner BelievedOwnerOf(ThinkScratch sc, int asset)
+        {
+            var cm = sc.Mind?.Civ;
+            int i = cm == null ? -1 : cm.IndexOfAsset(asset);
+            return i < 0 ? Owner.None : cm.Own[i].BelievedOwner;
+        }
+
+        // C1 (spec 5.8): the TRUE permission is deliberately NOT here: Permits is reachable from policies and mind hooks, and
+        // the reflection gate (G4.1) forbids GodState on that side. It is Civ.Ownership.Truth (sim side only).
     }
 }
