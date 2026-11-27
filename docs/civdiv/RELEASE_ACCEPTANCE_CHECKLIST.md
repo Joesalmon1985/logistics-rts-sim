@@ -101,14 +101,14 @@ Each checkpoint is independently demonstrable (brief §44). "Packages" are those
 
 | Gate | What must pass | Command / evidence | Status |
 |---|---|---|---|
-| B1 | All B packages merged with S1–S7 green | merge log | not started |
-| B2 | Pins P1, P2, P3, P4, P8 green; stage 3 hash | pins | not started |
-| B3 | **Deliberate re-pin** (declared point): F2's code merged; `Divinity.Enabled` on for population and Living Island games; population smoke hash and god-mode scenarios re-pinned with a DEV_LOG row | DEV_LOG re-pin row | not started |
-| B4 | Compile check; EditMode; PlayMode (god-only gating, Mythic meter, instruct and miracle flows, H-UI hooks of U1a/U2a, U3a grid hidden) | Unity in `wt-lrs-ckpt` | not started |
-| B5 | Windows build; stage 3 smoke `4bd54b271857a803`; population smoke (new pinned hash); **god-mode smoke** `-godonly -godpopulation` exit 0, invariants, Mythic identity (Q4-T6) | smokes | not started |
-| B6 | Scenarios 8, 9, 12, 13 (Tier 1 part), 18 (replay check at B) | §4 | not started |
-| B7 | Q1 `0026` early views; P7 on the divine domains | Q1 record | not started |
-| B8 | Save version → **6** | lead merge commit | not started |
+| B1 | All B packages merged with S1–S7 green | merge log | **passed on `unity/ckptb`** (F1, D1, D2, D3, U1a, U2a, U3a merged; C3a, C6, U3b, F2b too; full suite: DEV_LOG "Checkpoint B record"); D6 not in this tree |
+| B2 | Pins P1, P2, P3, P4, P8 green; stage 3 hash | pins | **passed** with a deliberate re-pin: P1/P4/P8 digests re-pinned for every population scenario (R60 ConceptionMode 1; old -> new in DEV_LOG); P2, P3, both-off pins and `4bd54b271857a803` unchanged |
+| B3 | **Deliberate re-pin** (declared point): F2's code merged; `Divinity.Enabled` on for population and Living Island games; population smoke hash and god-mode scenarios re-pinned with a DEV_LOG row | DEV_LOG re-pin row | **partly**: F2 re-pin done (ConceptionMode 1, R60; P1/P4/P8, F2-T1, F2b-T1 re-pinned with DEV_LOG rows); population smoke `c1df5d7fd207e5bc`, god-mode smoke `84c077ef42b4982c`, d1/d2/d3 demo hashes recorded. `Divinity.Enabled` is on for god-only (Living Island) games only; `-godpopulation` games still off (not flipped) |
+| B4 | Compile check; EditMode; PlayMode (god-only gating, Mythic meter, instruct and miracle flows, H-UI hooks of U1a/U2a, U3a grid hidden) | Unity in `wt-lrs-ckpt` | **passed with one fix**: compile 0 errors; console 0 errors; EditMode 629/629; PlayMode 114/116, the two failures were wall-clock-dependent U3b hash tests (fixed, class 6/6 twice); full PlayMode not rerun after the fix |
+| B5 | Windows build; stage 3 smoke `4bd54b271857a803`; population smoke (new pinned hash); **god-mode smoke** `-godonly -godpopulation` exit 0, invariants, Mythic identity (Q4-T6) | smokes | **passed**: build OK (`Builds\civdiv-b`); stage 3 `4bd54b271857a803`; population `c1df5d7fd207e5bc`; god mode `84c077ef42b4982c`; all exit 0, invariants ok, 0 exceptions. Mythic identity (Q4-T6) not checked separately |
+| B6 | Scenarios 8, 9, 12, 13 (Tier 1 part), 18 (replay check at B) | §4 | **partly**: scenario 8 (`d2_command`: 4 instructions, 3 followed, 1 ignored) and 9 (2 compulsions: 1 completed, 1 blocked) demonstrated; `d3_miracles` 7 miracles with ledger; 12, 13, 18 not run |
+| B7 | Q1 `0026` early views; P7 on the divine domains | Q1 record | not run at the checkpoint |
+| B8 | Save version → **6** | lead merge commit | **done**: `SaveFile.CurrentVersion = 6` (`36cc3fd`, needed by R60: v5 saves refused) |
 
 ### Checkpoint C — Working economy (C1, + C3a) · tag `civdiv-c` · with B, planned H13.5
 
