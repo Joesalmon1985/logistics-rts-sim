@@ -64,9 +64,43 @@ namespace God.Sim.Civ
                     Class = (byte)def.ObjClass, Category = (byte)(def.Recipe == null ? ObjCategory.Store : ObjCategory.Workplace),
                     State = (byte)StateOf(s, best, def), Kind = IntentTarget.Building, Node = best.Node, Dist = bestD, Ref = best.Id,
                 };
+                if (n < near.Length && tu.TakeOutEnabled != 0) n = SenseStore(s, npc, best, def, bestD, near, n);
             }
             if (n < near.Length && tu.BuildEnabled != 0 && CarriesAnyMaterial(npc) && Work.CanFound(s, npc, npc.Node))
                 near[n++] = new Sensed { Class = CivClass.Plot, Category = ObjCategory.Workplace, State = 0, Kind = IntentTarget.Node, Node = npc.Node, Dist = 0, Ref = 0 };
+        }
+
+        /// <summary>
+        /// C1c, the asset's store as a bin (the I-BS bin seam pattern, contracts 6): perceived by a person who truly may take
+        /// from it (the owner, an adult of the owning household, a holder of a Store right), as <see cref="CivClass.AssetStore"/>
+        /// with the band of the output it sees there that it may take (Full: no room left for another cycle), category Food
+        /// when that output is food. Others' stores are not offered to the mind (no permission; theft is a later package's).
+        /// Always offered to those people, empty too, so a store belief stays current.
+        /// </summary>
+        private static int SenseStore(GodState s, Npc npc, ProductiveAsset a, AssetDef def, int dist, Sensed[] near, int n)
+        {
+            if (!a.IsFinished || a.Store == 0) return n;
+            var bin = Goods.BinById(s.Population, a.Store);
+            if (bin == null) return n;
+            bool storeRight = Ownership.RightOn(s, npc, a, UseKind.Store) == Ownership.RightUse;
+            bool owners = Ownership.OwnerRelation(npc, a.Owner) != Ownership.RightNone && npc.Stage != LifeStage.Child;
+            if (!owners && !storeRight) return n;
+            int units = 0; bool food = false;
+            foreach (var l in bin.Lots)
+            {
+                if (!Work.IsOutput(def, l.Ware)) continue;
+                if (!storeRight && (Ownership.OwnerRelation(npc, l.Owner) == Ownership.RightNone)) continue;
+                units += l.Count;
+                if (Wares.IsFood(l.Ware) && l.Ware != Ware.Nightshade) food = true;
+            }
+            bool full = units > 0 && def.Recipe != null && def.WorkTicks > 0 && !Work.HasRoom(bin, def);
+            near[n++] = new Sensed
+            {
+                Class = CivClass.AssetStore, Category = (byte)(food ? ObjCategory.Food : ObjCategory.Store),
+                State = (byte)(units == 0 ? ObjState.StockEmpty : full ? ObjState.Full : units < 4 ? ObjState.StockLow : ObjState.StockHigh),
+                Kind = IntentTarget.Bin, Node = bin.Node, Dist = dist, Ref = bin.Id,
+            };
+            return n;
         }
 
         private static bool CarriesAnyMaterial(Npc npc)

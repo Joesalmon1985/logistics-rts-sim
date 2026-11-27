@@ -19,5 +19,9 @@ namespace God.Sim.Civ
         public int SeenBuiltConfidence = 230, SeenUsedConfidence = 120;
         /// <summary>At most this many assets in sight are perceived per think (nearest first; the Sense seam bound, spec 16).</summary>
         public int SenseAssets = 3;
+        /// <summary>C1c: at most this many units are taken out of an asset's store in one withdrawal (as room in the carry allows).</summary>
+        public int TakeOutUnits = 6;
+        /// <summary>C1c: 1: an asset's store is perceived by those who may take its output (owner, household, Store right). 0: never (C1 as merged: nobody takes output out).</summary>
+        public int TakeOutEnabled = 1;
     }
 }

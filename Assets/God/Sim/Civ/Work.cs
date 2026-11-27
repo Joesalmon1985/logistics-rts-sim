@@ -18,6 +18,8 @@ namespace God.Sim.Civ
         public const byte VerbWork = 96, VerbBuild = 102, VerbHaul = Verb.Haul;
         /// <summary>Intent verbs (contracts 14 Civ block 170-178).</summary>
         public const NpcVerb IntentWork = (NpcVerb)170, IntentBuild = (NpcVerb)171, IntentHaul = (NpcVerb)172;
+        /// <summary>C1c: take output out of an asset's store (the learning verb is <see cref="VerbHaul"/>: carrying goods between a store and where they are used; the bin target tells it from a delivery).</summary>
+        public const NpcVerb IntentTakeOut = (NpcVerb)178;
 
         public static bool IsMine(byte v) => v == VerbWork || v == VerbBuild || v == VerbHaul;
 
@@ -97,7 +99,7 @@ namespace God.Sim.Civ
             {
                 case VerbBuild: Build(s, ev, npc); break;
                 case VerbWork: Operate(s, ev, npc); break;
-                case VerbHaul: Haul(s, ev, npc); break;
+                case VerbHaul: if (npc.Action.TargetKind == IntentTarget.Bin) TakeOut(s, ev, npc); else Haul(s, ev, npc); break;
             }
         }
 
@@ -192,7 +194,8 @@ namespace God.Sim.Civ
             return true;
         }
 
-        private static bool HasRoom(LotBin bin, AssetDef def)
+        /// <summary>Room in the store for the outputs of one more cycle (the inputs it uses free their weight).</summary>
+        public static bool HasRoom(LotBin bin, AssetDef def)
         {
             if (bin.WeightCap <= 0) return true;
             int w = bin.Weight;
@@ -253,6 +256,55 @@ namespace God.Sim.Civ
                 if (r.Ok) put += l.Count;
             }
             if (put == 0) Frustrate(s, npc); else End(npc);
+        }
+
+        /// <summary>
+        /// C1c, take output out (<see cref="MoveReason.Withdraw"/>): the person walks within <see cref="Reach.Store"/> of the
+        /// asset's store it perceived or remembers and takes up to <c>Civ.C1.TakeOutUnits</c> of the asset's output (a
+        /// store-only asset: any goods), as room in its carry allows, the owner kept. Permission is checked lot by lot: its
+        /// own or its household's goods, or any goods there while it truly holds a Store right on the asset. What it does
+        /// with them (eat, carry home, pay a wage, offer in barter) is its next decision; a food lot it took waits for its
+        /// fate (eaten or spoiled) as a picked-up lot does (M3b lot episode).
+        /// </summary>
+        private static void TakeOut(GodState s, EventBuffer ev, Npc npc)
+        {
+            var bin = Goods.BinById(s.Population, npc.Action.TargetId);
+            var a = bin != null && bin.Kind == BinKind.AssetStore ? Assets.ByStore(s, bin.Id) : null;
+            var def = a != null ? AssetTable.Get(a.Kind) : null;
+            if (a == null || !a.IsFinished) { Frustrate(s, npc); return; }
+            if (!WalkTo(s, npc, bin.Node, Reach.Store)) { if (npc.Path == null) Frustrate(s, npc); return; }
+            if (npc.Life != null && !HouseholdHooks.CanWork(s, npc)) { Frustrate(s, npc); return; }
+            if (s.Territory.Grid.Distance(npc.Node, bin.Node) > Reach.Store) { Frustrate(s, npc); return; } // no remote transfer
+            bool storeRight = Ownership.RightOn(s, npc, a, UseKind.Store) == Ownership.RightUse;
+            int want = s.Tuning.Civ.C1.TakeOutUnits, got = 0;
+            Ware food = Ware.None;
+            for (int k = 0; k < bin.Lots.Count && got < want;)
+            {
+                var l = bin.Lots[k];
+                if (!IsOutput(def, l.Ware) || !(storeRight || Ownership.OwnerRelation(npc, l.Owner) != Ownership.RightNone)) { k++; continue; }
+                int n = Math.Min(want - got, Math.Min(l.Count, PopulationModule.Room(s, npc, l.Ware)));
+                if (n <= 0) { k++; continue; }
+                bool whole = n == l.Count;
+                var ware = l.Ware;
+                var r = Goods.Move(s, ev, Holder.Bin(bin.Id), l.Id, n, Holder.Carry(npc.Id), MoveReason.Withdraw, npc.Id, OwnerRule.Keep);
+                if (!r.Ok) { k++; continue; }
+                got += n;
+                if (Wares.IsFood(ware) && food == Ware.None) food = ware;
+                if (!whole) k++;
+            }
+            if (got == 0) { Frustrate(s, npc); return; }
+            if (food != Ware.None && npc.Mind != null && s.Tuning.Learning.Goods != GoodsCredit.Immediate)
+                for (int i = npc.Carry.Length - 1; i >= 0; i--)
+                    if (!npc.Carry[i].Empty && npc.Carry[i].Ware == food) { Learner.AwaitOutcome(npc.Mind.Store, VerbHaul, Learner.LotEpisodeKey(npc.Carry[i].Id)); break; }
+            End(npc);
+        }
+
+        /// <summary>C1c: what of a store counts as the asset's output (taken out): a recipe output, never an input left to be worked; a store-only kind holds only goods put there.</summary>
+        public static bool IsOutput(AssetDef def, Ware w)
+        {
+            if (def.Recipe == null) return true;
+            foreach (var o in def.Recipe.Outputs) if (o.Ware == w) return true;
+            return false;
         }
 
         /// <summary>What a store accepts: a recipe input; a store-only kind accepts any goods.</summary>
