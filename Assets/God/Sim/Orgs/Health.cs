@@ -233,7 +233,7 @@ namespace God.Sim.Orgs
             if (pi >= 0) { rec.Pending = hs.Treated[pi].Pending; rec.PendingDay = hs.Treated[pi].PendingDay; rec.CreditedDay = hs.Treated[pi].CreditedDay; hs.Treated[pi] = rec; }
             else hs.Treated.Insert(~pi, rec);
             hs.TreatmentsCompleted++;
-            int ticks = (int)Math.Max(1, s.Tick - t.StartTick);
+            int ticks = (int)Math.Max(1, s.Tick - t.StartTick + 1); // inclusive: the start tick may already count
             hs.Active.RemoveAt(ti);
             ev?.Add(new TreatmentEnded
             {
