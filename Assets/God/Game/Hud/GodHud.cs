@@ -81,6 +81,7 @@ namespace God.Game
             h._helpUntil = Time.unscaledTime + 14f;
             h._seenRoll = boot.View.Map.LastRollTick;
             rig.OverUi = h.IsOverUi;
+            h.InitHooks();
             if (boot.Territory != null) boot.Territory.ShowDiceTick = false;
             if (boot.Economy != null) boot.Economy.ShowDebugText = false;
             return h;
@@ -91,10 +92,10 @@ namespace God.Game
         public void TogglePause() { Boot.Running = !Boot.Running; }
 
         /// <summary>1x, 2x or 4x. Choosing a speed also resumes a paused game.</summary>
-        public void SetSpeed(float speed) { Boot.Speed = speed; Boot.Running = true; }
+        public void SetSpeed(float speed) { Boot.Speed = speed; Boot.Running = true; Boot.Accelerated = false; }
 
         /// <summary>The speeds on offer: 1x, 2x, 4x; watch mode adds 8x and 16x.</summary>
-        public float[] Speeds => Watching ? new[] { 1f, 2f, 4f, 8f, 16f } : new[] { 1f, 2f, 4f };
+        public float[] Speeds => SpeedSet();
 
         public void StepSpeed(int dir)
         {
@@ -464,12 +465,14 @@ namespace God.Game
             var mouse = DebugCursor ?? (Vector2)Input.mousePosition;
             if (Time.unscaledTime > _helpUntil) HelpVisible = false;
 
-            if (Input.GetKeyDown(KeyCode.Escape)) PressEscape();
+            // U1a: in god-only mode the PlayerController reads the keys and the mouse (intents); the old paths serve the stage 3 mode
+            bool godOnly = Boot.GodOnly;
+            if (!godOnly && Input.GetKeyDown(KeyCode.Escape)) PressEscape();
             if (Boot.Menu != null && Boot.Menu.Blocking) { HoverNode = -1; return; } // the menu or the start card holds the game
             CheckRoadAfterPlace();
-            if (Input.GetKeyDown(KeyCode.Space)) TogglePause();
-            if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus)) StepSpeed(1);
-            if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus)) StepSpeed(-1);
+            if (!godOnly && Input.GetKeyDown(KeyCode.Space)) TogglePause();
+            if (!godOnly && (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.KeypadPlus))) StepSpeed(1);
+            if (!godOnly && (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus))) StepSpeed(-1);
 
             HandleTabKeys();
             HandleTrueStateKey();
@@ -477,7 +480,7 @@ namespace God.Game
             HoverNode = -1;
             if (!over && Outcome == GameOutcome.Playing && Rig.GroundPoint(mouse, out var gp)) HoverNode = NodeAt(gp);
 
-            if (Outcome == GameOutcome.Playing)
+            if (Outcome == GameOutcome.Playing && !godOnly)
             {
                 if (Input.GetMouseButtonDown(0) && !over)
                 {
@@ -604,6 +607,7 @@ namespace God.Game
                 if (b != null) d.Ring(NodePos(b.Node), b.Size == BuildingSize.Hq ? 7.5f : b.Size == BuildingSize.Medium ? 5.2f : 3.6f, 0.6f, gold);
             }
             if (SelectedNode >= 0) d.Ring(NodePos(SelectedNode), 2.4f, 0.5f, gold);
+            DrawSelectionMarks(d);
 
             int hover = HoverNode;
             if (hover >= 0)

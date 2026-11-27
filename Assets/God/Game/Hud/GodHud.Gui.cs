@@ -80,6 +80,7 @@ namespace God.Game
             if (Outcome == GameOutcome.Playing) { DrawCards(st, vw, vh, stripH, repaint); DrawTrade(st, vw, vh, stripH, repaint); DrawPeople(st, vw, vh, stripH, repaint); }
             else DrawEnd(st, vw, vh, repaint);
             DrawTrueState(st, vw, vh, repaint);
+            DrawU1(st, vw, vh, stripH, repaint);
             DrawTooltip(st, vw, vh);
         }
 
@@ -204,6 +205,7 @@ namespace God.Game
                 if (GUI.Button(new Rect(x, y + 8f, 38f, 30f), new GUIContent(sp + "x", "Speed: + and -"), on ? st.BtnSel : st.Btn)) SetSpeed(sp);
                 x += 40f;
             }
+            DrawTimeExtras(st, ref x, y);
             x += 12f;
             float k = Mathf.Clamp01(1f - (Time.unscaledTime - _rollTime) / 0.9f);
             float size = 12f + 12f * k;

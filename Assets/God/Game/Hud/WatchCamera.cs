@@ -29,7 +29,7 @@ namespace God.Game
 
         private void OnDestroy() { if (_boot != null) _boot.SimEventRaised -= OnEvent; }
 
-        private bool Active => _boot != null && _boot.Hud != null && _boot.Hud.Watching && (_boot.Menu == null || !_boot.Menu.Blocking);
+        private bool Active => _boot != null && _boot.Hud != null && _boot.Hud.Watching && !_boot.GodOnly && (_boot.Menu == null || !_boot.Menu.Blocking);
 
         private void OnEvent(SimEvent e)
         {
