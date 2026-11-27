@@ -41,3 +41,11 @@ The lead's binding rulings on conflicts found between the package index, the sha
 | R35 | "D6" means both owner decision set D6 and package D6 (commandments) | Owner decisions are always written **D6.n** (with a number); the commandments package is written **package D6** or **D6 (commandments)**. |
 | R36 | R23 overlaps C7 520–539 and C2 540–549 | C6 uses only codes in 500–549 that no other package holds (the index's reading). |
 | R37 | Run length | The owner asked to keep working until a finished playable game: the 'continuation' after H18 is part of this run, not a later session. Checkpoint G (about H25) is in scope. |
+| R38 | No contract for seeding scenario content (deposits, facilities, vehicles, orgs, agreements, knowledge, coin) | Accepted as **I1a item 17**: a deterministic scenario-content loader in the runner/`SimBuilder` that issues ordinary setup commands at tick 0 (no hidden state injection); contracts §20 gets the row. |
+| R39 | Knowledge and rights checks needed before K1 exists | Accepted as **I1a item 18**: `KnowledgeQuery` and `RightsQuery` stubs (everyone knows `DesignId 0` designs; no rights recorded), replaced by K1. |
+| R40 | Industry card data for the HUD | Per-package `Information/IndustryCards.*` partials (sim-side, read-only views), consumed by I6. |
+| R41 | Royalties: automatic accrual (KNOW §8.4) vs none (MONEY §7.1) | **MONEY governs:** no automatic accrual; royalties are billed by an office-holder's act and paid by actual payment. |
+| R42 | Shared skill store lives in `OrgState.C7` (needs Orgs on) | The skill store lives in **`CivState`** (exists when any Civ/Industry switch is on), created lazily; C7 and K1 both use it. |
+| R43 | Agreement record kinds | I3's agreement record carries `Kind` (Supply, Electricity, Procurement, Haulage); I4's billing depends softly on I3 (fallback: C2 obligations only). |
+| R44 | Smoke flag, tag and scenario names | `-godonly -godpopulation`; tag `civdiv-g` for Checkpoint G; scenario `ind_slice`. WST incineration uses `Disposed`. |
+| R45 | Numbers on unity/poc differ from what the contracts assume (`MaxCand` 24, `PersonalCount` 32, `MoveReason` to 9, no `BinKind.AssetStore`) | F1 raises them to the contract values (36, 40, and the listed enums); I1a asserts the post-F1 values before its own changes. |
