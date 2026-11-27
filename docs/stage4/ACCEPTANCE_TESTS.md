@@ -493,7 +493,7 @@ Measured by the tests named (EM: `SocialMemoryTests`, `CommsTests`, `SocialIslan
 | M5.12 | **Not done** | S2 and S5 need island contests and benchmark custom rules (not built in M5) |
 | M5.13 / LS2 | **Not done** | Logs-for-food exchanges work (M5.11 trader scene), but the gather decision is not credited by the later meal (no episode reaches it) |
 | M5.14 | Met | `LifeScale` 200 gives the same grudge every day; `ScalePermille` 2000 is strictly lower every day with the learning store's hash unchanged; grudge rates 0 leave it at 300 |
-| M5.15 | Met | Every exchange step and gift follows a gesture and the receiver's own decision (EM, 4 seeds); over 20 seeds of band_6x20 (4 days) refusals and 37 counter-offers occur; gestures off gives no deals and no gifts; one grammar composes need, request, offer, accept, refuse, cooperate and warn (warn is composed but did not occur naturally: no enemy came in sight) |
+| M5.15 | Met | Every exchange step and gift follows a gesture and the receiver's own decision (EM, 4 seeds); over 20 seeds of band_6x20 (4 days) refusals and 37 counter-offers occur; gestures off gives no deals and no gifts; one grammar composes need, request, offer, accept, refuse, cooperate and warn (warn is composed but did not occur naturally: no enemy came in sight). **F0 (27 Nov 2026):** the counter-offer clause is not met on the merged base: 0 in 20 seeds since the I-BS amendments (already on `unity/ibs`; 2 in 20 at `0f978db`); kept as the `[Explicit]` target `M5_15_CounterOffersOccur`, refusals, steps and gifts still asserted |
 | M5.16 | Met | The speaker's deal memory, each listener's decoded copy and the goods move are separate records; a listener out of sight perceives and believes nothing; a gesture moves nothing; defection in M5.7 |
 | M5.17 | Met | band_6x20 at Full: every table reconciles with the events (counts by kind, act and outcome, listeners, lot ids, quantities, the soc_ columns); Full, Summary and Off give one hash; truth fields at Full only |
 | Neutrality | Met | `Social.Enabled = 0`: band_6x20 seeds 1-3, 10 days, every day hash equals `6671592` |
@@ -533,12 +533,12 @@ Measured by `IbsTests` (`ibs_families`, seeds 1-10, 15 days); per-seed numbers i
 | I-BS.2, I-BS.14 | Met 10/10; 0 non-member, unpermitted or re-owned withdrawals |
 | I-BS.3 | Met (both occur); kin 2035 vs unrelated 3130 pooled: kin is not more frequent in raw counts |
 | I-BS.4 | Met 10/10 |
-| I-BS.5 | Partly: 5/10 seeds |
+| I-BS.5 | Partly: 5/10 seeds on `unity/ibs`; 2/10 on the F0 base (`unity/int0`). An `[Explicit]` target; the 80% threshold is kept |
 | I-BS.6, I-BS.10 | Not done (controlled tests not written) |
-| I-BS.7 | Not met yet: the test fails on seed 6 (open estates at the end not excluded); heirs' collection rare on the island |
+| I-BS.7 | Met on the F0 base, 10/10 seeds: the test now excludes lots in estates still open at the run end (0-2 per seed) and accounts for a lot that spoiled in the estate before division (seed 9, 2 fish). Heirs' collection rare on the island (0-3 per seed) |
 | I-BS.8 | Met as occurrence, 9/10 seeds |
 | I-BS.9 | Deferred to M7/M11 (no observation learning) |
-| I-BS.11, I-BS.13, I-BS.15 | Met 10/10 (I-BS.13 pooled help 1516, no help 8965; I-BS.15 0 unperceived of about 1.6M checks) |
+| I-BS.11, I-BS.13, I-BS.15 | Met 10/10 (I-BS.13 pooled help 1516, no help 8965; I-BS.15 0 unperceived of about 1.6M checks; on the F0 base after amendment 12.37, which makes D4's ranging heading known like M3's explore directions) |
 | M4.21 clause | First arrival met (claim = pick-up tick); contest clause not met (no contest raised) |
 | M5.9 | Not met (reported only: M5's gift choice has no kin preference) |
 | M5.18, M5.19 | Not started |

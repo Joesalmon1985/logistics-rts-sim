@@ -11,11 +11,11 @@ Rules for this file:
 
 | Item | Value |
 |---|---|
-| Current milestone | **M4 and M5 merged** into `unity/poc` (`0f978db`). M4 is implemented and partially accepted, demographic viability outstanding (D4 Â§7). Running in parallel: the **I-BS integration gate** with the M4/M5 contract amendments and M5.18/M5.19 (`unity/ibs`, `wt-lrs-ibs`), and the **D4 demography workstream** (`unity/demog`, `wt-lrs-m3`). M0â€“M3, F0 and M13a (with M13a.5) are merged. |
+| Current milestone | **Civdiv F0 integration baseline (Checkpoint A) done on `unity/int0`** (`wt-lrs-int0`), **awaiting the lead's merge** into `unity/poc`: `unity/ibs` (I-BS amendments) and `unity/demog` (D4 demography) merged on top of M4 + M5 (`0f978db`); suites, Unity, build and both smokes green (see "F0 integration record" at the end). M4 is implemented and partially accepted, demographic viability outstanding (D4 Â§7). Not done in F0: the I-BS.6/8/10 controlled tests, the M5.9 kin cue, M5.18/M5.19 (U3), the demography sweeps (F2). M0â€“M3, F0 and M13a (with M13a.5) are merged. |
 | Current checkpoint | **4A Simulation laboratory** (M0â€“M2) |
 | Next functional release | **First playable new game**: M0â€“M7 and M9 ([conventions Â§10](DESIGN_CONVENTIONS.md#10-roadmap-and-stage-4-milestones-the-official-list)) |
 | Owner questions | None open: all 23 answered on 27 Nov 2026 ([conventions Â§13](DESIGN_CONVENTIONS.md#13-resolved-owner-decisions-27-nov-2026)) |
-| Last updated | 26 Nov 2026 (owner decisions D4; M4 merged locally) |
+| Last updated | 27 Nov 2026 (civdiv F0 on `unity/int0`) |
 
 ## Owner directions D2 (26 Nov 2026)
 
@@ -766,3 +766,49 @@ Run of 26 Nov 2026 on `unity/ibs` (from `unity/poc` 0f978db), stopped early on t
 6. Merge `unity/poc` into `unity/demog` (M5 at 0f978db); keep `HouseholdsOff_Band6x20_EqualsPostF0Hashes` and `M5NeutralityTests` (both Households and Social off; 8b898d115d8a05a7, 5fa8991b92168385, 66a55d5a67f2ad4e). Avoid M5 files and the unity/ibs seams; keep Npc.Traits 16-18.
 7. Full `dotnet test DotNet -c Release` (about 20 minutes); open Unity in `wt-lrs-m3` only to confirm zero compile errors in GodBootstrap.
 8. Add the SHARED_CONTRACTS 12 rows for verb 45 and situation 22 if not yet present, and update the D4 status cells.
+
+## F0 integration record (branch unity/int0, 27 Nov 2026)
+
+Civdiv package F0 (Checkpoint A), done by the lead's merge helper in `wt-lrs-int0` on `unity/int0` (from `unity/poc` `c1ab594`). Nothing pushed; `unity/poc` and `main` untouched. **Awaiting the lead's merge into `unity/poc`.**
+
+**Commits.**
+- `61bc2e1` merge `unity/ibs` (`81e4f47`). One conflict: this file (both sides appended records). All records kept.
+- `0a4655c` merge `unity/demog` (`5aaa255`). Conflicts and resolutions (both sides' behaviour kept):
+  - `Founders.MakeLife`: the traits array is `Preferences.TraitLength` (19). Slots 12-15 stay unwritten (I-BS 12.33: the gains are in `SelfView`). The D4 preferences are written at 16-18.
+  - `HouseholdHooks` (mind hooks): demog's `SeekChild` self-act comes first, then I-BS's `Bins()` perception candidates, which replace demog's blind `Store()`. `InstinctGain` reads the `SelfView` gains; `SeekChild` and `AcceptChild` take `SocialGain`, as demog took `traits[Count+2]`. It then applies demog's preference factors (companionship, child desire). `Describe` keeps both `WantsChild` and the estate class text.
+  - `HouseholdVerbs.AtPerson`: I-BS's comment, with demog's `AcceptChild` added.
+  - `HouseholdActs`, POPULATION_DESIGN and ACCEPTANCE_TESTS merged without conflicts. Both status tables are kept.
+  - SHARED_CONTRACTS: all §12 rows kept. In the D4 additive table, the `Npc.Traits` row now says that 12-15 are reserved and unwritten. Verb 45 RangeFar and situation 22 NoPlentyKnown were already listed there.
+- `2c0b7d4` merge `unity/poc` (`4655801`, the Unity-free compile check; tooling and docs only).
+- `f05f924` **F0 amendment 12.37** (sim): after the demography merge, D4's ranging walk (verb 45) aimed at a node 12-24 nodes out along today's heading. `Thinker.Known` did not accept that node, so I-BS.15 counted 0-133 unperceived decisions per seed. The heading is now the NPC's own direction, like M3's `ExploreA/B`: `CognitionExtensions.OwnHeading` calls `HouseholdMindHooks.OwnHeading`, which recomputes the goal with the unchanged `RangeFarGoal`, extracted from `RangeFar`. `Known` feeds only the perception statistics, so no hash moves: the both-off pins hold, and the I-BS island counts and the smoke hashes are identical before and after.
+- `0d17bab` tests:
+  - I-BS.7 excludes lots in estates still open at the run end. It also accounts for a lot that spoiled in the estate before division (seed 9: 2 fish; the estate settled empty with 0 transfers). The harness records spoiled lot ids without keeping the events, so the meal reconciliation is unchanged.
+  - I-BS.5 becomes `[Explicit]`.
+  - M5.15's counter-offer clause moves to the `[Explicit]` target `M5_15_CounterOffersOccur`. Refusals, steps and gifts are still asserted.
+- The docs commit with this record: ACCEPTANCE I-BS and M5.15 status cells, SHARED_CONTRACTS 12.37, and the Current status row.
+
+**Neutrality.** `HouseholdsOff_Band6x20_EqualsPostF0Hashes` and `M5NeutralityTests` (Households and Social both off) pass after each merge and on the final tree. They are pinned to `6671592`: `8b898d115d8a05a7`, `5fa8991b92168385`, `66a55d5a67f2ad4e`. No re-pin.
+
+**Tests (final tree `0d17bab`).**
+- `dotnet test DotNet/God.Sim.Tests -c Release`: **485/485**.
+- `dotnet test DotNet/God.Runner.Tests -c Release` (full, 17 min 32 s): **193/193 passed, 0 failed**. 28 `[Explicit]` tests did not run: the 26 existing ones, plus I-BS.5 and `M5_15_CounterOffersOccur`.
+- The first full runner run, on the plain merge with only the I-BS.7 open-estate fix, gave 190/194. It failed I-BS.15 (fixed by 12.37), I-BS.5, I-BS.7 seed 8 (an open estate's lots that were already transferred: test fix) and M5.15.
+- `AgentScripts/check-game-compile.ps1`: 0 errors.
+
+**Unity (6000.3.28f1, `wt-lrs-int0`).**
+- Console: 0 errors, 7 warnings. `compilationFailed` false, no Safe Mode. demog's `GodBootstrap` compiles.
+- EditMode **489/489**, PlayMode **79/79**, on the merge and again on the final tree.
+- Windows build OK: 87 MB, 0 errors, 6 warnings.
+- Smokes (seed 2, `-batchmode -nographics`, exit 0, final build):
+  - Stage 3: `SMOKE HASH END 20161 4bd54b271857a803` (unchanged).
+  - Population (`-godpopulation`, 60,000 ticks): `SMOKE HASH END 60000 e8b526952abafde3`, invariants ok, 0 exceptions. **New** (was `60d549c28635cc44` at `0f978db`): the I-BS amendments and D4 change population behaviour.
+
+**Failing or `[Explicit]` tests, classified.**
+- **I-BS.5** (`[Explicit]`, threshold 80% kept): 2/10 seeds on the merged base, against 5/10 on `unity/ibs`. The demography changes move the island. Not met.
+- **M5.15 counter-offer clause** (`[Explicit]` `M5_15_CounterOffersOccur`): 0 counter-offers in 20 seeds. This predates the merge: it already fails on `unity/ibs` `81e4f47` (checked in a scratch copy). At `0f978db` it held only marginally, 2 in 20 seeds (seeds 13 and 14). A probe count shows the cause is fewer answered addressed offers, not a missing path: 41 answers against 82, with counter candidates still offered (19 against 33) but never chosen. Not a merge fault. To fix in the package that owns M5 behaviour.
+- **I-BS.7**: passes 10/10 after the test fix. Open estates at the end: 0-2 lots per seed. Spoiled before division: 1 lot (seed 9). Spoilage in an estate is not counted in `EstateSettled.Destroyed` (observation, unchanged).
+- **M4.26 death clause**: passes but stays **underpowered**. On the young band: infections On 113, Mild 40, Off 0; disease deaths On 1, Mild 0. That is one death; treat the clause as unverified (F2 reruns it on the established band).
+- **M4.36**: passes in the full suite (established band, 20 seeds).
+- **M5.6/L14, M5.11/L16** and the other existing `[Explicit]` targets: unchanged, not run.
+
+**Not done (out of F0's scope or left for the lead):** the merge into `unity/poc` and the tag `civdiv-a`; the I-BS.6/8/10 controlled tests; the M5.9 kin cue; M5.18/M5.19; the demography sweeps (F2); the DEV_LOG "Test results" and "Commits and branches" rows (the lead's at merge). Pre-existing on `unity/poc` (`c1ab594`), not changed here: about 42 double-encoded characters ("Â§", "â€“") in this file's earlier sections.
