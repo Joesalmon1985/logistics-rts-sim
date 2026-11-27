@@ -53,6 +53,8 @@ namespace God.Sim.Information
     /// </summary>
     public static partial class OrgCards
     {
+        static partial void FillC7(GodState s, Npc n, OrgCard c);
+
         public static void Fill(GodState s, Npc n, NpcInspection card)
         {
             var c = card.Orgs;
@@ -66,6 +68,7 @@ namespace God.Sim.Information
                 foreach (var o in org.Offices) if (o.Holder == n.Id) office = ", " + o.Kind.ToString().ToLowerInvariant();
                 Row(OrgCardRow.Role, KnowledgeLayer.InstitutionRecord, org.Id, "member of " + NameOf(org) + " #" + org.Id + office);
             }
+            FillC7(s, n, c); // C7 (flagged additive edit): health and teaching rows
             var m = n.Mind?.Orgs;
             if (m == null) return;
             for (int i = 0; i < m.Count; i++)

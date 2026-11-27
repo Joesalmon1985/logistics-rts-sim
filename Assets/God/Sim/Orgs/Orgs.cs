@@ -56,12 +56,24 @@ namespace God.Sim.Orgs
     public static class OrgTemplates
     {
         public const int SharedFoodStore = 1;
+        /// <summary>C7 (R25, flagged additive rows): a private healer's practice (one founder, the Healer office) and a communal healers' house.</summary>
+        public const int HealerPractice = 2, HealersHouse = 3;
 
         public static readonly ReadOnlyArray<OrgTemplate> Rows = new ReadOnlyArray<OrgTemplate>(
             new OrgTemplate(SharedFoodStore, "shared food store", OrgType.ServiceBody, PurposeKind.MutualAid, (int)ServiceKind.Ration, OwnershipModel.Communal,
                 minFounders: 2, minHouseholds: 2, MembershipRule.ByAcceptance, DecisionKind.HeadDecides, DecisionKind.MajorityPresent, quorum: 2, DistributionRule.ByNeed,
                 StoreAccessRule.MembersByRation, DissolutionRule.ToMembersEqual, BinKind.CommunalStore, ServiceKind.Ration,
                 new TemplateOffice(OfficeKind.Keeper, OrgPower.Propose | OrgPower.DecideAlone | OrgPower.KeepStore | OrgPower.Spend | OrgPower.Represent, true, 0),
+                new TemplateOffice(OfficeKind.Recorder, OrgPower.Propose | OrgPower.KeepRecords, false, 1)),
+            // C7 rows (OWNER: C7)
+            new OrgTemplate(HealerPractice, "healer's practice", OrgType.ServiceBody, PurposeKind.Service, (int)ServiceKind.Treat, OwnershipModel.Private,
+                minFounders: 1, minHouseholds: 1, MembershipRule.ByAcceptance, DecisionKind.OwnerDecides, DecisionKind.OwnerDecides, quorum: 1, DistributionRule.ToOwners,
+                StoreAccessRule.Officers, DissolutionRule.ToShares, BinKind.OrgStore, ServiceKind.Treat,
+                new TemplateOffice(OfficeKind.Healer, OrgPower.Propose | OrgPower.DecideAlone | OrgPower.KeepStore | OrgPower.Spend | OrgPower.Represent | OrgPower.KeepRecords, true, 0)),
+            new OrgTemplate(HealersHouse, "healers' house", OrgType.ServiceBody, PurposeKind.Service, (int)ServiceKind.Treat, OwnershipModel.Communal,
+                minFounders: 2, minHouseholds: 2, MembershipRule.ByAcceptance, DecisionKind.HeadDecides, DecisionKind.MajorityPresent, quorum: 2, DistributionRule.ByNeed,
+                StoreAccessRule.Officers, DissolutionRule.ToMembersEqual, BinKind.OrgStore, ServiceKind.Treat,
+                new TemplateOffice(OfficeKind.Healer, OrgPower.Propose | OrgPower.DecideAlone | OrgPower.KeepStore | OrgPower.Spend | OrgPower.Represent, true, 0),
                 new TemplateOffice(OfficeKind.Recorder, OrgPower.Propose | OrgPower.KeepRecords, false, 1)));
 
         public static OrgTemplate Get(int id)
@@ -85,7 +97,7 @@ namespace God.Sim.Orgs
         public static Organisation Find(GodState s, int org) => s.Organisations?.Find(org);
 
         /// <summary>A new organisation mind with the game's numbers bound (sim side).</summary>
-        public static OrgMind NewMind(GodState s) => OrgMind.Create(s.Tuning.Orgs.C6, s.Tuning.Orgs.C8);
+        public static OrgMind NewMind(GodState s) { var m = OrgMind.Create(s.Tuning.Orgs.C6, s.Tuning.Orgs.C8); m.C7 = s.Tuning.Orgs.C7; return m; } // C7 binds its numbers (flagged edit)
 
         // ---------------------------------------------------------------- founding
 

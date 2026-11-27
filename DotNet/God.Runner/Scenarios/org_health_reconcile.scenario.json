@@ -1,0 +1,38 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_health_reconcile",
+  "description": "C7 warehouse fixture (not scenario evidence): org_health with two healers per faction, for C7_Warehouse_Reconciles. Civ is on only for the shared skill store (R42); C1 building and C3 hiring are off (Civ.C1.BuildEnabled = 0, Civ.C3.HireEnabled = 0) so the evidence is about healing alone.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 8,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Civ.Enabled": 1,
+    "Orgs.C7.StartHealers": 2,
+    "Households.Life.ForageHazardPerMillion": 200000,
+    "Households.Life.GatherHazardPerMillion": 200000,
+    "Households.Life.InjuryDeadlyFrom": 300,
+    "Civ.C1.BuildEnabled": 0,
+    "Civ.C3.HireEnabled": 0
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxDays": 20,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}
