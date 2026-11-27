@@ -129,8 +129,10 @@ namespace God.Sim.Orgs
         {
             h.Add(Count);
             HashC6(ref h);
+            HashC7(ref h); // C7 (flagged additive edit): hashes nothing while its part is null
         }
         partial void HashC6(ref StateHasher h);
+        partial void HashC7(ref StateHasher h);
 
         /// <summary>Bits of template ids whose practice it knows (culture at the start, told, or seen).</summary>
         public int Practices;

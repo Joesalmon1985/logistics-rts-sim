@@ -1,0 +1,35 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_teach_none",
+  "description": "C7b control for org_teach: nobody can teach (Orgs.C7.StartTeachers = 0).",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 6,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Civ.Enabled": 1,
+    "Civ.C1.BuildEnabled": 0,
+    "Civ.C3.HireEnabled": 0,
+    "Orgs.C7.StartTeachers": 0
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxDays": 15,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}
