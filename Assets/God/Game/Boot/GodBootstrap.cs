@@ -78,13 +78,18 @@ namespace God.Game
         /// <summary>U1a: the <c>ui</c> save extra: aliases, favourites, follows, notes, camera pose, selection (never hashed).</summary>
         public UiExtra Ui { get; private set; }
         public PlayerController Player { get; private set; }
+        /// <summary>U2a: the divine interface host (view, costs, chips, cues, alerts); null in a game without gods.</summary>
+        public DivineHost Divine { get; private set; }
+        private bool _godsAttached;
         /// <summary>U1a: accelerated mode steps as fast as a per-frame budget allows (see <see cref="ControlTuning"/>).</summary>
         public bool Accelerated;
         public float AchievedSpeed { get; private set; }
-        /// <summary>U1a stand-in: the god that holds the Human seat. F1a replaces it with the seat holder in the sim (contracts 2.1).</summary>
-        public static int StandInHumanGod = 1;
-        /// <summary>F1 (flagged edit for U1a's rebase point): the setup's <c>GameSetup.HumanGod</c> when set (D1 moves the seat into <c>GodRecord.Seat</c>), else the stand-in.</summary>
-        public int HumanGod => Sim != null && Sim.State.Setup != null && Sim.State.Setup.HumanGod != 0 ? Sim.State.Setup.HumanGod : StandInHumanGod;
+        /// <summary>
+        /// D1 (flagged edit, lead's instruction; contracts 2.1): the god holding the Human seat now, read from the sim
+        /// (<c>GodRecord.Seat</c>, moved by <c>SwitchGod</c>); before the registry exists, <c>GameSetup.HumanGod</c>. 0 = watch.
+        /// Replaces U1a's <c>StandInHumanGod</c>.
+        /// </summary>
+        public int HumanGod => Sim != null ? global::God.Sim.Divinity.Gods.HumanSeatHolder(Sim.State) : 0;
         /// <summary>Commands accepted and waiting for the next tick that runs.</summary>
         public int PendingCommandCount => Sim.PendingCommands.Count;
         /// <summary>Seed for the next scene load (set by the end cards); consumed by the next bootstrap.</summary>
@@ -189,6 +194,7 @@ namespace God.Game
                     {
                         setup.StartNpcsPerFaction = 20;
                         tuning = tuning ?? new SimTuning();
+                        setup.Control = PlayerControl.GodOnly; setup.HumanGod = 1; tuning.Divinity.Enabled = 1; // U2a: the flag deals the god-only game with its gods
                         God.Sim.Population.Households.FounderTuning.EstablishedBand(tuning.Households.Founders);
                     }
                 }
@@ -224,6 +230,7 @@ namespace God.Game
             SmokeRun.StartIfAsked(this);
             _saveExtras.Add(new ChainBotsSave(this));
             Selection = new SelectionModel(); Ui = new UiExtra(); _saveExtras.Add(Ui); // U1a
+            if (Sim.State.Divinity != null) Divine = new DivineHost(this); // U2a
             if (Sim.State.Setup.Tutorial) { Tutorial = TutorialCards.Create(this); _saveExtras.Add(Tutorial); }
             if (startAi) StartAi();
             if (loaded != null)
@@ -257,6 +264,7 @@ namespace God.Game
             Menu = GameMenu.Create(this);
             WatchCam = WatchCamera.Create(this);
             Player = PlayerController.Create(this, Director, Selection, Ui); // U1a
+            Player.Builder.Factory = new DivineCommandFactory(); // U2a: U1a's rebase point
             Director.Driving = GodOnly;
             if (loaded != null) Player.ApplyLoadedUi();
             if (loaded != null) Hud.Toast("Game loaded. Press Space to go on.");
@@ -283,6 +291,7 @@ namespace God.Game
             // P11: the faction AI (P9 brains) plays every non-human faction. Brains rebuild from state, so a loaded game goes on.
             Chains.Clear();
             if (AiHost.Director == null || AiHost.Director.Sim != Sim) AiHost.StartForGame(Sim);
+            if (GodOnly && Sim.State.Divinity != null && !_godsAttached) { _godsAttached = true; SimBuilder.AttachGods(Sim); } // U2a: the AI-seated gods think (idle by default)
             _lastThink = Sim.State.Tick;
         }
 
@@ -327,6 +336,26 @@ namespace God.Game
             // D4 (M4.42): the Living island starts from the established mixed-age band, the preferred default of population games
             PendingTuning = new SimTuning();
             God.Sim.Population.Households.FounderTuning.EstablishedBand(PendingTuning.Households.Founders);
+            PendingStartAi = true;
+            ReloadScene();
+        }
+
+        /// <summary>
+        /// U2a: starts the god-only Living island on the next scene load: no human faction, <c>Control = GodOnly</c>, divinity on, the god of the first
+        /// faction holds the Human seat, the established band, sandbox victory (so the Mythic mode may be set). <paramref name="mode"/> is the
+        /// start card's Mythic choice.
+        /// </summary>
+        public static void StartGodOnly(ulong seed, God.Sim.Divinity.DivinityMode mode = God.Sim.Divinity.DivinityMode.Standard)
+        {
+            PendingSeed = seed;
+            PendingSetup = new GameSetup(seed, GameSetup.NoHuman)
+            {
+                Population = true, StartNpcsPerFaction = 20, Victory = VictorySpec.SandboxOnly(), Control = PlayerControl.GodOnly,
+                HumanGod = God.Sim.Divinity.DivinityIds.GodOf(Faction.F0),
+            };
+            PendingTuning = new SimTuning();
+            God.Sim.Population.Households.FounderTuning.EstablishedBand(PendingTuning.Households.Founders);
+            PendingTuning.Divinity.Enabled = 1; PendingTuning.Divinity.Mode = mode;
             PendingStartAi = true;
             ReloadScene();
         }

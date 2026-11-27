@@ -30,7 +30,7 @@ namespace God.Runner.Tests
         {
             var all = WarehouseDb.Migrations();
             Assert.IsTrue(all.Any(m => m.version == 7 && m.name == "0007_divine_core.sql"));
-            Assert.AreEqual(7, WarehouseDb.CurrentVersion, "schema v7 after F1");
+            Assert.GreaterOrEqual(WarehouseDb.CurrentVersion, 7, "schema v7 after F1 (0026 is Q1's early views)");
             string path = Path.Combine(_dir, "v6.sqlite");
             using (var c = new SqliteConnection("Data Source=" + path + ";Pooling=False"))
             {
@@ -69,7 +69,7 @@ namespace God.Runner.Tests
             CollectionAssert.AreEqual(TestUtil.Seq(b), TestUtil.Seq(a), "recording at Full with the divine core schema changes no hash");
             using (var d = WarehouseDb.OpenRead(a.WarehousePath))
             {
-                Assert.AreEqual(7, d.SchemaVersion());
+                Assert.AreEqual(WarehouseDb.CurrentVersion, d.SchemaVersion());
                 foreach (var t in NewTables) Assert.AreEqual(0L, Convert.ToInt64(d.Scalar("SELECT COUNT(*) FROM " + t)), t);
                 foreach (var t in ActionTables)
                     Assert.AreEqual(0L, Convert.ToInt64(d.Scalar("SELECT COUNT(*) FROM " + t + " WHERE control_code IS NOT NULL OR intervention_id IS NOT NULL")), t);

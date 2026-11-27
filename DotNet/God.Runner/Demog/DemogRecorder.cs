@@ -22,6 +22,7 @@ namespace God.Runner.Demog
         public long MaturedTick = -1;
         // D4 preferences (read at the end) and what the person did (M4.40's paired comparison)
         public int ChildDesire = -1, Companionship = -1, Commitment = -1;
+        public long LastWantTick = -1;
         public int Tries, Wants, PartnershipsFormed, UnionsFormed, UnionsOutside, AdultDays, PartneredDays;
         // household store use (free-riding): food units it put in and took out
         public long Deposited, Withdrawn;
@@ -59,6 +60,20 @@ namespace God.Runner.Demog
         public int RomanticPairs, MixedPairs, SameSexPairs, Unions, UnionsOutsidePartnership;
         // reproductive opportunity: fertile woman-days by status
         public long[] WomanDays = new long[DemogRecorder.WomanStatusNames.Length];
+        /// <summary>F2: the mother's daily conception checks of biologically able women (fertile, not pregnant, past the after-birth time), by coordination state (<see cref="DemogRecorder.CheckNames"/>).</summary>
+        public long[] Checks = new long[DemogRecorder.CheckNames.Length];
+        /// <summary>F2: of the checks with a possible father who was not trying with her both ways, those where the two stood within <see cref="DemogRecorder.NearNodes"/> nodes.</summary>
+        public long ChecksNotBothNear;
+        /// <summary>F2: sum of the daily conception chance (permille) over the "both trying" checks (the biology's share).</summary>
+        public long BothChanceSum;
+        /// <summary>F2: "both trying" checks where no reproductive relationship existed or could be formed (one held another; or not partners).</summary>
+        public long BothNoUnion;
+        /// <summary>F2: of <see cref="BothNoUnion"/>, those where every union in the way was dormant (its other adult not trying in it, no pregnancy by it).</summary>
+        public long BothNoUnionDormant;
+        /// <summary>F2: the "no possible father" checks split: single; partnered with women only and free to seek a child outside (every commitment below <see cref="Preferences.ExclusiveFrom"/>); partnered with women only and held by a commitment.</summary>
+        public long[] NoFather = new long[3];
+        /// <summary>F2: of the "no possible father" checks, those where she had shown that she wants a child within the last day.</summary>
+        public long NoFatherSought;
         // care
         public long CareTicks;
         public int UnionsFormed, UnionsOutsideFormed;
@@ -99,6 +114,9 @@ namespace God.Runner.Demog
         public static readonly string[] CompositionNames = { "lone adult", "lone adult + children", "two adults", "two adults + children", "3+ adults", "3+ adults + children", "children only" };
         public static readonly string[] WomanStatusNames = { "pregnant", "after birth", "union (trying possible)", "partnered with a man, no union", "partnered with a woman only", "single" };
         public const int ReachNodes = 10;
+        /// <summary>F2 (conception-coordination diagnosis): states of a woman at her daily check; exclusive, first that holds.</summary>
+        public static readonly string[] CheckNames = { "no possible father (no man partner, no union)", "neither trying", "she only", "he only", "both trying (no conception)", "conceived" };
+        public const int NearNodes = 3;
 
         public readonly SortedDictionary<int, DemogPerson> People = new SortedDictionary<int, DemogPerson>();
         public readonly List<DemogYear> Years = new List<DemogYear>();
@@ -175,6 +193,7 @@ namespace God.Runner.Demog
             if (p == null) return;
             long day = _cal.Day(Math.Max(0, _s.Tick - 1));
             var y = YearOf(day);
+            if (M4) ConceptionChecks(y, (int)day);
             foreach (var e in events)
             {
                 switch (e)
@@ -236,7 +255,7 @@ namespace God.Runner.Demog
                         if (Arrangements.TryGetValue(ae.Arrangement, out var arr)) { arr.Given = ae.Given; arr.Returned = ae.Returned; arr.EndedBy = ae.EndedBy; arr.Reason = ae.Reason; arr.EndedTick = ae.Tick; }
                         break;
                     case TryForChildChosen tc: if (People.TryGetValue(tc.Npc, out var tp)) tp.Tries++; break;
-                    case ChildWanted cw: if (People.TryGetValue(cw.Npc, out var wp)) wp.Wants++; break;
+                    case ChildWanted cw: if (People.TryGetValue(cw.Npc, out var wp)) { wp.Wants++; wp.LastWantTick = cw.Tick; } break;
                     case PartnershipFormed pf:
                         if (People.TryGetValue(pf.A, out var pa)) pa.PartnershipsFormed++;
                         if (People.TryGetValue(pf.B, out var pb)) pb.PartnershipsFormed++;
@@ -285,6 +304,81 @@ namespace God.Runner.Demog
                         break;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// F2: classifies each woman whose daily slot ran in the tick just stepped (LifeCycleSystem: tick of day <c>1 + (id % 8) x
+        /// TicksPerDay / 8</c>), read after her check (tries are not changed by the check; a conception shows as PregStart now).
+        /// </summary>
+        private void ConceptionChecks(DemogYear y, int day)
+        {
+            long t = _s.Tick - 1;
+            int tpd = _cal.TicksPerDay, slotLen = Math.Max(1, tpd / 8), tod = _cal.TickOfDay(t);
+            if (tod < 1 || (tod - 1) % slotLen != 0) return;
+            int slot = (tod - 1) / slotLen;
+            if (slot >= 8) return;
+            var lt = _s.Tuning.Households.Life;
+            var g = _s.Territory.Grid;
+            foreach (var n in _s.Population.Npcs)
+            {
+                if (!Bodies.IsLivingPerson(n) || n.Life == null || n.Life.Sex != 0 || n.Id % 8 != slot || n.Life.LastDaily != day || n.Stage == LifeStage.Child) continue;
+                var l = n.Life;
+                bool conceived = l.PregFather != 0 && l.PregStart >= t;
+                if (l.PregFather != 0 && !conceived) continue;
+                long age = Bodies.AgeMilli(_cal, n, t);
+                int end = Reproduction.FertileEnd(lt, l.Pheno.Fertility);
+                if (age < lt.FertileFromMilli || age > end) continue;
+                if (l.LastBirthTick >= 0 && t - l.LastBirthTick < _cal.TicksForAgeMilli(lt.AfterBirthMilli)) continue;
+                if (conceived) { y.Checks[5]++; y.BothChanceSum += Reproduction.DailyPermille(lt, l.Pheno.Fertility, n.NutritionPermille, (int)age, end); continue; }
+                // the possible father: the man she is trying with, else her union mate, else a man partner
+                Npc mate = null;
+                bool sheTries = l.TryWith != 0 && l.TryingUntil >= t;
+                if (sheTries) { var m = _s.Population.Find(l.TryWith); if (m?.Life != null && Bodies.IsLivingPerson(m) && m.Life.Sex == 1 && m.Stage != LifeStage.Child) mate = m; }
+                if (mate == null)
+                    foreach (var u in _s.Households.Unions)
+                    {
+                        if (u.A != n.Id && u.B != n.Id) continue;
+                        var m = _s.Population.Find(u.A == n.Id ? u.B : u.A);
+                        if (m?.Life != null && Bodies.IsLivingPerson(m) && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
+                    }
+                if (mate == null)
+                    foreach (int o in Partnerships.PartnersOf(_s, n.Id))
+                    {
+                        var m = _s.Population.Find(o);
+                        if (m?.Life != null && Bodies.IsLivingPerson(m) && m.Life.Sex == 1 && m.Stage != LifeStage.Child) { mate = m; break; }
+                    }
+                if (mate == null)
+                {
+                    y.Checks[0]++;
+                    var ps = Partnerships.PartnersOf(_s, n.Id);
+                    y.NoFather[ps.Count == 0 ? 0 : Preferences.AllowsOutside(_s, n, 0) ? 1 : 2]++;
+                    if (People.TryGetValue(n.Id, out var dw) && dw.LastWantTick >= 0 && t - dw.LastWantTick <= tpd) y.NoFatherSought++;
+                    continue;
+                }
+                bool she = sheTries && l.TryWith == mate.Id;
+                bool he = mate.Life.TryWith == n.Id && mate.Life.TryingUntil >= t;
+                int k = she && he ? 4 : she ? 2 : he ? 3 : 1;
+                y.Checks[k]++;
+                if (k == 4)
+                {
+                    y.BothChanceSum += Reproduction.DailyPermille(lt, l.Pheno.Fertility, n.NutritionPermille, (int)age, end);
+                    if (ReproductiveUnions.Between(_s, n.Id, mate.Id) == null)
+                    {
+                        y.BothNoUnion++;
+                        bool dormant = true;
+                        foreach (var u in _s.Households.Unions)
+                        {
+                            int who = u.A == n.Id || u.B == n.Id ? n.Id : u.A == mate.Id || u.B == mate.Id ? mate.Id : 0;
+                            if (who == 0) continue;
+                            var o = _s.Population.Find(u.A == who ? u.B : u.A);
+                            if (o?.Life == null || !Bodies.IsLivingPerson(o)) continue;
+                            if (o.Life.TryWith == who && o.Life.TryingUntil >= t || o.Life.PregFather == who || _s.Population.Find(who)?.Life?.PregFather == o.Id) dormant = false;
+                        }
+                        if (dormant) y.BothNoUnionDormant++;
+                    }
+                }
+                else if (g.Distance(n.Node, mate.Node) <= NearNodes) y.ChecksNotBothNear++;
             }
         }
 

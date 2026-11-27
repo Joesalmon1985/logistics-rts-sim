@@ -64,6 +64,7 @@ namespace God.Game
 
         private void OnEvent(SimEvent e)
         {
+            if (_boot.GodOnly) return; // U2a: the god-only game uses aggregated alerts, not toasts
             string text = Describe(e, out var who);
             if (text == null) return;
             // The eliminated faction is shown in its own colour.

@@ -339,6 +339,7 @@ namespace God.Sim.Population.Households
             var father = s.Population.Find(life.TryWith);
             if (father?.Life == null || !father.Alive || father.Life.Sex != 1 || father.Stage == LifeStage.Child) return;
             if (father.Life.TryWith != mother.Id || father.Life.TryingUntil < s.Tick) return;
+            Conception.BeforeUnion(s, ev, mother, father); // F2: ConceptionMode 1 only (Conception.cs); mode 0 does nothing
             // D4: a conception needs a reproductive relationship between the two. Romantic partners who both hold "try for a
             // child" with each other have agreed one (formed here, when both have room); others agreed one by offer and acceptance.
             var union = ReproductiveUnions.Between(s, mother.Id, father.Id);

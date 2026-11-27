@@ -212,7 +212,7 @@ namespace God.Game
             }
             if (i.Gesture != PointerGesture.None) Gestured?.Invoke(i.Gesture, i.GesturePos);
             if (i.HouseholdOrHome) { if (!SelectHouseholdOfPrimary()) d.Home(); }
-            if (i.Escape) { if (!Selection.IsEmpty) Selection.Clear(); else Hud.PressEscape(); }
+            if (i.Escape) { if (Hud.CancelArmed()) { } else if (!Selection.IsEmpty) Selection.Clear(); else Hud.PressEscape(); } // U2a: a power in hand is put down first
         }
 
         // ---------------------------------------------------------------- selection actions (public: tests and U2 call them too)

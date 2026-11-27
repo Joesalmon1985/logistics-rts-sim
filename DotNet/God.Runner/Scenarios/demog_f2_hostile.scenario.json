@@ -1,0 +1,63 @@
+{
+    "scenarioVersion":  1,
+    "name":  "demog_f2_hostile",
+    "description":  "F2: demog_hostile with the F2 biology block (the demog_* originals stay as F1's pinned P8 scenarios). D4 (M4.37) ecology \u0027hostile\u0027: a poor island: 40-50% fewer berry bushes and root patches than the default (3/2/2/2 per forest/meadow/hills/fields hex against 5/4/4/4), slower regrowth (berries 300, roots 200 permille a day; default 400, 300), one fish spot per coast hex (default two); disease On. Founders: the established band (6 x 20). Biology: the F2 biology block shared by every ecology scenario (stated here, never tuned per seed), from human natural-fertility biology at 1 sim year = 16 human years: daily conception chance when both partners try 60-90% (a sim day is about 1.6 human years of trying), time after a birth 0.05 years (0.8 human years; with the 0.25-year pregnancy the shortest birth interval is 4.8 human years), fertile span to 2.8-3.2 years (45-51 human years, menopause; the age factor still lowers the chance over the last 0.4). No immigration, no spawning or replenishment; 15 sim years.",
+    "setup":  {
+                  "factionCount":  6,
+                  "human":  -1,
+                  "population":  true,
+                  "startNpcsPerFaction":  20,
+                  "victory":  [
+                                  {
+                                      "kind":  "sandbox"
+                                  }
+                              ]
+              },
+    "tuning":  {
+                   "Households.Founders.Generator":  1,
+                   "Households.Life.ConceiveBasePermille":  600,
+                   "Households.Life.ConceiveSpanPermille":  300,
+                   "Households.Life.AfterBirthMilli":  50,
+                   "Households.Life.FertileEndBaseMilli":  2800,
+                   "Households.Founders.ElderPermille":  100,
+                   "Households.Founders.MaturePermille":  300,
+                   "Households.Founders.ChildPermille":  300,
+                   "Households.Founders.ChildMinMilli":  50,
+                   "Households.Founders.ChildMaxMilli":  950,
+                   "Households.Founders.AgeMinMilli":  1000,
+                   "Households.Founders.AgeMaxMilli":  1900,
+                   "Households.Founders.MatureMinMilli":  2000,
+                   "Households.Founders.MatureMaxMilli":  2900,
+                   "Households.Founders.ElderMinMilli":  3000,
+                   "Households.Founders.ElderMaxMilli":  3300,
+                   "Households.Founders.CouplePermille":  800,
+                   "Households.Founders.YoungCouplePermille":  400,
+                   "Households.Founders.SameSexPermille":  100,
+                   "Households.Founders.StartHuts":  1,
+                   "Households.Founders.StoreFood":  6,
+                   "Estate.CustomF0":  1,
+                   "Estate.CustomF1":  2,
+                   "Estate.CustomF2":  3,
+                   "Estate.CustomF3":  4,
+                   "Estate.CustomF4":  5,
+                   "Estate.CustomF5":  6,
+                   "Ecology.BerriesPerForest":  3,
+                   "Ecology.BerriesPerMeadow":  2,
+                   "Ecology.RootsPerHills":  2,
+                   "Ecology.RootsPerFields":  2,
+                   "Ecology.FishPerCoast":  1,
+                   "Ecology.BerryRegrowPermille":  300,
+                   "Ecology.RootRegrowPermille":  200
+               },
+    "record":  {
+                   "level":  "off"
+               },
+    "stop":  {
+                 "maxYears":  15,
+                 "populationBelow":  1
+             },
+    "checks":  [
+                   "invariants",
+                   "no-exceptions"
+               ]
+}

@@ -63,7 +63,7 @@ namespace God.Game
             : Watching ? (View.IsGameOver ? GameOutcome.Lost : GameOutcome.Playing) : View.Diplomacy.Outcome;
 
         /// <summary>True when the build tools and orders may be used: a living human faction and a game still on.</summary>
-        public bool CanAct => Outcome == GameOutcome.Playing && MeAlive;
+        public bool CanAct => !Boot.GodOnly && Outcome == GameOutcome.Playing && MeAlive; // U2a: no faction orders in the god-only game
 
         private float _toastUntil, _helpUntil;
         private float _rollTime = -10f;
@@ -218,6 +218,8 @@ namespace God.Game
 
         private CommandResult Send(Command c)
         {
+            // U2a (blocker 6): the god-only game offers no faction command; the sim refuses it too (god_only)
+            if (Boot.GodOnly) { var g = CommandResult.Reject("god_only", God.Sim.Divinity.DivineReasons.Sentence("god_only")); Toast(g.Message); return g; }
             var r = Gate.Submit(c);
             if (!r.Ok) Toast(r.Message);
             return r;
@@ -608,6 +610,7 @@ namespace God.Game
             }
             if (SelectedNode >= 0) d.Ring(NodePos(SelectedNode), 2.4f, 0.5f, gold);
             DrawSelectionMarks(d);
+            DivineUpdate(d); // U2a
 
             int hover = HoverNode;
             if (hover >= 0)

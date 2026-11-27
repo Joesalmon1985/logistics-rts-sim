@@ -1,0 +1,600 @@
+[
+ {
+  "case": "bench_stage3_watch6",
+  "seed": 1,
+  "ticks": 40000,
+  "ticksPerSecond": 9385.0,
+  "realTimeMultiple": 938.5,
+  "simYearsPerRealSecond": 0.7821,
+  "simYearsPerRealMinute": 46.925,
+  "msPerTickMean": 0.1065,
+  "msPerTickP50": 0.0781,
+  "msPerTickP99": 0.3989,
+  "msPerTickMax": 8.869,
+  "allocBytesPerTick": 46865,
+  "memoryBuildBytes": 308520,
+  "memoryEndBytes": 1463048,
+  "memoryEndUncollectedBytes": 3662984,
+  "processWorkingSetBytes": 75993088,
+  "saveBytes": 467479,
+  "saveMs": 94.3,
+  "loadMs": 112.8,
+  "loadSameHash": true,
+  "machine": "cores 16",
+  "runtime": "10.0.12",
+  "parallel": [
+   {
+    "workers": 1,
+    "aggregateTicksPerSecond": 16312.0,
+    "perSimTicksPerSecond": 16312.0,
+    "scaling": 1.0
+   },
+   {
+    "workers": 4,
+    "aggregateTicksPerSecond": 57253.0,
+    "perSimTicksPerSecond": 14313.0,
+    "scaling": 0.877
+   },
+   {
+    "workers": 8,
+    "aggregateTicksPerSecond": 95214.0,
+    "perSimTicksPerSecond": 11902.0,
+    "scaling": 0.73
+   },
+   {
+    "workers": 16,
+    "aggregateTicksPerSecond": 99520.0,
+    "perSimTicksPerSecond": 6220.0,
+    "scaling": 0.381
+   }
+  ],
+  "gitCommit": "unknown",
+  "date": "2026-11-27"
+ },
+ {
+  "case": "bench_npc_100",
+  "seed": 1,
+  "ticks": 6000,
+  "ticksPerSecond": 7139.9,
+  "realTimeMultiple": 714.0,
+  "simYearsPerRealSecond": 0.595,
+  "simYearsPerRealMinute": 35.7,
+  "msPerTickMean": 0.14,
+  "msPerTickP50": 0.1344,
+  "msPerTickP99": 0.2887,
+  "msPerTickMax": 8.565,
+  "allocBytesPerTick": 22844,
+  "memoryBuildBytes": 2242904,
+  "memoryEndBytes": 4203584,
+  "memoryEndUncollectedBytes": 6765000,
+  "processWorkingSetBytes": 97525760,
+  "saveBytes": 2070854,
+  "saveMs": 230.1,
+  "loadMs": 264.4,
+  "loadSameHash": true,
+  "machine": "cores 16",
+  "runtime": "10.0.12",
+  "npcs": 120,
+  "npcsAlive": 120,
+  "npcDecisionsPerSecond": 51980.0,
+  "npcThinks": 43681,
+  "pathSearchesPerTick": 0.295,
+  "pathNodesExpandedPerSearch": 16.0,
+  "learningStoreBytesPerNpc": 9920,
+  "sleepsPerSimDay": 158.8,
+  "memoryPerNpcBytes": 42866,
+  "microsPerThinkOn": 19.24,
+  "microsPerThinkOff": 14.96,
+  "learningMicrosPerThink": 4.28,
+  "learningShareOfThink": 0.223,
+  "populationPhases": {
+   "day start": {
+    "usPerThinkOn": 0.258,
+    "usPerThinkOff": 0.223
+   },
+   "body": {
+    "usPerThinkOn": 0.718,
+    "usPerThinkOff": 0.636
+   },
+   "credit and close": {
+    "usPerThinkOn": 0.346,
+    "usPerThinkOff": 0.225
+   },
+   "senses": {
+    "usPerThinkOn": 2.219,
+    "usPerThinkOff": 1.886
+   },
+   "cognition": {
+    "usPerThinkOn": 2.609,
+    "usPerThinkOff": 1.974
+   },
+   "decide": {
+    "usPerThinkOn": 3.044,
+    "usPerThinkOff": 1.785
+   },
+   "learning update": {
+    "usPerThinkOn": 1.63,
+    "usPerThinkOff": 0.194
+   },
+   "act": {
+    "usPerThinkOn": 0.665,
+    "usPerThinkOff": 0.496
+   },
+   "consolidation": {
+    "usPerThinkOn": 0.06,
+    "usPerThinkOff": 0.018
+   }
+  },
+  "npcUpdateMicrosPerThink": 11.55,
+  "learningMicrosPerThinkByPhase": 3.93,
+  "learningShareOfNpcUpdate": 0.34,
+  "consolidationMsPerSimDay": 0.528,
+  "parallel": [
+   {
+    "workers": 1,
+    "aggregateTicksPerSecond": 7880.0,
+    "perSimTicksPerSecond": 7880.0,
+    "scaling": 1.0
+   },
+   {
+    "workers": 4,
+    "aggregateTicksPerSecond": 28869.0,
+    "perSimTicksPerSecond": 7217.0,
+    "scaling": 0.916
+   }
+  ],
+  "gitCommit": "unknown",
+  "date": "2026-11-27"
+ },
+ {
+  "case": "bench_npc_500",
+  "seed": 1,
+  "ticks": 6000,
+  "ticksPerSecond": 1083.0,
+  "realTimeMultiple": 108.3,
+  "simYearsPerRealSecond": 0.0903,
+  "simYearsPerRealMinute": 5.415,
+  "msPerTickMean": 0.9233,
+  "msPerTickP50": 0.928,
+  "msPerTickP99": 1.6518,
+  "msPerTickMax": 10.696,
+  "allocBytesPerTick": 25584,
+  "memoryBuildBytes": 9648632,
+  "memoryEndBytes": 13064208,
+  "memoryEndUncollectedBytes": 15525600,
+  "processWorkingSetBytes": 158470144,
+  "saveBytes": 9882400,
+  "saveMs": 504.5,
+  "loadMs": 651.8,
+  "loadSameHash": true,
+  "machine": "cores 16",
+  "runtime": "10.0.12",
+  "npcs": 592,
+  "npcsAlive": 592,
+  "npcDecisionsPerSecond": 39150.0,
+  "npcThinks": 216891,
+  "pathSearchesPerTick": 1.904,
+  "pathNodesExpandedPerSearch": 21.9,
+  "learningStoreBytesPerNpc": 9920,
+  "sleepsPerSimDay": 816.8,
+  "memoryPerNpcBytes": 23656,
+  "microsPerThinkOn": 25.54,
+  "microsPerThinkOff": 19.86,
+  "learningMicrosPerThink": 5.69,
+  "learningShareOfThink": 0.223,
+  "populationPhases": {
+   "day start": {
+    "usPerThinkOn": 0.265,
+    "usPerThinkOff": 0.275
+   },
+   "body": {
+    "usPerThinkOn": 0.809,
+    "usPerThinkOff": 0.767
+   },
+   "credit and close": {
+    "usPerThinkOn": 0.563,
+    "usPerThinkOff": 0.499
+   },
+   "senses": {
+    "usPerThinkOn": 5.871,
+    "usPerThinkOff": 5.186
+   },
+   "cognition": {
+    "usPerThinkOn": 3.433,
+    "usPerThinkOff": 2.812
+   },
+   "decide": {
+    "usPerThinkOn": 2.866,
+    "usPerThinkOff": 1.67
+   },
+   "learning update": {
+    "usPerThinkOn": 1.724,
+    "usPerThinkOff": 0.209
+   },
+   "act": {
+    "usPerThinkOn": 1.675,
+    "usPerThinkOff": 1.276
+   },
+   "consolidation": {
+    "usPerThinkOn": 0.062,
+    "usPerThinkOff": 0.017
+   }
+  },
+  "npcUpdateMicrosPerThink": 17.27,
+  "learningMicrosPerThinkByPhase": 4.17,
+  "learningShareOfNpcUpdate": 0.241,
+  "consolidationMsPerSimDay": 2.695,
+  "parallel": [
+   {
+    "workers": 1,
+    "aggregateTicksPerSecond": 1316.0,
+    "perSimTicksPerSecond": 1316.0,
+    "scaling": 1.0
+   },
+   {
+    "workers": 4,
+    "aggregateTicksPerSecond": 4802.0,
+    "perSimTicksPerSecond": 1200.0,
+    "scaling": 0.912
+   },
+   {
+    "workers": 8,
+    "aggregateTicksPerSecond": 8103.0,
+    "perSimTicksPerSecond": 1013.0,
+    "scaling": 0.77
+   },
+   {
+    "workers": 16,
+    "aggregateTicksPerSecond": 10284.0,
+    "perSimTicksPerSecond": 643.0,
+    "scaling": 0.488
+   }
+  ],
+  "gitCommit": "unknown",
+  "date": "2026-11-27"
+ },
+ {
+  "case": "bench_npc_1000",
+  "seed": 1,
+  "ticks": 6000,
+  "ticksPerSecond": 384.1,
+  "realTimeMultiple": 38.4,
+  "simYearsPerRealSecond": 0.032,
+  "simYearsPerRealMinute": 1.921,
+  "msPerTickMean": 2.6031,
+  "msPerTickP50": 2.5778,
+  "msPerTickP99": 5.0421,
+  "msPerTickMax": 12.217,
+  "allocBytesPerTick": 30063,
+  "memoryBuildBytes": 18815344,
+  "memoryEndBytes": 23496680,
+  "memoryEndUncollectedBytes": 35692344,
+  "processWorkingSetBytes": 224862208,
+  "saveBytes": 19743082,
+  "saveMs": 634.3,
+  "loadMs": 790.1,
+  "loadSameHash": true,
+  "machine": "cores 16",
+  "runtime": "10.0.12",
+  "npcs": 1150,
+  "npcsAlive": 1148,
+  "npcDecisionsPerSecond": 27940.0,
+  "npcThinks": 436387,
+  "pathSearchesPerTick": 7.181,
+  "pathNodesExpandedPerSearch": 27.2,
+  "learningStoreBytesPerNpc": 9920,
+  "sleepsPerSimDay": 1703.2,
+  "memoryPerNpcBytes": 21286,
+  "microsPerThinkOn": 35.79,
+  "microsPerThinkOff": 31.22,
+  "learningMicrosPerThink": 4.57,
+  "learningShareOfThink": 0.128,
+  "populationPhases": {
+   "day start": {
+    "usPerThinkOn": 0.682,
+    "usPerThinkOff": 0.452
+   },
+   "body": {
+    "usPerThinkOn": 1.549,
+    "usPerThinkOff": 1.1
+   },
+   "credit and close": {
+    "usPerThinkOn": 0.835,
+    "usPerThinkOff": 0.694
+   },
+   "senses": {
+    "usPerThinkOn": 12.611,
+    "usPerThinkOff": 9.755
+   },
+   "cognition": {
+    "usPerThinkOn": 5.091,
+    "usPerThinkOff": 3.779
+   },
+   "decide": {
+    "usPerThinkOn": 3.372,
+    "usPerThinkOff": 1.751
+   },
+   "learning update": {
+    "usPerThinkOn": 2.092,
+    "usPerThinkOff": 0.241
+   },
+   "act": {
+    "usPerThinkOn": 4.97,
+    "usPerThinkOff": 3.181
+   },
+   "consolidation": {
+    "usPerThinkOn": 0.07,
+    "usPerThinkOff": 0.017
+   }
+  },
+  "npcUpdateMicrosPerThink": 31.27,
+  "learningMicrosPerThinkByPhase": 5.93,
+  "learningShareOfNpcUpdate": 0.19,
+  "consolidationMsPerSimDay": 6.106,
+  "parallel": [
+   {
+    "workers": 1,
+    "aggregateTicksPerSecond": 439.0,
+    "perSimTicksPerSecond": 439.0,
+    "scaling": 1.0
+   },
+   {
+    "workers": 4,
+    "aggregateTicksPerSecond": 1501.0,
+    "perSimTicksPerSecond": 375.0,
+    "scaling": 0.856
+   },
+   {
+    "workers": 8,
+    "aggregateTicksPerSecond": 1718.0,
+    "perSimTicksPerSecond": 215.0,
+    "scaling": 0.49
+   },
+   {
+    "workers": 16,
+    "aggregateTicksPerSecond": 2138.0,
+    "perSimTicksPerSecond": 134.0,
+    "scaling": 0.305
+   }
+  ],
+  "gitCommit": "unknown",
+  "date": "2026-11-27"
+ },
+ {
+  "case": "bench_npc_2000",
+  "seed": 1,
+  "ticks": 6000,
+  "ticksPerSecond": 75.0,
+  "realTimeMultiple": 7.5,
+  "simYearsPerRealSecond": 0.0062,
+  "simYearsPerRealMinute": 0.375,
+  "msPerTickMean": 13.3356,
+  "msPerTickP50": 13.1907,
+  "msPerTickP99": 28.7009,
+  "msPerTickMax": 50.36,
+  "allocBytesPerTick": 36022,
+  "memoryBuildBytes": 37270904,
+  "memoryEndBytes": 44193000,
+  "memoryEndUncollectedBytes": 59462848,
+  "processWorkingSetBytes": 384696320,
+  "saveBytes": 38943957,
+  "saveMs": 957.3,
+  "loadMs": 1257.0,
+  "loadSameHash": true,
+  "machine": "cores 16",
+  "runtime": "10.0.12",
+  "npcs": 2255,
+  "npcsAlive": 2254,
+  "npcDecisionsPerSecond": 11145.0,
+  "npcThinks": 891746,
+  "pathSearchesPerTick": 30.491,
+  "pathNodesExpandedPerSearch": 23.4,
+  "learningStoreBytesPerNpc": 9920,
+  "sleepsPerSimDay": 4018.0,
+  "memoryPerNpcBytes": 20016,
+  "microsPerThinkOn": 89.73,
+  "microsPerThinkOff": 76.89,
+  "learningMicrosPerThink": 12.84,
+  "learningShareOfThink": 0.143,
+  "populationPhases": {
+   "day start": {
+    "usPerThinkOn": 0.818,
+    "usPerThinkOff": 1.088
+   },
+   "body": {
+    "usPerThinkOn": 1.781,
+    "usPerThinkOff": 2.444
+   },
+   "credit and close": {
+    "usPerThinkOn": 0.777,
+    "usPerThinkOff": 0.827
+   },
+   "senses": {
+    "usPerThinkOn": 20.996,
+    "usPerThinkOff": 23.813
+   },
+   "cognition": {
+    "usPerThinkOn": 5.59,
+    "usPerThinkOff": 5.695
+   },
+   "decide": {
+    "usPerThinkOn": 3.519,
+    "usPerThinkOff": 2.161
+   },
+   "learning update": {
+    "usPerThinkOn": 2.231,
+    "usPerThinkOff": 0.343
+   },
+   "act": {
+    "usPerThinkOn": 11.857,
+    "usPerThinkOff": 8.758
+   },
+   "consolidation": {
+    "usPerThinkOn": 0.064,
+    "usPerThinkOff": 0.019
+   }
+  },
+  "npcUpdateMicrosPerThink": 47.63,
+  "learningMicrosPerThinkByPhase": 4.33,
+  "learningShareOfNpcUpdate": 0.091,
+  "consolidationMsPerSimDay": 11.492,
+  "parallel": [
+   {
+    "workers": 1,
+    "aggregateTicksPerSecond": 65.0,
+    "perSimTicksPerSecond": 65.0,
+    "scaling": 1.0
+   },
+   {
+    "workers": 4,
+    "aggregateTicksPerSecond": 245.0,
+    "perSimTicksPerSecond": 61.0,
+    "scaling": 0.947
+   }
+  ],
+  "gitCommit": "unknown",
+  "date": "2026-11-27"
+ },
+ {
+  "recording_bench_npc_500": {
+   "scenario": "bench_npc_500",
+   "ticks": 6000,
+   "seed": 1,
+   "simDays": 5,
+   "allHashesEqual": true,
+   "modes": [
+    {
+     "mode": "off",
+     "ticksPerSecond": 727.0,
+     "overheadPercent": 0.0,
+     "finalHash": "9939cffe82afb58b"
+    },
+    {
+     "mode": "metrics",
+     "ticksPerSecond": 1005.0,
+     "overheadPercent": -27.7,
+     "finalHash": "9939cffe82afb58b"
+    },
+    {
+     "mode": "sqlite_metrics",
+     "ticksPerSecond": 751.0,
+     "overheadPercent": -3.1,
+     "finalHash": "9939cffe82afb58b",
+     "dbBytes": 696320,
+     "dbBytesPerSimDay": 139264
+    },
+    {
+     "mode": "jsonl_summary",
+     "ticksPerSecond": 703.0,
+     "overheadPercent": 3.5,
+     "finalHash": "9939cffe82afb58b",
+     "jsonlBytes": 3470981,
+     "jsonlBytesPerSimDay": 694196
+    },
+    {
+     "mode": "sqlite_summary",
+     "ticksPerSecond": 560.0,
+     "overheadPercent": 29.8,
+     "finalHash": "9939cffe82afb58b",
+     "dbBytes": 9101312,
+     "dbBytesPerSimDay": 1820262
+    },
+    {
+     "mode": "sqlite_summary_sync",
+     "ticksPerSecond": 410.0,
+     "overheadPercent": 77.4,
+     "finalHash": "9939cffe82afb58b",
+     "dbBytes": 9101312,
+     "dbBytesPerSimDay": 1820262
+    },
+    {
+     "mode": "jsonl_full",
+     "ticksPerSecond": 353.0,
+     "overheadPercent": 106.0,
+     "finalHash": "9939cffe82afb58b",
+     "jsonlBytes": 25393642,
+     "jsonlBytesPerSimDay": 5078728
+    },
+    {
+     "mode": "sqlite_full",
+     "ticksPerSecond": 402.0,
+     "overheadPercent": 81.0,
+     "finalHash": "9939cffe82afb58b",
+     "dbBytes": 35274752,
+     "dbBytesPerSimDay": 7054950
+    }
+   ],
+   "date": "2026-11-27"
+  },
+  "recording_bench_stage3_watch6": {
+   "scenario": "bench_stage3_watch6",
+   "ticks": 24000,
+   "seed": 1,
+   "simDays": 20,
+   "allHashesEqual": true,
+   "modes": [
+    {
+     "mode": "off",
+     "ticksPerSecond": 7224.0,
+     "overheadPercent": 0.0,
+     "finalHash": "34bc9ee37c71c8bd"
+    },
+    {
+     "mode": "metrics",
+     "ticksPerSecond": 7396.0,
+     "overheadPercent": -2.3,
+     "finalHash": "34bc9ee37c71c8bd"
+    },
+    {
+     "mode": "sqlite_metrics",
+     "ticksPerSecond": 7359.0,
+     "overheadPercent": -1.8,
+     "finalHash": "34bc9ee37c71c8bd",
+     "dbBytes": 712704,
+     "dbBytesPerSimDay": 35635
+    },
+    {
+     "mode": "jsonl_summary",
+     "ticksPerSecond": 8420.0,
+     "overheadPercent": -14.2,
+     "finalHash": "34bc9ee37c71c8bd",
+     "jsonlBytes": 95600,
+     "jsonlBytesPerSimDay": 4780
+    },
+    {
+     "mode": "sqlite_summary",
+     "ticksPerSecond": 8506.0,
+     "overheadPercent": -15.1,
+     "finalHash": "34bc9ee37c71c8bd",
+     "dbBytes": 1138688,
+     "dbBytesPerSimDay": 56934
+    },
+    {
+     "mode": "sqlite_summary_sync",
+     "ticksPerSecond": 8607.0,
+     "overheadPercent": -16.1,
+     "finalHash": "34bc9ee37c71c8bd",
+     "dbBytes": 1138688,
+     "dbBytesPerSimDay": 56934
+    },
+    {
+     "mode": "jsonl_full",
+     "ticksPerSecond": 9489.0,
+     "overheadPercent": -23.9,
+     "finalHash": "34bc9ee37c71c8bd",
+     "jsonlBytes": 177892,
+     "jsonlBytesPerSimDay": 8894
+    },
+    {
+     "mode": "sqlite_full",
+     "ticksPerSecond": 7234.0,
+     "overheadPercent": -0.1,
+     "finalHash": "34bc9ee37c71c8bd",
+     "dbBytes": 1482752,
+     "dbBytesPerSimDay": 74137
+    }
+   ],
+   "date": "2026-11-27"
+  }
+ }
+]
