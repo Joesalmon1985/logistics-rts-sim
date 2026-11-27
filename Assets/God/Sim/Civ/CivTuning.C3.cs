@@ -17,6 +17,10 @@ namespace God.Sim.Civ
         public int AbandonTicks = 300;
         /// <summary>An offer not answered within this many ticks lapses.</summary>
         public int OfferTicks = 120;
+        /// <summary>An employer does not offer again to a person whose last offer from it ended (refused, lapsed, or a contract that ended) within this many ticks (its own memory).</summary>
+        public int OfferCooldownTicks = 600;
+        /// <summary>Offers are made face to face: to a person within this many nodes, by an employer within this many nodes of its asset (the workplace in view).</summary>
+        public int OfferRange = 4, OfferAssetRange = 8;
         /// <summary>Unpaid units (as the worker believes) from which a walk-out is among its options.</summary>
         public int WalkOutUnpaid = 2;
         /// <summary>The pay an employer first offers per unit (it adds one after each refusal by the same person, up to <see cref="MaxPay"/>).</summary>

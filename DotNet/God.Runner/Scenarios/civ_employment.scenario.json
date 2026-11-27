@@ -1,0 +1,18 @@
+{
+  "scenarioVersion": 1,
+  "name": "civ_employment",
+  "description": "C3 demonstration (Checkpoint C, end-to-end scenario 3 'operates a productive asset and compensates another for work'): the band_6x20 population (six factions of 20 founding adults on foraging, stage 3 AI, sandbox) with Civ.Enabled = 1. People build fields and workshops from logs they gathered (C1); an owner who sees a person outside its household may offer work at its asset for goods by gesture; that person decides by its own valuation whether to accept or refuse; a hired worker works the owner's asset under a Work right (the output is the owner's) and the owner may hand over the agreed goods within reach at the end of a shift, or not: unpaid shifts become arrears and the worker may walk out (the contract is suspended, owner Q19), go back, resign or be dismissed. Nothing scripted; no money. 10 sim days.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 20,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "tuning": {
+    "Civ.Enabled": 1
+  },
+  "record": { "level": "off" },
+  "stop": { "maxDays": 10, "populationBelow": 1 },
+  "checks": [ "invariants", "no-exceptions" ]
+}

@@ -32,6 +32,10 @@ namespace God.Sim.Civ
         public short Trust;
         /// <summary>How many of its offers to this person were refused (an employer raises the pay after each), and the pay it last offered.</summary>
         public byte Refusals;
+        /// <summary>The pay per unit when it walked out (a renegotiated offer above it is better terms).</summary>
+        public byte WalkOutPay;
+        /// <summary>An employer: the renegotiating offers it made since the worker walked out.</summary>
+        public byte ReOffers;
         public long SinceTick, Tick;
     }
 
@@ -78,7 +82,7 @@ namespace God.Sim.Civ
             {
                 h.Add(j.Contract); h.Add(j.Side); h.Add(j.Other); h.Add(j.Asset); h.Add(j.AssetNode); h.Add(j.AssetClass); h.Add((int)j.PayWare); h.Add(j.PayCount);
                 h.Add((int)j.Per); h.Add(j.ShiftTicks); h.Add((int)j.Status); h.Add(j.By); h.Add(j.UnitsWorked); h.Add(j.UnitsPaid); h.Add(j.Unpaid); h.Add(j.Trust);
-                h.Add(j.Refusals); h.Add(j.SinceTick); h.Add(j.Tick);
+                h.Add(j.Refusals); h.Add(j.WalkOutPay); h.Add(j.ReOffers); h.Add(j.SinceTick); h.Add(j.Tick);
             }
         }
     }

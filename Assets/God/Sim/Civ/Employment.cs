@@ -123,6 +123,9 @@ namespace God.Sim.Civ
             var w = s.Population.Find(c.Worker);
             if (by == EmploymentContract.ByWorker) SetBelievedWorkRight(w, c.Asset, false); // it holds back its own side: it does not see itself as at work there now
             UpdateBelief(w, c);
+            var cm = w?.Mind?.Civ;
+            int i = cm?.IndexOfJob(c.Id) ?? -1;
+            if (i >= 0) { var b = cm.Jobs[i]; b.WalkOutPay = (byte)Fx.Clamp(c.Terms.Pay.Amount, 0, 255); cm.Jobs[i] = b; }
             return true;
         }
 
@@ -132,6 +135,9 @@ namespace God.Sim.Civ
             if (c == null || c.Status != ContractStatus.Suspended) return false;
             c.Status = ContractStatus.Active; c.By = 0; c.StatusTick = s.Tick; c.ProgressTick = s.Tick; c.DayOpen = true;
             StateOf(s).Resumptions++;
+            var am = s.Population.Find(c.Agent)?.Mind?.Civ;
+            int ai = am?.IndexOfJob(c.Id) ?? -1;
+            if (ai >= 0) { var b = am.Jobs[ai]; b.ReOffers = 0; am.Jobs[ai] = b; }
             ev?.Add(new ContractResumed { Contract = c.Id, By = by, PayAmount = c.Terms.Pay.Amount });
             var w = s.Population.Find(c.Worker);
             SetBelievedWorkRight(w, c.Asset, true);
@@ -164,9 +170,12 @@ namespace God.Sim.Civ
             if (wasOpen)
             {
                 byte ur = reason == EndReason.Died ? UseRightEnded.HolderDied : reason == EndReason.AssetGone ? UseRightEnded.AssetGone : UseRightEnded.ByGrantor;
-                if (Assets.Find(s, c.Asset) != null) Assets.EndUse(s, ev, c.Asset, Owner.Npc(c.Worker), UseKind.Work, ur);
+                // one Work right row per holder and asset: it ends with the last open contract of this worker on this asset
+                bool shared = false;
+                foreach (var o in e.Contracts) if (o != c && o.IsOpen && o.Worker == c.Worker && o.Asset == c.Asset) { shared = true; break; }
+                if (!shared && Assets.Find(s, c.Asset) != null) Assets.EndUse(s, ev, c.Asset, Owner.Npc(c.Worker), UseKind.Work, ur);
                 ev?.Add(new EmploymentEnded { Contract = c.Id, Worker = c.Worker, Reason = reason, By = by, ArrearsUnits = c.ArrearsUnits, UnitsEarned = c.UnitsEarned, UnitsPaid = c.UnitsPaid });
-                SetBelievedWorkRight(w, c.Asset, false);
+                if (!shared) SetBelievedWorkRight(w, c.Asset, false);
                 if (w != null && w.Alive) Close(s, ev, w, c.Id);
             }
             else if (reason == EndReason.Refused) e.Refusals++;
@@ -310,6 +319,7 @@ namespace God.Sim.Civ
             if (i < 0) return;
             var b = cm.Jobs[i];
             bool newlyRefused = b.Status != ContractStatus.Ended && c.Status == ContractStatus.Ended && c.Reason == EndReason.Refused;
+            if (b.Status != c.Status) b.Tick = c.StatusTick;
             b.Status = c.Status; b.By = c.By;
             b.PayWare = c.Terms.Pay.Ware; b.PayCount = (byte)Fx.Clamp(c.Terms.Pay.Amount, 0, 255); b.Per = c.Terms.Per; b.ShiftTicks = c.Terms.ShiftTicks;
             if (newlyRefused && b.Side == JobBelief.AsEmployer && b.Refusals < 255) b.Refusals++;
@@ -462,7 +472,14 @@ namespace God.Sim.Civ
             if (c != null && c.Status == ContractStatus.Suspended && c.Agent == npc.Id) Renegotiate(s, c, terms); // a renegotiating offer to a worker who walked out
             else c = Hire(s, ev, Owner.Npc(npc.Id), npc.Id, worker.Id, a.Id, terms);
             plan.Contract = c.Id; act.Contract = c.Id;
-            EmitOffer(s, ev, npc, c);
+            int id = EmitOffer(s, ev, npc, c);
+            if (c.Status == ContractStatus.Suspended)
+            {
+                if (Perceived(worker, id, GestureAct.Offer)) UpdateBelief(worker, c); // it saw the better terms
+                var am = npc.Mind?.Civ;
+                int ai = am?.IndexOfJob(c.Id) ?? -1;
+                if (ai >= 0) { var b = am.Jobs[ai]; if (b.ReOffers < 255) b.ReOffers++; am.Jobs[ai] = b; }
+            }
         }
 
         private static void StartDismiss(GodState s, EventBuffer ev, Npc npc, in C3Plan plan, ref EmploymentAct act)
@@ -656,6 +673,7 @@ namespace God.Sim.Civ
                     if (working || cycles > 0) Resume(s, ev, c, EmploymentContract.ByWorker); // it went back to work: it took the job up again
                     else continue;
                 }
+                if (w.Action.Asleep) c.ProgressTick = s.Tick; // a night's sleep is not abandonment: the timer counts waking time only
                 if (working)
                 {
                     c.WorkTicks++; c.DayWorkTicks++; c.ProgressTick = s.Tick;

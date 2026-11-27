@@ -17,7 +17,7 @@ namespace God.Sim.Civ
     public static class PostingValue
     {
         public const int Poor = 1, Low = 2, Fair = 3, Good = 4;
-        public const int Offered = 16, ActiveUnpaid = 17, Suspended = 18, SuspendedRepaid = 19, Due = 20, LossSmall = 21, LossBig = 22, Active = 23;
+        public const int Offered = 16, ActiveUnpaid = 17, Suspended = 18, SuspendedRepaid = 19, Due = 20, LossSmall = 21, LossBig = 22, Active = 23, WalkOutPersists = 24;
         public static uint F(int v) => Feature.Make(FeatureKind.Posting, v);
     }
 
@@ -65,6 +65,8 @@ namespace God.Sim.Civ
             into.Add(new Instinct(PostingValue.F(PostingValue.Poor), offer, h, -200));
             into.Add(new Instinct(PostingValue.F(PostingValue.Suspended), offer, h, 250));
             into.Add(new Instinct(PostingValue.F(PostingValue.Suspended), refuse, h, 100));
+            into.Add(new Instinct(PostingValue.F(PostingValue.WalkOutPersists), refuse, h, 500));
+            into.Add(new Instinct(PostingValue.F(PostingValue.WalkOutPersists), offer, h, -350));
             into.Add(new Instinct(PostingValue.F(PostingValue.Due), 0, p, 350));
             into.Add(new Instinct(PostingValue.F(PostingValue.LossBig), 0, p, -250));
         }
@@ -102,6 +104,7 @@ namespace God.Sim.Civ
                 case PostingValue.LossSmall: text = "a wage that costs me little"; break;
                 case PostingValue.LossBig: text = "a wage that costs me much"; break;
                 case PostingValue.Active: text = "in work"; break;
+                case PostingValue.WalkOutPersists: text = "a walk-out my offers did not end"; break;
             }
         }
 
@@ -333,7 +336,7 @@ namespace God.Sim.Civ
                 if (j.Status == ContractStatus.Suspended && j.By == EmploymentContract.ByWorker)
                 {
                     // back to work once it was paid what it was owed (or the terms were raised: a better band), else not; or give it up
-                    bool repaid = j.Unpaid < tu.WalkOutUnpaid && band >= PostingValue.Fair;
+                    bool repaid = (j.Unpaid < tu.WalkOutUnpaid || j.PayCount > j.WalkOutPay) && band >= PostingValue.Low;
                     if (!Room(sc, 2)) return;
                     plan.Act = EmploymentAct.Accept;
                     AddPlanned(sc, Employment.VerbWorkFor, Employment.IntentAccept, IntentTarget.Building, j.Asset, j.AssetNode, j.AssetClass, dist, plan,
@@ -350,11 +353,13 @@ namespace God.Sim.Civ
         private static void EmployerCandidates(ThinkScratch sc, CivMind cm, CivC3Tuning tu)
         {
             int open = 0;
+            bool pending = false;
             for (int i = 0; i < cm.Jobs.Count; i++)
             {
                 var j = cm.Jobs[i];
                 if (j.Side != JobBelief.AsEmployer || j.Status == ContractStatus.Ended) continue;
                 open++;
+                if (j.Status == ContractStatus.Offered) pending = true;
                 if (j.Status != ContractStatus.Suspended) continue;
                 int pi = PersonIndex(sc, j.Other);
                 if (pi < 0) continue;
@@ -362,15 +367,17 @@ namespace God.Sim.Civ
                 if (!Room(sc, 2)) return;
                 int raised = Math.Min(tu.MaxPay, j.PayCount + 1);
                 if (Held(sc, j.PayWare) < raised && FirstOutput(j.AssetClass) != j.PayWare) raised = j.PayCount;
+                // its better offers did not bring the worker back (or it cannot offer more): the walk-out persists
+                uint persists = j.ReOffers >= 2 || raised <= j.PayCount ? PostingValue.F(PostingValue.WalkOutPersists) : 0;
                 var plan = new C3Plan { Act = EmploymentAct.Offer, Contract = j.Contract, Asset = j.Asset, Ware = j.PayWare, Count = (byte)raised };
                 AddPlanned(sc, Employment.VerbHire, Employment.IntentOffer, IntentTarget.Npc, p.Id, p.Node, 0, p.Dist, plan,
-                    PostingValue.F(PostingValue.Suspended), Feature.MsgAct((int)GestureAct.Offer), Feature.NpcRef(p.As), Feature.Make(FeatureKind.Role, RoleValue.Employer));
+                    PostingValue.F(PostingValue.Suspended), Feature.MsgAct((int)GestureAct.Offer), Feature.NpcRef(p.As), Feature.Make(FeatureKind.Role, RoleValue.Employer), persists);
                 plan.Act = EmploymentAct.Dismiss;
                 AddPlanned(sc, Employment.VerbHire, Employment.IntentDismiss, IntentTarget.Building, j.Asset, j.AssetNode, j.AssetClass, sc.Grid.Distance(sc.Self.Node, j.AssetNode), plan,
-                    PostingValue.F(PostingValue.Suspended), Feature.MsgAct((int)GestureAct.Refuse), Feature.NpcRef(p.As), Feature.Make(FeatureKind.Role, RoleValue.Employer));
+                    PostingValue.F(PostingValue.Suspended), Feature.MsgAct((int)GestureAct.Refuse), Feature.NpcRef(p.As), Feature.Make(FeatureKind.Role, RoleValue.Employer), persists);
                 return;
             }
-            if (open >= tu.MaxWorkersPerEmployer) return;
+            if (open >= tu.MaxWorkersPerEmployer || pending) return; // one offer at a time
             // an asset it believes its own (or its household's) that work would turn into output
             int best = -1, bestD = int.MaxValue;
             for (int i = 0; i < cm.Own.Count; i++)
@@ -383,7 +390,7 @@ namespace God.Sim.Civ
                 if (StaffOn(cm, b.Asset) >= def.StaffSlots) continue;
                 if (def.Recipe.Inputs.Count > 0 && !StockedNow(sc, b.Asset)) continue; // a workshop is worth staffing only while it has inputs
                 int d = sc.Grid.Distance(sc.Self.Node, b.Node);
-                if (d > sc.Tuning.RecallNodes || d >= bestD) continue;
+                if (d > tu.OfferAssetRange || d >= bestD) continue;
                 best = i; bestD = d;
             }
             if (best < 0) return;
@@ -394,9 +401,10 @@ namespace God.Sim.Civ
             for (int k = 0; k < sc.PeopleCount; k++)
             {
                 var p = sc.People[k];
-                if (p.Asleep || p.SameHousehold || p.As == 0 || p.Stage == LifeStage.Child || p.Body != BodyKind.Person) continue;
+                if (p.Asleep || p.SameHousehold || p.As == 0 || p.Stage == LifeStage.Child || p.Body != BodyKind.Person || p.Dist > tu.OfferRange) continue;
                 bool known = false;
-                foreach (var j in cm.Jobs) if (j.Other == p.Id && j.Side == JobBelief.AsEmployer && j.Status != ContractStatus.Ended) { known = true; break; }
+                foreach (var j in cm.Jobs)
+                    if (j.Other == p.Id && j.Side == JobBelief.AsEmployer && (j.Status != ContractStatus.Ended || sc.Self.Tick - j.Tick < tu.OfferCooldownTicks)) { known = true; break; }
                 if (known) continue;
                 target = k; break; // nearest first
             }
