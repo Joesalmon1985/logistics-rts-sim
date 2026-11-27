@@ -88,8 +88,10 @@ namespace God.Sim
             trader = trader ?? new AiTrader();
             var registry = StandardPolicies.Registry(sim, AiTuning.Default, trader);
             policies.Validate(registry);
-            if (policies.Defaults[(int)PolicyLevel.Institution] != PolicyRegistry.None || policies.Scoped[(int)PolicyLevel.Institution].Count > 0)
-                throw new PolicyException("policies.institution: no institutions exist before M12");
+            // C6 (flagged additive edit, LEAD_RULINGS R31: move into D1's AttachDirectors at the merge): the institution seats (905)
+            if (policies.Scoped[(int)PolicyLevel.Institution].Count > 0) throw new PolicyException("policies.institution: per-scope institution policies are not supported (C6)");
+            var institution = InstitutionPolicies.Create(policies.Defaults[(int)PolicyLevel.Institution]) ?? throw new PolicyException("policies.institution: unknown policy " + policies.Defaults[(int)PolicyLevel.Institution]);
+            Orgs.InstitutionDirector.Attach(sim, institution);
             string civilian = policies.Defaults[(int)PolicyLevel.Civilian];
             if (policies.Scoped[(int)PolicyLevel.Civilian].Count > 0) throw new PolicyException("policies.civilian: per-faction civilian policies are not supported (M3)");
             if (civilian != PolicyRegistry.None)

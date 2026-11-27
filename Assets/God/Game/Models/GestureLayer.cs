@@ -118,9 +118,7 @@ namespace God.Game
             if (sh.Since < 0) sh.Since = time;
             if (time - sh.Since > Show) { _bySpeaker.Remove(n.Id); return; }
             var col = ColourOf(sh.E.Act);
-            // the gesture: the right arm raised and swung a little (always; U3b replaces it with the vocabulary)
-            var arm = figure.Find("Body/ArmR");
-            if (arm != null) arm.localRotation = Quaternion.Euler(-150f + 20f * Mathf.Sin((time - sh.Since) * 6f), 0, 0);
+            // the body animation is PoseLayer's (U3b vocabulary); this layer keeps only the developer text and line
             // text and line only for the developer decode overlay (M5.18) or, text only, the captions option
             bool decode = DevOverlays.DecodedMessages;
             if (!decode && !DevOverlays.Captions)

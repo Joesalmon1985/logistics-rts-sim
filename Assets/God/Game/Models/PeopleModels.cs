@@ -40,6 +40,63 @@ namespace God.Game
             mb.Box(new Vector3(0, 1.88f, 0.22f), new Vector3(0.4f, 0.05f, 0.14f), cap * 0.8f);
         }
 
+        /// <summary>The torso without the head (U3b rig: the head is its own pivot part at y 1.5).</summary>
+        public static void TorsoOnly(MeshBuilder mb, Color tunic, bool apron = false)
+        {
+            mb.Box(new Vector3(0, 1.13f, 0), new Vector3(0.64f, 0.66f, 0.38f), tunic);
+            mb.Box(new Vector3(0, 0.86f, 0), new Vector3(0.68f, 0.22f, 0.42f), tunic * 0.8f);
+            mb.Box(new Vector3(0, 0.96f, 0), new Vector3(0.66f, 0.07f, 0.4f), new Color(0.30f, 0.20f, 0.12f));
+            if (apron) mb.Box(new Vector3(0, 0.95f, 0.2f), new Vector3(0.48f, 0.6f, 0.04f), new Color(0.40f, 0.28f, 0.16f));
+        }
+
+        public const float HeadPivot = 1.5f;
+
+        /// <summary>The head in head space (pivot at the neck, y 1.5): skin, hair (grey for an elder) and the faction cap.</summary>
+        public static void Head(MeshBuilder mb, Color cap, bool grey)
+        {
+            float o = -HeadPivot;
+            mb.Box(new Vector3(0, 1.66f + o, 0), new Vector3(0.4f, 0.42f, 0.4f), ModelKit.Skin);
+            mb.Box(new Vector3(0, 1.83f + o, -0.04f), new Vector3(0.43f, 0.14f, 0.42f), grey ? new Color(0.78f, 0.78f, 0.80f) : ModelKit.Hair);
+            mb.Box(new Vector3(0, 1.92f + o, 0), new Vector3(0.46f, 0.12f, 0.46f), cap);
+            mb.Box(new Vector3(0, 1.88f + o, 0.22f), new Vector3(0.4f, 0.05f, 0.14f), cap * 0.8f);
+        }
+
+        /// <summary>Finger pips beyond the hand in arm space (count 1..5), the quantity of a gesture.</summary>
+        public static void Fingers(MeshBuilder mb, int count)
+        {
+            for (int i = 0; i < count; i++)
+                mb.Box(new Vector3((i - (count - 1) * 0.5f) * 0.05f, -0.78f, 0.02f), new Vector3(0.035f, 0.13f, 0.035f), ModelKit.Skin);
+        }
+
+        /// <summary>A bandage wrap (arm or leg space).</summary>
+        public static void Wrap(MeshBuilder mb, float y, float w)
+        {
+            mb.Box(new Vector3(0, y, 0), new Vector3(w, 0.17f, w + 0.03f), new Color(0.93f, 0.92f, 0.86f));
+            mb.Box(new Vector3(0, y - 0.12f, 0), new Vector3(w * 0.9f, 0.04f, w + 0.04f), new Color(0.74f, 0.20f, 0.18f));
+        }
+
+        /// <summary>A sling: a cloth band across the chest (body space).</summary>
+        public static void Sling(MeshBuilder mb)
+        {
+            ModelKit.Beam(mb, new Vector3(-0.3f, 1.42f, 0.22f), new Vector3(0.3f, 0.95f, 0.22f), 0.06f, new Color(0.90f, 0.88f, 0.78f));
+        }
+
+        /// <summary>A belly bump (body space, unit size; scaled by the view).</summary>
+        public static void Belly(MeshBuilder mb, Color tunic)
+        {
+            mb.Box(new Vector3(0, 0, 0), new Vector3(0.42f, 0.42f, 0.34f), tunic * 1.05f);
+        }
+
+        /// <summary>A flat ring on the ground (an aura) in figure space.</summary>
+        public static void AuraRing(MeshBuilder mb)
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                float a = i * Mathf.PI / 6f;
+                mb.Box(new Vector3(Mathf.Cos(a) * 0.95f, 0.05f, Mathf.Sin(a) * 0.95f), new Vector3(0.3f, 0.05f, 0.12f), Color.white, -a * Mathf.Rad2Deg);
+            }
+        }
+
         public static void Leg(MeshBuilder mb, Color trousers)
         {
             mb.Box(new Vector3(0, -0.4f, 0), new Vector3(0.22f, 0.8f, 0.24f), trousers);
