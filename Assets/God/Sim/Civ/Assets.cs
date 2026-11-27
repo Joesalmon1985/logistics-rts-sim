@@ -10,6 +10,8 @@ namespace God.Sim.Civ
         public const int Field = 90, Workshop = 91, Store = 92;
         /// <summary>A free plot where the person stands and could found an asset (a place, not an object: Ref 0).</summary>
         public const int Plot = 93;
+        /// <summary>C1c: the store of an asset, seen as a store holding goods it may take (a bin: Ref is the BinId; the asset is the one at its node).</summary>
+        public const int AssetStore = 94;
         public static bool IsAsset(int cls) => cls >= Field && cls <= Store;
     }
 
