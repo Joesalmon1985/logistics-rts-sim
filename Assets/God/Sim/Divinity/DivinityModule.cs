@@ -27,6 +27,7 @@ namespace God.Sim.Divinity
         {
             if (sim.State.Divinity == null) return; // Enabled = 0: no handlers, no system (pin P1)
             Gods.Install(sim);
+            Miracles.Install(sim); // D3 (flagged additive edit)
             sim.AddSystem(DivinitySystem.SystemOrder, new DivinitySystem());
         }
 
@@ -41,6 +42,7 @@ namespace God.Sim.Divinity
         {
             var reg = s.Divinity?.Gods;
             if (s.Divinity == null) return;
+            Miracles.Check(s, bad); // D3 (flagged additive edit): C7
             if (reg == null) { bad.Add("G1: divinity state without a god registry"); return; }
             if (reg.Gods.Count != s.FactionCount) bad.Add("G1: " + reg.Gods.Count + " gods for " + s.FactionCount + " factions");
             if (reg.Days.Count != reg.Gods.Count) bad.Add("G1: day records " + reg.Days.Count + " for " + reg.Gods.Count + " gods");
