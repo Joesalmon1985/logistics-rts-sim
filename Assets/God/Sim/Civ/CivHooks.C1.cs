@@ -81,18 +81,7 @@ namespace God.Sim.Civ
         {
             if (!a.IsFinished || a.Store == 0) return n;
             var bin = Goods.BinById(s.Population, a.Store);
-            if (bin == null) return n;
-            bool storeRight = Ownership.RightOn(s, npc, a, UseKind.Store) == Ownership.RightUse;
-            bool owners = Ownership.OwnerRelation(npc, a.Owner) != Ownership.RightNone && npc.Stage != LifeStage.Child;
-            if (!owners && !storeRight) return n;
-            int units = 0; bool food = false;
-            foreach (var l in bin.Lots)
-            {
-                if (!Work.IsOutput(def, l.Ware)) continue;
-                if (!storeRight && (Ownership.OwnerRelation(npc, l.Owner) == Ownership.RightNone)) continue;
-                units += l.Count;
-                if (Wares.IsFood(l.Ware) && l.Ware != Ware.Nightshade) food = true;
-            }
+            if (bin == null || !Work.StoreView(s, npc, a, def, bin, out int units, out bool food)) return n;
             bool full = units > 0 && def.Recipe != null && def.WorkTicks > 0 && !Work.HasRoom(bin, def);
             near[n++] = new Sensed
             {

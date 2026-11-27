@@ -299,6 +299,27 @@ namespace God.Sim.Civ
             End(npc);
         }
 
+        /// <summary>
+        /// C1c, what a person sees of an asset's store it may take from (sim side, for the Sense seam): false unless it is the
+        /// owner, an adult of the owning household, or truly holds a Store right; else the output units there it may take
+        /// (its own or its household's, or any with a Store right) and whether any of them is food.
+        /// </summary>
+        public static bool StoreView(GodState s, Npc npc, ProductiveAsset a, AssetDef def, LotBin bin, out int units, out bool food)
+        {
+            units = 0; food = false;
+            bool storeRight = Ownership.RightOn(s, npc, a, UseKind.Store) == Ownership.RightUse;
+            bool owners = Ownership.OwnerRelation(npc, a.Owner) != Ownership.RightNone && npc.Stage != LifeStage.Child;
+            if (!owners && !storeRight) return false;
+            foreach (var l in bin.Lots)
+            {
+                if (!IsOutput(def, l.Ware)) continue;
+                if (!storeRight && Ownership.OwnerRelation(npc, l.Owner) == Ownership.RightNone) continue;
+                units += l.Count;
+                if (Wares.IsFood(l.Ware) && l.Ware != Ware.Nightshade) food = true;
+            }
+            return true;
+        }
+
         /// <summary>C1c: what of a store counts as the asset's output (taken out): a recipe output, never an input left to be worked; a store-only kind holds only goods put there.</summary>
         public static bool IsOutput(AssetDef def, Ware w)
         {
