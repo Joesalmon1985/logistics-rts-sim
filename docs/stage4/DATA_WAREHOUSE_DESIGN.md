@@ -963,7 +963,7 @@ Marks as 12.2. New `TelemetryDomain` names (numbers by the SAC Industry addendum
 | `fact_design_discovery` | one first discovery of a design in the world, and later rediscoveries after loss | event | S | `DesignDiscovered`, `DesignLost` | K1 / 2 (3 for research) |
 | `dim_artefact` | one document: `lot_id`, design, fidelity, origin (written, copied, seeded), maker, source lot, made and closed tick | type 1 accumulating | S | live rows = `Document` holdings in C1 (AR-I1); closed = `Consumed` of the lot | K1 / 2 |
 | `fact_artefact_copy` | one write or copy act: maker, source lot, new lot, design, fidelity, materials, ticks, † `authorised` | event | S | `DesignFormalised`, `ArtefactCopied`; materials = `ConsumedBy(ProcessInput)` rows with this ref | K1 / 2 |
-| `fact_skill_spell` | one spell per (person, skill class, band) if K1 lands the skill slots (else C7's table) | **H** | S | `SkillChanged` | K1 or C7 / 2 |
+| `fact_skill_spell` | one spell per (person, skill class, band) of the one skill store in `CivState` (R42) | **H** | S | `SkillChanged` | C7 / K1 / 2 |
 | `fact_research_project`, `fact_research_day` | project (sponsor, target, site, team, status); project × day (ticks, materials, progress) | accumulating; D | S | `ResearchProject*`, `ResearchProgress`; materials = `ConsumedBy(Research)` | K1 / 3 |
 
 **I. Rights and licences (K1; `0040_rights_licences.sql`, Tier 2)**

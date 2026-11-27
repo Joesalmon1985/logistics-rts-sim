@@ -285,7 +285,7 @@ Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX
 
 ## 11. Open questions
 Only consequential ones; each has the default the run uses.
-1. **A healing skill record.** POPULATION_DESIGN owns the skill record, which is not in the code yet. Default: C7 adds `Skill.Healing` and the general skill slots there if no other package has; if none exists when C7 starts, healing skill is represented by the healer's learned association values for `Treat` (outcome-weighted), which is enough for SVC-HEAL-1 and SVC-HEAL-2.
+1. **A healing skill record.** POPULATION_DESIGN owns the skill record, which is not in the code yet. Default (R42): C7 and K1 share the one skill store in `CivState` (created lazily, one accessor), and healing is a `SkillClass` in it, not a table in `OrgState.C7`; if none exists when C7 starts, healing skill is represented by the healer's learned association values for `Treat` (outcome-weighted), which is enough for SVC-HEAL-1 and SVC-HEAL-2.
 2. **New ware `Herbs` and `OwnershipBasis.Forfeited`.** Both touch shared enums. Default: request both from the contracts owner in F1; if refused, `Treat` uses no remedy and collateral forfeiture uses `Seized` with a `Forfeit` reason on the event.
 3. **Jurisdiction of communal rules.** Whether a commune's rule can make an act a crime in the sim's truth (default yes, for its members and its property only), or only a norm violation. This decides how justice KPIs count crime.
 
