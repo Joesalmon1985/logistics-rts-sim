@@ -33,7 +33,8 @@ namespace God.Sim
         /// parts and hash are exactly as before.
         /// </summary>
         public static readonly ReadOnlyArray<string> AllHashPartNames = new ReadOnlyArray<string>(
-            "territory", "economy", "military", "factions", "trade", "core", "pending", "population", "cognition", "learning", "household", "social");
+            "territory", "economy", "military", "factions", "trade", "core", "pending", "population", "cognition", "learning", "household", "social",
+            "civ", "organisations", "divine"); // F1.4: each only with a population and while its state is non-null
 
         /// <summary>
         /// The part names of this state, in the order of <see cref="PartsOf"/> (F0.12): the stage 3 parts; the M3 parts with a
@@ -46,6 +47,9 @@ namespace God.Sim
             for (int i = 0; i < n; i++) l.Add(AllHashPartNames[i]);
             if (s.Population != null && s.Households != null) l.Add("household");
             if (s.Population != null && s.Social != null) l.Add("social");
+            if (s.Population != null && s.Civ != null) l.Add("civ");                     // F1.4
+            if (s.Population != null && s.Organisations != null) l.Add("organisations");
+            if (s.Population != null && s.Divinity != null) l.Add("divine");
             return l.ToArray();
         }
 
@@ -90,6 +94,13 @@ namespace God.Sim
             if (setup.FactionCount < 2 || setup.FactionCount > FactionInfo.Max) throw new ArgumentOutOfRangeException(nameof(setup), "2 to 6 factions.");
             if (setup.HasHuman && !setup.InGame(setup.Human)) throw new ArgumentOutOfRangeException(nameof(setup), "The human faction is not in the game.");
             if (setup.TicksPerDay <= 0 || setup.DaysPerYear <= 0 || setup.LifeScale <= 0) throw new ArgumentOutOfRangeException(nameof(setup), "The calendar needs positive TicksPerDay, DaysPerYear and LifeScale.");
+            // F1 (contracts 2.1): the god-only seat
+            if (setup.HumanGod < 0 || setup.HumanGod > setup.FactionCount) throw new ArgumentOutOfRangeException(nameof(setup), "HumanGod must be 0 (none) or a GodId 1 to FactionCount.");
+            if (setup.Control == PlayerControl.GodOnly)
+            {
+                if (setup.HasHuman) throw new ArgumentOutOfRangeException(nameof(setup), "God-only mode needs Human = NoHuman: every faction is seated by a faction policy.");
+                if ((tuning ?? new SimTuning()).Divinity.Enabled != 1) throw new ArgumentOutOfRangeException(nameof(setup), "God-only mode needs Divinity.Enabled = 1.");
+            }
             ulong seed = setup.Seed;
             var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim"), Setup = setup, Tuning = tuning != null ? tuning.Clone() : new SimTuning() };
             s.Board = BoardGenerator.CreateIslandBoard(seed);
@@ -100,6 +111,9 @@ namespace God.Sim
             TradeModule.StartGame(s);
             Population.PopulationModule.StartGame(s);
             if (s.Population != null) Population.PopulationExtensions.StartGame(s); // F0.13: M4, then M5
+            Civ.CivModule.StartGame(s);               // F1.5: Civ, Orgs, Divinity (each creates its state only when on, with a population)
+            Orgs.OrgModule.StartGame(s);
+            Divinity.DivinityModule.StartGame(s);
             var sim = new GodSim(s);
             InstallModules(sim);
             return sim;
@@ -115,6 +129,9 @@ namespace God.Sim
             FactionsModule.Install(sim);
             Population.PopulationModule.Install(sim);
             if (sim.State.Population != null) Population.PopulationExtensions.Install(sim); // F0.13: M4, then M5
+            Civ.CivModule.Install(sim);               // F1.5
+            Orgs.OrgModule.Install(sim);
+            Divinity.DivinityModule.Install(sim);
         }
 
         /// <summary>
@@ -180,6 +197,10 @@ namespace God.Sim
             // F0.12: the later modules' parts, each only while its state exists (so M3 games hash exactly as before)
             if (s.Households != null) { var h = new StateHasher(); s.Households.AddTo(ref h); parts.Add(h.Value); }
             if (s.Social != null) { var h = new StateHasher(); s.Social.AddTo(ref h); parts.Add(h.Value); }
+            // F1.4: civ, organisations, divine (same rule)
+            if (s.Civ != null) { var h = new StateHasher(); s.Civ.AddTo(ref h); parts.Add(h.Value); }
+            if (s.Organisations != null) { var h = new StateHasher(); s.Organisations.AddTo(ref h); parts.Add(h.Value); }
+            if (s.Divinity != null) { var h = new StateHasher(); s.Divinity.AddTo(ref h); parts.Add(h.Value); }
             return parts.ToArray();
         }
 
@@ -253,6 +274,17 @@ namespace God.Sim
         {
             if (c == null) throw new ArgumentNullException(nameof(c));
             if (State.IsGameOver) return CommandResult.Reject(MilitaryReasons.GameOver, "The game is over.");
+            // F1 (contracts 2.1, 10.1, LEAD_RULINGS R1): the divine gates and the god-only gate, before the handler lookup
+            if (c is Divinity.DivineCommand dc)
+            {
+                if (State.Divinity == null) return CommandResult.Reject(Divinity.DivineReasons.DivinityOff, Divinity.DivineReasons.Sentence(Divinity.DivineReasons.DivinityOff));
+                // authorship: an external divine command must name the god holding the Human seat; in-step commands of
+                // AI-seated gods are admitted by the god director (D1), never here
+                if (!InStep && !Divinity.DivinityModule.HoldsHumanSeat(State, dc.God))
+                    return CommandResult.Reject(Divinity.DivineReasons.NotYourGod, Divinity.DivineReasons.Sentence(Divinity.DivineReasons.NotYourGod));
+            }
+            else if (!InStep && State.Setup != null && State.Setup.Control == PlayerControl.GodOnly && c is FactionCommand)
+                return CommandResult.Reject(Divinity.DivineReasons.GodOnly, Divinity.DivineReasons.Sentence(Divinity.DivineReasons.GodOnly));
             if (!_handlers.TryGetValue(c.GetType(), out var h))
                 return CommandResult.Reject(Reasons.Disabled, "That action is not available.");
             return h.Validate(State, c);

@@ -47,7 +47,7 @@ Status: design, 27 Nov 2026. Owner decisions D6.1, D6.2, D6.4, D6.8, D6.14, D6.1
 | **Aircraft** | vehicle class `Aircraft` (needs an airfield facility and an air movement layer) | later | 1–2 | fuel | later |
 | **Naval** | vehicle class `Boat` (needs water nodes for movement) | later | 2+ | fuel | later |
 | **Defensive structures** | C1 assets of kind `Defence` (wall segment, bunker, gun post) built at a construction site | NPC builders | gun post: 1 gunner | ammunition (gun post), power (later: lights, sensors) | 2 (wall, bunker, gun post) |
-| **Strategic device** | a persistent asset of class `StrategicDevice` (4.7) | strategic facility (IND kind 11) | launch crew of 2 | nuclear fuel, parts, very large power, licence | 3 |
+| **Strategic device** | a persistent asset of class `StrategicDevice` (4.7) | strategic facility (IND kind 11) | launch crew of 2 | nuclear fuel, parts, very large power, a design known at the site (a licence is the owner's own policy, R33) | 3 |
 
 ### 3.2 Weapons and stats (original, abstract)
 
@@ -129,7 +129,7 @@ The commander office decides from its own `InstitutionView` (C6): procurement, o
 
 ### 4.7 The strategic device (fictional nuclear capability; Tier 3)
 
-**Making it.** A licensed design (KNOWLEDGE doc), a strategic facility (IND `FacilityKind.StrategicSite`), the recipe `StrategicDeviceAssembly` (inputs: nuclear fuel 6, machine parts 20, wire 10, steel 20; 6000 ticks; 4/6 workers; 300 pu for the whole cycle), producing an asset of class `StrategicDevice` owned by the facility owner. It is a persistent asset with a location, condition and owner; it can be moved by a carrier, stolen, sabotaged, inspected or dismantled.
+**Making it.** A design known at the site (KNOWLEDGE doc; knowledge gates the build, a licence never does: LEAD_RULINGS R33), a strategic facility (IND `FacilityKind.StrategicSite`), the recipe `StrategicDeviceAssembly` (inputs: nuclear fuel 6, machine parts 20, wire 10, steel 20; 6000 ticks; 4/6 workers; 300 pu for the whole cycle), producing an asset of class `StrategicDevice` owned by the facility owner. It is a persistent asset with a location, condition and owner; it can be moved by a carrier, stolen, sabotaged, inspected or dismantled.
 
 **Using it** is an organisation decision of its owner (the commander and, by charter, usually the government) carried out by a crew of 2 at the device (`UseStrategicDevice` act, within reach). Target: a hex region within `Industry.Military.StrategicRange` hexes. The effect is deterministic and fictional (no physics):
 

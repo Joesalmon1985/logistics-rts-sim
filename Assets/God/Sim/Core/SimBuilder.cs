@@ -73,7 +73,7 @@ namespace God.Sim
                 if (sim.State.Population == null) throw new PolicyException("policies.civilian: the game has no population (setup.population is off)");
                 var pop = PopulationOf(sim);
                 if (pop != null && registry.Create(PolicyLevel.Civilian, civilian, -1) is INpcPolicy np) pop.SetPolicy(civilian, np);
-                foreach (var n in sim.State.Population.Npcs) if (n.BornTick == sim.State.Tick || n.Policy == null) n.Policy = civilian;
+                foreach (var n in sim.State.Population.Npcs) if (Population.Bodies.IsPerson(n) && (n.BornTick == sim.State.Tick || n.Policy == null)) n.Policy = civilian;
             }
 
             var mil = MilitaryOf(sim);

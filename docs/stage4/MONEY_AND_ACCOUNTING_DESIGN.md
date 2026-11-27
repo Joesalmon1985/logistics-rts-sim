@@ -283,8 +283,8 @@ Mapping to D6.2: the stage 3 mode remains the listed temporary mechanism (DEV_LO
 | Unit of account, accepted units, price lists | 2 | K2a | policies only |
 | Derived person books, journal lines | 2 | K2a (warehouse) | `fact_journal_line` |
 | Moneyness measure and `MediumOfExchangeObserved` | 2 | K2a (analytics) | as ECONOMY 4.11 |
-| Institutional money: issuers, accounts, issuance E1–E4 and destruction D1–D5, account transfers | 3 | **K2b** (+ C8 services) | a tally store: deposits of grain, transfers at the store |
-| Notes, interest, interbank claims, runs, monetary policy | 3 | K2b, C8 | later |
+| Institutional money: issuers, accounts, issuance E1–E4 and destruction D1–D5, account transfers | 3 | **K2b** (+ C8 services; C8 is deferred, Tier 3) | a tally store: deposits of grain, transfers at the store |
+| Notes, interest, interbank claims, runs, monetary policy | 3 | K2b, C8 (deferred) | later |
 
 ## 14. Tests and acceptance hooks
 

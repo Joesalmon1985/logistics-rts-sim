@@ -8,10 +8,15 @@ namespace God.Sim.Comms
     {
         None = 0, Want = 1, Offer = 2, Accept = 3, Refuse = 4, NeedFood = 5, NeedHelp = 6, Cooperate = 7, Promise = 8, Follow = 9,
         Warn = 10, Surrender = 11, Defend = 12, Accuse = 13, Apologise = 14, Forgive = 15, AskJoin = 16, Praise = 17,
+        // ---- F1 (contracts 14): reserved names, no meaning until their package lands them; 28-31 reserved ----
+        Teach = 18, Pray = 19, Worship = 20, Demonstrate = 21, RequestService = 22, Report = 23,   // C7, D6, D6, C7, C6, C9
+        Thank = 24, Greet = 25, Threaten = 26, Alarm = 27,                                          // C2 signalling acts
     }
 
     /// <summary>What a topic names: a ware, a place (node), a person, an issue (M10), a posting (M6), or a task (reserved, 13.10).</summary>
-    public enum TopicKind : byte { None = 0, Ware = 1, Place = 2, Npc = 3, Issue = 4, Posting = 5, Task = 6 }
+    public enum TopicKind : byte { None = 0, Ware = 1, Place = 2, Npc = 3, Issue = 4, Posting = 5, Task = 6,
+        /// <summary>F1 (contracts 14): 7 Commandment, 8 God (D6), 9 Org, 10 Service (C6); 11+ reserved.</summary>
+        Commandment = 7, God = 8, Org = 9, Service = 10 }
 
     /// <summary>When a message's content applies.</summary>
     public enum MsgTime : byte { Now = 0, Soon = 1, Later = 2 }

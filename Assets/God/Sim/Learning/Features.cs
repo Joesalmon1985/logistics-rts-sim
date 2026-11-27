@@ -44,6 +44,10 @@ namespace God.Sim.Learning
         Posting = 14,
         Situation = 15,
         Time = 16,
+        /// <summary>F1 (contracts 14): divine context (D2/D6), values <see cref="DivineFeatureValue"/>.</summary>
+        Divine = 17,
+        /// <summary>F1 (contracts 14): organisation context (C6). 19-31 reserved.</summary>
+        Org = 18,
         Conj = 32,
     }
 
@@ -59,6 +63,10 @@ namespace God.Sim.Learning
     public static class SelfFeature
     {
         public const int CarryingFood = 1, CarryingLog = 2, CarryingTool = 3, Injured = 4, HasBed = 5, HasSite = 6, NoBed = 7, CarryFull = 8;
+        // ---- F1 (contracts 14): blocks. Divinity 48-55, Orgs 56-63, Civ 64-71; 72+ reserved ----
+        public const int DivinityFirst = 48, DivinityLast = 55, OrgsFirst = 56, OrgsLast = 63, CivFirst = 64, CivLast = 71;
+        /// <summary>Divinity values (D3, D4, D2), landed by F1 so the numbers are fixed.</summary>
+        public const int Smitten = 48, Healed = 49, Blessed = 50, Possessed = 51, Compelled = 52;
     }
 
     /// <summary><see cref="FeatureKind.ObjClass"/> values: classes of thing an NPC perceives (never ids).</summary>
@@ -68,6 +76,10 @@ namespace God.Sim.Learning
             Axe = 9, FoodLot = 10, LogLot = 11, Spot = 12, EnemySoldier = 13, Unknown = 14,
             // controlled lab scenarios only (NPC_LEARNING L3)
             LabButton = 30;
+        // ---- F1 (contracts 14): blocks. Divinity 80-89, Civ assets 90-99 (C1), Orgs 100-109 (C6); 110+ reserved ----
+        public const int DivinityFirst = 80, DivinityLast = 89, CivFirst = 90, CivLast = 99, OrgsFirst = 100, OrgsLast = 109;
+        /// <summary>A consecrated place (D3 creates, D6 gives it meaning), perceived through <c>SenseExtra</c>.</summary>
+        public const int Shrine = 80;
     }
 
     /// <summary><see cref="FeatureKind.ObjCategory"/> values (from the item table).</summary>
@@ -92,12 +104,31 @@ namespace God.Sim.Learning
     public static class SituationKind
     {
         public const int FoodRemembered = 1, EnemyInSight = 2, NoFoodKnown = 3, Outdoors = 4;
+        // ---- F1 (contracts 14): blocks. Divinity 80-95, Orgs 96-111, Civ 112-127; 128+ reserved ----
+        public const int DivinityFirst = 80, DivinityLast = 95, OrgsFirst = 96, OrgsLast = 111, CivFirst = 112, CivLast = 127;
+        public const int DivineSign = 80, AvatarInSight = 81, ConsecratedPlace = 82, SmiteWitnessed = 83;
     }
 
     /// <summary><see cref="FeatureKind.NpcGroup"/> values (SHARED_CONTRACTS 6.1): M5 1-3, later 4-5, M4 6-7.</summary>
     public static class NpcGroupValue
     {
         public const int OwnFaction = 1, OtherFaction = 2, EnemyFaction = 3, StateStaff = 4, Soldier = 5, Elder = 6, Child = 7;
+        /// <summary>F1 (contracts 14): 8 Clergy (D6), 9 OrgStaff (C6), 10 Avatar (D5); 11+ reserved.</summary>
+        public const int Clergy = 8, OrgStaff = 9, Avatar = 10;
+    }
+
+    /// <summary>
+    /// <see cref="FeatureKind.Role"/> values (F1, contracts 14): 4 and 5 taken by the base, 1-3 reserved; Orgs 6-9, Civ 10; 11+ reserved.
+    /// </summary>
+    public static class RoleValue
+    {
+        public const int Priest = 6, Healer = 7, Teacher = 8, Official = 9, Employer = 10;
+    }
+
+    /// <summary><see cref="FeatureKind.Divine"/> values (F1, contracts 10.3, 11.3, 13.2).</summary>
+    public static class DivineFeatureValue
+    {
+        public const int Suggested = 1, Commanded = 2, Compelled = 3, Possessed = 4, CommandmentRequired = 5, CommandmentProhibited = 6, CommandmentEncouraged = 7;
     }
 
     /// <summary><see cref="FeatureKind.Time"/> values.</summary>

@@ -84,10 +84,10 @@ namespace God.Sim.Cognition
     public sealed class ThinkScratch
     {
         /// <summary>
-        /// <see cref="MaxCand"/> 24 since F0: M3 offers at most <see cref="M3Cand"/> = 16 (unchanged), M4 and M5 at most 4 each
-        /// after it (<see cref="CognitionExtensions.AddCandidates"/>).
+        /// <see cref="MaxCand"/> 36 since F1 (24 since F0): M3 offers at most <see cref="M3Cand"/> = 16 (unchanged), then M4, M5,
+        /// Civ, Orgs and Divinity at most 4 each (<see cref="CognitionExtensions.AddCandidates"/>; contracts 14, 20.8).
         /// </summary>
-        public const int MaxSeen = 16, MaxCand = 24, M3Cand = 16, MaxBase = 12, MaxTarget = 6, MaxConj = 8, MaxPeople = 8, MaxHeard = 4;
+        public const int MaxSeen = 16, MaxCand = 36, M3Cand = 16, MaxBase = 12, MaxTarget = 6, MaxConj = 8, MaxPeople = 8, MaxHeard = 4, MaxDivine = 2;
 
         public SelfView Self;
         public Sensed[] Seen = new Sensed[MaxSeen];
@@ -112,6 +112,13 @@ namespace God.Sim.Cognition
         /// <summary>F0.8: the messages this mind decoded this think (M5 fills it; empty otherwise).</summary>
         public Comms.DecodedMessage[] Heard = new Comms.DecodedMessage[MaxHeard];
         public int HeardCount;
+        /// <summary>F1 (contracts 10.3, 20.7): the divine instructions this mind reads now (D2 fills it through <c>DivinityMindHooks.FillDivine</c>; empty otherwise). Separate from M5's frozen <see cref="Heard"/>.</summary>
+        public Divinity.DecodedDivine[] Divine = new Divinity.DecodedDivine[MaxDivine];
+        public int DivineCount;
+        /// <summary>F1 (contracts 11.3): the control entry over this body at this think (default: <see cref="Divinity.ControlKind.Self"/>), copied by the sim before Think.</summary>
+        public Divinity.ControlEntry Control;
+        /// <summary>F1 (contracts 11.3): the index of the controlled candidate a divinity mind hook added at this think (-1 none; reset by the dispatcher).</summary>
+        public int ControlCand = -1;
         /// <summary>F0.7: a copy of its own carry (the lots and their owners), <see cref="CarryCount"/> slots.</summary>
         public ItemLot[] Carry = new ItemLot[8];
         public int CarryCount;
@@ -144,6 +151,7 @@ namespace God.Sim.Cognition
             BuildBase(sc);
             sc.ArmedCount = Learner.Arm(sc.Mind.Store, sc.Base, sc.BaseCount, sc.Armed);
             CognitionExtensions.FillHeard(sc);
+            CognitionExtensions.FillDivine(sc); // F1: D2's decoded instructions (none by default)
             BuildCandidates(sc);
         }
 
@@ -599,7 +607,7 @@ namespace God.Sim.Cognition
             {
                 if (id == 0) return false;
                 for (int i = 0; i < sc.PeopleCount; i++) if (sc.People[i].Id == id) return true;
-                return CognitionExtensions.Remembers(sc, id);
+                return CognitionExtensions.Remembers(sc, id) || CognitionExtensions.NamedByDivine(sc, kind, id, node);
             }
             if (kind == IntentTarget.Bin)
             {
@@ -612,6 +620,7 @@ namespace God.Sim.Cognition
             var s = sc.Self;
             if (kind == IntentTarget.Node && (node == s.Node || node == s.ExploreA || node == s.ExploreB)) return true; // its own spot and its own directions
             if (kind == IntentTarget.Node && CognitionExtensions.OwnHeading(sc, node)) return true;                      // F0 (12.37): M4's ranging heading
+            if (CognitionExtensions.NamedByDivine(sc, kind, id, node)) return true;                                      // F1 (contracts 10.3): named by a decoded instruction
             if (kind == IntentTarget.Lot && (id == s.FoodLot0 || id == s.FoodLot1)) return true;                        // its own carry
             if (kind == IntentTarget.Hut && (id == s.HomeHut || id == s.SiteHut)) return true;                         // its own hut and site
             for (int i = 0; i < sc.SeenCount; i++)

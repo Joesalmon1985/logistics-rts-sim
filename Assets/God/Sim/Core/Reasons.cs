@@ -54,7 +54,7 @@ namespace God.Sim
                 case MaxLevel: return "It is already at the top level.";
                 case NotFinished: return "It must be finished first.";
                 case AlreadyUpgrading: return "It is already being upgraded.";
-                default: return code;
+                default: return Divinity.DivineReasons.Sentence(code); // F1: the divine codes (else the code itself)
             }
         }
     }

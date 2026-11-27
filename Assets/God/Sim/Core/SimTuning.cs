@@ -37,6 +37,12 @@ namespace God.Sim
         public God.Sim.Social.SocialTuning Social = new God.Sim.Social.SocialTuning();
         /// <summary>F0.12 (M5): gestures and decoding. Written only when changed.</summary>
         public Comms.CommsTuning Comms = new Comms.CommsTuning();
+        /// <summary>F1.3 (contracts 16): the divinity module (D1-D7); <c>Enabled = 0</c> by default. Written only when changed.</summary>
+        public Divinity.DivinityTuning Divinity = new Divinity.DivinityTuning();
+        /// <summary>F1.3: organisations (C6-C10); <c>Enabled = 0</c>, <c>Emergence = 1</c> by default. Written only when changed.</summary>
+        public Orgs.OrgTuning Orgs = new Orgs.OrgTuning();
+        /// <summary>F1.3: the civilisation ledger (C1-C5); <c>Enabled = 0</c> by default. Written only when changed.</summary>
+        public Civ.CivTuning Civ = new Civ.CivTuning();
 
         /// <summary>A deep, independent copy (through the save format, so every saved field is copied).</summary>
         public SimTuning Clone()

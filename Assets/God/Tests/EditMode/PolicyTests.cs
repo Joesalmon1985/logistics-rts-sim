@@ -28,7 +28,7 @@ namespace God.Sim.Tests
             typeof(ITrueStateOverlay), typeof(ViewFiller), typeof(GodSim).Assembly.GetType("God.Sim.Information.TrueStateOverlay", true),
         };
 
-        private static readonly Type[] PolicyInterfaces = { typeof(INpcPolicy), typeof(IMilitaryPolicy), typeof(IInstitutionPolicy), typeof(IFactionPolicy) };
+        private static readonly Type[] PolicyInterfaces = { typeof(INpcPolicy), typeof(IMilitaryPolicy), typeof(IInstitutionPolicy), typeof(IFactionPolicy), typeof(IGodPolicy) }; // F1-T11: the god level
 
         /// <summary>Every type of the policy namespaces, and every implementation of a policy interface wherever it lives.</summary>
         public static List<Type> PolicyTypes()

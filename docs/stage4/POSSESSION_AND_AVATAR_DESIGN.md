@@ -193,7 +193,7 @@ Codes and names are SAC §15.1.
 | `AvatarActionStarted` (854, HV) | intervention, act, target, observers |
 | Action events (extended by F1) | `Control` (0 own, 1 compelled, 2 possessed, 3 avatar) |
 
-**Person-day row:** ticks possessed. **God-day row:** possession ticks, avatar ticks, avatar damage. Warehouse: `fact_possession_spell`, `fact_avatar_manifestation` (Q1, DATA_WAREHOUSE §12).
+**Person-day row:** ticks possessed. **God-day row:** possession ticks, avatar ticks, avatar damage. Warehouse: `fact_possession`, `fact_avatar_manifestation` (Q1, DATA_WAREHOUSE §12; names as SAC §18.2, LEAD_RULINGS R7).
 
 ---
 
@@ -213,10 +213,12 @@ Codes and names are SAC §15.1.
 
 ## 10. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
 | `BeginPossession`/`EndPossession` handlers, `PossessionSpell`, upkeep, end reasons, one at a time, minimum age | D4 | 2 |
-| Possessed think and the `Control` record on events; `PossessedActionStarted` | D4 (seam: F1) | 2 |
+| Possessed think and the `Control` record on events; `PossessedActionStarted` | D4a (seam: F1) | 2 |
 | Learning under possession: `Feature.Divine(Possessed)`, `LearnPermille`, `SelfFeature.Possessed`; blame shift for perceiving victims | D4 | 2 |
 | Stick and click to `DivineControlInput`; over-the-shoulder camera | U1 | 2 |
 | Foreign citizens (flag) | D4 | 2 |

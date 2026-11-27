@@ -28,7 +28,7 @@ namespace God.Sim.Social
         {
             if (s.Population == null || s.Tuning.Social.Enabled == 0) return;
             s.Social = new SocialState();
-            foreach (var n in s.Population.Npcs) NewMind(s, n);
+            foreach (var n in s.Population.Npcs) if (Population.Bodies.IsPerson(n)) NewMind(s, n);
         }
 
         public static void NewMind(GodState s, Npc npc)
@@ -54,7 +54,7 @@ namespace God.Sim.Social
             foreach (var n in s.Population.Npcs)
             {
                 var m = n.Mind?.Social;
-                if (m == null) continue;
+                if (m == null || !Population.Bodies.IsPerson(n)) continue;
                 m.Tuning = s.Tuning.Social; m.CommsTuning = s.Tuning.Comms;
             }
         }
@@ -67,7 +67,7 @@ namespace God.Sim.Social
             foreach (var n in s.Population.Npcs)
             {
                 var m = n.Mind?.Social;
-                if (m == null) continue;
+                if (m == null || !Population.Bodies.IsPerson(n)) continue;
                 if (m.RelCount < 0 || m.RelCount > m.Rel.Length) bad.Add("social: npc " + n.Id + " RelCount " + m.RelCount);
                 if (m.InboxCount < 0 || m.InboxCount > m.Inbox.Length) bad.Add("social: npc " + n.Id + " inbox " + m.InboxCount);
                 if (m.DealCount < 0 || m.DealCount > SocialMind.MaxDeals) bad.Add("social: npc " + n.Id + " deals " + m.DealCount);
@@ -219,7 +219,7 @@ namespace God.Sim.Social
             int n = 0;
             foreach (var o in p.Npcs)
             {
-                if (!o.Alive || o.Id == npc.Id) continue;
+                if (!Population.Bodies.IsLivingPerson(o) || o.Id == npc.Id) continue;
                 int d = g.Distance(npc.Node, o.Node);
                 if (d > sight) continue;
                 int at = n;
@@ -890,11 +890,11 @@ namespace God.Sim.Social
             var d = s.Tuning.Social.Decay;
             int tick = (int)s.Tick, tpd = Tpd(s);
             bool households = false;
-            foreach (var n in p.Npcs) if (n.Alive && n.Household != 0) { households = true; break; }
+            foreach (var n in p.Npcs) if (Population.Bodies.IsLivingPerson(n) && n.Household != 0) { households = true; break; }
             foreach (var n in p.Npcs)
             {
                 var m = MindOf(n);
-                if (!n.Alive || m == null) continue;
+                if (!Population.Bodies.IsLivingPerson(n) || m == null) continue;
                 if (rowDue) Row(ev, n, m, day - 1);
                 for (int i = 0; i < m.RelCount; i++)
                 {

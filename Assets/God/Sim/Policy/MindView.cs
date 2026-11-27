@@ -8,6 +8,8 @@ namespace God.Sim.Policy
     public struct CandidateScore
     {
         public int Instinct, Learned, Social, Culture, Personality, Cost;
+        /// <summary>F1 (contracts 10.3): the divine term (D2 instruction + D6 commandment); 0 unless a D package fills it. Not in <see cref="MindView.CandidateTerms"/> (layout 1 unchanged).</summary>
+        public int Divine;
         /// <summary>The part of <see cref="Instinct"/> a need (a drive) drives; Instinct - Need is situational instinct. Not a separate score term.</summary>
         public int Need;
         /// <summary>How many of the candidate's keys have an entry for its verb (0: never tried here).</summary>
@@ -72,6 +74,7 @@ namespace God.Sim.Policy
                 r.StrongestOrigin = StrongestOrigin(st, c);
             }
             r.Social = CognitionExtensions.SocialTerm(_sc, i);
+            r.Divine = CognitionExtensions.DivineTerm(_sc, i); // F1: 0 by default
             r.Personality = Personality(c.Verb);
             r.Cost = c.Cost;
             return r;
@@ -138,7 +141,7 @@ namespace God.Sim.Policy
                 case Verb.Rest: return -tr[Population.Trait.Industry] / 2;
                 case Verb.Explore: return tr[Population.Trait.Boldness];
                 case Verb.Flee: return -tr[Population.Trait.Boldness] / 2;
-                default: return CognitionExtensions.Personality(verb, tr);
+                default: return CognitionExtensions.Personality(verb, tr); // F1: Civ, Orgs and Divinity ranges included
             }
         }
 

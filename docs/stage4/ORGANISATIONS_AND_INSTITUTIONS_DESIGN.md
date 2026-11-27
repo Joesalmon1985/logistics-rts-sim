@@ -258,7 +258,7 @@ Each organisation has one **decision slot** per day (tick `(dayStart + OrgId × 
 - **Budget lines** are decisions: "up to 3 berries a day for rations; 1 log a day for the healer's fire". Spending against a line is still a physical hand-over or consumption by an authorised role-holder. Spending never exceeds the store plus what the decision allows (I-INV-4 of INSTITUTIONAL_STATE, generalised).
 - **Income** by ownership model: government taxes, fees and sales (STATE_DESIGN); private fees and sales; communal member contributions; cooperative shares of output; religious offerings and gifts. All are hand-overs at a place.
 - **Wages** owed and not paid become formal obligations (`Source = Wage`) and arrears, exactly as STATE_DESIGN's `Debt`.
-- **Insolvency.** An organisation whose open liabilities due exceed its holdings for `InsolventDays` (default 3) becomes `Insolvent`. It keeps operating with whoever stays. Creditors may pursue claims through whatever justice exists ([INSTITUTIONAL_SERVICES §5.6](INSTITUTIONAL_SERVICES_DESIGN.md#56-justice-complaints-arbitration-restitution-and-detention)).
+- **Insolvency.** An organisation whose open liabilities due exceed its holdings for `InsolventDays` (default 3) becomes `Insolvent`. It keeps operating with whoever stays. Creditors may pursue claims through whatever justice exists ([INSTITUTIONAL_SERVICES §5.6](INSTITUTIONAL_SERVICES_DESIGN.md#56-justice-complaints-arbitration-restitution-and-detention-brief-22)).
 
 ### 4.7 Institutional records and information separation
 - **Records are written by a role-holder's action** (`WriteRecord`, a short act at the organisation's place by the recorder or the office that holds `KeepRecords`). The writer records what it knows: what it saw, was told or counted. A record can be late, incomplete, wrong or falsified (the falsification choice of INSTITUTIONAL_STATE). With no recorder, nothing is written.
@@ -337,17 +337,17 @@ Once per day, after households and before institutions' services run: (1) obliga
 - **Animations only show events:** a founding meeting (gathered NPCs, `AskJoin` and `Accept` gestures), a vote by raised hands, deposits at a store, an official refusing a divine instruction.
 
 ## 7. Telemetry
-**Domain events** (names; codes allocated by SHARED_ARCHITECTURAL_CONTRACTS):
-- lifecycle: `OrgOpportunityFormed` (Full only), `OrgProposed`, `OrgFounded`, `OrgStatusChanged`, `OrgCharterAmended`, `OrgMerged`, `OrgSplit`, `OrgDissolved`;
-- roles: `OrgRoleTaken`, `OrgRoleLeft` (reason: left, dismissed, died, merged, dissolved), `OfficeFilled`, `OfficeVacated`;
-- decisions: `OrgProposalMade` (source), `OrgVoteCast` (HV, Full), `OrgDecisionTaken` (outcome, as counted; analytics-only true count), `OrgDecisionCarriedOut`, `OrgDecisionRefused` (by whom);
-- goods and accounts: `OrgContribution`, `OrgSpend` (each is also an `ItemMoved` or `Consumed`), `OrgObligationCreated`, `OrgObligationSettled`, `OrgObligationDefaulted`, `OrgInsolvent`;
-- records and policies: `RecordWritten`, `RecordFalsified` (truth field), `OrgPolicySet`, `OrgRelationChanged`;
-- divine: `InstructionRelayed` (instruction id, recipient), with the response event owned by DIVINE_PLAYER_DESIGN.
+**Domain events** (names and codes as SHARED_ARCHITECTURAL_CONTRACTS §15.1 and the C6 spec; LEAD_RULINGS R24: where this list differs, the contracts name governs):
+- lifecycle: `OrgOpportunityAvailable` (511, Full only), `OrgFounded` (500), `OrgStatusChanged` (516), `OrgDissolved` (501); `OrgProposed`, `OrgCharterAmended`, `OrgMerged`, `OrgSplit` (Tier 3) have no contract code yet;
+- roles: `MemberJoined` (503), `MemberLeft` (504; reason: left, dismissed, died, merged, dissolved), `OrgHeadChanged` (502); office changes below the head are rows of the daily snapshot, not events (`OrgRoleTaken`, `OrgRoleLeft`, `OfficeFilled`, `OfficeVacated` have no contract code);
+- decisions: `OrgDecisionTaken` (513; source, outcome as counted, accept, refuse and absent counts; analytics-only true count), with the instruction relay of D2 (812) for divine instructions; `OrgProposalMade`, `OrgVoteCast`, `OrgDecisionCarriedOut`, `OrgDecisionRefused` have no contract code (their fields are folded into `OrgDecisionTaken` and the acts it causes);
+- goods and accounts: `OrgSpent` (505; each spend is also an `ItemMoved` or `Consumed`); contributions are ordinary `ItemMoved`; organisation obligations are C2's registry and its events (`LoanMade` 540 to `CollateralSeized` 544; Money events from 1100) rather than `OrgObligation*`; `OrgInsolvent` has no contract code (insolvency is a measured state);
+- records and policies: `RecordWritten` (515; `Falsified` is its analytics-only truth field, replacing `RecordFalsified`), `OrgPolicySet` (514); `OrgRelationChanged` has no contract code;
+- divine: `InstructionRelayed` (812; instruction id, recipient), with the response event `CommandResponded` (814) owned by DIVINE_PLAYER_DESIGN.
 
 **Daily organisation snapshot:** id, type, model, status, members, employees, offices filled and vacant, store per ware, obligations owed and owing, decisions adopted and rejected, requests open (services), income and spending by cause.
 
-**Warehouse** (DATA_WAREHOUSE_DESIGN to adopt): `dim_org` (natural key `OrgId`), `fact_org_day`, `fact_org_role` (effective-dated, half-open `[from, to)`), `fact_org_decision`, `fact_obligation`, and `org_key` on existing goods and wage facts.
+**Warehouse** (DATA_WAREHOUSE_DESIGN to adopt): `dim_org` (natural key `OrgId`), `fact_org_day`, `fact_org_membership` (roles and offices, effective-dated, half-open `[from, to)`; the contracts' name, R7), `fact_org_expenditure`, `fact_obligation` (K2a, `0038`), and `org_key` on existing goods and wage facts.
 
 ## 8. Invariants
 | # | Invariant |
@@ -364,18 +364,18 @@ Once per day, after households and before institutions' services run: (1) obliga
 | ORG-I10 Determinism | Replay and save/load continuation give identical hashes with organisations active, recording on or off. |
 
 ## 9. Tier and package mapping
-Package ids are the brief §39 provisional ids; the package index may rename them.
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 
 | Capability | Tier | Package | Minimal first version |
 |---|---|---|---|
 | `OwnerKind.Org`, `BinKind.OrgStore`, org-owned lots and bins | 1 (needed by the Tier 1 labour economy as soon as any owner other than an NPC or household works) | C1 | Owner value, bin kind, `Permits.Believed` basis `OrgRole`; conservation tests pass with org owners |
 | Formal obligation registry | 2 | C2 | Wage arrears and loans as double-entry records; ORG-I2 |
 | Enterprises as organisations, employment | 2 | C3 | Private and cooperative workshop organisations posting jobs; output owned by the organisation |
-| Military organisation | 3 (expanded military) | C4 | War band org with a Commander office over MILITARY's assignments |
-| Associations, legitimacy links | 3 | C5 | Association type and `DecisionRule` reuse only |
+| Military organisation | 3 (expanded military) | C4 (deferred) | War band org with a Commander office over MILITARY's assignments |
+| Associations, legitimacy links | 3 | C5 (beyond minimal citizenship, deferred) | Association type and `DecisionRule` reuse only |
 | **Organisation record, roles, offices, `DecisionRule` (OwnerDecides, HeadDecides, MajorityPresent), records, policies, opportunity and founding, dissolution** | **2** | **C6** | One template (shared food store) founded by two households from need evidence; one private template (healer's practice); decisions by `HeadDecides` and `MajorityPresent` |
-| Services on the framework | 2 | C7, C8 | See INSTITUTIONAL_SERVICES_DESIGN |
-| Justice organisations | 3 | C9 | See INSTITUTIONAL_SERVICES_DESIGN |
+| Services on the framework | 2 | C7, C6 (C8 Tier 2 absorbed) | See INSTITUTIONAL_SERVICES_DESIGN |
+| Justice organisations | 3 | C9 (deferred) | See INSTITUTIONAL_SERVICES_DESIGN |
 | **Government as an organisation, offices, the AiBrain government seat, relayed divine instructions, religious organisations** | **2** (refusal by a government is scenario 15) | **C10** | Government org per faction with Head and Council; `InstructionRelayed`; adopt, modify or refuse; one temple template |
 | Merger, split, Council and Consensus rules, inter-organisation regulation | 3 | C6, C10 | After the first version works end to end |
 | Effects of welfare and childcare organisations on survival | 2 | F2 | Used as treatments in demographic viability experiments |

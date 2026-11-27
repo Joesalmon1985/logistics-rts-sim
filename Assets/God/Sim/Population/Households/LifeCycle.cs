@@ -37,7 +37,7 @@ namespace God.Sim.Population.Households
             for (int i = 0; i < n; i++)
             {
                 var npc = p.Npcs[i];
-                if (!npc.Alive || npc.Life == null) continue;
+                if (!Bodies.IsLivingPerson(npc) || npc.Life == null) continue;
                 var life = npc.Life;
                 if (tod != 0 && life.PregFather != 0 && s.Tick >= life.PregDue) { Reproduction.Birth(s, ev, npc, day); if (!npc.Alive) continue; }
                 if (check && npc.Stage == LifeStage.Child) Attend(s, npc, lt.AttendNodes);
@@ -51,7 +51,7 @@ namespace God.Sim.Population.Households
         {
             var hs = s.Households;
             hs.Announced = true;
-            foreach (var n in s.Population.Npcs) if (n.Alive && n.Life != null) ev.Add(NpcGenome.Of(n));
+            foreach (var n in s.Population.Npcs) if (Bodies.IsLivingPerson(n) && n.Life != null) ev.Add(NpcGenome.Of(n));
             foreach (var h in hs.Households)
             {
                 ev.Add(new HouseholdFormed { Household = h.Id, Faction = h.Faction, Hut = h.Hut, Founder = h.Members.Count > 0 ? h.Members[0] : 0, Reason = JoinReason.Founded });
@@ -70,11 +70,11 @@ namespace God.Sim.Population.Households
             if (p.DayDone >= 0)
                 foreach (var npc in p.Npcs)
                 {
-                    if (!npc.Alive || npc.Life == null) continue;
+                    if (!Bodies.IsLivingPerson(npc) || npc.Life == null) continue;
                     var l = npc.Life;
                     ev.Add(new PersonDayLife
                     {
-                        Npc = npc.Id, Day = day - 1, AgeMilli = (int)cal.AgeMilli(npc.BornTick, s.Tick), Household = npc.Household, Partner = FirstPartner(s, npc.Id),
+                        Npc = npc.Id, Day = day - 1, AgeMilli = (int)Bodies.AgeMilli(cal, npc, s.Tick), Household = npc.Household, Partner = FirstPartner(s, npc.Id),
                         CareGivenTicks = npc.DayTicks[Activity.Care], CareReceivedTicks = l.CareReceived, Growth = l.Growth, Stage = npc.Stage, Sex = l.Sex,
                         Pregnant = l.PregFather != 0, Ill = l.Illness == 1,
                     });
@@ -116,7 +116,7 @@ namespace God.Sim.Population.Households
             bool own = false; Npc minder = null;
             foreach (var o in s.Population.Npcs)
             {
-                if (!o.Alive || o.Id == child.Id || o.Stage == LifeStage.Child) continue;
+                if (!Bodies.IsLivingPerson(o) || o.Id == child.Id || o.Stage == LifeStage.Child) continue;
                 if (g.Distance(o.Node, child.Node) > nodes) continue;
                 if (child.Household != 0 && o.Household == child.Household) { own = true; break; }
                 if (minder == null) minder = o;
@@ -144,7 +144,7 @@ namespace God.Sim.Population.Households
             var cal = SimCalendar.Of(s);
             var life = npc.Life;
             var lt = s.Tuning.Households.Life;
-            long age = cal.AgeMilli(npc.BornTick, s.Tick);
+            long age = Bodies.AgeMilli(cal, npc, s.Tick);
             // ageing and stage
             var stage = SimCalendar.StageOf(age);
             if (stage != npc.Stage)
@@ -299,7 +299,7 @@ namespace God.Sim.Population.Households
                 var g = s.Territory.Grid;
                 foreach (var n in p.Npcs)
                 {
-                    if (!n.Alive || n.Life == null) continue;
+                    if (!Bodies.IsLivingPerson(n) || n.Life == null) continue;
                     int hex = g.HexOf(n.Node);
                     if (hex >= 0 && hex < f.Length) f[hex] = Math.Min(dt.FoulMax, f[hex] + dt.FoulPerPerson);
                 }
@@ -355,7 +355,7 @@ namespace God.Sim.Population.Households
             s.Households.Stats.Conceptions++;
             ev.Add(new PregnancyStarted
             {
-                Mother = mother.Id, BioFather = father.Id, MotherAgeMilli = (int)age, FatherAgeMilli = (int)cal.AgeMilli(father.BornTick, s.Tick), DueTick = life.PregDue,
+                Mother = mother.Id, BioFather = father.Id, MotherAgeMilli = (int)age, FatherAgeMilli = (int)Bodies.AgeMilli(cal, father, s.Tick), DueTick = life.PregDue,
             });
         }
 

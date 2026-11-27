@@ -27,6 +27,7 @@ namespace God.Sim.Population
             {
                 if (n.Id <= lastId) bad.Add("npc ids are not ascending at " + n.Id);
                 lastId = n.Id;
+                if (!Bodies.IsPerson(n)) continue; // F1.8: the counts below are of people (an avatar body is D5's)
                 if (n.Id >= p.NextNpcId) bad.Add("npc " + n.Id + " is at or above the next id");
                 if (!n.Alive)
                 {
@@ -72,7 +73,7 @@ namespace God.Sim.Population
             }
             // C4: nothing stays owned by a person long dead (M4 moves it to the estate at death; M3 spills it)
             foreach (var n in p.Npcs)
-                if (!n.Alive && s.Tick - n.DiedTick > 3 * tpd)
+                if (Bodies.IsPerson(n) && !n.Alive && s.Tick - n.DiedTick > 3 * tpd)
                     CheckNotOwnedBy(p, n.Id, bad);
             for (int w = 0; w < Wares.PersonalCount; w++)
             {

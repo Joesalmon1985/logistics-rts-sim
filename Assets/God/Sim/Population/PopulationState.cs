@@ -84,10 +84,10 @@ namespace God.Sim.Population
         public ItemLot Lot;
     }
 
-    /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1). 8 slots (F0): 4-7 reserved.</summary>
-    public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3 }
-    /// <summary>Why goods left it. 8 slots (F0): <see cref="Buried"/> for M4 estates; 5-7 reserved.</summary>
-    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4 }
+    /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1). 8 slots (F0); F1: 4 Miracle (D3), 5 Crafted; 6-7 reserved.</summary>
+    public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3, Miracle = 4, Crafted = 5 }
+    /// <summary>Why goods left it. 8 slots (F0): <see cref="Buried"/> for M4 estates; F1: 5 Miracle (D3), 6 Treatment (C7), 7 Offering (D6). The ledger arrays stay 8 slots.</summary>
+    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4, Miracle = 5, Treatment = 6, Offering = 7 }
 
     /// <summary>
     /// The one conservation ledger of personal goods (ECONOMY_DESIGN A1): for every ware,
@@ -189,6 +189,12 @@ namespace God.Sim.Population
         public int Id;
         public Faction Faction;
         public bool Alive = true;
+        /// <summary>F1.8 (contracts 4.1): a person (0) or a god's avatar body. Written to JSON and hashed only when not a person.</summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public BodyKind Kind;
+        /// <summary>F1.8: the GodId of an avatar body (0 for a person). Written and hashed only when non-zero.</summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public int God;
+        /// <summary>F1.8 (contracts 4.4, 20.3): ticks subtracted from calendar age for biological age (<see cref="Bodies.AgeTicks"/>; D7). Written and hashed only when non-zero.</summary>
+        [Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)] public long BioAgeOffset;
         public long BornTick, DiedTick;
         public DeathCause DeathCause;
         /// <summary>True for a founder of the scenario (no NpcBorn: M4 brings births).</summary>
@@ -309,8 +315,8 @@ namespace God.Sim.Population
         public Hut HutById(int id) { foreach (var h in Huts) if (h.Id == id) return h; return null; }
         public ResourceSource SourceById(int id) { foreach (var s in Sources) if (s.Id == id) return s; return null; }
 
-        public int AliveCount { get { int n = 0; foreach (var p in Npcs) if (p.Alive) n++; return n; } }
+        public int AliveCount { get { int n = 0; foreach (var p in Npcs) if (Bodies.IsLivingPerson(p)) n++; return n; } }
 
-        public int AliveOf(Faction f) { int n = 0; foreach (var p in Npcs) if (p.Alive && p.Faction == f) n++; return n; }
+        public int AliveOf(Faction f) { int n = 0; foreach (var p in Npcs) if (Bodies.IsLivingPerson(p) && p.Faction == f) n++; return n; }
     }
 }

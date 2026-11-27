@@ -41,3 +41,21 @@ The lead's binding rulings on conflicts found between the package index, the sha
 | R35 | "D6" means both owner decision set D6 and package D6 (commandments) | Owner decisions are always written **D6.n** (with a number); the commandments package is written **package D6** or **D6 (commandments)**. |
 | R36 | R23 overlaps C7 520–539 and C2 540–549 | C6 uses only codes in 500–549 that no other package holds (the index's reading). |
 | R37 | Run length | The owner asked to keep working until a finished playable game: the 'continuation' after H18 is part of this run, not a later session. Checkpoint G (about H25) is in scope. |
+| R38 | No contract for seeding scenario content (deposits, facilities, vehicles, orgs, agreements, knowledge, coin) | Accepted as **I1a item 17**: a deterministic scenario-content loader in the runner/`SimBuilder` that issues ordinary setup commands at tick 0 (no hidden state injection); contracts §20 gets the row. |
+| R39 | Knowledge and rights checks needed before K1 exists | Accepted as **I1a item 18**: `KnowledgeQuery` and `RightsQuery` stubs (everyone knows `DesignId 0` designs; no rights recorded), replaced by K1. |
+| R40 | Industry card data for the HUD | Per-package `Information/IndustryCards.*` partials (sim-side, read-only views), consumed by I6. |
+| R41 | Royalties: automatic accrual (KNOW §8.4) vs none (MONEY §7.1) | **MONEY governs:** no automatic accrual; royalties are billed by an office-holder's act and paid by actual payment. |
+| R42 | Shared skill store lives in `OrgState.C7` (needs Orgs on) | The skill store lives in **`CivState`** (exists when any Civ/Industry switch is on), created lazily; C7 and K1 both use it. |
+| R43 | Agreement record kinds | I3's agreement record carries `Kind` (Supply, Electricity, Procurement, Haulage); I4's billing depends softly on I3 (fallback: C2 obligations only). |
+| R44 | Smoke flag, tag and scenario names | `-godonly -godpopulation`; tag `civdiv-g` for Checkpoint G; scenario `ind_slice`. WST incineration uses `Disposed`. |
+| R45 | Numbers on unity/poc differ from what the contracts assume (`MaxCand` 24, `PersonalCount` 32, `MoveReason` to 9, no `BinKind.AssetStore`) | F1 raises them to the contract values (36, 40, and the listed enums); I1a asserts the post-F1 values before its own changes. |
+| R46 | Rulings vs contracts text not yet amended (U4 names, skill-store owner) | Where a ruling and the contracts disagree, **the ruling wins**; the contracts are amended by the package that next touches the section. |
+| R47 | `Information/CommandmentText` owner | R6 governs: U2 (Game layer). The index entry under package D6 is superseded. |
+| R48 | C7 and K1 specs say `OrgState.C7.Skills` | R42 governs: the skill store is in `CivState`. |
+| R49 | `fact_org_decision` without a migration; migration 0020 unused | C6 adds `fact_org_decision` to its own migration 0018. 0020 (C8's slot) stays reserved and unused. |
+| R50 | Draft org and service events without contract codes | A package allocates a code from its own block only if the warehouse must reconcile the event; otherwise it stays state. |
+| R51 | Tier 1 scenario page, generated islands and tutorial rows naming deferred U6 | The scenario menu entries (Living island, god-only, unlimited Mythic, Iron Coast) are added by **U2b**; generated islands already exist; the tutorial is Tier 3, after Checkpoint G. |
+| R52 | RESURRECTION §4.2–4.6 still describe the old archive model | Left under the notice; D7 rewrites them when it merges. |
+| R53 | No deconsecration event | D3 may add `LocationDeconsecrated` at code 830 if it implements deconsecration. |
+| R54 | `SimTuning.TrySet` refuses paths containing "seed", so `Orgs.C10.SeedGovernments` (R27) cannot be set | Renamed **`Orgs.C10.InitialGovernments`** (same meaning and defaults as R27). |
+| R55 | F1 deviations 20.F1.1–20.F1.12 (non-partial tuning roots with D1 costs inside `Mythic`; seat fallback `GameSetup.HumanGod` until D1; gate order; `Control.Release` returns bool; lease fields; `GestureMade.DurationTicks` from `Social.GestureTicks`; static catalogue properties; hook superset; `CommandmentTypes.cs` owned by package D6; `MythicTrace`; `MapContext` keys; two test adjustments) | **All accepted** as contract amendments. The §10.1 row follows R1. |

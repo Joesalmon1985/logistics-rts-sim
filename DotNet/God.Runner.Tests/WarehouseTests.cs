@@ -547,7 +547,7 @@ namespace God.Runner.Tests
         {
             var (_, db, _) = RunWh("dims", 1, 36000, RecordingLevel.Summary);
             Assert.AreEqual(6, Q(db, "SELECT COUNT(*) FROM dim_faction"));
-            Assert.AreEqual(Wares.PersonalCount, Q(db, "SELECT COUNT(*) FROM dim_ware"), "every ware id, the personal wares of M3 included");
+            Assert.LessOrEqual(Q(db, "SELECT COUNT(*) FROM dim_ware"), Wares.PersonalCount, "every ware id, the personal wares of M3 included (F1.17: PersonalCount 40 leaves 33-39 free)");
             Assert.AreEqual(Enum.GetValues(typeof(Ware)).Length, Q(db, "SELECT COUNT(*) FROM dim_ware"));
             Assert.Greater(Q(db, "SELECT COUNT(*) FROM dim_location WHERE kind = 'hex'"), 5);
             Assert.Greater(Q(db, "SELECT COUNT(*) FROM dim_building WHERE is_hq = 1"), 5);

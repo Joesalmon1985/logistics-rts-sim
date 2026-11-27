@@ -60,6 +60,9 @@ namespace God.Sim
         Fish = 30,
         /// <summary>A bitter, mildly toxic berry: food that hurts (NPC_LEARNING L4). Only test scenarios place it by default.</summary>
         Nightshade = 31,
+        // ---- F1.17 (contracts 7.1): the one new personal ware of this run (sources and remedy use: C7). 33-39 free for later
+        //      appends without another ledger layout change. ----
+        Herbs = 32,
     }
 
     /// <summary>How urgently a consumer wants one input ware. Stop means it asks for none.</summary>
@@ -76,8 +79,14 @@ namespace God.Sim
         /// <summary>The stage 3 wares (the economy's per-ware arrays). The personal food wares of M3 lie beyond it.</summary>
         public const int Count = 28;
 
-        /// <summary>Every ware including the personal goods of the population (M3): the population ledger's array length.</summary>
-        public const int PersonalCount = 32;
+        /// <summary>
+        /// Every ware including the personal goods of the population (M3): the population ledger's array length. 40 since F1.17
+        /// (32 before): the population hash keeps the old 32-ware order and adds wares 32-39 only when any of them is non-zero.
+        /// </summary>
+        public const int PersonalCount = 40;
+
+        /// <summary>The ledger width the population hash was laid out for before F1.17 (wares 0-31).</summary>
+        public const int LegacyPersonalCount = 32;
 
         public static bool IsFood(Ware w) => w == Ware.Berries || w == Ware.Roots || w == Ware.Fish || w == Ware.Nightshade;
 
@@ -128,6 +137,7 @@ namespace God.Sim
                 case Ware.Roots: return "roots";
                 case Ware.Fish: return "fish";
                 case Ware.Nightshade: return "nightshade";
+                case Ware.Herbs: return "herbs";
                 default: return "none";
             }
         }

@@ -20,7 +20,7 @@ namespace God.Sim.Social
             int every = s.Tuning.Population.ThinkEvery;
             foreach (var npc in s.Population.Npcs)
             {
-                if (!npc.Alive || npc.Mind?.Social == null) continue;
+                if (!Population.Bodies.IsLivingPerson(npc) || npc.Mind?.Social == null) continue;
                 if ((s.Tick + npc.Id) % every == 0) SocialSim.AtThink(s, ev, npc);
             }
             SocialSim.CloseStale(s, ev);

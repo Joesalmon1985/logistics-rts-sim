@@ -4,7 +4,7 @@ using God.Sim.Learning;
 namespace God.Sim.Population
 {
     /// <summary>Why a lot moved (10-31 reserved).</summary>
-    public enum MoveReason : byte { PickUp = 1, Drop = 2, Deposit = 3, Withdraw = 4, HandOver = 5, EstateIn = 6, EstateOut = 7, Claim = 8, DeathSpill = 9 }
+    public enum MoveReason : byte { PickUp = 1, Drop = 2, Deposit = 3, Withdraw = 4, HandOver = 5, EstateIn = 6, EstateOut = 7, Claim = 8, DeathSpill = 9, Deliver = 10, AvatarDrop = 11, Confiscate = 12 } // F1 (contracts 7.1): 10 C1 haul, 11 D5, 12 C9; 13-31 reserved
 
     /// <summary>Who owns a moved lot at its destination. A lot on the ground is always ownerless, whatever the rule.</summary>
     public enum OwnerRule : byte { Keep = 0, ToReceiver = 1, ToBinOwner = 2, Set = 3 }
@@ -23,6 +23,9 @@ namespace God.Sim.Population
     {
         FirstArrival = 0, Built = 1, Exchanged = 2, Gift = 3, Inherited = 4, StateGrant = 5, Seized = 6, Founded = 7,
         Produced = 8, Deposited = 9, Abandoned = 10, Spilled = 11, Escheat = 12, Divided = 13,
+        // F1 (contracts 7.1); 25-31 reserved
+        Forfeited = 14, Miracle = 15, Wage = 16, Loan = 17, Repayment = 18, Levy = 19, Restitution = 20, Offering = 21,
+        OrgContribution = 22, Purchase = 23, Confiscated = 24,
         Auto = 255,
     }
 

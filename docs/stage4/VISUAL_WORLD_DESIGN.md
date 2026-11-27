@@ -156,22 +156,22 @@ The existing figure stays the base. Everything below is a rendering of data read
 
 **What the view reads.** `GodState` (population, economy, territory, board, goods) through the existing views; the divine observation view (PLAYER_UI_DESIGN section 5); and the event stream from `GodBootstrap.SimEventRaised`.
 
-**Provisional divine events the effects bind to** (final names from the divine packages and SHARED_ARCHITECTURAL_CONTRACTS):
+**Divine events the effects bind to** (names and codes as SHARED_ARCHITECTURAL_CONTRACTS §15.1; LEAD_RULINGS R13, R24):
 
-| Event (provisional) | Effect and animation |
+| Event (contracts name) | Effect and animation |
 |---|---|
-| `DivineSuggestionDelivered { God, Npc, Action }` | suggestion halo on `Npc`; the person looks up (then its own response event shows the reaction) |
-| `DivineCommandIssued { God, Target, Action, Scope }` | beam and chevron on each recipient the sim reports; group: one beam each up to a cap, then a district ring |
-| `CompulsionStarted` / `CompulsionEnded { Reason }` | yoke and tether; end effect by reason (completed: release; timeout: fade; cancelled; death) |
-| `PossessionStarted` / `PossessionEnded { Reason }` | rim, glyph and camera transition; end burst |
-| `AvatarManifested` / `AvatarDismissed` / `AvatarDestroyed` | column of light, unmanifest, collapse |
-| `MiracleWrought { Kind, Target, Amount }` plus the authoritative state events (`InjuryHealed`, `ItemMoved` creation lots, `BuildingDestroyed`) | the matching miracle effect; the changed state arrives in its own events so the view never fakes the result |
-| `NpcResurrected { Npc, Variant }` | resurrection column and the person's reborn pose |
-| `CommandmentRevealed` / `Learned` / `Communicated` / `Revised` / `Revoked` | glyph tablet; travelling glyph between speaker and listener |
-| `PrayerMade { Npc, God }` | prayer thread |
-| `PlaceConsecrated` / `Deconsecrated` | sacred ground ring on or off |
-| `MythicChanged { God, Delta, Reason }` | meter animation and cost chips (UI only) |
-| `DivineResponse { Npc, Accepted, Refused, Ignored }` | the NPC's own animation of the answer (NPC_ANIMATION_DESIGN) |
+| `DivineSuggestionIssued` (810) with `CommandPerceived` (813) for the person who perceives it | suggestion halo on `Npc`; the person looks up (then its own response event shows the reaction) |
+| `DivineCommandIssued` (811) | beam and chevron on each recipient the sim reports; group: one beam each up to a cap, then a district ring |
+| `CompulsionStarted` (815) / `CompulsionEnded` (816, reason) | yoke and tether; end effect by reason (completed: release; timeout: fade; cancelled; death) |
+| `PossessionStarted` (845) / `PossessionEnded` (846, reason) | rim, glyph and camera transition; end burst |
+| `AvatarManifested` (850) / `AvatarDismissed` (851) / `AvatarDestroyed` (852) | column of light, unmanifest, collapse |
+| `MiracleCast` (825) and `MiracleEffectApplied` (826) (replace the draft `MiracleWrought`) plus the authoritative state events (`InjuryHealed`, `ItemMoved` creation lots, `BuildingDestroyed`) | the matching miracle effect; the changed state arrives in its own events so the view never fakes the result |
+| `NpcResurrected` (880) | resurrection column and the person's reborn pose |
+| `CommandmentIssued` (860) / `CommandmentRevised` (861) / `CommandmentRevoked` (862) / `CommandmentLearned` (863; a hearing is a `CommandmentLearned` with its source) | glyph tablet; travelling glyph between speaker and listener |
+| `PrayerMade` (870) | prayer thread |
+| `LocationConsecrated` (829; no separate deconsecration event yet) | sacred ground ring on or off |
+| `MythicCredited` (804), `MythicSpent` (805), `MythicUpkeepCharged` (806) (replace the draft `MythicChanged`) | meter animation and cost chips (UI only) |
+| `CommandResponded` (814; replaces the draft `DivineResponse`) | the NPC's own animation of the answer (NPC_ANIMATION_DESIGN) |
 
 **Rules.**
 1. An effect is a deterministic function of an event and the sim state at that event; the same events produce the same effects (a pure `DivineFxPlanner` builds effect records, headless-testable).
@@ -202,17 +202,19 @@ LOD is a function of camera distance only for what is drawn. Cues are produced f
 
 ## 15. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
-| Grid hidden in normal play: producing-hex pulse and hex text off, overlays dev-only, `DevOverlays` flags | U3 | 1 (it supports "functional player controls": the player must not see the grid while playing) |
+| Grid hidden in normal play: producing-hex pulse and hex text off, overlays dev-only, `DevOverlays` flags | U3a | 1 (it supports "functional player controls": the player must not see the grid while playing) |
 | Forest edges, ecotones, coast detail, curved road polish, settlement clusters and distinct buildings | U3 | 2 |
 | Resource-derived skin (depletion, fields tied to land records) | U3 with C1 | 2 |
 | Real hill and mountain relief with figure and building lift | U3 | 2 |
-| Character look: injury, illness, fatigue, pregnancy, carried goods in hands, equipment, hair by age | U4 | 2 |
-| Divine effect set (suggestion, command, compulsion, possession, heal, smite, create, avatar) | U2/U4 with D2 to D5 | 1 for suggestion, command, compulsion, heal, smite, create; 2 for possession and avatar effects, resurrection |
-| Sacred places, memorial markers, prayer threads | U4/U5 with D6, D7 | 2 |
+| Character look: injury, illness, fatigue, pregnancy, carried goods in hands, equipment, hair by age | U3b | 2 |
+| Divine effect set (suggestion, command, compulsion, possession, heal, smite, create, avatar) | U2a (cues) and U3b (rich effects) with D2 to D4 | 1 for suggestion, command, compulsion, heal, smite, create; 2 for possession and avatar effects, resurrection |
+| Sacred places, memorial markers, prayer threads | U3b/U5 with D6, D7 | 2 |
 | Aggregated far-range markers, instancing, ecological decoration, shader coast | U3 | 3 |
-| Emotion posture detail and cap mood rim, per-household clothing | U4 | 3 |
+| Emotion posture detail and cap mood rim, per-household clothing | U3b | 3 |
 
 ## 16. PlayMode-testable acceptance hooks
 

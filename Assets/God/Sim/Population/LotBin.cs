@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 namespace God.Sim.Population
 {
-    /// <summary>Who is entitled to a lot (SHARED_CONTRACTS 3). Estate: Id = the deceased's NpcId; State: the FactionId.</summary>
-    public enum OwnerKind : byte { None = 0, Npc = 1, Household = 2, Group = 3, Enterprise = 4, State = 5, Estate = 6 }
+    /// <summary>Who is entitled to a lot (SHARED_CONTRACTS 3). Estate: Id = the deceased's NpcId; State: the FactionId. F1 (contracts 7.1): <see cref="Org"/> (Id = OrgId) for every organisation; <see cref="Enterprise"/> is never written.</summary>
+    public enum OwnerKind : byte { None = 0, Npc = 1, Household = 2, Group = 3, Enterprise = 4, State = 5, Estate = 6, Org = 7 }
 
     /// <summary>
     /// The owner of a lot or a bin (SHARED_CONTRACTS 2.1). A plain struct with public fields (it is saved and hashed with the
@@ -46,8 +46,8 @@ namespace God.Sim.Population
         public override string ToString() => Kind + " " + Id;
     }
 
-    /// <summary>Kinds of bin (3+ reserved: site, granary, workshop).</summary>
-    public enum BinKind : byte { HouseholdStore = 1, Estate = 2 }
+    /// <summary>Kinds of bin. F1 (contracts 7.1): 3 OrgStore (C6), 4 AssetStore (C1), 5 CommunalStore (C8), 6 Shrine (D6), each created only through <c>Goods.NewBin</c> by its owner package; 7+ reserved.</summary>
+    public enum BinKind : byte { HouseholdStore = 1, Estate = 2, OrgStore = 3, AssetStore = 4, CommunalStore = 5, Shrine = 6 }
 
     /// <summary>
     /// A store of lots at a node with an owner (SHARED_CONTRACTS 2.1): a household store (M4) or an estate (M4). Lots are
