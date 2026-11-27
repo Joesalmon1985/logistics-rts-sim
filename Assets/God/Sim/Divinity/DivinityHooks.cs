@@ -36,11 +36,13 @@ namespace God.Sim.Divinity
             TryStartD2(s, ev, npc, in c, day, ref handled);
             TryStartD4(s, ev, npc, in c, day, ref handled);
             TryStartD5(s, ev, npc, in c, day, ref handled);
+            TryStartD6(s, ev, npc, in c, day, ref handled); // flagged additive edit (D6)
             return handled;
         }
         static partial void TryStartD2(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
         static partial void TryStartD4(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
         static partial void TryStartD5(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
+        static partial void TryStartD6(GodState s, EventBuffer ev, Npc npc, in Candidate c, int day, ref bool handled);
 
         public static bool TryAct(GodState s, EventBuffer ev, Npc npc, int day)
         {
@@ -49,11 +51,13 @@ namespace God.Sim.Divinity
             TryActD2(s, ev, npc, day, ref handled);
             TryActD4(s, ev, npc, day, ref handled);
             TryActD5(s, ev, npc, day, ref handled);
+            TryActD6(s, ev, npc, day, ref handled); // flagged additive edit (D6)
             return handled;
         }
         static partial void TryActD2(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
         static partial void TryActD4(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
         static partial void TryActD5(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
+        static partial void TryActD6(GodState s, EventBuffer ev, Npc npc, int day, ref bool handled);
 
         /// <summary>The episode key of a decision of this domain (0: none). Each slot sets <c>key</c> only while it is 0.</summary>
         public static int EpisodeKey(Npc npc, in Candidate c)

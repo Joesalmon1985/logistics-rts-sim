@@ -44,15 +44,35 @@ namespace God.Game
             return sb.ToString();
         }
 
+        // flagged edit (package D6): rules carry learning verbs (VerbTable rows), D6's selectors and conditions (a second condition in ConditionParam bits 0-7)
         public static string Verb(byte v)
         {
-            if (System.Enum.IsDefined(typeof(Sim.Policy.NpcVerb), (int)v)) return Humanize(((Sim.Policy.NpcVerb)v).ToString());
+            if (Sim.Learning.VerbTable.TryGet(v, out var info)) return info.Name;
             return "act " + v;
         }
 
-        private static string Who(ApplySelector a) => a == ApplySelector.Everyone ? "Everyone" : "Those named (" + (int)a + ")";
+        private static string Who(ApplySelector a)
+        {
+            switch (a)
+            {
+                case ApplySelector.Everyone: return "Everyone";
+                case ApplySelector.Adults: return "Adults";
+                case ApplySelector.Children: return "Children";
+                case ApplySelector.Elders: return "Elders";
+                case ApplySelector.Affiliated: return "My followers";
+                case ApplySelector.Community: return "Those of the community";
+                case ApplySelector.HouseholdHeads: return "Heads of households";
+                default: return "Those named (" + (int)a + ")";
+            }
+        }
 
-        private static string When(ConditionKind c, int p) => c == ConditionKind.Always ? "" : "when " + Humanize(c.ToString()).ToLowerInvariant();
+        private static string When(ConditionKind c, int p)
+        {
+            if (c == ConditionKind.Always) return "";
+            string w = "when " + Humanize(c.ToString()).ToLowerInvariant();
+            var also = (ConditionKind)(p & 0xFF);
+            return also == ConditionKind.Always ? w : w + " and " + Humanize(also.ToString()).ToLowerInvariant();
+        }
 
         private static string Humanize(string pascal)
         {
@@ -77,19 +97,30 @@ namespace God.Game
     }
 
     /// <summary>
-    /// The template list of the picker (R11: the template picker is Tier 1; the free builder is U2b). D6 owns the real
-    /// <c>CommandmentTemplates</c>; until it merges this is a provisional list built only from rules the F1 enums can express. One place to swap.
+    /// The template list of the picker (R11: the template picker is Tier 1; the free builder is U2b), read from D6's sim-side
+    /// <c>CommandmentTemplates</c> (flagged edit by package D6): Tier 1 and Tier 2 templates first, then the data-only ones with
+    /// the package they wait for. Importance is D6's 1-5 scale.
     /// </summary>
     public static class CommandmentTemplateList
     {
-        public static IReadOnlyList<CommandmentTemplateDef> Provisional() => new[]
+        public static IReadOnlyList<CommandmentTemplateDef> Provisional()
         {
-            new CommandmentTemplateDef { Id = 4, Name = "Protect forests", Rules = new[] { new CommandmentRule { Modality = Modality.Prohibited, LearningVerb = (byte)Sim.Policy.NpcVerb.Gather, Ware = Ware.Log, Applies = ApplySelector.Everyone, Condition = ConditionKind.Always } }, Note = "Provisional until D6's templates merge." },
-            new CommandmentTemplateDef { Id = 3, Name = "Honour agreements", Rules = new[] { new CommandmentRule { Modality = Modality.Required, LearningVerb = (byte)Sim.Policy.NpcVerb.HandOver, Applies = ApplySelector.Everyone, Condition = ConditionKind.Always } }, Note = "Provisional until D6's templates merge." },
-            new CommandmentTemplateDef { Id = 1, Name = "Share food", Rules = new[] { new CommandmentRule { Modality = Modality.Encouraged, LearningVerb = (byte)Sim.Policy.NpcVerb.HandOver, Ware = Ware.Grain, Applies = ApplySelector.Everyone, Condition = ConditionKind.Always } }, Note = "Provisional until D6's templates merge." },
-        };
+            var l = new List<CommandmentTemplateDef>();
+            for (int pass = 0; pass < 2; pass++)
+                for (int i = 0; i < CommandmentTemplates.All.Count; i++)
+                {
+                    var t = CommandmentTemplates.All[i];
+                    if ((t.Tier > 0) != (pass == 0)) continue;
+                    l.Add(new CommandmentTemplateDef
+                    {
+                        Id = t.Id, Name = t.Name, Rules = CommandmentTemplates.RulesOf(t.Id),
+                        Note = t.Tier == 0 ? "Matches nothing yet: waits for " + t.WaitsFor + "." : t.Tier == 2 ? "Tier 2: " + t.WaitsFor + "." : null,
+                    });
+                }
+            return l;
+        }
 
         public static readonly string[] ImportanceNames = { "Low", "Normal", "High" };
-        public static readonly int[] ImportanceValues = { 300, 600, 900 };
+        public static readonly int[] ImportanceValues = { 2, 3, 5 };
     }
 }
