@@ -81,6 +81,8 @@ namespace God.Sim.Civ
             byte rel = OwnerRelation(actor, owner);
             if (rel == RightOwner) return new PermissionResult(true, PermissionBasis.Own);
             if (rel == RightHousehold) return new PermissionResult(true, PermissionBasis.Household);
+            // C6 (flagged additive edit for the lead): an organisation owner's true permissions are C6's (roles, store access)
+            if (s.Organisations != null) { var org = Orgs.Orgs.Truth(s, actor, owner); if (org.Allowed) return org; }
             return new PermissionResult(false, PermissionBasis.None);
         }
 

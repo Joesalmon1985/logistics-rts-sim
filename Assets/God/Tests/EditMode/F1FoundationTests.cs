@@ -341,7 +341,8 @@ namespace God.Sim.Tests
         [Test]
         public void Events_NewDomainsAndRanges_NoRows()
         {
-            Assert.AreEqual(0, OrgEvents.Catalog.Count + DivinityEvents.Catalog.Count, "F1 adds no event rows"); // C1 (flagged edit): Civ rows 270-277 landed
+            Assert.AreEqual(0, DivinityEvents.Catalog.Count, "F1 adds no event rows"); // C1 (flagged edit): Civ rows 270-277 landed; C6 (flagged edit): Orgs rows below
+            foreach (var e in OrgEvents.Catalog) Assert.IsTrue(e.Code >= 500 && e.Code <= 519 || e.Code == 551, "C6 rows stay in C6's block (and the welfare slot 551): " + e.Name);
             foreach (var e in CivEvents.Catalog) Assert.IsTrue(e.Code >= 270 && e.Code <= 289, "C1 rows stay in C1's block: " + e.Name);
             foreach (var d in new[] { TelemetryDomain.Lending, TelemetryDomain.Organisation, TelemetryDomain.Service }) Assert.AreEqual((500, 599), EventCatalog.RangeOf(d, false), d.ToString());
             for (int d = 60; d <= 66; d++) Assert.AreEqual((800, 899), EventCatalog.RangeOf((TelemetryDomain)d, false), ((TelemetryDomain)d).ToString());
@@ -360,7 +361,7 @@ namespace God.Sim.Tests
             Assert.AreEqual(0x4000_0001, DivinityIds.AvatarBodyId(1));
             Assert.AreEqual(35, EpisodeKey.Possession);
             Assert.AreEqual(VerbTable.Rows.Count, VerbTable.Rows.Select(r => r.Id).Distinct().Count());
-            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id)), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102
+            Assert.IsFalse(VerbTable.Rows.Any(r => r.Id >= 96 && !Verb.IsCiv(r.Id) && !Verb.IsOrgs(r.Id)), "rows 96-127 stay reserved until their packages"); // C1 (flagged edit): Civ rows 96, 102; C6 (flagged edit): Orgs rows 104-106, 114, 115
         }
     }
 }
