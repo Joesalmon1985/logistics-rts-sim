@@ -197,6 +197,7 @@ namespace God.Game
                         setup.StartNpcsPerFaction = 20;
                         tuning = tuning ?? new SimTuning();
                         setup.Control = PlayerControl.GodOnly; setup.HumanGod = 1; tuning.Divinity.Enabled = 1; // U2a: the flag deals the god-only game with its gods
+                        tuning.Civ.Enabled = 1; tuning.Orgs.Enabled = 1; // MVP: god-only testers see owned fields, employment, stores and organisations
                         God.Sim.Population.Households.FounderTuning.EstablishedBand(tuning.Households.Founders);
                     }
                 }
@@ -358,6 +359,7 @@ namespace God.Game
             PendingTuning = new SimTuning();
             God.Sim.Population.Households.FounderTuning.EstablishedBand(PendingTuning.Households.Founders);
             PendingTuning.Divinity.Enabled = 1; PendingTuning.Divinity.Mode = mode;
+            PendingTuning.Civ.Enabled = 1; PendingTuning.Orgs.Enabled = 1; // MVP: god-only game also runs civilisation and organisations
             PendingStartAi = true;
             ReloadScene();
         }
