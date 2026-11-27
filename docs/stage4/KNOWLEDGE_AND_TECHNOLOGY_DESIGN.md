@@ -96,9 +96,9 @@ An owner that wants to respect rights does so by **its own decision**: an organi
 
 ### 5.1 The per-person store
 ```text
-KnowledgeMind                             // NpcMind.Know (new mind slot, section 14), null unless Civ.Knowledge.Enabled; hashed when present
+KnowledgeMind                             // NpcMind.Know (new mind slot, section 14), null unless Civ.Knowledge.Enabled; created lazily on the first write (SAC §22.4, #17), so enabling the module without seeded content changes no mind hash; hashed when present
   Known: KnownDesign[<= 24], Count         // eviction when full: lowest Level x recency, never one in use today; ties by DesignId
-  Skills: short[SkillClassCount]           // practical ability, permille (only if C7 has not landed shared skill slots; see 5.3)
+  (no skills here: practical ability lives in the one skill store in `CivState`, section 5.3; LEAD_RULINGS R42)
 
 KnownDesign
   Design: DesignId
@@ -128,7 +128,7 @@ Levels use the same 0..255 strength scale as culture traits and commandments (CU
 ### 5.3 Practical ability (skills)
 - **Distinct from knowing.** To build a unit a worker needs `KnownDesign.Level ≥ MinBuildKnowledge` (or a document at the site, 6.3) **and** `Skill(BuildSkill) ≥ MinBuildSkill`; to operate it, `MinOperateKnowledge` and `Skill(OperateSkill) ≥ MinOperateSkill`. Below the skill minimum the act is refused with `NoSkill` (the existing `Affordances` flag `NoSkill = 64`, `Assets/God/Sim/Cognition/Affordances.cs`); between the minimum and mastery, work is slower and wears equipment faster (the industrial documents' rule).
 - **Skill classes** (`SkillClass`, small enum): `Construction, Mechanics, Electrical, Driving, Mining, Refining, Chemistry, Metalwork, Reading, Research, Medicine (C7's Healing)`. Skills grow by practice (`SkillGainPerCycle`, scaled by the LearnRate phenotype as POPULATION's skills say) and apprenticeship (INSTITUTIONAL_SERVICES §5.2), decay slowly with disuse.
-- **One skill store.** POPULATION_DESIGN owns the skill record in principle but none exists in code (no `Skills` field on `Npc`). INSTITUTIONAL_SERVICES open question 1 lets C7 add skill slots. Rule: **whichever of C7 and K1 merges first lands the slots** (`NpcMind.Know.Skills` by K1, or C7's), and the other reuses them; the lead records which in the addendum. The slice needs `Driving`, `Mechanics`, `Construction` and `Electrical`.
+- **One skill store (LEAD_RULINGS R42).** POPULATION_DESIGN owns the skill record in principle but none exists in code (no `Skills` field on `Npc`). The store lives in **`CivState`** (it exists when any Civ or Industry switch is on), is **created lazily**, and is used by both C7 and K1 through one accessor (`Skills.Of`, `Skills.Gain`); it is not in `OrgState.C7` (that needs Orgs on) and not in `KnowledgeMind`. The slice needs `Driving`, `Mechanics`, `Construction` and `Electrical`.
 
 ## 6. Knowledge artefacts (documents)
 
@@ -193,7 +193,7 @@ A patent exists only under a **patent law**: a C10 `Law { OrgId (government), Ki
 Divine revelation of a design (10.4) gives the person knowledge only. If that person applies for a patent, the office treats the application like any other; the god's involvement is visible only to analysis (`Source = Revealed` in the mind).
 
 ### 8.4 Licences
-- **Patent licences:** granted by the patent holder (scope ⊆ the patent's), exclusive or non-exclusive, for a term, with a fee (`LicenceFee` obligation, paid via K2) and optional royalty per unit produced (`Royalty`, accrued at day start from the truth production count under the licence, MONEY §7.1).
+- **Patent licences:** granted by the patent holder (scope ⊆ the patent's), exclusive or non-exclusive, for a term, with a fee (`LicenceFee` obligation, paid via K2) and optional royalty per unit produced (`Royalty`). **There is no automatic accrual** (LEAD_RULINGS R41; MONEY §7.1 governs): the licensor's office-holder bills the royalty by an act, from what the organisation knows (the licensee's report or its own inspection), and the licensee settles it by an actual payment. Under-reporting is possible; the truth production count is used by analysis only.
 - **Contract licences of a secret:** a holder of unpatented knowledge may sell access (documents plus teaching) under a contract with use restrictions; `Jurisdiction = 0`; enforceable only as a contract dispute.
 - **Compulsory licences** (Tier 3): where the law provides, a court or office grants a licence against the holder's will at a set royalty (`CompulsoryLicenceGranted`).
 - **A licence is permission, not ability.** A licensee still needs knowledge (documents, teaching from the licensor, or its own) and the practical ability, materials and labour to build (D6 test 7).
@@ -279,16 +279,18 @@ New office kinds (`Researcher`, `Examiner`, `Clerk`, `Librarian`), powers (`Exam
 
 ## 14. Contract requests to the lead (for the SAC Industry addendum)
 
+**Status:** decided in SHARED_ARCHITECTURAL_CONTRACTS §22.11 and LEAD_RULINGS R32, R34, R41, R42. Where a row below proposes a number the addendum changed, the addendum governs: verbs are **Study 102, WriteDocument 103 (write and copy share one row), Research 63, IssueBill 127 (K2a)**; applying for a right reuses `RequestService` 106 (service kind 20) and bidding reuses `Say(Offer)`, so there are no `CopyDocument`, `ApplyForRight` or `Bid` rows; `NpcVerb` 210 Study, 211 WriteDocument, 212 Research, 213 IssueBill (214–218 spare, sentinel 219).
+
 | # | Request | Neutral? |
 |---|---|---|
 | K1-R1 | `CivState.K1` sub-object (partial `Civ/CivState.K1.cs`: `DesignRegistry`, `Artefacts`, `Rights`, `Projects`, `Auctions`), hashed after C5 (and before K2) when non-null; switch `Civ.Knowledge.Enabled` (default 0); tuning `Civ.Knowledge` with the `Designs` table | yes |
 | K1-R2 | Mind slot `NpcMind.Know` (`KnowledgeMind`), null unless the switch is on, hashed only when present (the `Kin`/`Social` pattern); `ArchivedLife.Know` (D7) | yes |
 | K1-R3 | Ids `RightId`, `ResearchProjectId`, `AuctionId` (counters in `CivState.K1`); `DesignId` as content id; episode-key kinds 19 right, 20 auction, 21 research project | yes |
-| K1-R4 | Wares `Document` (proposed 63) and `Paper` (proposed 64) from the spare 63–71 of the industrial ware block (INDUSTRIAL_RESOURCES §3.1); `Wares.IsUnique(w)` (Axe and Document) replacing `w != Ware.Axe` in `Goods.Mergeable` and the ground merge (`Assets/God/Sim/Population/Goods.cs`, a frozen file: a one-line, behaviour-neutral lead amendment) | yes (no Document lot exists until K1 writes one) |
+| K1-R4 | Wares `Document` (**63**) and `Paper` (**64**) (accepted, SAC §22.3) from the spare 63–71 of the industrial ware block (INDUSTRIAL_RESOURCES §3.1); `Wares.IsUnique(w)` (Axe and Document) replacing `w != Ware.Axe` in `Goods.Mergeable` and the ground merge (`Assets/God/Sim/Population/Goods.cs`, a frozen file: a one-line, behaviour-neutral lead amendment) | yes (no Document lot exists until K1 writes one) |
 | K1-R5 | `ConsumeReason.Research = 13` in the 16-slot ledger that the I1a foundation lands (INDUSTRIAL_RESOURCES §3.2; 13–15 reserved there); writing and copying materials use `ProcessInput` (8); documents are produced with `ProduceReason.Crafted` (5, F1) | yes (slots hashed only when non-zero) |
-| K1-R6 | Learning verb rows for `Study`, `CopyDocument`, `WriteDesign`, `Research`, `ApplyForRight`, `Bid` from the free rows of 96–127 (proposed 114–119), and an `NpcVerb` block **210–219** for Knowledge and Money (200–209 is Industry, INDUSTRIAL_RESOURCES §9.2); K1 and K2 candidates use the Civ candidate quota (`CivMindHooks.K1`/`.K2` partials), no new `MaxCand` quota | yes |
+| K1-R6 | Learning verb rows for `Study` (**102**), `WriteDocument` (**103**, write and copy), `Research` (**63**) per SAC §22.3 (the proposal of `CopyDocument`, `WriteDesign`, `ApplyForRight`, `Bid` as rows 114–119 is rejected: 114–115 are Orgs spares and 116–118 are package D6's), and an `NpcVerb` block **210–219** for Knowledge and Money (200–209 is Industry, INDUSTRIAL_RESOURCES §9.2); K1 and K2 candidates use the Civ candidate quota (`CivMindHooks.K1`/`.K2` partials), no new `MaxCand` quota | yes |
 | K1-R7 | C6: purposes `Research`, `RegisterRights`, `Adjudicate`; offices `Researcher`, `Examiner`, `Clerk`, `Librarian`; powers `Examine`, `Register`; templates of section 13 | yes |
-| K1-R8 | `ServiceKind` values (proposed) `RegisterRight = 20`, `ContractResearch = 21`, `CommercialDispute = 22`, `LibraryRead = 23`; C7's `Teach` topic extended to `DesignId`; C9 complaint kind `Infringement` | yes |
+| K1-R8 | `ServiceKind` values (accepted, R34) `RegisterRight = 20`, `ContractResearch = 21`, `CommercialDispute = 22`, `LibraryRead = 23`; C7's `Teach` topic extended to `DesignId`; C9 complaint kind `Infringement` | yes |
 | K1-R9 | C10 `Law.Kind = PatentLaw` and its rules (8.2) | yes |
 | K1-R10 | Asset records of C1 and the industrial packages carry `DesignId`; the sense seam exposes it to inspection | yes |
 | K1-R11 | Domains `Knowledge = 76`, `Rights = 77`, `Auction = 78` (and K2's `Money = 79`; Industry has 70–75), all with `RangeOf` → **1100–1199** (the block INDUSTRIAL_RESOURCES §12 suggests; Industry has 1000–1099); event codes (proposal) **1100–1169**: knowledge 1100 `DesignDiscovered`, 1101 `KnowledgeAcquired`, 1102 `KnowledgeForgotten`, 1103 `DesignFormalised`, 1104 `ArtefactCopied` (truth field `Authorised` †), 1105 `ArtefactClosed`, 1106 `DesignLost`, 1107 `SkillChanged` (if C7 does not own it), 1110 `ResearchProjectStarted`, 1111 `ResearchProgress` (HV), 1112 `ResearchProjectEnded`; rights 1130 `RightApplied`, 1131 `RightGranted`, 1132 `RightRefused`, 1133 `RightAssigned`, 1134 `LicenceGranted`, 1135 `LicenceEnded`, 1136 `RightRenewed`, 1137 `RightLapsed`, 1138 `RightExpired`, 1139 `RightChallenged`, 1140 `RightRevoked`, 1141 `RightSurrendered`, 1142 `UnauthorisedDesignUse` †, 1143 `InfringementPerceived`, 1144 `CompulsoryLicenceGranted`, 1145 `InjunctionOrdered`; auctions 1160 `AuctionAnnounced`, 1161 `BidMade` (HV), 1162 `AuctionClosed`, 1163 `AuctionSettled`, 1164 `AuctionVoided` | catalogue rows only |
@@ -330,5 +332,5 @@ New office kinds (`Researcher`, `Examiner`, `Clerk`, `Librarian`), powers (`Exam
 1. **Literacy.** Should reading need a learned `Reading` skill everywhere? Default: yes, with the industrial scenario seeding adult literacy; prehistoric scenarios have no documents anyway.
 2. **Can an organisation be a holder of knowledge?** Default: no; only its members and documents. An org's "capability" is a view over its members.
 3. **Novelty standard.** Default `AgainstRegistry` (the office knows only its own registry and deposits); `AgainstKnownPriorArt` is a law option.
-4. **Do royalties need the licensor to observe output?** Default: truth count by contract terms (MONEY §15 q4).
+4. **Do royalties need the licensor to observe output?** Default (R41, MONEY governs): yes in effect: no automatic accrual from the truth count; the licensor bills from the licensee's report or its own inspection and is paid by an actual payment (MONEY §15 q4).
 5. **Design table versioning across saves.** Default: content ids are stable; a save records the content version and refuses a mismatch (as other tuning).

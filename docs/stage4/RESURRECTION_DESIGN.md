@@ -99,11 +99,13 @@ Defaults (`SimTuning.Archive`): `FullArchiveDays` 10 (one sim year), `CompactAss
 
 ### 4.1 Archiving the dead (daily, off the tick loop)
 
+> **Superseded in part by the contracts (LEAD_RULINGS R7; [SHARED_ARCHITECTURAL_CONTRACTS.md §4.4](../civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md#44-death-archive-and-resurrection-d7-f1-lands-the-hook) governs).** The archive is `DivinityState.Archive`: one `ArchivedLife` per person (association store, kin, social and divine minds, optional beliefs), written by `DivinityHooks.ArchiveMind` just before `Kill` clears the mind, **dormant** (no system iterates it per tick), saved and hashed in `divine`. There are **no packed tiers** (`Full`, `Compact`, `None`), **no digest**, **no daily compaction pass** and **no moving of the dead out of `PopulationState.Npcs`** (that would change every hash); retention is `Divinity.Resurrection.Archive = Off | All | RecentDays` with `ArchiveMax`. Resurrection restores the same `Npc` record; age uses `Npc.BioAgeOffset` and `Bodies.AgeTicks` (not `AgeShiftTicks` or `Ages.BioAgeMilli`); lives are counted by `LifeNo` on `NpcResurrected` and `fact_death.life_no` (not `Lives[4]`). The steps below are the earlier proposal and stay for the reasoning only.
+
 1. **At death** (`PopulationModule.Kill`), before `npc.Mind = null`: if `RetainMinds`, the mind is packed at `Full` into a pending slot on the record (one allocation per death, not per tick). Everything else of `Kill` is unchanged: estates open, partnerships end, the household is left, hut rights end, the carry spills.
 2. **Archive pass** (once a day, the first tick of the day, ascending id): every dead record still in `PopulationState.Npcs` whose estate is settled (`EstateSettled` emitted) and whose death is at least `ArchiveAfterDays` (default 1) old moves into `ArchiveState.Dead` with its pending mind. Kin and pedigree lookups (`PopulationState.Find`) fall back to a binary search of the archive, so estate, kin and genealogy code keep working.
 3. **Compaction** (same pass): `Full` minds older than `FullArchiveDays` are re-packed at `Compact`.
 4. **Window and cap** (same pass): with `MindArchiveYears > 0`, minds older than that drop to `None`; above `MaxArchivedMinds` the oldest compact minds drop to `None`. Identity cores are never dropped (genealogy across generations needs them; POPULATION's "drop after 4 generations" is replaced by this rule).
-5. Each step emits `PersonArchived`, `MindCompacted`, `MindDropped` and updates the digest.
+5. Each step emits `NpcArchived` (881) and nothing else (contracts §4.4; the digest and the compaction events are superseded, see the notice above).
 
 **Cost.** One pass per day touches only that day's deaths and compactions: O(deaths per day). The tick loop no longer visits dead records at all, which also removes a growing cost from every `foreach Npcs` loop over long runs.
 
@@ -136,7 +138,7 @@ Defaults (`SimTuning.Archive`): `FullArchiveDays` 10 (one sim year), `CompactAss
 6. **Place and possessions.** The body appears at `Node` with an **empty carry**. Its former goods went to its estate and belong to their present owners (D5.13). A god may give goods separately (create resources into its carry, MYTHIC §6.8, a separate command and cost).
 7. **Household, partnerships, employment.** It belongs to no household (`Household = 0`, as left at death) and has no partnership, contract, hut right or care arrangement. These are not restored (D5.13). The household module treats it like a homeless adult (or, for a child, an orphan displaying need), and re-entry happens by ordinary decisions (4.5).
 8. **Obligations** in its restored social memory that fell due while it was dead are marked `Orphaned`; open ones keep their terms (others may or may not honour them: their own memories decide).
-9. **Signs and events:** a loud divine sign at `Node` (DIVINE_PLAYER §4.8), `DivineInterventionIssued`, `MiracleApplied(Resurrect)`, `NpcResurrected`. The resurrected person records a `Target` exposure and its divine relation takes the "possessed by it" level of evidence at double value (COMMANDMENTS_AND_RELIGION §4.2: belief +400, trust +150, devotion +100).
+9. **Signs and events:** a loud divine sign at `Node` (DIVINE_PLAYER §4.8), `DivineActionAccepted` (807), `MiracleCast` (825, kind `Resurrect`), `NpcResurrected` (880), names as SAC §15.1 (LEAD_RULINGS R24). The resurrected person records a `Target` exposure and its divine relation takes the "possessed by it" level of evidence at double value (COMMANDMENTS_AND_RELIGION §4.2: belief +400, trust +150, devotion +100).
 
 ### 4.3 Rejuvenation (separate, potentially expensive)
 
@@ -190,13 +192,13 @@ Eligibility needs only the identity core and a mind tier other than `None`. Beca
 
 | Event | Fields |
 |---|---|
-| `PersonArchived` | npc, diedTick, cause, tier, bytes |
-| `MindCompacted` | npc, fromTier, toTier, bytesBefore, bytesAfter, entriesKept, relationsKept |
-| `MindDropped` | npc, reason (Window, Cap) |
-| `NpcResurrected` | intervention, god, npc, variant, lifeNumber, deathTick, deathCause, yearsDead, node, mindTier, ageMilliAfter, oldAgeGraceApplied, mindless |
+| `NpcArchived` (881, Full; replaces `PersonArchived`) | npc, life number, diedTick, cause, node |
+| `NpcRestoredFromArchive` (882) | npc, life number (replaces the packed-tier event `MindCompacted`: SAC §4.4 has no tiers) |
+| (eviction) | an entry past `Divinity.Resurrection.ArchiveMax` is evicted deterministically (oldest `DiedTick`, ties by id) with no event (replaces `MindDropped`; SAC §4.4) |
+| `NpcResurrected` | intervention, god, npc, variant, `LifeNo`, deathTick, deathCause, yearsDead, node, age after (`Bodies.AgeTicks`), oldAgeGraceApplied (fields as the D7 spec; `mindTier` and `mindless` dropped with the packed tiers) |
 | `NpcRejuvenated` | intervention, god, npc, years, ageBefore, ageAfter, stageAfter |
 
-**Warehouse** (Q1, [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md)): `dim_person` keeps one row per `NpcId` (persistent identity) and gains `life_count`; a new `fact_life` (one row per life: start, end, cause, resurrected by) and `fact_resurrection`; `fact_person_day` simply has no rows for days spent dead. Every KPI that counts deaths, births or the living stays correct because resurrection is a separate event, not a negative death.
+**Warehouse** (Q1, [DATA_WAREHOUSE_DESIGN.md](DATA_WAREHOUSE_DESIGN.md)): `dim_person` keeps one row per `NpcId` (persistent identity) and gains `life_count`; `fact_life_spell` (one row per life: start, end, cause, resurrected by; the name of SAC §4.4 and §18.2, LEAD_RULINGS R7), `fact_resurrection` and `fact_npc_archive`, and `life_no` on `fact_death`; `fact_person_day` simply has no rows for days spent dead. Every KPI that counts deaths, births or the living stays correct because resurrection is a separate event, not a negative death.
 
 **Daily snapshot:** archive counts by tier, archive bytes, resurrections today.
 
@@ -218,6 +220,8 @@ Eligibility needs only the identity core and a mind tier other than `None`. Beca
 
 ## 9. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
 | Pack the mind at death (`MindPack` for learning, beliefs, kin, social; religion when D6 lands) | D7 | 2 |
@@ -227,7 +231,7 @@ Eligibility needs only the identity core and a mind tier other than `None`. Beca
 | Compaction tiers, window and cap | D7 | 2 |
 | Rejuvenation | D7 | 3 |
 | `AskJoinHousehold`, property claims through justice | C3/C9 | 3 |
-| Warehouse `fact_life`, `fact_resurrection`, memorial view | Q1, U5 | 2 |
+| Warehouse `fact_life_spell`, `fact_resurrection`, `fact_npc_archive`, memorial view | Q1, U5 | 2 |
 
 Resurrection is Tier 2 in the brief (§42). The one Tier 1 dependency is cheap and should land early (D1 or F1): **do not discard the mind at death when divinity is on** (step 1 of 4.1), because a mind discarded before D7 lands cannot be recovered later in the same save.
 

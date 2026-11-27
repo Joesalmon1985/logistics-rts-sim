@@ -235,7 +235,7 @@ The organisation may adopt such a law because priests, believers or a divine req
 | T8 | Forgive those who repent | Encouraged `Forgive` · Everyone · `TargetApologised` | C2 (M7 acts) |
 | T9 | Protect communal property | Prohibited `TakeFromStore` (18) communal store · Everyone · `NotPermitted` | C1, C8 |
 | T10 | Contribute to public services | Encouraged `Store` (17) into a communal or organisation store · Adults · `HouseholdSurplus` | C8 |
-| T11 | Defend your community | Encouraged `Say(Warn)` (74) and later `Attack` · Adults · `EnemyInSight` and `AtHome` | Tier 1 (warn); C4 (attack) |
+| T11 | Defend your community | Encouraged `Say(Warn)` (74) and later `Attack` · Adults · `EnemyInSight` and `AtHome` | Tier 2 (R5; the warn part needs no new verb); C4 (attack, deferred) |
 | T12 | Treat injured individuals | Encouraged `Tend` (later `Treat` 107) · Adults · `TargetInjured` | Tier 1 (`Tend`); C7 |
 
 ---
@@ -248,7 +248,7 @@ The organisation may adopt such a law because priests, believers or a divine req
 | `Cognition` | Rule matching per candidate from the person's own context; `Pray`, `Worship`, `MakeOffering`, telling candidates; `Permits.Believed` labels |
 | `Learning` | `Feature.Divine` 5–7; prayer episode kind 37; learned values feed adoption |
 | `Comms` | `Say(Teach)` with `TopicKind.Commandment` (7); `Praise`/`Warn` with `TopicKind.God` (8); gestures `Pray` (19), `Worship` (20); M5 decode errors produce variants |
-| `Culture` (C10) | The shared adoption-test function; vertical and tradition channels; norms |
+| `Culture` (D6, C10) | The shared adoption function in `Sim/Culture` is owned by package D6 (LEAD_RULINGS R6); C10 adds the vertical and tradition channels and norms on top of it |
 | Organisations (C6) | Religious organisations, canon, priests, offerings, membership; schisms by founding |
 | Justice and politics (C9, C10) | `Law.SourceCommandment`; `LawAdopted` |
 | Citizenship (C5) | Untouched by every religion path |
@@ -302,16 +302,18 @@ Codes and names are SAC §15.1 (D6, 860–879).
 
 ## 9. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
-| `Commandment` records with every field, `CommandmentRules.Validate`, templates T1, T3, T4, T6, T7, T11, T12; reveal, revise, revoke | D6 | 1 |
+| `Commandment` records with every field, `CommandmentRules.Validate`, templates T1, T3, T4, T6, T7, T12 (T11 is Tier 2, LEAD_RULINGS R5); reveal, revise, revoke | D6 | 1 |
 | Per-person knowledge (heard, learned, adopted, rejected, forgotten) and variant interpretations | D6 | 1 |
 | The commandment part of the divine term and `Feature.Divine` 5–7 | D6 | 1 |
-| Transmission by telling (`Say(Teach)`, `TopicKind.Commandment`) and the minimal household pass; migrants | D6 (+ U4 animation) | 1 |
+| Transmission by telling (`Say(Teach)`, `TopicKind.Commandment`) and the minimal household pass; migrants | D6 (+ U3b animation) | 1 |
 | `GodBelief` five fields with the evidence table; founding religions and affiliation spells | D6 | 1 (minimal evidence) / 2 (full table) |
 | Prayer with episodes, worship, offerings, conversion, several gods | D6 | 2 |
-| Commandment adopted as law | D6 + C9/C10 | 2 |
-| Templates T2, T5, T8–T10 as their verbs land | D6 with C1, C2, C7, C8 | 2–3 |
+| Commandment adopted as law | D6 + C10 (C9 deferred to Tier 3) | 2 |
+| Templates T11 (R5), then T2, T5, T8–T10 as their verbs land | D6 with C1, C2, C7, C6 (C8 Tier 2 absorbed) | 2–3 |
 | Religious organisations, canon, priests' interests, schisms | D6 + C6 + C10 | 3 |
 | Commandment exposures through C10's cultural pass; traditions; priests' preaching | C10 | 3 |
 | Worship-fed Mythic | D6 + D1 (amendment) | 3 |

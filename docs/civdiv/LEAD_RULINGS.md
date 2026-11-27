@@ -49,3 +49,11 @@ The lead's binding rulings on conflicts found between the package index, the sha
 | R43 | Agreement record kinds | I3's agreement record carries `Kind` (Supply, Electricity, Procurement, Haulage); I4's billing depends softly on I3 (fallback: C2 obligations only). |
 | R44 | Smoke flag, tag and scenario names | `-godonly -godpopulation`; tag `civdiv-g` for Checkpoint G; scenario `ind_slice`. WST incineration uses `Disposed`. |
 | R45 | Numbers on unity/poc differ from what the contracts assume (`MaxCand` 24, `PersonalCount` 32, `MoveReason` to 9, no `BinKind.AssetStore`) | F1 raises them to the contract values (36, 40, and the listed enums); I1a asserts the post-F1 values before its own changes. |
+| R46 | Rulings vs contracts text not yet amended (U4 names, skill-store owner) | Where a ruling and the contracts disagree, **the ruling wins**; the contracts are amended by the package that next touches the section. |
+| R47 | `Information/CommandmentText` owner | R6 governs: U2 (Game layer). The index entry under package D6 is superseded. |
+| R48 | C7 and K1 specs say `OrgState.C7.Skills` | R42 governs: the skill store is in `CivState`. |
+| R49 | `fact_org_decision` without a migration; migration 0020 unused | C6 adds `fact_org_decision` to its own migration 0018. 0020 (C8's slot) stays reserved and unused. |
+| R50 | Draft org and service events without contract codes | A package allocates a code from its own block only if the warehouse must reconcile the event; otherwise it stays state. |
+| R51 | Tier 1 scenario page, generated islands and tutorial rows naming deferred U6 | The scenario menu entries (Living island, god-only, unlimited Mythic, Iron Coast) are added by **U2b**; generated islands already exist; the tutorial is Tier 3, after Checkpoint G. |
+| R52 | RESURRECTION §4.2–4.6 still describe the old archive model | Left under the notice; D7 rewrites them when it merges. |
+| R53 | No deconsecration event | D3 may add `LocationDeconsecrated` at code 830 if it implements deconsecration. |

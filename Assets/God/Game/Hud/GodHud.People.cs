@@ -22,10 +22,9 @@ namespace God.Game
         private Vector2 _personScroll;
         /// <summary>F0.15: the card's tab: 0 mind (M3), 1 household (M4), 2 relations (M5).</summary>
         private int _personTab;
-        private static readonly string[] PersonTabs = { "Mind", "Household", "Relations" };
 
-        /// <summary>The tab shown (tests).</summary>
-        public int PersonTab { get => _personTab; set => _personTab = Mathf.Clamp(value, 0, PersonTabs.Length - 1); }
+        /// <summary>The tab shown (tests): an index into the registered tabs (0 mind, 1 household, 2 relations, then the rest by order).</summary>
+        public int PersonTab { get => _personTab; set => _personTab = Mathf.Clamp(value, 0, Mathf.Max(0, _personTabs.Count - 1)); }
 
         /// <summary>The person whose card is open, 0 for none.</summary>
         public int SelectedNpc { get; private set; }
@@ -38,9 +37,17 @@ namespace God.Game
             ClearSelection(); ClearEnvoy();
             SelectedNpc = id;
             PersonCard = InspectionOf(id);
+            // U1a: the selection model is the truth, the card follows it; a card opened by hand selects that person
+            var sel = Boot.Selection;
+            if (sel != null && id != 0 && !((sel.HasPersons || sel.Kind == SelectionKind.Household) && sel.Primary == id)) sel.SetPerson(id);
         }
 
-        public void ClearNpc() { SelectedNpc = 0; PersonCard = null; }
+        public void ClearNpc()
+        {
+            SelectedNpc = 0; PersonCard = null; TypingText = false;
+            var sel = Boot.Selection;
+            if (sel != null && (sel.HasPersons || sel.Kind == SelectionKind.Household)) sel.Clear();
+        }
 
         /// <summary>The view that has a card for this person: the viewer's own, or in watch mode the person's own faction's records.</summary>
         private NpcInspection InspectionOf(int id)
@@ -89,14 +96,21 @@ namespace God.Game
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("x", st.Btn, GUILayout.Width(28f))) { ClearNpc(); GUILayout.EndHorizontal(); return; }
             GUILayout.EndHorizontal();
+            if (Boot.GodOnly) DrawPersonNameRow(st, c);
+            var tabs = VisiblePersonTabs(c);
+            if (_personTab >= tabs.Count) _personTab = 0;
             GUILayout.BeginHorizontal();
-            for (int t = 0; t < PersonTabs.Length; t++)
-                if (GUILayout.Button(PersonTabs[t], t == _personTab ? st.BtnSel : st.Btn)) _personTab = t;
+            for (int t = 0; t < tabs.Count; t++)
+                if (GUILayout.Button(tabs[t].Title, t == _personTab ? st.BtnSel : st.Btn)) _personTab = t;
             GUILayout.EndHorizontal();
             // vertical scrolling only: the content is laid out to the card's width (wrapped labels, flexible drive bars)
-            _personScroll = GUILayout.BeginScrollView(_personScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(height - 88f));
-            if (_personTab == 1) { DrawHouseholdTab(st, c); GUILayout.EndScrollView(); return; }
-            if (_personTab == 2) { DrawRelationsTab(st, c); GUILayout.EndScrollView(); return; }
+            _personScroll = GUILayout.BeginScrollView(_personScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(height - (Boot.GodOnly ? 120f : 88f)));
+            tabs[_personTab].Draw(st, c);
+            GUILayout.EndScrollView();
+        }
+
+        private void DrawMindTab(HudStyle st, NpcInspection c)
+        {
             GUILayout.Label((c.Founder ? "Founder, age " : "Age ") + c.HudAge, st.Small);
             GUILayout.Label("Doing: " + (c.Doing.Length > 0 ? c.Doing : "nothing"), st.Label);
             GUILayout.Label("Health " + c.Health / 10 + "%   nutrition " + c.Nutrition / 10 + "%" + (c.Injury > 0 ? "   injury " + c.Injury / 10 + "%" : "")
@@ -131,7 +145,6 @@ namespace God.Game
             foreach (var h in c.HabitsNegative) GUILayout.Label("  - " + h.Text, st.Small);
             GUILayout.Label(c.Entries + " associations, " + c.Conjunctions + " learned combinations; learning " + c.Mode
                 + "; learning changed " + c.LearnedSharePermille / 10 + "% of today's choices", st.Small);
-            GUILayout.EndScrollView();
         }
 
         private static string Signed(int v) => v >= 0 ? "+" + v : v.ToString();

@@ -115,7 +115,7 @@ public sealed class Meter                                // IndustryState.Grid.M
 {
     public int Id, Port; public int SupplierOrg;         // the utility that sells through this meter (the network operator of the component, or a named seller)
     public long DeliveredEu, ReadEu;                     // cumulative delivered; the value at the last reading by a person
-    public int LastReadDay; public int Agreement;        // the electricity supply agreement (an I3 SupplyAgreement with Ware = None and an energy price term)
+    public int LastReadDay; public int Agreement;        // the electricity supply agreement (an I3 `SupplyAgreement` record with `Kind = Electricity` (LEAD_RULINGS R43), `Ware = None` and an energy price term; if I3 has not merged, billing falls back to C2 obligations only)
 }
 ```
 

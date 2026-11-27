@@ -658,18 +658,20 @@ Populations: 100, 500, 1000, 2000 are the required set; 5000 is attempted. For e
 `unity/demog` adds `demog report --scenario S --seeds 1-20 --years 15 [--set ..] [--arm "name: k=v ..."] [--plan FILE] [--out DIR]` and `unity/ibs` fixes the warehouse mappers for NPC 0; both merge before D5 work. `demog report` is the headless demographic viability experiment (F2); it and `lab`, `learn-dump`, `export` and `bench` read the sim and the recorder, never the other way round. The new commands planned for Q1 and Q2 are `sql` (read-only, [INFORMATION_AND_MEDIA_DESIGN.md §12](INFORMATION_AND_MEDIA_DESIGN.md#12-owner-d5-civilisation-and-divinity-26-nov-2026)), `bench` cases (12.6), and the divine fixture scenarios for Q3. `experiment`, `serve`, `dataset` and `verify-model` stay "not implemented" (exit 9): no training and no served agents in this run (D5.32).
 
 ### 12.8 Tier and package mapping
+
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 | Item | Package (brief §39) | Tier |
 |---|---|---|
 | Command types, validation, Mythic, `Divinity.Enabled`, P1–P3, divine replay | F1, D1, D2, Q3 | 1 |
 | Resource ledger and conservation C1 with miracles | D3, C1, Q3 | 1 |
 | Save version bump, `divine` hash part, save/load parity with divine state | F1, Q3 | 1 |
-| Exact replay of a human session (movement intents, possession, avatar) | D4, D5, U1, Q3 | 2 |
+| Exact replay of a human session (movement intents, possession, avatar) | D4 (D4a, D4b), U1, Q3 | 2 |
 | Resurrection and archive, population identity | D7, Q3 | 2 |
 | `Orgs.Enabled`, P4–P5, switch matrix P6 | C6, Q3 | 2 |
-| Benchmarks for populations 100–2000, learning, social, divine, recording, parallel | Q2 | 1 (baseline, 2000-person run), 2 (org and divine cases) |
-| `bench_npc_5000`, nightly long runs with divine and organisations | Q2 | 3 |
+| Benchmarks for populations 100–2000, learning, social, divine, recording, parallel | Q1 (absorbs Q2) | 1 (baseline, 2000-person run), 2 (org and divine cases) |
+| `bench_npc_5000`, nightly long runs with divine and organisations | Q1 (absorbs Q2) | 3 |
 | Camera independence test in the player | U1, Q3, Q4 | 2 |
-| Checks of 12.1 for justice and military additions | C9, C4, Q3 | 3 |
+| Checks of 12.1 for justice and military additions | C9, C4 (deferred), Q3 | 3 |
 
 ### 12.9 Acceptance hooks
 | # | Test | Pass criterion |

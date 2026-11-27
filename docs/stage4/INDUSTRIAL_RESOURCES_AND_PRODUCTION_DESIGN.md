@@ -242,7 +242,7 @@ public static class RecipeBook
 | 32 | Harvester assembly | Factory | steel 8, machine parts 4, engine 1, wire 2 | asset: harvester; *scrap 1* | 1500 | 3/5 | 80 |
 | 33 | Ammunition | Factory | steel 1, copper 1 | ammunition 10 | 240 | 1/2 | 20 |
 | 34 | Firearm | Factory | steel 2, machine parts 1 | firearm 1 | 360 | 1/2 | 20 |
-| 35 | Nuclear fuel processing | Refinery (licensed design) | uranium ore 10 | nuclear fuel 1, *slag 6, spent fuel 0* | 1800 | 3/4 | 120 |
+| 35 | Nuclear fuel processing | Refinery (design known at the site; R33) | uranium ore 10 | nuclear fuel 1, *slag 6, spent fuel 0* | 1800 | 3/4 | 120 |
 | 36–60 | military vehicles, power-line kits, recycling, incineration | | | see the D6 sister documents | | | |
 
 Vehicle and station construction recipes are in their documents; recycling and incineration in WASTE §4.4. Units are deliberately small so the vertical slice completes within a few sim days (1 day = 1200 ticks by default).
@@ -330,15 +330,16 @@ A refinery or smelter **transforms** physical resources (4.4); it **earns** only
 |---|---|---|---|
 | Internal transfer | a carrier or vehicle of the same owner moves lots between its own bins | `OwnerRule.Keep`; no payment | `Goods`, I2 |
 | Barter at the gate | two authorised persons hand over goods for goods (M5 exchange steps, each a separate act) | `Exchanged`; nothing atomic | M5, ORG-ACC-2 |
-| Purchase | the seller's person hands over (or unloads into the buyer's bin), the buyer's person pays | basis `Purchase` (23); payment by the MONEY doc's instruments, or goods | C8 / MONEY doc |
+| Purchase | the seller's person hands over (or unloads into the buyer's bin), the buyer's person pays | basis `Purchase` (23); payment by the MONEY doc's instruments, or goods | K2a (payment; MONEY doc) |
 | **Supply agreement** | a standing agreement between two owners: ware, count per delivery, schedule, delivery place, price terms; each delivery is a physical unload | ownership passes at unload (`OwnershipBasis.SupplyAgreement`, 25); each delivery opens a C2 `FormalObligation` (debtor buyer, creditor seller) settled by payment | **I3** (record), C2 (obligation) |
-| Communal allocation | a communal store's keeper issues by ration rule | C6/C8 rules | C6 |
+| Communal allocation | a communal store's keeper issues by ration rule | C6 rules (C8 Tier 2 absorbed) | C6 |
 | Government provision | a government organisation's staff deliver from its stores under a budget line | grant hand-over (`Gift` or `StateGrant` basis) | C10, C6 |
 
 ```csharp
 public sealed class SupplyAgreement                // IndustryState.Trade.Agreements, ascending Id (AgreementId)
 {
     public int Id; public Owner Seller, Buyer;     // any owners (orgs, NPCs, households)
+    public AgreementKind Kind;                     // Supply, Electricity, Procurement, Haulage (LEAD_RULINGS R43): one record for I3, I4 (electricity supply) and I5 (procurement); I4's billing depends softly on I3 (fallback: C2 obligations only)
     public Ware Ware; public short PerDelivery; public short EveryDays; public int DeliverToBin;
     public PriceTerm Price;                        // { Kind: Goods | Money | None (internal/communal), Ware or MoneyUnit, Count per unit } — Money per the MONEY doc
     public int StartDay, EndDay;                   // 0 = open-ended
@@ -422,12 +423,12 @@ As F1 did for D5, one small commit lands every shared industrial surface, so the
 | # | Item | Files |
 |---|---|---|
 | I1a.1 | `Ware` 40–71 block, `Wares.PersonalCount = 72`, helpers of 3.1, weights, F1.17-style ledger hashing for 40–71 | `Economy/Wares.cs`, `PopulationModule.cs` |
-| I1a.2 | Ledger reasons widened to 16 (3.2); `ProduceReason` 6–9, `ConsumeReason` 8–12; hash slots 8–15 only when non-zero | `Population/PopulationState.cs` |
+| I1a.2 | Ledger reasons widened to 16 (3.2); `ProduceReason` 6–9, `ConsumeReason` 8–13 (13 `Research`, K1; SAC §22.1 I1a.2); hash slots 8–15 only when non-zero | `Population/PopulationState.cs` |
 | I1a.3 | `MoveReason.BinTransfer = 13` with `Reach.Store` for both bins (VEHICLES §3.4); `OwnershipBasis.SupplyAgreement = 25` (I3) | `Population/Goods.cs`, `Reach.cs` |
 | I1a.4 | `Goods.MoveBin(s, ev, bin, toNode, actor)`: relocates a bin by one lattice step (vehicles only; VEHICLES §4.3) with `BinMoved` | `Population/Goods.cs` (frozen: amendment) |
 | I1a.5 | State slot `GodState.Industry` (`IndustryState`, sub-objects `Geology`, `Production` I1; `Vehicles` I2; `Trade` I3; `Grid` I4; `Military` I5; `Waste` I1/WASTE), hash part `"industry"` appended after `"divine"` (present only when non-null), `SimTuning.Industry` root (`Enabled = 0`), `IndustryModule` entry points, `IndustryHooks`/`IndustryMindHooks` dispatched **after Divinity** | `Core/GodState.Industry.cs`, `Core/GodSim.cs`, `Core/SimTuning.cs`, `Industry/*` stubs |
 | I1a.6 | Id ranges (section 9.2), `ThinkScratch.MaxCand` 36 → 40 (quota 4 for Industry), `NpcMind.Industry` slot (null unless enabled) | `Thinker.cs`, `PolicyTypes.cs`, `Learning/Verbs.cs`, `Cognition/Mind.cs` |
-| I1a.7 | Movement sites `PopulationExtensions.StepTicks(s, npc, from, to, base)` and `PopulationExtensions.Moved(s, ev, npc, from, to)` (default: base, no-op) for vehicles (VEHICLES §4.3) | `PopulationExtensions.cs`, `PopulationSystem.cs` |
+| I1a.7 | Movement sites `PopulationExtensions.StepTicks(s, npc, from, to, base)`, `PopulationExtensions.Moved(s, ev, npc, from, to)` (default: base, no-op) and a third site `PopulationExtensions.PathCosts` (the cost profile of VEHICLES §4.3; SAC §22.11 #15) for vehicles | `PopulationExtensions.cs`, `PopulationSystem.cs` |
 | I1a.8 | `TelemetryDomain` 70–75 and `RangeOf` → 1000–1099; empty per-package catalogue arrays `IndustryEvents.I1` … `I5` | `Telemetry/DomainEvent.cs`, `Industry/IndustryEvents.cs` |
 | I1a.9 | Pin **P10 `Industry_Off_Reproduces_Base`** (all D5 switches and `Industry.Enabled` 0: every part hash equals the base) and **P11 `Industry_Idle_Is_Neutral`** (`Industry.Enabled = 1`, no deposits seeded by the scenario, generation off: every part except `industry` equals P10) | tests |
 | I1a.10 | Save: the lead bumps `SaveFile.CurrentVersion` at the checkpoint that merges I1a; `FromJson` accepts null `Industry` | lead only |
@@ -456,7 +457,7 @@ As F1 did for D5, one small commit lands every shared industrial surface, so the
 
 | Capability | Tier | Package | Minimal first version (vertical slice, D6.18) |
 |---|---|---|---|
-| I1a foundation (section 9.1) | 2 (first industrial merge; after the Tier 1 civilisation and divine set) | **I1** (part a) | all neutral items; P10, P11 |
+| I1a foundation (section 9.1) | 2 (first industrial merge; after the Tier 1 civilisation and divine set) | **I1a** (its own package in the index) | all neutral items; P10, P11 |
 | Wares 40–53, ledger reasons, deposits (scenario-seeded), mechanised mine, smelter (recipes 22, 25), machine shop, engine works, hauler/harvester assembly (29–32), the runner, orders | 2 | **I1** | iron ore + coal deposits seeded by the industrial scenario; recipes 22, 25, 29, 30, 32; orders placed by an NPC owner and by an org office-holder |
 | Geology generation, survey, manual extraction, deposit knowledge in minds | 2 (generation), 3 (survey, knowledge spread) | I1 | generation on; survey later |
 | Oil chain (well, refinery 23, 27), copper chain (26, 28) | 2 (after the slice) | I1 | |
@@ -466,21 +467,21 @@ As F1 did for D5, one small commit lands every shared industrial surface, so the
 | Facility card, queue view, deposit drawing | 2 | I6 | |
 | Designs gating recipes | 2 (data hook), 3 (full licensing) | K1 | scenario-seeded known designs |
 
-### 10.1 The D6 package set and the minimal path (provisional ids; the package index fixes them)
+### 10.1 The D6 package set and the minimal path (ids as DEVELOPMENT_PACKAGE_INDEX; purchases and payments belong to K2a, not C8)
 
 | Id | Title | Owning docs | Hard prerequisites | Soft prerequisites | Tier | Migration, events |
 |---|---|---|---|---|---|---|
-| **I1** (a: foundation; b: content) | Industrial content and recipes: wares, ledger reasons, deposits, facilities, `RecipeBook` and runner, orders; waste outputs and the pollution field | this doc; WASTE | F1a, F1b, C1; **I1a before every other I package** | C6 (org owners), C3 (wages), K1 (design gating), Q1 | 2 | `0031`, `0036`; 1000–1019, 1080–1094 |
+| **I1a** (foundation), then **I1** (content) | Industrial content and recipes: wares, ledger reasons, deposits, facilities, `RecipeBook` and runner, orders; waste outputs and the pollution field | this doc; WASTE | F1a, F1b, C1, **C6** (index: Iron Coast's facilities belong to organisations whose office-holders place the orders); **I1a before every other I package** | C3 (wages), K1 (design gating), Q1 | 2 | `0031`, `0036`; 1000–1019, 1080–1094 |
 | **I2** | Vehicles and harvesting | VEHICLES | I1 (incl. I1a), C1 | C3 (operators), C6 (fleets), D2, D4a (control of operators), Q3 | 2 | `0032`; 1020–1039 |
-| **I3** | Refineries and industrial trade (no external buyer): supply agreements, recorded sales, delivery obligations | this doc §4.9 | I1, C2 (obligations), C6 | I2 (deliveries), MONEY doc package (money payment; goods payment works without it) | 2 | `0033`; 1040–1049 |
-| **I4** | Electricity generation and distribution | ELECTRICITY | I1, C1 | C6 (utility), C3 (staff), C2 (bills), I2 (fuel delivery), MONEY doc package, K1 | 2 | `0034`; 1050–1069 |
+| **I3** | Refineries and industrial trade (no external buyer): supply agreements, recorded sales, delivery obligations | this doc §4.9 | I1, C2 (obligations), C6 | I2 (deliveries), K2a (money payment; goods payment works without it) | 2 | `0033`; 1040–1049 |
+| **I4** | Electricity generation and distribution | ELECTRICITY | I1, C1 | C6 (utility), C3 (staff), C2 (bills), I2 (fuel delivery), K2a, K1 | 2 | `0034`; 1050–1069 |
 | **I5** | Mechanised military production | INDUSTRIAL_MILITARY | I1, I2, I3, C6, C3 | I4, C4/M9 (combat, Tier 3), D2/D4, K1 | 2 (end) / 3 | `0035`; 1070–1079 |
 | **I6** | Industrial presentation and analytics: VISUAL_WORLD §18, PLAYER_UI §25, KPIs IND/VEH/ELE/IMIL/WST/ENV, warehouse views | VISUAL_WORLD §18, PLAYER_UI §25, each doc's §7 | the I package whose state it shows; U3a, U2a conventions; Q1 (`0030` and the `sql` command) | U5 (reports panel) | 2 (cards, overlays for the slice) / 3 | `0037`; 1095–1099 |
 | **K1** | Knowledge, designs and licences | KNOWLEDGE_AND_TECHNOLOGY_DESIGN.md (other agent) | its own (C6, C7 education, C9 for disputes) | — | 2 (design data and seeding) / 3 | its own block |
 
 **Minimal path to the vertical slice (D6.18), Tier 2, started only after the Tier 1 set has merged:** I1a (foundation, neutral, pins P10–P11) → I1 minimal (iron ore and coal deposits seeded, recipes 22, 25, 29, 30, 32, orders) → I2 minimal (harvester and hauler, operator job, harvest routine) → I4 minimal (one coal station, one component, allocation, outage) → I3 minimal (one supply agreement and one `IndustrialSaleClosed`) → Q3 `ind_slice` scenario and VS-1..VS-10 → I6 minimal (facility, vehicle and station cards, electricity overlay, shortage glyphs, visible cargo). I5 and the oil, copper, waste-recycling, nuclear, survey and military extensions follow only if time remains; none may delay a Tier 1 or Tier 2 civilisation or divine package (D6.18). I2 and I4 can run in parallel once I1 has merged; I3 needs C2.
 
-**I1 dependencies in detail.** I1 needs **F1a+F1b** (state-slot and hook pattern, `OwnerKind.Org`, `BinKind.AssetStore`), **C1** (productive assets, `Work`, ownership beliefs; hard), **C6** (org owners and decisions; hard for org-placed orders, soft for NPC-owned facilities), **C3** (employment; soft: owners and members can work without wages), **K1** (design ids; soft: `DesignId = 0` until K1 lands), **Q1** for the KPIs. It must not start before the Tier 1 set (F0, F1, C1, D1, D2, D3, D6-commandments, U1a, U2a, U3a, Q1-T1, Q3) has merged (D6.18).
+**I1 dependencies in detail.** I1 needs **F1a+F1b** (state-slot and hook pattern, `OwnerKind.Org`, `BinKind.AssetStore`), **C1** (productive assets, `Work`, ownership beliefs; hard), **C6** (org owners and decisions; **hard** per the index: the Iron Coast facilities belong to organisations; an NPC-owned facility still works without it in a test), **C3** (employment; soft: owners and members can work without wages), **K1** (design ids; soft: `DesignId = 0` until K1 lands), **Q1** for the KPIs. It must not start before the Tier 1 set (F0, F1, C1, D1, D2, D3, D6-commandments, U1a, U2a, U3a, Q1-T1, Q3) has merged (D6.18).
 
 ## 11. Tests and acceptance hooks
 

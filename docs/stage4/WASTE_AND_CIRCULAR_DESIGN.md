@@ -86,7 +86,7 @@ public sealed class EnvironmentState                 // IndustryState.Waste.Envi
 | 43 | Incinerate | WasteSite with burner | refuse 4 (or sludge 2) | *ash 1*; emission high | 120 | 1/1 | 0 |
 | 44 | Dismantle vehicle | Depot or RecyclingPlant | (the asset) | scrap ≤ embodied × 800‰, parts ≤ embodied parts × 500‰, engine 0–1 | 900 | 2/3 | 20 |
 
-**Incineration** is the only path that consumes waste out of the world (`ConsumeReason.Disposed` for the inputs via `ProcessInput`; IND counts it as process input), and it produces ash and pollution. **Waste-to-power**: the waste station (ELECTRICITY design 4) burns refuse as fuel (`Combusted`) and produces ash; it is a utility like any other.
+**Incineration** is the only path that consumes waste out of the world (the inputs are consumed with `ConsumeReason.Disposed` (11), not `ProcessInput`; LEAD_RULINGS R44, SAC §22.3), and it produces ash and pollution. **Waste-to-power**: the waste station (ELECTRICITY design 4) burns refuse as fuel (`Combusted`) and produces ash; it is a utility like any other.
 
 ### 4.4 Organisations
 
