@@ -35,6 +35,7 @@ namespace God.Sim.Tests
             ["PopulationModule.cs|foreach (var n in s.Population.Npcs) { h.Add(n.Id); if (n.Mind != null) n.Mind.AddTo(ref h); else h.Add(-1); }"] = "hashing: every mind",
             ["PopulationModule.cs|foreach (var n in s.Population.Npcs) { h.Add(n.Id); if (n.Mind?.Store != null) n.Mind.Store.AddTo(ref h); else h.Add(-1); }"] = "hashing: every learning store",
             ["PopulationState.cs|int lo = 0, hi = Npcs.Count - 1;"] = "Find (binary search over every record)",
+            ["DivineActs.cs|foreach (var n in p.Npcs)"] = "D2: where a named lot is now: any carrier's carry (an avatar's too)",
             ["PopulationSystem.cs|foreach (var npc in p.Npcs)"] = "goods physics: carried lots spoil whoever carries them (DayStart spoiling)",
         };
 

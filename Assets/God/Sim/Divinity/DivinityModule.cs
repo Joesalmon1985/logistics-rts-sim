@@ -28,7 +28,20 @@ namespace God.Sim.Divinity
             if (sim.State.Divinity == null) return; // Enabled = 0: no handlers, no system (pin P1)
             Gods.Install(sim);
             sim.AddSystem(DivinitySystem.SystemOrder, new DivinitySystem());
+            // flagged additive edit (D2): the packages' handler slots, in package order
+            InstallD2(sim);
+            InstallD3(sim);
+            InstallD4(sim);
+            InstallD5(sim);
+            InstallD6(sim);
+            InstallD7(sim);
         }
+        static partial void InstallD2(GodSim sim);
+        static partial void InstallD3(GodSim sim);
+        static partial void InstallD4(GodSim sim);
+        static partial void InstallD5(GodSim sim);
+        static partial void InstallD6(GodSim sim);
+        static partial void InstallD7(GodSim sim);
 
         /// <summary>A new mind: its part of this module (none in F1: the mind slot stays null until D1 fills it).</summary>
         public static void NewMind(GodState s, Npc npc) { }
