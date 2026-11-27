@@ -42,6 +42,7 @@ namespace God.Sim.Population.Households
                 case HVerb.SeekChild: SeekChild(s, ev, npc); break;
                 case HVerb.AcceptChild: AcceptChild(s, ev, npc); break;
                 case HVerb.RangeFar: RangeFar(s, npc); break;
+                case HVerb.Provision: Provision(s, ev, npc, day); break;
                 default: End(npc); break;
             }
             return true;
@@ -326,6 +327,89 @@ namespace God.Sim.Population.Households
                 if (r.Ok) put += l.Count;
             }
             if (put == 0) Frustrate(s, npc); else End(npc);
+        }
+
+        // ---------------- provisioning (F2c, R67) ----------------
+
+        /// <summary>Food units in its carry that are its own (what it may put in the store for the household).</summary>
+        private static int OwnFood(Npc npc)
+        {
+            int n = 0;
+            for (int i = 0; i < npc.Carry.Length; i++)
+            {
+                var l = npc.Carry[i];
+                if (l.Empty || !Wares.IsFood(l.Ware) || l.Ware == Ware.Nightshade) continue;
+                if (l.Owner.Kind == OwnerKind.Npc && l.Owner.Id == npc.Id) n += l.Count;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// F2c (R67): provisioning the household, one decision with two legs that both cost real time: forage at the chosen food
+        /// place (M3's forage rule: <c>ForageTicks</c> per pick, 1-2 units, the source's stock falls) until it holds
+        /// <c>Care.ProvisionUnits</c> of its own food (or its carry is full, or the place is empty), then walk home and put its
+        /// own food in its household's store (the store's owner taking it, as a deposit). Credited <c>Care.ProvisionVp</c> per
+        /// unit delivered. Nothing is created or moved at a distance; it may stop at any think (hunger, a better use of time).
+        /// </summary>
+        private static void Provision(GodState s, EventBuffer ev, Npc npc, int day)
+        {
+            var ct = s.Tuning.Households.Care;
+            var a = npc.Action;
+            if (ct.Provision == 0 || npc.Household == 0 || npc.Stage == LifeStage.Child) { End(npc); return; }
+            var p = s.Population;
+            ResourceSource src = null;
+            foreach (var x in p.Sources) if (x.Node == a.TargetNode) { src = x; break; }
+            var ware = src != null ? PopulationModule.WareOf(src.Kind) : Ware.Berries;
+            int own = OwnFood(npc);
+            // no child at home any more (grown up, gone or dead): nothing left to provision for, unless it is bringing food home
+            if (own == 0 && HouseholdHooks.ProvisionDependants(s, npc) == 0) { End(npc); return; }
+            bool gathering = own < Math.Max(1, ct.ProvisionUnits) && src != null && src.Stock > 0 && Wares.IsFood(ware) && ware != Ware.Nightshade
+                && PopulationModule.Room(s, npc, ware) > 0;
+            if (gathering)
+            {
+                if (!WalkTo(s, npc, a.TargetNode, Population.Reach.Touch)) { if (npc.Path == null) Frustrate(s, npc); return; }
+                if (!HouseholdHooks.WorkTick(s, npc)) return;
+                var tu = s.Tuning.Population;
+                if (++npc.Action.Progress < tu.ForageTicks) return;
+                npc.Action.Progress = 0;
+                int yield = 1 + npc.RngWork.NextInt(2);
+                yield = Math.Min(yield, Math.Min(src.Stock, PopulationModule.Room(s, npc, ware)));
+                src.Stock -= yield;
+                if (Goods.Produce(s, ev, Holder.Carry(npc.Id), ware, yield, day + PopulationModule.SpoilDays(s.Tuning.Ecology, ware), 0,
+                        Owner.Npc(npc.Id), ProduceReason.Foraged, npc.Id, src.Id) == 0)
+                    throw new InvalidOperationException("provision: no room after the room check");
+                p.Stats.Foraged += yield;
+                ev.Add(new Foraged { Npc = npc.Id, Source = src.Id, Ware = ware, Count = yield, StockAfter = src.Stock });
+                return;
+            }
+            if (own == 0)
+            {
+                // nothing gathered and nothing to gather here (the place is empty): it notes that and stops
+                if (src == null || src.Stock <= 0)
+                {
+                    var b = npc.Mind.Beliefs;
+                    for (int i = 0; i < b.Count; i++) if (b.Slots[i].Subject == a.TargetNode && b.Slots[i].Kind == BeliefKind.Food) b.Slots[i].Stock = ObjState.StockEmpty;
+                }
+                Frustrate(s, npc);
+                return;
+            }
+            var h = s.Households.Find(npc.Household);
+            var bin = h != null && h.Bin != 0 ? Goods.BinById(p, h.Bin) : null;
+            if (bin == null || !IsOwnStore(s, npc, bin)) { Frustrate(s, npc); return; }
+            if (!WalkTo(s, npc, bin.Node, Population.Reach.Store)) { if (npc.Path == null) Frustrate(s, npc); return; }
+            int put = 0;
+            for (int i = 0; i < npc.Carry.Length; i++)
+            {
+                var l = npc.Carry[i];
+                if (l.Empty || !Wares.IsFood(l.Ware) || l.Ware == Ware.Nightshade) continue;
+                if (!(l.Owner.Kind == OwnerKind.Npc && l.Owner.Id == npc.Id)) continue;
+                int count = l.Count;
+                var r = Goods.Move(s, ev, Holder.Carry(npc.Id), l.Id, count, Holder.Bin(bin.Id), MoveReason.Deposit, npc.Id, OwnerRule.ToBinOwner);
+                if (r.Ok) put += count;
+            }
+            if (put == 0) { Frustrate(s, npc); return; }
+            Reward(s, npc, ct.ProvisionVp * put);
+            End(npc);
         }
 
         // ---------------- partnership ----------------
