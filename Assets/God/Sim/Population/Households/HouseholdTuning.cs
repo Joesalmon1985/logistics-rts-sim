@@ -40,6 +40,13 @@ namespace God.Sim.Population.Households
         public int MiscarryPermille = 20, MiscarryBelowNutrition = 200;
         /// <summary>How long one "try for a child" decision lasts (ticks): both partners must hold it on the mother's day check.</summary>
         public int TryingTicks = 1200;
+        /// <summary>
+        /// F2: the conception-coordination rule (<see cref="Conception"/>). 0 (default): the M4/D4 rule. 1: at the check, two
+        /// partners who both hold "try" with each other end a dormant reproductive relationship either holds with a third adult.
+        /// Written only when non-zero, so tunings without it serialise and hash exactly as before.
+        /// </summary>
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int ConceptionMode;
         /// <summary>Pregnancy raises the mother's hunger rate by this (permille).</summary>
         public int PregnantHungerPermille = 300;
         /// <summary>Childbirth hazard per 1000 births (mother and newborn), rising to the max when the mother's nutrition is below 300 at the due date.</summary>
