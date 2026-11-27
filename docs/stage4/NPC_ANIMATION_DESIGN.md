@@ -199,7 +199,7 @@ A `GestureMade` composes `Act, Topic (kind, id, sub), Quantity, Counter, Target,
 | `GestureMade.DurationTicks` (or a documented constant per act) | social, M5 | cue length equals the sim cost |
 | `GestureAct.Thank`, `Threaten`, `Greet`, `Alarm` (the candidates with no owner in COMMUNICATION 4.9) | social | gratitude, threatening and attention are listed by the owner and should be sim acts, not view inventions |
 | `PrayerMade`, `TeachingStarted` and `LessonStep` events | D6, C7 | praying and teaching |
-| `DivineResponse` (or the existing `ResponseChosen` extended with a divine source) | D2 | reaction animations |
+| `CommandResponded` (814, SAC §19.2; replaces the draft `DivineResponse`) | D2 | reaction animations |
 | a short `AttentionDirected { Listener, Speaker }` or reuse `MessageDecoded` | social | listener turn |
 | `GestureMade.Presented` carries the lot id shown | social | the displayed item is real |
 
@@ -229,15 +229,17 @@ All cues are always planned from events (cheap, no per-frame cost when nothing h
 
 ## 14. Tier and package mapping
 
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
+
 | Capability | Package | Tier |
 |---|---|---|
-| Remove unconditional gesture text and line; developer decode overlay; hash independence (M5.18) | U4 | 1 |
-| Planner, cue queue and pose layer; the clips for request, offer, give, receive, accept, refuse, warn, cooperate, begging | U4 | 2 |
-| Head pivot, hands, finger pips, held items | U4 | 2 |
-| Pointing, displaying, attention, agreeing, apologising, gratitude, threatening (with the new acts) | U4 with social | 2 |
-| Fear and submission reactions to divine events; praying; teaching | U4 with D2, D3, D6, C7 | 2 for fear and submission and praying, 3 for teaching |
-| Optional symbols and captions | U4 | 3 |
-| Conversation chains with holds, group scenes, LOD pulses, divine tint | U4 | 3 |
+| Remove unconditional gesture text and line; developer decode overlay; hash independence (M5.18) | U3a | 1 |
+| Planner, cue queue and pose layer; the clips for request, offer, give, receive, accept, refuse, warn, cooperate, begging | U3b | 2 |
+| Head pivot, hands, finger pips, held items | U3b | 2 |
+| Pointing, displaying, attention, agreeing, apologising, gratitude, threatening (with the new acts) | U3b with social | 2 |
+| Fear and submission reactions to divine events; praying; teaching | U3b with D2, D3, D6, C7 | 2 for fear and submission and praying, 3 for teaching |
+| Optional symbols and captions | U3b | 3 |
+| Conversation chains with holds, group scenes, LOD pulses, divine tint | U3b | 3 |
 
 ## 15. PlayMode-testable acceptance hooks
 

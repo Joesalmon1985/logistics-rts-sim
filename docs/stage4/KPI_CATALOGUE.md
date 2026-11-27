@@ -697,6 +697,8 @@ Every new KPI that is not marked actual-only has a reference SQL view in `0030_k
 - **Wellbeing dimensions table (5.16):** add "Belief and religion" (REL-01..09, shown alone, **no total**) and "Divine influence" (DIV-01..13, no total). Neither enters any other dimension, and no report sums across dimensions (test K13 extends to the new IDs).
 
 ### 15.8 Tier and package mapping
+
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 | Group | KPIs | Package | Tier |
 |---|---|---|---|
 | Demography, health, food | POP-12..14, HLT-10, LIV-07 | F2, D7, Q1 | 1 (POP-14: 2) |
@@ -708,7 +710,7 @@ Every new KPI that is not marked actual-only has a reference SQL view in `0030_k
 | Commandments, religion | CMD-02..04, CMD-06, REL-01..06, REL-08 | D6, Q1 | 2 |
 | Advanced religion | REL-07, REL-09, CMD-07 | D6, C10, Q1 | 3 |
 | Divine core | DIV-01..06, DIV-09, DIV-10, DIV-13 | D1..D3, Q1 | 1 |
-| Divine advanced | DIV-07, DIV-08, DIV-11, DIV-12 | D4, D5, D7, Q1 | 2 |
+| Divine advanced | DIV-07, DIV-08, DIV-11, DIV-12 | D4 (D4a, D4b), D7, Q1 | 2 |
 
 ### 15.9 Acceptance hooks
 | # | Test | Pass criterion |

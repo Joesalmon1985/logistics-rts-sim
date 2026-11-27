@@ -380,6 +380,8 @@ None for the owner. Settled here, with defaults:
 - **Neutrality.** Training readiness must not constrain play: the NPC, institution, military and faction policies stay autonomous (D5.29), and a God policy does not replace them; it is one more actor that reaches the world only through commands.
 
 ### 14.1 Tier and package mapping
+
+Package ids follow the final [package index](../civdiv/DEVELOPMENT_PACKAGE_INDEX.md) (review 27 Nov 2026): D5 is absorbed into D4 (D4a possession, D4b avatar); U4 into U3 (U3a world, U3b characters and effects); Q2 into Q1; C8's Tier 2 scope into C6 and C5's minimal citizenship into C10; C4, C9, C8 banking and C5 beyond citizenship are deferred to Tier 3; U6 is deferred apart from the scenario files, which belong to Q3.
 | Item | Package (brief §39) | Tier |
 |---|---|---|
 | `IGodPolicy` interface, registry level, `IdleGod`, reflection and leak tests | D1, F1 | 1 (interface), 2 (scripted `StewardGod`) |
