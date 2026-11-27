@@ -22,6 +22,7 @@ namespace God.Game
         private GodSim _sim;
         private GroundLayer _ground;
         private bool _debug;
+        private bool _seenGridFlag;
         private GameObject _lit, _flat;
         private Material _litMat, _flatMat;
         private int _signature = int.MinValue;
@@ -75,6 +76,7 @@ namespace God.Game
         {
             var t = _sim.State.Territory;
             if (t == null) return;
+            if (_seenGridFlag != DevOverlays.GridOverlay) { _seenGridFlag = DevOverlays.GridOverlay; ShowDebugOverlay = _seenGridFlag; }
             int sig = Signature(t);
             if (sig != _signature) { _signature = sig; Rebuild(_sim.State); }
 
@@ -82,7 +84,7 @@ namespace God.Game
             {
                 _seenRollTick = t.LastRollTick;
                 _tickTime = Time.unscaledTime;
-                PulseProducers(_sim.State);
+                if (DevOverlays.GridOverlay) PulseProducers(_sim.State); // producing-hex glow is a developer overlay (D5.18)
             }
         }
 

@@ -18,7 +18,7 @@ namespace God.Game.Tests
         private const string Scene = "Assets/God/Scenes/Main.unity";
 
         [TearDown]
-        public void TearDown() { Time.captureFramerate = 0; GodBootstrap.SkipStartCard = true; GodBootstrap.PendingSeed = null; GodBootstrap.PendingSetup = null; GodBootstrap.PendingStartAi = false; }
+        public void TearDown() { DevOverlays.Reset(); Time.captureFramerate = 0; GodBootstrap.SkipStartCard = true; GodBootstrap.PendingSeed = null; GodBootstrap.PendingSetup = null; GodBootstrap.PendingStartAi = false; }
 
         [UnityTest]
         public IEnumerator Gestures_AreDrawnFromEvents_AndTheRelationsTabShowsKnownPeople()
@@ -30,6 +30,7 @@ namespace God.Game.Tests
             yield return SceneManager.LoadSceneAsync(Scene, new LoadSceneParameters(LoadSceneMode.Single));
             yield return null;
             var boot = GodBootstrap.Instance;
+            DevOverlays.DecodedMessages = true; // M5.18: the composed text is a developer overlay
             Assert.IsNotNull(boot.Sim.State.Social, "the social module runs on the living island");
             boot.Speed = 16f;
             Time.captureFramerate = 30;

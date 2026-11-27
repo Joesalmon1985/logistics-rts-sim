@@ -31,6 +31,8 @@ namespace God.Game
         public ITrueStateOverlay TrueState { get; private set; }
         /// <summary>Developer mode (<c>-goddev</c>, or set by tests before the scene loads): the true-state overlay is allowed in any game.</summary>
         public static bool DeveloperMode;
+        /// <summary>True in a developer game: the decode and grid overlays (F6, F9) and their buttons exist.</summary>
+        public bool DevPanelAllowed { get; private set; }
         /// <summary>The organic island look (P4a): the hexes stay in the sim, the player sees a natural island.</summary>
         public IslandView Island { get; private set; }
         /// <summary>The old hex-tile look, built only with <see cref="legacyHexLook"/> or <c>-godhexlook</c> (kept until the P2/P3 merge).</summary>
@@ -159,6 +161,7 @@ namespace God.Game
             Sim.ExternalCommandAccepted += _ => _personCommandWaiting = true;
             // M1 (Q22): what this game is for decides the overlay: developer mode allows it anywhere, watch mode is an
             // observation game (allowed), a game against the AIs is competitive (never). A host setting, not sim state.
+            DevPanelAllowed = DeveloperMode || HasArg("-goddev");
             var purpose = DeveloperMode || HasArg("-goddev") ? ScenarioPurpose.Developer : TrueStateOverlayRules.DefaultPurpose(Sim.State.Setup);
             TrueStateOverlayRules.Apply(Sim.State.Setup, purpose);
             View = ViewFiller.For(Sim, FactionLook.Viewer(Sim.State));
