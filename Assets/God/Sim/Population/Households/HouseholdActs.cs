@@ -353,6 +353,7 @@ namespace God.Sim.Population.Households
             int cap = s.Tuning.Households.Partner.MaxLivePartnerships;
             if (a.Stage == LifeStage.Child || b.Stage == LifeStage.Child || a.Life == null || b.Life == null) return false;
             if (Partnerships.Between(s, a.Id, b.Id) != null) return false;
+            if (!Preferences.PartnerCompatible(a, b)) return false; // F2b: both must seek the other's sex (always true while not drawn)
             return Partnerships.Count(s, a.Id) < cap && Partnerships.Count(s, b.Id) < cap;
         }
 
