@@ -61,6 +61,31 @@ namespace God.Game
         public GodHud Hud { get; private set; }
         /// <summary>The god camera controls (P5).</summary>
         public GodCameraRig Rig { get; private set; }
+
+        // ---- U1a (camera, selection, input, time controls). Flagged edit: the lines marked U1a belong to the U1 package.
+        /// <summary>Tests: start the next scene load in god-only mode (as <c>-godonly</c> does). Reset it in TearDown.</summary>
+        public static bool ForceGodOnly;
+        /// <summary>U1a tests: false starts the next scene load paused, so two runs begin at the same tick. Reset it in TearDown.</summary>
+        public static bool StartRunning = true;
+        /// <summary>
+        /// U1a: god-only mode (D5.1): the player controls come from <see cref="PlayerController"/>, commands queue while paused
+        /// (R8), the speeds are 1, 2, 5, 10. Today a host flag (<c>-godonly</c>); after F1a it reads <c>GameSetup.Control == GodOnly</c>.
+        /// </summary>
+        public bool GodOnly { get; private set; }
+        /// <summary>U1a: the overhead camera director that owns <see cref="Rig"/>.</summary>
+        public CameraDirector Director { get; private set; }
+        public SelectionModel Selection { get; private set; }
+        /// <summary>U1a: the <c>ui</c> save extra: aliases, favourites, follows, notes, camera pose, selection (never hashed).</summary>
+        public UiExtra Ui { get; private set; }
+        public PlayerController Player { get; private set; }
+        /// <summary>U1a: accelerated mode steps as fast as a per-frame budget allows (see <see cref="ControlTuning"/>).</summary>
+        public bool Accelerated;
+        public float AchievedSpeed { get; private set; }
+        /// <summary>U1a stand-in: the god that holds the Human seat. F1a replaces it with the seat holder in the sim (contracts 2.1).</summary>
+        public static int StandInHumanGod = 1;
+        public int HumanGod => StandInHumanGod;
+        /// <summary>Commands accepted and waiting for the next tick that runs.</summary>
+        public int PendingCommandCount => Sim.PendingCommands.Count;
         /// <summary>Seed for the next scene load (set by the end cards); consumed by the next bootstrap.</summary>
         public static ulong? PendingSeed;
         /// <summary>The seed the island was dealt (and dressed) from.</summary>
@@ -129,11 +154,14 @@ namespace God.Game
         private static bool HasArg(string name) => System.Array.IndexOf(System.Environment.GetCommandLineArgs(), name) >= 0;
 
         /// <summary>Command-line flags that skip the start card: the player (or a script) has already chosen.</summary>
-        private static readonly string[] SkipCardFlags = { "-godseed", "-godwatch", "-godplay", "-godsmoke", "-godsample", "-godfight", "-godrun" };
+        private static readonly string[] SkipCardFlags = { "-godseed", "-godwatch", "-godplay", "-godsmoke", "-godsample", "-godfight", "-godrun", "-godonly" };
 
         private void Awake()
         {
             Instance = this;
+            GodOnly = ForceGodOnly || HasArg("-godonly");
+            if (!StartRunning) Running = false;
+            bool hadSetup = PendingSetup != null;
             bool flagged = false;
             foreach (var f in SkipCardFlags) if (HasArg(f)) flagged = true;
             var loaded = PendingLoad; PendingLoad = null;
@@ -148,12 +176,21 @@ namespace God.Game
             {
                 seed = SeedFromCommandLine(seed);
                 if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
-                var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") || HasArg("-godsmoke") ? GameSetup.NoHuman : 0);
+                var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") || HasArg("-godsmoke") || GodOnly ? GameSetup.NoHuman : 0);
                 PendingSetup = null;
                 var tuning = PendingTuning;
                 PendingTuning = null;
                 // M3: -godpopulation starts a game with a living population (founders, wild food, huts) in a sandbox
-                if (HasArg("-godpopulation") && !setup.Population) { setup.Population = true; setup.Victory = VictorySpec.SandboxOnly(); }
+                if ((HasArg("-godpopulation") || (GodOnly && !hadSetup)) && !setup.Population)
+                {
+                    setup.Population = true; setup.Victory = VictorySpec.SandboxOnly();
+                    if (GodOnly && !hadSetup) // U1a (R29): -godonly deals the Living island (the established band) with no human faction
+                    {
+                        setup.StartNpcsPerFaction = 20;
+                        tuning = tuning ?? new SimTuning();
+                        God.Sim.Population.Households.FounderTuning.EstablishedBand(tuning.Households.Founders);
+                    }
+                }
                 setup.Seed = seed;
                 // M0: built through SimBuilder, as the headless runner builds it (the AI is attached in StartAi).
                 Sim = SimBuilder.Create(setup, tuning, attachAi: false).Sim;
@@ -184,6 +221,7 @@ namespace God.Game
             ReadRunArgs();
             SmokeRun.StartIfAsked(this);
             _saveExtras.Add(new ChainBotsSave(this));
+            Selection = new SelectionModel(); Ui = new UiExtra(); _saveExtras.Add(Ui); // U1a
             if (Sim.State.Setup.Tutorial) { Tutorial = TutorialCards.Create(this); _saveExtras.Add(Tutorial); }
             if (startAi) StartAi();
             if (loaded != null)
@@ -209,12 +247,16 @@ namespace God.Game
             GodCamera.backgroundColor = new Color(0.62f, 0.78f, 0.90f);
             EnsureSun();
 
-            Rig = GodCameraRig.Attach(GodCamera);
+            Director = CameraDirector.Attach(GodCamera); // U1a: the director owns the rig
+            Rig = Director.Rig;
             if (Island != null) Rig.HeightAt = (x, z) => Island.HeightAt(new Vector3(x, 0f, z));
             Hud = GodHud.Create(this, Rig);
             Toasts = ToastFeed.Create(this);
             Menu = GameMenu.Create(this);
             WatchCam = WatchCamera.Create(this);
+            Player = PlayerController.Create(this, Director, Selection, Ui); // U1a
+            Director.Driving = GodOnly;
+            if (loaded != null) Player.ApplyLoadedUi();
             if (loaded != null) Hud.Toast("Game loaded. Press Space to go on.");
         }
 
@@ -353,13 +395,41 @@ namespace God.Game
             // Paused (M1): a person's command still shows at once, because the game takes one ordinary tick to apply it, the
             // AI included, exactly as if it ran for 0.1 s. Nothing else moves a paused game, and no tick is special, so a
             // replay is just commands at ticks (the held ticks of M0's AiHost.StepHeld are gone).
-            if (!Running) { if (_personCommandWaiting) { _personCommandWaiting = false; Sim.Step(); PumpEvents(); } return; }
+            // U1a (R8): in god-only mode a command sent while paused stays pending until the next tick that runs (no one-tick rule).
+            if (!Running)
+            {
+                if (GodOnly) _personCommandWaiting = false;
+                else if (_personCommandWaiting) { _personCommandWaiting = false; Sim.Step(); PumpEvents(); }
+                return;
+            }
             _personCommandWaiting = false;
+            if (Accelerated) { StepAccelerated(); return; }
             _acc += Time.deltaTime * Speed * GodSim.TicksPerSecond;
             int steps = Mathf.Min((int)_acc, 400);
             _acc -= (int)_acc;
             if (steps > 0) Sim.Step(steps);
             if (Chains.Count > 0 && Sim.State.Tick - _lastThink >= 20) { _lastThink = Sim.State.Tick; ThinkChains(); }
+            PumpEvents();
+        }
+
+        /// <summary>U1a: steps the paused or running sim by n ticks (the Step key). Pending commands apply on the first.</summary>
+        public void StepTicks(int n)
+        {
+            if (DrivenExternally || Sim.State.IsGameOver || n <= 0) return;
+            Sim.Step(n);
+            PumpEvents();
+        }
+
+        /// <summary>U1a: accelerated mode: steps until the frame's time budget or the speed cap is used (the sim does not know).</summary>
+        private void StepAccelerated()
+        {
+            var tun = Director != null ? Director.Tuning : new ControlTuning();
+            float dt = Mathf.Max(0.001f, Time.unscaledDeltaTime);
+            int cap = Mathf.Max(1, (int)(tun.AcceleratedMaxSpeed * GodSim.TicksPerSecond * dt));
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            int done = 0;
+            while (done < cap && sw.Elapsed.TotalMilliseconds < tun.AcceleratedBudgetMs && !Sim.State.IsGameOver) { Sim.Step(); done++; }
+            AchievedSpeed = done / (GodSim.TicksPerSecond * dt);
             PumpEvents();
         }
 

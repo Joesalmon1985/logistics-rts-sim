@@ -23,6 +23,10 @@ namespace God.Game
         public System.Func<Vector2, bool> OverUi;
         /// <summary>Turn the input off (tests drive the public methods instead).</summary>
         public bool InputEnabled = true;
+        /// <summary>U1a: the director that places the camera in god-only mode (null or not driving: this rig works as in stage 3).</summary>
+        public CameraDirector Director;
+        /// <summary>Raised at the end of <see cref="Reframe(float, Vector3)"/>: the whole island is framed (the director's home view).</summary>
+        public event System.Action Reframed;
 
         public float MaxHeight { get; private set; } = 400f;
         public float IslandRadius { get; private set; } = 500f;
@@ -53,6 +57,7 @@ namespace God.Game
             IslandCentre = new Vector3(centre.x, 0f, centre.z);
             IslandCamera.Frame(Cam, islandRadius, IslandCentre);
             MaxHeight = Cam.transform.position.y;
+            Reframed?.Invoke();
         }
 
         /// <summary>Ground height used for picking: the island mesh, never below the sea level at 0.</summary>
@@ -61,8 +66,13 @@ namespace God.Game
         /// <summary>Where the ray through a screen point (pixels, origin bottom-left) meets the ground.</summary>
         public bool GroundPoint(Vector2 screen, out Vector3 point)
         {
+            return GroundHit(Cam.ScreenPointToRay(new Vector3(screen.x, screen.y, 0f)), out point);
+        }
+
+        /// <summary>Where a ray meets the ground (the island mesh height), false when it points away from it.</summary>
+        public bool GroundHit(Ray ray, out Vector3 point)
+        {
             point = default;
-            var ray = Cam.ScreenPointToRay(new Vector3(screen.x, screen.y, 0f));
             float y = 0f;
             for (int i = 0; i < 3; i++)
             {
@@ -98,6 +108,12 @@ namespace God.Game
         /// </summary>
         public void FocusOn(Vector3 ground, float height, bool instant = false)
         {
+            if (Director != null && Director.Driving)
+            {
+                // the old height above the ground becomes a distance along the current view
+                Director.FocusOn(ground, height / Mathf.Max(0.2f, Mathf.Sin(Director.Pitch * Mathf.Deg2Rad)), instant);
+                return;
+            }
             var f = Cam.transform.forward;
             float t = height / Mathf.Max(0.2f, -f.y);
             var target = new Vector3(ground.x, GroundY(ground.x, ground.z), ground.z) - f * t;
