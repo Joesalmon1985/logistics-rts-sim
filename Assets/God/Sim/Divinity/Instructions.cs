@@ -165,9 +165,9 @@ namespace God.Sim.Divinity
                 ins.Recipients.Add(rr);
             }
             if (kind == InterventionKind.Command)
-                ev.Add(new DivineCommandIssued { Intervention = id, God = god, Act = act, TargetKind = t.Kind, TargetId = t.Id, TargetNode = t.Node, TargetRadius = t.Radius, Scope = scope, Recipients = rec.Count - notReached, NotReached = notReached, Expires = ins.Expires });
+                ev.Add(new DivineCommandIssued { Intervention = id, God = god, Act = act, TargetKind = t.Kind, TargetId = t.Id, TargetNode = t.Node, TargetRadius = t.Radius, Scope = scope, Recipients = rec.Count - notReached, NotReached = notReached, Expires = ins.Expires, Npc = t.Kind == DivineTargetKind.Npc ? t.Id : 0, Node = t.Node });
             else
-                ev.Add(new DivineSuggestionIssued { Intervention = id, God = god, Act = act, TargetKind = t.Kind, TargetId = t.Id, TargetNode = t.Node, TargetRadius = t.Radius, Scope = scope, Recipients = rec.Count - notReached, NotReached = notReached, Expires = ins.Expires });
+                ev.Add(new DivineSuggestionIssued { Intervention = id, God = god, Act = act, TargetKind = t.Kind, TargetId = t.Id, TargetNode = t.Node, TargetRadius = t.Radius, Scope = scope, Recipients = rec.Count - notReached, NotReached = notReached, Expires = ins.Expires, Npc = t.Kind == DivineTargetKind.Npc ? t.Id : 0, Node = t.Node });
             var topic = DivineActs.TopicOf(s, act, t);
             for (int i = 0; i < ins.Recipients.Count; i++)
             {
@@ -215,6 +215,7 @@ namespace God.Sim.Divinity
             {
                 Intervention = ins.Id, Npc = npc.Id, God = ins.God, Kind = ins.Kind, DecodedAct = d.Act, TopicKind = d.Topic.Kind, TopicId = d.Topic.Id,
                 Clarity = d.Clarity, OnWaking = onWaking, Evicted = evicted, Mismatch = mismatch,
+                Heard = d.Act + (d.Topic.Kind != TopicKind.None ? " (" + d.Topic.Kind + " " + d.Topic.Id + ")" : ""),
             });
             if (evicted != 0) Evicted(s, ev, npc.Id, evicted);
             if (ins.Kind == InterventionKind.Command && tu.Witnesses != 0 && !onWaking) Witnesses(s, ev, ins, npc);
@@ -261,7 +262,8 @@ namespace God.Sim.Divinity
             rr.Response = resp;
             var reg = s.Divinity.Messages;
             reg.Responses[(int)resp]++;
-            ev.Add(new CommandResponded { Intervention = ins.Id, Npc = rr.Npc, God = ins.God, Kind = ins.Kind, Response = resp, Verb = verb, Divine = divine, DecidedTick = s.Tick });
+            ev.Add(new CommandResponded { Intervention = ins.Id, Npc = rr.Npc, God = ins.God, Kind = ins.Kind, Response = resp, Verb = verb, Divine = divine, DecidedTick = s.Tick,
+                Understood = rr.DecodedAct != DivineAct.None && rr.DecodedAct != ins.Act ? rr.DecodedAct.ToString() : null });
         }
 
         // ---------------- per tick (DivinitySystem's D2 slot) ----------------

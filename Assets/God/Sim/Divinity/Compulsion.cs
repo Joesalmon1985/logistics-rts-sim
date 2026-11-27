@@ -135,7 +135,7 @@ namespace God.Sim.Divinity
                     // the status write is the only field D2 changes on an entry (Control has no setter for Blocked: contracts 11.3)
                     e.Status = ControlStatus.Blocked;
                     t.Entries[i] = e;
-                    ev.Add(new CompulsionBlocked { Intervention = e.Intervention, God = e.God, Npc = e.Body, Act = e.Act });
+                    ev.Add(new CompulsionBlocked { Intervention = e.Intervention, God = e.God, Npc = e.Body, Act = e.Act, Reason = "cannot " + e.Act + " now (not held, not known or cannot carry)" });
                 }
                 if ((s.Tick + npc.Id) % every == 0 || Control.ForceThink(s, npc)) ScaleReward(s, npc);
             }

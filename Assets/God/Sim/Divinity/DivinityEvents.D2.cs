@@ -29,6 +29,8 @@ namespace God.Sim.Divinity
         public DivineScope Scope;
         public int Recipients, NotReached;
         public long Expires;
+        /// <summary>The person named by an individual target (0 otherwise) and the target's node (for the HUD's cue).</summary>
+        public int Npc, Node;
     }
 
     /// <summary>811: a command was accepted and delivered.</summary>
@@ -41,6 +43,8 @@ namespace God.Sim.Divinity
         public DivineScope Scope;
         public int Recipients, NotReached;
         public long Expires;
+        /// <summary>The person named by an individual target (0 otherwise) and the target's node (for the HUD's cue).</summary>
+        public int Npc, Node;
     }
 
     /// <summary>812: one recipient an organisation-scope instruction was relayed to.</summary>
@@ -64,6 +68,8 @@ namespace God.Sim.Divinity
         public int Evicted;
         /// <summary>Analytics truth only: the decoded act or topic differs from the god's.</summary>
         public bool Mismatch;
+        /// <summary>What it heard, in words (the decoded act and topic; the person's belief).</summary>
+        public string Heard;
     }
 
     /// <summary>814: the one response of a perceiver.</summary>
@@ -77,6 +83,8 @@ namespace God.Sim.Divinity
         /// <summary>The chosen decision's divine term (vp).</summary>
         public int Divine;
         public long DecidedTick;
+        /// <summary>The act as this person understood it (its belief), when it differs from the god's (null otherwise).</summary>
+        public string Understood;
     }
 
     /// <summary>815: a compulsion's control spell opened.</summary>
@@ -104,6 +112,8 @@ namespace God.Sim.Divinity
     {
         public int Intervention, God, Npc;
         public DivineAct Act;
+        /// <summary>Why, in words (the act cannot be built from what the body holds, knows and can carry now).</summary>
+        public string Reason;
     }
 
     /// <summary>819 (HV): a witness saw a command's sign at its recipient.</summary>
