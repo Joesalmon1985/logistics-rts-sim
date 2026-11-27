@@ -16,7 +16,8 @@ namespace God.Sim.Civ
         {
             into.Add(new VerbInfo(Work.VerbWork, "work", VerbGroup.Production, Work.IntentWork));
             into.Add(new VerbInfo(Work.VerbBuild, "build an asset", VerbGroup.Production, Work.IntentBuild));
-            into.Add(new VerbInfo(Work.VerbHaul, "haul", VerbGroup.Production, Work.IntentHaul));
+            // C1c: deferred, so taking food out of a store waits for that lot's fate (eaten or spoiled) as a picked-up lot does
+            into.Add(new VerbInfo(Work.VerbHaul, "haul", VerbGroup.Production, Work.IntentHaul, deferred: true));
         }
 
         /// <summary>
@@ -34,6 +35,13 @@ namespace God.Sim.Civ
             into.Add(new Instinct(Feature.Class(CivClass.Workshop), Feature.State(ObjState.StockHigh), Work.VerbWork, 200));
             into.Add(new Instinct(Feature.Class(CivClass.Workshop), Feature.State(ObjState.StockLow), Work.VerbWork, 150));
             into.Add(new Instinct(log, Feature.Class(CivClass.Workshop), Work.VerbHaul, 250));
+            // C1c: hunger draws food out of one's own store (as M4's household store does); a store with no room left for
+            // another cycle, or well stocked, draws its output out (to carry home, pay or trade)
+            uint store = Feature.Class(CivClass.AssetStore);
+            into.Add(new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Category(ObjCategory.Food), Work.VerbHaul, 450));
+            into.Add(new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Category(ObjCategory.Food), Work.VerbHaul, 200));
+            into.Add(new Instinct(Feature.State(ObjState.Full), store, Work.VerbHaul, 350));
+            into.Add(new Instinct(Feature.State(ObjState.StockHigh), store, Work.VerbHaul, 150));
         }
 
         /// <summary>
@@ -46,6 +54,7 @@ namespace God.Sim.Civ
             if (sc.Mind == null) return;
             var self = sc.Self;
             bool workCand = false;
+            TakeOutCandidate(sc);
             for (int i = 0; i < sc.SeenCount; i++)
             {
                 var t = sc.Seen[i];
@@ -97,6 +106,68 @@ namespace God.Sim.Civ
             if (best >= 0) Cand(sc, Work.VerbWork, cm.Own[best].Asset, cm.Own[best].Node, cm.Own[best].Class, 0, bestD, true);
         }
 
+        /// <summary>
+        /// C1c: take output out of an asset's store: the store it sees now (the Sense seam: a bin of class
+        /// <see cref="CivClass.AssetStore"/>), else one it remembers (a store belief within recall), with something there it
+        /// may take (the band is not empty), when it believes the asset its own, its household's, or that it holds a Store
+        /// right (<see cref="Permits.BelievedAsset"/>: a belief, never the truth). One candidate at most, the nearest.
+        /// </summary>
+        private static void TakeOutCandidate(ThinkScratch sc)
+        {
+            int best = -1, bestD = int.MaxValue;
+            for (int i = 0; i < sc.SeenCount; i++)
+            {
+                var t = sc.Seen[i];
+                if (t.Kind != IntentTarget.Bin || t.Class != CivClass.AssetStore || t.Ref == 0 || t.State == ObjState.StockEmpty) continue;
+                if (t.Dist >= bestD || MayTakeBelieved(sc, t.Node) == 0) continue;
+                best = i; bestD = t.Dist;
+            }
+            if (best >= 0)
+            {
+                var t = sc.Seen[best];
+                StoreCand(sc, t.Ref, t.Node, t.State, t.Category, t.Dist, false);
+                return;
+            }
+            var b = sc.Mind.Beliefs;
+            int bi = -1;
+            for (int i = 0; i < b.Count; i++)
+            {
+                var bel = b.Slots[i];
+                if (bel.Kind != BeliefKind.Store || bel.Class != CivClass.AssetStore || bel.Ref == 0 || bel.Stock == ObjState.StockEmpty) continue;
+                bool seenNow = false;
+                for (int k = 0; k < sc.SeenCount; k++) if (sc.Seen[k].Kind == IntentTarget.Bin && sc.Seen[k].Ref == bel.Ref) { seenNow = true; break; }
+                if (seenNow) continue;
+                int d = sc.Grid.Distance(sc.Self.Node, bel.Subject);
+                if (d > sc.Tuning.RecallNodes || d >= bestD || MayTakeBelieved(sc, bel.Subject) == 0) continue;
+                bi = i; bestD = d;
+            }
+            if (bi < 0) return;
+            // remembered: what it knows of the asset's kind says whether its output is food
+            var def = AssetTable.OfClass(MayTakeBelieved(sc, b.Slots[bi].Subject));
+            bool food = false;
+            if (def?.Recipe != null) foreach (var o in def.Recipe.Outputs) if (Wares.IsFood(o.Ware)) food = true;
+            StoreCand(sc, b.Slots[bi].Ref, b.Slots[bi].Subject, b.Slots[bi].Stock, food ? ObjCategory.Food : ObjCategory.Store, bestD, true);
+        }
+
+        /// <summary>The class of the asset at a node whose store it believes it may take from (owner, household or a Store right, from its ownership beliefs); 0 none.</summary>
+        private static int MayTakeBelieved(ThinkScratch sc, int node)
+        {
+            var cm = sc.Mind.Civ;
+            if (cm == null) return 0;
+            foreach (var o in cm.Own)
+                if (o.Node == node && Permits.BelievedAsset(sc, o.Asset, UseKind.Store).Allowed) return o.Class;
+            return 0;
+        }
+
+        private static void StoreCand(ThinkScratch sc, int bin, int node, int state, int category, int dist, bool fromBelief)
+        {
+            int at = Thinker.AddCandidate(sc, Work.VerbHaul, IntentTarget.Bin, bin, node, CivClass.AssetStore, dist, fromBelief);
+            if (at < 0) return;
+            sc.Cand[at].Intent = Work.IntentTakeOut; // the learning verb is shared with delivering; the bin target and its class tell them apart
+            Thinker.TargetFeatures(sc, at, Feature.Class(CivClass.AssetStore), category != 0 ? Feature.Category(category) : Feature.Category(ObjCategory.Store),
+                state != 0 ? Feature.State(state) : 0, Feature.PlaceRef(node));
+        }
+
         private static bool OwnsKindBelief(ThinkScratch sc, int cls)
         {
             var cm = sc.Mind.Civ;
@@ -122,6 +193,7 @@ namespace God.Sim.Civ
                 case CivClass.Workshop: text = "a workshop"; break;
                 case CivClass.Store: text = "a store building"; break;
                 case CivClass.Plot: text = "a free plot"; break;
+                case CivClass.AssetStore: text = "the store of an asset"; break;
             }
         }
     }

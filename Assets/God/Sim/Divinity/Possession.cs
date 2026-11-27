@@ -33,7 +33,7 @@ namespace God.Sim.Divinity
     }
 
     /// <summary>
-    /// D4's learning verbs (contracts 14: Divinity rows 116-123; D6 holds 116-118, D2 119): the avatar's take (an avatar never
+    /// D4's learning verbs (contracts 14: Divinity rows 116-123; D6 holds 116-118 and 120, D2 119): the avatar's take (an avatar never
     /// becomes an owner, so it cannot use the person's pick-up, which makes the first taker the owner), the embodied give (D2's
     /// instructed hand-over reads its ware from the divine inbox, so a controlled body gives through its own row: one
     /// <c>Goods.Move</c> HandOver, <c>ToReceiver</c>, basis <c>Gift</c>) and the embodied gesture (a controlled body says a
@@ -42,11 +42,11 @@ namespace God.Sim.Divinity
     public static class EmbodiedVerb
     {
         /// <summary>The avatar takes a lot into its carry, its owner unchanged (<c>OwnerRule.Keep</c>).</summary>
-        public const byte AvatarTake = 120;
+        public const byte AvatarTake = 121;
         /// <summary>A controlled body hands a carried lot (a person: its own; the avatar: any) to a person (<c>ToReceiver</c>, basis <c>Gift</c>).</summary>
-        public const byte Give = 121;
+        public const byte Give = 122;
         /// <summary>A controlled body (possessed person or avatar) makes a gesture to a listener (M5 <c>Messages.Emit</c>).</summary>
-        public const byte Gesture = 122;
+        public const byte Gesture = 123;
 
         public static bool IsMine(byte v) => v == AvatarTake || v == Give || v == Gesture;
     }

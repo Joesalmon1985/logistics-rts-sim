@@ -81,6 +81,7 @@ namespace God.Sim.Population.Households
             var hs = s.Households;
             if (hs == null) return;
             p.SameHousehold = observer.Household != 0 && seen.Household == observer.Household;
+            p.PartnerMismatch = !Preferences.PartnerCompatible(observer, seen); // F2b: false unless partner-sex preferences are drawn
             var l = seen.Life;
             if (l == null || s.Tuning.Households.Care.Off != 0 && observer.Stage != LifeStage.Child && seen.Stage == LifeStage.Child) return;
             // (D4) "wants a child" is seen only by those it could have one with (a visible fact, asked of Reproduction)
@@ -168,7 +169,7 @@ namespace God.Sim.Population.Households
         {
             switch (verb)
             {
-                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Store: case HVerb.TakeFromStore: return Activity.Care;
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Store: case HVerb.TakeFromStore: case HVerb.Provision: return Activity.Care;
                 case HVerb.Beg: case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.Leave:
                 case HVerb.AskCare: case HVerb.AcceptCare: case HVerb.EndCare: case HVerb.SeekChild: case HVerb.AcceptChild: return Activity.Other;
                 case HVerb.RangeFar: return Activity.Explore;
@@ -216,6 +217,22 @@ namespace God.Sim.Population.Households
 
         public static bool CanWork(GodState s, Npc npc) => Competence(s, npc) > 0;
 
+        /// <summary>
+        /// F2c (R67): the children living in an adult's own household (it lives with them, so it knows them), for its
+        /// <c>SelfView.Dependants</c>; 0 while <c>Care.Provision</c> is off, care is off, or it is a child or has no household.
+        /// </summary>
+        public static int ProvisionDependants(GodState s, Npc npc)
+        {
+            if (s.Households == null || npc.Life == null || npc.Household == 0 || npc.Stage == LifeStage.Child) return 0;
+            var ct = s.Tuning.Households.Care;
+            if (ct.Provision == 0 || ct.Off != 0) return 0;
+            var h = s.Households.Find(npc.Household);
+            if (h == null) return 0;
+            int k = 0;
+            foreach (int m in h.Members) { var n = s.Population.Find(m); if (n != null && n.Alive && n.Stage == LifeStage.Child) k++; }
+            return k;
+        }
+
         /// <summary>Whether this work tick counts: a child's competence share of ticks do (deterministic accumulation).</summary>
         public static bool WorkTick(GodState s, Npc npc)
         {
@@ -257,7 +274,8 @@ namespace God.Sim.Population.Households
             new VerbInfo(HVerb.EndCare, "end shared care", VerbGroup.Relationships, NpcVerb.Interact),
             new VerbInfo(HVerb.SeekChild, "show it wants a child", VerbGroup.Relationships, NpcVerb.Interact),
             new VerbInfo(HVerb.AcceptChild, "agree to a child", VerbGroup.Relationships, NpcVerb.Interact),
-            new VerbInfo(HVerb.RangeFar, "range far for food", VerbGroup.Search, NpcVerb.Explore));
+            new VerbInfo(HVerb.RangeFar, "range far for food", VerbGroup.Search, NpcVerb.Explore),
+            new VerbInfo(HVerb.Provision, "provision the household", VerbGroup.Gathering, NpcVerb.ForageAt));
 
         private static uint RoleF(int v) => Feature.Make(FeatureKind.Role, v);
 
@@ -297,7 +315,13 @@ namespace God.Sim.Population.Households
             new Instinct(Feature.Situation(HSituation.SeekingChild), 0, HVerb.AcceptChild, 300),
             // D4 (M4.43): hungry with no plentiful food known nearby draws a long walk out
             new Instinct(Feature.DriveActive(Drive.Hunger), Feature.Situation(HSituation.NoPlentyKnown), HVerb.RangeFar, RangeFarPrior),
-            new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Situation(HSituation.NoPlentyKnown), HVerb.RangeFar, RangeFarPrior / 2));
+            new Instinct(Feature.DriveBand(Drive.Hunger, 1), Feature.Situation(HSituation.NoPlentyKnown), HVerb.RangeFar, RangeFarPrior / 2),
+            // F2c (R67): its household short of food draws provisioning, more so with a dependant in need in sight
+            new Instinct(Feature.Situation(HSituation.HouseholdShort), 0, HVerb.Provision, ProvisionPrior),
+            new Instinct(Feature.Situation(HSituation.HouseholdShort), Feature.Situation(HSituation.DependantInNeed), HVerb.Provision, ProvisionPrior / 2));
+
+        /// <summary>F2c: the innate prior of provisioning (scaled by the nurture gain).</summary>
+        public const int ProvisionPrior = 350;
 
         /// <summary>The innate prior of ranging far (D4): enough to outweigh the walk's perceived cost at <see cref="RangeFarNodes"/>.</summary>
         public const int RangeFarPrior = 600;
@@ -403,7 +427,7 @@ namespace God.Sim.Population.Households
                 var p = sc.People[i];
                 int rhat = KinData.RHat(sc.Mind, p.As);
                 var role = KinData.RoleOf(sc.Mind, p.As);
-                if (p.Display == DisplayKind.Propose && p.DisplayTarget == self.Id && proposer < 0) proposer = i;
+                if (p.Display == DisplayKind.Propose && p.DisplayTarget == self.Id && proposer < 0 && !p.PartnerMismatch) proposer = i;
                 if (p.Display == DisplayKind.AskCare && p.DisplayTarget == self.Id && asker < 0) asker = i;
                 if (p.Stage == LifeStage.Child && p.SameHousehold) dependants = true;
                 if (p.Stage == LifeStage.Child && p.Display == DisplayKind.Beg)
@@ -422,7 +446,7 @@ namespace God.Sim.Population.Households
                 if (p.Display == DisplayKind.NeedsHome && p.Stage == LifeStage.Child && p.Dist < dOrphan) { dOrphan = p.Dist; orphan = i; }
                 if (role == KinRole.Partner && !p.Asleep && partner < 0) partner = i;
                 if (!partnered && p.Stage != LifeStage.Child && p.SameFaction && !p.Asleep && p.Display != DisplayKind.Partnered && p.Display != DisplayKind.Trying
-                    && role != KinRole.Partner && !CloseKin(sc, p.As) && p.Dist < dMate) { dMate = p.Dist; mate = i; }
+                    && role != KinRole.Partner && !CloseKin(sc, p.As) && !p.PartnerMismatch && p.Dist < dMate) { dMate = p.Dist; mate = i; }
                 if (self.Household != 0 && p.Stage != LifeStage.Child && p.SameFaction && !p.SameHousehold && !p.Asleep && p.Display != DisplayKind.CarePartner && p.Dist < dOther)
                 { dOther = p.Dist; other = i; }
                 if (p.Display == DisplayKind.CarePartner && p.DisplayLevel >= 2 && owed < 0) owed = i;
@@ -444,6 +468,7 @@ namespace God.Sim.Population.Households
             if (food && beggar >= 0) Person(sc, HVerb.Feed, beggar, Feature.State(HState.Begging1 + Math.Min(2, Math.Max(0, sc.People[beggar].DisplayLevel - 1))));
             else if (food && sick >= 0) Person(sc, HVerb.Feed, sick, Feature.State(HState.Sick));
             if (sick >= 0) Person(sc, HVerb.Tend, sick, Feature.State(HState.Sick));
+            if (self.Dependants > 0 && home && HouseholdShort(sc)) Provision(sc);
             if (orphan >= 0) Person(sc, HVerb.Adopt, orphan, Feature.State(HState.NeedsHome));
             if (partner >= 0)
             {
@@ -462,6 +487,81 @@ namespace God.Sim.Population.Households
             if (owed >= 0) Person(sc, HVerb.EndCare, owed, Feature.Situation(sc.People[owed].DisplayLevel >= 3 ? HSituation.CareOwed3 : HSituation.CareOwed2));
             if (dependants && other >= 0) Person(sc, HVerb.AskCare, other, Feature.Self(HSelf.HasDependants));
             if (partner >= 0 && hungerBand >= 2) Person(sc, HVerb.Leave, partner, 0);
+        }
+
+        /// <summary>
+        /// F2c (R67): whether it sees or remembers its own household's store empty or low (it has children at home: the
+        /// caller checks <c>SelfView.Dependants</c>). A store it knows nothing of is not judged short.
+        /// </summary>
+        private static bool HouseholdShort(ThinkScratch sc)
+        {
+            for (int i = 0; i < sc.SeenCount; i++)
+            {
+                var t = sc.Seen[i];
+                if (t.Kind == IntentTarget.Bin && t.Class == HClass.Store) return t.State == ObjState.StockEmpty || t.State == ObjState.StockLow;
+            }
+            var b = sc.Mind.Beliefs;
+            for (int i = 0; i < b.Count; i++)
+            {
+                var bel = b.Slots[i];
+                if (bel.Kind == BeliefKind.Store && bel.Ref != 0 && bel.Class == HClass.Store) return bel.Stock == ObjState.StockEmpty || bel.Stock == ObjState.StockLow;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// F2c (R67): "provision the household": a food place to forage at for the household (the one it is already provisioning
+        /// from, else the nearest it sees with food, else the best it remembers within recall); the act forages there, then
+        /// carries the food home to the store. A full carry with no running provisioning offers nothing.
+        /// </summary>
+        private static void Provision(ThinkScratch sc)
+        {
+            var s = sc.Self;
+            int node = -1, cls = 0, stock = 0, dist = 0;
+            bool fromBelief = false;
+            if (s.RunVerb == HVerb.Provision && s.RunKind == IntentTarget.Node && s.RunTarget >= 0)
+            {
+                node = s.RunTarget; dist = sc.Grid.Distance(s.Node, node);
+                for (int i = 0; i < sc.SeenCount; i++) if (sc.Seen[i].Node == node && sc.Seen[i].Category == ObjCategory.Food) { cls = sc.Seen[i].Class; stock = sc.Seen[i].State; }
+                if (cls == 0)
+                {
+                    var bb = sc.Mind.Beliefs;
+                    for (int i = 0; i < bb.Count; i++) if (bb.Slots[i].Kind == BeliefKind.Food && bb.Slots[i].Subject == node) { cls = bb.Slots[i].Class; stock = bb.Slots[i].Stock; fromBelief = true; break; }
+                }
+                if (cls == 0) node = -1;
+            }
+            if (node < 0 && s.CarryFull) return;
+            if (node < 0)
+            {
+                int best = int.MaxValue;
+                for (int i = 0; i < sc.SeenCount; i++)
+                {
+                    var t = sc.Seen[i];
+                    if (t.Category != ObjCategory.Food || t.State == ObjState.StockEmpty) continue;
+                    if (t.Class != ObjClass.BerryBush && t.Class != ObjClass.RootPatch && t.Class != ObjClass.FishSpot) continue;
+                    if (t.Dist < best) { best = t.Dist; node = t.Node; cls = t.Class; stock = t.State; dist = t.Dist; }
+                }
+            }
+            if (node < 0)
+            {
+                var b = sc.Mind.Beliefs;
+                int recall = sc.Tuning.RecallNodes, bestScore = int.MinValue;
+                for (int i = 0; i < b.Count; i++)
+                {
+                    var bel = b.Slots[i];
+                    if (bel.Kind != BeliefKind.Food || bel.Stock == ObjState.StockEmpty) continue;
+                    if (bel.Class != ObjClass.BerryBush && bel.Class != ObjClass.RootPatch && bel.Class != ObjClass.FishSpot) continue;
+                    int d = sc.Grid.Distance(s.Node, bel.Subject);
+                    if (d > recall) continue;
+                    int score = bel.Confidence - d * 20;
+                    if (score > bestScore) { bestScore = score; node = bel.Subject; cls = bel.Class; stock = bel.Stock; dist = d; fromBelief = true; }
+                }
+            }
+            if (node < 0) return;
+            int at = Thinker.AddCandidate(sc, HVerb.Provision, IntentTarget.Node, 0, node, (byte)cls, dist, fromBelief);
+            if (at < 0) return;
+            Thinker.TargetFeatures(sc, at, Feature.Situation(HSituation.HouseholdShort), Feature.Class(cls), Feature.Category(ObjCategory.Food),
+                stock != 0 ? Feature.State(stock) : 0, Feature.PlaceRef(node));
         }
 
         /// <summary>A candidate aimed at a seen person (a person target: its handle and the node it stands on), with its person features.</summary>
@@ -621,7 +721,7 @@ namespace God.Sim.Population.Households
             {
                 case HVerb.Beg: g = self.HungerGain; break;
                 case HVerb.Propose: case HVerb.Accept: case HVerb.TryForChild: case HVerb.AskCare: case HVerb.AcceptCare: g = self.SocialGain; break;
-                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: g = self.NurtureGain; break;
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Provision: g = self.NurtureGain; break;
                 case HVerb.SeekChild: case HVerb.AcceptChild: g = self.SocialGain; break;
                 default: return prior;
             }
@@ -642,7 +742,7 @@ namespace God.Sim.Population.Households
             if (traits == null || traits.Length < Trait.Count) return 0;
             switch (verb)
             {
-                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: return traits[Trait.Generosity] / 4;
+                case HVerb.Feed: case HVerb.Tend: case HVerb.Adopt: case HVerb.Provision: return traits[Trait.Generosity] / 4;
                 case HVerb.Propose: return traits[Trait.Boldness] / 3;
                 case HVerb.Accept: return -traits[Trait.Patience] / 3;
                 case HVerb.TryForChild: case HVerb.SeekChild: case HVerb.AcceptChild: return traits[Trait.KinWeight] / 4;
@@ -675,6 +775,7 @@ namespace God.Sim.Population.Households
                         case HSituation.DependantInNeed: return "a dependant in need"; case HSituation.CareOwed1: return "is owed a little care";
                         case HSituation.CareOwed2: return "is owed care"; case HSituation.CareOwed3: return "is owed much care";
                         case HSituation.UnionPartner: return "agreed a child with it"; case HSituation.SeekingChild: return "wants a child"; case HSituation.NoPlentyKnown: return "knows no plentiful food near";
+                        case HSituation.HouseholdShort: return "its household is short of food";
                     }
                     return null;
                 default: return null;

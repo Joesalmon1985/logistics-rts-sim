@@ -1,0 +1,239 @@
+using God.Sim.Cognition;
+using God.Sim.Learning;
+using God.Sim.Policy;
+using God.Sim.Population;
+
+namespace God.Sim.Divinity
+{
+    /// <summary>
+    /// D4b (the brief's D5; contracts 4.2, 10.2, 11; POSSESSION_AND_AVATAR 5): the manifested avatar. The god's body is one
+    /// <see cref="Npc"/> record with <c>Kind = Avatar</c>, <c>God</c> and id <c>AvatarBodyId = 0x4000_0000 + GodId</c>, created at
+    /// the god's first <c>ManifestAvatar</c> (so a game where no god manifests has a byte-identical population part, pin P2) and
+    /// reused by every later manifestation. It has a mind with learning off, no M4 life, no household, no hut rights and the
+    /// policy <c>none</c>: it never thinks for itself and acts only on the god's inputs (<c>ControlKind.AvatarBody</c>), through
+    /// the same walks, reach and <c>Goods</c> moves as anyone (its take keeps the owner; its give is a gift; it never owns).
+    /// F1's <c>Body()</c> skip gives it no hunger, fatigue, cold, ageing or illness. Damage through <c>Bodies.Damage</c> reaches
+    /// it here: at health 0 it is <b>destroyed, never killed</b> (no <c>NpcDied</c>, no estate, no <c>Kill</c>); what it carries
+    /// goes to the ground (<c>AvatarDrop</c>, owners unchanged) and the god returns to divine existence, unharmed. OWNER: D4.
+    /// </summary>
+    public static class Avatars
+    {
+        /// <summary>The god's avatar body (null before its first manifestation).</summary>
+        public static Npc BodyOf(GodState s, int god) => s.Population?.Find(DivinityIds.AvatarBodyId(god));
+
+        internal static CommandResult Validate(GodState s, ManifestAvatar c)
+        {
+            if (s.Divinity == null) return EmbodimentReasons.Reject(DivineReasons.DivinityOff);
+            var g = s.Divinity.Gods?.Of(c.God);
+            if (g == null) return EmbodimentReasons.Reject(DivineReasons.NoSuchGod);
+            var grid = s.Territory.Grid;
+            if (c.Node < 0 || c.Node >= grid.Count || !grid.IsLand(c.Node)) return EmbodimentReasons.Reject(EmbodimentReasons.NotLand);
+            var body = BodyOf(s, c.God);
+            if (body != null && body.Alive || Control.Of(s, DivinityIds.AvatarBodyId(c.God)) != ControlKind.Self) return EmbodimentReasons.Reject(EmbodimentReasons.Manifested);
+            return Mythic.CanSpend(s, c.God, InterventionKind.Avatar, s.Tuning.Divinity.Mythic.Costs.ManifestAvatar);
+        }
+
+        internal static CommandResult Apply(GodState s, EventBuffer ev, ManifestAvatar c)
+        {
+            var r = Validate(s, c);
+            if (!r.Ok) return r;
+            long cost = s.Tuning.Divinity.Mythic.Costs.ManifestAvatar;
+            r = Mythic.TrySpend(s, ev, c.God, InterventionKind.Avatar, cost, Interventions.Peek(s));
+            if (!r.Ok) return r;
+            int id = Interventions.Open(s, ev, c.God, InterventionKind.Avatar, DivineAct.None, new DivineTarget(DivineTargetKind.Self, DivinityIds.AvatarBodyId(c.God), c.Node), DivineScope.None, cost);
+            var reg = Embodiment.RegistryOf(s);
+            int possession = reg.PossessionOfGod(c.God)?.Intervention ?? 0;
+            var body = BodyOf(s, c.God);
+            bool created = body == null;
+            if (created) body = Create(s, c.God);
+            // manifested: alive at the node, health restored, nothing in hand, nothing under way
+            body.Alive = true; body.Node = c.Node; body.Health = s.Tuning.Divinity.Avatar.Health; body.Injury = 0;
+            body.Action = new NpcAction { Since = s.Tick }; body.Path = null; body.PathGoal = -1; body.PathIdx = 0; body.StepTicks = 0;
+            var entry = new ControlEntry { Body = body.Id, Kind = ControlKind.AvatarBody, God = c.God, Intervention = id, SinceTick = s.Tick, Heading = ControlEntry.HeadingStop, Gait = 1 };
+            if (!Control.TryAcquire(s, ev, in entry, out string reason)) { body.Alive = false; return EmbodimentReasons.Reject(reason); } // validated above: not expected
+            reg.Manifestations.Add(new AvatarSpell { Intervention = id, God = c.God, Body = body.Id, Node = c.Node, StartTick = s.Tick });
+            reg.Manifested++;
+            ev.Add(new AvatarManifested { Intervention = id, God = c.God, Body = body.Id, Node = c.Node, Health = body.Health, SupersededPossession = possession, Created = created });
+            return CommandResult.Accept();
+        }
+
+        /// <summary>The god's one body record, inserted in id order (it sorts after every person: <c>Find</c> works).</summary>
+        private static Npc Create(GodState s, int god)
+        {
+            var p = s.Population;
+            var root = new Rng(s.Seed).Fork("avatar", god);
+            var n = new Npc
+            {
+                Id = DivinityIds.AvatarBodyId(god), Kind = BodyKind.Avatar, God = god, Faction = DivinityIds.OriginFactionOf(god), BornTick = s.Tick,
+                Carry = new ItemLot[s.Tuning.Population.CarrySlots], Policy = PolicyRegistry.None, Instincts = InstinctSet.Default,
+                RngPolicy = root, RngWork = root.Fork("work"), RngLearn = root.Fork("learn"),
+                Mind = new NpcMind(s.Tuning.Learning.Caps, 8, LearningMode.Off),
+                LearnRate = 1000, ForgetRate = 1000, Curiosity = 1000, Alive = false,
+            };
+            n.RewardSnap = (int[])n.Drives.Clone();
+            int at = p.Npcs.Count;
+            while (at > 0 && p.Npcs[at - 1].Id > n.Id) at--;
+            p.Npcs.Insert(at, n);
+            var g = s.Divinity.Gods.Of(god);
+            if (g != null) g.AvatarBody = n.Id;
+            return n;
+        }
+
+        internal static CommandResult ValidateDismiss(GodState s, DismissAvatar c)
+        {
+            if (s.Divinity == null) return EmbodimentReasons.Reject(DivineReasons.DivinityOff);
+            if (Control.Of(s, DivinityIds.AvatarBodyId(c.God)) != ControlKind.AvatarBody) return EmbodimentReasons.Reject(EmbodimentReasons.NoAvatar);
+            return CommandResult.Accept();
+        }
+
+        internal static CommandResult ApplyDismiss(GodState s, EventBuffer ev, DismissAvatar c)
+        {
+            var r = ValidateDismiss(s, c);
+            if (!r.Ok) return r;
+            Control.Release(s, ev, DivinityIds.AvatarBodyId(c.God), ControlEndReason.Cancelled);
+            return CommandResult.Accept();
+        }
+
+        /// <summary>Everything the body carries to the ground at its node (<c>AvatarDrop</c>, owners unchanged). Returns the lots moved.</summary>
+        private static int DropAll(GodState s, EventBuffer ev, Npc body)
+        {
+            int n = 0;
+            for (int i = 0; i < body.Carry.Length; i++)
+            {
+                var l = body.Carry[i];
+                if (l.Empty) continue;
+                var r = Goods.Move(s, ev, Holder.Carry(body.Id), l.Id, l.Count, Holder.Ground(body.Node), MoveReason.AvatarDrop, body.Id, OwnerRule.Keep);
+                if (!r.Ok) throw new System.InvalidOperationException("avatar drop failed: " + r.Status);
+                n++;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// The end report (from <c>Control.EndedD5</c>, once per manifestation, CT1): the lots to the ground, the body leaves the
+        /// world (<c>Alive = false</c>, its last node kept), then <see cref="AvatarDestroyed"/> (with the cooldown after a
+        /// destruction) or <see cref="AvatarDismissed"/>.
+        /// </summary>
+        internal static void Ended(GodState s, EventBuffer ev, in ControlEntry e, ControlEndReason why)
+        {
+            if (e.Kind != ControlKind.AvatarBody) return;
+            var reg = s.Divinity.Avatars;
+            var av = reg?.ManifestationOf(e.Intervention);
+            var body = s.Population?.Find(e.Body);
+            int lots = 0;
+            if (body != null)
+            {
+                lots = DropAll(s, ev, body);
+                body.Alive = false;
+                body.Action = new NpcAction { Since = body.Action.Since }; body.Path = null; body.PathGoal = -1; body.StepTicks = 0;
+            }
+            int node = body?.Node ?? 0;
+            long ticks = s.Tick - e.SinceTick;
+            if (why == ControlEndReason.Destroyed)
+            {
+                long until = s.Tick + s.Tuning.Divinity.Mythic.Cooldown.AvatarAfterDestructionTicks;
+                Mythic.StartCooldown(s, e.God, InterventionKind.Avatar, until);
+                if (reg != null) reg.Destroyed++;
+                ev.Add(new AvatarDestroyed
+                {
+                    Intervention = e.Intervention, God = e.God, Body = e.Body, Node = node, By = av?.LastBy ?? 0, ByIntervention = av?.LastIntervention ?? 0,
+                    Cause = av?.LastCause ?? DamageCause.None, StartTick = e.SinceTick, Ticks = ticks, CooldownUntil = until, LotsDropped = lots,
+                    Actions = av?.ActionsStarted ?? 0, Observers = av?.Observers.Count ?? 0, DamageTaken = av?.DamageTaken ?? 0,
+                });
+            }
+            else
+            {
+                ev.Add(new AvatarDismissed
+                {
+                    Intervention = e.Intervention, God = e.God, Body = e.Body, Node = node, Reason = why, StartTick = e.SinceTick, Ticks = ticks, LotsDropped = lots,
+                    Actions = av?.ActionsStarted ?? 0, Observers = av?.Observers.Count ?? 0, DamageTaken = av?.DamageTaken ?? 0,
+                });
+            }
+            if (av != null) reg.Manifestations.Remove(av);
+        }
+
+        /// <summary>
+        /// <c>Bodies.Damage</c> on an avatar (D5's dispatch slot): health falls by the blow (<see cref="AvatarDamaged"/>); at 0 the
+        /// body is destroyed through the control seam (<c>Destroyed</c>), never killed.
+        /// </summary>
+        internal static void Damage(GodState s, EventBuffer ev, Npc body, int injuryMicro, DamageCause cause, int actor, int intervention)
+        {
+            var e = Control.EntryOf(s, body.Id);
+            var av = s.Divinity.Avatars?.ManifestationOf(e.Intervention);
+            body.Injury = System.Math.Min(1_000_000, body.Injury + injuryMicro);
+            body.Health = System.Math.Max(0, body.Health - injuryMicro);
+            if (av != null)
+            {
+                av.DamageTaken += injuryMicro; av.Blows++;
+                av.LastBy = actor; av.LastCause = cause; av.LastIntervention = intervention;
+            }
+            ev.Add(new AvatarDamaged { Intervention = e.Intervention, God = body.God, Body = body.Id, By = actor, ByIntervention = intervention, Amount = injuryMicro, HealthAfter = body.Health, Cause = cause });
+            if (body.Health > 0) return;
+            if (e.Kind == ControlKind.AvatarBody) Control.Release(s, ev, body.Id, ControlEndReason.Destroyed);
+            else { DropAll(s, ev, body); body.Alive = false; }
+        }
+
+        /// <summary><c>Bodies.Heal</c> of an injury on an avatar (its own god's <c>HealInjury</c>): health and injury restored, capped at full.</summary>
+        internal static void Heal(Npc body, HealKind what, int amount, int full)
+        {
+            if (what != HealKind.Injury) return;
+            body.Injury = System.Math.Max(0, body.Injury - amount);
+            body.Health = System.Math.Min(full, body.Health + amount);
+        }
+
+        /// <summary>
+        /// An act the god started in its body: <see cref="AvatarActionStarted"/> with the people attending now (living, awake,
+        /// within gesture sight); each is a distinct observer of the manifestation (the demonstration's reach).
+        /// </summary>
+        internal static void ActionStarted(GodState s, EventBuffer ev, AvatarSpell av, Npc body, in DecisionRecord last)
+        {
+            av.ActionsStarted++;
+            var g = s.Territory.Grid;
+            bool night = PopulationSystem.TimeOf(SimCalendar.Of(s), s.Tick) == TimeOfDay.Night;
+            int sight = Comms.CommsRange.Gesture(s.Tuning.Population, night);
+            int cap = s.Tuning.Divinity.Avatar.MaxObservers;
+            int attending = 0;
+            foreach (var n in s.Population.Npcs)
+            {
+                if (!Bodies.IsLivingPerson(n) || n.Action.Asleep || g.Distance(n.Node, body.Node) > sight) continue;
+                attending++;
+                av.Observe(n.Id, cap);
+            }
+            ev.Add(new AvatarActionStarted
+            {
+                Intervention = av.Intervention, Body = body.Id, Verb = last.Verb, TargetKind = last.TargetKind, TargetId = last.TargetId, TargetNode = last.TargetNode,
+                ActionTick = last.Tick, Attending = attending, Observers = av.Observers.Count,
+            });
+        }
+    }
+
+    /// <summary><c>ManifestAvatar { God, Node }</c> (contracts 10.2, 11.1). OWNER: D4 (D5 slot).</summary>
+    public sealed class ManifestAvatarHandler : CommandHandler<ManifestAvatar>
+    {
+        protected override CommandResult Validate(GodState s, ManifestAvatar c) => Avatars.Validate(s, c);
+        protected override CommandResult Apply(GodState s, ManifestAvatar c, EventBuffer ev) => Avatars.Apply(s, ev, c);
+    }
+
+    /// <summary><c>DismissAvatar { God }</c>: the god withdraws its body (<c>Cancelled</c>). OWNER: D4 (D5 slot).</summary>
+    public sealed class DismissAvatarHandler : CommandHandler<DismissAvatar>
+    {
+        protected override CommandResult Validate(GodState s, DismissAvatar c) => Avatars.ValidateDismiss(s, c);
+        protected override CommandResult Apply(GodState s, DismissAvatar c, EventBuffer ev) => Avatars.ApplyDismiss(s, ev, c);
+    }
+
+    /// <summary>D5's slot of the frozen control seam: the manifestation's end report.</summary>
+    public static partial class Control
+    {
+        static partial void EndedD5(GodState s, EventBuffer ev, in ControlEntry e, ControlEndReason why) => Avatars.Ended(s, ev, in e, why);
+    }
+
+    /// <summary>D5's install slot: the avatar handlers (the control input is registered once, in D4's slot).</summary>
+    public static partial class DivinityModule
+    {
+        static partial void InstallD5(GodSim sim)
+        {
+            sim.RegisterHandler(new ManifestAvatarHandler());
+            sim.RegisterHandler(new DismissAvatarHandler());
+        }
+    }
+}

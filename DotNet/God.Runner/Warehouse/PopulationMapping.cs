@@ -107,7 +107,8 @@ namespace God.Runner.Warehouse
                 c.Insert(Tables.FactDecision, c.Tick, c.Seq, c.DateKey(), p.Key, p.FactionKey, (long)e.Verb, (long)(int)e.TargetKind, (long)e.TargetId,
                     e.TargetNode >= 0 ? (object)c.NodeLocation(e.TargetNode) : null, (long)e.TargetClass, (long)e.Total, (long)e.Instinct, (long)e.Need, (long)e.Learned,
                     (long)e.Social, (long)e.Culture, (long)e.Personality, (long)e.Cost, (long)e.Explore, (long)e.Candidates,
-                    e.LearnedChangedWinner ? 1L : 0L, e.ExploreWon ? 1L : 0L, e.Continued ? 1L : 0L, (long)e.SecondVerb, (long)e.SecondTotal, (long)c.Weight);
+                    e.LearnedChangedWinner ? 1L : 0L, e.ExploreWon ? 1L : 0L, e.Continued ? 1L : 0L, (long)e.SecondVerb, (long)e.SecondTotal, (long)c.Weight,
+                    c.ControlCode(e.Control)); // R63: control_code (column of 0007; null without Divinity)
             });
         }
 

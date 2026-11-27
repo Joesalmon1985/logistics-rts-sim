@@ -41,12 +41,14 @@ namespace God.Sim.Population.Households
         /// <summary>How long one "try for a child" decision lasts (ticks): both partners must hold it on the mother's day check.</summary>
         public int TryingTicks = 1200;
         /// <summary>
-        /// F2: the conception-coordination rule (<see cref="Conception"/>). 0 (default): the M4/D4 rule. 1: at the check, two
-        /// partners who both hold "try" with each other end a dormant reproductive relationship either holds with a third adult.
-        /// Written only when non-zero, so tunings without it serialise and hash exactly as before.
+        /// F2: the conception-coordination rule (<see cref="Conception"/>). 1 (default since the Checkpoint B re-pin, LEAD_RULINGS
+        /// R60): at the check, two partners who both hold "try" with each other end a dormant reproductive relationship either
+        /// holds with a third adult. 0: the old M4/D4 rule (experiment arm). Written only when not the default, so the default
+        /// tuning serialises (and its <c>core</c> hash part stays) exactly as before; an explicit 0 is written. Saves from before
+        /// the re-pin (version 5, where an omitted field meant 0) are refused by save version 6.
         /// </summary>
-        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
-        public int ConceptionMode;
+        [System.ComponentModel.DefaultValue(1), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int ConceptionMode = 1;
         /// <summary>Pregnancy raises the mother's hunger rate by this (permille).</summary>
         public int PregnantHungerPermille = 300;
         /// <summary>Childbirth hazard per 1000 births (mother and newborn), rising to the max when the mother's nutrition is below 300 at the due date.</summary>
@@ -106,6 +108,15 @@ namespace God.Sim.Population.Households
         public int ChildBornVp = 600;
         /// <summary>D4 (M4.44): the forms of care a begging child's display reaches (<see cref="CareStructure"/> bits: 1 parents, 2 other kin, 4 household mates, 8 anyone, 16 adoptive and step parents); 31 all.</summary>
         public int FeedFrom = CareStructure.All;
+        /// <summary>
+        /// F2c (R67): 1 lets an adult with children in its household see its household short of food (its store seen or
+        /// remembered empty or low) and offers it "provision": forage for the household and carry the food home to the store,
+        /// one decision of its own (nurture gain, generosity), credited <see cref="ProvisionVp"/> per unit delivered. 0 (default):
+        /// nothing new is offered, drawn or hashed.
+        /// </summary>
+        public int Provision;
+        /// <summary>F2c: food units it gathers before carrying them home, and the reward per unit delivered to the store.</summary>
+        public int ProvisionUnits = 4, ProvisionVp = 60;
     }
 
     /// <summary>Partnerships (HOUSEHOLDS "Partnership and courtship", Q5, Q6).</summary>
@@ -135,6 +146,20 @@ namespace God.Sim.Population.Households
         public int CompanionshipMean = 500, CompanionshipSpread = 400;
         public int ChildDesireMean = 500, ChildDesireSpread = 400;
         public int CommitmentMean = 500, CommitmentSpread = 500;
+        /// <summary>
+        /// F2b (LEAD_RULINGS R61): the partner-sex preference (<see cref="NpcLife.PartnerSeeks"/>). 0 (default): not drawn,
+        /// partnership choice is sex-blind (the M4 rule). 1: drawn once at a person's origin, relative to its own sex: seeks the
+        /// other sex with <see cref="SeekOtherSexPermille"/>, its own sex with <see cref="SeekSameSexPermille"/>, both otherwise;
+        /// a partnership then forms only between two people who each seek the other's sex. A preference, never a restriction
+        /// on anyone else: same-sex partnerships, reproduction outside a partnership, adoption and shared care are unchanged.
+        /// The distribution is an owner question (master plan §7); no scenario sets it. Each field is written only when non-zero.
+        /// </summary>
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int PartnerSexMode;
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int SeekOtherSexPermille;
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int SeekSameSexPermille;
     }
 
     /// <summary>Disease (POPULATION "Disease", Q3): one fever. Rates per million per day; Mild halves contact, crowding and sanitation.</summary>

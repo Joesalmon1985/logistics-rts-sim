@@ -606,6 +606,7 @@ namespace God.Sim.Population
             }
             self.Stage = npc.Stage;
             self.Household = npc.Household;
+            self.Dependants = Households.HouseholdHooks.ProvisionDependants(s, npc); // F2c: 0 unless Care.Provision is on
             // I-BS amendment (SHARED_CONTRACTS 12.33): the genome's instinct gains, as its own body carries them (0 = none: an M3 NPC)
             if (npc.Life != null) { self.HungerGain = npc.Life.Pheno.HungerGain; self.FearGain = npc.Life.Pheno.FearGain; self.SocialGain = npc.Life.Pheno.SocialGain; self.NurtureGain = npc.Life.Pheno.NurtureGain; }
             if (_sc.Carry.Length < npc.Carry.Length) _sc.Carry = new ItemLot[npc.Carry.Length];
@@ -783,7 +784,7 @@ namespace God.Sim.Population
                 Total = w.Total, Instinct = w.Instinct, Need = w.Need, Learned = w.Learned, Social = w.Social, Culture = w.Culture,
                 Personality = w.Personality, Cost = w.Cost, Explore = w.Explore, Candidates = w.Candidates,
                 LearnedChangedWinner = w.LearnedChangedWinner, ExploreWon = w.ExploreWon, Continued = continued,
-                SecondVerb = w.SecondVerb, SecondTotal = w.SecondTotal,
+                SecondVerb = w.SecondVerb, SecondTotal = w.SecondTotal, Control = (byte)w.Control,
             });
 
         /// <summary>The reward the previous decision earned (consumed by the next TD step), remembered as an experience when not zero.</summary>

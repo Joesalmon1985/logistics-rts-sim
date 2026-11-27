@@ -104,6 +104,8 @@ namespace God.Sim.Tests
             probe.Step(1); // PossessedActionStarted is reported at the tick after the think that started the act
             var give = probe.Of<ItemMoved>().Single(e => e.Reason == MoveReason.HandOver);
             Assert.AreEqual(id, give.Actor, "the possessed person gave it");
+            Assert.AreEqual((byte)ControlKind.Possessed, give.Control, "ItemMoved(HandOver) carries Control = 2 (R63)");
+            Assert.AreEqual((byte)ControlKind.Possessed, pick.Control, "the take too");
             Assert.AreEqual(m.Id, give.ToId);
             Assert.AreEqual(OwnerKind.Npc, give.OwnerAfterKind); Assert.AreEqual(m.Id, give.OwnerAfterId, "a gift: the receiver owns it");
             var acts = probe.Of<PossessedActionStarted>();

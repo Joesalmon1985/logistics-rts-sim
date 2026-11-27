@@ -17,14 +17,14 @@
     "Divinity.Mythic.GodThinkTicks": 1,
     "Divinity.Mythic.Schedule.S1.Tick": 600, "Divinity.Mythic.Schedule.S1.God": 1, "Divinity.Mythic.Schedule.S1.Template": 6, "Divinity.Mythic.Schedule.S1.B": 1,
     "Divinity.Mythic.Schedule.S2.Tick": 601, "Divinity.Mythic.Schedule.S2.Every": 2, "Divinity.Mythic.Schedule.S2.Until": 650, "Divinity.Mythic.Schedule.S2.God": 1,
-    "Divinity.Mythic.Schedule.S2.Template": 8, "Divinity.Mythic.Schedule.S2.A": 4,
-    "Divinity.Mythic.Schedule.S3.Tick": 730, "Divinity.Mythic.Schedule.S3.God": 1, "Divinity.Mythic.Schedule.S3.Template": 10, "Divinity.Mythic.Schedule.S3.A": 4,
+    "Divinity.Mythic.Schedule.S2.Template": 11, "Divinity.Mythic.Schedule.S2.A": 4,
+    "Divinity.Mythic.Schedule.S3.Tick": 730, "Divinity.Mythic.Schedule.S3.God": 1, "Divinity.Mythic.Schedule.S3.Template": 13, "Divinity.Mythic.Schedule.S3.A": 4,
     "Divinity.Mythic.Schedule.S4.Tick": 1000, "Divinity.Mythic.Schedule.S4.Every": 130, "Divinity.Mythic.Schedule.S4.Until": 1130, "Divinity.Mythic.Schedule.S4.God": 1,
-    "Divinity.Mythic.Schedule.S4.Template": 10, "Divinity.Mythic.Schedule.S4.A": 7,
-    "Divinity.Mythic.Schedule.S5.Tick": 1020, "Divinity.Mythic.Schedule.S5.God": 1, "Divinity.Mythic.Schedule.S5.Template": 10, "Divinity.Mythic.Schedule.S5.A": 6,
-    "Divinity.Mythic.Schedule.S6.Tick": 1050, "Divinity.Mythic.Schedule.S6.God": 1, "Divinity.Mythic.Schedule.S6.Template": 11, "Divinity.Mythic.Schedule.S6.A": 1,
-    "Divinity.Mythic.Schedule.S7.Tick": 1060, "Divinity.Mythic.Schedule.S7.God": 1, "Divinity.Mythic.Schedule.S7.Template": 10, "Divinity.Mythic.Schedule.S7.A": 5,
-    "Divinity.Mythic.Schedule.S8.Tick": 1400, "Divinity.Mythic.Schedule.S8.God": 1, "Divinity.Mythic.Schedule.S8.Template": 12
+    "Divinity.Mythic.Schedule.S4.Template": 13, "Divinity.Mythic.Schedule.S4.A": 7,
+    "Divinity.Mythic.Schedule.S5.Tick": 1020, "Divinity.Mythic.Schedule.S5.God": 1, "Divinity.Mythic.Schedule.S5.Template": 13, "Divinity.Mythic.Schedule.S5.A": 6,
+    "Divinity.Mythic.Schedule.S6.Tick": 1050, "Divinity.Mythic.Schedule.S6.God": 1, "Divinity.Mythic.Schedule.S6.Template": 14, "Divinity.Mythic.Schedule.S6.A": 1,
+    "Divinity.Mythic.Schedule.S7.Tick": 1060, "Divinity.Mythic.Schedule.S7.God": 1, "Divinity.Mythic.Schedule.S7.Template": 13, "Divinity.Mythic.Schedule.S7.A": 5,
+    "Divinity.Mythic.Schedule.S8.Tick": 1400, "Divinity.Mythic.Schedule.S8.God": 1, "Divinity.Mythic.Schedule.S8.Template": 15
   },
   "policies": {
     "god": { "default": "IdleGod", "1": "ScheduleGod" }

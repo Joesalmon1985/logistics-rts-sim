@@ -1,0 +1,44 @@
+{
+  "title": "F2c (R67) provisioning of dependants: Care.Provision off vs on against the three F2 ecologies, ConceptionMode 1, 20 seeds x 15 years.",
+  "scenario": "demog_f2_favourable",
+  "years": 15,
+  "seeds": "1-20",
+  "set": [
+    "tuning.Households.Life.ConceptionMode=1"
+  ],
+  "arms": [
+    {
+      "name": "favourable-off",
+      "scenario": "demog_f2_favourable"
+    },
+    {
+      "name": "favourable-provision",
+      "scenario": "demog_f2_favourable",
+      "set": [
+        "tuning.Households.Care.Provision=1"
+      ]
+    },
+    {
+      "name": "balanced-off",
+      "scenario": "demog_f2_balanced"
+    },
+    {
+      "name": "balanced-provision",
+      "scenario": "demog_f2_balanced",
+      "set": [
+        "tuning.Households.Care.Provision=1"
+      ]
+    },
+    {
+      "name": "hostile-off",
+      "scenario": "demog_f2_hostile"
+    },
+    {
+      "name": "hostile-provision",
+      "scenario": "demog_f2_hostile",
+      "set": [
+        "tuning.Households.Care.Provision=1"
+      ]
+    }
+  ]
+}

@@ -327,6 +327,11 @@ namespace God.Sim.Divinity
             bool loud = kind == MiracleKind.SmitePerson || kind == MiracleKind.SmiteBuilding || kind == MiracleKind.SmiteSource;
             m.Signs.Add(new DivineSign { Intervention = iv, God = god, Kind = (byte)kind, Node = node, Radius = (byte)Math.Min(255, tu.SignNodes), Loudness = (byte)(loud ? 2 : 1), Until = s.Tick + tu.SignTicks });
             while (m.Signs.Count > MiracleState.SignRing) m.Signs.RemoveAt(0);
+            // R63: everyone awake within the sign's reach holds SituationKind.DivineSign while it lasts (never told what it was)
+            if (s.Population == null) return;
+            var g = s.Territory.Grid;
+            foreach (var w in s.Population.Npcs)
+                if (Bodies.IsLivingPerson(w) && !w.Action.Asleep && g.Distance(w.Node, node) <= tu.SignNodes) Instructions.SawSign(s, w, s.Tick + tu.SignTicks);
         }
 
         private static int Ticks(GodState s, int days) => days * SimCalendar.Of(s).TicksPerDay;

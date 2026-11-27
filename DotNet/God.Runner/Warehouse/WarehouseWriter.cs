@@ -97,13 +97,38 @@ namespace God.Runner.Warehouse
             using (var r = new StreamReader(s)) return r.ReadToEnd();
         }
 
-        private void Migrate()
+        private void Migrate() => ApplyMissing(Migrations());
+
+        /// <summary>The migration versions recorded in <c>meta_schema_version</c> (empty for a new file).</summary>
+        public HashSet<int> AppliedVersions()
+        {
+            var set = new HashSet<int>();
+            try
+            {
+                using (var c = Conn.CreateCommand())
+                {
+                    c.CommandText = "SELECT version FROM meta_schema_version";
+                    using (var r = c.ExecuteReader()) while (r.Read()) set.Add((int)r.GetInt64(0));
+                }
+            }
+            catch (SqliteException) { }
+            return set;
+        }
+
+        /// <summary>
+        /// LEAD_RULINGS R64: applies, in number order, every migration of <paramref name="migrations"/> whose version is not
+        /// yet recorded in <c>meta_schema_version</c> (set membership, not "above the current maximum": migrations merge out
+        /// of number order, e.g. 0009 after 0012/0015/0026). Returns the versions applied now.
+        /// </summary>
+        public List<int> ApplyMissing(IEnumerable<(int version, string name, string sql)> migrations)
         {
             Exec("CREATE TABLE IF NOT EXISTS meta_schema_version (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL, description TEXT NOT NULL)");
-            int have = SchemaVersion();
-            foreach (var (version, name, sql) in Migrations())
+            var have = AppliedVersions();
+            var applied = new List<int>();
+            foreach (var (version, name, sql) in migrations.OrderBy(m => m.version))
             {
-                if (version <= have) continue;
+                if (have.Contains(version)) continue;
+                applied.Add(version);
                 using (var tx = Conn.BeginTransaction())
                 {
                     Exec(sql, tx);
@@ -118,7 +143,24 @@ namespace God.Runner.Warehouse
                     tx.Commit();
                 }
             }
+            return applied;
         }
+
+        /// <summary>
+        /// Opens (creating if absent) a database read-write and applies the migrations it lacks (R64; set membership).
+        /// <paramref name="migrations"/>: the set to apply (default: every migration the runner knows; tests pass a subset).
+        /// </summary>
+        public static WarehouseDb OpenMigrate(string path, IEnumerable<(int version, string name, string sql)> migrations = null)
+        {
+            var c = new SqliteConnection("Data Source=" + path + ";Pooling=False");
+            c.Open();
+            var db = new WarehouseDb(path, c);
+            db.LastApplied = db.ApplyMissing(migrations ?? Migrations());
+            return db;
+        }
+
+        /// <summary>The versions the last <see cref="OpenMigrate"/> applied.</summary>
+        public List<int> LastApplied { get; private set; } = new List<int>();
 
         public void Exec(string sql, SqliteTransaction tx = null)
         {

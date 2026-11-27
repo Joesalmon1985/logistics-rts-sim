@@ -193,7 +193,9 @@ namespace God.Runner.Tests
             for (ulong seed = 1; seed <= 5; seed++)
             {
                 var f = new Fixture(seed);
-                if (!f.StepUntil(() => f.Of<WagePaid>().Count > 0, 2400)) continue;
+                // C1c (flagged edit): the owner now also works its own field between taking roots out, so on some seeds its
+                // own cycles come first (one work progress per asset); wait until the worker has produced as well
+                if (!f.StepUntil(() => f.Of<WagePaid>().Count > 0 && f.Of<Produced>().Any(p => p.Npc == f.Worker.Id), 2400)) continue;
                 fixtures++;
                 var start = f.Of<EmploymentStarted>().First();
                 Assert.AreEqual(f.Owner.Id, start.Agent); Assert.AreEqual(f.Worker.Id, start.Worker); Assert.AreEqual(f.Field.Id, start.Asset);

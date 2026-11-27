@@ -24,11 +24,14 @@ namespace God.Game.Tests
         public void SetUp() { DevOverlays.Reset(); }
 
         [TearDown]
-        public void TearDown() { DevOverlays.Reset(); Time.captureFramerate = 0; GodBootstrap.SkipStartCard = true; GodBootstrap.PendingSeed = null; GodBootstrap.PendingSetup = null; GodBootstrap.PendingStartAi = false; }
+        public void TearDown() { DevOverlays.Reset(); Time.captureFramerate = 0; GodBootstrap.StartRunning = true; GodBootstrap.SkipStartCard = true; GodBootstrap.PendingSeed = null; GodBootstrap.PendingSetup = null; GodBootstrap.PendingStartAi = false; }
 
-        private static IEnumerator Load(ulong seed)
+        /// <param name="paused">Checkpoint B: start paused (<c>StartRunning = false</c>) so the frames of the scene load step no
+        /// ticks by wall-clock time; the hash comparisons below then compare runs of exactly the same tick count.</param>
+        private static IEnumerator Load(ulong seed, bool paused = false)
         {
             GodBootstrap.SkipStartCard = true;
+            GodBootstrap.StartRunning = !paused;
             GodBootstrap.PendingSeed = seed;
             GodBootstrap.PendingSetup = new GameSetup(seed, 0) { Population = true, StartNpcsPerFaction = 20, Victory = VictorySpec.SandboxOnly() };
             GodBootstrap.PendingStartAi = true;
@@ -184,7 +187,7 @@ namespace God.Game.Tests
 
         private static IEnumerator RunHash(ulong seed, float camDist, string[] cues, ulong[] hash, int[] gestureCount)
         {
-            yield return Load(seed);
+            yield return Load(seed, paused: true);
             var boot = GodBootstrap.Instance;
             boot.Running = false;
             var cam = Camera.main;
@@ -227,7 +230,7 @@ namespace God.Game.Tests
 
         private static IEnumerator Hash(ulong seed, bool pump, ulong[] r)
         {
-            yield return Load(seed);
+            yield return Load(seed, paused: true);
             var boot = GodBootstrap.Instance;
             boot.Running = false;
             for (int chunk = 0; chunk < 30; chunk++) { boot.Sim.Step(100); if (pump) boot.PumpEvents(); else boot.Sim.DrainEvents(); yield return null; }
