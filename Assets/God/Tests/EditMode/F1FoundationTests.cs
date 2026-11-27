@@ -68,7 +68,8 @@ namespace God.Sim.Tests
             // D1 adjustment: the four configuration commands have D1's handlers; the rest stay handler-less until D2-D7
             types = types.Where(t => !DivineCommandSet.IsConfiguration(t)).ToList();
             // D2 adjustment: suggestions, commands and compulsions have D2's handlers
-            types = types.Where(t => t != typeof(IssueSuggestion) && t != typeof(IssueCommand) && t != typeof(IssueCompulsion) && t != typeof(CancelCompulsion)).ToList();
+            types = types.Where(t => t != typeof(IssueSuggestion) && t != typeof(IssueCommand) && t != typeof(IssueCompulsion) && t != typeof(CancelCompulsion)
+                && t != typeof(CastMiracle)).ToList(); // and D3's miracle handler (merge adjustment)
             var sim = Game(11, divinity: 1, humanGod: 1);
             Assert.IsNotNull(sim.State.Divinity, "stub state with the switch on");
             ulong before = sim.StateHash();
