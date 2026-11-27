@@ -19,8 +19,8 @@ namespace God.Sim.Social
     /// <item>my own messages: ask for food, offer a trade, offer a gift, ask for help, warn of an enemy; and seeking out a
     /// remembered trading partner.</item>
     /// </list>
-    /// Targets carry <c>IntentTarget.None</c> and the person's handle in <c>TargetId</c>: the frozen M3.12 check
-    /// (<c>Thinker.Known</c>) knows no person targets (an amendment is proposed); M5's own perception check is a test.
+    /// Targets are person targets (<c>IntentTarget.Npc</c>, the person's handle in <c>TargetId</c>): since the I-BS amendment
+    /// (SHARED_CONTRACTS 12.31) the M3.12 check (<c>Thinker.Known</c>) accepts a person in sight or remembered.
     /// </summary>
     internal static class SocialCandidates
     {
@@ -116,7 +116,7 @@ namespace God.Sim.Social
             if (m.PendingCount >= SocialMind.MaxPending) return;
             var who = sc.People[person];
             p.Handle = who.Id; p.As = who.As; p.Node = who.Node; p.Dist = who.Dist; p.Quality = (byte)quality;
-            int at = Thinker.AddCandidate(sc, p.Verb, IntentTarget.None, p.Handle, p.Node, SocialClass.Person, p.Dist);
+            int at = Thinker.AddCandidate(sc, p.Verb, IntentTarget.Npc, p.Handle, p.Node, SocialClass.Person, p.Dist);
             if (at < 0) return;
             p.Cand = at;
             uint rel = Feature.NpcRel((int)Relations.ClassOf(sc, in who));
@@ -433,7 +433,7 @@ namespace God.Sim.Social
                     {
                         var rel = m.Rel[best];
                         int d = sc.Grid.Distance(self.Node, rel.LastNode);
-                        int at = Thinker.AddCandidate(sc, SocialVerb.Seek, IntentTarget.None, rel.Other, rel.LastNode, SocialClass.Person, d, true);
+                        int at = Thinker.AddCandidate(sc, SocialVerb.Seek, IntentTarget.Npc, rel.Other, rel.LastNode, SocialClass.Person, d, true);
                         if (at >= 0)
                         {
                             Thinker.TargetFeatures(sc, at, Feature.NpcRef(rel.Other), Feature.PlaceRef(rel.LastNode));

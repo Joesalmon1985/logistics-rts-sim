@@ -82,11 +82,13 @@ namespace God.Sim.Information
         public string Text;
         public byte Verb, Class;
         public int Dist, Instinct, Need, Learned, Personality, Cost, Explore, Total;
+        /// <summary>The Social term (kin and social memory, I-BS amendment 12.34); 0 for an M3 person.</summary>
+        public int Social;
         public bool Chosen, FromBelief;
 
         /// <summary>"eat berry bush (2 away): need +600, instinct +0, learned +120, personality +0, cost -40, explore +31 = 711".</summary>
         public string Breakdown => Text + " (" + Dist + " away" + (FromBelief ? ", remembered" : "") + "): need " + Sg(Need) + ", instinct " + Sg(Instinct - Need)
-            + ", learned " + Sg(Learned) + ", personality " + Sg(Personality) + ", cost " + Sg(-Cost) + ", explore " + Sg(Explore) + " = " + Total;
+            + ", learned " + Sg(Learned) + (Social != 0 ? ", social " + Sg(Social) : "") + ", personality " + Sg(Personality) + ", cost " + Sg(-Cost) + ", explore " + Sg(Explore) + " = " + Total;
 
         private static string Sg(int v) => v >= 0 ? "+" + v : v.ToString();
         public override string ToString() => Breakdown;
@@ -197,7 +199,7 @@ namespace God.Sim.Information
                 r.Opportunities.Add(new Opportunity
                 {
                     Text = VerbTable.Name(o.Verb) + TargetWords(Policy.IntentTarget.Node, o.Class, o.Verb), Verb = o.Verb, Class = o.Class, Dist = o.Dist,
-                    Instinct = o.Instinct, Need = o.Need, Learned = o.Learned, Personality = o.Personality, Cost = o.Cost, Explore = o.Explore, Total = o.Total,
+                    Instinct = o.Instinct, Need = o.Need, Learned = o.Learned, Personality = o.Personality, Social = o.Social, Cost = o.Cost, Explore = o.Explore, Total = o.Total,
                     Chosen = o.Chosen, FromBelief = o.FromBelief,
                 });
             }

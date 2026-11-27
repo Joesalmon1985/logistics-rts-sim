@@ -42,6 +42,10 @@ namespace God.Sim.Population.Households
             new EventInfo(typeof(HutRightLost), 145, 1, TelemetryDomain.Household, EventCatalog.Generic),
             new EventInfo(typeof(HouseholdDay), 146, 1, TelemetryDomain.Household, "fact_household_day"),
             new EventInfo(typeof(PersonDayLife), 147, 1, TelemetryDomain.Population, "fact_person_day", note: "M4's columns of the person-day row (stage, household, partner, care ticks)"),
+            // ---- D4 relationship ontology (unity/demog) ----
+            new EventInfo(typeof(ReproductiveUnionFormed), 148, 1, TelemetryDomain.Household, EventCatalog.Generic, note: "D4: two adults agreed to try for a child (kind 1 partners, 2 outside a partnership)"),
+            new EventInfo(typeof(ReproductiveUnionEnded), 149, 1, TelemetryDomain.Household, EventCatalog.Generic, note: "D4: a reproductive relationship lapsed or a partner died"),
+            new EventInfo(typeof(ChildWanted), 150, 1, TelemetryDomain.Household, EventCatalog.Generic, true, note: "D4: an adult showed that it wants a child"),
             // ---- estates (230-249) ----
             new EventInfo(typeof(EstateOpened), 230, 1, TelemetryDomain.Estate, EventCatalog.Generic),
             new EventInfo(typeof(EstateTransfer), 231, 1, TelemetryDomain.Estate, "fact_inheritance"),
@@ -213,6 +217,29 @@ namespace God.Sim.Population.Households
         public int Partnership, A, B, Initiator;
         public byte Reason;
         public const byte Death = 1, Left = 2, Separated = 3;
+    }
+
+    /// <summary>D4 (148): a reproductive relationship agreed: its id, the two adults, who offered, its kind, and whether they are romantic partners too.</summary>
+    public sealed class ReproductiveUnionFormed : DomainEvent
+    {
+        public int Union, A, B, Initiator;
+        public byte Kind;
+        public bool Partners;
+    }
+
+    /// <summary>D4 (149): a reproductive relationship ended: 1 lapsed (neither tried for the lapse time), 2 a death; children born in it, days it lasted.</summary>
+    public sealed class ReproductiveUnionEnded : DomainEvent
+    {
+        public int Union, A, B, Children, Days;
+        public byte Reason;
+        public const byte Lapsed = 1, Death = 2;
+    }
+
+    /// <summary>D4 (150): an adult showed that it wants a child (a display at its own spot), with its child-desire preference (analytics).</summary>
+    public sealed class ChildWanted : DomainEvent
+    {
+        public int Npc, Desire;
+        public bool Partnered;
     }
 
     public sealed class TryForChildChosen : DomainEvent

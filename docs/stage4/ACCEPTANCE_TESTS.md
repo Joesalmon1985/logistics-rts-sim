@@ -428,6 +428,26 @@ Owner decision D3 §5 ([DEV_LOG](DEV_LOG.md#owner-decisions-d3-26-nov-2026-after
 | **Not done** | M4.4, M4.7, M4.12, M4.13, M4.15, M4.16, M4.23, M4.24, and the separate immigration-off `Stable_10Generations` arm |
 | **New, not started (D4)** | M4.37–M4.45 |
 
+
+#### D4 status (branch `unity/demog`, 26 Nov 2026)
+
+Numbers are from `demog report` and the runner tests on `unity/demog` (10 seeds per arm unless stated); see POPULATION "Demography investigation" and the DEV_LOG "Demography workstream record". Nothing below is marked met that did not run.
+
+| Test | Status | Evidence |
+|---|---|---|
+| M4.36 | **Met as written, not taken as stability** | Established band (now `m4_families`): 17/20 seeds reach generation 3 alive (no-care control 12); child deaths per birth 17.3% with care vs 55.6% without; better with care in 20/20 paired seeds; nothing foraged below 0.5 years; yield per work tick 0.0095 / 0.0174 / 0.0255 (0.5-0.75 / 0.75-1 / adult). The earlier 15/20 was on the young band before ranging; the young band stays as `m4_families_young`. Populations still fall to 4-6 by day 60 |
+| M4.37 | **Not met** | Favourable / balanced / hostile scenario files exist (ecology parameters stated; biology block empty). Not run at 20 seeds x 5 generations. Every population in the established-band runs goes extinct (10/10 at 6x10, 6x20, 6x40), so no viable favourable scenario exists yet |
+| M4.38 | **Not run** | Plan written (13 arms against `demog_balanced`); not run before the pause |
+| M4.39 | **Met (EditMode)** | `DemographyTests` fixtures at 71f1f67 (ontology records separate; same-sex couple raising an adopted child; reproduction outside the household) |
+| M4.40 | **Not run** | The paired high/low-preference comparison was not run |
+| M4.41 | **Partly met** | The report gives completed vs censored fertility, reproductive opportunity, child and age-specific mortality, offspring reaching adulthood. Completed fertility 0.50-0.56 per woman (default ecology), 0.70 +- 0.14 under `demog_favourable` (far from the 3-4 starting point). One-factor sweep (10 seeds): preference and pairing arms 0.48-0.65; conception high 0.81, birth gap 0.05 0.85, fertile span to 2.8 0.92 (1/10 seeds not extinct) |
+| M4.42 | **Partly met (amended)** | Generator built and the default of `m4_band_6x20`, `m4_families`, `demog_*` and the Unity Living island; young band kept as `m4_band_6x20_young`. Spread **fails** the amended target: largest 3-day share 16.0% +- 1.2 (max 18.3%) at 6x20; 16.8% (max 21.6%) at 6x10; 19.6% (max 22.5%) at 6x40 |
+| M4.43 | **Partly met** | Report gives production, regeneration, consumption, spoilage, reachable food, travel, density, productivity; regimes classified (exploration at 6x10, exploration plus local depletion at 6x20, distribution and density at 6x40). Ranging lowers starvation 30-45%; household stores are not yet broken out |
+| M4.44 | **Not run** | Plan written (8 arms incl. no care); the care-form switch `Households.Care.FeedFrom` exists; free-riding not measured |
+| M4.45 | **Met** | `DemogReportTests` reconciliation with the warehouse (0d7a1a6); every report run reconciled 10/10 |
+
+**M4.42 amendment (D4, approved by the owner's coordinator as evidence-justified).** *Original:* no 30-day window holds more than 15% of founder deaths in 10 seeds. *Observed:* 94-97% of founder deaths fall in one 30-day window, because 30 days is 3 sim years against a lifespan of about 3.5 years (LifeScale 100): any cohort dies within one such window. *Revised:* no **0.3-year (3-day)** window holds more than 15% of founder deaths in 10 seeds (the 30-day window scaled to the lifespan as a share of a human life). *Rationale:* the original window cannot distinguish a spread from a synchronised die-off at this time scale. The revised target is not met (16.0% mean, 18.3% max at 6x20).
+
 ### M5. Social memory, gestures, honest barter and gifts
 
 **Goal:** NPCs remember who is who, communicate by gesture, trade honestly in separate hand-overs and give gifts. Lifetime learning extends to social domains.
@@ -473,7 +493,7 @@ Measured by the tests named (EM: `SocialMemoryTests`, `CommsTests`, `SocialIslan
 | M5.12 | **Not done** | S2 and S5 need island contests and benchmark custom rules (not built in M5) |
 | M5.13 / LS2 | **Not done** | Logs-for-food exchanges work (M5.11 trader scene), but the gather decision is not credited by the later meal (no episode reaches it) |
 | M5.14 | Met | `LifeScale` 200 gives the same grudge every day; `ScalePermille` 2000 is strictly lower every day with the learning store's hash unchanged; grudge rates 0 leave it at 300 |
-| M5.15 | Met | Every exchange step and gift follows a gesture and the receiver's own decision (EM, 4 seeds); over 20 seeds of band_6x20 (4 days) refusals and 37 counter-offers occur; gestures off gives no deals and no gifts; one grammar composes need, request, offer, accept, refuse, cooperate and warn (warn is composed but did not occur naturally: no enemy came in sight) |
+| M5.15 | Met | Every exchange step and gift follows a gesture and the receiver's own decision (EM, 4 seeds); over 20 seeds of band_6x20 (4 days) refusals and 37 counter-offers occur; gestures off gives no deals and no gifts; one grammar composes need, request, offer, accept, refuse, cooperate and warn (warn is composed but did not occur naturally: no enemy came in sight). **F0 (27 Nov 2026):** the counter-offer clause is not met on the merged base: 0 in 20 seeds since the I-BS amendments (already on `unity/ibs`; 2 in 20 at `0f978db`); kept as the `[Explicit]` target `M5_15_CounterOffersOccur`, refusals, steps and gifts still asserted |
 | M5.16 | Met | The speaker's deal memory, each listener's decoded copy and the goods move are separate records; a listener out of sight perceives and believes nothing; a gesture moves nothing; defection in M5.7 |
 | M5.17 | Met | band_6x20 at Full: every table reconciles with the events (counts by kind, act and outcome, listeners, lot ids, quantities, the soc_ columns); Full, Summary and Off give one hash; truth fields at Full only |
 | Neutrality | Met | `Social.Enabled = 0`: band_6x20 seeds 1-3, 10 days, every day hash equals `6671592` |
@@ -501,6 +521,27 @@ Every scenario uses persistent individuals and actual resource movements, and ea
 | I-BS.15 | **D4:** Knowledge isolation: no NPC acts on a person, good or store it has not perceived or does not remember. A reflection and event check finds no act at a distance, and every person-directed choice names a perceived or remembered person. |
 
 The recording-neutrality check (Full, Summary and Off give the same hash) runs on every I-BS scenario. Every I-BS event reaches the warehouse and reconciles exactly (D4 §9).
+
+#### I-BS status (branch `unity/ibs`, 26 Nov 2026, interim: the run was paused)
+
+Measured by `IbsTests` (`ibs_families`, seeds 1-10, 15 days); per-seed numbers in DEV_LOG "I-BS integration record".
+
+| # | Status |
+|---|---|
+| Neutrality and warehouse | Met: Full = Summary = Off hash and exact reconciliation on all 10 seeds |
+| I-BS.1, I-BS.12 | Met: complete chains 10/10 seeds (131-294 each); a believed parent's gathered food 10/10 |
+| I-BS.2, I-BS.14 | Met 10/10; 0 non-member, unpermitted or re-owned withdrawals |
+| I-BS.3 | Met (both occur); kin 2035 vs unrelated 3130 pooled: kin is not more frequent in raw counts |
+| I-BS.4 | Met 10/10 |
+| I-BS.5 | Partly: 5/10 seeds on `unity/ibs`; 2/10 on the F0 base (`unity/int0`). An `[Explicit]` target; the 80% threshold is kept |
+| I-BS.6, I-BS.10 | Not done (controlled tests not written) |
+| I-BS.7 | Met on the F0 base, 10/10 seeds: the test now excludes lots in estates still open at the run end (0-2 per seed) and accounts for a lot that spoiled in the estate before division (seed 9, 2 fish). Heirs' collection rare on the island (0-3 per seed) |
+| I-BS.8 | Met as occurrence, 9/10 seeds |
+| I-BS.9 | Deferred to M7/M11 (no observation learning) |
+| I-BS.11, I-BS.13, I-BS.15 | Met 10/10 (I-BS.13 pooled help 1516, no help 8965; I-BS.15 0 unperceived of about 1.6M checks; on the F0 base after amendment 12.37, which makes D4's ranging heading known like M3's explore directions) |
+| M4.21 clause | First arrival met (claim = pick-up tick); contest clause not met (no contest raised) |
+| M5.9 | Not met (reported only: M5's gift choice has no kin preference) |
+| M5.18, M5.19 | Not started |
 
 **Manual:** screenshot of gesture animation (the view animates sim events and decides nothing). **Done means:** NPCs recognise, remember and gesture; an exchange can be cheated; gifts happen; nothing enforces honesty.
 

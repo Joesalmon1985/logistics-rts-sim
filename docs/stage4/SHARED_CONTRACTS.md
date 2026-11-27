@@ -597,8 +597,29 @@ All seven also run at Off, Summary and Full with the same hash.
 | 12.28 | `SocialHooks.OnHandOver` only on owner change | A3 | every hand-over between two living people, with `OwnerChanged` | A3 |
 | 12.29 | Separate `Permission` seam (D3) | A8 | one seam: `Permits.Believed` in `Affordances.cs` | A8 supersedes it |
 | 12.30 | `SaveFile` v4 refuses older | v3 saves (M0–M3b) exist | refused with the same "older version" message | 9.3 |
+| 12.31 | `Thinker.Known` knows no people (frozen M3.12 check) | M4 aimed person candidates at the actor's own node with the handle as id; M5 used `IntentTarget.None` | **I-BS amendment:** person targets are `IntentTarget.Npc` (handle + the person's node); `Known` accepts a person in `sc.People` or remembered (`CognitionExtensions.Remembers`: believed kin, social memory). Both workarounds removed | M4 and M5 asked for it; I-BS.15 checks every person-directed choice |
+| 12.32 | A bin is never perceived: store use offered blind, heir collection a reflex, O4 delivers estate goods across nodes | - | **I-BS amendment:** the Sense seam `PopulationExtensions.SenseBins` (M4 body): within sight a person senses its household's store (`HClass.Store`) and estate goods (`HClass.Estate`) with the band of what is its own or its household's; `BeliefKind.Store` remembers them; store and estate candidates are `IntentTarget.Bin` from perception or memory, then walk and `Withdraw` within `Reach.Store`, permission checked lot by lot. `Estates.Collect` and O4's delivery removed: what heirs leave goes ownerless at the death node (first arrival may claim it) | A2, D3 9: nothing used at a distance |
+| 12.33 | Genome instinct gains reach the mind | `Npc.Traits[12..15]` (M4 workaround) | **I-BS amendment:** `SelfView.HungerGain/FearGain/SocialGain/NurtureGain` (0 = none); traits 12-15 no longer written but kept (zero) so later trait slots (demography 16-18) keep their indices. Gains still apply only to M4's verbs | M4 asked for it |
+| 12.34 | `OpportunitySlot` has no Social column | M5 kept `Social.Term = 0` so M3.28's sum held | **I-BS amendment:** `OpportunitySlot.Social`, `Opportunity.Social` (hashed only for minds with an M4/M5 part). `Social.Term` stays 0: with it on, L14 moves only from 32% to 29% (20 seeds; target at most 20%) | M5 asked for it; evidence in DEV_LOG I-BS record |
+| 12.35 | F0's `Produced`/`Consumed` mappers make a `dim_person` row for npc 0 | M3 tests counted `npc_id > 0` | rows with no actor have `person_key` NULL; no npc 0 person; tests tell personal rows by `lot_id IS NOT NULL` | M4 amendment 4 |
+| 12.36 | SOCIAL 4.1: familiarity +100 per interaction; warehouse names | M5 built 180, `fact_transaction_line`, `soc_` columns | 180 in SOCIAL 4.1 (doc updated); the table names in 8.2 are as built | M5.2 evidence (SOCIAL 8.1) |
+| 12.37 | `Thinker.Known` knows a node target only when seen, believed, its own spot or M3's explore directions | D4's ranging walk (verb 45, M4.43) aims 12-24 nodes out along today's heading: 0-133 decisions per seed failed I-BS.15 after the F0 merge | **F0 amendment:** `CognitionExtensions.OwnHeading` (M4 body `HouseholdMindHooks.OwnHeading`): a node target equal to the end of its own ranging walk today is its own direction, known like `ExploreA/B`. `Known` is used only for the perception statistics, so no hash moves. Caveat, noted and not changed: the walk is cut short by the land map (`IsLand`) beyond sight, a geometry read the mind did not perceive | I-BS.15 on the merged base (DEV_LOG F0 record) |
 
 ---
+
+
+**D4 additive shared data (branch `unity/demog`, merged at F0 on `unity/int0`; additive only, nothing frozen changes).**
+
+| Item | Values | Owner |
+|---|---|---|
+| Household verbs | 43 SeekChild, 44 AcceptChild, 45 RangeFar (Search group, M4-only) | M4 |
+| Events | 148 ReproductiveUnionFormed, 149 ReproductiveUnionEnded, 150 ChildWanted (`HouseholdEvents`) | M4 |
+| DisplayKind | 9 SeekChild, 10 UnionPartner | M4 |
+| HSelf / HSituation features | HSelf 18 WantsChild; HSituation 20 UnionPartner, 21 SeekingChild, 22 NoPlentyKnown | M4 |
+| Npc.Traits | length 19: 16 companionship, 17 child desire, 18 commitment (stored on NpcLife); 12-15 reserved and unwritten (zero), the gains are in `SelfView` (12.33); `SeekChild`/`AcceptChild` take the social gain from `SelfView` (F0 merge) | M4 |
+| KinMind | `UnionWith` (the mind's believed reproductive partner) | M4 |
+| HouseholdState | reproductive-union and economic-partnership lists and their hash fields (see 71f1f67) | M4 |
+| Tuning | `Households.Prefs`, `Households.Partner.{MaxLiveUnions, UnionLapseMilli, SeekTicks, IndependentUnions, UnionVp}`, `Households.Founders.Generator` and established-band fields, `Households.Care.FeedFrom` | M4 |
 
 ## 13. Open decisions (each with the default taken)
 

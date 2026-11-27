@@ -72,6 +72,8 @@ namespace God.Game
         public ChainBot Chain => Chains.Find(c => c.Side == FactionLook.Viewer(Sim.State));
         /// <summary>The setup for the next scene load (watch mode, another human faction); consumed by the next bootstrap.</summary>
         public static GameSetup PendingSetup;
+        /// <summary>D4: the tuning for the next scene load (the Living island's established band); consumed with <see cref="PendingSetup"/>. Null: defaults.</summary>
+        public static SimTuning PendingTuning;
         /// <summary>
         /// A game read from a save, for the next scene load (set by <see cref="LoadSlot"/>); consumed by the next bootstrap, which
         /// uses its sim as it is instead of dealing a new island.
@@ -148,11 +150,13 @@ namespace God.Game
                 if (PendingSeed.HasValue) { seed = PendingSeed.Value; PendingSeed = null; }
                 var setup = PendingSetup ?? new GameSetup(seed, HasArg("-godwatch") || HasArg("-godsmoke") ? GameSetup.NoHuman : 0);
                 PendingSetup = null;
+                var tuning = PendingTuning;
+                PendingTuning = null;
                 // M3: -godpopulation starts a game with a living population (founders, wild food, huts) in a sandbox
                 if (HasArg("-godpopulation") && !setup.Population) { setup.Population = true; setup.Victory = VictorySpec.SandboxOnly(); }
                 setup.Seed = seed;
                 // M0: built through SimBuilder, as the headless runner builds it (the AI is attached in StartAi).
-                Sim = SimBuilder.Create(setup, null, attachAi: false).Sim;
+                Sim = SimBuilder.Create(setup, tuning, attachAi: false).Sim;
                 // A script or a flag chose already: the AIs play (the smoke too: it watches six brains; not the dev runs).
                 if (flagged && !HasArg("-godsample") && !HasArg("-godfight")) startAi = true;
             }
@@ -276,6 +280,9 @@ namespace God.Game
         {
             PendingSeed = seed;
             PendingSetup = new GameSetup(seed, watch ? GameSetup.NoHuman : 0) { Population = true, StartNpcsPerFaction = 20, Victory = VictorySpec.SandboxOnly() };
+            // D4 (M4.42): the Living island starts from the established mixed-age band, the preferred default of population games
+            PendingTuning = new SimTuning();
+            God.Sim.Population.Households.FounderTuning.EstablishedBand(PendingTuning.Households.Founders);
             PendingStartAi = true;
             ReloadScene();
         }
@@ -313,7 +320,13 @@ namespace God.Game
             PendingSeed = next;
             var old = Sim.State.Setup;
             PendingSetup = new GameSetup(next, old.Human, old.FactionCount) { Tutorial = tutorial, Population = old.Population, StartNpcsPerFaction = old.StartNpcsPerFaction };
-            if (old.Population) PendingSetup.Victory = VictorySpec.SandboxOnly();
+            if (old.Population)
+            {
+                PendingSetup.Victory = VictorySpec.SandboxOnly();
+                // D4: a restarted population game keeps its founder generator (the established band)
+                PendingTuning = new SimTuning();
+                if (Sim.State.Tuning.Households.Founders.Generator == 1) God.Sim.Population.Households.FounderTuning.EstablishedBand(PendingTuning.Households.Founders);
+            }
             PendingStartAi = true;
             return next;
         }

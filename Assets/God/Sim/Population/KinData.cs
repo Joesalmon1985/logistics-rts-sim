@@ -36,6 +36,8 @@ namespace God.Sim.Population
     {
         public const int Cap = 32;
         public List<KinBelief> Beliefs = new List<KinBelief>();
+        /// <summary>D4 (unity/demog): the person this mind agreed to try for a child with (it took part in the agreement), 0 none. Written only by M4.</summary>
+        public int UnionWith;
 
         /// <summary>The index of the belief about <paramref name="other"/>, or -1.</summary>
         public int IndexOf(int other)
@@ -55,6 +57,7 @@ namespace God.Sim.Population
         {
             h.Add(Beliefs.Count);
             foreach (var b in Beliefs) { h.Add(b.Other); h.Add((int)b.Role | ((int)b.Source << 8)); h.Add(b.Confidence); h.Add(b.Tick); }
+            if (UnionWith != 0) h.Add(UnionWith);
         }
     }
 

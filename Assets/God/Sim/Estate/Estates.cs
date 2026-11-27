@@ -59,9 +59,9 @@ namespace God.Sim.Estate
     /// Estates (MATERIAL_INHERITANCE, SHARED_CONTRACTS 2.5, WORLD_ONTOLOGY 6.5 and A2). At a death the carry goes into an
     /// estate bin at the death node (<c>EstateIn</c>, owner <c>Estate(d)</c>, never merged). After the mourning delay the
     /// executor applies the custom: ownership passes in place (<c>SetOwner</c>); a stackable lot shared by several heirs is
-    /// split into a share bin beside it (the moved part takes a new id, as every split does). Heirs within reach collect
-    /// their lots (<c>Withdraw</c>); what is left at the deadline goes to the heir's household store (O4 delivery, temporary)
-    /// or becomes ownerless on the ground there. Every step is a <see cref="Goods"/> call and an <c>EstateTransfer</c>.
+    /// split into a share bin beside it (the moved part takes a new id, as every split does). Heirs who perceive the estate
+    /// decide to collect their lots and walk there (<c>TakeFromStore</c> on the bin, <c>Withdraw</c> within reach: I-BS amendment
+    /// 12.32, which retired O4's cross-node delivery); what is left at the deadline becomes ownerless on the ground there. Every step is a <see cref="Goods"/> call and an <c>EstateTransfer</c>.
     /// </summary>
     public static class Estates
     {
@@ -119,7 +119,7 @@ namespace God.Sim.Estate
             ev.Add(new EstateOpened { Estate = d.Id, Bin = bin, Node = d.Node, Heirs = e.Partners.Count + e.Children.Count, Lots = lots, Faction = d.Faction });
         }
 
-        /// <summary>One tick of the estate system (order 255): split the due, let heirs within reach collect, settle at the deadline or when empty.</summary>
+        /// <summary>One tick of the estate system (order 255): split the due, settle at the deadline or when empty (heirs collect by their own decisions).</summary>
         public static void Tick(GodState s, EventBuffer ev, IEstateSettlement rule)
         {
             var hs = s.Households;
@@ -134,7 +134,6 @@ namespace God.Sim.Estate
                     e.Executor = ex; e.Custom = (byte)c; e.Split = true;
                     rule.Split(s, ev, e, ex, c);
                 }
-                if (e.Split) Collect(s, ev, e);
                 if (e.Split && (s.Tick >= e.DueTick || Empty(s, e)))
                 {
                     Settle(s, ev, e);
@@ -154,50 +153,8 @@ namespace God.Sim.Estate
         }
 
         /// <summary>
-        /// Heirs standing within <see cref="Reach.Store"/> of the estate take their own lots (and household members their
-        /// household's) into their carry, as room allows: a <c>Withdraw</c> by the heir, ownership kept (A2). This is a
-        /// reflex of an heir at the place, not a decision: the mind has no seam to perceive a bin yet (contract amendment).
-        /// </summary>
-        public static void Collect(GodState s, EventBuffer ev, EstateRecord e)
-        {
-            var p = s.Population;
-            var g = s.Territory.Grid;
-            CollectFrom(s, ev, e.Bin, e, g);
-            foreach (int b in e.ShareBins) CollectFrom(s, ev, b, e, g);
-        }
-
-        private static void CollectFrom(GodState s, EventBuffer ev, int binId, EstateRecord e, NodeGrid g)
-        {
-            var p = s.Population;
-            var bin = Goods.BinById(p, binId);
-            if (bin == null) return;
-            for (int k = 0; k < bin.Lots.Count;)
-            {
-                var l = bin.Lots[k];
-                Npc taker = null;
-                if (l.Owner.Kind == OwnerKind.Npc) { var h = p.Find(l.Owner.Id); if (h != null && h.Alive && g.Distance(h.Node, bin.Node) <= Reach.Store) taker = h; }
-                else if (l.Owner.Kind == OwnerKind.Household)
-                {
-                    var hh = s.Households.Find(l.Owner.Id);
-                    if (hh != null) foreach (int m in hh.Members) { var h = p.Find(m); if (h != null && h.Alive && h.Stage != LifeStage.Child && g.Distance(h.Node, bin.Node) <= Reach.Store) { taker = h; break; } }
-                }
-                if (taker != null)
-                {
-                    int room = PopulationModule.Room(s, taker, l.Ware);
-                    int n = Math.Min(room, l.Count);
-                    if (n > 0)
-                    {
-                        var r = Goods.Move(s, ev, Holder.Bin(binId), l.Id, n, Holder.Carry(taker.Id), MoveReason.Withdraw, taker.Id, OwnerRule.Keep);
-                        if (r.Ok) { if (n == l.Count) continue; }
-                    }
-                }
-                k++;
-            }
-        }
-
-        /// <summary>
-        /// The deadline (MATERIAL 4.1.6): lots still owned by a living heir go to its household store (O4 delivery) when it has
-        /// one and they fit; the rest become ownerless on the ground at the death node. Then every estate bin is removed.
+        /// The deadline (MATERIAL 4.1.6): every lot still in the estate becomes ownerless on the ground at the death node
+        /// (first arrival may claim it, M4.21). Then every estate bin is removed. (O4's delivery to the heir's store retired at I-BS.)
         /// </summary>
         public static void Settle(GodState s, EventBuffer ev, EstateRecord e)
         {
@@ -217,27 +174,11 @@ namespace God.Sim.Estate
         private static void Clear(GodState s, EventBuffer ev, EstateRecord e, int binId)
         {
             var p = s.Population;
-            var et = s.Tuning.Estate;
             var bin = Goods.BinById(p, binId);
             if (bin == null) return;
             while (bin.Lots.Count > 0)
             {
                 var l = bin.Lots[0];
-                int store = 0;
-                if (et.Delivery != 0)
-                {
-                    if (l.Owner.Kind == OwnerKind.Npc)
-                    {
-                        var h = p.Find(l.Owner.Id);
-                        if (h != null && h.Alive && h.Household != 0) store = s.Households.Find(h.Household)?.Bin ?? 0;
-                    }
-                    else if (l.Owner.Kind == OwnerKind.Household) store = s.Households.Find(l.Owner.Id)?.Bin ?? 0;
-                }
-                if (store != 0)
-                {
-                    var r = Goods.Move(s, ev, Holder.Bin(binId), l.Id, l.Count, Holder.Bin(store), MoveReason.EstateOut, 0, OwnerRule.Keep);
-                    if (r.Ok) { Transfer(ev, e, l.Id, l.Ware, l.Count, l.Owner, EstateReason.Delivered); continue; }
-                }
                 var g = Goods.Move(s, ev, Holder.Bin(binId), l.Id, l.Count, Holder.Ground(bin.Node), MoveReason.EstateOut, 0, OwnerRule.Set, Owner.None,
                     MergeRule.Never, 0, OwnershipBasis.Escheat);
                 if (!g.Ok) throw new InvalidOperationException("estate to ground failed: " + g.Status);

@@ -508,6 +508,8 @@ namespace God.Sim.Population
                     };
                 }
             }
+            // I-BS amendment (12.32): bins in sight (household stores, estate goods), perceived through the M4 seam
+            if (p.Bins.Count > 0) n = PopulationExtensions.SenseBins(s, npc, sight, _g, _near, n);
             // the nearest PerceiveMax things (ties: the order found, which is fixed)
             int keep = Math.Min(n, Math.Min(tu.PerceiveMax, ThinkScratch.MaxSeen));
             for (int k = 0; k < keep; k++)
@@ -597,6 +599,8 @@ namespace God.Sim.Population
             }
             self.Stage = npc.Stage;
             self.Household = npc.Household;
+            // I-BS amendment (SHARED_CONTRACTS 12.33): the genome's instinct gains, as its own body carries them (0 = none: an M3 NPC)
+            if (npc.Life != null) { self.HungerGain = npc.Life.Pheno.HungerGain; self.FearGain = npc.Life.Pheno.FearGain; self.SocialGain = npc.Life.Pheno.SocialGain; self.NurtureGain = npc.Life.Pheno.NurtureGain; }
             if (_sc.Carry.Length < npc.Carry.Length) _sc.Carry = new ItemLot[npc.Carry.Length];
             System.Array.Copy(npc.Carry, _sc.Carry, npc.Carry.Length);
             _sc.CarryCount = npc.Carry.Length;

@@ -38,6 +38,12 @@ namespace God.Sim.Population
             SocialHooks.FillPerson(s, observer, seen, ref p);
         }
 
+        /// <summary>
+        /// I-BS amendment (SHARED_CONTRACTS 12.32), the Sense seam for bins: the bins in sight of <paramref name="npc"/> its
+        /// owner perceives (M4: its household's store, estate goods), appended to the sensed things. Returns the new count.
+        /// </summary>
+        public static int SenseBins(GodState s, Npc npc, int sight, NodeGrid g, Sensed[] near, int n) => HouseholdHooks.SenseBins(s, npc, sight, g, near, n);
+
         // ---- module entry points ----
         public static void StartGame(GodState s) { HouseholdHooks.StartGame(s); SocialHooks.StartGame(s); }
         public static void Install(GodSim sim) { HouseholdHooks.Install(sim); SocialHooks.Install(sim); }

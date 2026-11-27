@@ -78,6 +78,24 @@ namespace God.Sim.Population.Households
                 }
             }
             foreach (var kv in count) if (kv.Value > cap) bad.Add("npc " + kv.Key + " holds " + kv.Value + " partnerships (cap " + cap + ")");
+            // D4: reproductive relationships: two living adults, ascending ids, under the cap, each mind's own record agreeing
+            int ucap = System.Math.Max(1, s.Tuning.Households.Partner.MaxLiveUnions);
+            var ucount = new SortedDictionary<int, int>();
+            int lastU = 0;
+            foreach (var u in hs.Unions)
+            {
+                if (u.Id <= lastU) bad.Add("unions not ascending at " + u.Id);
+                lastU = u.Id;
+                if (u.A >= u.B) bad.Add("union " + u.Id + " pair not ordered");
+                foreach (int x in new[] { u.A, u.B })
+                {
+                    var n = p.Find(x);
+                    if (n == null || !n.Alive || n.Stage == LifeStage.Child) bad.Add("union " + u.Id + " names a dead person or a child " + x);
+                    ucount[x] = ucount.TryGetValue(x, out int k) ? k + 1 : 1;
+                }
+            }
+            foreach (var kv in ucount) if (kv.Value > ucap) bad.Add("npc " + kv.Key + " holds " + kv.Value + " reproductive relationships (cap " + ucap + ")");
+            if (hs.Economic.Count > 0) bad.Add("economic partnerships exist (a stub type in M4)");
             foreach (var e in hs.Estates)
                 if (s.Tick > e.DueTick) bad.Add("estate " + e.Deceased + " open past its deadline");
             // C4: lots owned by an estate only while it is open

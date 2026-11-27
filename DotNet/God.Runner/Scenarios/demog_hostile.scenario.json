@@ -1,0 +1,59 @@
+{
+    "scenarioVersion":  1,
+    "name":  "demog_hostile",
+    "description":  "D4 (M4.37) ecology \u0027hostile\u0027: a poor island: 40-50% fewer berry bushes and root patches than the default (3/2/2/2 per forest/meadow/hills/fields hex against 5/4/4/4), slower regrowth (berries 300, roots 200 permille a day; default 400, 300), one fish spot per coast hex (default two); disease On. Founders: the established band (6 x 20). Biology: the D4 demographic baseline shared by every ecology scenario (stated here, never tuned per seed). No immigration, no spawning or replenishment; 15 sim years.",
+    "setup":  {
+                  "factionCount":  6,
+                  "human":  -1,
+                  "population":  true,
+                  "startNpcsPerFaction":  20,
+                  "victory":  [
+                                  {
+                                      "kind":  "sandbox"
+                                  }
+                              ]
+              },
+    "tuning":  {
+                   "Households.Founders.Generator":  1,
+                   "Households.Founders.ElderPermille":  100,
+                   "Households.Founders.MaturePermille":  300,
+                   "Households.Founders.ChildPermille":  300,
+                   "Households.Founders.ChildMinMilli":  50,
+                   "Households.Founders.ChildMaxMilli":  950,
+                   "Households.Founders.AgeMinMilli":  1000,
+                   "Households.Founders.AgeMaxMilli":  1900,
+                   "Households.Founders.MatureMinMilli":  2000,
+                   "Households.Founders.MatureMaxMilli":  2900,
+                   "Households.Founders.ElderMinMilli":  3000,
+                   "Households.Founders.ElderMaxMilli":  3300,
+                   "Households.Founders.CouplePermille":  800,
+                   "Households.Founders.YoungCouplePermille":  400,
+                   "Households.Founders.SameSexPermille":  100,
+                   "Households.Founders.StartHuts":  1,
+                   "Households.Founders.StoreFood":  6,
+                   "Estate.CustomF0":  1,
+                   "Estate.CustomF1":  2,
+                   "Estate.CustomF2":  3,
+                   "Estate.CustomF3":  4,
+                   "Estate.CustomF4":  5,
+                   "Estate.CustomF5":  6,
+                   "Ecology.BerriesPerForest":  3,
+                   "Ecology.BerriesPerMeadow":  2,
+                   "Ecology.RootsPerHills":  2,
+                   "Ecology.RootsPerFields":  2,
+                   "Ecology.FishPerCoast":  1,
+                   "Ecology.BerryRegrowPermille":  300,
+                   "Ecology.RootRegrowPermille":  200
+               },
+    "record":  {
+                   "level":  "off"
+               },
+    "stop":  {
+                 "maxYears":  15,
+                 "populationBelow":  1
+             },
+    "checks":  [
+                   "invariants",
+                   "no-exceptions"
+               ]
+}

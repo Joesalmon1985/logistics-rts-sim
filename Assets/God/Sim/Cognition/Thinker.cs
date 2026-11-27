@@ -50,6 +50,11 @@ namespace God.Sim.Cognition
         /// <summary>F0.7: its own life stage and household (0 none); written only by M4's <c>FillSelf</c> fields.</summary>
         public LifeStage Stage;
         public int Household;
+        /// <summary>
+        /// I-BS amendment (SHARED_CONTRACTS 12.33): the genome's instinct gains of its own body (BIOLOGICAL 4.4), permille (500-1500),
+        /// filled by the sim from M4's phenotype; 0 for a person without one (an M3 NPC, <c>Households.Enabled = 0</c>): no gain.
+        /// </summary>
+        public int HungerGain, FearGain, SocialGain, NurtureGain;
     }
 
     /// <summary>One candidate intent (COMMUNICATION 3, 4.6): verb, target, its distance and perceived cost, and its context keys.</summary>
@@ -157,6 +162,9 @@ namespace God.Sim.Cognition
             }
         }
 
+        /// <summary>The belief kind of a sensed thing: a bin (I-BS amendment 12.32) is a store belief whatever its class; else by class.</summary>
+        private static BeliefKind KindOf(in Sensed t) => t.Kind == IntentTarget.Bin ? BeliefKind.Store : KindOfClass(t.Class);
+
         public static void UpdateBeliefs(ThinkScratch sc)
         {
             var b = sc.Mind.Beliefs;
@@ -171,7 +179,7 @@ namespace God.Sim.Cognition
                 {
                     bool seen = false;
                     for (int s = 0; s < sc.SeenCount; s++)
-                        if (sc.Seen[s].Node == bel.Subject && KindOfClass(sc.Seen[s].Class) == bel.Kind) { seen = true; break; }
+                        if (sc.Seen[s].Node == bel.Subject && KindOf(sc.Seen[s]) == bel.Kind) { seen = true; break; }
                     if (!seen) { b.RemoveAt(i); continue; }
                 }
                 i++;
@@ -179,9 +187,9 @@ namespace God.Sim.Cognition
             for (int s = 0; s < sc.SeenCount; s++)
             {
                 var t = sc.Seen[s];
-                var kind = KindOfClass(t.Class);
+                var kind = KindOf(t);
                 if (kind == BeliefKind.None) continue;
-                int reference = kind == BeliefKind.Hut || kind == BeliefKind.Tool ? t.Ref : 0;
+                int reference = kind == BeliefKind.Hut || kind == BeliefKind.Tool || kind == BeliefKind.Store ? t.Ref : 0;
                 b.Upsert(kind, t.Node, t.Class, t.State, reference, self.Tick);
             }
             // its own hut and site are always known
@@ -211,7 +219,7 @@ namespace God.Sim.Cognition
                         break;
                     case ObjCategory.Danger: s += 800 + self.Fear; break;
                 }
-                if (sc.Mind.Beliefs.IndexOf(KindOfClass(t.Class), t.Node) < 0) s += 150; // novelty
+                if (sc.Mind.Beliefs.IndexOf(KindOf(t), t.Node) < 0) s += 150; // novelty
                 // learned salience (NPC_LEARNING 4.9): things that have mattered catch the eye
                 s += LearnedSalience(st, t.Category);
                 s -= t.Dist * 10;
@@ -578,12 +586,32 @@ namespace God.Sim.Cognition
 
         // ---------------- the M3.12 check ----------------
 
-        /// <summary>True when a target node or reference was perceived now or is believed (acceptance M3.12), independent of the candidate list.</summary>
+        /// <summary>
+        /// True when a target node or reference was perceived now or is believed (acceptance M3.12), independent of the candidate list.
+        /// I-BS amendment (SHARED_CONTRACTS 12.31): a person target (<see cref="IntentTarget.Npc"/>, the handle in <paramref name="id"/>)
+        /// is known when it is in sight now (<c>sc.People</c>) or remembered by the mind (believed kin, M4; social memory, M5);
+        /// a bin target (<see cref="IntentTarget.Bin"/>, 12.32) when a sensed bin or a store belief carries its id.
+        /// </summary>
         public static bool Known(ThinkScratch sc, IntentTarget kind, int id, int node)
         {
             if (kind == IntentTarget.None) return true;
+            if (kind == IntentTarget.Npc)
+            {
+                if (id == 0) return false;
+                for (int i = 0; i < sc.PeopleCount; i++) if (sc.People[i].Id == id) return true;
+                return CognitionExtensions.Remembers(sc, id);
+            }
+            if (kind == IntentTarget.Bin)
+            {
+                if (id == 0) return false;
+                for (int i = 0; i < sc.SeenCount; i++) if (sc.Seen[i].Kind == IntentTarget.Bin && sc.Seen[i].Ref == id) return true;
+                var bb = sc.Mind.Beliefs;
+                for (int i = 0; i < bb.Count; i++) if (bb.Slots[i].Kind == BeliefKind.Store && bb.Slots[i].Ref == id) return true;
+                return false;
+            }
             var s = sc.Self;
             if (kind == IntentTarget.Node && (node == s.Node || node == s.ExploreA || node == s.ExploreB)) return true; // its own spot and its own directions
+            if (kind == IntentTarget.Node && CognitionExtensions.OwnHeading(sc, node)) return true;                      // F0 (12.37): M4's ranging heading
             if (kind == IntentTarget.Lot && (id == s.FoodLot0 || id == s.FoodLot1)) return true;                        // its own carry
             if (kind == IntentTarget.Hut && (id == s.HomeHut || id == s.SiteHut)) return true;                         // its own hut and site
             for (int i = 0; i < sc.SeenCount; i++)
