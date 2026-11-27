@@ -13,7 +13,7 @@ namespace God.Sim.Orgs
             handled = true;
             var m = npc.Mind?.Orgs;
             if (m == null) { OrgActs.Frustrate(s, npc); return; }
-            byte kind = (byte)(c.Verb == C7Verb.Treat ? 40 + c.Class : c.Verb == C7Verb.Teach ? 50 + c.Class : 60 + c.Class);
+            byte kind = (byte)(c.Verb == C7Verb.Treat ? 40 + c.Class : c.Verb == C7Verb.Teach ? 100 + c.Class : 70 + c.Class);
             // re-choosing the running act continues it
             if (npc.Action.Since < s.Tick && m.Act.Kind == kind && m.Act.Target == (c.Kind == IntentTarget.Node ? 0 : c.TargetId) && m.Act.StartTick > 0) return;
             m.Act = new OrgAct { Kind = kind, Target = c.Kind == IntentTarget.Node ? 0 : c.TargetId, StartTick = s.Tick };

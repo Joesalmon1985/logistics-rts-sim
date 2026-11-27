@@ -57,6 +57,10 @@ namespace God.Sim.Orgs
         // ---- education (SERVICES 5.2, C7b) ----
         /// <summary>Teacher and learner within gesture range for this many ticks.</summary>
         public int TeachTicks = 60;
+        /// <summary>Gesture range of a lesson (nodes); a demonstration is seen within half the day sight.</summary>
+        public int TeachRange = 2;
+        /// <summary>Start culture: adults per faction who teach <see cref="StartTeachTopic"/> with <see cref="StartTeachSkill"/>.</summary>
+        public int StartTeachers, StartTeachTopic = 2, StartTeachSkill = 600;
         /// <summary>Skill rise = <c>TeachSkillGain x fidelity / 1000</c>, capped below the teacher's.</summary>
         public int TeachSkillGain = 300;
         /// <summary>At most this many associations copied per session.</summary>

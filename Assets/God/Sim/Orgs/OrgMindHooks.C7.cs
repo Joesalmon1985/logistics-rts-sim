@@ -52,18 +52,20 @@ namespace God.Sim.Orgs
             into.Add(new Instinct(C7Feature.Of(C7Feature.FoundPractice), 0, C7Verb.Treat, 250));
             for (int t = 1; t <= 3; t++)
             {
-                into.Add(new Instinct(C7Feature.Of(C7Feature.TeachTopic0 + t), 0, C7Verb.Teach, 200));
-                into.Add(new Instinct(C7Feature.Of(C7Feature.AttendTopic0 + t), 0, C7Verb.Attend, 300));
+                into.Add(new Instinct(C7Feature.Of(C7Feature.TeachTopic0 + t), 0, C7Verb.Teach, 350));
+                into.Add(new Instinct(C7Feature.Of(C7Feature.AttendTopic0 + t), 0, C7Verb.Attend, 350));
+                into.Add(new Instinct(C7Feature.Of(C7Feature.DemoTopic0 + t), 0, C7Verb.Teach, 200));
             }
         }
 
         static partial void AddCandidatesC7(ThinkScratch sc)
         {
             var m = sc.Mind?.Orgs;
-            if (m?.Health == null || m.C7 == null) return;
+            if (m == null || m.C7 == null) return;
+            EducationThink.Perceive(sc, m); // a teaching offer heard may be the first thing of C7's in this mind
+            if (m.Health == null) return;
             HealthThink.Perceive(sc, m);
             HealthThink.Candidates(sc, m);
-            EducationThink.Perceive(sc, m);
             EducationThink.Candidates(sc, m);
         }
 

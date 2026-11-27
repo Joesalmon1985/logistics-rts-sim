@@ -62,6 +62,7 @@ namespace God.Sim.Orgs
         public static void StartGame(GodState s)
         {
             var tu = T(s);
+            Education.StartGame(s);
             if (tu.StartHealers <= 0 || s.Population == null) return;
             var healers = new List<Npc>();
             var perFaction = new Dictionary<int, int>();

@@ -178,6 +178,38 @@ namespace God.Runner.Tests
             Assert.AreEqual(res.FinalHash, pr.FinalHash, "Full recording is neutral");
         }
 
+        /// <summary>
+        /// C7b at island scale (org_teach vs org_teach_none, 20 seeds x 15 days): lessons and demonstrations happen with nothing
+        /// scripted; SVC-I1/I5 for Teach (every transfer has its session with at least TeachTicks, by a living teacher); taught
+        /// skill never reaches the teacher's; no C7 state without a teacher. Counts reported.
+        /// </summary>
+        [Test]
+        public void Teaching_NaturalRun_20Seeds()
+        {
+            var t = Seeds("org_teach", 20, 15 * Tpd);
+            var c = Seeds("org_teach_none", 20, 15 * Tpd);
+            int sessions = 0, transfers = 0, entries = 0, demos = 0, seedsWith = 0; long gained = 0;
+            foreach (var p in t)
+            {
+                var kts = p.Events.OfType<KnowledgeTransferred>().ToList();
+                var ses = p.Events.OfType<TeachingSession>().ToList();
+                var deaths = p.Events.OfType<NpcDied>().ToDictionary(d => d.Npc, d => d.Tick);
+                if (kts.Count > 0) seedsWith++;
+                sessions += ses.Count; transfers += kts.Count; entries += kts.Sum(k => k.EntriesCopied); demos += kts.Count(k => k.Kind == TeachingSession.Demonstrate);
+                gained += kts.Sum(k => (long)(k.SkillAfter - k.SkillBefore));
+                foreach (var k in kts)
+                {
+                    Assert.IsTrue(ses.Any(x => x.Teacher == k.Teacher && x.Learner == k.Learner && x.Tick == k.Tick && x.Ticks >= p.State.Tuning.Orgs.C7.TeachTicks), "a transfer has its session");
+                    Assert.Less(k.SkillAfter, p.State.Tuning.Orgs.C7.StartTeachSkill, "taught skill stays below the teacher's");
+                    Assert.IsFalse(deaths.TryGetValue(k.Teacher, out long d) && d < k.Tick, "a dead teacher teaches nothing");
+                }
+            }
+            TestContext.WriteLine("org_teach 20 seeds x 15 days: seeds with a lesson " + seedsWith + "/20, sessions " + sessions + " (demonstrations " + demos + "), transfers " + transfers
+                + ", associations copied " + entries + ", skill gained in total " + gained);
+            foreach (var p in c) { Assert.IsNull(p.State.Organisations.Health); Assert.IsEmpty(p.Events.OfType<TeachingSession>()); }
+            Assert.Greater(transfers, 0, "lessons happen without a script");
+        }
+
         private static long Q(string db, string sql)
         {
             using (var c = new SqliteConnection("Data Source=" + db))

@@ -29,6 +29,10 @@ namespace God.Sim.Orgs
         public bool Attending;
         /// <summary>Its last offer (teacher side): to whom, when.</summary>
         public int OfferedTo, OfferedTick;
+        /// <summary>Topics it can teach (bit per topic id), and its own cursor over heard teaching gestures.</summary>
+        public int TeachTopics, LastTeachMsg;
+        /// <summary>It believes a lesson it offered is still open (it resumes it after a distraction).</summary>
+        public bool Teaching;
 
         public int HealerAt(int i) => i == 0 ? H0 : i == 1 ? H1 : H2;
         public bool Believes(int healer) => healer != 0 && (H0 == healer || H1 == healer || H2 == healer);
@@ -43,7 +47,7 @@ namespace God.Sim.Orgs
         public void AddTo(ref StateHasher h)
         {
             h.Add(H0); h.Add(H1); h.Add(H2); h.Add(Healer ? 1 : 0); h.Add(LastMsg); h.Add(LastAsk); h.Add(GivenInformal); h.Add(Given); h.Add(Practice);
-            h.Add(OfferFrom); h.Add(OfferTopic); h.Add(OfferTick); h.Add(Attending ? 1 : 0); h.Add(OfferedTo); h.Add(OfferedTick);
+            h.Add(OfferFrom); h.Add(OfferTopic); h.Add(OfferTick); h.Add(Attending ? 1 : 0); h.Add(OfferedTo); h.Add(OfferedTick); h.Add(TeachTopics); h.Add(LastTeachMsg); h.Add(Teaching ? 1 : 0);
         }
     }
 

@@ -346,6 +346,219 @@ namespace God.Sim.Tests
             Assert.IsEmpty(SimInvariants.Check(loaded.State));
         }
 
+        // ================================================================ C7b education
+
+        private static readonly uint WoodKey = Feature.Class(ObjClass.WoodStand);
+
+        /// <summary>Sets one association of a person directly (fixture: what it learned before the scene).</summary>
+        internal static void Assoc(Npc n, uint key, byte verb, short value)
+        {
+            var st = n.Mind.Store;
+            int at = st.Find(key, verb);
+            if (at < 0) at = st.InsertAt(~at, key, verb, 0, Origin.Own);
+            var e = st.Entries[at]; e.Stw = value; e.Ltw = value; st.Entries[at] = e;
+        }
+
+        internal static short ValueOf(Npc n, uint key, byte verb, out Origin origin)
+        {
+            int at = n.Mind.Store.Find(key, verb);
+            origin = at >= 0 ? n.Mind.Store.Entries[at].Origin : Origin.Own;
+            return at >= 0 ? n.Mind.Store.Entries[at].Ltw : (short)0;
+        }
+
+        /// <summary>
+        /// A teacher (skill 600 in gathering wood with an axe, a learned value for gathering at a wood stand) and a learner of its
+        /// household beside it: the teacher offers by gesture, the learner chooses to attend, the session runs, the learner's
+        /// copied value and skill change by the formula's exact deltas.
+        /// </summary>
+        internal static (W w, Npc teacher, Npc learner) Lesson(ulong seed, short teacherValue, int teacherSkill = 600, bool teach = true)
+        {
+            var w = World(seed);
+            var teacher = Person(w, w.Glade);
+            var learner = Person(w, At(w, 0, 1));
+            SocialFixtures.SetRelation(w.Sim, learner, teacher, 400, 500);
+            SocialFixtures.SetRelation(w.Sim, teacher, learner, 400, 500);
+            Assoc(teacher, WoodKey, Verb.Gather, teacherValue);
+            Assoc(teacher, Feature.Class(ObjClass.BerryBush), Verb.Eat, 900); // another topic's knowledge: never copied by a wood lesson
+            if (teach) Education.MakeTeacher(w.S, teacher, (int)SkillClass.Woodcutting, teacherSkill);
+            return (w, teacher, learner);
+        }
+
+        /// <summary>Runs the lesson through the real gestures and choices until a KnowledgeTransferred (or the limit).</summary>
+        internal static KnowledgeTransferred RunLesson(W w, Npc teacher, Npc learner, int max = 3000)
+        {
+            var ev = new EventBuffer { CurrentTick = w.S.Tick };
+            teacher.Action = new NpcAction { Verb = C7Verb.Teach, TargetKind = IntentTarget.Npc, TargetId = learner.Id, TargetNode = learner.Node, Since = w.S.Tick };
+            var c = new Candidate { Verb = C7Verb.Teach, Kind = IntentTarget.Npc, TargetId = learner.Id, TargetNode = learner.Node, Class = (byte)(Education.OfferBase + (int)SkillClass.Woodcutting) };
+            PopulationExtensions.TryStart(w.S, ev, teacher, in c, 0);
+            w.Log.AddRange(ev.Drain());
+            for (int i = 0; i < max && !w.Of<KnowledgeTransferred>().Any(k => k.Learner == learner.Id); i++) w.Step(1);
+            return w.Of<KnowledgeTransferred>().FirstOrDefault(k => k.Learner == learner.Id);
+        }
+
+        [Test]
+        public void Scenario6_TeachChangesCapability_ExactDeltas()
+        {
+            var (w, teacher, learner) = Lesson(21, 2000);
+            short before = ValueOf(learner, WoodKey, Verb.Gather, out _);
+            var kt = RunLesson(w, teacher, learner);
+            Assert.IsNotNull(kt, "the learner attended and the lesson completed");
+            Assert.IsTrue(w.Of<Social.GestureMade>().Any(g => g.Act == GestureAct.Teach && g.Speaker == teacher.Id), "offered by gesture");
+            var tu = w.S.Tuning.Orgs.C7;
+            int attention = 1000; // a sated, painless learner
+            int fidelity = 600 * attention / 1000;
+            int trust = Social.SocialView.Trust(learner.Mind, teacher.Id);
+            int expectValue = Imitation.Scaled(2000, fidelity, Imitation.TrustFactor(trust));
+            short after = ValueOf(learner, WoodKey, Verb.Gather, out var origin);
+            TestContext.WriteLine("skill " + kt.SkillBefore + " -> " + kt.SkillAfter + ", fidelity " + kt.Fidelity + ", trust " + trust + ", value for gathering at a wood stand " + before + " -> " + after
+                + ", entries copied " + kt.EntriesCopied);
+            Assert.AreEqual(fidelity, kt.Fidelity);
+            Assert.AreEqual(0, kt.SkillBefore);
+            Assert.AreEqual(tu.TeachSkillGain * fidelity / 1000, kt.SkillAfter, "skill rise = TeachSkillGain x fidelity / 1000");
+            Assert.AreEqual(kt.SkillAfter, Skills.Of(w.S, learner.Id, SkillClass.Woodcutting));
+            Assert.AreEqual(expectValue, after, "copied value = teacher x fidelity x trust factor");
+            Assert.AreEqual(Origin.Imitated, origin);
+            Assert.AreEqual(0, ValueOf(learner, Feature.Class(ObjClass.BerryBush), Verb.Eat, out _), "another topic is not copied");
+            Assert.IsTrue(w.Of<TeachingSession>().Any(t => t.Learner == learner.Id && t.Ticks >= tu.TeachTicks));
+            Assert.IsEmpty(SimInvariants.Check(w.S));
+        }
+
+        /// <summary>SVC-EDU-U1: only associations the teacher holds are copied (origin Imitated); repeated lessons never lift the learner's skill to the teacher's.</summary>
+        [Test]
+        public void Teach_CopiesOnlyHeld()
+        {
+            var (w, teacher, learner) = Lesson(22, 1500, teacherSkill: 400);
+            var held = teacher.Mind.Store;
+            var teacherKeys = new HashSet<(uint, byte)>();
+            for (int i = 0; i < held.Count; i++) if (held.Entries[i].Verb == Verb.Gather) teacherKeys.Add((held.Entries[i].Key, held.Entries[i].Verb));
+            var teacherBefore = Enumerable.Range(0, held.Count).Select(i => held.Entries[i]).ToArray();
+            for (int lesson = 0; lesson < 5; lesson++)
+            {
+                var kt = RunLesson(w, teacher, learner);
+                Assert.IsNotNull(kt, "lesson " + lesson);
+                w.Log.Clear();
+                teacher.Mind.Orgs.Health.OfferedTick = 0; teacher.Mind.Orgs.Health.Teaching = false;
+            }
+            var ls = learner.Mind.Store;
+            for (int i = 0; i < ls.Count; i++)
+                if (ls.Entries[i].Origin == Origin.Imitated) Assert.IsTrue(teacherKeys.Contains((ls.Entries[i].Key, ls.Entries[i].Verb)), "imitated entry the teacher holds");
+            Assert.IsTrue(Enumerable.Range(0, ls.Count).Any(i => ls.Entries[i].Origin == Origin.Imitated));
+            int skill = Skills.Of(w.S, learner.Id, SkillClass.Woodcutting);
+            TestContext.WriteLine("learner skill after 5 lessons " + skill + " (teacher 400)");
+            Assert.Less(skill, 400, "never reaches the teacher's skill through teaching");
+            Assert.AreEqual(399, skill, "capped just below the teacher");
+            // the teacher's own store is unchanged by teaching (the copy reads it only); its later own learning may still move it, so compare the copied entry only
+            Assert.AreEqual((short)1500, teacherBefore.First(e => e.Key == WoodKey && e.Verb == Verb.Gather).Ltw);
+        }
+
+        /// <summary>SVC-EDU-2: a teacher with a wrong (negative) association passes it on with its sign.</summary>
+        [Test]
+        public void Teach_PassesMistakes()
+        {
+            var (w, teacher, learner) = Lesson(23, -1800);
+            var kt = RunLesson(w, teacher, learner);
+            Assert.IsNotNull(kt);
+            short v = ValueOf(learner, WoodKey, Verb.Gather, out var origin);
+            TestContext.WriteLine("teacher -1800, learner " + v);
+            Assert.Less(v, 0, "the mistake is copied with the teacher's sign");
+            Assert.AreEqual(Origin.Imitated, origin);
+        }
+
+        /// <summary>Demonstration: a person in sight who attends gets the demonstrator's values as Vicarious entries (no skill).</summary>
+        [Test]
+        public void Demonstrate_GivesVicariousEntries()
+        {
+            var (w, teacher, learner) = Lesson(24, 2000);
+            SocialFixtures.SetRelation(w.Sim, teacher, learner, 0, 0); // a stranger to the teacher: shown, not taught
+            var ev = new EventBuffer { CurrentTick = w.S.Tick };
+            teacher.Action = new NpcAction { Verb = C7Verb.Teach, TargetKind = IntentTarget.Node, TargetNode = teacher.Node, Since = w.S.Tick };
+            var c = new Candidate { Verb = C7Verb.Teach, Kind = IntentTarget.Node, TargetNode = teacher.Node, Class = (byte)(Education.DemoBase + (int)SkillClass.Woodcutting) };
+            PopulationExtensions.TryStart(w.S, ev, teacher, in c, 0);
+            w.Log.AddRange(ev.Drain());
+            for (int i = 0; i < 3000 && !w.Of<KnowledgeTransferred>().Any(); i++) w.Step(1);
+            var kt = w.Of<KnowledgeTransferred>().FirstOrDefault();
+            Assert.IsNotNull(kt, "someone attended the demonstration");
+            Assert.AreEqual(TeachingSession.Demonstrate, kt.Kind);
+            Assert.AreEqual(kt.SkillBefore, kt.SkillAfter, "a demonstration gives no skill");
+            ValueOf(learner, WoodKey, Verb.Gather, out var origin);
+            Assert.AreEqual(Origin.Vicarious, origin);
+        }
+
+        /// <summary>C7-T3: Imitation.cs uses only public members of AssociationStore and Learner and never touches culture.</summary>
+        [Test]
+        public void Imitation_PublicApiOnly()
+        {
+            string path = System.IO.Path.Combine(GoodsTests.RepoRoot(), "Assets", "God", "Sim", "Learning", "Imitation.cs");
+            string src = System.IO.File.ReadAllText(path);
+            foreach (var bad in new[] { "RemoveAt(", "Culture", "internal ", "Reflection", "Traits" })
+                Assert.IsFalse(src.Contains(bad), "Imitation.cs uses " + bad);
+            foreach (var m in new[] { "Find", "InsertAt" })
+                Assert.IsTrue(typeof(AssociationStore).GetMethod(m).IsPublic);
+            Assert.IsTrue(typeof(Learner).GetMethod(nameof(Learner.EvictOne)).IsPublic);
+            Assert.IsTrue(typeof(AssociationStore).GetField(nameof(AssociationStore.Entries)).IsPublic);
+        }
+
+        /// <summary>
+        /// SVC-EDU-1 (behaviour): over 20 seeds a taught learner gathers logs faster (logs in the first 600 ticks; over two days
+        /// both fill their carry) than the same learner, who had learned from its own experience that felling was not worth it,
+        /// untaught (the same game without the lesson): its copied value makes it choose to fell wood more often. Mann-Whitney
+        /// reported; the skill itself does not change the felling speed (M3 has no skill input: recorded).
+        /// </summary>
+        [Test]
+        public void Scenario6_TaughtGathersMoreLogs_20Seeds()
+        {
+            var taught = new int[20]; var control = new int[20]; var taught2 = new int[20]; var control2 = new int[20];
+            for (int k = 0; k < 20; k++)
+            {
+                foreach (bool teach in new[] { true, false })
+                {
+                    var (w, teacher, learner) = Lesson((ulong)(100 + k), 2000, teach: teach);
+                    LearningFixtures.Bush(w.Sim, SourceKind.Wood, At(w, 2, 3), 400, 400, 400);
+                    HouseholdFixtures.Give(w.Sim, learner, Ware.Axe, 1);
+                    Assoc(learner, WoodKey, Verb.Gather, -1500); // its own experience: felling seemed not worth it (both arms)
+                    if (teach) Assert.IsNotNull(RunLesson(w, teacher, learner), "lesson on seed " + k);
+                    else w.Step(1); // the control: the same game, nobody teaches
+                    HouseholdFixtures.Kill(w.Sim, teacher.Id, DeathCause.Accident); // the teacher's own felling never counts
+                    long from = w.S.Tick;
+                    w.Log.Clear();
+                    w.Step(2 * SimCalendar.Of(w.S).TicksPerDay);
+                    var logEvents = w.Of<Produced>().Where(p => p.Npc == learner.Id && p.Ware == Ware.Log).ToList();
+                    int logs = logEvents.Where(p => p.Tick < from + 600).Sum(p => p.Count);
+                    if (teach) { taught[k] = logs; taught2[k] = logEvents.Sum(p => p.Count); } else { control[k] = logs; control2[k] = logEvents.Sum(p => p.Count); }
+                }
+            }
+            double p = RankSumP(control, taught);
+            TestContext.WriteLine("logs in the first 600 ticks (rate), taught:  " + string.Join(" ", taught) + " (mean " + taught.Average().ToString("0.00") + ")");
+            TestContext.WriteLine("logs in the first 600 ticks (rate), control: " + string.Join(" ", control) + " (mean " + control.Average().ToString("0.00") + "); one-sided Mann-Whitney p = " + p.ToString("0.0000"));
+            TestContext.WriteLine("logs in 2 days (carry-capped), taught " + string.Join(" ", taught2) + " / control " + string.Join(" ", control2) + ", p = " + RankSumP(control2, taught2).ToString("0.0000"));
+            Assert.Less(p, 0.05, "taught learners gather more logs (SVC-EDU-1)");
+        }
+
+        /// <summary>One-sided Mann-Whitney U (b greater than a), normal approximation with ties.</summary>
+        internal static double RankSumP(int[] a, int[] b)
+        {
+            var all = a.Select(v => (v, g: 0)).Concat(b.Select(v => (v, g: 1))).OrderBy(x => x.v).ToArray();
+            var ranks = new double[all.Length];
+            for (int i = 0; i < all.Length;)
+            {
+                int j = i; while (j < all.Length && all[j].v == all[i].v) j++;
+                for (int k = i; k < j; k++) ranks[k] = (i + j + 1) / 2.0;
+                i = j;
+            }
+            double rb = 0; for (int i = 0; i < all.Length; i++) if (all[i].g == 1) rb += ranks[i];
+            double n1 = a.Length, n2 = b.Length, u = rb - n2 * (n2 + 1) / 2, mu = n1 * n2 / 2, sd = Math.Sqrt(n1 * n2 * (n1 + n2 + 1) / 12.0);
+            if (sd == 0) return 1;
+            double z = (u - mu - 0.5) / sd;
+            return 0.5 * Erfc(z / Math.Sqrt(2));
+        }
+
+        private static double Erfc(double x)
+        {
+            double t = 1 / (1 + 0.5 * Math.Abs(x));
+            double y = t * Math.Exp(-x * x - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+            return x >= 0 ? y : 2 - y;
+        }
+
         /// <summary>Runs one act through the population's dispatch until it ends.</summary>
         internal static void RunAct(W w, Npc n, byte verb, byte sub, IntentTarget kind, int id, int node, int known = 0, int max = 3000)
         {
