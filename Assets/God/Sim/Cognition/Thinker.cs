@@ -55,6 +55,11 @@ namespace God.Sim.Cognition
         /// filled by the sim from M4's phenotype; 0 for a person without one (an M3 NPC, <c>Households.Enabled = 0</c>): no gain.
         /// </summary>
         public int HungerGain, FearGain, SocialGain, NurtureGain;
+        /// <summary>
+        /// F2c (R67): the children living in its own household (people it lives with), filled by M4 only while
+        /// <c>Households.Care.Provision</c> is on and it is an adult; 0 otherwise.
+        /// </summary>
+        public int Dependants;
     }
 
     /// <summary>One candidate intent (COMMUNICATION 3, 4.6): verb, target, its distance and perceived cost, and its context keys.</summary>

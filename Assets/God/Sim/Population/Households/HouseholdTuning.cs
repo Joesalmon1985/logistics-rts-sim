@@ -106,6 +106,15 @@ namespace God.Sim.Population.Households
         public int ChildBornVp = 600;
         /// <summary>D4 (M4.44): the forms of care a begging child's display reaches (<see cref="CareStructure"/> bits: 1 parents, 2 other kin, 4 household mates, 8 anyone, 16 adoptive and step parents); 31 all.</summary>
         public int FeedFrom = CareStructure.All;
+        /// <summary>
+        /// F2c (R67): 1 lets an adult with children in its household see its household short of food (its store seen or
+        /// remembered empty or low) and offers it "provision": forage for the household and carry the food home to the store,
+        /// one decision of its own (nurture gain, generosity), credited <see cref="ProvisionVp"/> per unit delivered. 0 (default):
+        /// nothing new is offered, drawn or hashed.
+        /// </summary>
+        public int Provision;
+        /// <summary>F2c: food units it gathers before carrying them home, and the reward per unit delivered to the store.</summary>
+        public int ProvisionUnits = 4, ProvisionVp = 60;
     }
 
     /// <summary>Partnerships (HOUSEHOLDS "Partnership and courtship", Q5, Q6).</summary>

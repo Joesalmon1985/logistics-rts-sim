@@ -15,8 +15,10 @@ namespace God.Sim.Population.Households
         public const byte SeekChild = 43, AcceptChild = 44;
         /// <summary>D4 (M4.43): range far for food: walk a long way out when hungry and no plentiful food is known (the depletion trap near home).</summary>
         public const byte RangeFar = 45;
+        /// <summary>F2c (R67): forage for the household and carry the food home to its store (aimed at a food place).</summary>
+        public const byte Provision = 46;
 
-        public static bool IsMine(byte v) => v == Store || v == TakeFromStore || v >= Feed && v <= RangeFar;
+        public static bool IsMine(byte v) => v == Store || v == TakeFromStore || v >= Feed && v <= Provision;
 
         /// <summary>Verbs aimed at a person (a person target: the seen person's handle and its node, see <c>HouseholdMindHooks</c>).</summary>
         public static bool AtPerson(byte v) => v >= Feed && v <= EndCare || v == AcceptChild;
@@ -31,7 +33,7 @@ namespace God.Sim.Population.Households
 
     public static class HSelf { public const int Unpartnered = 16, HasDependants = 17, WantsChild = 18; }
 
-    public static class HSituation { public const int DependantInNeed = 16, CareOwed1 = 17, CareOwed2 = 18, CareOwed3 = 19, UnionPartner = 20, SeekingChild = 21, NoPlentyKnown = 22; }
+    public static class HSituation { public const int DependantInNeed = 16, CareOwed1 = 17, CareOwed2 = 18, CareOwed3 = 19, UnionPartner = 20, SeekingChild = 21, NoPlentyKnown = 22, HouseholdShort = 23; }
 
     public static class HRole { public const int Child = 4, Elder = 5; }
 }
