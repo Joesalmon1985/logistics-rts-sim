@@ -1,0 +1,38 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_health",
+  "description": "C7a (brief 47 scenario 5 at island scale, SVC-HEAL-2, SVC-ACC-4): two factions of eight founding adults; work is dangerous (a raid stand-in: forage and gather hazards 20% per full work day, injuries of 100-300 that kill at 300 per mille a day while above 300 (a visible wound)), so wounds are common. One adult per faction knows the healing practice (skill 300) and its faction believes it a healer (Orgs.C7.StartHealers = 1). Nothing scripted, no player: the wounded ask by gesture, healers see signs, gather herbs at root patches, treat within reach; a healer who treated three people informally may found a practice. Control: org_health_nohealer. 20 sim days. Civ is on only for the shared skill store (R42); C1 building and C3 hiring are off (Civ.C1.BuildEnabled = 0, Civ.C3.HireEnabled = 0) so the evidence is about healing alone.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 8,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Civ.Enabled": 1,
+    "Orgs.C7.StartHealers": 1,
+    "Households.Life.ForageHazardPerMillion": 200000,
+    "Households.Life.GatherHazardPerMillion": 200000,
+    "Households.Life.InjuryDeadlyFrom": 300,
+    "Civ.C1.BuildEnabled": 0,
+    "Civ.C3.HireEnabled": 0
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxDays": 20,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}

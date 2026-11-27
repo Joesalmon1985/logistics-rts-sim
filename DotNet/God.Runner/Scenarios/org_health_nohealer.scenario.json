@@ -1,0 +1,38 @@
+{
+  "scenarioVersion": 1,
+  "name": "org_health_nohealer",
+  "description": "C7a control for org_health: the same dangerous island with nobody who knows the healing practice (Orgs.C7.StartHealers = 0); M4 carers still tend. Civ is on only for the shared skill store (R42); C1 building and C3 hiring are off (Civ.C1.BuildEnabled = 0, Civ.C3.HireEnabled = 0) so the evidence is about healing alone.",
+  "setup": {
+    "factionCount": 2,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 8,
+    "victory": [
+      {
+        "kind": "sandbox"
+      }
+    ],
+    "disease": "mild"
+  },
+  "tuning": {
+    "Orgs.Enabled": 1,
+    "Civ.Enabled": 1,
+    "Orgs.C7.StartHealers": 0,
+    "Households.Life.ForageHazardPerMillion": 200000,
+    "Households.Life.GatherHazardPerMillion": 200000,
+    "Households.Life.InjuryDeadlyFrom": 300,
+    "Civ.C1.BuildEnabled": 0,
+    "Civ.C3.HireEnabled": 0
+  },
+  "record": {
+    "level": "off"
+  },
+  "stop": {
+    "maxDays": 20,
+    "populationBelow": 1
+  },
+  "checks": [
+    "invariants",
+    "no-exceptions"
+  ]
+}

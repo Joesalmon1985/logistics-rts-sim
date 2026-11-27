@@ -19,6 +19,7 @@ namespace God.Sim.Orgs
         {
             if (s.Population == null || s.Tuning.Orgs.Enabled == 0) return;
             s.Organisations = new OrgState();
+            Healthcare.StartGame(s); // C7 (flagged edit): the healing start culture, nothing when Orgs.C7.StartHealers = 0
             int practices = s.Tuning.Orgs.C6.StartPractices;
             if (s.Tuning.Orgs.Emergence == 0 || practices == 0) return;
             foreach (var n in s.Population.Npcs)
@@ -43,7 +44,7 @@ namespace God.Sim.Orgs
             {
                 var m = Bodies.IsPerson(n) ? n.Mind?.Orgs : null;
                 if (m == null) continue;
-                m.Tuning = s.Tuning.Orgs.C6; m.Welfare = s.Tuning.Orgs.C8;
+                m.Tuning = s.Tuning.Orgs.C6; m.Welfare = s.Tuning.Orgs.C8; m.C7 = s.Tuning.Orgs.C7; // C7 (flagged edit)
                 if (m.Beliefs == null) m.Beliefs = new OrgBelief[OrgMind.Cap];
             }
         }
@@ -105,6 +106,7 @@ namespace God.Sim.Orgs
                 if (b.Owner.Kind != OwnerKind.Org) continue;
                 if (os.Find(b.Owner.Id) == null) bad.Add("ORG4: bin " + b.Id + " owned by unknown org " + b.Owner.Id);
             }
+            Healthcare.Check(s, bad); // C7 (flagged edit)
         }
     }
 }
