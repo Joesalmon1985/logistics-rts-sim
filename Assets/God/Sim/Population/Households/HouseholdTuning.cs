@@ -135,6 +135,20 @@ namespace God.Sim.Population.Households
         public int CompanionshipMean = 500, CompanionshipSpread = 400;
         public int ChildDesireMean = 500, ChildDesireSpread = 400;
         public int CommitmentMean = 500, CommitmentSpread = 500;
+        /// <summary>
+        /// F2b (LEAD_RULINGS R61): the partner-sex preference (<see cref="NpcLife.PartnerSeeks"/>). 0 (default): not drawn,
+        /// partnership choice is sex-blind (the M4 rule). 1: drawn once at a person's origin, relative to its own sex: seeks the
+        /// other sex with <see cref="SeekOtherSexPermille"/>, its own sex with <see cref="SeekSameSexPermille"/>, both otherwise;
+        /// a partnership then forms only between two people who each seek the other's sex. A preference, never a restriction
+        /// on anyone else: same-sex partnerships, reproduction outside a partnership, adoption and shared care are unchanged.
+        /// The distribution is an owner question (master plan §7); no scenario sets it. Each field is written only when non-zero.
+        /// </summary>
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int PartnerSexMode;
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int SeekOtherSexPermille;
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int SeekSameSexPermille;
     }
 
     /// <summary>Disease (POPULATION "Disease", Q3): one fever. Rates per million per day; Mild halves contact, crowding and sanitation.</summary>

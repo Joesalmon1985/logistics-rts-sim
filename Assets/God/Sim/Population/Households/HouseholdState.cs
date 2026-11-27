@@ -228,6 +228,15 @@ namespace God.Sim.Population.Households
         /// same of its partners). Drawn once at its origin; the decider reads them as <c>Npc.Traits</c> 16-18.
         /// </summary>
         public int Companionship = 500, ChildDesire = 500, Commitment = 500;
+        /// <summary>
+        /// F2b (LEAD_RULINGS R61, owner D4 §2): which sexes it seeks as a romantic partner (<see cref="Preferences.SeeksWomen"/>,
+        /// <see cref="Preferences.SeeksMen"/>, <see cref="Preferences.SeeksBoth"/>); 0 = not drawn (sex-blind, the M4 rule). An
+        /// individual preference about companionship only: it never touches reproductive relationships, care, adoption or
+        /// fostering. Drawn at its origin only when <c>Households.Prefs.PartnerSexMode</c> is 1; written to the save and the
+        /// hash only when non-zero, so games without it serialise and hash exactly as before.
+        /// </summary>
+        [System.ComponentModel.DefaultValue(0), Newtonsoft.Json.JsonProperty(DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore)]
+        public int PartnerSeeks;
 
         public void AddTo(ref StateHasher h)
         {
@@ -244,6 +253,7 @@ namespace God.Sim.Population.Households
             h.Add(Display | (DisplayLevel << 8)); h.Add(DisplayTarget); h.Add(DisplayUntil); h.Add(WorkAcc);
             h.Add(OrphanSince); h.Add((Fostered ? 1 : 0) | (ToldFostered ? 2 : 0)); h.Add(CueCarer); h.Add(CueDays); h.Add(CueDay); h.Add(LastDaily); h.Add(WorkTicks);
             h.Add(Companionship); h.Add(ChildDesire); h.Add(Commitment);
+            if (PartnerSeeks != 0) h.Add(PartnerSeeks); // F2b: hashed only when drawn
         }
     }
 }

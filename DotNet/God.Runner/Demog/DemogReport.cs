@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using God.Sim;
 using God.Sim.Population;
+using God.Sim.Population.Households;
 
 namespace God.Runner.Demog
 {
@@ -260,6 +261,7 @@ namespace God.Runner.Demog
                 + $"; mean standing wild food within 5 nodes of the death {F(Ratio(allY.Sum(y => y.StarveFoodWithin5), sd), 0)} units, within 10 nodes {F(Ratio(allY.Sum(y => y.StarveFoodWithin10), sd), 0)} units "
                 + $"({F(Ratio(allY.Sum(y => y.StarveFoodWithin10) * 100.0, allY.Sum(y => y.StarveCapacityWithin10)), 1)}% of the capacity there); deaths with no wild food within 10 nodes {allY.Sum(y => y.StarveDeathsNoFoodWithin10)}; "
                 + $"nearest source holding 5+ units: mean {F(Ratio(allY.Sum(y => y.StarveNearestSum), allY.Sum(y => y.StarveNearestHist.Sum())), 1)} nodes; within 10 {allY.Sum(y => y.StarveNearestHist[0])}, 11-20 {allY.Sum(y => y.StarveNearestHist[1])}, 21-40 {allY.Sum(y => y.StarveNearestHist[2])}, beyond 40 {allY.Sum(y => y.StarveNearestHist[3])}");
+            t.AppendLine(ChildText(arm));
             var cens = allY.Where(y => y.PopStart > 0).ToList();
             t.AppendLine($"nutrition at the year censuses (permille, mean of yearly means): adults {F(cens.Where(y => y.Adults + y.Elders > 0).Select(y => (double)y.MeanNutritionAdults).DefaultIfEmpty(double.NaN).Average(), 0)}, children {F(cens.Where(y => y.Children > 0).Select(y => (double)y.MeanNutritionChildren).DefaultIfEmpty(double.NaN).Average(), 0)}");
             t.AppendLine($"founder deaths: largest share in any 30-day window {MS(arm.Select(s => s.MaxFounderDeathShare30 / 10.0), 1)}% (max {F(arm.Max(s => s.MaxFounderDeathShare30) / 10.0, 1)}%), in any 3-day (0.3-year) window {MS(arm.Select(s => s.MaxFounderDeathShare3 / 10.0), 1)}% (max {F(arm.Max(s => s.MaxFounderDeathShare3) / 10.0, 1)}%)");
@@ -271,6 +273,7 @@ namespace God.Runner.Demog
                 + "; " + Pref(arm, "child desire", p => p.Sex == 0 && p.AdultDays >= 10 ? p.ChildDesire : -1, p => 10.0 * p.Births / p.AdultDays, "births per woman-year"));
             t.AppendLine(Pref(arm, "companionship", p => p.Companionship, p => p.AdultDays > 0 ? (double)p.PartneredDays / p.AdultDays : double.NaN, "share of adult days partnered")
                 + "; " + Pref(arm, "companionship", p => p.Companionship, p => p.AdultDays > 0 ? 10.0 * p.PartnershipsFormed / p.AdultDays : double.NaN, "partnerships formed per adult-year"));
+            t.AppendLine(PartnerText(arm));
             t.AppendLine($"reproductive relationships formed: {allY.Sum(y => y.UnionsFormed)} ({allY.Sum(y => y.UnionsOutsideFormed)} outside a partnership); births to a father outside the mother's partnership: "
                 + arm.Sum(s => s.Rec.People.Values.Count(p => p.Born && p.FatherOutside)));
             // M4.44: shared-care arrangements and free-riding
@@ -293,6 +296,74 @@ namespace God.Runner.Demog
         }
 
         private static double Ratio(double a, double b) => b == 0 ? double.NaN : a / b;
+
+        /// <summary>
+        /// F2b child-starvation diagnosis: by child age band, the starvation deaths under 1.0 against a daily sample of the living
+        /// children of that band (each living child once a day): what it did and got over its last 3 days, and its circumstances.
+        /// </summary>
+        public static string ChildText(List<DemogRunSummary> arm)
+        {
+            var t = new StringBuilder();
+            t.Append("child starvation diagnosis (F2b; per child age band: starved = starvation deaths under 1.0, alive = daily sample of living children; 3-day sums per case; % of cases):");
+            for (int b = 0; b < DemogRecorder.ChildBandNames.Length; b++)
+                foreach (var kind in new[] { "starved", "alive", "onset, then starved", "onset, then reached 1.0" })
+                {
+                    var c = new ChildCircumstance();
+                    foreach (var s in arm) Add(c, kind == "starved" ? s.Rec.ChildStarved[b] : kind == "alive" ? s.Rec.ChildAlive[b] : kind.EndsWith("then starved") ? s.Rec.OnsetStarved[b] : s.Rec.OnsetSurvived[b]);
+                    if (c.N == 0) continue;
+                    double n = c.N;
+                    t.Append($"\n   {DemogRecorder.ChildBandNames[b]} {kind} {c.N}: begs {F(c.Begs / n, 2)} (to an adult carrying food {F(c.BegsToCarrier / n, 2)}, to a household member {F(c.BegsToMember / n, 2)}), store {F(c.StoreTicks / n, 0)} ticks / {F(c.StoreUnits / n, 2)} units taken, fed {F(c.FedUnits / n, 2)} units, own foraged {F(c.Foraged / n, 2)} units ({F(c.ForageTicks / n, 0)} forage ticks), ate {F(c.Eaten / n, 2)} units; "
+                        + $"no begging {P(c.NoBeg, n)}, not fed {P(c.NoFed, n)}, no own foraging {P(c.NoForage, n)}; nutrition {F(c.Nutrition / n, 0)}, carrying {F(c.CarriedFood / n, 2)} food; "
+                        + $"no household {P(c.NoHousehold, n)}, adult members {F(c.HouseholdAdults / n, 2)}, nearest adult member {F(Ratio(c.NearestMemberSum, c.NearestMemberN), 1)} nodes, one within sight {P(c.AdultInSight, n)}, within 2 nodes {P(c.AdultNear, n)}; "
+                        + $"household food (store + members' carry) {P(c.HouseholdFood, n)} ({F(c.HouseholdFoodUnits / n, 1)} units), a member carrying food within sight {P(c.FoodCarrierInSight, n)}; any adult of its people within sight {P(c.AnyAdultInSight, n)}; "
+                        + $"mother alive {P(c.MotherAlive, n)}, main carer alive {P(c.CarerAlive, n)} (none yet {P(c.NoMainCarer, n)}), orphan {P(c.Orphan, n)}, a younger sibling under 0.25 {P(c.InfantSibling, n)}"
+                        + (kind != "alive" ? "; ages (0.05-year bins from " + F(b == 0 ? 0 : b == 1 ? 0.25 : 0.5, 2) + ") " + string.Join(" ", c.AgeBins.Skip(b == 0 ? 0 : b == 1 ? 5 : 10).Take(b == 2 ? 10 : 5)) : ""));
+                }
+            // who they were: founders' children or born in the run, and the year they died
+            var starved = arm.SelectMany(s => s.Rec.People.Values.Where(p => p.Cause == DeathCause.Starvation && p.DeathTick >= 0 && p.DeathTick - p.BornTick < s.Rec.AgeTicks(1000))
+                .Select(p => (p.Founder, Year: (int)(p.DeathTick / Math.Max(1, s.Rec.TicksPerYear))))).ToList();
+            if (starved.Count > 0)
+                t.Append($"\n   starved under 1.0: founders' children {starved.Count(x => x.Founder)}, born in the run {starved.Count(x => !x.Founder)}; by year of death "
+                    + string.Join(" ", Enumerable.Range(0, starved.Max(x => x.Year) + 1).Select(y => starved.Count(x => x.Year == y))));
+            return t.ToString();
+        }
+
+        private static string P(long k, double n) => F(n == 0 ? double.NaN : 100.0 * k / n, 0) + "%";
+
+        private static void Add(ChildCircumstance a, ChildCircumstance b)
+        {
+            a.N += b.N; a.Begs += b.Begs; a.FedUnits += b.FedUnits; a.Foraged += b.Foraged; a.Eaten += b.Eaten; a.ForageTicks += b.ForageTicks;
+            a.NoBeg += b.NoBeg; a.NoFed += b.NoFed; a.NoForage += b.NoForage; a.NoHousehold += b.NoHousehold; a.HouseholdAdults += b.HouseholdAdults;
+            a.AdultInSight += b.AdultInSight; a.AdultNear += b.AdultNear; a.HouseholdFood += b.HouseholdFood; a.HouseholdFoodUnits += b.HouseholdFoodUnits;
+            a.FoodCarrierInSight += b.FoodCarrierInSight; a.AnyAdultInSight += b.AnyAdultInSight; a.MotherAlive += b.MotherAlive; a.CarerAlive += b.CarerAlive;
+            a.Orphan += b.Orphan; a.BegsToCarrier += b.BegsToCarrier; a.BegsToMember += b.BegsToMember; a.StoreTicks += b.StoreTicks; a.StoreUnits += b.StoreUnits; a.InfantSibling += b.InfantSibling; a.NoMainCarer += b.NoMainCarer;
+            for (int i = 0; i < a.AgeBins.Length; i++) a.AgeBins[i] += b.AgeBins[i]; a.NearestMemberSum += b.NearestMemberSum; a.NearestMemberN += b.NearestMemberN; a.Nutrition += b.Nutrition; a.CarriedFood += b.CarriedFood;
+        }
+
+        /// <summary>F2b: partnerships formed during the run by composition, and the partner-sex preferences of everyone the run saw (by own sex).</summary>
+        public static string PartnerText(List<DemogRunSummary> arm)
+        {
+            int mixed = arm.Sum(s => s.Rec.FormedMixed), women = arm.Sum(s => s.Rec.FormedWomen), men = arm.Sum(s => s.Rec.FormedMen);
+            int all = mixed + women + men;
+            var t = new StringBuilder();
+            t.Append($"partnerships formed in the run {all} (per run {MS(arm.Select(s => (double)(s.Rec.FormedMixed + s.Rec.FormedWomen + s.Rec.FormedMen)), 1)}): woman and man {mixed} ({P(mixed, all)}), two women {women} ({P(women, all)}), two men {men} ({P(men, all)})");
+            var people = arm.SelectMany(s => s.Rec.People.Values).Where(p => p.Sex <= 1).ToList();
+            t.Append("; partner-sex preference (F2b, everyone seen):");
+            foreach (byte sex in new byte[] { 0, 1 })
+            {
+                var ps = people.Where(p => p.Sex == sex).ToList();
+                double n = ps.Count;
+                t.Append($" {(sex == 0 ? "women" : "men")} {ps.Count}: seeks women {P(ps.Count(p => p.PartnerSeeks == Preferences.SeeksWomen), n)}, men {P(ps.Count(p => p.PartnerSeeks == Preferences.SeeksMen), n)}, both {P(ps.Count(p => p.PartnerSeeks == Preferences.SeeksBoth), n)}, unset (sex-blind) {P(ps.Count(p => p.PartnerSeeks == 0), n)};");
+            }
+            // share of adult days partnered and births per woman by preference (people with at least 10 adult days)
+            foreach (var g in people.Where(p => p.AdultDays >= 10 && p.PartnerSeeks != 0).GroupBy(p => (p.Sex, p.PartnerSeeks)).OrderBy(g => g.Key.Sex).ThenBy(g => g.Key.PartnerSeeks))
+            {
+                string who = (g.Key.Sex == 0 ? "women" : "men") + " seeking " + (g.Key.PartnerSeeks == Preferences.SeeksWomen ? "women" : g.Key.PartnerSeeks == Preferences.SeeksMen ? "men" : "both");
+                t.Append($" {who} ({g.Count()}): partnered {F(100.0 * g.Sum(p => (double)p.PartneredDays) / Math.Max(1, g.Sum(p => (double)p.AdultDays)), 0)}% of adult days"
+                    + (g.Key.Sex == 0 ? $", births per woman-year {F(10.0 * g.Sum(p => (double)p.Births) / Math.Max(1, g.Sum(p => (double)p.AdultDays)), 3)}" : "") + ";");
+            }
+            return t.ToString();
+        }
 
         /// <summary>
         /// A paired comparison (M4.40): in each seed, the mean of <paramref name="measure"/> over people whose preference is

@@ -43,6 +43,12 @@ namespace God.Sim.Cognition
         public byte Gesture;
         /// <summary>F1.8 (contracts 4.2): what kind of body it is (a person, or a god's avatar). Whether it is recognised as a god is D6 belief.</summary>
         public Population.BodyKind Body;
+        /// <summary>
+        /// F2b (M4 hook, SHARED_CONTRACTS D4 table): the observer and this person do not both seek the other's sex as a partner
+        /// (partner-sex preferences, <c>Households.Prefs.PartnerSexMode</c> 1; always false otherwise). A visible fact asked of
+        /// <c>Preferences.PartnerCompatible</c>, like the "wants a child" display's <c>MayConceiveWith</c>. Appended field.
+        /// </summary>
+        public bool PartnerMismatch;
     }
 }
 

@@ -81,6 +81,7 @@ namespace God.Sim.Population.Households
             var hs = s.Households;
             if (hs == null) return;
             p.SameHousehold = observer.Household != 0 && seen.Household == observer.Household;
+            p.PartnerMismatch = !Preferences.PartnerCompatible(observer, seen); // F2b: false unless partner-sex preferences are drawn
             var l = seen.Life;
             if (l == null || s.Tuning.Households.Care.Off != 0 && observer.Stage != LifeStage.Child && seen.Stage == LifeStage.Child) return;
             // (D4) "wants a child" is seen only by those it could have one with (a visible fact, asked of Reproduction)
@@ -403,7 +404,7 @@ namespace God.Sim.Population.Households
                 var p = sc.People[i];
                 int rhat = KinData.RHat(sc.Mind, p.As);
                 var role = KinData.RoleOf(sc.Mind, p.As);
-                if (p.Display == DisplayKind.Propose && p.DisplayTarget == self.Id && proposer < 0) proposer = i;
+                if (p.Display == DisplayKind.Propose && p.DisplayTarget == self.Id && proposer < 0 && !p.PartnerMismatch) proposer = i;
                 if (p.Display == DisplayKind.AskCare && p.DisplayTarget == self.Id && asker < 0) asker = i;
                 if (p.Stage == LifeStage.Child && p.SameHousehold) dependants = true;
                 if (p.Stage == LifeStage.Child && p.Display == DisplayKind.Beg)
@@ -422,7 +423,7 @@ namespace God.Sim.Population.Households
                 if (p.Display == DisplayKind.NeedsHome && p.Stage == LifeStage.Child && p.Dist < dOrphan) { dOrphan = p.Dist; orphan = i; }
                 if (role == KinRole.Partner && !p.Asleep && partner < 0) partner = i;
                 if (!partnered && p.Stage != LifeStage.Child && p.SameFaction && !p.Asleep && p.Display != DisplayKind.Partnered && p.Display != DisplayKind.Trying
-                    && role != KinRole.Partner && !CloseKin(sc, p.As) && p.Dist < dMate) { dMate = p.Dist; mate = i; }
+                    && role != KinRole.Partner && !CloseKin(sc, p.As) && !p.PartnerMismatch && p.Dist < dMate) { dMate = p.Dist; mate = i; }
                 if (self.Household != 0 && p.Stage != LifeStage.Child && p.SameFaction && !p.SameHousehold && !p.Asleep && p.Display != DisplayKind.CarePartner && p.Dist < dOther)
                 { dOther = p.Dist; other = i; }
                 if (p.Display == DisplayKind.CarePartner && p.DisplayLevel >= 2 && owed < 0) owed = i;
