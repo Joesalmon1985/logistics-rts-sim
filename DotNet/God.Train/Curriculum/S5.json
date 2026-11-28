@@ -1,0 +1,31 @@
+{
+  "id": "S5",
+  "curriculum": "founder-v1",
+  "content": "selecting and completing useful construction (L1 shelters, hearth, well, carpenter)",
+  "generator": "small_island",
+  "population": 6,
+  "needMask": 4095,
+  "days": 5,
+  "waitsFor": [
+    "UN4"
+  ],
+  "stubSupported": false,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "seeds_with_l1_collection_shelter_share",
+      "op": ">=",
+      "value": 0.6
+    }
+  ]
+}

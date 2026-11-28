@@ -1,0 +1,39 @@
+{
+  "id": "S1",
+  "curriculum": "founder-v1",
+  "content": "motor control and exploration",
+  "generator": "small_island",
+  "population": 1,
+  "needMask": 33,
+  "days": 1,
+  "waitsFor": [
+    "UN1",
+    "UN2",
+    "UN3b",
+    "UN6"
+  ],
+  "stubSupported": true,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "accepted_share",
+      "op": ">=",
+      "value": 0.8
+    },
+    {
+      "kind": "mean_distinct_cells",
+      "op": ">=",
+      "value": 12
+    }
+  ]
+}

@@ -19,5 +19,7 @@
     <ProjectReference Include="../God.Runner/God.Runner.csproj" />
     <ProjectReference Include="../God.Sim.Tests/God.Sim.Tests.csproj" />
     <ProjectReference Include="../God.Catalogue/God.Catalogue.csproj" />
+    <!-- UN6t (flagged for the lead): the trainer harness tests TR*/UN6ta run on the stub world in the standard suite. -->
+    <ProjectReference Include="../God.Train/God.Train.csproj" />
   </ItemGroup>
 </Project>

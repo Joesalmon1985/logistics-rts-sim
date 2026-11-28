@@ -1,0 +1,39 @@
+{
+  "id": "S4",
+  "curriculum": "founder-v1",
+  "content": "take, store, withdraw and carrying",
+  "generator": "small_island",
+  "population": 4,
+  "needMask": 4095,
+  "days": 3,
+  "waitsFor": [
+    "UN1",
+    "UN2",
+    "UN3b",
+    "UN6"
+  ],
+  "stubSupported": false,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "adults_alive_share_pooled",
+      "op": ">=",
+      "value": 0.95
+    },
+    {
+      "kind": "seeds_with_deposit_and_withdrawal_share",
+      "op": ">=",
+      "value": 0.75
+    }
+  ]
+}
