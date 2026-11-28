@@ -22,6 +22,13 @@ namespace God.Train.Env
         public int BrainKind = God.Sim.Unified.BrainKind.Untrained, Artifact = 0;
         /// <summary>Diagnostics only (the game defaults are 1, 1, 300): the overlay, sampling and the temperament temperature spread.</summary>
         public int Overlay = 1, Sample = 1, TemperatureSpread = 300;
+        /// <summary>
+        /// Training-side start variation (slice 1 V2; trainer-visible seeds and <c>Layout.Train</c> only): 0 = the generator's start
+        /// (V1); 1 = by a keyed draw of the seed, one of the generator's start, its left-right mirror, its 120-degree rotation, a node
+        /// in the far quarter of the island, or any passable land node (the same kinds of transform the held-out layouts apply, on
+        /// training and validation boards).
+        /// </summary>
+        public int Starts = 0;
     }
 
     /// <summary>
@@ -86,6 +93,7 @@ namespace God.Train.Env
             _ids.Sort();
             if (_ids.Count > 0) StartNode = s.Population.Find(_ids[0]).Node;
             if (layout != Layout.Train) Relocate(layout);
+            else if (cfg.Starts == 1) TrainStart();
             foreach (int id in _ids)
             {
                 var n = s.Population.Find(id);
@@ -227,7 +235,21 @@ namespace God.Train.Env
 
         // ---------------- held-out start positions ----------------
 
-        private void Relocate(Layout layout)
+        /// <summary>The kind of training start of a seed under <see cref="UnifiedConfig.Starts"/> = 1 (0 generator, 1 mirror, 2 rotation, 3 far quarter, 4 any).</summary>
+        public static int TrainStartKind(long seed) => new Rng((ulong)seed).Fork("v2-train-start").NextInt(5);
+
+        private void TrainStart()
+        {
+            int kind = TrainStartKind(Seed);
+            if (kind == 0) return;
+            if (kind <= 3) { Relocate(kind == 1 ? Layout.Mirrored : kind == 2 ? Layout.Rotated : Layout.UnfamiliarStart, true); return; }
+            var s = Sim.State; var g = s.Territory.Grid;
+            var cand = new List<int>();
+            for (int v = 0; v < g.Count; v++) if (g.IsLand(v) && Motor.Passable(s, v)) cand.Add(v);
+            if (cand.Count > 0) MoveTribe(cand[new Rng((ulong)Seed).Fork("v2-train-start-node").NextInt(cand.Count)]);
+        }
+
+        private void Relocate(Layout layout, bool training = false)
         {
             var s = Sim.State;
             var g = s.Territory.Grid;
@@ -254,9 +276,15 @@ namespace God.Train.Env
                 for (int v = 0; v < g.Count; v++) if (g.IsLand(v) && Motor.Passable(s, v)) cand.Add((g.Distance(StartNode, v), v));
                 cand.Sort((a, b) => a.d != b.d ? b.d.CompareTo(a.d) : a.v.CompareTo(b.v));
                 int top = Math.Max(1, cand.Count / 4);
-                if (cand.Count > 0) target = cand[(int)((ulong)Seed * 2654435761UL % (ulong)top)].v;
+                if (cand.Count > 0) target = training ? cand[new Rng((ulong)Seed).Fork("v2-train-far").NextInt(top)].v : cand[(int)((ulong)Seed * 2654435761UL % (ulong)top)].v;
             }
             if (target < 0) return; // regenerated: the held-out board alone
+            MoveTribe(target);
+        }
+
+        private void MoveTribe(int target)
+        {
+            var s = Sim.State;
             foreach (int id in _ids)
             {
                 var n = s.Population.Find(id);

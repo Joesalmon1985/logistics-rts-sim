@@ -15,6 +15,13 @@ namespace God.Train
     /// <summary>The steps the commands share (demonstrations, behaviour cloning, ES, validation), usable from tests.</summary>
     public static class Pipeline
     {
+        /// <summary>Slice 1 V2 (training side only): the start variation of every training/validation world (<see cref="UnifiedConfig.Starts"/>) and the percept-only teacher. Set by the CLI's <c>--starts varied</c> and <c>--teacher percept</c>; defaults reproduce V1.</summary>
+        public static int Starts = 0;
+        public static bool PerceptTeacher = false;
+
+        /// <summary>The training-only teacher of the real world under the current options.</summary>
+        public static SurvivalTeacher Teacher() => new SurvivalTeacher { PerceptOnly = PerceptTeacher };
+
         /// <summary>A training-side stub world of a stage (train layout, trainer-visible seeds only).</summary>
         public static StubWorld Stub(Stage st, long seed, StubConfig baseCfg = null)
         {
@@ -30,7 +37,7 @@ namespace God.Train
         public static long Ticks(Stage st, StubConfig cfg = null) => (long)st.Days * (cfg ?? new StubConfig()).TicksPerDay;
 
         /// <summary>A training-side real unified world of a stage (train layout, trainer-visible seeds only).</summary>
-        public static UnifiedWorld Real(Stage st, long seed) => new UnifiedWorld(new UnifiedConfig { Persons = st.Population, NeedMask = st.NeedMask }, seed, Layout.Train, null);
+        public static UnifiedWorld Real(Stage st, long seed) => new UnifiedWorld(new UnifiedConfig { Persons = st.Population, NeedMask = st.NeedMask, Starts = Starts }, seed, Layout.Train, null);
 
         /// <summary>The world of a stage: the stub (harness self-test) or the real unified world.</summary>
         public static IWorld World(Stage st, long seed, bool stub) => stub ? (IWorld)Stub(st, seed) : Real(st, seed);
@@ -47,7 +54,7 @@ namespace God.Train
             Parallel.For(0, seeds.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, workers) }, i =>
             {
                 var rec = new List<Sequence>();
-                IActor teacher = stub ? new StubTeacher() : (IActor)new SurvivalTeacher();
+                IActor teacher = stub ? new StubTeacher() : (IActor)Teacher();
                 Rollout.Run(World(st, seeds[i], stub), teacher, seeds[i], n, evaluation: false, record: rec);
                 per[i] = rec;
             });

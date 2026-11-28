@@ -31,6 +31,8 @@ namespace God.Train
         {
             if (args.Length == 0) { e.WriteLine(Help); return Usage; }
             var a = Parse(args);
+            Pipeline.Starts = Opt(a, "starts", "generator") == "varied" ? 1 : 0;
+            Pipeline.PerceptTeacher = Opt(a, "teacher", "v1") == "percept";
             try
             {
                 switch (args[0])
@@ -106,10 +108,10 @@ namespace God.Train
         private static int Probe(Dictionary<string, string> a, TextWriter o, TextWriter e)
         {
             long seed = Int(a, "seed", 1);
-            var cfg = new UnifiedConfig { Persons = Int(a, "persons", 1), NeedMask = Convert.ToInt32(Opt(a, "mask", "0x033"), 16), Overlay = Int(a, "overlay", 1), Sample = Int(a, "sample", 1), TemperatureSpread = Int(a, "spread", 300) };
+            var cfg = new UnifiedConfig { Persons = Int(a, "persons", 1), NeedMask = Convert.ToInt32(Opt(a, "mask", "0x033"), 16), Overlay = Int(a, "overlay", 1), Sample = Int(a, "sample", 1), TemperatureSpread = Int(a, "spread", 300), Starts = Pipeline.Starts };
             var w = new UnifiedWorld(cfg, seed, Honesty.Layout.Train, null);
             string which = Opt(a, "actor", "teacher");
-            IActor actor = which == "teacher" ? new Teacher.SurvivalTeacher() : which == "game" ? new GameBrainActor()
+            IActor actor = which == "teacher" ? Pipeline.Teacher() : which == "game" ? new GameBrainActor()
                 : new NetActor((Opt(a, "ckpt") != null ? Checkpoint.Load(Opt(a, "ckpt")) : Checkpoint.Untrained(NetShape.Unified, 1, "unified")).ToQNet());
             int days = Int(a, "days", 3);
             var sw = Stopwatch.StartNew();
@@ -133,7 +135,7 @@ namespace God.Train
             SeedPolicy.CheckTraining(seeds);
             if (RealWorldRefused(a, e)) return Unavailable;
             var st = CurriculumData.Load(Opt(a, "stage", "S2"));
-            var net = Checkpoint.Load(Opt(a, "from")).ToQNet();
+            var net = (Opt(a, "from") != null ? Checkpoint.Load(Opt(a, "from")) : Checkpoint.Untrained(NetShape.Unified, 1, "unified")).ToQNet();
             int beta = Int(a, "beta", 300), workers = Int(a, "workers", 8), persons = Int(a, "persons", st.Population);
             long ticks = Int(a, "days", st.Days) * (long)God.Sim.SimCalendar.DefaultTicksPerDay;
             var per = new List<Sequence>[seeds.Length];
@@ -141,8 +143,8 @@ namespace God.Train
             System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, workers) }, i =>
             {
                 var rec = new List<Sequence>();
-                var world = new UnifiedWorld(new UnifiedConfig { Persons = persons, NeedMask = st.NeedMask }, seeds[i], Layout.Train, null);
-                stats[i] = Rollout.Run(world, new DaggerActor(net, new Teacher.SurvivalTeacher(), beta), seeds[i], ticks, evaluation: false, record: rec);
+                var world = new UnifiedWorld(new UnifiedConfig { Persons = persons, NeedMask = st.NeedMask, Starts = Pipeline.Starts }, seeds[i], Layout.Train, null);
+                stats[i] = Rollout.Run(world, new DaggerActor(net, Pipeline.Teacher(), beta), seeds[i], ticks, evaluation: false, record: rec);
                 per[i] = rec;
             });
             var all = new List<Sequence>(); foreach (var p in per) all.AddRange(p);

@@ -36,10 +36,22 @@ namespace God.Train.Teacher
             if (!(w is UnifiedWorld)) throw new InvalidOperationException("SurvivalTeacher drives the unified world only");
             _rng = new Rng((ulong)seed).Fork("survival-teacher");
             _wander.Clear();
+            _side.Clear();
         }
+
+        /// <summary>
+        /// Slice 1 V2: the teacher reads only what the body's percept shows (Obs v1: its needs, carry, the six cells, the perceived
+        /// entities and its place memory) and the static catalogue (which classes are food); no path oracle, no world query. When
+        /// no fresh water (or no food) is perceived or remembered it explores even before the need is pressing.
+        /// </summary>
+        public bool PerceptOnly;
+        /// <summary>Percept-only exploration: per-person turn side and the chance (permille per decision) of a random new heading.</summary>
+        public int TurnChance = 60;
+        private readonly Dictionary<int, bool> _side = new Dictionary<int, bool>();
 
         public ActionChoice Act(IWorld w, int personIndex, int person, short[] obs, in ActMask m)
         {
+            if (PerceptOnly) return ActPercept((UnifiedWorld)w, person, in m);
             var uw = (UnifiedWorld)w;
             var s = uw.State;
             ref var p = ref uw.LastPercept;
@@ -112,6 +124,87 @@ namespace God.Train.Teacher
             return Wander(s, person, npc.Node, u.Facing, m);
         }
 
+        private static readonly int ONeeds = ObsSchema.OffsetOf("needs"), OCarry = ObsSchema.OffsetOf("carry");
+
+        private ActionChoice ActPercept(UnifiedWorld uw, int person, in ActMask m)
+        {
+            var s = uw.State;
+            ref var p = ref uw.LastPercept;
+            var v = p.V;
+            bool foodNeed = Unified.NeedActive(s, NeedChannel.Hunger), waterNeed = Unified.NeedActive(s, NeedChannel.Thirst);
+            bool sleepNeed = Unified.NeedActive(s, NeedChannel.Energy);
+            int hunger = v[ONeeds + (int)NeedChannel.Hunger], thirst = v[ONeeds + (int)NeedChannel.Thirst], fatigue = v[ONeeds + (int)NeedChannel.Energy];
+
+            if (sleepNeed && Allowed(m, Prim.Sleep) && (fatigue >= Exhausted || fatigue >= TiredAt && thirst < 700 && hunger < 700))
+                return ActionChoice.Of(Prim.Sleep);
+            if (!foodNeed && !waterNeed) { Explored++; return Explore(person, v, m); }
+
+            int water = -1, forage = -1;
+            for (int e = 0; e < p.EntityCount; e++)
+            {
+                int o = OEnt + e * ObsSchema.EntityFields, cls = v[o];
+                if (v[o + 2] > Reach.Touch) continue;
+                if (cls == Percept.ClassFreshWater && water < 0) water = e;
+                if ((v[o + 3] & 15) == 6 && forage < 0 && EdibleClass(s, cls)) forage = e;
+            }
+            int foodSlot = -1, foods = 0, used = 0;
+            for (int k = 0; k < ObsSchema.CarrySlots; k++)
+            {
+                int cls = v[OCarry + k * ObsSchema.CarryFields];
+                if (cls == 0) continue;
+                used++;
+                var o = cls > 0 && cls <= ushort.MaxValue ? s.Unification.Book.Object((ushort)cls) : null;
+                if (o != null && o.Nutrition > 0) { foods++; if (foodSlot < 0) foodSlot = k; }
+            }
+            bool room = used < ObsSchema.CarrySlots;
+
+            if (waterNeed && thirst >= ThirstAt && water >= 0) return Use(water, Heads.SourceEmpty, 1);
+            if (foodNeed && hunger >= HungerAt && foodSlot >= 0) return Use(Heads.TargetSelf, foodSlot, 0);
+            if (foodNeed && forage >= 0 && room && (hunger >= HungerAt || foods < CarryFood)) return Use(forage, Heads.SourceEmpty, 0);
+            if (waterNeed && water >= 0 && thirst >= 150) return Use(water, Heads.SourceEmpty, 1);
+
+            bool wantWater = waterNeed && thirst >= ThirstAt / 2;
+            bool wantFood = foodNeed && (foodSlot < 0 && hunger >= HungerAt / 2 || foods < CarryFood && room);
+            bool waterFirst = wantWater && (!wantFood || thirst >= hunger);
+            if (waterFirst && Steer(s, ref p, true, m, out var c1)) { Steered++; return c1; }
+            if (wantFood && Steer(s, ref p, false, m, out var c2)) { Steered++; return c2; }
+            if (wantWater && Steer(s, ref p, true, m, out var c3)) { Steered++; return c3; }
+            // no source of a pressing need in view or memory, or no water known at all: search (straight lines, a new heading now
+            // and then, turning when blocked)
+            bool knowsWater = !waterNeed || Knows(s, v, true), knowsFood = !foodNeed || foodSlot >= 0 || Knows(s, v, false);
+            if (wantWater || wantFood || !knowsWater || !knowsFood) { Explored++; return Explore(person, v, m); }
+            if (Allowed(m, Prim.Wait)) return ActionChoice.Of(Prim.Wait);
+            return Explore(person, v, m);
+        }
+
+        /// <summary>A fresh water point (or an edible forage place) is perceived or remembered in the observation.</summary>
+        private static bool Knows(GodState s, short[] v, bool water)
+        {
+            for (int e = 0; e < ObsSchema.Entities; e++)
+            {
+                int o = OEnt + e * ObsSchema.EntityFields, cls = v[o];
+                if (cls == 0) break;
+                if (water ? cls == Percept.ClassFreshWater : (v[o + 3] & 15) == 6 && EdibleClass(s, cls)) return true;
+            }
+            for (int k = 0; k < ObsSchema.Places; k++)
+            {
+                int cls = v[OPlaces + k * ObsSchema.PlaceFields];
+                if (cls != 0 && (water ? cls == Percept.ClassFreshWater : EdibleClass(s, cls))) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Search from the percept alone: step forward while the cell ahead is passable; now and then, or when blocked, turn (each person keeps a turning side, flipped now and then).</summary>
+        private ActionChoice Explore(int person, short[] v, in ActMask m)
+        {
+            if (!_side.TryGetValue(person, out bool right)) { right = _rng.NextInt(2) == 0; _side[person] = right; }
+            bool blocked = v[OCells] == 0 || !Allowed(m, Prim.StepForward);
+            if (!blocked && _rng.NextInt(1000) >= TurnChance) return ActionChoice.Of(Prim.StepForward);
+            if (_rng.NextInt(8) == 0) { right = !right; _side[person] = right; }
+            var c = right ? Prim.TurnRight : Prim.TurnLeft;
+            return Allowed(m, c) ? ActionChoice.Of(c) : ActionChoice.Of(Prim.Wait);
+        }
+
         /// <summary>Decisions steered by the body's own percept or place memory, and steps that needed the path oracle.</summary>
         public long Steered, OracleSteps, Explored;
         /// <summary>The emergency levels from which the path oracle replaces straight-line exploration.</summary>
@@ -131,7 +224,10 @@ namespace God.Train.Teacher
             int sector = -1;
             for (int e = 0; e < p.EntityCount && sector < 0; e++)
             {
-                bool hit = water ? p.EntityKind[e] == SpatialKind.WaterPoint && FreshWater(s, p.EntityId[e])
+                int ecls = v[OEnt + e * ObsSchema.EntityFields];
+                bool hit = PerceptOnly
+                    ? (water ? ecls == Percept.ClassFreshWater : (v[OEnt + e * ObsSchema.EntityFields + 3] & 15) == 6 && EdibleClass(s, ecls))
+                    : water ? p.EntityKind[e] == SpatialKind.WaterPoint && FreshWater(s, p.EntityId[e])
                                  : p.EntityKind[e] == SpatialKind.ForagePlace && EdibleForage(s, p.EntityId[e]);
                 if (hit) sector = v[OEnt + e * ObsSchema.EntityFields + 1];
             }

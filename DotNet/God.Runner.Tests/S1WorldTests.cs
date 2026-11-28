@@ -63,6 +63,40 @@ namespace God.Runner.Tests
         }
 
         [Test]
+        public void S1V2_TrainingStarts_VariedOnTrainingSeedsOnly()
+        {
+            var kinds = new HashSet<int>();
+            int moved = 0;
+            for (long seed = 1; seed <= 40; seed++)
+            {
+                kinds.Add(UnifiedWorld.TrainStartKind(seed));
+                var a = new UnifiedWorld(new UnifiedConfig { Persons = 2, Starts = 0 }, seed, Layout.Train, null);
+                var b = new UnifiedWorld(new UnifiedConfig { Persons = 2, Starts = 1 }, seed, Layout.Train, null);
+                var c = new UnifiedWorld(new UnifiedConfig { Persons = 2, Starts = 1 }, seed, Layout.Train, null);
+                Assert.That(b.StartNode, Is.EqualTo(c.StartNode), "deterministic");
+                if (UnifiedWorld.TrainStartKind(seed) == 0) Assert.That(b.StartNode, Is.EqualTo(a.StartNode));
+                if (b.StartNode != a.StartNode) moved++;
+                if (UnifiedWorld.TrainStartKind(seed) != 0) Assert.That(b.People.All(p => b.State.Population.Find(p).Node == b.StartNode), "the tribe starts together at the varied start");
+            }
+            Assert.That(kinds, Is.EquivalentTo(new[] { 0, 1, 2, 3, 4 }), "generator, mirror, rotation, far quarter, any node");
+            Assert.That(moved, Is.GreaterThan(20));
+            Assert.Throws<HeldOutRefusedException>(() => new UnifiedWorld(new UnifiedConfig { Starts = 1 }, 900001, Layout.Train, null));
+        }
+
+        [Test]
+        public void S1V2_PerceptTeacher_NoOracle_Survives()
+        {
+            var w = new UnifiedWorld(new UnifiedConfig { Persons = 2, Starts = 1 }, 7, Layout.Train, null);
+            var t = new SurvivalTeacher { PerceptOnly = true };
+            var rec = new List<Sequence>();
+            var ep = Rollout.Run(w, t, 7, 3 * w.TicksPerDay, evaluation: false, record: rec);
+            Assert.That(t.OracleSteps, Is.EqualTo(0), "the percept-only teacher never walks the path oracle");
+            Assert.That(ep.AdultsAliveAt(ep.Ticks), Is.EqualTo(2));
+            Assert.That(w.Drinks, Is.GreaterThan(0)); Assert.That(w.Forages, Is.GreaterThan(0));
+            Assert.That(rec.All(s => s.Origin == ControlOrigin.Teacher && s.Samples.Count > 0));
+        }
+
+        [Test]
         public void S1_FounderPolicyV1_LoadsThroughHeaderCheck_NeverTrained()
         {
             var a = ArtifactLoader.LoadVerified(1);
