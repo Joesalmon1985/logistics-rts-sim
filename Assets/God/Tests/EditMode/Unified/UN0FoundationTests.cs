@@ -480,8 +480,13 @@ namespace God.Sim.Tests
             Assert.AreEqual(80, (int)TelemetryDomain.UnifiedWorld); Assert.AreEqual(88, (int)TelemetryDomain.Groups);
             Assert.AreEqual((800, 899), EventCatalog.RangeOf(TelemetryDomain.Divine, false)); Assert.AreEqual((900, 999), EventCatalog.RangeOf(TelemetryDomain.Lab, false));
             Assert.AreEqual((100, 199), EventCatalog.RangeOf(TelemetryDomain.Population, false)); Assert.AreEqual((1, 99), EventCatalog.RangeOf(TelemetryDomain.Population, true));
-            Assert.AreEqual(0, UnifiedEvents.Catalog.Count, "the owners' arrays are empty at UN0");
-            foreach (var e in EventCatalog.All) Assert.IsTrue(e.Code < 1200 || e.Code > 1399, "no event in the unified block yet: " + e.Name);
+            // UN2 (flagged hunk in UN0's test): the owners fill their arrays; every unified row lies in the unified range and in a block
+            foreach (var e in UnifiedEvents.Catalog)
+            {
+                Assert.That(e.Code, Is.InRange(1200, 1399), e.Name);
+                Assert.IsTrue(new[] { "UN1", "UN2", "UN4", "UN3b", "UN7", "UN8a", "UN6", "UB1", "UN8b" }.Any(p => { var (lo, hi) = UnifiedEvents.BlockOf(p); return e.Code >= lo && e.Code <= hi; }), e.Name);
+            }
+            foreach (var e in EventCatalog.All) if (e.Code >= 1200 && e.Code <= 1399) CollectionAssert.Contains(UnifiedEvents.Catalog.Select(x => x.Type).ToList(), e.Type, "only unified rows in the block: " + e.Name);
             Assert.AreEqual(EventCatalog.All.Count, EventCatalog.All.Select(e => e.Code).Distinct().Count(), "codes unique");
             foreach (var pkg in new[] { "UN1", "UN5", "UN2", "UN4", "UN3b", "UN7", "UN8a", "UN6", "UN6t", "UB1", "UN8b" })
             {
@@ -530,12 +535,13 @@ namespace God.Sim.Tests
                 var prim = new DivineControlInput { God = 1, Body = body.Id, Kind = ControlInputKind.Primitive, Primitive = new PrimitiveControl { Control = Prim.TurnLeft, Actor = body.Id } };
                 var heading = new DivineControlInput { God = 1, Body = body.Id, Kind = ControlInputKind.Stop };
                 var rp = handler.Validate(s, prim); var rh = handler.Validate(s, heading);
-                Assert.IsFalse(rp.Ok, "no motor at UN0 (unified) / no unified game (legacy): " + rp.Reason);
-                Assert.AreEqual(Reasons.Disabled, rp.Reason);
+                // UN2 (flagged hunk in UN0's test): the motor answers the seam in a unified game; a legacy game still refuses it
+                if (unified) Assert.IsTrue(rp.Ok, "UN2's motor accepts the primitive: " + rp.Reason);
+                else { Assert.IsFalse(rp.Ok, "no unified game (legacy): " + rp.Reason); Assert.AreEqual(Reasons.Disabled, rp.Reason); }
                 if (unified) { Assert.IsFalse(rh.Ok, "legacy kinds are off in a unified game"); Assert.AreEqual(Reasons.Disabled, rh.Reason); }
                 else Assert.IsTrue(rh.Ok, "legacy kinds unchanged in a legacy game");
-                Assert.AreEqual(unified ? MotorStatus.Disabled : MotorStatus.Disabled, UnifiedHooks.CheckPossessed(s, body.Id, prim.Primitive.Value));
-                Assert.AreEqual(MotorStatus.Disabled, UnifiedHooks.SubmitPossessed(s, ev, body.Id, ControlKind.Possessed, prim.Primitive.Value), "the seam answers Disabled until UN2");
+                Assert.AreEqual(unified ? MotorStatus.Accepted : MotorStatus.Disabled, UnifiedHooks.CheckPossessed(s, body.Id, prim.Primitive.Value));
+                Assert.AreEqual(unified ? MotorStatus.Accepted : MotorStatus.Disabled, UnifiedHooks.SubmitPossessed(s, ev, body.Id, ControlKind.Possessed, prim.Primitive.Value), "the seam answers Disabled outside a unified game");
             }
             // a command without the primitive writes no Primitive field (pending hash of older commands unchanged)
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new DivineControlInput { God = 1, Kind = ControlInputKind.Stop }, SaveFile.Settings);
