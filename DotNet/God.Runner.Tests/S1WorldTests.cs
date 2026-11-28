@@ -63,6 +63,21 @@ namespace God.Runner.Tests
         }
 
         [Test]
+        public void S1_FounderPolicyV1_LoadsThroughHeaderCheck_NeverTrained()
+        {
+            var a = ArtifactLoader.LoadVerified(1);
+            Assert.That(a.Status, Is.EqualTo(ArtifactLoader.StatusFailed), "TR-01 did not pass: the artifact is FAILED-TR01, never TRAINED");
+            Assert.That(a.InputMap, Is.EqualTo(BrainInput.MapV2));
+            Assert.That(a.NetShape, Is.EqualTo("298,24,32,64,166"));
+            Assert.That(a.ThresholdsHash, Does.StartWith("b4a5136240c7db9e"));
+            var w = new UnifiedWorld(new UnifiedConfig { Persons = 1, BrainKind = BrainKind.Trained, Artifact = 1 }, 21, Layout.Train, null);
+            var ep = Rollout.Run(w, new GameBrainActor(), 21, 600, evaluation: true);
+            Assert.That(ep.Decisions, Is.GreaterThan(0));
+            Assert.That(w.Runtime.Injected, Is.False, "the game's own brain decides");
+            Assert.That(Brain.Badge(w.State).Label, Does.Not.Contain("TRAINED").Or.Contain("FAILED"), "a failed artifact is never labelled trained");
+        }
+
+        [Test]
         public void S1_InputMap_RescalesAndDerives()
         {
             var obs = new short[ObsSchema.Length];

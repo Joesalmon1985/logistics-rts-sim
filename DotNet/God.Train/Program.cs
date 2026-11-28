@@ -256,7 +256,7 @@ namespace God.Train
             bool stub = Flag(a, "stub");
             var seeds = SeedPolicy.ParseSeeds(Opt(a, "seeds", stub ? $"{t.SelfTestSeeds[0]}-{t.SelfTestSeeds[1]}" : $"{t.HeldOutSeeds[0]}-{t.HeldOutSeeds[1]}"));
             var arms = Opt(a, "arms", "untrained,frozen,trained").Split(',');
-            var setup = new EvalSetup { World = stub ? "stub" : "unified", Seeds = seeds, Workers = Int(a, "workers", 8) };
+            var setup = new EvalSetup { World = stub ? "stub" : "unified", Seeds = seeds, Workers = Int(a, "workers", 8), Persons = Int(a, "persons", 0) };
             string stageId = null;
             foreach (var name in arms)
             {

@@ -68,9 +68,9 @@ namespace God.Train.Artifact
             foreach (var f in ArtifactHeader.StringFields) sb.Append("        public const string ").Append(f).Append(" = @\"").Append(((string)typeof(ArtifactHeader).GetField(f).GetValue(h)).Replace("\"", "\"\"")).Append("\";\n");
             int chunks = (b64.Length + ChunkChars - 1) / ChunkChars;
             sb.Append("        /// <summary>The weights' base64 in order (join the chunks).</summary>\n");
-            sb.Append("        public static readonly string[] WeightsBase64 = { ");
+            sb.Append("        public static readonly God.Sim.ReadOnlyArray<string> WeightsBase64 = new God.Sim.ReadOnlyArray<string>(");
             for (int i = 0; i < chunks; i++) sb.Append(i > 0 ? ", " : "").Append("Chunk").Append(i);
-            sb.Append(" };\n");
+            sb.Append(");\n");
             for (int i = 0; i < chunks; i++)
                 sb.Append("        private const string Chunk").Append(i).Append(" = \"").Append(b64, i * ChunkChars, Math.Min(ChunkChars, b64.Length - i * ChunkChars)).Append("\";\n");
             sb.Append("    }\n}\n");

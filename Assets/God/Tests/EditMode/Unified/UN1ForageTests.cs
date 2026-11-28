@@ -412,9 +412,10 @@ namespace God.Sim.Tests
         {
             const int driveOnly = 0x01F, noThirstMask = 0xFFF & ~(1 << (int)NeedChannel.Thirst);
             const int day = 1200;
-            var off = Game(10, t => t.Unification.Needs.ActiveMask = driveOnly);
-            var noThirst = Game(10, t => t.Unification.Needs.ActiveMask = noThirstMask);
-            var thirsty = Game(10);
+            // the needs alone: no brain decides (a deciding brain would act differently on different observed masks)
+            var off = Game(10, t => { t.Unification.Needs.ActiveMask = driveOnly; t.Unification.UN6.Decide = 0; });
+            var noThirst = Game(10, t => { t.Unification.Needs.ActiveMask = noThirstMask; t.Unification.UN6.Decide = 0; });
+            var thirsty = Game(10, t => t.Unification.UN6.Decide = 0);
             for (int i = 0; i < 10 * day; i++) { off.Step(); noThirst.Step(); thirsty.Step(); }
             var so = off.State; var sn = noThirst.State; var st = thirsty.State;
             foreach (var n in so.Population.Npcs.Where(Bodies.IsPerson))

@@ -26,6 +26,8 @@ namespace God.Train.Eval
         public long[] Seeds;
         public int NeedMask = 0x033;
         public int Workers = 1;
+        /// <summary>Unified world: persons per episode when not the measure's own (a supplementary run, labelled; never the T1 scenario).</summary>
+        public int Persons;
         public StubConfig Stub = new StubConfig();
         public List<ArmSpec> Arms = new List<ArmSpec>();
     }
@@ -71,14 +73,17 @@ namespace God.Train.Eval
                 if (why != null) throw new InvalidOperationException("the unified world cannot be evaluated yet: " + why);
                 if (setup.Seeds.Length != t.HeldOutSeeds[1] - t.HeldOutSeeds[0] + 1 || setup.Seeds[0] != t.HeldOutSeeds[0])
                     throw new InvalidOperationException($"a held-out evaluation runs exactly the seeds {t.HeldOutSeeds[0]}-{t.HeldOutSeeds[1]} (no subset, no cherry-picking)");
-                res.Label = "held-out evaluation";
+                res.Label = setup.Persons > 0 && setup.Persons != m1.Population
+                    ? $"SUPPLEMENTARY held-out run, {setup.Persons} person(s) per episode (not the T1 scenario of {m1.Population}; gate values below are not TR-01 results)"
+                    : "held-out evaluation";
+                if (setup.Persons > 0) res.Population = setup.Persons;
             }
             res.Seeds.AddRange(setup.Seeds);
 
             IWorld Make(long seed, ArmSpec arm)
             {
                 if (setup.World == "unified")
-                    return new UnifiedWorld(new UnifiedConfig { Persons = m1.Population, NeedMask = setup.NeedMask, PainBand = t.PainBandDefault, BrainKind = arm.GameBrainKind, Artifact = arm.GameArtifact },
+                    return new UnifiedWorld(new UnifiedConfig { Persons = setup.Persons > 0 ? setup.Persons : m1.Population, NeedMask = setup.NeedMask, PainBand = t.PainBandDefault, BrainKind = arm.GameBrainKind, Artifact = arm.GameArtifact },
                         seed, Layouts.ForEvalSeed(seed), access);
                 var cfg = new StubConfig
                 {

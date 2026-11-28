@@ -112,7 +112,7 @@ namespace God.Sim.Tests
         {
             var off = Game(5, false); off.Step(300);
             Assert.Greater(off.State.Population.Stats.Decisions, 0, "the legacy path decides");
-            var on = Game(5, true); on.Step(300);
+            var on = Game(5, true, 0, t => t.Unification.UN6.Decide = 0); on.Step(300); // the legacy path only: no brain decides (a brain's SLEEP sets Verb.Sleep, UN2)
             Assert.AreEqual(0, on.State.Population.Stats.Decisions, "Thinker.Think never runs in a unified game");
             foreach (var n in People(on.State)) { Assert.AreEqual(0, n.Action.Verb, "no legacy verb starts"); Assert.AreEqual(0, n.Mind.DayDecisions); }
             Assert.Less(on.State.Population.Npcs.First(Bodies.IsPerson).Drives[God.Sim.Learning.Drive.Hunger], 1000001, "Body() still runs");
@@ -465,7 +465,8 @@ namespace God.Sim.Tests
             Assert.AreEqual(MotorStatus.Disabled, t.Validate(Game(14, false).State, in call), "nothing applies outside a unified game");
             for (int k = 1; k <= 20; k++) Assert.IsNotNull(EffectRegistry.OwnerOf((EffectKind)k), "owner of kind " + k);
             Assert.IsNull(EffectRegistry.OwnerOf((EffectKind)21));
-            Assert.AreEqual(MotorStatus.Disabled, EffectRegistry.Validate(s, in call), "the game's table is empty at UN0");
+            // slice 1: the game's table registers UN1's Forage/DrinkWash and UN3b's Eat (subset); an Eat call with no carried source lot is refused physically
+            Assert.AreEqual(MotorStatus.Invalid, EffectRegistry.Validate(s, in call), "Eat is registered; nothing carried to eat");
             Assert.AreEqual(Catalogue.Objects.Count == 0 && Catalogue.Buildings.Count == 0, Catalogue.IsEmpty, "IsEmpty agrees with the tables (UN3a fills them)");
         }
 

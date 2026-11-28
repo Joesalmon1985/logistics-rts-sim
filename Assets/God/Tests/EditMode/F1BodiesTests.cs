@@ -37,6 +37,7 @@ namespace God.Sim.Tests
             ["PopulationState.cs|int lo = 0, hi = Npcs.Count - 1;"] = "Find (binary search over every record)",
             ["DivineActs.cs|foreach (var n in p.Npcs)"] = "D2: where a named lot is now: any carrier's carry (an avatar's too)",
             ["PopulationSystem.cs|foreach (var npc in p.Npcs)"] = "goods physics: carried lots spoil whoever carries them (DayStart spoiling)",
+            ["Resolver.cs|foreach (var n in p.Npcs) if (n.Carry != null) foreach (var l in n.Carry) if (!l.Empty && l.Id == lot) { node = n.Node; ware = l.Ware; return true; }"] = "goods physics: a lot is located wherever it physically is, in any body's carry (UN2's Resolver.LocateLot)",
         };
 
         private static readonly Regex LoopRe = new Regex(@"foreach\s*\(\s*var\s+\w+\s+in\s+[\w.?]*\bNpcs\s*\)|\bfor\s*\(.*\bNpcs\.Count|=\s*[\w.]*\bNpcs\.Count\s*[;-]", RegexOptions.Compiled);

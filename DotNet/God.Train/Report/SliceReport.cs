@@ -21,12 +21,14 @@ namespace God.Train.Report
         {
             var sb = new StringBuilder();
             var v = Verdict.Compute(r, t);
+            bool supplementary = r.Label.StartsWith("SUPPLEMENTARY");
             sb.Append("# Slice 1 held-out report (").Append(r.World).Append(" world)\n\n");
             sb.Append("- ").Append(r.Label).Append("; seeds ").Append(r.Seeds.First()).Append('-').Append(r.Seeds.Last()).Append(" (").Append(r.Seeds.Count).Append("), ")
               .Append(r.Population).Append(" persons per episode, ").Append(r.Days).Append(" days x ").Append(r.TicksPerDay).Append(" ticks; need mask 0x").Append(r.NeedMask.ToString("X3"))
               .Append("; pain band ").Append(r.PainBand).Append(" permille.\n");
             sb.Append("- Thresholds `TRAINING_THRESHOLDS.md` hash `").Append(r.ThresholdsHash).Append("` (v").Append(r.ThresholdsVersion).Append(").\n");
             sb.Append("- Layouts (seed mod 4): mirrored / rotated / regenerated / unfamiliar start, all on regenerated held-out boards; teacher-free, no oracle, divinity off.\n");
+            if (supplementary) sb.Append("- **Supplementary run: the measures below use the T1-T7 formulas on a different population; they are not TR-01 results and no threshold is applied.**\n");
             sb.Append("- **Verdict: ").Append(v.Headline).Append("**");
             if (v.FailedGate.Count > 0) sb.Append(" (gate not met: ").Append(string.Join("; ", v.FailedGate)).Append(')');
             sb.Append(".\n\n");
@@ -42,7 +44,7 @@ namespace God.Train.Report
                     if (m == null) { sb.Append(" - |"); continue; }
                     if (!m.Evaluable) { sb.Append(" not evaluable |"); continue; }
                     string val = m.Kind.StartsWith("seeds_with") ? m.Count + "/" + m.Of : m.Value.ToString("0.000", Inv);
-                    sb.Append(' ').Append(val).Append(a.Name == "trained" ? (m.Met ? " met" : " **not met**") : "").Append(" |");
+                    sb.Append(' ').Append(val).Append(a.Name == "trained" && !supplementary ? (m.Met ? " met" : " **not met**") : "").Append(" |");
                 }
                 sb.Append('\n');
             }

@@ -19,7 +19,7 @@ namespace God.Sim.Unified
         public const int Derived = 14;
 
         private const byte Raw = 0, Turn = 1, Dist = 2, Small = 3, Bits = 4, X100 = 5, X300 = 6, X80 = 7, X60 = 8;
-        private static readonly byte[] Kind = Build();
+        private static readonly ReadOnlyArray<byte> Kind = new ReadOnlyArray<byte>(Build());
 
         private static byte[] Build()
         {
@@ -43,7 +43,7 @@ namespace God.Sim.Unified
         /// <summary>The network input of value <paramref name="v"/> at vector index <paramref name="i"/> under <paramref name="map"/>, clamped to +-<paramref name="clamp"/>.</summary>
         public static int Apply(int map, int i, int v, int clamp)
         {
-            if (map >= MapV1 && i < Kind.Length)
+            if (map >= MapV1 && i < Kind.Count)
             {
                 switch (Kind[i])
                 {
