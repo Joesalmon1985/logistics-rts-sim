@@ -34,13 +34,14 @@ namespace God.Sim.Unified
             var live = new HashSet<int>();
             foreach (var n in p.Npcs)
             {
+                bool person = Bodies.IsPerson(n); // every body's carry is checked; only people have a unified record
                 foreach (var l in n.Carry)
                 {
                     if (l.Empty) continue;
                     live.Add(l.Id);
                     if (!l.Owner.IsNone) bad.Add("U-C5: lot " + l.Id + " carried by " + n.Id + " has an owner (" + l.Owner + ")");
                 }
-                if (Bodies.IsPerson(n) && n.Alive && u.PersonOf(n.Id) == null) bad.Add("U-C4: person " + n.Id + " has no unified record");
+                if (person && n.Alive && u.PersonOf(n.Id) == null) bad.Add("U-C4: person " + n.Id + " has no unified record");
             }
             foreach (var g in p.Lots)
             {

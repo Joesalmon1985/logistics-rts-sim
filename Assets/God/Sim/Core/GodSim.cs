@@ -107,7 +107,7 @@ namespace God.Sim
             ulong seed = setup.Seed;
             var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim"), Setup = setup, Tuning = tuning != null ? tuning.Clone() : new SimTuning() };
             if (Unified.Unified.Requested(s.Tuning)) s.Unification = Unified.UnifiedModule.NewState(s); // UN0: before any goods exist (founder packs get origins)
-            s.Board = BoardGenerator.CreateIslandBoard(seed);
+            s.Board = BoardGenerator.CreateBoard(seed, s.Tuning); // UN1 (R85): the unified 61-hex disc when Unification.Enabled = 1
             FactionsModule.StartGame(s);
             TerritoryModule.StartGame(s);
             MilitaryModule.StartGame(s);

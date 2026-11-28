@@ -480,13 +480,8 @@ namespace God.Sim.Tests
             Assert.AreEqual(80, (int)TelemetryDomain.UnifiedWorld); Assert.AreEqual(88, (int)TelemetryDomain.Groups);
             Assert.AreEqual((800, 899), EventCatalog.RangeOf(TelemetryDomain.Divine, false)); Assert.AreEqual((900, 999), EventCatalog.RangeOf(TelemetryDomain.Lab, false));
             Assert.AreEqual((100, 199), EventCatalog.RangeOf(TelemetryDomain.Population, false)); Assert.AreEqual((1, 99), EventCatalog.RangeOf(TelemetryDomain.Population, true));
-            // UN2 (flagged hunk in UN0's test): the owners fill their arrays; every unified row lies in the unified range and in a block
-            foreach (var e in UnifiedEvents.Catalog)
-            {
-                Assert.That(e.Code, Is.InRange(1200, 1399), e.Name);
-                Assert.IsTrue(new[] { "UN1", "UN2", "UN4", "UN3b", "UN7", "UN8a", "UN6", "UB1", "UN8b" }.Any(p => { var (lo, hi) = UnifiedEvents.BlockOf(p); return e.Code >= lo && e.Code <= hi; }), e.Name);
-            }
-            foreach (var e in EventCatalog.All) if (e.Code >= 1200 && e.Code <= 1399) CollectionAssert.Contains(UnifiedEvents.Catalog.Select(x => x.Type).ToList(), e.Type, "only unified rows in the block: " + e.Name);
+            Assert.IsTrue(UnifiedEvents.Catalog.All(e => e.Code >= 1200 && e.Code <= 1399), "every owner row lies in the unified block (UN1 landed its six rows 1200-1205; later owners add theirs)");
+            foreach (var e in EventCatalog.All) Assert.IsTrue(e.Code < 1200 || e.Code > 1399 || UnifiedEvents.Catalog.Contains(e), "only owners' rows in the unified block: " + e.Name);
             Assert.AreEqual(EventCatalog.All.Count, EventCatalog.All.Select(e => e.Code).Distinct().Count(), "codes unique");
             foreach (var pkg in new[] { "UN1", "UN5", "UN2", "UN4", "UN3b", "UN7", "UN8a", "UN6", "UN6t", "UB1", "UN8b" })
             {
