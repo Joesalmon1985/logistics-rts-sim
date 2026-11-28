@@ -1,0 +1,62 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Divinity\DivinityEvents.D1.cs(28,23): warning CS0108: 'GodCreated.Name' hides inherited member 'DomainEvent.Name'. Use the new keyword if hiding was intended. [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Divinity\DivinityEvents.D1.cs(108,21): warning CS0108: 'DivineObservationAnswered.Domain' hides inherited member 'DomainEvent.Domain'. Use the new keyword if hiding was intended. [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Unified\Percept\Percept.UN2.cs(18,27): warning CS0282: There is no defined ordering between fields in multiple declarations of partial struct 'Percept'. To specify an ordering, all instance fields must be in the same declaration. [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Comms\Messages.cs(125,50): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Social\SocialMind.cs(224,23): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Social\SocialMind.cs(224,63): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Social\SocialMind.cs(224,100): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Social\SocialMind.cs(225,23): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Unified\Brain\BrainState.UN6.cs(31,38): warning CS0675: Bitwise-or operator used on a sign-extended operand; consider casting to a smaller unsigned type first [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\Assets\God\Sim\Divinity\Miracles.cs(96,24): warning CS0649: Field 'Miracles.Plan.Place' is never assigned to, and will always have its default value 0 [C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\God.Sim.csproj]
+  God.Sim -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim\bin\Release\netstandard2.1\God.Sim.dll
+  God.Catalogue -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Catalogue\bin\Release\net8.0\God.Catalogue.dll
+  God.Recording -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Recording\bin\Release\netstandard2.1\God.Recording.dll
+  God.Sim.Tests -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim.Tests\bin\Release\net10.0\God.Sim.Tests.dll
+Test run for C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Sim.Tests\bin\Release\net10.0\God.Sim.Tests.dll (.NETCoreApp,Version=v10.0)
+  God.Train -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Train\bin\Release\net10.0\god-train.dll
+A total of 1 test files matched the specified pattern.
+  God.Runner -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Runner\bin\Release\net10.0\God.Runner.dll
+  Skipped BalanceReport_Seeds1To12 [< 1 ms]
+  Skipped Dump_Seed [< 1 ms]
+  Skipped Influences_NotUniversally [< 1 ms]
+
+Passed!  - Failed:     0, Passed:   675, Skipped:     0, Total:   675, Duration: 1 m 16 s - God.Sim.Tests.dll (net10.0)
+  God.Runner.Tests -> C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Runner.Tests\bin\Release\net10.0\God.Runner.Tests.dll
+Test run for C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-s1b\DotNet\God.Runner.Tests\bin\Release\net10.0\God.Runner.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+  Skipped Report_OwnersUseOutput_20Seeds [< 1 ms]
+  Skipped Diagnose_SharedStore [< 1 ms]
+  Skipped Scenario4_IndependentInstitution [11 s]
+  Skipped ConceptionMode1_RaisesCompletedFertility_F2_T3 [< 1 ms]
+  Skipped IBS5_MutualExchange_BothBelievedGainsPositive [< 1 ms]
+  Skipped L2b_SatedEatingAfterRepeatedHungerRelief [< 1 ms]
+  Skipped L5_ForgettingOfALearnedPlace [< 1 ms]
+  Skipped LS3_Hut20Points [< 1 ms]
+  Skipped LS4_Axe20Points [< 1 ms]
+  Skipped LS4_Conjunction80 [< 1 ms]
+  Skipped L13_FirstFishChoice [< 1 ms]
+  Skipped L2_LongerNaturalRun [< 1 ms]
+  Skipped L2_PerSeedDistribution [< 1 ms]
+  Skipped L2_SatedEatingInTheProbeRun [< 1 ms]
+  Skipped L3_FillerChoiceAndValues [< 1 ms]
+  Skipped L5_L6_Controls [< 1 ms]
+  Skipped L5_PlaceValueByDay40 [< 1 ms]
+  Skipped L8_PerPairDistribution [< 1 ms]
+  Skipped LS1_MissedProbes [< 1 ms]
+  Skipped LS1_PerSeedDistribution [< 1 ms]
+  Skipped LS1_WithoutExplorationNoise [< 1 ms]
+  Skipped Band6x20_30Days_Diagnostics [< 1 ms]
+  Skipped Band6x20_30Days_Invariants [< 1 ms]
+  Skipped Fertility_Diagnostics [< 1 ms]
+  Skipped SharedChildcare_ExploitedArrangementEndedByTheOther_M4_29 [< 1 ms]
+  Skipped Default_6xN_Generations_15Years_M4_27 [< 1 ms]
+  Skipped DemographicSweep_Sampled_M4_33 [< 1 ms]
+  Skipped M5_11_L16_Communication_LearnsToAskAFriendWhoAnswers [< 1 ms]
+  Skipped M5_6_L14_SocialTermOff [< 1 ms]
+  Skipped M5_6_L14_AvoidanceAfterBeingCheated_AndRecovery [< 1 ms]
+  Skipped M5_6_L14_SocialTermOn [< 1 ms]
+  Skipped M5_15_CounterOffersOccur [< 1 ms]
+
+Passed!  - Failed:     0, Passed:   342, Skipped:     1, Total:   343, Duration: 27 m 20 s - God.Runner.Tests.dll (net10.0)
