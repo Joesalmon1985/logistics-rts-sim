@@ -154,6 +154,15 @@ namespace God.Sim.Unified
             if (e.Origin == Origin.Own) e.Flags = (byte)((e.Flags & ~3) | (int)origin);
         }
 
+        /// <summary>Injects a policy into this game's decision site (see <see cref="BrainRuntime.Inject"/>); false when the game is not unified.</summary>
+        public static bool InjectPolicy(GodSim sim, IPrimitivePolicy policy, ControlOrigin origin)
+        {
+            var rt = sim?.State?.Unification?.BrainRuntime;
+            if (rt == null) return false;
+            rt.Inject(policy, origin);
+            return true;
+        }
+
         // ---------------------------------------------------------------- the badge (TR-01 honesty)
 
         /// <summary>The brain of this game, as every report and the HUD must name it.</summary>
@@ -163,14 +172,20 @@ namespace God.Sim.Unified
             if (rec == null) return new BrainBadge { Kind = -1, Label = "NONE", WeightsSha256 = "" };
             var rt = s.Unification.BrainRuntime;
             bool trained = rec.Kind == BrainKind.Trained && rt != null && rt.Artifact != null && rt.Artifact.StatusIsTrained
-                && rt.Policy is TrainedPolicy && ArtifactLoader.Verify(rt.Artifact, ArtifactLoader.CurrentCatalogueHash()) == null;
+                && rt.Policy is TrainedPolicy && !rt.Injected && ArtifactLoader.Verify(rt.Artifact, ArtifactLoader.CurrentCatalogueHash()) == null;
             return new BrainBadge { Kind = rec.Kind, Label = rec.Label, ArtifactVersion = rec.ArtifactVersion, WeightsSha256 = rec.WeightsSha256, Trained = trained };
         }
 
         /// <summary>The one-line report string ("Brain: FALLBACK (scripted safety controller; not trained)").</summary>
         public static string Report(GodState s)
         {
-            var b = Badge(s);
+            var rt = s?.Unification?.BrainRuntime;
+            string inj = rt != null && rt.Injected ? "; decisions by an injected policy (origin " + rt.Origin + "), not the game's brain" : "";
+            return ReportOf(Badge(s)) + inj;
+        }
+
+        private static string ReportOf(BrainBadge b)
+        {
             switch (b.Kind)
             {
                 case BrainKind.Untrained: return "Brain: UNTRAINED (random initial weights, seed-fixed; not trained) weights " + b.WeightsSha256;

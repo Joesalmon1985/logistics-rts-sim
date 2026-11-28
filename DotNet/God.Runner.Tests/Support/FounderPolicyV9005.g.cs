@@ -15,7 +15,7 @@ namespace God.Sim.Unified
         public const string Status = @"TRAINED";
         public const string ObsSchemaHash = @"81bef353bb749321af0048d97c60a3041f1d3e285e1098b2b423a421c37b95c4";
         public const string ActSchemaHash = @"797154328f0bcb15d9b43cb8ff4bacf7d3eef71b9ef2a0971b71a1c418e23c81";
-        public const string CatalogueHash = @"empty-catalogue";
+        public const string CatalogueHash = @"f764df01de6b98aa5cc61e612b300446cf87366bda971804428544d9455405a0";
         public const string TuningHash = @"un6-test";
         public const string CurriculumId = @"none";
         public const string StagesTrained = @"";

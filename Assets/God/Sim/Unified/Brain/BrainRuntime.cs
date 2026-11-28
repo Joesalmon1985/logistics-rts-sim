@@ -46,7 +46,7 @@ namespace God.Sim.Unified
 
         private BrainRuntime(GodState s, int kind, string label, string sha, BrainArtifact artifact, IPrimitivePolicy policy)
         {
-            Kind = kind; Label = label; WeightsSha256 = sha; Artifact = artifact; Policy = policy;
+            Kind = kind; Label = label; WeightsSha256 = sha; Artifact = artifact; Policy = policy; _own = policy;
             Body = new MotorBody();
             var t = s.Tuning.Unification.UN6;
             OverlayTune = new LearningTuning { EpisodesOn = false, Entries = t.OverlayEntries, Conjunctions = 0, Traces = t.OverlayTraces, Episodes = 0, Moments = 0, GammaPermille = t.OverlayGamma };
@@ -102,6 +102,25 @@ namespace God.Sim.Unified
             }
             return rt;
         }
+
+        /// <summary>
+        /// Replaces this game's deciding policy (the trainer's network, an evaluation arm, the teacher, a test fixture), with the origin
+        /// its controls are submitted under. Per game, never static: several sims in one process run different policies in parallel.
+        /// The game's brain record (kind, label, hash) is unchanged and an injected policy is never reported as trained
+        /// (<see cref="Brain.Badge"/> requires the game's own <see cref="TrainedPolicy"/>). Null restores the game's own policy.
+        /// </summary>
+        public void Inject(IPrimitivePolicy policy, ControlOrigin origin)
+        {
+            Policy = policy ?? Own;
+            Origin = policy == null ? ControlOrigin.Policy : origin;
+        }
+
+        /// <summary>The policy of the game's own brain kind (what <see cref="Inject"/>(null) restores).</summary>
+        public IPrimitivePolicy Own => _own;
+        private IPrimitivePolicy _own;
+
+        /// <summary>True when the deciding policy is not the game's own (an injected one).</summary>
+        public bool Injected => !ReferenceEquals(Policy, _own);
 
         internal void Count(long tick, int macs)
         {

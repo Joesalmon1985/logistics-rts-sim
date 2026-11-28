@@ -40,12 +40,15 @@ namespace God.Sim.Unified
     /// against the shape, the <c>Obs</c>/<c>Act</c> schema versions and hashes, and the catalogue hash. With <c>Brain.Kind = 1</c> any
     /// failure refuses to start the game (<see cref="BrainRefused"/>); there is no silent downgrade.
     /// <para>Versions <see cref="TestFirst"/>-<see cref="TestLast"/> are test artifacts: they are also looked up in the other loaded
-    /// assemblies (UN6's tests compile their tiny generated artifacts there) and can never carry the status "TRAINED".</para>
+    /// assemblies (UN6's tests compile their tiny generated artifacts there) and can never carry the status "TRAINED". A "SELF-TEST"
+    /// artifact outside that range is refused; "INTERIM" and "FAILED-TR01" artifacts run labelled by their status, never as trained.</para>
     /// </summary>
     public static class ArtifactLoader
     {
         public const string Namespace = "God.Sim.Unified";
         public const int TestFirst = 9000, TestLast = 9999;
+        /// <summary>The other statuses of UN6t's header: a harness self-test (only test versions load it), an interim and a failed TR-01 artifact (load, labelled, never trained).</summary>
+        public const string StatusSelfTest = "SELF-TEST", StatusInterim = "INTERIM", StatusFailed = "FAILED-TR01";
 
         public static string ClassName(int version) => "FounderPolicyV" + version.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
@@ -131,7 +134,10 @@ namespace God.Sim.Unified
             catch (Exception e) when (e is FormatException || e is ArgumentException) { return "net shape: " + e.Message; }
             if (a.Weights == null || a.Weights.Length != a.WeightCount || shape.Count != a.Weights.Length) return "weight count mismatch";
             if (BrainNet.WeightsSha256(a.Weights) != a.WeightsSha256) return "weights hash mismatch";
-            if (a.Version >= TestFirst && a.Version <= TestLast && a.StatusIsTrained) return "a test artifact cannot be TRAINED";
+            bool test = a.Version >= TestFirst && a.Version <= TestLast;
+            if (test && a.StatusIsTrained) return "a test artifact cannot be TRAINED";
+            if (a.Status == StatusSelfTest && !test) return "a SELF-TEST artifact (harness self-test, stub world) cannot run as a game brain";
+            if (a.Status != BrainArtifact.StatusTrained && a.Status != StatusInterim && a.Status != StatusFailed && a.Status != StatusSelfTest) return "unknown artifact status '" + a.Status + "'";
             return null;
         }
 
