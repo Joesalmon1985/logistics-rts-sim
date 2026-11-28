@@ -92,6 +92,75 @@ namespace God.Sim.Unified
         /// <summary>The source lot of option <paramref name="option"/> of the <c>source</c> head (4 carry slots, then the empty hand = 0).</summary>
         public static int SourceOf(in Percept p, int option) => option >= 0 && option < ObsSchema.CarrySlots && p.CarryLot != null ? p.CarryLot[option] : 0;
 
+        /// <summary>The quantity of each of the 16 buckets of the <c>quantity</c> head (a default: UN6 may retune by a new Act version).</summary>
+        public static readonly ReadOnlyArray<short> QuantityBuckets = new ReadOnlyArray<short>(0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 30, 50, 100, 999);
+
+        /// <summary>The referent of option <paramref name="option"/> of a <c>referent</c> head (16 entity slots, 4 carry slots, self, none).</summary>
+        public static Referent ReferentOf(GodState s, in Percept p, int option)
+        {
+            var r = default(Referent);
+            if (option >= 0 && option < p.EntityCount)
+            {
+                switch (p.EntityKind[option])
+                {
+                    case SpatialKind.Npc: r.Kind = ReferentKind.Person; r.Id = p.EntityId[option]; break;
+                    case SpatialKind.Lot: r.Kind = ReferentKind.Lot; r.Id = p.EntityId[option]; r.Ware = (short)GroundWare(s.Population, p.EntityId[option]); break;
+                    default: r.Kind = ReferentKind.Place; r.Id = p.EntityNode[option]; break;
+                }
+            }
+            else if (option >= ObsSchema.Entities && option < ObsSchema.Entities + ObsSchema.CarrySlots)
+            {
+                int lot = SourceOf(in p, option - ObsSchema.Entities);
+                if (lot != 0)
+                {
+                    r.Kind = ReferentKind.Lot; r.Id = lot;
+                    var n = s.Population.Find(p.Actor);
+                    r.Ware = (short)(n != null ? Motor.WareOfLot(s, n, lot) : 0);
+                }
+            }
+            else if (option == ObsSchema.Entities + ObsSchema.CarrySlots) { r.Kind = ReferentKind.Person; r.Id = p.Actor; }
+            return r;
+        }
+
+        /// <summary>The design of option <paramref name="option"/> of the <c>design</c> head: the i-th design the body knows (by row), 0 for none.</summary>
+        public static ushort DesignOf(BrainState b, int option)
+        {
+            if (b == null || option < 0 || option >= 32) return 0;
+            int i = 0;
+            for (int row = 0; row < BrainState.DesignBits; row++)
+                if (Knowledge.Knows(b, KnowledgeKind.Design, row)) { if (i == option) return CatId.Building(row); i++; }
+            return 0;
+        }
+
+        /// <summary>
+        /// Decodes one factorised Act v1 choice (one option per head) into the <see cref="PrimitiveControl"/> the motor takes: the
+        /// percept's entity slots become targets and referents, carry slots become the source lot, the design option the known design.
+        /// Fields a control does not use are left at their defaults.
+        /// </summary>
+        public static PrimitiveControl ControlOf(GodState s, in Percept p, int control, int target, int source, int slot, int design, int gesture,
+            int referent1, int referent2, int quantity)
+        {
+            var c = new PrimitiveControl { Control = (Prim)(control < 0 || control > (int)Prim.Wait ? 0 : control), Actor = p.Actor };
+            c.Target = TargetOf(in p, target);
+            c.SourceLot = SourceOf(in p, source);
+            c.Slot = (byte)(slot < 0 || slot > 3 ? 0 : slot);
+            c.Design = DesignOf(s.Unification?.PersonOf(p.Actor)?.Brain, design);
+            if (c.Design != 0 && c.Control == Prim.Use && c.Target.Kind == TargetKind.Facing)
+            {
+                int node = s.Territory.Grid.Neighbour(p.Node, p.Facing);
+                c.Target = new TargetRef(TargetKind.Placement, node);
+            }
+            if (c.Control == Prim.Gesture)
+            {
+                c.Gesture = (byte)(gesture < 0 || gesture > 31 ? 0 : gesture);
+                c.R1 = ReferentOf(s, in p, referent1); c.R2 = ReferentOf(s, in p, referent2);
+                c.Quantity = quantity >= 0 && quantity < QuantityBuckets.Count ? QuantityBuckets[quantity] : (short)0;
+            }
+            else if (c.Control == Prim.Take || c.Control == Prim.Drop)
+                c.Quantity = quantity > 0 && quantity < QuantityBuckets.Count ? QuantityBuckets[quantity] : (short)0;
+            return c;
+        }
+
         /// <summary>The class of a ware (its catalogue id, or 3000 + ware).</summary>
         public static int ClassOfWare(InteractionBook book, Ware w)
         {
@@ -145,8 +214,11 @@ namespace God.Sim.Unified
             v[OOccupying] = (short)(u.Occupying != 0 ? ObsSchema.Scale : 0);
             v[OEquipped] = S(u.Equipped != 0 ? ClassOfWare(book, (Ware)Motor.WareOfLot(s, npc, u.Equipped)) : 0);
             // ---- body
-            for (int d = 0; d < Drive.Count && d < NeedChannels.FirstExtension; d++) v[ONeeds + d] = S(npc.Drives[d] / 1000);
-            for (int i = 0; i < NeedChannels.Extensions; i++) v[ONeeds + NeedChannels.FirstExtension + i] = u.Needs[i];
+            // the twelve pressures in NeedChannel order (drive c = channel c, R86 mapping); an inactive channel reads 0 (as UN1's body reading)
+            for (int d = 0; d < Drive.Count && d < NeedChannels.FirstExtension; d++)
+                if (Unified.NeedActive(s, (NeedChannel)d)) v[ONeeds + d] = S(System.Math.Min(1000, npc.DriveOf(d)));
+            for (int i = 0; i < NeedChannels.Extensions; i++)
+                if (Unified.NeedActive(s, (NeedChannel)(NeedChannels.FirstExtension + i))) v[ONeeds + NeedChannels.FirstExtension + i] = u.Needs[i];
             v[OHealth] = S(npc.HealthPermille);
             v[OInjury] = S(npc.Injury / 1000);
             v[OAge] = (short)npc.Stage;

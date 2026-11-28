@@ -216,6 +216,58 @@ namespace God.Runner.Tests.Support
             return k;
         }
 
+        /// <summary>
+        /// The scripted-displacement hook (UN6t T5): interrupts what <paramref name="npc"/> is doing (<see cref="InterruptReason.Divine"/>;
+        /// a sleeper is woken) and walks it away from where it stood, one primitive at a time through <see cref="Motor.Submit"/> with
+        /// origin <see cref="ControlOrigin.Fixture"/> (turn towards the passable neighbour farthest from the start, ties by the lower
+        /// direction, then step), stepping <paramref name="sim"/> until the body is at least <paramref name="cells"/> lattice steps from
+        /// its start or <paramref name="maxTicks"/> ran out. Works on any unified <c>GodSim</c> (a fixture's or a trainer's). Returns
+        /// the ticks stepped; <paramref name="submitted"/> receives every control sent (a replayable stream). Scripted: never an
+        /// evaluation population's behaviour.
+        /// </summary>
+        public static int Displace(GodSim sim, int npc, int cells, int maxTicks = 600, List<ScriptedControl> submitted = null, EventBuffer ev = null, List<MotorStatus> statuses = null)
+        {
+            var s = sim.State; var g = s.Territory.Grid;
+            var body = s.Population.Find(npc);
+            Assert.IsNotNull(body, "no such body");
+            int start = body.Node;
+            ev = ev ?? new EventBuffer();
+            ev.CurrentTick = s.Tick;
+            Motor.Interrupt(s, ev, npc, InterruptReason.Divine);
+            int t = 0;
+            for (; t < maxTicks && body.Alive && g.Distance(start, body.Node) < cells; t++)
+            {
+                if (!Motor.Busy(s, npc) && !body.Action.Asleep)
+                {
+                    int best = -1, bestD = -1;
+                    for (int d = 0; d < 6; d++)
+                    {
+                        int x = g.Neighbour(body.Node, d);
+                        if (x >= 0 && Motor.Passable(s, x) && g.Distance(start, x) > bestD) { bestD = g.Distance(start, x); best = d; }
+                    }
+                    if (best < 0) break; // boxed in
+                    int face = s.Unification.PersonOf(npc).Facing;
+                    var c = new PrimitiveControl { Actor = npc };
+                    c.Control = best == face ? Prim.StepForward : ((best - face + 6) % 6 <= 3 ? Prim.TurnRight : Prim.TurnLeft);
+                    ev.CurrentTick = s.Tick;
+                    var st = Motor.Submit(s, ev, in c, ControlOrigin.Fixture);
+                    submitted?.Add(new ScriptedControl(s.Tick, c)); statuses?.Add(st);
+                }
+                sim.Step();
+            }
+            return t;
+        }
+
+        /// <summary><see cref="Displace(GodSim,int,int,int,List{ScriptedControl},EventBuffer,List{MotorStatus})"/> on this fixture (recorded and its events kept).</summary>
+        public int Displace(Npc n, int cells, int maxTicks = 600)
+        {
+            var sent = new List<ScriptedControl>(); var sts = new List<MotorStatus>();
+            int t = Displace(Sim, n.Id, cells, maxTicks, sent, _ev, sts);
+            Recorded.AddRange(sent); Results.AddRange(sts);
+            Drain(); Sim.DrainInto(Events);
+            return t;
+        }
+
         /// <summary>Plays a stream: each control is submitted at its tick (relative to <paramref name="from"/>), then ticks run up to <paramref name="until"/>.</summary>
         public void Play(IReadOnlyList<ScriptedControl> stream, ControlOrigin origin, long until, long from = 0, Action<PrimitiveFixture> atTick = null)
         {

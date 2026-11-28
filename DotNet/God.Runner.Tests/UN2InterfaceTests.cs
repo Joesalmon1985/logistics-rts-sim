@@ -131,7 +131,7 @@ namespace God.Runner.Tests
             // the default (generated, empty at UN0) catalogue and the empty registry: NoInteraction, never an exception
             var d = UN2MotorTests.Two(7, out var a2, out _);
             int l2 = d.Ground(a2.Node, Ware.Log, 1);
-            Assert.AreEqual(Catalogue.IsEmpty ? MotorStatus.NoInteraction : Motor.Check(d.S, d.C(Prim.Use, a2, T(TargetKind.Lot, l2))), d.Submit(d.C(Prim.Use, a2, T(TargetKind.Lot, l2))));
+            Assert.AreEqual(God.Sim.Unified.Catalogue.IsEmpty ? MotorStatus.NoInteraction : Motor.Check(d.S, d.C(Prim.Use, a2, T(TargetKind.Lot, l2))), d.Submit(d.C(Prim.Use, a2, T(TargetKind.Lot, l2))));
             Assert.IsEmpty(f.Invariants());
             TestContext.WriteLine($"T7: rows applied {string.Join(",", h.Applied)}; durations 10/10/5/2; OutOfReach, NoInteraction, NotKnown, Occupied refused");
         }
@@ -595,5 +595,48 @@ namespace God.Runner.Tests
             Assert.AreEqual(200, l.Count);
             Assert.Greater(f.Of<ControlApplied>().Count(), 50);
         }
-    }
+
+        // ---------------------------------------------------------------- hooks for UN6t (decoding a choice; T5's displacement)
+
+        [Test]
+        public void Percept_DecodeChoice()
+        {
+            var f = UN2MotorTests.Two(21, out var a, out var b);
+            int rock = f.Ground(f.Grid.Neighbour(a.Node, 1), Ware.Rock, 1);
+            int grain = f.InCarry(a, Ware.Grain, 1);
+            Knowledge.Learn(f.Rec(a).Brain, KnowledgeKind.Design, 4);
+            var p = new Percept(); Percept.Encode(f.S, a.Id, ref p);
+            int eb = Enumerable.Range(0, p.EntityCount).Single(e => p.EntityKind[e] == SpatialKind.Npc && p.EntityId[e] == b.Id);
+            int er = Enumerable.Range(0, p.EntityCount).Single(e => p.EntityKind[e] == SpatialKind.Lot && p.EntityId[e] == rock);
+            var take = Percept.ControlOf(f.S, in p, (int)Prim.Take, er, Motor.SourceEmpty, 0, Motor.DesignNone, 0, Motor.ReferentNone, Motor.ReferentNone, 0);
+            Assert.AreEqual(Prim.Take, take.Control); Assert.AreEqual(TargetKind.Lot, take.Target.Kind); Assert.AreEqual(rock, take.Target.Id); Assert.AreEqual(0, take.SourceLot);
+            var g = Percept.ControlOf(f.S, in p, (int)Prim.Gesture, eb, 0, 0, Motor.DesignNone, (int)GestureAct.Offer, ObsSchema.Entities, eb, 4);
+            Assert.AreEqual(TargetKind.Npc, g.Target.Kind); Assert.AreEqual(b.Id, g.Target.Id);
+            Assert.AreEqual(ReferentKind.Lot, g.R1.Kind); Assert.AreEqual(grain, g.R1.Id); Assert.AreEqual((short)Ware.Grain, g.R1.Ware);
+            Assert.AreEqual(ReferentKind.Person, g.R2.Kind); Assert.AreEqual(b.Id, g.R2.Id); Assert.AreEqual(4, g.Quantity);
+            var place = Percept.ControlOf(f.S, in p, (int)Prim.Use, Motor.TargetFacing, Motor.SourceEmpty, 0, 0, 0, Motor.ReferentNone, Motor.ReferentNone, 0);
+            Assert.AreEqual(CatId.Building(4), place.Design); Assert.AreEqual(TargetKind.Placement, place.Target.Kind);
+            Assert.AreEqual(f.Grid.Neighbour(a.Node, f.Rec(a).Facing), place.Target.Id);
+            Assert.AreEqual(MotorStatus.Accepted, f.Submit(take), "a decoded choice is a control the motor takes");
+        }
+
+        [Test]
+        public void UN2_Fixture_Displacement()
+        {
+            var f = UN2MotorTests.Two(22, out var a, out var b);
+            var h = new CountingEffect();
+            f.UseTables(TestBook(), TableOf(h));
+            int log = f.Ground(a.Node, Ware.Log, 1);
+            Assert.AreEqual(MotorStatus.Accepted, f.Submit(f.C(Prim.Use, a, T(TargetKind.Lot, log))));
+            f.Step(4);
+            int start = a.Node;
+            int ticks = f.Displace(a, 3);
+            Assert.GreaterOrEqual(f.Grid.Distance(start, a.Node), 3, "displaced at least 3 cells");
+            var ai = f.Of<ActionInterrupted>().Single(e => e.Actor == a.Id);
+            Assert.AreEqual(Prim.Use, ai.Control); Assert.AreEqual(InterruptReason.Divine, ai.Reason);
+            Assert.AreEqual(0, h.Applies, "the interrupted unit applied nothing");
+            Assert.IsTrue(f.Of<ControlApplied>().Where(e => e.Actor == a.Id && e.Control != Prim.Use).All(e => e.Origin == ControlOrigin.Fixture));
+            Assert.IsTrue(f.Results.Skip(1).All(st => st == MotorStatus.Accepted), "every displacement primitive accepted");
+            TestContext.WriteLine($"displacement: 3 cells in {ticks} ticks with {f.Recorded.Count - 1} primitives (origin Fixture)");
+        }    }
 }
