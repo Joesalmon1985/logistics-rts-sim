@@ -132,12 +132,13 @@ namespace God.Sim.Unified
             if (a.ObsSchemaVersion != ObsSchema.Version || a.ObsSchemaHash != ObsSchema.SchemaHash) return "Obs schema changed";
             if (a.ActSchemaVersion != ActSchema.Version || a.ActSchemaHash != ActSchema.SchemaHash) return "Act schema changed";
             if (catalogueHash != null && a.CatalogueHash != catalogueHash) return "catalogue changed";
-            if (a.InputMap != BrainInput.MapRaw && a.InputMap != BrainInput.MapV1) return "unknown input map " + a.InputMap;
+            if (a.InputMap < BrainInput.MapRaw || a.InputMap > BrainInput.MapV2) return "unknown input map " + a.InputMap;
             if (a.WeightScaleShift != BrainNet.WeightShift) return "weight scale shift " + a.WeightScaleShift + " is not " + BrainNet.WeightShift;
             BrainShape shape;
             try { shape = BrainShape.Parse(a.NetShape); }
             catch (Exception e) when (e is FormatException || e is ArgumentException) { return "net shape: " + e.Message; }
             if (a.Weights == null || a.Weights.Length != a.WeightCount || shape.Count != a.Weights.Length) return "weight count mismatch";
+            if ((shape.In > ObsSchema.Length) != (a.InputMap == BrainInput.MapV2)) return "input map " + a.InputMap + " does not fit a network input of " + shape.In;
             if (BrainNet.WeightsSha256(a.Weights) != a.WeightsSha256) return "weights hash mismatch";
             bool test = a.Version >= TestFirst && a.Version <= TestLast;
             if (test && a.StatusIsTrained) return "a test artifact cannot be TRAINED";

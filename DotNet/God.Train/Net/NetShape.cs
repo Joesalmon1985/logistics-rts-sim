@@ -35,6 +35,9 @@ namespace God.Train.Net
 
         public static NetShape Default => new NetShape(ObsSchema.Length, 24, 32, 64, ActSchema.Length);
 
+        /// <summary>The unified world's shape (slice 1): the 284 observation values plus input map 2's derived inputs.</summary>
+        public static NetShape Unified => new NetShape(ObsSchema.Length + BrainInput.Derived, 24, 32, 64, ActSchema.Length);
+
         /// <summary>Worst-case multiply-accumulates of one decision.</summary>
         public int MacPerDecision => In * Enc + Enc * Dense + 2 * Rec * Dense + Rec * Heads.MaxLogitsPerDecision();
 

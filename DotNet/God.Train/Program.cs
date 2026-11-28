@@ -40,6 +40,7 @@ namespace God.Train
                     case "probe": return Probe(a, o, e);
                     case "dagger": return Dagger(a, o, e);
                     case "s1-report": return SliceReportCmd(a, o, e);
+                    case "validate": return ValidateCmd(a, o, e);
                     case "demo": return Demo(a, o, e);
                     case "bc": return Bc(a, o, e);
                     case "es": return Es(a, o, e);
@@ -109,7 +110,7 @@ namespace God.Train
             var w = new UnifiedWorld(cfg, seed, Honesty.Layout.Train, null);
             string which = Opt(a, "actor", "teacher");
             IActor actor = which == "teacher" ? new Teacher.SurvivalTeacher() : which == "game" ? new GameBrainActor()
-                : new NetActor((Opt(a, "ckpt") != null ? Checkpoint.Load(Opt(a, "ckpt")) : Checkpoint.Untrained(NetShape.Default, 1, "unified")).ToQNet());
+                : new NetActor((Opt(a, "ckpt") != null ? Checkpoint.Load(Opt(a, "ckpt")) : Checkpoint.Untrained(NetShape.Unified, 1, "unified")).ToQNet());
             int days = Int(a, "days", 3);
             var sw = Stopwatch.StartNew();
             var ep = Rollout.Run(w, actor, seed, (long)days * w.TicksPerDay, evaluation: false);
@@ -119,7 +120,7 @@ namespace God.Train
             for (int c = 1; c < 13; c++) if (w.Applied[c] + w.Failed[c] > 0) line.Append($" {(God.Sim.Unified.Prim)c} {w.Applied[c]}/{w.Applied[c] + w.Failed[c]}");
             o.WriteLine(line.ToString());
             o.WriteLine("  refused: " + string.Join(", ", System.Linq.Enumerable.Select(w.Refused, kv => kv.Key + " " + kv.Value)));
-            if (actor is Teacher.SurvivalTeacher stt) o.WriteLine($"  teacher: steered by percept/memory {stt.Steered}, oracle steps {stt.OracleSteps}");
+            if (actor is Teacher.SurvivalTeacher stt) o.WriteLine($"  teacher: steered by percept/memory {stt.Steered}, explored {stt.Explored}, oracle steps {stt.OracleSteps}");
             foreach (var p in ep.People)
                 o.WriteLine($"  person {p.Person}: adult {p.Adult}, death tick {p.DeathTick} ({p.Cause}), cells {p.CellsVisited}, pain(h|t) {p.PainTicksHungerThirst}/{p.PersonTicks}, return {p.Return}");
             return Ok;
@@ -154,6 +155,22 @@ namespace God.Train
             return Ok;
         }
 
+        /// <summary>A stage's criteria on its validation seeds (training-side model selection; never held-out) for a checkpoint.</summary>
+        private static int ValidateCmd(Dictionary<string, string> a, TextWriter o, TextWriter e)
+        {
+            bool stub = Flag(a, "stub");
+            if (RealWorldRefused(a, e)) return Unavailable;
+            var st = CurriculumData.Load(Opt(a, "stage", "S2"));
+            // optional harder validation episodes (same validation seeds): more persons, more days
+            if (a.ContainsKey("persons")) st.Population = Int(a, "persons", st.Population);
+            if (a.ContainsKey("days")) st.Days = Int(a, "days", st.Days);
+            if (a.ContainsKey("vseeds")) st.ValidationSeeds = Int(a, "vseeds", st.ValidationSeeds);
+            var net = Checkpoint.Load(Opt(a, "ckpt")).ToQNet();
+            var val = Pipeline.Validate(st, net, Int(a, "workers", 8), null, stub);
+            o.WriteLine(Pipeline.CriteriaJson(st, CurriculumData.Check(st, val), double.NaN, Pipeline.MeanReturn(val), stub));
+            return Ok;
+        }
+
         private static int Demo(Dictionary<string, string> a, TextWriter o, TextWriter e)
         {
             var seeds = SeedPolicy.ParseSeeds(Opt(a, "seeds", "1-8"));
@@ -182,7 +199,7 @@ namespace God.Train
             if (Opt(a, "demos") != null) { demos = new List<Sequence>(); foreach (var f in Opt(a, "demos").Split(',')) demos.AddRange(DemoFile.Read(f)); }
             else demos = Pipeline.Demos(st, seeds, workers, -1, stub);
             var ckPath = Path.Combine(dir, "bc.ckpt");
-            var start = Flag(a, "resume") && File.Exists(ckPath) ? Checkpoint.Load(ckPath) : Checkpoint.Untrained(NetShape.Default, (ulong)Int(a, "init-seed", 1), stub ? "stub" : "unified");
+            var start = Flag(a, "resume") && File.Exists(ckPath) ? Checkpoint.Load(ckPath) : Checkpoint.Untrained(stub ? NetShape.Default : NetShape.Unified, (ulong)Int(a, "init-seed", 1), stub ? "stub" : "unified");
             start.Stage = st.Id; start.SeedsText = "demo seeds " + Opt(a, "seeds", "1-8");
             var cfg = new BcConfig { Epochs = Int(a, "epochs", st.BcEpochs), Workers = workers, Batch = Int(a, "batch", 4), Lr = double.Parse(Opt(a, "lr", "0.003"), System.Globalization.CultureInfo.InvariantCulture) };
             var ck = BehaviourCloning.Train(start, demos, cfg, (start.Kind == "bc" ? start.Step : 0) + cfg.Epochs, (ep, loss) => o.WriteLine($"bc epoch {ep}: loss {loss:0.0000}"));
@@ -244,16 +261,6 @@ namespace God.Train
             foreach (var name in arms)
             {
                 Checkpoint ck; string brain;
-                if (!stub && name == "untrained")
-                {
-                    // the game's own untrained brain: the same network, random weights from UN6.UntrainedSeed (= the file's untrainedInitSeed)
-                    int seed = new God.Sim.SimTuning().Unification.UN6.UntrainedSeed;
-                    if ((ulong)seed != (ulong)t.UntrainedInitSeed) { e.WriteLine($"refused: UN6.UntrainedSeed {seed} != thresholds untrainedInitSeed {t.UntrainedInitSeed}"); return Refused; }
-                    var w = God.Sim.Unified.BrainNet.UntrainedWeights(God.Sim.Unified.BrainShape.Default, (ulong)seed);
-                    setup.Arms.Add(new ArmSpec { Name = name, Brain = "untrained", WeightsSha256 = God.Sim.Unified.BrainNet.WeightsSha256(w), ArtifactStatus = "game Brain.Kind = 0",
-                        Actor = () => new GameBrainActor(), GameBrainKind = God.Sim.Unified.BrainKind.Untrained });
-                    continue;
-                }
                 if (!stub && name == "trained" && Opt(a, "artifact") != null)
                 {
                     // the frozen artifact, loaded by the game through UN6's header check (Brain.Kind = 1)
@@ -264,14 +271,15 @@ namespace God.Train
                     if (stageId == null) stageId = Opt(a, "stage");
                     continue;
                 }
-                if (name == "untrained") { ck = Checkpoint.Untrained(NetShape.Default, t.UntrainedInitSeed, "stub"); brain = "untrained"; }
+                if (name == "untrained") { ck = Checkpoint.Untrained(stub ? NetShape.Default : NetShape.Unified, t.UntrainedInitSeed, stub ? "stub" : "unified"); brain = "untrained"; }
                 else if (name == "frozen") { ck = Checkpoint.Load(Opt(a, "frozen", Path.Combine(dir, "bc.ckpt"))); brain = ck.Kind == "bc" ? "frozen" : "not-frozen:" + ck.Kind; }
                 else if (name == "trained") { ck = Checkpoint.Load(Opt(a, "trained", Path.Combine(dir, "es.ckpt"))); brain = ck.Kind == "es" ? "trained" : "not-trained:" + ck.Kind; }
                 else { e.WriteLine("unknown arm " + name + " (arms: untrained, frozen, trained)"); return Usage; }
                 if (ck.Kind != "init" && stageId == null) stageId = ck.Stage;
                 var net = ck.ToQNet();
                 string label = name == "frozen" ? "FROZEN (behaviour cloning)" : name.ToUpperInvariant();
-                setup.Arms.Add(new ArmSpec { Name = name, Brain = brain, WeightsSha256 = net.WeightsSha256(), ArtifactStatus = "checkpoint", Actor = () => new NetActor(net) { Label = label } });
+                string status = name == "untrained" ? "same shape, init seed " + t.UntrainedInitSeed + ", injected" : name == "frozen" ? "last BC checkpoint, injected" : "checkpoint, injected";
+                setup.Arms.Add(new ArmSpec { Name = name, Brain = brain, WeightsSha256 = net.WeightsSha256(), ArtifactStatus = status, Actor = () => new NetActor(net) { Label = label } });
             }
             setup.NeedMask = CurriculumData.Load(Opt(a, "stage", stageId ?? "S2")).NeedMask;
             var res = Evaluator.Run(t, Opt(a, "thresholds-hash"), setup);

@@ -90,7 +90,18 @@ namespace God.Train.Teacher
                 if (waterFirst && Steer(s, ref p, true, m, out var c1)) { Steered++; return c1; }
                 if (wantFood && Steer(s, ref p, false, m, out var c2)) { Steered++; return c2; }
                 if (wantWater && Steer(s, ref p, true, m, out var c3)) { Steered++; return c3; }
-                // nothing perceived or remembered: the path oracle (training only)
+                // nothing perceived or remembered: explore in a straight line (step forward; turn right when blocked), an imitable
+                // search; only in an emergency (thirst or hunger near damage) the path oracle (training only)
+                if (wantWater || wantFood)
+                {
+                    bool emergency = waterNeed && thirst >= OracleThirst || foodNeed && hunger >= OracleHunger;
+                    if (!emergency)
+                    {
+                        Explored++;
+                        if (p.V[OCells] != 0 && Allowed(m, Prim.StepForward)) return ActionChoice.Of(Prim.StepForward);
+                        return ActionChoice.Of(Prim.TurnRight);
+                    }
+                }
                 int step = -1;
                 if (waterFirst) step = NextNode(s, npc.Node, true);
                 if (step < 0 && wantFood) step = NextNode(s, npc.Node, false);
@@ -102,7 +113,9 @@ namespace God.Train.Teacher
         }
 
         /// <summary>Decisions steered by the body's own percept or place memory, and steps that needed the path oracle.</summary>
-        public long Steered, OracleSteps;
+        public long Steered, OracleSteps, Explored;
+        /// <summary>The emergency levels from which the path oracle replaces straight-line exploration.</summary>
+        public int OracleThirst = 750, OracleHunger = 850;
 
         private static readonly int OEnt = ObsSchema.OffsetOf("entities"), OPlaces = ObsSchema.OffsetOf("places"), OCells = ObsSchema.OffsetOf("cells");
 

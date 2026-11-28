@@ -18,7 +18,8 @@ namespace God.Sim.Unified
 
         public BrainShape(int input, int enc, int dense, int rec, int act)
         {
-            if (input != ObsSchema.Length) throw new ArgumentException("brain shape: input " + input + " is not the Obs v1 length " + ObsSchema.Length);
+            if (input != ObsSchema.Length && input != ObsSchema.Length + BrainInput.Derived)
+                throw new ArgumentException("brain shape: input " + input + " is neither the Obs v1 length " + ObsSchema.Length + " nor that plus input map 2's " + BrainInput.Derived + " derived inputs");
             if (act != ActSchema.Length) throw new ArgumentException("brain shape: heads " + act + " are not the Act v1 length " + ActSchema.Length);
             if (rec < 1 || rec > BrainState.RecurrentSize) throw new ArgumentException("brain shape: recurrent state " + rec + " outside 1-" + BrainState.RecurrentSize);
             if (enc < 1 || dense < 1) throw new ArgumentException("brain shape: empty layer");
@@ -120,8 +121,7 @@ namespace God.Sim.Unified
             var s = Shape; var w = W; var sc = _sc;
             int[] x = sc.X, a1 = sc.A1, a2 = sc.A2;
             int nIn = s.In, nEnc = s.Enc, nDense = s.Dense;
-            int map = InputMap;
-            for (int i = 0; i < nIn; i++) x[i] = BrainInput.Apply(map, i, obs[i], ObsClamp);
+            BrainInput.Fill(InputMap, obs, x, nIn, ObsClamp);
             var ws = new ReadOnlySpan<short>(w);
             var xs = new ReadOnlySpan<int>(x, 0, nIn);
             for (int j = 0; j < nEnc; j++)

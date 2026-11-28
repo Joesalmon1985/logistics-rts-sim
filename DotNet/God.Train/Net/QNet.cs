@@ -55,7 +55,7 @@ namespace God.Train.Net
         public void Recur(short[] obs, short[] h, QScratch sc)
         {
             var s = Shape; var w = W;
-            for (int i = 0; i < s.In; i++) sc.X[i] = BrainInput.Apply(InputMap, i, obs[i], ObsClamp);
+            BrainInput.Fill(InputMap, obs, sc.X, s.In, ObsClamp);
             for (int j = 0; j < s.Enc; j++)
             {
                 long acc = (long)w[s.B1 + j] * 1000; int row = s.W1 + j * s.In;

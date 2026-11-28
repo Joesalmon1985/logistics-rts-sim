@@ -63,6 +63,29 @@ namespace God.Runner.Tests
         }
 
         [Test]
+        public void S1_InputMap_RescalesAndDerives()
+        {
+            var obs = new short[ObsSchema.Length];
+            int ent = ObsSchema.OffsetOf("entities");
+            // slot 0: a person ahead at 2; slot 1: fresh water to the left (sector 5) at 1, in reach
+            obs[ent] = Percept.ClassPerson; obs[ent + 1] = 0; obs[ent + 2] = 2; obs[ent + 3] = 1;
+            int o = ent + ObsSchema.EntityFields;
+            obs[o] = Percept.ClassFreshWater; obs[o + 1] = 5; obs[o + 2] = 1; obs[o + 3] = 7 | 512;
+            Assert.That(BrainInput.Apply(BrainInput.MapRaw, o + 1, 5, 2000), Is.EqualTo(5), "map 0 is the raw vector");
+            Assert.That(BrainInput.Apply(BrainInput.MapV1, o + 1, 5, 2000), Is.EqualTo(-333), "a left sector becomes a signed turn");
+            Assert.That(BrainInput.Apply(BrainInput.MapV1, o + 2, 1, 2000), Is.EqualTo(100));
+            Assert.That(BrainInput.Apply(BrainInput.MapV1, o, Percept.ClassFreshWater, 2000), Is.EqualTo(600));
+            var x = new int[ObsSchema.Length + BrainInput.Derived];
+            BrainInput.Fill(BrainInput.MapV2, obs, x, x.Length, 2000);
+            int w = ObsSchema.Length;
+            Assert.That(new[] { x[w], x[w + 1], x[w + 2], x[w + 3], x[w + 4], x[w + 5], x[w + 6] }, Is.EqualTo(new[] { 1000, 0, 0, 1000, 100, 1000, 120 }), "nearest water: present, left, distance, in reach, slot 1");
+            Assert.That(x[w + 7], Is.EqualTo(0), "no food perceived or remembered");
+            var y = new int[ObsSchema.Length];
+            BrainInput.Fill(BrainInput.MapV1, obs, y, y.Length, 2000);
+            Assert.That(y, Is.EqualTo(x.Take(ObsSchema.Length).ToArray()), "map 2's first 284 inputs are map 1's");
+        }
+
+        [Test]
         public void S1_Network_Deterministic_AtDecisionSite()
         {
             var net = Checkpoint.Untrained(NetShape.Default, 1, "unified").ToQNet();
