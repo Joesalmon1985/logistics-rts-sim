@@ -224,6 +224,7 @@ namespace God.Train
             SeedPolicy.CheckTraining(seeds);
             if (RealWorldRefused(a, e)) return Unavailable;
             var st = CurriculumData.Load(Opt(a, "stage", "S2"));
+            if (a.ContainsKey("persons")) st.Population = Int(a, "persons", st.Population); // ES episodes of another tribe size (V2: 12)
             int workers = Int(a, "workers", 8);
             var dir = OutDir(a);
             var esPath = Path.Combine(dir, "es.ckpt");
