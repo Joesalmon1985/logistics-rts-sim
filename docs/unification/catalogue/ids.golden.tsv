@@ -1,0 +1,203 @@
+OBJ-001	5	Battle axe
+OBJ-002	6	Heavy battle axe
+OBJ-003	7	Beer
+OBJ-004	8	Blackwood
+OBJ-005	9	Bread paddle
+OBJ-006	10	Broad axe
+OBJ-007	11	Bronze axe
+OBJ-008	12	Cloth
+OBJ-009	13	Coal
+OBJ-010	14	Felling axe
+OBJ-011	15	Fire tongs
+OBJ-012	16	Fish
+OBJ-013	17	Fishing rod
+OBJ-014	18	Gold
+OBJ-015	19	Gold ore
+OBJ-016	20	Stone
+OBJ-017	21	Mortar
+OBJ-018	22	Hammer
+OBJ-019	23	Helmet
+OBJ-020	24	Hunting spear
+OBJ-021	25	Iron
+OBJ-022	26	Iron ore
+OBJ-023	27	Kitchen tools
+OBJ-024	28	Wood
+OBJ-025	29	Helmet mask
+OBJ-026	30	Meal
+OBJ-027	31	Meat
+OBJ-028	32	Pick
+OBJ-029	33	Bread
+OBJ-030	34	Ration
+OBJ-031	35	Reed
+OBJ-032	36	Scythe
+OBJ-033	37	Sharp axe
+OBJ-034	38	Shovel
+OBJ-035	39	Snack
+OBJ-036	40	Strong beer
+OBJ-037	41	Warhelm
+OBJ-038	42	Warriors axe
+OBJ-039	43	Water
+OBJ-040	44	Wheat
+OBJ-041	45	Clay
+OBJ-042	46	Sheep
+OBJ-043	47	Hay
+OBJ-044	48	Mushrooms
+OBJ-045	49	Roots
+OBJ-046	50	Wild eggs
+OBJ-047	51	Rabbit
+OBJ-048	52	Wild vegetables
+OBJ-049	53	Cactus fruit
+OBJ-050	54	Seaweed
+OBJ-051	55	Charcoal
+OBJ-052	56	Wheat seed
+OBJ-053	57	Raw meat
+OBJ-054	58	Cooked fish
+OBJ-055	59	Hide
+OBJ-056	60	Wool
+OBJ-057	61	Copper ore
+OBJ-058	62	Copper
+OBJ-059	63	Tin ore
+OBJ-060	64	Tin
+OBJ-061	65	Bronze
+OBJ-062	66	Steel
+OBJ-063	67	Planks
+OBJ-064	68	Pottery
+OBJ-065	69	Brick
+OBJ-066	70	Building block
+OBJ-067	71	Leather
+OBJ-068	72	Stone hammer
+OBJ-069	73	Stone axe
+OBJ-070	74	Stone pick
+OBJ-071	75	Wood tongs
+OBJ-072	76	Cattle
+OBJ-073	77	Ferry
+OBJ-074	78	Ship
+OBJ-075	79	Herbs
+OBJ-076	80	Sword
+OBJ-077	81	Spear
+OBJ-078	82	Bow
+OBJ-079	83	Sling
+OBJ-080	84	Big shield
+OBJ-081	85	Small shield
+OBJ-082	86	Breastplate
+OBJ-083	87	Light armour
+OBJ-084	88	Bedding
+OBJ-085	89	Painting board / easel
+OBJ-086	90	Fish basin
+OBJ-087	91	Living display fish
+OBJ-088	92	Drink counter
+OBJ-089	93	Cooking grate
+OBJ-090	94	Hide ball
+OBJ-091	95	Hoop / ball target
+OBJ-092	96	Bed
+OBJ-093	97	Sleeping mat
+OBJ-094	98	Tally token
+OBJ-095	99	Record rack
+OBJ-096	100	Rattle alarm
+OBJ-097	101	Stool
+OBJ-098	102	Strategy board
+OBJ-099	103	Sun marker
+OBJ-100	104	Infusion pot
+OBJ-101	105	Herbal infusion
+OBJ-102	106	Work surface
+OBJ-103	107	Cradle
+OBJ-104	108	Wash basin
+OBJ-105	109	Low jump platform
+OBJ-106	110	Model hut
+OBJ-107	111	Storage chest
+OBJ-108	112	Carved ornament
+OBJ-109	113	Grinding stone
+OBJ-110	114	Flour
+OBJ-111	115	Food stall
+OBJ-112	116	Water feature
+OBJ-113	117	Waste basket
+OBJ-114	118	Waste
+OBJ-115	119	Memorial stone
+OBJ-116	120	Potted plant
+OBJ-117	121	Climbing frame
+OBJ-118	122	Medicine box
+OBJ-119	123	Toy cart
+OBJ-120	124	Unusual plant
+OBJ-121	125	Notice board
+OBJ-122	126	Pigment
+OBJ-123	127	Wall art
+OBJ-124	128	Drum
+OBJ-125	129	Target game
+OBJ-126	130	Cool storage chest
+OBJ-127	131	Bench
+OBJ-128	132	Fire warning station
+OBJ-129	133	Bathing pool
+OBJ-130	134	Message token
+OBJ-131	135	Story circle
+OBJ-132	136	Toy
+OBJ-133	137	Toy box
+OBJ-134	138	Waste pit
+OBJ-135	139	Training stone
+OBJ-136	140	Latrine
+OBJ-137	141	Water jug
+OBJ-138	142	Cleaning cloth
+BLD-001	5	Communal hall
+BLD-002	6	Fisher's shelter
+BLD-003	7	Gamekeeper's Hut
+BLD-004	8	Hunter's Hut
+BLD-005	9	Woodcutter's shelter
+BLD-006	10	Stonecutter's shelter
+BLD-007	11	Ranger's Hut
+BLD-008	12	Scout's Hut
+BLD-009	13	Sentry
+BLD-010	14	Well
+BLD-011	15	Bakery
+BLD-012	16	Barracks
+BLD-013	17	Barrier
+BLD-014	18	Charcoal Kiln
+BLD-015	19	Ferry Yard
+BLD-016	20	Lime Kiln
+BLD-017	21	Metal Workshop
+BLD-018	22	Micro Brewery
+BLD-019	23	Reed Yard
+BLD-020	24	Shipyard
+BLD-021	25	Smelting Works
+BLD-022	26	Tavern
+BLD-023	27	Tower
+BLD-024	28	Warehouse
+BLD-025	29	Wood Hardener
+BLD-026	30	Ax Workshop
+BLD-027	31	Big Inn
+BLD-028	32	Brewery
+BLD-029	33	Inn
+BLD-030	34	War Mill
+BLD-031	35	Battle Arena
+BLD-032	36	Cattle Farm
+BLD-033	37	Farm
+BLD-034	38	Fortress
+BLD-035	39	Helm Smithy
+BLD-036	40	Market
+BLD-037	41	Training Camp
+BLD-038	42	Weaving Mill
+BLD-039	43	Citadel
+BLD-040	44	Coal Mine
+BLD-041	45	Gold Mine
+BLD-042	46	Granite Mine
+BLD-043	47	Iron Mine
+BLD-044	48	Deep Coal Mine
+BLD-045	49	Deep Gold Mine
+BLD-046	50	Deep Iron Mine
+BLD-047	51	Deeper Coal Mine
+BLD-048	52	Deeper Gold Mine
+BLD-049	53	Deeper Iron Mine
+BLD-050	54	Port
+BLD-051	55	Clay gatherer's shelter
+BLD-052	56	Shepherd's shelter
+BLD-053	57	Hay gatherer's shelter
+BLD-054	58	Primitive hearth
+BLD-055	59	Carpenter
+BLD-056	60	Pottery
+BLD-057	61	Stone workshop
+BLD-058	62	Sheep pen
+BLD-059	63	Tannery
+BLD-060	64	Copper Mine
+BLD-061	65	Primitive forge
+BLD-062	66	Settlement
+BLD-063	67	Road
+BLD-064	68	Seed plot
+BLD-065	69	Tin Mine

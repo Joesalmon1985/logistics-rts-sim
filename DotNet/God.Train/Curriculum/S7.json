@@ -1,0 +1,31 @@
+{
+  "id": "S7",
+  "curriculum": "founder-v1",
+  "content": "offer, promise, hand-over and non-reciprocation",
+  "generator": "small_island",
+  "population": 6,
+  "needMask": 4095,
+  "days": 10,
+  "waitsFor": [
+    "UN7"
+  ],
+  "stubSupported": false,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "seeds_with_handover_share",
+      "op": ">=",
+      "value": 0.4
+    }
+  ]
+}
