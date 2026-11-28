@@ -19,7 +19,10 @@ namespace God.Sim.Population
             if (s.Setup == null || !s.Setup.Population) return;
             var p = new PopulationState { OpenPileUnits = new int[s.Territory.Topology.HexCount] };
             s.Population = p;
-            PlaceSources(s);
+            // UN0 (R85, UN0 spec 5.4): a unified world package may replace the legacy wild sources and founders (default: kept)
+            bool unified = Unified.Unified.On(s);
+            if (!unified || !Unified.UnifiedHooks.ReplacesSources(s)) PlaceSources(s);
+            if (!unified || !Unified.UnifiedHooks.ReplacesFounders(s))
             foreach (var f in s.Setup.Factions)
             {
                 var hqs = s.Territory.HqsOf(f);
@@ -165,6 +168,7 @@ namespace God.Sim.Population
 
         public static int Weight(Ware w)
         {
+            if (Unified.UnifiedWares.InBlock(w)) return Unified.UnifiedWares.Weight(w); // UN0: the unification block (catalogue numbers)
             if (Wares.IsFood(w)) return 1;
             if (w == Ware.Axe || Wares.IsGear(w)) return 2;
             if (w == Ware.Log || w == Ware.Clay || w == Ware.Stone || w == Ware.Ore || w == Ware.Plank || w == Ware.Brick || w == Ware.Mortar) return 4;
@@ -417,18 +421,33 @@ namespace God.Sim.Population
         /// F1.17: the ledger in the pre-F1 order (reason-major, wares 0-31: exactly the old array), then, only when any ware
         /// 32-39 has a non-zero count under any reason, a marker and those slots, so the population part is unchanged until a
         /// ware beyond 31 (Herbs) is produced or consumed.
+        /// <para>UN0 (contracts 23.14): the ledger is 16 reasons x 160 wares; the two blocks above cover reasons 0-7 and wares
+        /// 0-39 exactly as before. Then, only when any slot outside that window (wares 40-159 of reasons 0-7, or any ware of
+        /// reasons 8-15) is non-zero, a second marker and every such non-zero slot as (index, value) in index order.</para>
         /// </summary>
         internal static void HashLedger(ref StateHasher h, GoodsLedger l)
         {
-            const int Old = Wares.LegacyPersonalCount, W = Wares.PersonalCount;
-            bool extra = false;
-            for (int r = 0; r < GoodsLedger.ProduceReasons; r++) for (int w = 0; w < W; w++) { long v = l.Produced[r * W + w]; if (w < Old) h.Add(v); else if (v != 0) extra = true; }
-            for (int r = 0; r < GoodsLedger.ConsumeReasons; r++) for (int w = 0; w < W; w++) { long v = l.Consumed[r * W + w]; if (w < Old) h.Add(v); else if (v != 0) extra = true; }
-            if (!extra) return;
-            h.Add(0x48455242); // "HERB"
-            for (int r = 0; r < GoodsLedger.ProduceReasons; r++) for (int w = Old; w < W; w++) h.Add(l.Produced[r * W + w]);
-            for (int r = 0; r < GoodsLedger.ConsumeReasons; r++) for (int w = Old; w < W; w++) h.Add(l.Consumed[r * W + w]);
+            const int Old = Wares.LegacyPersonalCount, F1 = Wares.F1PersonalCount, W = Wares.PersonalCount, R = GoodsLedger.LegacyReasons;
+            bool extra = false, wide = false;
+            for (int r = 0; r < R; r++) for (int w = 0; w < F1; w++) { long v = l.Produced[r * W + w]; if (w < Old) h.Add(v); else if (v != 0) extra = true; }
+            for (int r = 0; r < R; r++) for (int w = 0; w < F1; w++) { long v = l.Consumed[r * W + w]; if (w < Old) h.Add(v); else if (v != 0) extra = true; }
+            if (extra)
+            {
+                h.Add(0x48455242); // "HERB"
+                for (int r = 0; r < R; r++) for (int w = Old; w < F1; w++) h.Add(l.Produced[r * W + w]);
+                for (int r = 0; r < R; r++) for (int w = Old; w < F1; w++) h.Add(l.Consumed[r * W + w]);
+            }
+            for (int i = 0; i < l.Produced.Length && !wide; i++) if (l.Produced[i] != 0 && Wide(i)) wide = true;
+            for (int i = 0; i < l.Consumed.Length && !wide; i++) if (l.Consumed[i] != 0 && Wide(i)) wide = true;
+            if (!wide) return;
+            h.Add(0x554E4946); // "UNIF"
+            for (int i = 0; i < l.Produced.Length; i++) if (l.Produced[i] != 0 && Wide(i)) { h.Add(i); h.Add(l.Produced[i]); }
+            h.Add(-1);
+            for (int i = 0; i < l.Consumed.Length; i++) if (l.Consumed[i] != 0 && Wide(i)) { h.Add(i); h.Add(l.Consumed[i]); }
         }
+
+        /// <summary>A ledger slot outside the F1 window (reason 8+ or ware 40+).</summary>
+        private static bool Wide(int i) => i / Wares.PersonalCount >= GoodsLedger.LegacyReasons || i % Wares.PersonalCount >= Wares.F1PersonalCount;
 
         public static ulong HashCognition(GodState s)
         {

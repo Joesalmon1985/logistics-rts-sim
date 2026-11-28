@@ -64,6 +64,7 @@ namespace God.Sim
             if (s.Civ != null) Civ.CivModule.Check(s, bad);                         // F1.5: Civ, Orgs, Divinity
             if (s.Organisations != null) Orgs.OrgModule.Check(s, bad);
             if (s.Divinity != null) Divinity.DivinityModule.Check(s, bad);
+            if (s.Unification != null) Unified.UnifiedInvariants.Check(s, bad);   // UN0 (contracts 23.11): U-C1..U-C6
             return bad;
         }
 

@@ -85,9 +85,12 @@ namespace God.Sim.Population
     }
 
     /// <summary>Why goods entered the population's world (the ledger's reason codes, ECONOMY A1). 8 slots (F0); F1: 4 Miracle (D3), 5 Crafted; 6-7 reserved.</summary>
-    public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3, Miracle = 4, Crafted = 5 }
+    /// <para>UN0 (contracts 23.4): the ledger has 16 slots; 6-9 keep contracts 22.3's industry meanings (unused here); 10 Collected
+    /// (raw via a collection building), 11 Drawn (water into a container, UB), 12 Excreted (latrine waste); 13-15 reserved.</para>
+    public enum ProduceReason : byte { Founder = 0, Foraged = 1, HandGathered = 2, Placed = 3, Miracle = 4, Crafted = 5, Collected = 10, Drawn = 11, Excreted = 12 }
     /// <summary>Why goods left it. 8 slots (F0): <see cref="Buried"/> for M4 estates; F1: 5 Miracle (D3), 6 Treatment (C7), 7 Offering (D6). The ledger arrays stay 8 slots.</summary>
-    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4, Miracle = 5, Treatment = 6, Offering = 7 }
+    /// <para>UN0 (contracts 23.4): 16 slots; 8 ProcessInput (22.3's meaning: a recipe input), 14 Drunk (UB), 15 Washed (UB); 9-13 reserved.</para>
+    public enum ConsumeReason : byte { Eaten = 0, Spoiled = 1, Built = 2, Wear = 3, Buried = 4, Miracle = 5, Treatment = 6, Offering = 7, ProcessInput = 8, Drunk = 14, Washed = 15 }
 
     /// <summary>
     /// The one conservation ledger of personal goods (ECONOMY_DESIGN A1): for every ware,
@@ -96,7 +99,11 @@ namespace God.Sim.Population
     /// </summary>
     public sealed class GoodsLedger
     {
-        public const int ProduceReasons = 8, ConsumeReasons = 8;
+        /// <summary>UN0 (contracts 23.4): 16 reasons each (8 before); the population hash adds reasons 8-15 only when non-zero.</summary>
+        public const int ProduceReasons = 16, ConsumeReasons = 16;
+
+        /// <summary>The reason slots of the F1 layout (0-7): the hash keeps them in their old order.</summary>
+        public const int LegacyReasons = 8;
         public long[] Produced = new long[ProduceReasons * Wares.PersonalCount];
         public long[] Consumed = new long[ConsumeReasons * Wares.PersonalCount];
 

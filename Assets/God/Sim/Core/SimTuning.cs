@@ -43,6 +43,8 @@ namespace God.Sim
         public Orgs.OrgTuning Orgs = new Orgs.OrgTuning();
         /// <summary>F1.3: the civilisation ledger (C1-C5); <c>Enabled = 0</c> by default. Written only when changed.</summary>
         public Civ.CivTuning Civ = new Civ.CivTuning();
+        /// <summary>UN0 (contracts 23.1): the unified switch; <c>Enabled = 0</c> by default. Written only when changed.</summary>
+        public Unified.UnifiedTuning Unification = new Unified.UnifiedTuning();
 
         /// <summary>A deep, independent copy (through the save format, so every saved field is copied).</summary>
         public SimTuning Clone()

@@ -81,10 +81,22 @@ namespace God.Sim.Divinity
         public long CreatedBy(int god, Ware w) => Created[god * Wares.PersonalCount + (int)w];
         public long DestroyedBy(int god, Ware w) => Destroyed[god * Wares.PersonalCount + (int)w];
 
+        /// <summary>
+        /// UN0 (contracts 23.14): the F1 layout exactly (length and values of gods x wares 0-39, stride 40), then, only when a
+        /// ware 40+ has a non-zero count, a marker and those slots as (index, created, destroyed): <c>Wares.PersonalCount</c> 160
+        /// leaves the divine part of every older game unchanged.
+        /// </summary>
         public void AddTo(ref StateHasher h)
         {
-            h.Add(Created.Length);
-            for (int i = 0; i < Created.Length; i++) { h.Add(Created[i]); h.Add(Destroyed[i]); }
+            const int W = Wares.PersonalCount, F1 = Wares.F1PersonalCount;
+            int rows = Created.Length / W;
+            h.Add(rows * F1);
+            for (int g = 0; g < rows; g++) for (int w = 0; w < F1; w++) { h.Add(Created[g * W + w]); h.Add(Destroyed[g * W + w]); }
+            bool wide = false;
+            for (int i = 0; i < Created.Length && !wide; i++) if (i % W >= F1 && (Created[i] != 0 || Destroyed[i] != 0)) wide = true;
+            if (!wide) return;
+            h.Add(0x554E4946); // "UNIF"
+            for (int i = 0; i < Created.Length; i++) if (i % W >= F1 && (Created[i] != 0 || Destroyed[i] != 0)) { h.Add(i); h.Add(Created[i]); h.Add(Destroyed[i]); }
         }
     }
 

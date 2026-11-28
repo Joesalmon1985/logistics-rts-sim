@@ -157,6 +157,7 @@ namespace God.Sim.Population
             _people.Build(p, s.Tick, _cellOf, _cellsX * _cellsZ);
             Profiler?.Mark(PopPhase.Day);
             var tu = s.Tuning.Population;
+            bool unified = Unified.Unified.On(s); // UN0 (contracts 23.3): the unified person tick replaces the legacy think and act
             for (int i = 0; i < p.Npcs.Count; i++)
             {
                 var npc = p.Npcs[i];
@@ -166,6 +167,14 @@ namespace God.Sim.Population
                 Body(s, npc, cal);
                 if (npc.Health <= 0) { Die(s, ev, npc, npc.DeathCause == DeathCause.None ? DeathCause.Starvation : npc.DeathCause); continue; }
                 Account(npc);
+                if (unified)
+                {
+                    // UN0: Body() ran (biology); sleep, waking, collapse, decisions and actions belong to the unified hooks (UN2, UN6)
+                    Unified.UnifiedHooks.PersonTick(s, ev, npc);
+                    if (p.IndexDirty) RebuildIndex(p);
+                    Profiler?.Mark(PopPhase.Act);
+                    continue;
+                }
                 if (npc.Action.Asleep)
                 {
                     // rested, or hungry enough to get up once somewhat rested (exhaustion keeps a starving sleeper asleep)

@@ -24,7 +24,7 @@ namespace God.Sim.Population.Households
         {
             if (sim.State.Households == null) return;
             sim.AddSystem(240, new LifeCycleSystem());
-            sim.AddSystem(255, new Estate.EstateSystem());
+            if (!Unified.Unified.On(sim.State)) sim.AddSystem(255, new Estate.EstateSystem()); // UN0 (contracts 23.3): no estates in a unified game
         }
 
         /// <summary>From <c>PopulationModule.AddNpc</c>: an NPC M4 itself makes (a birth, an immigrant) gets a believed-kin mind.</summary>
@@ -43,7 +43,7 @@ namespace God.Sim.Population.Households
             var hs = s.Households;
             if (hs == null || npc.Life == null) return;
             if (npc.Life.PregFather != 0) { npc.Life.PregFather = 0; ev.Add(new PregnancyEnded { Mother = npc.Id, Outcome = PregnancyEnded.MotherDied }); }
-            Estate.Estates.Open(s, ev, npc);
+            if (!Unified.Unified.On(s)) Estate.Estates.Open(s, ev, npc); // UN0 (contracts 23.3, D9.13): death leaves goods where they are
             foreach (var p in hs.Partnerships.ToArray())
             {
                 if (p.A != npc.Id && p.B != npc.Id) continue;

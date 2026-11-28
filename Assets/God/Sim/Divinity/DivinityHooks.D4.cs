@@ -26,7 +26,7 @@ namespace God.Sim.Divinity
             var act = (GestureAct)e.Target.Node;
             if ((e.Kind == ControlKind.Possessed || e.Kind == ControlKind.AvatarBody) && e.Act == DivineAct.Communicate && act != GestureAct.None && s.Social != null)
             {
-                var topic = e.Target.Radius > 0 && e.Target.Radius < Wares.PersonalCount ? Messages.OfWare((Ware)e.Target.Radius) : default;
+                var topic = e.Target.Radius > 0 && e.Target.Radius < Wares.F1PersonalCount ? Messages.OfWare((Ware)e.Target.Radius) : default;
                 Messages.Emit(s, ev, npc, Messages.Compose(act, topic, 0, default, e.Target.Id));
             }
             // a gesture is made at once (its duration is the view's: GestureMade.DurationTicks); the input is used up

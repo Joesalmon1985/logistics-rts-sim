@@ -46,8 +46,12 @@ namespace God.Sim.Population
         public override string ToString() => Kind + " " + Id;
     }
 
-    /// <summary>Kinds of bin. F1 (contracts 7.1): 3 OrgStore (C6), 4 AssetStore (C1), 5 CommunalStore (C8), 6 Shrine (D6), each created only through <c>Goods.NewBin</c> by its owner package; 7+ reserved.</summary>
-    public enum BinKind : byte { HouseholdStore = 1, Estate = 2, OrgStore = 3, AssetStore = 4, CommunalStore = 5, Shrine = 6 }
+    /// <summary>Kinds of bin. F1 (contracts 7.1): 3 OrgStore (C6), 4 AssetStore (C1), 5 CommunalStore (C8), 6 Shrine (D6), each created only through <c>Goods.NewBin</c> by its owner package.
+    /// UN0 (contracts 23.4): the unified containers 7 Storage (a building's store), 8 Site (a construction site's materials), 9 Fixtures (installed
+    /// furnishings), 10 WorkInput, 11 WorkOutput (a workstation), 12 Container (inside an installed chest); 13-15 reserved. A unified bin has a
+    /// location and a capacity, never an owner.</summary>
+    public enum BinKind : byte { HouseholdStore = 1, Estate = 2, OrgStore = 3, AssetStore = 4, CommunalStore = 5, Shrine = 6,
+        Storage = 7, Site = 8, Fixtures = 9, WorkInput = 10, WorkOutput = 11, Container = 12 }
 
     /// <summary>
     /// A store of lots at a node with an owner (SHARED_CONTRACTS 2.1): a household store (M4) or an estate (M4). Lots are

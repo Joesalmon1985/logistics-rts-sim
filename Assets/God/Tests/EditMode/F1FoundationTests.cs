@@ -210,7 +210,7 @@ namespace God.Sim.Tests
         public void Herbs_LedgerHashLayout()
         {
             Assert.AreEqual(32, (int)Ware.Herbs);
-            Assert.AreEqual(40, Wares.PersonalCount);
+            Assert.AreEqual(160, Wares.PersonalCount); // UN0 (contracts 23.4): 40 -> 160; the hash layout below is unchanged
             var sim = Game(15);
             var s = sim.State;
             ulong h0 = PopulationModule.HashPopulation(s);

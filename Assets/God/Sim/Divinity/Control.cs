@@ -379,6 +379,11 @@ namespace God.Sim.Divinity
     /// F1b (contracts 11.3): validates and applies a <see cref="DivineControlInput"/> to the god's own spell over the body.
     /// <b>Not registered by F1</b>: D4 (possession) and D5 (avatar) register it when their spells exist, so until then the
     /// command is refused <c>disabled</c> like every F1 command. OWNER: F1 (frozen).
+    /// <para>UN0 (contracts 23.5, LEAD_RULINGS R84, frozen-seam amendment): <see cref="ControlInputKind.Primitive"/> carries one of
+    /// the twelve unified controls. It is accepted only in a unified game (elsewhere <c>disabled</c>), validated by the same
+    /// physical checks as every origin (<c>UnifiedHooks.CheckPrimitive</c>, filled by UN2's motor) and, on apply, submitted to the
+    /// motor with origin Possessed (Avatar for an avatar body). In a unified game the legacy kinds (Heading, MoveTo, Stop, Action)
+    /// are refused <c>disabled</c>: the body has no legacy verb path. A legacy game's behaviour is unchanged.</para>
     /// </summary>
     public sealed class DivineControlInputHandler : CommandHandler<DivineControlInput>
     {
@@ -387,6 +392,8 @@ namespace God.Sim.Divinity
             if (s.Divinity == null) return Reject(DivineReasons.DivinityOff);
             var e = Control.EntryOf(s, c.Body);
             if (e.Kind != ControlKind.Possessed && e.Kind != ControlKind.AvatarBody || e.God != c.God) return Reject(DivineReasons.BadTarget);
+            bool unified = Unified.Unified.On(s); // UN0
+            if (unified != (c.Kind == ControlInputKind.Primitive)) return CommandResult.Reject(Reasons.Disabled, "That control is not available in this game.");
             switch (c.Kind)
             {
                 case ControlInputKind.Heading:
@@ -400,6 +407,14 @@ namespace God.Sim.Divinity
                     return CommandResult.Accept();
                 case ControlInputKind.Action:
                     return c.Act != DivineAct.None ? CommandResult.Accept() : Reject(DivineReasons.ActUnavailable);
+                case ControlInputKind.Primitive:
+                {
+                    if (c.Primitive == null) return Reject(DivineReasons.BadTarget);
+                    var st = Unified.UnifiedHooks.CheckPossessed(s, c.Body, c.Primitive.Value);
+                    if (st == Unified.MotorStatus.Accepted) return CommandResult.Accept();
+                    if (st == Unified.MotorStatus.Disabled) return CommandResult.Reject(Reasons.Disabled, "That control is not available yet.");
+                    return CommandResult.Reject(DivineReasons.ActUnavailable, "The body cannot do that now (" + st + ").");
+                }
                 default:
                     return Reject(DivineReasons.BadTarget);
             }
@@ -430,6 +445,7 @@ namespace God.Sim.Divinity
                     break;
             }
             t.Entries[i] = e;
+            if (c.Kind == ControlInputKind.Primitive) Unified.UnifiedHooks.SubmitPossessed(s, ev, c.Body, e.Kind, c.Primitive.Value); // UN0: the same motor as every origin
             return CommandResult.Accept();
         }
 
