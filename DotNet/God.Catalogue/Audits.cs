@@ -268,7 +268,7 @@ namespace God.Catalogue
             }
             foreach (var b in d.Buildings.Where(b => b.Name.EndsWith("Mine", StringComparison.Ordinal)))
                 if (b.Stage != "Later" || !b.Reason.Contains("no bootstrap path")) e.Add(b.Id + " " + b.Name + ": a mine must be Later and say 'no bootstrap path'");
-            foreach (var o in d.Objects.Where(o => o.Workbook.TryGetValue("type", out var t) && t == "Mineral"))
+            foreach (var o in d.Objects.Where(o => o.Stage != "UA-initial" && o.Workbook["source"].Contains("deposit")))
                 if (o.Stage != "Later" || !o.Reason.Contains("no bootstrap path")) e.Add(o.Id + " " + o.Name + ": a deposit must be Later and say 'no bootstrap path'");
             return e;
         }
@@ -409,7 +409,7 @@ namespace God.Catalogue
                 string src = r is ObjectRow ? r.Workbook["source"] : r.Workbook["cost"];
                 var miss = Importer.MissingInputs(src);
                 var keys = miss.Where(m => m == "reed" || m == "wheat seed" || m == "seed plants" || m.EndsWith("deposit")).ToList();
-                if (r.Workbook.TryGetValue("type", out var t) && t == "Mineral") keys.Add("finite deposit");
+                if (r is ObjectRow && r.Workbook["source"].Contains("deposit")) keys.Add("finite deposit");
                 if (r.Name.EndsWith("Mine", StringComparison.Ordinal)) keys.Add("finite deposit");
                 if (keys.Count > 0) l.Add(r.Id + " " + r.Name + " (" + r.Stage + "): " + string.Join(", ", keys.Distinct()));
             }

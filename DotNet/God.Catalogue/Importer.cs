@@ -208,7 +208,7 @@ namespace God.Catalogue
             row.Status = stage == "UB" ? "staged" : stage == "Later" ? "deferred" : stage == "Superseded" ? "rejected" : throw new InvalidOperationException("stage " + stage);
             var missing = MissingInputs(inputsText);
             var sb = new StringBuilder(stage + ": ");
-            bool mine = Regex.IsMatch(row.Name, @"Mine$") || (isObj && row.Workbook["type"] == "Mineral");
+            bool mine = Regex.IsMatch(row.Name, @"Mine$") || (isObj && row.Workbook["source"].Contains("deposit"));
             if (mine) sb.Append("finite deposits have no placement data and no bootstrap path (G10)");
             else if (inputsText.Contains("TBD")) sb.Append("cost TBD stays inactive until set (F)");
             else if (missing.Count > 0) sb.Append("needs " + string.Join(", ", missing) + " (outside the UA closure)");

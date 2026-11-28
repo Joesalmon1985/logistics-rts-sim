@@ -141,7 +141,7 @@ namespace God.Catalogue
             sb.Append("\nnamespace God.Sim.Unified\n{\n    public static partial class Catalogue\n    {\n");
             sb.Append("        /// <summary>The SHA-256 of the canonical active-row JSON (catalogue.json, rows sorted by CatId); recorded by UN6t's artifact header.</summary>\n");
             sb.Append("        public const string CatalogueHash = \"").Append(hash).Append("\";\n\n");
-            sb.Append("        /// <summary>The strike attack of an empty hand (D9.5 E); held objects carry their own <c>ObjectDef.StrikeAttack</c>.</summary>\n");
+            sb.Append("        /// <summary>The strike attack of an empty hand (manifest fix E); held objects carry their own <c>ObjectDef.StrikeAttack</c>.</summary>\n");
             sb.Append("        public const int EmptyHandStrikeAttack = 1;\n\n");
             sb.Append("        static partial void ShaUN3a(ref string sha) { sha = \"").Append(doc.WorkbookSha256).Append("\"; }\n\n");
             sb.Append("        static partial void RecipesUN3a(ref RecipeDef[] table)\n        {\n");

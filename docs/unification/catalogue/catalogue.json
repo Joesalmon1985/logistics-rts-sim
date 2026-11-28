@@ -834,7 +834,7 @@
       "fixApplied": [],
       "corrections": [],
       "status": "deferred",
-      "reason": "Later: no UA need and no UA closure role; defined after the first tier; corrections F to apply before activation",
+      "reason": "Later: finite deposits have no placement data and no bootstrap path (G10); corrections F to apply before activation",
       "workbook": {
         "type": "Fuel",
         "source": "Coal Mine: Finite coal deposit → 1\nDeep Coal Mine: Finite coal deposit → 2\nDeeper Coal Mine: Finite coal deposit → 3",

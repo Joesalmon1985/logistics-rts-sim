@@ -10,7 +10,7 @@ namespace God.Sim.Unified
         /// <summary>The SHA-256 of the canonical active-row JSON (catalogue.json, rows sorted by CatId); recorded by UN6t's artifact header.</summary>
         public const string CatalogueHash = "6dda890c915cde65e20b88277175371d969b231de930c5b71b284f8d20aa212b";
 
-        /// <summary>The strike attack of an empty hand (D9.5 E); held objects carry their own <c>ObjectDef.StrikeAttack</c>.</summary>
+        /// <summary>The strike attack of an empty hand (manifest fix E); held objects carry their own <c>ObjectDef.StrikeAttack</c>.</summary>
         public const int EmptyHandStrikeAttack = 1;
 
         static partial void ShaUN3a(ref string sha) { sha = "f764df01de6b98aa5cc61e612b300446cf87366bda971804428544d9455405a0"; }

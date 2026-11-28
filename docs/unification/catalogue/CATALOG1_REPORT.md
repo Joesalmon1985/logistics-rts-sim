@@ -107,6 +107,7 @@ Round 4:
 
 ## 4. Unresolved bootstrap dependencies (outside UA by design)
 
+- OBJ-009 Coal (Later): finite deposit
 - OBJ-015 Gold ore (Later): finite deposit
 - OBJ-022 Iron ore (Later): finite deposit
 - OBJ-040 Wheat (Later): wheat seed
@@ -251,7 +252,7 @@ Append in this order (manifest order, append only). Rows marked reuse name an ex
 | OBJ-006 | 1006 | 10 | Broad axe | Later | deferred | H | Later: needs iron, charcoal (outside the UA closure); corrections H to apply before activation |
 | OBJ-007 | 1007 | 11 | Bronze axe | Later | deferred | H | Later: needs bronze, charcoal (outside the UA closure); corrections H to apply before activation |
 | OBJ-008 | 1008 | 12 | Cloth | UB | staged | F | UB: needs wool (outside the UA closure); corrections F to apply before activation |
-| OBJ-009 | 1009 | 13 | Coal | Later | deferred | F | Later: no UA need and no UA closure role; defined after the first tier; corrections F to apply before activation |
+| OBJ-009 | 1009 | 13 | Coal | Later | deferred | F | Later: finite deposits have no placement data and no bootstrap path (G10); corrections F to apply before activation |
 | OBJ-010 | 1010 | 14 | Felling axe | Later | deferred | E | Later: needs iron (outside the UA closure); corrections E to apply before activation |
 | OBJ-011 | 1011 | 15 | Fire tongs | Later | deferred | E | Later: needs iron (outside the UA closure); corrections E to apply before activation |
 | OBJ-012 | 1012 | 16 | Fish | UA-initial | implemented | E | Raw fish from the fisher's shelter (sea dice stock); nutrition 0 until cooked at a hearth (G2) |
