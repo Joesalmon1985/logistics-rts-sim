@@ -26,6 +26,18 @@ namespace God.Train.Eval
         public long ShelterTick = -1, RawDepositTick = -1, HandoverTick = -1;
         public long Return, Decisions, TeacherSubmissions;
         public string FinalHash = "";
+        /// <summary>Accepted controls per Prim (index 0-12; unified world only).</summary>
+        public long[] Applied = new long[13];
+        public List<PersonResult> People = new List<PersonResult>();
+    }
+
+    /// <summary>One person of one evaluated episode (unified world): survival, cause, end-of-day need pressures (-1 = dead).</summary>
+    public sealed class PersonResult
+    {
+        public int Person; public bool Adult; public long DeathTick = -1; public string Cause = "";
+        public long PersonTicks, PainTicksHungerThirst;
+        public int CellsVisited;
+        public List<int> Hunger = new List<int>(), Energy = new List<int>(), Thirst = new List<int>();
     }
 
     public sealed class ArmResult

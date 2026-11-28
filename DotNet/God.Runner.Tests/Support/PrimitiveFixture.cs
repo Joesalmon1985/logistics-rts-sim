@@ -56,6 +56,7 @@ namespace God.Runner.Tests.Support
             if (divinity) t.Divinity.Enabled = 1;
             tune?.Invoke(t);
             t.Unification.Enabled = 1;
+            t.Unification.UN6.Decide = 0; // the tests drive every body by hand: no brain decides (the real MotorBody is live since slice 1)
             var setup = new GameSetup(seed, GameSetup.NoHuman, 2) { Population = true, StartNpcsPerFaction = perFaction, Victory = VictorySpec.SandboxOnly() };
             var f = new PrimitiveFixture(GodSim.Create(setup, t));
             foreach (var n in f.People()) f.Free(n);

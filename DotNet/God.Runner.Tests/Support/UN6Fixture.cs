@@ -11,8 +11,8 @@ namespace God.Runner.Tests.Support
     /// <summary>
     /// UN6 test fixture (tests only, never in the game assembly): an <see cref="IBrainBody"/> over a toy world so the brain runtime can
     /// be exercised before UN2's encoder and motor merge. MECHANICAL: perception is a fixed-radius scan with a toy distance
-    /// |node a - node b|; every submission is accepted and holds the body for <see cref="ActionTicks"/> ticks (<see cref="FakeMotor"/>
-    /// counts them down); USE effects are whatever the test installs in <see cref="OnUse"/>. Deterministic and allocation-free per call.
+    /// |node a - node b|; every submission is accepted and holds the body for <see cref="ActionTicks"/> ticks (UN2's real
+    /// <c>Motor.Tick</c> counts them down: the fixture holds the body with a no-effect timed action); USE effects are whatever the test installs in <see cref="OnUse"/>. Deterministic and allocation-free per call.
     /// </summary>
     public sealed class FixtureBody : IBrainBody
     {
@@ -111,8 +111,11 @@ namespace God.Runner.Tests.Support
         {
             var u = s.Unification.PersonOf(c.Actor);
             if (u == null || c.Control == Prim.None) return MotorStatus.Invalid;
-            u.ActionKind = c.Control;
+            // the real motor counts the hold down and completes it; WAIT has no physical effect, so the fixture's physics stay in OnUse
+            u.ClearAction();
+            u.ActionKind = Prim.Wait;
             u.ActionTicksLeft = ActionTicks;
+            u.ActionTotal = ActionTicks;
             u.LastResult = MotorStatus.Accepted;
             Submits++; ByControl[(int)c.Control]++;
             if (c.Control == Prim.Use && OnUse != null) OnUse(s, s.Population.Find(c.Actor), c);
@@ -148,15 +151,6 @@ namespace God.Runner.Tests.Support
         }
     }
 
-    /// <summary>The fixture's motor: counts every unified body's action down one tick (order 247, before the person ticks).</summary>
-    public sealed class FakeMotor : ISimSystem
-    {
-        public const int Order = 247;
-        public void Tick(GodState s, EventBuffer ev)
-        {
-            foreach (var u in s.Unification.People) if (u.ActionTicksLeft > 0) u.ActionTicksLeft--;
-        }
-    }
 
     /// <summary>A fixture policy (tests only, <see cref="ControlOrigin.Fixture"/>): a scripted control per decision, cycling.</summary>
     public sealed class ScriptedPolicy : IPrimitivePolicy
@@ -185,12 +179,11 @@ namespace God.Runner.Tests.Support
             return GodSim.Create(setup, t);
         }
 
-        /// <summary>Attaches a fixture body and the fake motor (again after a load: neither is saved).</summary>
+        /// <summary>Attaches a fixture body (again after a load: it is not saved). UN2's real motor ticks the actions it holds.</summary>
         public static FixtureBody Attach(GodSim sim, FixtureBody body = null)
         {
             body = body ?? new FixtureBody();
             sim.State.Unification.BrainRuntime.Body = body;
-            sim.AddSystem(FakeMotor.Order, new FakeMotor());
             return body;
         }
 

@@ -17,7 +17,7 @@ namespace God.Sim.Unified
         /// <summary>True when the person decides this tick (the schedule; reads sim state only, never a view).</summary>
         public static bool Due(GodState s, Npc npc, UnifiedNpc u)
         {
-            if (u == null || !npc.Alive || !Bodies.IsPerson(npc)) return false;
+            if (u == null || !npc.Alive || !Bodies.IsPerson(npc) || s.Tuning.Unification.UN6.Decide == 0) return false;
             if (npc.Action.Asleep || u.Busy) return false;
             if (s.Divinity != null && Divinity.Control.SkipsPolicy(s, npc)) return false;
             int stagger = s.Tuning.Unification.UN6.Stagger;

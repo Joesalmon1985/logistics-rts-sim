@@ -18,7 +18,8 @@ namespace God.Sim.Unified
 
         public BrainShape(int input, int enc, int dense, int rec, int act)
         {
-            if (input != ObsSchema.Length) throw new ArgumentException("brain shape: input " + input + " is not the Obs v1 length " + ObsSchema.Length);
+            if (input != ObsSchema.Length && input != ObsSchema.Length + BrainInput.Derived)
+                throw new ArgumentException("brain shape: input " + input + " is neither the Obs v1 length " + ObsSchema.Length + " nor that plus input map 2's " + BrainInput.Derived + " derived inputs");
             if (act != ActSchema.Length) throw new ArgumentException("brain shape: heads " + act + " are not the Act v1 length " + ActSchema.Length);
             if (rec < 1 || rec > BrainState.RecurrentSize) throw new ArgumentException("brain shape: recurrent state " + rec + " outside 1-" + BrainState.RecurrentSize);
             if (enc < 1 || dense < 1) throw new ArgumentException("brain shape: empty layer");
@@ -87,6 +88,9 @@ namespace God.Sim.Unified
         /// <summary>Per-decision inputs set by the caller: a bias per control option (null = none) and the temperature (permille).</summary>
         public int[] Bias;
         public int Temperature = 1000;
+        /// <summary>The input map (<see cref="BrainInput"/>): raw by default; the game's untrained brain, the trainer's candidates and
+        /// an artifact that names map 1 set <see cref="BrainInput.Current"/>.</summary>
+        public int InputMap = BrainInput.MapRaw;
         /// <summary>The multiply-accumulates of the last <see cref="Act"/> (cost counter for UNP and UN11a).</summary>
         public int Macs;
 
@@ -117,7 +121,7 @@ namespace God.Sim.Unified
             var s = Shape; var w = W; var sc = _sc;
             int[] x = sc.X, a1 = sc.A1, a2 = sc.A2;
             int nIn = s.In, nEnc = s.Enc, nDense = s.Dense;
-            for (int i = 0; i < nIn; i++) { int v = obs[i]; x[i] = v < -ObsClamp ? -ObsClamp : v > ObsClamp ? ObsClamp : v; }
+            BrainInput.Fill(InputMap, obs, x, nIn, ObsClamp);
             var ws = new ReadOnlySpan<short>(w);
             var xs = new ReadOnlySpan<int>(x, 0, nIn);
             for (int j = 0; j < nEnc; j++)

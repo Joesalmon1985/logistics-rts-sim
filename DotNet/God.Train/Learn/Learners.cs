@@ -37,7 +37,7 @@ namespace God.Train.Learn
             };
             int nb = Math.Max(1, cfg.Batch);
             var grads = new float[nb][]; var caches = new FCache[nb]; var losses = new double[nb]; var counts = new int[nb];
-            for (int j = 0; j < nb; j++) { grads[j] = new float[shape.Count]; caches[j] = new FCache(shape); }
+            for (int j = 0; j < nb; j++) { grads[j] = new float[shape.Count]; caches[j] = new FCache(shape) { InputMap = start.InputMap }; }
             var total = new double[shape.Count];
             var po = new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, cfg.Workers) };
             while (ck.Step < untilEpoch)
@@ -185,7 +185,8 @@ namespace God.Train.Learn
                     float sign = (c & 1) == 0 ? 1f : -1f;
                     var cand = new float[theta.Length];
                     for (int i = 0; i < cand.Length; i++) cand[i] = (float)(theta[i] + sign * cfg.Sigma * eps[i]);
-                    fitness[c] = Fitness(FloatNet.ToQNet(shape, cand), world, cfg, it);
+                    var q = FloatNet.ToQNet(shape, cand); q.InputMap = start.InputMap;
+                    fitness[c] = Fitness(q, world, cfg, it);
                 });
                 var idx = new int[pop]; for (int i = 0; i < pop; i++) idx[i] = i;
                 Array.Sort(idx, (a, b) => fitness[a] != fitness[b] ? fitness[a].CompareTo(fitness[b]) : a.CompareTo(b));

@@ -412,9 +412,10 @@ namespace God.Sim.Tests
         {
             const int driveOnly = 0x01F, noThirstMask = 0xFFF & ~(1 << (int)NeedChannel.Thirst);
             const int day = 1200;
-            var off = Game(10, t => t.Unification.Needs.ActiveMask = driveOnly);
-            var noThirst = Game(10, t => t.Unification.Needs.ActiveMask = noThirstMask);
-            var thirsty = Game(10);
+            // the needs alone: no brain decides (a deciding brain would act differently on different observed masks)
+            var off = Game(10, t => { t.Unification.Needs.ActiveMask = driveOnly; t.Unification.UN6.Decide = 0; });
+            var noThirst = Game(10, t => { t.Unification.Needs.ActiveMask = noThirstMask; t.Unification.UN6.Decide = 0; });
+            var thirsty = Game(10, t => t.Unification.UN6.Decide = 0);
             for (int i = 0; i < 10 * day; i++) { off.Step(); noThirst.Step(); thirsty.Step(); }
             var so = off.State; var sn = noThirst.State; var st = thirsty.State;
             foreach (var n in so.Population.Npcs.Where(Bodies.IsPerson))
@@ -486,7 +487,7 @@ namespace God.Sim.Tests
         public void World_Scale_NoAllPairs()
         {
             var t0 = System.Diagnostics.Stopwatch.StartNew();
-            var sim = UN1WorldTests.Game(1, 6, t => { t.Unification.Start.Tribes = 6; }, npcs: 200, factions: 6);
+            var sim = UN1WorldTests.Game(1, 6, t => { t.Unification.Start.Tribes = 6; t.Unification.UN6.Decide = 0; /* world and needs only: the brain's cost has its own benchmarks */ }, npcs: 200, factions: 6);
             var s = sim.State; var u = s.Unification;
             t0.Stop();
             int persons = s.Population.Npcs.Count(Bodies.IsLivingPerson);

@@ -26,7 +26,10 @@ namespace God.Train.Learn
         public string SeedsText = "";
 
         public NetShape NetShape => Net.NetShape.Parse(Shape);
-        public QNet ToQNet() => FloatNet.ToQNet(NetShape, P);
+        public QNet ToQNet() { var q = FloatNet.ToQNet(NetShape, P); q.InputMap = InputMap; return q; }
+
+        /// <summary>The network input map of this checkpoint's world: raw on the stub world, <see cref="BrainInput.Current"/> on the unified world.</summary>
+        public int InputMap => World == "stub" ? BrainInput.MapRaw : NetShape.In > ObsSchema.Length ? BrainInput.MapV2 : BrainInput.MapV1;
 
         public byte[] ToBytes()
         {

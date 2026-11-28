@@ -16,6 +16,8 @@ namespace God.Sim.Unified
         public int Sample = 1;
         /// <summary>A person's first decision waits until tick (NpcId mod Stagger) (sim state only, never the camera); 1 = no stagger.</summary>
         public int Stagger = 1;
+        /// <summary>1 = the brain decides for every person (the game); 0 = no brain decisions at all (motor fixtures that drive bodies by hand).</summary>
+        public int Decide = 1;
 
         // ---- associative overlay (§D9.2 d) ----
         /// <summary>1 = the overlay learns and biases the control head; 0 = off (no store, no bias).</summary>

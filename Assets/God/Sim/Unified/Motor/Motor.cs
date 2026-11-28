@@ -94,9 +94,15 @@ namespace God.Sim.Unified
             for (int i = 0; i < people.Count; i++)
             {
                 var r = people[i];
-                if (r.ActionKind == Prim.None || r.ActionKind == Prim.Sleep) continue;
+                if (r.ActionKind == Prim.None) continue;
                 var npc = s.Population.Find(r.Npc);
                 if (npc == null || !npc.Alive) { r.ClearAction(); continue; }
+                if (r.ActionKind == Prim.Sleep)
+                {
+                    // waking completes SLEEP here, with every other completion: the body decides at its next tick, never the tick it woke
+                    if (npc.Action.Asleep && WakesNow(s, npc)) Wake(s, ev, npc, r);
+                    continue;
+                }
                 if (r.ActionTicksLeft > 0) r.ActionTicksLeft--;
                 if (r.ActionTicksLeft > 0) continue;
                 Complete(s, ev, npc, r);
@@ -167,6 +173,14 @@ namespace God.Sim.Unified
             return MotorStatus.Accepted;
         }
 
+        /// <summary>The legacy waking conditions: rested, or hungry once somewhat rested.</summary>
+        private static bool WakesNow(GodState s, Npc npc)
+        {
+            var tu = s.Tuning.Population;
+            int f = npc.DriveOf(Drive.Fatigue);
+            return f <= tu.WakeFatigue || npc.DriveOf(Drive.Hunger) >= tu.WakeHunger && f < tu.SleepFrom;
+        }
+
         private static void Wake(GodState s, EventBuffer ev, Npc npc, UnifiedNpc u)
         {
             npc.Action = new NpcAction { Since = s.Tick };
@@ -187,8 +201,8 @@ namespace God.Sim.Unified
             if (npc.Action.Asleep)
             {
                 if (u.ActionKind != Prim.Sleep) Start(s, u, Prim.Sleep, 1, TargetRef.Self, u.ActionOrigin, true);
-                if (f <= tu.WakeFatigue || npc.DriveOf(Drive.Hunger) >= tu.WakeHunger && f < tu.SleepFrom) Wake(s, ev, npc, u);
-                return;
+                return; // waking is checked by Tick (after every person's body), so a sleeper never decides in the tick it wakes
+
             }
             if (u.ActionKind == Prim.Sleep) u.ClearAction();
             if (f >= tu.CollapseFatigue)

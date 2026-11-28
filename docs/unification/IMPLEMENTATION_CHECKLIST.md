@@ -10,11 +10,13 @@ The only plan in force. Decisions: `docs/civdiv/OWNER_DECISION_REGISTER.md` (D9,
 - [x] UN2 primitive executor (12 controls, Obs/Act encoding, legality mask)
 - [x] UN6 brain runtime (int inference, QNet parity, artifact header, per-game policy)
 
-## Slice 1: one trained NPC survives independently (in progress)
-- [ ] Fix `UN6BrainTests.Decision_OnCompletionOnly` against the real motor
-- [ ] Real-world training environment (UnifiedWorld) and teacher for eat, drink, sleep
-- [ ] Train S1–S3; freeze artifact; evaluate teacher-free on held-out seeds 900001–900020 against the committed thresholds; untrained/frozen controls
-- [ ] Headless report: survival days, needs, actions, causes of death
+## Slice 1: one trained NPC survives independently (branch `unity/s1`; TR-01 not passed)
+- [x] Fix `UN6BrainTests.Decision_OnCompletionOnly` against the real motor
+- [x] Real-world training environment (UnifiedWorld) and teacher for eat, drink, sleep
+- [x] Train S1–S3; freeze artifact; evaluate teacher-free on held-out seeds 900001–900020 against the committed thresholds; untrained/frozen controls (S1, S2 trained; S3 not trainable until UN3b's reliefs; `FounderPolicyV1` FAILED-TR01: 12-person T1 0.558, T2 0.236; one person alone 18/20)
+- [x] Headless report: survival days, needs, actions, causes of death (`docs/unification/slice1/`)
+- [ ] Owner: confirm the network input map 2 (derived nearest water/food inputs) or choose another input design
+- [ ] V2 founder policy that finds water from unfamiliar starts in a 12-person tribe (reported beside V1)
 
 ## Later slices (not started; branches kept)
 - Slice 2 shelter: `unity/un3b` (buildings, collection gate), `unity/un4` (construction)

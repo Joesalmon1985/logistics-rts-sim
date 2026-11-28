@@ -148,7 +148,7 @@ namespace God.Runner.Tests
             masked.Step(100);
             UnifiedWorld.ReadBody(masked.State, masked.State.Unification.People[0].Npc, r);
             for (int c = NeedChannels.FirstExtension; c < NeedChannels.Count; c++) Assert.That(r.Needs[c], Is.EqualTo(0), "inactive channel " + c);
-            Assert.That(UnifiedWorld.Unavailable(1), Is.Not.Null.And.Contains("UN2"), "the trainer refuses the unified world until UN2 merges");
+            Assert.That(UnifiedWorld.Unavailable(1), Is.Null, "slice 1: every training seam answers on the merged sim (Obs v1, Motor.Legal, ControlOf, Submit)");
         }
 
         // ---------------- T2 ----------------

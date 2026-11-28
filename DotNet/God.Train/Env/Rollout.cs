@@ -16,13 +16,16 @@ namespace God.Train.Env
     }
 
     /// <summary>The quantised network as an actor: per-person recurrent state in <see cref="BrainState.Recurrent"/> and a keyed policy stream.</summary>
-    public sealed class NetActor : IActor
+    public sealed class NetActor : IActor, ISitePolicySource
     {
         private readonly QNet _net; private readonly bool _greedy;
         private readonly QScratch _sc;
         private Rng[] _rng = new Rng[0];
         public NetActor(QNet net, bool greedy = false) { _net = net; _greedy = greedy; _sc = new QScratch(net.Shape); }
         public ControlOrigin Origin => ControlOrigin.Policy;
+        /// <summary>In the unified world the network runs at the game's decision site as a <see cref="CandidatePolicy"/> (the game's integer inference).</summary>
+        public IPrimitivePolicy MakePolicy() => new CandidatePolicy(_net, Label);
+        public string Label = "TRAINING CANDIDATE";
 
         public void Begin(IWorld w, long seed)
         {
@@ -53,6 +56,9 @@ namespace God.Train.Env
         public int Person; public bool Adult; public long DeathTick = -1; public long Return;
         public long PersonTicks, PainTicksHungerThirst, PainTicksAnyActive;
         public int CellsVisited;
+        public string Cause = "";
+        /// <summary>Hunger, Energy, Thirst pressure at the end of each day (-1 when dead).</summary>
+        public List<(short hunger, short energy, short thirst)> Daily = new List<(short, short, short)>();
     }
 
     public sealed class EpisodeStats
@@ -63,6 +69,8 @@ namespace God.Train.Env
         public long Decisions, TeacherSubmissions;
         public long TotalReturn;
         public ulong FinalHash;
+        /// <summary>Accepted controls per Prim (site worlds only).</summary>
+        public long[] AppliedBy = new long[13];
 
         public int AdultsAtStart() { int n = 0; foreach (var p in People) if (p.Adult) n++; return n; }
         public int AdultsAliveAt(long tick) { int n = 0; foreach (var p in People) if (p.Adult && (p.DeathTick < 0 || p.DeathTick > tick)) n++; return n; }
@@ -96,6 +104,8 @@ namespace God.Train.Env
                 if (seqs != null) { seqs[i] = new Sequence { Seed = seed, Person = w.People[i], Origin = actor.Origin }; record.Add(seqs[i]); }
             }
             actor.Begin(w, seed);
+            var site = w as ISiteWorld;
+            site?.Bind(actor, seqs, evaluation);
             var obs = new short[ObsSchema.Length];
             int hunger = (int)NeedChannel.Hunger, thirst = (int)NeedChannel.Thirst, band = w.PainBand, mask = w.NeedMask;
             for (long t = 0; t < ticks; t++)
@@ -109,7 +119,7 @@ namespace God.Train.Env
                     if (nd[hunger] >= band || nd[thirst] >= band) ps.PainTicksHungerThirst++;
                     for (int c = 0; c < 12; c++) if ((mask & (1 << c)) != 0 && nd[c] >= band) { ps.PainTicksAnyActive++; break; }
                     int person = w.People[i];
-                    if (!w.ReadyToDecide(person)) continue;
+                    if (site != null || !w.ReadyToDecide(person)) continue;
                     var pc = default(Percept); var m = default(ActMask);
                     w.Observe(person, ref pc, obs, ref m);
                     var a = actor.Act(w, i, person, obs, in m);
@@ -133,9 +143,21 @@ namespace God.Train.Env
                     if (!now[i].Alive) st.People[i].DeathTick = w.Tick;
                     prev[i].CopyFrom(now[i]);
                 }
+                if (w.TicksPerDay > 0 && (t + 1) % w.TicksPerDay == 0)
+                    for (int i = 0; i < n; i++)
+                    {
+                        var nd = prev[i].Needs;
+                        st.People[i].Daily.Add(prev[i].Alive ? (nd[hunger], nd[(int)NeedChannel.Energy], nd[thirst]) : ((short)-1, (short)-1, (short)-1));
+                    }
+                if (site is UnifiedWorld uw0 && uw0.Violation != null && evaluation) throw new EvaluationInvalidException("evaluation rollout invalid: " + uw0.Violation);
             }
             st.Ticks = ticks;
-            foreach (var p in st.People) { p.CellsVisited = w.CellsVisited(p.Person); st.TotalReturn += p.Return; }
+            foreach (var p in st.People) { p.CellsVisited = w.CellsVisited(p.Person); st.TotalReturn += p.Return; if (site != null) p.Cause = site.CauseOf(p.Person); }
+            if (site != null)
+            {
+                st.Decisions = site.Decisions; st.TeacherSubmissions = site.TeacherSubmissions;
+                System.Array.Copy(site.AppliedBy, st.AppliedBy, 13);
+            }
             st.FinalHash = w.StateHash();
             return st;
         }
