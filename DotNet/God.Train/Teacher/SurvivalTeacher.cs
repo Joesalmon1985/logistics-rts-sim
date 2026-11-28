@@ -156,7 +156,13 @@ namespace God.Train.Teacher
                 var o = cls > 0 && cls <= ushort.MaxValue ? s.Unification.Book.Object((ushort)cls) : null;
                 if (o != null && o.Nutrition > 0) { foods++; if (foodSlot < 0) foodSlot = k; }
             }
-            bool room = used < ObsSchema.CarrySlots;
+            // room: the body's own load (carried classes and counts, static ware weights) against its carry capacity
+            int load = 0;
+            for (int k = 0; k < ObsSchema.CarrySlots; k++) { int cls = v[OCarry + k * ObsSchema.CarryFields]; if (cls != 0) load += v[OCarry + k * ObsSchema.CarryFields + 1] * PopulationModule.Weight(WareOfClass(s, cls)); }
+            int forageCls = forage >= 0 ? v[OEnt + forage * ObsSchema.EntityFields] : 0;
+            bool sameLot = false;
+            for (int k = 0; k < ObsSchema.CarrySlots; k++) if (forageCls != 0 && v[OCarry + k * ObsSchema.CarryFields] == forageCls) sameLot = true;
+            bool room = (used < ObsSchema.CarrySlots || sameLot) && (forageCls == 0 || s.Tuning.Population.CarryWeight - load >= PopulationModule.Weight(WareOfClass(s, forageCls)));
 
             if (waterNeed && thirst >= ThirstAt && water >= 0) return Use(water, Heads.SourceEmpty, 1);
             if (foodNeed && hunger >= HungerAt && foodSlot >= 0) return Use(Heads.TargetSelf, foodSlot, 0);
@@ -175,6 +181,20 @@ namespace God.Train.Teacher
             if (wantWater || wantFood || !knowsWater || !knowsFood) { Explored++; return Explore(person, v, m); }
             if (Allowed(m, Prim.Wait)) return ActionChoice.Of(Prim.Wait);
             return Explore(person, v, m);
+        }
+
+        private static Dictionary<int, Ware> _wareOf;
+        /// <summary>The ware of an observed class (catalogue data).</summary>
+        private static Ware WareOfClass(GodState s, int cls)
+        {
+            var map = _wareOf;
+            if (map == null)
+            {
+                map = new Dictionary<int, Ware>();
+                foreach (Ware w in Enum.GetValues(typeof(Ware))) { int c = Percept.ClassOfWare(s.Unification.Book, w); if (c != 0 && !map.ContainsKey(c)) map[c] = w; }
+                _wareOf = map;
+            }
+            return map.TryGetValue(cls, out var x) ? x : Ware.None;
         }
 
         /// <summary>A fresh water point (or an edible forage place) is perceived or remembered in the observation.</summary>
