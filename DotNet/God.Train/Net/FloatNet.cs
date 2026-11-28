@@ -8,6 +8,8 @@ namespace God.Train.Net
     public sealed class FCache
     {
         public readonly float[] X, V1, A1, V2, A2, Vz, Z, Vc, C, HPrev, H, DH, DA1, DA2, Logit;
+        /// <summary>The input map of the network being trained (God.Sim's <c>BrainInput</c>).</summary>
+        public int InputMap = BrainInput.Current;
         public FCache(NetShape s)
         {
             X = new float[s.In]; V1 = new float[s.Enc]; A1 = new float[s.Enc]; V2 = new float[s.Dense]; A2 = new float[s.Dense];
@@ -64,7 +66,7 @@ namespace God.Train.Net
         /// <summary>Forward of one decision; <paramref name="h"/> (float recurrent state) is updated in place.</summary>
         public static void Recur(NetShape s, float[] p, short[] obs, float[] h, FCache c)
         {
-            for (int i = 0; i < s.In; i++) c.X[i] = Clamp(obs[i], -QNet.ObsClamp, QNet.ObsClamp) / 1000f;
+            for (int i = 0; i < s.In; i++) c.X[i] = BrainInput.Apply(c.InputMap, i, obs[i], QNet.ObsClamp) / 1000f;
             for (int j = 0; j < s.Enc; j++)
             {
                 double v = p[s.B1 + j]; int row = s.W1 + j * s.In;

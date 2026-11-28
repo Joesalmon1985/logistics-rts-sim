@@ -38,6 +38,8 @@ namespace God.Train
                     case "thresholds-hash": { var t = Thresholds.Load(Opt(a, "thresholds")); o.WriteLine(t.Hash); return Ok; }
                     case "env-check": return EnvCheck(a, o, e);
                     case "probe": return Probe(a, o, e);
+                    case "dagger": return Dagger(a, o, e);
+                    case "s1-report": return SliceReportCmd(a, o, e);
                     case "demo": return Demo(a, o, e);
                     case "bc": return Bc(a, o, e);
                     case "es": return Es(a, o, e);
@@ -103,7 +105,7 @@ namespace God.Train
         private static int Probe(Dictionary<string, string> a, TextWriter o, TextWriter e)
         {
             long seed = Int(a, "seed", 1);
-            var cfg = new UnifiedConfig { Persons = Int(a, "persons", 1), NeedMask = Convert.ToInt32(Opt(a, "mask", "0x033"), 16) };
+            var cfg = new UnifiedConfig { Persons = Int(a, "persons", 1), NeedMask = Convert.ToInt32(Opt(a, "mask", "0x033"), 16), Overlay = Int(a, "overlay", 1), Sample = Int(a, "sample", 1), TemperatureSpread = Int(a, "spread", 300) };
             var w = new UnifiedWorld(cfg, seed, Honesty.Layout.Train, null);
             string which = Opt(a, "actor", "teacher");
             IActor actor = which == "teacher" ? new Teacher.SurvivalTeacher() : which == "game" ? new GameBrainActor()
@@ -117,8 +119,38 @@ namespace God.Train
             for (int c = 1; c < 13; c++) if (w.Applied[c] + w.Failed[c] > 0) line.Append($" {(God.Sim.Unified.Prim)c} {w.Applied[c]}/{w.Applied[c] + w.Failed[c]}");
             o.WriteLine(line.ToString());
             o.WriteLine("  refused: " + string.Join(", ", System.Linq.Enumerable.Select(w.Refused, kv => kv.Key + " " + kv.Value)));
+            if (actor is Teacher.SurvivalTeacher stt) o.WriteLine($"  teacher: steered by percept/memory {stt.Steered}, oracle steps {stt.OracleSteps}");
             foreach (var p in ep.People)
                 o.WriteLine($"  person {p.Person}: adult {p.Adult}, death tick {p.DeathTick} ({p.Cause}), cells {p.CellsVisited}, pain(h|t) {p.PainTicksHungerThirst}/{p.PersonTicks}, return {p.Return}");
+            return Ok;
+        }
+
+        /// <summary>DAgger (TRAINING ONLY): the network acts on training seeds, the teacher labels; with --beta permille the teacher acts.</summary>
+        private static int Dagger(Dictionary<string, string> a, TextWriter o, TextWriter e)
+        {
+            var seeds = SeedPolicy.ParseSeeds(Opt(a, "seeds", "1-8"));
+            SeedPolicy.CheckTraining(seeds);
+            if (RealWorldRefused(a, e)) return Unavailable;
+            var st = CurriculumData.Load(Opt(a, "stage", "S2"));
+            var net = Checkpoint.Load(Opt(a, "from")).ToQNet();
+            int beta = Int(a, "beta", 300), workers = Int(a, "workers", 8), persons = Int(a, "persons", st.Population);
+            long ticks = Int(a, "days", st.Days) * (long)God.Sim.SimCalendar.DefaultTicksPerDay;
+            var per = new List<Sequence>[seeds.Length];
+            var stats = new EpisodeStats[seeds.Length];
+            System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, workers) }, i =>
+            {
+                var rec = new List<Sequence>();
+                var world = new UnifiedWorld(new UnifiedConfig { Persons = persons, NeedMask = st.NeedMask }, seeds[i], Layout.Train, null);
+                stats[i] = Rollout.Run(world, new DaggerActor(net, new Teacher.SurvivalTeacher(), beta), seeds[i], ticks, evaluation: false, record: rec);
+                per[i] = rec;
+            });
+            var all = new List<Sequence>(); foreach (var p in per) all.AddRange(p);
+            var path = Path.Combine(OutDir(a), Opt(a, "name", "dagger.bin"));
+            DemoFile.Write(path, all);
+            long n = 0; foreach (var sq in all) n += sq.Samples.Count;
+            long alive = 0, adults = 0, pain = 0, pt = 0;
+            foreach (var x in stats) { alive += x.AdultsAliveAt(x.Ticks); adults += x.AdultsAtStart(); foreach (var p in x.People) { pain += p.PainTicksHungerThirst; pt += p.PersonTicks; } }
+            o.WriteLine($"dagger (TRAINING ONLY, teacher labels, beta {beta}/1000): {all.Count} sequences, {n} decisions -> {path}; rollouts alive {alive}/{adults}, pain(h|t) {(double)pain / Math.Max(1, pt):0.000}");
             return Ok;
         }
 
@@ -179,7 +211,7 @@ namespace God.Train
             var from = Flag(a, "resume") && File.Exists(esPath) ? esPath : Opt(a, "from", Path.Combine(dir, "bc.ckpt"));
             var start = Checkpoint.Load(from);
             bool stub = Flag(a, "stub");
-            var cfg = new EsConfig { Pairs = Int(a, "pairs", st.EsPairs), EpisodesPerCandidate = Int(a, "episodes", st.EsEpisodes), Workers = workers, Seeds = seeds, Ticks = Pipeline.Ticks(st, stub),
+            var cfg = new EsConfig { Pairs = Int(a, "pairs", st.EsPairs), EpisodesPerCandidate = Int(a, "episodes", st.EsEpisodes), Workers = workers, Seeds = seeds, Ticks = a.ContainsKey("days") ? Int(a, "days", st.Days) * (long)(stub ? new StubConfig().TicksPerDay : God.Sim.SimCalendar.DefaultTicksPerDay) : Pipeline.Ticks(st, stub),
                 Sigma = double.Parse(Opt(a, "sigma", "0.005"), System.Globalization.CultureInfo.InvariantCulture), Lr = double.Parse(Opt(a, "lr", "0.0005"), System.Globalization.CultureInfo.InvariantCulture) };
             int iters = Int(a, "iters", st.EsIterations);
             var sw = Stopwatch.StartNew();
@@ -204,20 +236,42 @@ namespace God.Train
             Evaluator.Authorise(t, Opt(a, "thresholds-hash"));
             if (RealWorldRefused(a, e)) return Unavailable;
             var dir = OutDir(a);
-            var seeds = SeedPolicy.ParseSeeds(Opt(a, "seeds", $"{t.SelfTestSeeds[0]}-{t.SelfTestSeeds[1]}"));
+            bool stub = Flag(a, "stub");
+            var seeds = SeedPolicy.ParseSeeds(Opt(a, "seeds", stub ? $"{t.SelfTestSeeds[0]}-{t.SelfTestSeeds[1]}" : $"{t.HeldOutSeeds[0]}-{t.HeldOutSeeds[1]}"));
             var arms = Opt(a, "arms", "untrained,frozen,trained").Split(',');
-            var setup = new EvalSetup { World = "stub", Seeds = seeds, Workers = Int(a, "workers", 8) };
+            var setup = new EvalSetup { World = stub ? "stub" : "unified", Seeds = seeds, Workers = Int(a, "workers", 8) };
             string stageId = null;
             foreach (var name in arms)
             {
                 Checkpoint ck; string brain;
+                if (!stub && name == "untrained")
+                {
+                    // the game's own untrained brain: the same network, random weights from UN6.UntrainedSeed (= the file's untrainedInitSeed)
+                    int seed = new God.Sim.SimTuning().Unification.UN6.UntrainedSeed;
+                    if ((ulong)seed != (ulong)t.UntrainedInitSeed) { e.WriteLine($"refused: UN6.UntrainedSeed {seed} != thresholds untrainedInitSeed {t.UntrainedInitSeed}"); return Refused; }
+                    var w = God.Sim.Unified.BrainNet.UntrainedWeights(God.Sim.Unified.BrainShape.Default, (ulong)seed);
+                    setup.Arms.Add(new ArmSpec { Name = name, Brain = "untrained", WeightsSha256 = God.Sim.Unified.BrainNet.WeightsSha256(w), ArtifactStatus = "game Brain.Kind = 0",
+                        Actor = () => new GameBrainActor(), GameBrainKind = God.Sim.Unified.BrainKind.Untrained });
+                    continue;
+                }
+                if (!stub && name == "trained" && Opt(a, "artifact") != null)
+                {
+                    // the frozen artifact, loaded by the game through UN6's header check (Brain.Kind = 1)
+                    int ver = Int(a, "artifact", 1);
+                    var art = God.Sim.Unified.ArtifactLoader.LoadVerified(ver);
+                    setup.Arms.Add(new ArmSpec { Name = name, Brain = "trained", WeightsSha256 = art.WeightsSha256, ArtifactStatus = "FounderPolicyV" + ver + " " + art.Status + " (game Brain.Kind = 1)",
+                        Actor = () => new GameBrainActor(), GameBrainKind = God.Sim.Unified.BrainKind.Trained, GameArtifact = ver });
+                    if (stageId == null) stageId = Opt(a, "stage");
+                    continue;
+                }
                 if (name == "untrained") { ck = Checkpoint.Untrained(NetShape.Default, t.UntrainedInitSeed, "stub"); brain = "untrained"; }
                 else if (name == "frozen") { ck = Checkpoint.Load(Opt(a, "frozen", Path.Combine(dir, "bc.ckpt"))); brain = ck.Kind == "bc" ? "frozen" : "not-frozen:" + ck.Kind; }
                 else if (name == "trained") { ck = Checkpoint.Load(Opt(a, "trained", Path.Combine(dir, "es.ckpt"))); brain = ck.Kind == "es" ? "trained" : "not-trained:" + ck.Kind; }
                 else { e.WriteLine("unknown arm " + name + " (arms: untrained, frozen, trained)"); return Usage; }
                 if (ck.Kind != "init" && stageId == null) stageId = ck.Stage;
                 var net = ck.ToQNet();
-                setup.Arms.Add(new ArmSpec { Name = name, Brain = brain, WeightsSha256 = net.WeightsSha256(), ArtifactStatus = "checkpoint", Actor = () => new NetActor(net) });
+                string label = name == "frozen" ? "FROZEN (behaviour cloning)" : name.ToUpperInvariant();
+                setup.Arms.Add(new ArmSpec { Name = name, Brain = brain, WeightsSha256 = net.WeightsSha256(), ArtifactStatus = "checkpoint", Actor = () => new NetActor(net) { Label = label } });
             }
             setup.NeedMask = CurriculumData.Load(Opt(a, "stage", stageId ?? "S2")).NeedMask;
             var res = Evaluator.Run(t, Opt(a, "thresholds-hash"), setup);
@@ -250,6 +304,19 @@ namespace God.Train
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
             File.WriteAllText(path, text);
             o.WriteLine($"artifact {ArtifactWriter.ClassName(h.Version)} ({h.Status}) weights {h.WeightsSha256} -> {path}");
+            return Ok;
+        }
+
+        /// <summary>The slice-1 headless report (markdown) of an evaluated unified-world results file.</summary>
+        private static int SliceReportCmd(Dictionary<string, string> a, TextWriter o, TextWriter e)
+        {
+            var t = Thresholds.Load(Opt(a, "thresholds"));
+            var r = EvalResults.FromJson(File.ReadAllText(Opt(a, "results")));
+            if (r.ThresholdsHash != t.Hash) { e.WriteLine($"refused: the results were evaluated against thresholds {r.ThresholdsHash}, the committed file is {t.Hash}"); return Refused; }
+            var md = Report.SliceReport.Write(r, t);
+            var path = Opt(a, "out", "SLICE1_REPORT.md");
+            File.WriteAllText(path, md, new System.Text.UTF8Encoding(false));
+            o.WriteLine("slice-1 report -> " + path);
             return Ok;
         }
 

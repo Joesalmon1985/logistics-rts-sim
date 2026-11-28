@@ -55,7 +55,7 @@ namespace God.Sim.Unified
     {
         public readonly BrainArtifact Artifact;
 
-        public TrainedPolicy(BrainArtifact verified) : base(new BrainNet(BrainShape.Parse(verified.NetShape), verified.Weights)) { Artifact = verified; }
+        public TrainedPolicy(BrainArtifact verified) : base(new BrainNet(BrainShape.Parse(verified.NetShape), verified.Weights) { InputMap = verified.InputMap }) { Artifact = verified; }
         public override int Kind => BrainKind.Trained;
         /// <summary>"TRAINED" only for a "TRAINED" artifact; else the artifact's status is named (e.g. "ARTIFACT v3 SELF-TEST").</summary>
         public override string Label => Artifact.StatusIsTrained ? "TRAINED" : "ARTIFACT v" + Artifact.Version + " " + Artifact.Status;

@@ -64,6 +64,7 @@ namespace God.Train.Artifact
             sb.Append("    /// <summary>Founder policy artifact v").Append(h.Version).Append(" (").Append(h.Status).Append("): header constants and int16 weights (base64, little-endian).</summary>\n");
             sb.Append("    public static class ").Append(ClassName(h.Version)).Append("\n    {\n");
             foreach (var f in ArtifactHeader.IntFields) sb.Append("        public const int ").Append(f).Append(" = ").Append(((int)typeof(ArtifactHeader).GetField(f).GetValue(h)).ToString(CultureInfo.InvariantCulture)).Append(";\n");
+            sb.Append("        public const int InputMap = ").Append(net.InputMap.ToString(CultureInfo.InvariantCulture)).Append(";\n");
             foreach (var f in ArtifactHeader.StringFields) sb.Append("        public const string ").Append(f).Append(" = @\"").Append(((string)typeof(ArtifactHeader).GetField(f).GetValue(h)).Replace("\"", "\"\"")).Append("\";\n");
             int chunks = (b64.Length + ChunkChars - 1) / ChunkChars;
             sb.Append("        /// <summary>The weights' base64 in order (join the chunks).</summary>\n");

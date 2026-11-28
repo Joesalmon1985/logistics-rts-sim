@@ -15,6 +15,8 @@ namespace God.Train.Eval
         public string WeightsSha256 = "";
         public string ArtifactStatus = "";
         public Func<IActor> Actor;
+        /// <summary>Unified world: the game's own <c>Unification.Brain.Kind</c> / <c>.Artifact</c> of this arm's worlds (used when the actor injects nothing).</summary>
+        public int GameBrainKind = God.Sim.Unified.BrainKind.Untrained, GameArtifact = 0;
     }
 
     public sealed class EvalSetup
@@ -73,8 +75,11 @@ namespace God.Train.Eval
             }
             res.Seeds.AddRange(setup.Seeds);
 
-            IWorld Make(long seed)
+            IWorld Make(long seed, ArmSpec arm)
             {
+                if (setup.World == "unified")
+                    return new UnifiedWorld(new UnifiedConfig { Persons = m1.Population, NeedMask = setup.NeedMask, PainBand = t.PainBandDefault, BrainKind = arm.GameBrainKind, Artifact = arm.GameArtifact },
+                        seed, Layouts.ForEvalSeed(seed), access);
                 var cfg = new StubConfig
                 {
                     Radius = setup.Stub.Radius, Persons = m1.Population, NeedMask = setup.NeedMask, TicksPerDay = setup.Stub.TicksPerDay,
@@ -83,7 +88,7 @@ namespace God.Train.Eval
                 return new StubWorld(cfg, seed, Layouts.ForEvalSeed(seed), access);
             }
 
-            int tpd = setup.Stub.TicksPerDay;
+            int tpd = setup.World == "unified" ? God.Sim.SimCalendar.DefaultTicksPerDay : setup.Stub.TicksPerDay;
             res.TicksPerDay = tpd; res.PainBand = t.PainBandDefault;
             var jobs = new List<(int arm, int seed)>();
             for (int a = 0; a < setup.Arms.Count; a++) for (int s = 0; s < setup.Seeds.Length; s++) jobs.Add((a, s));
@@ -96,7 +101,7 @@ namespace God.Train.Eval
                 {
                     var (a, s) = jobs[j];
                     long seed = setup.Seeds[s];
-                    var w = Make(seed);
+                    var w = Make(seed, setup.Arms[a]);
                     var st = Rollout.Run(w, setup.Arms[a].Actor(), seed, (long)days * tpd, evaluation: true);
                     st.Layout = Layouts.Name(Layouts.ForEvalSeed(seed));
                     stats[j] = st;
@@ -131,7 +136,14 @@ namespace God.Train.Eval
                         ShelterTick = st.Facts.FirstShelterTick, RawDepositTick = st.Facts.FirstRawDepositTick, HandoverTick = st.Facts.FirstHandoverTick,
                         Return = st.TotalReturn, Decisions = st.Decisions, TeacherSubmissions = st.TeacherSubmissions, FinalHash = st.FinalHash.ToString("x16"),
                     };
-                    foreach (var p in st.People) { sr.PersonTicks += p.PersonTicks; sr.PainTicksHungerThirst += p.PainTicksHungerThirst; }
+                    foreach (var p in st.People)
+                    {
+                        sr.PersonTicks += p.PersonTicks; sr.PainTicksHungerThirst += p.PainTicksHungerThirst;
+                        var pr = new PersonResult { Person = p.Person, Adult = p.Adult, DeathTick = p.DeathTick, Cause = p.Cause, PersonTicks = p.PersonTicks, PainTicksHungerThirst = p.PainTicksHungerThirst, CellsVisited = p.CellsVisited };
+                        foreach (var d in p.Daily) { pr.Hunger.Add(d.hunger); pr.Energy.Add(d.energy); pr.Thirst.Add(d.thirst); }
+                        sr.People.Add(pr);
+                    }
+                    Array.Copy(st.AppliedBy, sr.Applied, 13);
                     arm.PerSeed.Add(sr);
                 }
                 arm.Measures = Measures(t, eps, tpd, setup.World == "stub");
@@ -184,11 +196,11 @@ namespace God.Train.Eval
                         Count(r, m, eps, f => f.CanHandOver, f => f.FirstHandoverTick >= 0 && f.FirstHandoverTick <= by); break;
                     case "interrupted_sites_completed_share":
                         r.Evaluable = false; r.Met = false;
-                        r.Note = stub ? "not evaluable on the stub world (no construction)" : "the interruption fixture needs UN4 (construction) and UN2's fixture harness";
+                        r.Note = stub ? "not evaluable on the stub world (no construction)" : "not evaluable: the interruption fixture needs UN4 (construction, not merged)";
                         break;
                     case "adults_alive_share_each_seed":
                         r.Evaluable = false; r.Met = false;
-                        r.Note = stub ? "not evaluable on the stub world (needs the 72-person unified start)" : "run with --full72 on seeds 900001-900003 (UN5)";
+                        r.Note = stub ? "not evaluable on the stub world (needs the 72-person unified start)" : "not evaluable: the 72-person unified start is UN5's (not merged)";
                         break;
                     default: throw new InvalidOperationException("unknown measure kind " + m.Kind);
                 }
@@ -206,7 +218,7 @@ namespace God.Train.Eval
             // the file states "count of 20"; with fewer seeds (a self-test subset) the count scales to the same share
             double need = m.Of > 0 ? (double)m.Count / m.Of * eps.Count : m.Count;
             r.Met = ok && k >= need - 1e-9;
-            if (!ok) r.Note = "not evaluable on this world";
+            if (!ok) r.Note = "not evaluable on this world (no buildings, construction, collection or hand-over yet: UN3b/UN4/UN7 not merged)";
         }
     }
 

@@ -85,14 +85,67 @@ namespace God.Train.Teacher
                 // ---- walk to the most pressing need's nearest source (path oracle)
                 bool wantWater = waterNeed && thirst >= ThirstAt / 2;
                 bool wantFood = foodNeed && (foodSlot < 0 && hunger >= HungerAt / 2 || foods < CarryFood && emptyHandRoom);
+                bool waterFirst = wantWater && (!wantFood || thirst >= hunger);
+                // steer by what the body perceives or remembers (the sector in its own observation), so the choice is imitable
+                if (waterFirst && Steer(s, ref p, true, m, out var c1)) { Steered++; return c1; }
+                if (wantFood && Steer(s, ref p, false, m, out var c2)) { Steered++; return c2; }
+                if (wantWater && Steer(s, ref p, true, m, out var c3)) { Steered++; return c3; }
+                // nothing perceived or remembered: the path oracle (training only)
                 int step = -1;
-                if (wantWater && (!wantFood || thirst >= hunger)) step = NextNode(s, npc.Node, true);
+                if (waterFirst) step = NextNode(s, npc.Node, true);
                 if (step < 0 && wantFood) step = NextNode(s, npc.Node, false);
                 if (step < 0 && wantWater) step = NextNode(s, npc.Node, true);
-                if (step >= 0) return Toward(s, npc.Node, u.Facing, step, m);
-                if (!wantWater && !wantFood && Allowed(m, Prim.Wait) && _rng.NextInt(4) != 0) return ActionChoice.Of(Prim.Wait);
+                if (step >= 0) { OracleSteps++; return Toward(s, npc.Node, u.Facing, step, m); }
+                if (!wantWater && !wantFood && Allowed(m, Prim.Wait)) return ActionChoice.Of(Prim.Wait);
             }
             return Wander(s, person, npc.Node, u.Facing, m);
+        }
+
+        /// <summary>Decisions steered by the body's own percept or place memory, and steps that needed the path oracle.</summary>
+        public long Steered, OracleSteps;
+
+        private static readonly int OEnt = ObsSchema.OffsetOf("entities"), OPlaces = ObsSchema.OffsetOf("places"), OCells = ObsSchema.OffsetOf("cells");
+
+        /// <summary>
+        /// Turn towards the nearest perceived (else remembered) source of the need by its observed relative sector (0 ahead: step
+        /// forward when the cell ahead is passable; 1-3 turn right; 4-5 turn left). False when none is perceived or remembered,
+        /// or the way ahead is blocked (the oracle then decides).
+        /// </summary>
+        private bool Steer(GodState s, ref Percept p, bool water, in ActMask m, out ActionChoice c)
+        {
+            c = default;
+            var v = p.V;
+            int sector = -1;
+            for (int e = 0; e < p.EntityCount && sector < 0; e++)
+            {
+                bool hit = water ? p.EntityKind[e] == SpatialKind.WaterPoint && FreshWater(s, p.EntityId[e])
+                                 : p.EntityKind[e] == SpatialKind.ForagePlace && EdibleForage(s, p.EntityId[e]);
+                if (hit) sector = v[OEnt + e * ObsSchema.EntityFields + 1];
+            }
+            int bestD = int.MaxValue;
+            if (sector < 0)
+                for (int k = 0; k < ObsSchema.Places; k++)
+                {
+                    int o = OPlaces + k * ObsSchema.PlaceFields, cls = v[o];
+                    if (cls == 0) continue;
+                    bool hit = water ? cls == Percept.ClassFreshWater : EdibleClass(s, cls);
+                    if (hit && v[o + 2] < bestD) { bestD = v[o + 2]; sector = v[o + 1]; }
+                }
+            if (sector < 0 || sector == 6) return false;
+            if (sector == 0)
+            {
+                if (v[OCells] == 0 || !Allowed(m, Prim.StepForward)) return false; // blocked ahead
+                c = ActionChoice.Of(Prim.StepForward); return true;
+            }
+            c = ActionChoice.Of(sector <= 3 ? Prim.TurnRight : Prim.TurnLeft);
+            return true;
+        }
+
+        private static bool EdibleClass(GodState s, int cls)
+        {
+            if (cls <= 0 || cls > ushort.MaxValue) return false;
+            var o = s.Unification.Book.Object((ushort)cls);
+            return o != null && o.Nutrition > 0 && o.Interactions.Count > 0 && o.Interactions[0].TargetKind == God.Sim.Unified.TargetKind.ForagePlace;
         }
 
         // ---------------- helpers ----------------

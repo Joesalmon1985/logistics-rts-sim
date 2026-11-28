@@ -31,6 +31,8 @@ namespace God.Train.Net
 
         public readonly NetShape Shape;
         public readonly short[] W;
+        /// <summary>The input map (God.Sim's <see cref="BrainInput"/>; the same table as the game's network).</summary>
+        public int InputMap = BrainInput.MapRaw;
 
         public QNet(NetShape shape, short[] weights)
         {
@@ -53,7 +55,7 @@ namespace God.Train.Net
         public void Recur(short[] obs, short[] h, QScratch sc)
         {
             var s = Shape; var w = W;
-            for (int i = 0; i < s.In; i++) sc.X[i] = Clamp(obs[i], -ObsClamp, ObsClamp);
+            for (int i = 0; i < s.In; i++) sc.X[i] = BrainInput.Apply(InputMap, i, obs[i], ObsClamp);
             for (int j = 0; j < s.Enc; j++)
             {
                 long acc = (long)w[s.B1 + j] * 1000; int row = s.W1 + j * s.In;

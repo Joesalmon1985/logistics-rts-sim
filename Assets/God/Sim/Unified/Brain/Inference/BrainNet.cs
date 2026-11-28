@@ -87,6 +87,9 @@ namespace God.Sim.Unified
         /// <summary>Per-decision inputs set by the caller: a bias per control option (null = none) and the temperature (permille).</summary>
         public int[] Bias;
         public int Temperature = 1000;
+        /// <summary>The input map (<see cref="BrainInput"/>): raw by default; the game's untrained brain, the trainer's candidates and
+        /// an artifact that names map 1 set <see cref="BrainInput.Current"/>.</summary>
+        public int InputMap = BrainInput.MapRaw;
         /// <summary>The multiply-accumulates of the last <see cref="Act"/> (cost counter for UNP and UN11a).</summary>
         public int Macs;
 
@@ -117,7 +120,8 @@ namespace God.Sim.Unified
             var s = Shape; var w = W; var sc = _sc;
             int[] x = sc.X, a1 = sc.A1, a2 = sc.A2;
             int nIn = s.In, nEnc = s.Enc, nDense = s.Dense;
-            for (int i = 0; i < nIn; i++) { int v = obs[i]; x[i] = v < -ObsClamp ? -ObsClamp : v > ObsClamp ? ObsClamp : v; }
+            int map = InputMap;
+            for (int i = 0; i < nIn; i++) x[i] = BrainInput.Apply(map, i, obs[i], ObsClamp);
             var ws = new ReadOnlySpan<short>(w);
             var xs = new ReadOnlySpan<int>(x, 0, nIn);
             for (int j = 0; j < nEnc; j++)

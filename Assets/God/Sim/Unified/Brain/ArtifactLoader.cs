@@ -18,6 +18,8 @@ namespace God.Sim.Unified
         public string ObsSchemaHash = "", ActSchemaHash = "", CatalogueHash = "", TuningHash = "", CurriculumId = "", StagesTrained = "",
             StagesNotTrained = "", TrainingSeeds = "", TrainerCommit = "", ThresholdsHash = "", TrainingMetricsJson = "", NetShape = "", WeightsSha256 = "";
         public int WeightScaleShift, WeightCount;
+        /// <summary>The network input map (<see cref="BrainInput"/>); 0 (raw) for an artifact that names none.</summary>
+        public int InputMap;
         public short[] Weights;
 
         public const string StatusTrained = "TRAINED";
@@ -97,6 +99,8 @@ namespace God.Sim.Unified
                     b64.Append((string)(f.IsLiteral ? f.GetRawConstantValue() : f.GetValue(null)));
                 }
                 a.Weights = BrainNet.FromBytes(Convert.FromBase64String(b64.ToString()));
+                var im = t.GetField("InputMap", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                a.InputMap = im == null ? BrainInput.MapRaw : (int)(im.IsLiteral ? im.GetRawConstantValue() : im.GetValue(null));
                 if (a.Version != version) { error = "artifact " + ClassName(version) + " names version " + a.Version; return null; }
                 return a;
             }
@@ -128,6 +132,7 @@ namespace God.Sim.Unified
             if (a.ObsSchemaVersion != ObsSchema.Version || a.ObsSchemaHash != ObsSchema.SchemaHash) return "Obs schema changed";
             if (a.ActSchemaVersion != ActSchema.Version || a.ActSchemaHash != ActSchema.SchemaHash) return "Act schema changed";
             if (catalogueHash != null && a.CatalogueHash != catalogueHash) return "catalogue changed";
+            if (a.InputMap != BrainInput.MapRaw && a.InputMap != BrainInput.MapV1) return "unknown input map " + a.InputMap;
             if (a.WeightScaleShift != BrainNet.WeightShift) return "weight scale shift " + a.WeightScaleShift + " is not " + BrainNet.WeightShift;
             BrainShape shape;
             try { shape = BrainShape.Parse(a.NetShape); }

@@ -20,6 +20,8 @@ namespace God.Train.Env
         public int PainBand = 800;
         /// <summary>The game's own brain (<c>Unification.Brain.Kind</c>, <c>.Artifact</c>) when no policy is injected.</summary>
         public int BrainKind = God.Sim.Unified.BrainKind.Untrained, Artifact = 0;
+        /// <summary>Diagnostics only (the game defaults are 1, 1, 300): the overlay, sampling and the temperament temperature spread.</summary>
+        public int Overlay = 1, Sample = 1, TemperatureSpread = 300;
     }
 
     /// <summary>
@@ -69,6 +71,7 @@ namespace God.Train.Env
             tuning.Unification.Needs.ActiveMask = cfg.NeedMask;
             tuning.Unification.Brain.Kind = cfg.BrainKind;
             tuning.Unification.Brain.Artifact = cfg.Artifact;
+            tuning.Unification.UN6.Overlay = cfg.Overlay; tuning.Unification.UN6.Sample = cfg.Sample; tuning.Unification.UN6.TemperatureSpread = cfg.TemperatureSpread;
             // GodSim needs 2-6 factions: the second faction's founders are removed before tick 0 (killed, so every ledger stays
             // consistent; their bodies and packs lie at the other start, far away). The episode's tribe is the first faction.
             var setup = new GameSetup((ulong)seed, GameSetup.NoHuman, 2) { Population = true, StartNpcsPerFaction = cfg.Persons, Victory = VictorySpec.SandboxOnly() };
@@ -112,6 +115,7 @@ namespace God.Train.Env
             _evaluation = evaluation;
             var rt = Runtime;
             IPrimitivePolicy pol;
+            if (actor is DaggerActor dg) dg.SetRecord(record);
             if (actor is ISitePolicySource src) pol = src.MakePolicy();
             else pol = new ActorPolicy(this, actor, record);
             if (pol == null) rt.Inject(null, ControlOrigin.Policy); // the game's own brain

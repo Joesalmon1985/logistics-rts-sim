@@ -71,7 +71,7 @@ namespace God.Sim.Unified
                 {
                     var shape = BrainShape.Default;
                     var w = BrainNet.UntrainedWeights(shape, (ulong)s.Tuning.Unification.UN6.UntrainedSeed);
-                    var p = new UntrainedPolicy(new BrainNet(shape, w));
+                    var p = new UntrainedPolicy(new BrainNet(shape, w) { InputMap = BrainInput.Current }); // the same input map as a trained artifact
                     rt = new BrainRuntime(s, BrainKind.Untrained, p.Label, BrainNet.WeightsSha256(w), null, p);
                     break;
                 }
