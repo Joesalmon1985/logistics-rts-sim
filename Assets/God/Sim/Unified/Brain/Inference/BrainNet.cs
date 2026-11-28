@@ -115,24 +115,32 @@ namespace God.Sim.Unified
         public void Recur(short[] obs, short[] h)
         {
             var s = Shape; var w = W; var sc = _sc;
-            for (int i = 0; i < s.In; i++) sc.X[i] = Clamp(obs[i], -ObsClamp, ObsClamp);
-            for (int j = 0; j < s.Enc; j++)
+            int[] x = sc.X, a1 = sc.A1, a2 = sc.A2;
+            int nIn = s.In, nEnc = s.Enc, nDense = s.Dense;
+            for (int i = 0; i < nIn; i++) { int v = obs[i]; x[i] = v < -ObsClamp ? -ObsClamp : v > ObsClamp ? ObsClamp : v; }
+            var ws = new ReadOnlySpan<short>(w);
+            var xs = new ReadOnlySpan<int>(x, 0, nIn);
+            for (int j = 0; j < nEnc; j++)
             {
-                long acc = (long)w[s.B1 + j] * 1000; int row = s.W1 + j * s.In;
-                for (int i = 0; i < s.In; i++) acc += w[row + i] * sc.X[i];
-                sc.A1[j] = Clamp(Sat(acc) >> WeightShift, -ActClamp, ActClamp);
+                long acc = (long)w[s.B1 + j] * 1000;
+                var row = ws.Slice(s.W1 + j * nIn, nIn);
+                for (int i = 0; i < row.Length; i++) acc += row[i] * xs[i];
+                a1[j] = Clamp(Sat(acc) >> WeightShift, -ActClamp, ActClamp);
             }
-            for (int j = 0; j < s.Dense; j++)
+            var a1s = new ReadOnlySpan<int>(a1, 0, nEnc);
+            for (int j = 0; j < nDense; j++)
             {
-                long acc = (long)w[s.B2 + j] * 1000; int row = s.W2 + j * s.Enc;
-                for (int i = 0; i < s.Enc; i++) acc += w[row + i] * sc.A1[i];
-                sc.A2[j] = Clamp(Sat(acc) >> WeightShift, -ActClamp, ActClamp);
+                long acc = (long)w[s.B2 + j] * 1000;
+                var row = ws.Slice(s.W2 + j * nEnc, nEnc);
+                for (int i = 0; i < row.Length; i++) acc += row[i] * a1s[i];
+                a2[j] = Clamp(Sat(acc) >> WeightShift, -ActClamp, ActClamp);
             }
+            var a2s = new ReadOnlySpan<int>(a2, 0, nDense);
             for (int j = 0; j < s.Rec; j++)
             {
                 long az = (long)w[s.Bz + j] * 1000, ac = (long)w[s.Bc + j] * 1000;
-                int rz = s.Wz + j * s.Dense, rc = s.Wc + j * s.Dense;
-                for (int i = 0; i < s.Dense; i++) { az += w[rz + i] * sc.A2[i]; ac += w[rc + i] * sc.A2[i]; }
+                var rz = ws.Slice(s.Wz + j * nDense, nDense); var rc = ws.Slice(s.Wc + j * nDense, nDense);
+                for (int i = 0; i < a2s.Length; i++) { int v = a2s[i]; az += rz[i] * v; ac += rc[i] * v; }
                 int z = Clamp(((Sat(az) >> WeightShift) >> 2) + 500, 0, 1000);
                 int c = Clamp(Sat(ac) >> WeightShift, -ActClamp, ActClamp);
                 int hj = h[j];
@@ -145,12 +153,15 @@ namespace God.Sim.Unified
         public void Logits(int head, short[] h)
         {
             var s = Shape; var w = W; var sc = _sc;
-            int off = BrainHeads.Offset[head], n = BrainHeads.Size[head];
+            int off = BrainHeads.Offset[head], n = BrainHeads.Size[head], rec = s.Rec;
+            var ws = new ReadOnlySpan<short>(w);
+            var hs = new ReadOnlySpan<short>(h, 0, rec);
             for (int k = 0; k < n; k++)
             {
                 int o = off + k;
-                long acc = (long)w[s.Bh + o] * 1000; int row = s.Wh + o * s.Rec;
-                for (int j = 0; j < s.Rec; j++) acc += w[row + j] * h[j];
+                long acc = (long)w[s.Bh + o] * 1000;
+                var row = ws.Slice(s.Wh + o * rec, rec);
+                for (int j = 0; j < row.Length; j++) acc += row[j] * hs[j];
                 sc.Logits[k] = Sat(acc) >> WeightShift;
             }
             if (head == BrainHeads.Control && Bias != null)
