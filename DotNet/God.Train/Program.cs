@@ -304,7 +304,7 @@ namespace God.Train
                 CatalogueHash = ArtifactWriter.CurrentCatalogueHash(), TuningHash = Opt(a, "tuning-hash", ck.World == "stub" ? "stub-world" : ""),
                 CurriculumId = Opt(a, "curriculum", "founder-v1"), StagesTrained = Opt(a, "stages-trained", ck.Stage), StagesNotTrained = Opt(a, "stages-not-trained", ""),
                 TrainingSeeds = ck.SeedsText, TrainerCommit = Opt(a, "trainer-commit", "unknown"), ThresholdsHash = Opt(a, "thresholds-hash", Thresholds.Load(Opt(a, "thresholds")).Hash),
-                TrainingMetricsJson = ck.MetricsJson,
+                TrainingMetricsJson = Opt(a, "metrics-file") != null ? File.ReadAllText(Opt(a, "metrics-file")).Trim() : ck.MetricsJson,
             };
             if (ck.World == "stub" && h.Status != "SELF-TEST") { e.WriteLine("refused: a stub-world checkpoint can only produce a SELF-TEST artifact"); return Refused; }
             var text = ArtifactWriter.Write(h, ck.ToQNet());
