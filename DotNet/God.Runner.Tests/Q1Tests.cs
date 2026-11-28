@@ -231,7 +231,7 @@ namespace God.Runner.Tests
             var reference = TestUtil.Seq(res[0]);
             Assert.Greater(reference.Count, 3);
             for (int i = 1; i < res.Length; i++) CollectionAssert.AreEqual(reference, TestUtil.Seq(res[i]), specs[i].name);
-            Assert.AreEqual(GodSim.AllHashPartNames.Count, res[0].FinalParts.Length, "all hash parts compared");
+            Assert.AreEqual(GodSim.AllHashPartNames.Count - 1, res[0].FinalParts.Length, "all hash parts compared (UN0: every part but \"unification\", which exists only in a unified game, where civ and organisations do not)");
         }
 
         // ------------------------------------------------------------------ W-D5-10
