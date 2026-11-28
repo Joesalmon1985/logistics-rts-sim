@@ -18,5 +18,6 @@
   <ItemGroup>
     <ProjectReference Include="../God.Runner/God.Runner.csproj" />
     <ProjectReference Include="../God.Sim.Tests/God.Sim.Tests.csproj" />
+    <ProjectReference Include="../God.Catalogue/God.Catalogue.csproj" />
   </ItemGroup>
 </Project>

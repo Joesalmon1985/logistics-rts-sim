@@ -59,218 +59,218 @@ Columns: **ID**; **WB row** (sheet row); name; category/type; inputs or source -
 
 ### 3.1 Objects (138)
 
-| ID | WB row | Name | Type | Source / inputs -> output | Use | Effect [need] | Stage | Fix |
-|---|---|---|---|---|---|---|---|---|
-| OBJ-001 | 5 | Battle axe | Weapon | Ax Workshop: 1 iron + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-002 | 6 | Heavy battle axe | Weapon | War Mill: 2 steel + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-003 | 7 | Beer | Drink | Micro Brewery: 2 wheat + 2 water -> 2 | USE on self / recipe input | Drink or supply a food recipe [Thirst] | Later |  |
-| OBJ-004 | 8 | Blackwood | Material | Wood Hardener: 2 wood + 1 charcoal -> 1 | input |  | Later |  |
-| OBJ-005 | 9 | Bread paddle | Tool | Carpenter: 1 wood -> 1 / Metal Workshop: 1 iron + 1 wood -> 1 | tool | Baking | Later | F |
-| OBJ-006 | 10 | Broad axe | Weapon | Ax Workshop: 2 iron + 2 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-007 | 11 | Bronze axe | Weapon | War Mill: 2 bronze + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-008 | 12 | Cloth | Material | Weaving Mill: 2 wool -> 1 / Weaving Mill: 2 reed -> 1 | input |  | UB | F |
-| OBJ-009 | 13 | Coal | Fuel | Coal Mine: Finite coal deposit -> 1 / Deep Coal Mine: Finite coal deposit -> 2 / Deeper Coal Mine: Finite coal deposit -> 3 | input |  | Later | F |
-| OBJ-010 | 14 | Felling axe | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Wood collection; still needs a collection shelter | Later | E |
-| OBJ-011 | 15 | Fire tongs | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Heated material handling | Later | E |
-| OBJ-012 | 16 | Fish | Raw | Fisher's shelter: Sea dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Cook before eating | UA-initial | E |
-| OBJ-013 | 17 | Fishing rod | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Fish collection; still needs a fisher's shelter | Later | E |
-| OBJ-014 | 18 | Gold | Metal | Smelting Works: 2 gold ore + 1 charcoal -> 2 | input |  | Later |  |
-| OBJ-015 | 19 | Gold ore | Mineral | Gold Mine: Finite gold deposit -> 1 / Deep Gold Mine: Finite gold deposit -> 2 / Deeper Gold Mine: Finite gold deposit -> 3 | input |  | Later | F |
-| OBJ-016 | 20 | Stone | Raw | Stonecutter's shelter: Mountain dice stock -> 1 / Granite Mine: Finite stone deposit -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial | F |
-| OBJ-017 | 21 | Mortar | Material | Primitive hearth: 1 stone + 1 water + 1 charcoal -> 1 / Lime Kiln: 2 stone + 1 water + 1 charcoal -> 2 / Lime Kiln: 2 stone + 1 water + 1 coal -> 2 | input |  | UB | F |
-| OBJ-018 | 22 | Hammer | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Construction work | Later | E |
-| OBJ-019 | 23 | Helmet | Armour | Helm Smithy: 1 iron + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-020 | 24 | Hunting spear | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Hunting / handling game | Later | E |
-| OBJ-021 | 25 | Iron | Metal | Primitive forge: 1 iron ore + 1 charcoal -> 1 / Smelting Works: 2 iron ore + 1 charcoal -> 2 | input |  | Later |  |
-| OBJ-022 | 26 | Iron ore | Mineral | Iron Mine: Finite iron deposit -> 1 / Deep Iron Mine: Finite iron deposit -> 2 / Deeper Iron Mine: Finite iron deposit -> 3 | input |  | Later | F |
-| OBJ-023 | 27 | Kitchen tools | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Preparing food | Later | E |
-| OBJ-024 | 28 | Wood | Raw | Woodcutter's shelter: Forest dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial |  |
-| OBJ-025 | 29 | Helmet mask | Armour | Helm Smithy: 2 iron + 1 leather + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-026 | 30 | Meal | Food | Big Inn: 1 bread + 1 strong beer + 1 cooked fish -> 1 / Big Inn: 1 bread + 1 strong beer + 1 meat -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C |
-| OBJ-027 | 31 | Meat | Food | Primitive hearth: 1 raw meat + 1 wood -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | UB | C |
-| OBJ-028 | 32 | Pick | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Mineral extraction | Later | E |
-| OBJ-029 | 33 | Bread | Food | Bakery: 2 wheat + 1 water + 1 charcoal -> 2 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C |
-| OBJ-030 | 34 | Ration | Food | Tavern: 1 bread -> 1 / Tavern: 1 cooked fish -> 1 / Tavern: 1 meat -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C |
-| OBJ-031 | 35 | Reed | Material | Reed Yard: Wetland cultivation -> 2 | input |  | UB |  |
-| OBJ-032 | 36 | Scythe | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Harvest crops | Later | E |
-| OBJ-033 | 37 | Sharp axe | Weapon | Ax Workshop: 2 iron + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-034 | 38 | Shovel | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Prepare ground / plant crops | Later | E |
-| OBJ-035 | 39 | Snack | Food | Inn: 1 bread + 1 beer + 1 cooked fish -> 1 / Inn: 1 bread + 1 beer + 1 meat -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C |
-| OBJ-036 | 40 | Strong beer | Drink | Brewery: 3 wheat + 2 water -> 2 | USE on self / recipe input | Drink or supply a food recipe [Thirst] | Later |  |
-| OBJ-037 | 41 | Warhelm | Armour | Helm Smithy: 2 steel + 1 gold + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-038 | 42 | Warriors axe | Weapon | War Mill: 2 steel + 1 gold + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-039 | 43 | Water | Drink / input | Well: Fresh water location -> 1 | USE on self (drink / wash slot) or recipe input | Relieves thirst or dirtiness; consumed or transferred as appropriate [Thirst] | UA-initial | E |
-| OBJ-040 | 44 | Wheat | Crop | Farm: 1 wheat seed -> 3 | input |  | Later |  |
-| OBJ-041 | 45 | Clay | Raw | Clay gatherer's shelter: Wetland dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial |  |
-| OBJ-042 | 46 | Sheep | Animal | Shepherd's shelter: Pasture dice stock -> 1 | USE hand on animal / enclosure | Dice stock; collection requires matching operational shelter. Herd, care or process through valid animal interaction; living identity | UA-initial | E |
-| OBJ-043 | 47 | Hay | Raw | Hay gatherer's shelter: Fields dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial |  |
-| OBJ-044 | 48 | Mushrooms | Forage | No building: Forest infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-045 | 49 | Roots | Forage | No building: Mountain infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-046 | 50 | Wild eggs | Forage | No building: Wetland infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-047 | 51 | Rabbit | Forage | No building: Pasture infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-048 | 52 | Wild vegetables | Forage | No building: Fields infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-049 | 53 | Cactus fruit | Forage | No building: Desert infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-050 | 54 | Seaweed | Forage | No building: Sea coast infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-051 | 55 | Charcoal | Fuel | Primitive hearth: 2 wood -> 1 / Charcoal Kiln: 2 wood -> 1 | input |  | UB |  |
-| OBJ-052 | 56 | Wheat seed | Seed | Seed plot: Field seed plants -> 1 / Farm: 1 wheat seed -> 1 | USE on cultivation plot | Plant and reproduce through crop growth | UB | F |
-| OBJ-053 | 57 | Raw meat | Raw | Hunter's Hut: 1 rabbit -> 1 / Sheep pen: 1 sheep -> 2 | input | Cook before eating | UB | F |
-| OBJ-054 | 58 | Cooked fish | Food | Primitive hearth: 1 fish + 1 wood -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | UA-initial | C |
-| OBJ-055 | 59 | Hide | Material | Sheep pen: 1 sheep -> 1 | input |  | UB | F |
-| OBJ-056 | 60 | Wool | Material | Sheep pen: Live sheep -> 2 | input |  | UB | F |
-| OBJ-057 | 61 | Copper ore | Mineral | Copper Mine: Finite copper deposit -> 1 | input |  | Later |  |
-| OBJ-058 | 62 | Copper | Metal | Smelting Works: 2 copper ore + 1 charcoal -> 2 | input |  | Later |  |
-| OBJ-059 | 63 | Tin ore | Mineral | Tin Mine: Finite tin deposit -> 1 | input |  | Later |  |
-| OBJ-060 | 64 | Tin | Metal | Smelting Works: 2 tin ore + 1 charcoal -> 2 | input |  | Later |  |
-| OBJ-061 | 65 | Bronze | Metal | Smelting Works: 2 copper + 1 tin + 1 charcoal -> 1 | input |  | Later |  |
-| OBJ-062 | 66 | Steel | Metal | Smelting Works: 2 iron + 1 charcoal -> 1 | input |  | Later |  |
-| OBJ-063 | 67 | Planks | Material | Carpenter: 1 wood -> 2 | input |  | UA-initial |  |
-| OBJ-064 | 68 | Pottery | Material | Pottery: 2 clay + 1 wood -> 1 | input |  | UB |  |
-| OBJ-065 | 69 | Brick | Material | Pottery: 2 clay + 1 charcoal -> 2 | input |  | UB |  |
-| OBJ-066 | 70 | Building block | Material | Stone workshop: 2 stone -> 1 | input |  | UB |  |
-| OBJ-067 | 71 | Leather | Material | Tannery: 1 hide + 1 water -> 1 | input |  | UB |  |
-| OBJ-068 | 72 | Stone hammer | Tool | Carpenter: 1 wood + 1 stone -> 1 | tool | Early construction work | UA-initial | E |
-| OBJ-069 | 73 | Stone axe | Tool | Carpenter: 1 wood + 1 stone -> 1 | tool | Early wood collection; still needs a collection shelter | UA-initial | E |
-| OBJ-070 | 74 | Stone pick | Tool | Carpenter: 1 wood + 1 stone -> 1 | tool | Early mineral extraction | UB | E |
-| OBJ-071 | 75 | Wood tongs | Tool | Carpenter: 1 wood -> 1 | tool | Early heated material handling | UB | E |
-| OBJ-072 | 76 | Cattle | Animal | Cattle Farm: Existing suitable adult animals -> 1 / Cattle Farm: Wild cattle population -> 1 | USE hand on animal / enclosure | Herd, care or process through valid animal interaction; living identity | Later | F |
-| OBJ-073 | 77 | Ferry | Vehicle | Ferry Yard: 6 wood + 3 cloth -> 1 | USE hand on vehicle | Operate / transport people or goods; needs operator | Later | I |
-| OBJ-074 | 78 | Ship | Vehicle | Shipyard: 10 blackwood + 4 cloth + 2 wood -> 1 | USE hand on vehicle | Operate / transport people or goods; needs operator | Later | I |
-| OBJ-075 | 79 | Herbs | Medical supply | No building: Root habitat -> 1 | USE on injured NPC / self | Treatment subject to knowledge and consent [Pain / Health] | UA-initial | D |
-| OBJ-076 | 80 | Sword | Equipment | Metal Workshop: 2 iron + 1 wood -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-077 | 81 | Spear | Equipment | Metal Workshop: 1 wood + 1 iron -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-078 | 82 | Bow | Equipment | Metal Workshop: 2 wood + 1 cloth -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F |
-| OBJ-079 | 83 | Sling | Equipment | Metal Workshop: 1 leather + 1 cloth -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F |
-| OBJ-080 | 84 | Big shield | Equipment | Metal Workshop: 2 planks + 1 iron -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | F |
-| OBJ-081 | 85 | Small shield | Equipment | Metal Workshop: 1 planks + 1 leather -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F |
-| OBJ-082 | 86 | Breastplate | Equipment | Metal Workshop: 3 iron + 1 leather -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H |
-| OBJ-083 | 87 | Light armour | Equipment | Metal Workshop: 2 cloth + 1 leather -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F |
-| OBJ-084 | 88 | Bedding | Material | Carpenter: 2 hay -> 1 | input |  | UA-initial |  |
-| OBJ-085 | 89 | Painting board / easel | Furnishing | Carpenter: 2 wood + 1 cloth -> 1 | install+use | Supports art creation using pigment [Fun] | UB | G |
-| OBJ-086 | 90 | Fish basin | Furnishing | Pottery: 3 clay + 1 charcoal -> 1 | install+use | Display living fish; requires water and animal care [Fun; Room] | Later |  |
-| OBJ-087 | 91 | Living display fish | Living animal | Fisher's shelter (capture route TBD) [route TBD] | USE / place in fish basin | Keep a separately tracked live fish; not an edible fish lot at same time [Fun] | Later | F |
-| OBJ-088 | 92 | Drink counter | Furnishing | Carpenter: 3 planks -> 1 | install+use | Supports serving stored drinks [Social; Thirst] | UB | E |
-| OBJ-089 | 93 | Cooking grate | Furnishing | Primitive forge: 2 iron -> 1 | install+use | Supports food cooking over hearth [Hunger] | Later |  |
-| OBJ-090 | 94 | Hide ball | Portable good | Tannery: 1 leather + 1 hay -> 1 | handheld | Manipulable ball for play [Fun] | UB |  |
-| OBJ-091 | 95 | Hoop / ball target | Furnishing | Carpenter: 2 wood + 1 reed -> 1 | install+use | Target for ball play [Fun; Social] | UB | G |
-| OBJ-092 | 96 | Bed | Furnishing | Carpenter: 3 wood + 1 bedding -> 1 | install+use | One adult sleeping place; reusable [Energy; Comfort] | UA-initial | A |
-| OBJ-093 | 97 | Sleeping mat | Furnishing | Carpenter: 2 hay + 1 reed -> 1 | install+use | Low-cost sleeping place; reusable [Energy; Comfort] | UB | AG |
-| OBJ-094 | 98 | Tally token | Portable record | Carpenter: 1 wood -> 1 | USE / display to NPC or notice board | Records quantity or obligation; no currency creation | UB | C |
-| OBJ-095 | 99 | Record rack | Furnishing | Carpenter: 2 planks -> 1 | install+use | Stores knowledge artefacts [Room; Fun] | UB | E |
-| OBJ-096 | 100 | Rattle alarm | Furnishing | Carpenter: 1 wood + 1 reed + 1 pottery -> 1 | install+use | Physical local warning when disturbed [Safety] | UB |  |
-| OBJ-097 | 101 | Stool | Furnishing | Carpenter: 2 wood -> 1 | install+use | One seat [Comfort] | UA-initial |  |
-| OBJ-098 | 102 | Strategy board | Portable good | Carpenter: 1 wood + 1 stone -> 1 | handheld | Solo or consensual shared play [Fun; Social] | UB | D |
-| OBJ-099 | 103 | Sun marker | Fixture | Stone workshop: 2 stone -> 1 | fixture | Local daylight time cue | Later | G |
-| OBJ-100 | 104 | Infusion pot | Furnishing | Pottery: 2 clay + 1 charcoal -> 1 | install+use | Supports preparing herb drink [Thirst; Comfort] | UB |  |
-| OBJ-101 | 105 | Herbal infusion | Consumable | Primitive hearth: 1 water + 1 herbs + 1 charcoal -> 1 | USE on self | Drinkable; no automatic medical claim [Thirst] | UB |  |
-| OBJ-102 | 106 | Work surface | Furnishing | Carpenter: 2 planks -> 1 | install+use | Work and display surface [Room] | UB |  |
-| OBJ-103 | 107 | Cradle | Furnishing | Carpenter: 2 wood + 1 bedding -> 1 | install+use | Safe resting slot for infant; caregiver access [Energy; Comfort] | UA-initial | A |
-| OBJ-104 | 108 | Wash basin | Furnishing | Pottery: 2 clay + 1 charcoal -> 1 | install+use | Wash self or objects with supplied water [Hygiene] | UB |  |
-| OBJ-105 | 109 | Low jump platform | Fixture | Carpenter: 3 wood -> 1 | fixture | Safe water play only; no automatic swimming [Fun] | UB | G |
-| OBJ-106 | 110 | Model hut | Portable good | Carpenter: 1 wood + 1 reed -> 1 | handheld | Imaginative play [Fun] | UB |  |
-| OBJ-107 | 111 | Storage chest | Furnishing | Carpenter: 2 planks -> 1 | install+use | Finite physical container [Room] | UA-initial | A |
-| OBJ-108 | 112 | Carved ornament | Portable good | Carpenter: 1 wood -> 1 | handheld | Display improves perceived surroundings [Room] | UA-initial |  |
-| OBJ-109 | 113 | Grinding stone | Furnishing | Stone workshop: 2 stone -> 1 | install+use | Supports grinding wheat [Hunger] | UB |  |
-| OBJ-110 | 114 | Flour | Processed food | Primitive hearth: 1 wheat -> 1 | USE on compatible recipe / storage target | Optional ingredient for baking; not automatic food [Hunger] | UB |  |
-| OBJ-111 | 115 | Food stall | Fixture | Carpenter: 3 wood + 1 cloth -> 1 | fixture | Holds goods for voluntary exchange [Hunger; Social] | Later | C |
-| OBJ-112 | 116 | Water feature | Fixture | Pottery: 3 clay + 1 charcoal -> 1 | fixture | Retains delivered water; decorative [Room; Fun] | Later | G |
-| OBJ-113 | 117 | Waste basket | Furnishing | Weaving Mill: 2 reed -> 1 | install+use | Finite waste storage [Hygiene; Room] | UB | A |
-| OBJ-114 | 118 | Waste | Material | Consumption / disposal | USE on compatible recipe / storage target | Material byproduct; transfer and treatment required [Hygiene; Room] | UA-initial | E |
-| OBJ-115 | 119 | Memorial stone | Fixture | Stone workshop: 2 stone -> 1 | fixture | Records identity of deceased; memorial interaction [Social; Room] | UB |  |
-| OBJ-116 | 120 | Potted plant | Furnishing | Pottery: 1 pottery + 1 water -> 1 | install+use | Plant care; living specimen required [Room; Fun] | Later |  |
-| OBJ-117 | 121 | Climbing frame | Fixture | Carpenter: 4 wood + 2 reed -> 1 | fixture | Play; energy expenditure and safety constraints [Fun] | UB |  |
-| OBJ-118 | 122 | Medicine box | Furnishing | Carpenter: 1 wood -> 1 | install+use | Finite storage for herbs and remedies [Health; Pain] | UB | A |
-| OBJ-119 | 123 | Toy cart | Portable good | Carpenter: 2 wood -> 1 | handheld | Push or manipulate toy [Fun] | UB |  |
-| OBJ-120 | 124 | Unusual plant | Furnishing | Pottery: 1 pottery + 1 water -> 1 | install+use | Rare plant variant; no magic effect assumed [Room; Fun] | Later |  |
-| OBJ-121 | 125 | Notice board | Fixture | Carpenter: 2 planks -> 1 | fixture | Display durable symbols and records [Social] | UB | E |
-| OBJ-122 | 126 | Pigment | Material | Stone workshop: 1 clay + 1 charcoal -> 1 | USE on compatible recipe / storage target | Abstract colour material for art | UB |  |
-| OBJ-123 | 127 | Wall art | Portable good | Carpenter: 1 cloth + 1 pigment -> 1 | handheld | Aesthetic display [Room] | UB |  |
-| OBJ-124 | 128 | Drum | Portable good | Carpenter: 1 wood + 1 leather -> 1 | handheld | Make audible rhythm; listeners may join [Fun; Social] | UB |  |
-| OBJ-125 | 129 | Target game | Fixture | Stone workshop: 2 stone + 1 wood -> 1 | fixture | Simple rolling/throwing game [Fun; Social] | UB |  |
-| OBJ-126 | 130 | Cool storage chest | Furnishing | Carpenter: 3 wood + 2 stone -> 1 | install+use | Slows spoilage; finite capacity [Hunger] | UB | AG |
-| OBJ-127 | 131 | Bench | Furnishing | Carpenter: 3 wood -> 1 | install+use | Multiple seats [Comfort; Social] | UA-initial |  |
-| OBJ-128 | 132 | Fire warning station | Fixture | Carpenter: 1 wood + 1 reed -> 1 | fixture | Staffed observation point; warning via gesture [Safety] | Later | IG |
-| OBJ-129 | 133 | Bathing pool | Fixture | Stone workshop: 4 stone + 2 clay -> 1 | fixture | Water-filled shallow basin; safe access [Hygiene; Fun] | Later |  |
-| OBJ-130 | 134 | Message token | Portable record | Carpenter: 1 wood -> 1 | USE / display to NPC or notice board | Carry a physical message; no telepathy [Social] | UB | E |
-| OBJ-131 | 135 | Story circle | Fixture | Stone workshop: 3 stone -> 1 | fixture | Multiple seats for live story or music [Fun; Social] | UB |  |
-| OBJ-132 | 136 | Toy | Portable good | Carpenter: 1 wood -> 1 | handheld | Manipulation and imaginative play [Fun] | UA-initial |  |
-| OBJ-133 | 137 | Toy box | Furnishing | Carpenter: 1 planks -> 1 | install+use | Finite toy storage [Room; Fun] | UB | A |
-| OBJ-134 | 138 | Waste pit | Fixture | Stone workshop: 2 stone + 1 clay -> 1 | fixture | Contains waste; disposal process recorded [Hygiene; Room] | UB |  |
-| OBJ-135 | 139 | Training stone | Furnishing | Stone workshop: 2 stone -> 1 | install+use | Physical exercise; increases fatigue [Fun; Health] | UB |  |
-| OBJ-136 | 140 | Latrine | Fixture | Carpenter: 2 wood + 1 clay -> 1 | fixture | Relieve bladder privately; generates waste [Bladder; Hygiene] | UA-initial | A |
-| OBJ-137 | 141 | Water jug | Portable good | Pottery: 1 clay + 1 charcoal -> 1 | USE on water source / self / compatible target | Carry physical water; finite capacity [Thirst; Hygiene] | UB |  |
-| OBJ-138 | 142 | Cleaning cloth | Portable good | Weaving Mill: 1 cloth -> 1 | USE on water source / self / compatible target | Reusable cleaning implement; needs washing [Hygiene; Room] | UB |  |
+| ID | WB row | Name | Type | Source / inputs -> output | Use | Effect [need] | Stage | Fix | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| OBJ-001 | 5 | Battle axe | Weapon | Ax Workshop: 1 iron + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-002 | 6 | Heavy battle axe | Weapon | War Mill: 2 steel + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-003 | 7 | Beer | Drink | Micro Brewery: 2 wheat + 2 water -> 2 | USE on self / recipe input | Drink or supply a food recipe [Thirst] | Later |  | deferred |
+| OBJ-004 | 8 | Blackwood | Material | Wood Hardener: 2 wood + 1 charcoal -> 1 | input |  | Later |  | deferred |
+| OBJ-005 | 9 | Bread paddle | Tool | Carpenter: 1 wood -> 1 / Metal Workshop: 1 iron + 1 wood -> 1 | tool | Baking | Later | F | deferred |
+| OBJ-006 | 10 | Broad axe | Weapon | Ax Workshop: 2 iron + 2 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-007 | 11 | Bronze axe | Weapon | War Mill: 2 bronze + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-008 | 12 | Cloth | Material | Weaving Mill: 2 wool -> 1 / Weaving Mill: 2 reed -> 1 | input |  | UB | F | staged |
+| OBJ-009 | 13 | Coal | Fuel | Coal Mine: Finite coal deposit -> 1 / Deep Coal Mine: Finite coal deposit -> 2 / Deeper Coal Mine: Finite coal deposit -> 3 | input |  | Later | F | deferred |
+| OBJ-010 | 14 | Felling axe | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Wood collection; still needs a collection shelter | Later | E | deferred |
+| OBJ-011 | 15 | Fire tongs | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Heated material handling | Later | E | deferred |
+| OBJ-012 | 16 | Fish | Raw | Fisher's shelter: Sea dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Cook before eating | UA-initial | E | implemented |
+| OBJ-013 | 17 | Fishing rod | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Fish collection; still needs a fisher's shelter | Later | E | deferred |
+| OBJ-014 | 18 | Gold | Metal | Smelting Works: 2 gold ore + 1 charcoal -> 2 | input |  | Later |  | deferred |
+| OBJ-015 | 19 | Gold ore | Mineral | Gold Mine: Finite gold deposit -> 1 / Deep Gold Mine: Finite gold deposit -> 2 / Deeper Gold Mine: Finite gold deposit -> 3 | input |  | Later | F | deferred |
+| OBJ-016 | 20 | Stone | Raw | Stonecutter's shelter: Mountain dice stock -> 1 / Granite Mine: Finite stone deposit -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial | F | implemented |
+| OBJ-017 | 21 | Mortar | Material | Primitive hearth: 1 stone + 1 water + 1 charcoal -> 1 / Lime Kiln: 2 stone + 1 water + 1 charcoal -> 2 / Lime Kiln: 2 stone + 1 water + 1 coal -> 2 | input |  | UB | F | staged |
+| OBJ-018 | 22 | Hammer | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Construction work | Later | E | deferred |
+| OBJ-019 | 23 | Helmet | Armour | Helm Smithy: 1 iron + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-020 | 24 | Hunting spear | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Hunting / handling game | Later | E | deferred |
+| OBJ-021 | 25 | Iron | Metal | Primitive forge: 1 iron ore + 1 charcoal -> 1 / Smelting Works: 2 iron ore + 1 charcoal -> 2 | input |  | Later |  | deferred |
+| OBJ-022 | 26 | Iron ore | Mineral | Iron Mine: Finite iron deposit -> 1 / Deep Iron Mine: Finite iron deposit -> 2 / Deeper Iron Mine: Finite iron deposit -> 3 | input |  | Later | F | deferred |
+| OBJ-023 | 27 | Kitchen tools | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Preparing food | Later | E | deferred |
+| OBJ-024 | 28 | Wood | Raw | Woodcutter's shelter: Forest dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial |  | implemented |
+| OBJ-025 | 29 | Helmet mask | Armour | Helm Smithy: 2 iron + 1 leather + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-026 | 30 | Meal | Food | Big Inn: 1 bread + 1 strong beer + 1 cooked fish -> 1 / Big Inn: 1 bread + 1 strong beer + 1 meat -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C | deferred |
+| OBJ-027 | 31 | Meat | Food | Primitive hearth: 1 raw meat + 1 wood -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | UB | C | staged |
+| OBJ-028 | 32 | Pick | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Mineral extraction | Later | E | deferred |
+| OBJ-029 | 33 | Bread | Food | Bakery: 2 wheat + 1 water + 1 charcoal -> 2 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C | deferred |
+| OBJ-030 | 34 | Ration | Food | Tavern: 1 bread -> 1 / Tavern: 1 cooked fish -> 1 / Tavern: 1 meat -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C | deferred |
+| OBJ-031 | 35 | Reed | Material | Reed Yard: Wetland cultivation -> 2 | input |  | UB |  | staged |
+| OBJ-032 | 36 | Scythe | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Harvest crops | Later | E | deferred |
+| OBJ-033 | 37 | Sharp axe | Weapon | Ax Workshop: 2 iron + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-034 | 38 | Shovel | Tool | Metal Workshop: 1 iron + 1 wood -> 1 | tool | Prepare ground / plant crops | Later | E | deferred |
+| OBJ-035 | 39 | Snack | Food | Inn: 1 bread + 1 beer + 1 cooked fish -> 1 / Inn: 1 bread + 1 beer + 1 meat -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | Later | C | deferred |
+| OBJ-036 | 40 | Strong beer | Drink | Brewery: 3 wheat + 2 water -> 2 | USE on self / recipe input | Drink or supply a food recipe [Thirst] | Later |  | deferred |
+| OBJ-037 | 41 | Warhelm | Armour | Helm Smithy: 2 steel + 1 gold + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-038 | 42 | Warriors axe | Weapon | War Mill: 2 steel + 1 gold + 1 wood + 1 charcoal -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-039 | 43 | Water | Drink / input | Well: Fresh water location -> 1 | USE on self (drink / wash slot) or recipe input | Relieves thirst or dirtiness; consumed or transferred as appropriate [Thirst] | UA-initial | E | implemented |
+| OBJ-040 | 44 | Wheat | Crop | Farm: 1 wheat seed -> 3 | input |  | Later |  | deferred |
+| OBJ-041 | 45 | Clay | Raw | Clay gatherer's shelter: Wetland dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial |  | implemented |
+| OBJ-042 | 46 | Sheep | Animal | Shepherd's shelter: Pasture dice stock -> 1 | USE hand on animal / enclosure | Dice stock; collection requires matching operational shelter. Herd, care or process through valid animal interaction; living identity | UA-initial | E | implemented |
+| OBJ-043 | 47 | Hay | Raw | Hay gatherer's shelter: Fields dice stock -> 1 | input | Dice stock; collection requires matching operational shelter. Physical input, transfer or transformation | UA-initial |  | implemented |
+| OBJ-044 | 48 | Mushrooms | Forage | No building: Forest infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-045 | 49 | Roots | Forage | No building: Mountain infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-046 | 50 | Wild eggs | Forage | No building: Wetland infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-047 | 51 | Rabbit | Forage | No building: Pasture infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-048 | 52 | Wild vegetables | Forage | No building: Fields infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-049 | 53 | Cactus fruit | Forage | No building: Desert infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-050 | 54 | Seaweed | Forage | No building: Sea coast infinite forage -> 1 | eat/offer | Infinite local forage; finite gathering time. Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-051 | 55 | Charcoal | Fuel | Primitive hearth: 2 wood -> 1 / Charcoal Kiln: 2 wood -> 1 | input |  | UB |  | staged |
+| OBJ-052 | 56 | Wheat seed | Seed | Seed plot: Field seed plants -> 1 / Farm: 1 wheat seed -> 1 | USE on cultivation plot | Plant and reproduce through crop growth | UB | F | staged |
+| OBJ-053 | 57 | Raw meat | Raw | Hunter's Hut: 1 rabbit -> 1 / Sheep pen: 1 sheep -> 2 | input | Cook before eating | UB | F | staged |
+| OBJ-054 | 58 | Cooked fish | Food | Primitive hearth: 1 fish + 1 wood -> 1 | eat/offer | Eat; offer to another person (may refuse) [Hunger] | UA-initial | C | implemented |
+| OBJ-055 | 59 | Hide | Material | Sheep pen: 1 sheep -> 1 | input |  | UB | F | staged |
+| OBJ-056 | 60 | Wool | Material | Sheep pen: Live sheep -> 2 | input |  | UB | F | staged |
+| OBJ-057 | 61 | Copper ore | Mineral | Copper Mine: Finite copper deposit -> 1 | input |  | Later |  | deferred |
+| OBJ-058 | 62 | Copper | Metal | Smelting Works: 2 copper ore + 1 charcoal -> 2 | input |  | Later |  | deferred |
+| OBJ-059 | 63 | Tin ore | Mineral | Tin Mine: Finite tin deposit -> 1 | input |  | Later |  | deferred |
+| OBJ-060 | 64 | Tin | Metal | Smelting Works: 2 tin ore + 1 charcoal -> 2 | input |  | Later |  | deferred |
+| OBJ-061 | 65 | Bronze | Metal | Smelting Works: 2 copper + 1 tin + 1 charcoal -> 1 | input |  | Later |  | deferred |
+| OBJ-062 | 66 | Steel | Metal | Smelting Works: 2 iron + 1 charcoal -> 1 | input |  | Later |  | deferred |
+| OBJ-063 | 67 | Planks | Material | Carpenter: 1 wood -> 2 | input |  | UA-initial |  | implemented |
+| OBJ-064 | 68 | Pottery | Material | Pottery: 2 clay + 1 wood -> 1 | input |  | UB |  | staged |
+| OBJ-065 | 69 | Brick | Material | Pottery: 2 clay + 1 charcoal -> 2 | input |  | UB |  | staged |
+| OBJ-066 | 70 | Building block | Material | Stone workshop: 2 stone -> 1 | input |  | UB |  | staged |
+| OBJ-067 | 71 | Leather | Material | Tannery: 1 hide + 1 water -> 1 | input |  | UB |  | staged |
+| OBJ-068 | 72 | Stone hammer | Tool | Carpenter: 1 wood + 1 stone -> 1 | tool | Early construction work | UA-initial | E | implemented |
+| OBJ-069 | 73 | Stone axe | Tool | Carpenter: 1 wood + 1 stone -> 1 | tool | Early wood collection; still needs a collection shelter | UA-initial | E | implemented |
+| OBJ-070 | 74 | Stone pick | Tool | Carpenter: 1 wood + 1 stone -> 1 | tool | Early mineral extraction | UB | E | staged |
+| OBJ-071 | 75 | Wood tongs | Tool | Carpenter: 1 wood -> 1 | tool | Early heated material handling | UB | E | staged |
+| OBJ-072 | 76 | Cattle | Animal | Cattle Farm: Existing suitable adult animals -> 1 / Cattle Farm: Wild cattle population -> 1 | USE hand on animal / enclosure | Herd, care or process through valid animal interaction; living identity | Later | F | deferred |
+| OBJ-073 | 77 | Ferry | Vehicle | Ferry Yard: 6 wood + 3 cloth -> 1 | USE hand on vehicle | Operate / transport people or goods; needs operator | Later | I | deferred |
+| OBJ-074 | 78 | Ship | Vehicle | Shipyard: 10 blackwood + 4 cloth + 2 wood -> 1 | USE hand on vehicle | Operate / transport people or goods; needs operator | Later | I | deferred |
+| OBJ-075 | 79 | Herbs | Medical supply | No building: Root habitat -> 1 | USE on injured NPC / self | Treatment subject to knowledge and consent [Pain / Health] | UA-initial | D | implemented |
+| OBJ-076 | 80 | Sword | Equipment | Metal Workshop: 2 iron + 1 wood -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-077 | 81 | Spear | Equipment | Metal Workshop: 1 wood + 1 iron -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-078 | 82 | Bow | Equipment | Metal Workshop: 2 wood + 1 cloth -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F | staged |
+| OBJ-079 | 83 | Sling | Equipment | Metal Workshop: 1 leather + 1 cloth -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F | staged |
+| OBJ-080 | 84 | Big shield | Equipment | Metal Workshop: 2 planks + 1 iron -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | F | deferred |
+| OBJ-081 | 85 | Small shield | Equipment | Metal Workshop: 1 planks + 1 leather -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F | staged |
+| OBJ-082 | 86 | Breastplate | Equipment | Metal Workshop: 3 iron + 1 leather -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | Later | H | deferred |
+| OBJ-083 | 87 | Light armour | Equipment | Metal Workshop: 2 cloth + 1 leather -> 1 | equip/strike | Protection or combat / training, future NPC military [Safety] | UB | F | staged |
+| OBJ-084 | 88 | Bedding | Material | Carpenter: 2 hay -> 1 | input |  | UA-initial |  | implemented |
+| OBJ-085 | 89 | Painting board / easel | Furnishing | Carpenter: 2 wood + 1 cloth -> 1 | install+use | Supports art creation using pigment [Fun] | UB | G | staged |
+| OBJ-086 | 90 | Fish basin | Furnishing | Pottery: 3 clay + 1 charcoal -> 1 | install+use | Display living fish; requires water and animal care [Fun; Room] | Later |  | deferred |
+| OBJ-087 | 91 | Living display fish | Living animal | Fisher's shelter (capture route TBD) [route TBD] | USE / place in fish basin | Keep a separately tracked live fish; not an edible fish lot at same time [Fun] | Later | F | deferred |
+| OBJ-088 | 92 | Drink counter | Furnishing | Carpenter: 3 planks -> 1 | install+use | Supports serving stored drinks [Social; Thirst] | UB | E | staged |
+| OBJ-089 | 93 | Cooking grate | Furnishing | Primitive forge: 2 iron -> 1 | install+use | Supports food cooking over hearth [Hunger] | Later |  | deferred |
+| OBJ-090 | 94 | Hide ball | Portable good | Tannery: 1 leather + 1 hay -> 1 | handheld | Manipulable ball for play [Fun] | UB |  | staged |
+| OBJ-091 | 95 | Hoop / ball target | Furnishing | Carpenter: 2 wood + 1 reed -> 1 | install+use | Target for ball play [Fun; Social] | UB | G | staged |
+| OBJ-092 | 96 | Bed | Furnishing | Carpenter: 3 wood + 1 bedding -> 1 | install+use | One adult sleeping place; reusable [Energy; Comfort] | UA-initial | A | implemented |
+| OBJ-093 | 97 | Sleeping mat | Furnishing | Carpenter: 2 hay + 1 reed -> 1 | install+use | Low-cost sleeping place; reusable [Energy; Comfort] | UB | AG | staged |
+| OBJ-094 | 98 | Tally token | Portable record | Carpenter: 1 wood -> 1 | USE / display to NPC or notice board | Records quantity or obligation; no currency creation | UB | C | staged |
+| OBJ-095 | 99 | Record rack | Furnishing | Carpenter: 2 planks -> 1 | install+use | Stores knowledge artefacts [Room; Fun] | UB | E | staged |
+| OBJ-096 | 100 | Rattle alarm | Furnishing | Carpenter: 1 wood + 1 reed + 1 pottery -> 1 | install+use | Physical local warning when disturbed [Safety] | UB |  | staged |
+| OBJ-097 | 101 | Stool | Furnishing | Carpenter: 2 wood -> 1 | install+use | One seat [Comfort] | UA-initial |  | implemented |
+| OBJ-098 | 102 | Strategy board | Portable good | Carpenter: 1 wood + 1 stone -> 1 | handheld | Solo or consensual shared play [Fun; Social] | UB | D | staged |
+| OBJ-099 | 103 | Sun marker | Fixture | Stone workshop: 2 stone -> 1 | fixture | Local daylight time cue | Later | G | deferred |
+| OBJ-100 | 104 | Infusion pot | Furnishing | Pottery: 2 clay + 1 charcoal -> 1 | install+use | Supports preparing herb drink [Thirst; Comfort] | UB |  | staged |
+| OBJ-101 | 105 | Herbal infusion | Consumable | Primitive hearth: 1 water + 1 herbs + 1 charcoal -> 1 | USE on self | Drinkable; no automatic medical claim [Thirst] | UB |  | staged |
+| OBJ-102 | 106 | Work surface | Furnishing | Carpenter: 2 planks -> 1 | install+use | Work and display surface [Room] | UB |  | staged |
+| OBJ-103 | 107 | Cradle | Furnishing | Carpenter: 2 wood + 1 bedding -> 1 | install+use | Safe resting slot for infant; caregiver access [Energy; Comfort] | UA-initial | A | implemented |
+| OBJ-104 | 108 | Wash basin | Furnishing | Pottery: 2 clay + 1 charcoal -> 1 | install+use | Wash self or objects with supplied water [Hygiene] | UB |  | staged |
+| OBJ-105 | 109 | Low jump platform | Fixture | Carpenter: 3 wood -> 1 | fixture | Safe water play only; no automatic swimming [Fun] | UB | G | staged |
+| OBJ-106 | 110 | Model hut | Portable good | Carpenter: 1 wood + 1 reed -> 1 | handheld | Imaginative play [Fun] | UB |  | staged |
+| OBJ-107 | 111 | Storage chest | Furnishing | Carpenter: 2 planks -> 1 | install+use | Finite physical container [Room] | UA-initial | A | implemented |
+| OBJ-108 | 112 | Carved ornament | Portable good | Carpenter: 1 wood -> 1 | handheld | Display improves perceived surroundings [Room] | UA-initial |  | implemented |
+| OBJ-109 | 113 | Grinding stone | Furnishing | Stone workshop: 2 stone -> 1 | install+use | Supports grinding wheat [Hunger] | UB |  | staged |
+| OBJ-110 | 114 | Flour | Processed food | Primitive hearth: 1 wheat -> 1 | USE on compatible recipe / storage target | Optional ingredient for baking; not automatic food [Hunger] | UB |  | staged |
+| OBJ-111 | 115 | Food stall | Fixture | Carpenter: 3 wood + 1 cloth -> 1 | fixture | Holds goods for voluntary exchange [Hunger; Social] | Later | C | deferred |
+| OBJ-112 | 116 | Water feature | Fixture | Pottery: 3 clay + 1 charcoal -> 1 | fixture | Retains delivered water; decorative [Room; Fun] | Later | G | deferred |
+| OBJ-113 | 117 | Waste basket | Furnishing | Weaving Mill: 2 reed -> 1 | install+use | Finite waste storage [Hygiene; Room] | UB | A | staged |
+| OBJ-114 | 118 | Waste | Material | Consumption / disposal | USE on compatible recipe / storage target | Material byproduct; transfer and treatment required [Hygiene; Room] | UA-initial | E | implemented |
+| OBJ-115 | 119 | Memorial stone | Fixture | Stone workshop: 2 stone -> 1 | fixture | Records identity of deceased; memorial interaction [Social; Room] | UB |  | staged |
+| OBJ-116 | 120 | Potted plant | Furnishing | Pottery: 1 pottery + 1 water -> 1 | install+use | Plant care; living specimen required [Room; Fun] | Later |  | deferred |
+| OBJ-117 | 121 | Climbing frame | Fixture | Carpenter: 4 wood + 2 reed -> 1 | fixture | Play; energy expenditure and safety constraints [Fun] | UB |  | staged |
+| OBJ-118 | 122 | Medicine box | Furnishing | Carpenter: 1 wood -> 1 | install+use | Finite storage for herbs and remedies [Health; Pain] | UB | A | staged |
+| OBJ-119 | 123 | Toy cart | Portable good | Carpenter: 2 wood -> 1 | handheld | Push or manipulate toy [Fun] | UB |  | staged |
+| OBJ-120 | 124 | Unusual plant | Furnishing | Pottery: 1 pottery + 1 water -> 1 | install+use | Rare plant variant; no magic effect assumed [Room; Fun] | Later |  | deferred |
+| OBJ-121 | 125 | Notice board | Fixture | Carpenter: 2 planks -> 1 | fixture | Display durable symbols and records [Social] | UB | E | staged |
+| OBJ-122 | 126 | Pigment | Material | Stone workshop: 1 clay + 1 charcoal -> 1 | USE on compatible recipe / storage target | Abstract colour material for art | UB |  | staged |
+| OBJ-123 | 127 | Wall art | Portable good | Carpenter: 1 cloth + 1 pigment -> 1 | handheld | Aesthetic display [Room] | UB |  | staged |
+| OBJ-124 | 128 | Drum | Portable good | Carpenter: 1 wood + 1 leather -> 1 | handheld | Make audible rhythm; listeners may join [Fun; Social] | UB |  | staged |
+| OBJ-125 | 129 | Target game | Fixture | Stone workshop: 2 stone + 1 wood -> 1 | fixture | Simple rolling/throwing game [Fun; Social] | UB |  | staged |
+| OBJ-126 | 130 | Cool storage chest | Furnishing | Carpenter: 3 wood + 2 stone -> 1 | install+use | Slows spoilage; finite capacity [Hunger] | UB | AG | staged |
+| OBJ-127 | 131 | Bench | Furnishing | Carpenter: 3 wood -> 1 | install+use | Multiple seats [Comfort; Social] | UA-initial |  | implemented |
+| OBJ-128 | 132 | Fire warning station | Fixture | Carpenter: 1 wood + 1 reed -> 1 | fixture | Staffed observation point; warning via gesture [Safety] | Later | IG | deferred |
+| OBJ-129 | 133 | Bathing pool | Fixture | Stone workshop: 4 stone + 2 clay -> 1 | fixture | Water-filled shallow basin; safe access [Hygiene; Fun] | Later |  | deferred |
+| OBJ-130 | 134 | Message token | Portable record | Carpenter: 1 wood -> 1 | USE / display to NPC or notice board | Carry a physical message; no telepathy [Social] | UB | E | staged |
+| OBJ-131 | 135 | Story circle | Fixture | Stone workshop: 3 stone -> 1 | fixture | Multiple seats for live story or music [Fun; Social] | UB |  | staged |
+| OBJ-132 | 136 | Toy | Portable good | Carpenter: 1 wood -> 1 | handheld | Manipulation and imaginative play [Fun] | UA-initial |  | implemented |
+| OBJ-133 | 137 | Toy box | Furnishing | Carpenter: 1 planks -> 1 | install+use | Finite toy storage [Room; Fun] | UB | A | staged |
+| OBJ-134 | 138 | Waste pit | Fixture | Stone workshop: 2 stone + 1 clay -> 1 | fixture | Contains waste; disposal process recorded [Hygiene; Room] | UB |  | staged |
+| OBJ-135 | 139 | Training stone | Furnishing | Stone workshop: 2 stone -> 1 | install+use | Physical exercise; increases fatigue [Fun; Health] | UB |  | staged |
+| OBJ-136 | 140 | Latrine | Fixture | Carpenter: 2 wood + 1 clay -> 1 | fixture | Relieve bladder privately; generates waste [Bladder; Hygiene] | UA-initial | A | implemented |
+| OBJ-137 | 141 | Water jug | Portable good | Pottery: 1 clay + 1 charcoal -> 1 | USE on water source / self / compatible target | Carry physical water; finite capacity [Thirst; Hygiene] | UB |  | staged |
+| OBJ-138 | 142 | Cleaning cloth | Portable good | Weaving Mill: 1 cloth -> 1 | USE on water source / self / compatible target | Reusable cleaning implement; needs washing [Hygiene; Room] | UB |  | staged |
 
 ### 3.2 Buildings (65)
 
 Columns: ID; WB row; name; build/upgrade cost; upgrade from; produces / enables; furnishings; stage; fix. The function/rules text is omitted where it repeats "produces"; where it differs it is summarised in section 5.
 
-| ID | WB row | Building | Cost | Upgrade from | Produces / enables | Furnishings | Stage | Fix |
-|---|---|---|---|---|---|---|---|---|
-| BLD-001 | 5 | Communal hall | Founder-provided; later construction TBD | - | Founder building; sufficient shelter and shared storage | Mats / beds for 12; benches; chest; hearth | UA-initial | AF |
-| BLD-002 | 6 | Fisher's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 fish | Sleeping mat / bed; store; stool | UA-initial | FG |
-| BLD-003 | 7 | Gamekeeper's Hut | 1 stone + 4 wood | - | Manage animal habitats; no increase/depletion of infinite rabbit forage | As required / space allows | Later | E |
-| BLD-004 | 8 | Hunter's Hut | 1 stone + 4 wood | - | 1 raw meat | As required / space allows | UB |  |
-| BLD-005 | 9 | Woodcutter's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 wood | Sleeping mat / bed; store; stool | UA-initial | FG |
-| BLD-006 | 10 | Stonecutter's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 stone | Sleeping mat / bed; store; stool | UA-initial | FG |
-| BLD-007 | 11 | Ranger's Hut | 4 wood | - | Maintain visible woodland; no extra dice allowance | As required / space allows | Later | E |
-| BLD-008 | 12 | Scout's Hut | 1 stone + 2 wood | - | Shelter and route knowledge; rations are provisions not construction materials | As required / space allows | Later | E |
-| BLD-009 | 13 | Sentry | 2 blackwood | - | Shelter and observation; no automatic territorial claim | As required / space allows | Later | EH |
-| BLD-010 | 14 | Well | 4 wood | - | 1 water | As required / space allows | UA-initial | E |
-| BLD-011 | 15 | Bakery | 2 blackwood + 2 stone + 2 wood + 2 reed | - | 2 bread | Bread paddle; work surface; hearth / oven | Later |  |
-| BLD-012 | 16 | Barracks | 2 stone + 4 mortar + 4 wood + 1 reed | - | Equip recruit | As required / space allows | Later | BH |
-| BLD-013 | 17 | Barrier | 5 blackwood + 2 mortar | - | Defensive asset | As required / space allows | Later | H |
-| BLD-014 | 18 | Charcoal Kiln | 2 mortar + 3 wood + 2 reed | - | 1 charcoal | As required / space allows | UB |  |
-| BLD-015 | 19 | Ferry Yard | 2 blackwood + 2 cloth + 3 stone + 3 wood | - | 1 ferry | As required / space allows | Later |  |
-| BLD-016 | 20 | Lime Kiln | 1 blackwood + 2 stone + 4 wood | - | 2 mortar | As required / space allows | UB |  |
-| BLD-017 | 21 | Metal Workshop | 1 blackwood + 2 stone + 1 mortar + 1 wood + 1 reed | - | 1 bread paddle; 1 felling axe; 1 fire tongs; 1 fishing rod; 1 hammer; 1 hunting spear; 1 kitchen tools; 1 pick; 1 scythe; 1 shovel; 1 sword; 1 spear; 1 bow; 1 sling; 1 big shield; 1 small shield; 1 breastplate; 1 light armour | Work surface; tools; fuel storage | Later | FG |
-| BLD-018 | 22 | Micro Brewery | 2 blackwood + 3 stone + 3 wood + 2 reed | - | 2 beer | Infusion pot / brewing vessels; counter | Later |  |
-| BLD-019 | 23 | Reed Yard | 2 stone + 5 wood | - | 2 reed | As required / space allows | UB |  |
-| BLD-020 | 24 | Shipyard | 2 blackwood + 2 cloth + 3 stone + 3 wood | - | 1 ship | As required / space allows | Later |  |
-| BLD-021 | 25 | Smelting Works | 1 blackwood + 1 stone + 1 mortar + 3 wood + 2 reed | - | 2 iron; 2 gold; 2 copper; 1 bronze; 1 steel; 2 tin | As required / space allows | Later |  |
-| BLD-022 | 26 | Tavern | 2 blackwood + 1 stone + 3 wood + 1 reed | - | 1 ration | Counter; work surface; benches; hearth | Later | BF |
-| BLD-023 | 27 | Tower | 7 blackwood + 4 stone + 1 wood | - | Observation and defence | As required / space allows | Later | H |
-| BLD-024 | 28 | Warehouse | 2 blackwood + 2 stone + 3 mortar + 3 wood + 1 reed | - | Shelter and storage | Chests; record racks; waste baskets | Later | A |
-| BLD-025 | 29 | Wood Hardener | 1 stone + 3 wood | - | 1 blackwood | As required / space allows | UB |  |
-| BLD-026 | 30 | Ax Workshop | TBD | Metal Workshop | 1 battle axe; 1 sharp axe; 1 broad axe | As required / space allows | Later | F |
-| BLD-027 | 31 | Big Inn | TBD | Inn | 1 meal | Beds; benches; counter; hearth; wash basin; latrine | Later | BF |
-| BLD-028 | 32 | Brewery | TBD | Micro Brewery | 2 strong beer | Brewing vessels; counter | Later | F |
-| BLD-029 | 33 | Inn | TBD | Tavern | 1 snack | Beds; benches; counter; hearth; wash basin; latrine | Later | BF |
-| BLD-030 | 34 | War Mill | TBD | Ax Workshop | 1 bronze axe; 1 heavy battle axe; 1 warriors axe | As required / space allows | Later | F |
-| BLD-031 | 35 | Battle Arena | 4 gold + 4 stone + 6 mortar + 6 wood + 3 reed | - | Train evasion | Training stones; seating | Later | EH |
-| BLD-032 | 36 | Cattle Farm | 1 blackwood + 2 stone + 2 wood | - | 1 cattle; Train ox | Animal enclosure; water basin | Later | E |
-| BLD-033 | 37 | Farm | 1 blackwood + 3 stone + 4 wood | - | 3 wheat + 1 wheat seed | As required / space allows | Later | G |
-| BLD-034 | 38 | Fortress | 9 blackwood + 4 stone + 2 mortar + 5 wood | - | Defence | As required / space allows | Later | H |
-| BLD-035 | 39 | Helm Smithy | 1 blackwood + 2 stone + 2 mortar + 3 wood + 3 reed | - | 1 helmet; 1 helmet mask; 1 warhelm | As required / space allows | Later |  |
-| BLD-036 | 40 | Market | 3 blackwood + 5 stone + 3 mortar + 3 wood + 4 reed | - | Physical meeting and exchange location; not automatic trade | Food stalls; notice board; work surfaces | Later | C |
-| BLD-037 | 41 | Training Camp | 4 gold + 4 stone + 6 mortar + 6 wood + 3 reed | - | Train attack and defence | Training stones; gear storage | Later | EH |
-| BLD-038 | 42 | Weaving Mill | 2 stone + 5 wood + 2 reed | - | 1 cloth; 1 waste basket; 1 cleaning cloth | As required / space allows | UB |  |
-| BLD-039 | 43 | Citadel | TBD | Fortress | Upgrade Fortress | As required / space allows | Later | FH |
-| BLD-040 | 44 | Coal Mine | 2 stone + 4 wood | - | 1 coal | As required / space allows | Later |  |
-| BLD-041 | 45 | Gold Mine | 2 stone + 4 wood | - | 1 gold ore | As required / space allows | Later |  |
-| BLD-042 | 46 | Granite Mine | 2 stone + 4 wood | - | 1 stone | As required / space allows | Later |  |
-| BLD-043 | 47 | Iron Mine | 2 stone + 4 wood | - | 1 iron ore | As required / space allows | Later |  |
-| BLD-044 | 48 | Deep Coal Mine | TBD | Coal Mine | 2 coal | As required / space allows | Later | F |
-| BLD-045 | 49 | Deep Gold Mine | TBD | Gold Mine | 2 gold ore | As required / space allows | Later | F |
-| BLD-046 | 50 | Deep Iron Mine | TBD | Iron Mine | 2 iron ore | As required / space allows | Later | F |
-| BLD-047 | 51 | Deeper Coal Mine | TBD | Deep Coal Mine | 3 coal | As required / space allows | Later | F |
-| BLD-048 | 52 | Deeper Gold Mine | TBD | Deep Gold Mine | 3 gold ore | As required / space allows | Later | F |
-| BLD-049 | 53 | Deeper Iron Mine | TBD | Deep Iron Mine | 3 iron ore | As required / space allows | Later | F |
-| BLD-050 | 54 | Port | 3 blackwood + 2 gold + 5 stone + 2 mortar + 2 iron + 3 wood + 4 reed | - | Berthing, storage, trade and shelter | As required / space allows | Later | C |
-| BLD-051 | 55 | Clay gatherer's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 clay | Sleeping mat / bed; store; stool | UA-initial | FG |
-| BLD-052 | 56 | Shepherd's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 sheep | Sleeping mat / bed; store; stool | UA-initial | FG |
-| BLD-053 | 57 | Hay gatherer's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 hay | Sleeping mat / bed; store; stool | UA-initial | FG |
-| BLD-054 | 58 | Primitive hearth | 1 stone | - | 1 meat; 1 cooked fish; 1 charcoal; 1 mortar; 1 herbal infusion; 1 flour | Cooking grate; infusion pot; grinding stone | UA-initial | G |
-| BLD-055 | 59 | Carpenter | 3 wood + 1 stone | - | 2 planks; 1 bread paddle; 1 stone hammer; 1 stone axe; 1 stone pick; 1 wood tongs; 1 bedding; 1 painting board; 1 drink counter; 1 target ball; 1 bed; 1 bedding mat; 1 tally token; 1 record rack; 1 rattle alarm; 1 stool; 1 strategy board; 1 work surface; 1 cradle; 1 jump platform; 1 model hut; 1 storage chest; 1 carved ornament; 1 food stall; 1 climbing frame; 1 medicine box; 1 toy cart; 1 notice board; 1 wall art; 1 drum; 1 cool storage; 1 bench; 1 fire watch; 1 message token; 1 toy; 1 toy box; 1 latrine | Work surface; tool storage | UA-initial | G |
-| BLD-056 | 60 | Pottery | 3 wood + 2 clay | - | 1 pottery; 2 brick; 1 fish basin; 1 infusion pot; 1 wash basin; 1 water basin; 1 potted plant; 1 unusual plant; 1 water jug | Work surface; storage | UB | G |
-| BLD-057 | 61 | Stone workshop | 2 wood + 2 stone | - | 1 building block; 1 sundial; 1 grinding stone; 1 memorial stone; 1 pigment; 1 target game; 1 bathing pool; 1 story circle; 1 waste pit; 1 training stone | Work surface; tool storage | UB | G |
-| BLD-058 | 62 | Sheep pen | 2 wood | - | 2 wool; 2 raw meat + 1 hide | Animal enclosure; water basin | UB | FG |
-| BLD-059 | 63 | Tannery | 3 wood + 2 stone | - | 1 leather; 1 hide ball | As required / space allows | UB |  |
-| BLD-060 | 64 | Copper Mine | 4 wood + 2 stone | - | 1 copper ore | As required / space allows | Later |  |
-| BLD-061 | 65 | Primitive forge | 3 stone + 2 clay | - | 1 iron; 1 cooking grate | As required / space allows | Later | G |
-| BLD-062 | 66 | Settlement | TBD | - | Catan vertex and development area | As required / space allows | UB | AF |
-| BLD-063 | 67 | Road | TBD | - | Between settlement sites; improves walking | As required / space allows | UB | F |
-| BLD-064 | 68 | Seed plot | 2 wood | - | 1 wheat seed | As required / space allows | UB | E |
-| BLD-065 | 69 | Tin Mine | 4 wood + 2 stone | - | 1 tin ore | As required / space allows | Later |  |
+| ID | WB row | Building | Cost | Upgrade from | Produces / enables | Furnishings | Stage | Fix | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| BLD-001 | 5 | Communal hall | Founder-provided; later construction TBD | - | Founder building; sufficient shelter and shared storage | Mats / beds for 12; benches; chest; hearth | UA-initial | AF | implemented |
+| BLD-002 | 6 | Fisher's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 fish | Sleeping mat / bed; store; stool | UA-initial | FG | implemented |
+| BLD-003 | 7 | Gamekeeper's Hut | 1 stone + 4 wood | - | Manage animal habitats; no increase/depletion of infinite rabbit forage | As required / space allows | Later | E | deferred |
+| BLD-004 | 8 | Hunter's Hut | 1 stone + 4 wood | - | 1 raw meat | As required / space allows | UB |  | staged |
+| BLD-005 | 9 | Woodcutter's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 wood | Sleeping mat / bed; store; stool | UA-initial | FG | implemented |
+| BLD-006 | 10 | Stonecutter's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 stone | Sleeping mat / bed; store; stool | UA-initial | FG | implemented |
+| BLD-007 | 11 | Ranger's Hut | 4 wood | - | Maintain visible woodland; no extra dice allowance | As required / space allows | Later | E | deferred |
+| BLD-008 | 12 | Scout's Hut | 1 stone + 2 wood | - | Shelter and route knowledge; rations are provisions not construction materials | As required / space allows | Later | E | deferred |
+| BLD-009 | 13 | Sentry | 2 blackwood | - | Shelter and observation; no automatic territorial claim | As required / space allows | Later | EH | deferred |
+| BLD-010 | 14 | Well | 4 wood | - | 1 water | As required / space allows | UA-initial | E | implemented |
+| BLD-011 | 15 | Bakery | 2 blackwood + 2 stone + 2 wood + 2 reed | - | 2 bread | Bread paddle; work surface; hearth / oven | Later |  | deferred |
+| BLD-012 | 16 | Barracks | 2 stone + 4 mortar + 4 wood + 1 reed | - | Equip recruit | As required / space allows | Later | BH | deferred |
+| BLD-013 | 17 | Barrier | 5 blackwood + 2 mortar | - | Defensive asset | As required / space allows | Later | H | deferred |
+| BLD-014 | 18 | Charcoal Kiln | 2 mortar + 3 wood + 2 reed | - | 1 charcoal | As required / space allows | UB |  | staged |
+| BLD-015 | 19 | Ferry Yard | 2 blackwood + 2 cloth + 3 stone + 3 wood | - | 1 ferry | As required / space allows | Later |  | deferred |
+| BLD-016 | 20 | Lime Kiln | 1 blackwood + 2 stone + 4 wood | - | 2 mortar | As required / space allows | UB |  | staged |
+| BLD-017 | 21 | Metal Workshop | 1 blackwood + 2 stone + 1 mortar + 1 wood + 1 reed | - | 1 bread paddle; 1 felling axe; 1 fire tongs; 1 fishing rod; 1 hammer; 1 hunting spear; 1 kitchen tools; 1 pick; 1 scythe; 1 shovel; 1 sword; 1 spear; 1 bow; 1 sling; 1 big shield; 1 small shield; 1 breastplate; 1 light armour | Work surface; tools; fuel storage | Later | FG | deferred |
+| BLD-018 | 22 | Micro Brewery | 2 blackwood + 3 stone + 3 wood + 2 reed | - | 2 beer | Infusion pot / brewing vessels; counter | Later |  | deferred |
+| BLD-019 | 23 | Reed Yard | 2 stone + 5 wood | - | 2 reed | As required / space allows | UB |  | staged |
+| BLD-020 | 24 | Shipyard | 2 blackwood + 2 cloth + 3 stone + 3 wood | - | 1 ship | As required / space allows | Later |  | deferred |
+| BLD-021 | 25 | Smelting Works | 1 blackwood + 1 stone + 1 mortar + 3 wood + 2 reed | - | 2 iron; 2 gold; 2 copper; 1 bronze; 1 steel; 2 tin | As required / space allows | Later |  | deferred |
+| BLD-022 | 26 | Tavern | 2 blackwood + 1 stone + 3 wood + 1 reed | - | 1 ration | Counter; work surface; benches; hearth | Later | BF | deferred |
+| BLD-023 | 27 | Tower | 7 blackwood + 4 stone + 1 wood | - | Observation and defence | As required / space allows | Later | H | deferred |
+| BLD-024 | 28 | Warehouse | 2 blackwood + 2 stone + 3 mortar + 3 wood + 1 reed | - | Shelter and storage | Chests; record racks; waste baskets | Later | A | deferred |
+| BLD-025 | 29 | Wood Hardener | 1 stone + 3 wood | - | 1 blackwood | As required / space allows | UB |  | staged |
+| BLD-026 | 30 | Ax Workshop | TBD | Metal Workshop | 1 battle axe; 1 sharp axe; 1 broad axe | As required / space allows | Later | F | deferred |
+| BLD-027 | 31 | Big Inn | TBD | Inn | 1 meal | Beds; benches; counter; hearth; wash basin; latrine | Later | BF | deferred |
+| BLD-028 | 32 | Brewery | TBD | Micro Brewery | 2 strong beer | Brewing vessels; counter | Later | F | deferred |
+| BLD-029 | 33 | Inn | TBD | Tavern | 1 snack | Beds; benches; counter; hearth; wash basin; latrine | Later | BF | deferred |
+| BLD-030 | 34 | War Mill | TBD | Ax Workshop | 1 bronze axe; 1 heavy battle axe; 1 warriors axe | As required / space allows | Later | F | deferred |
+| BLD-031 | 35 | Battle Arena | 4 gold + 4 stone + 6 mortar + 6 wood + 3 reed | - | Train evasion | Training stones; seating | Later | EH | deferred |
+| BLD-032 | 36 | Cattle Farm | 1 blackwood + 2 stone + 2 wood | - | 1 cattle; Train ox | Animal enclosure; water basin | Later | E | deferred |
+| BLD-033 | 37 | Farm | 1 blackwood + 3 stone + 4 wood | - | 3 wheat + 1 wheat seed | As required / space allows | Later | G | deferred |
+| BLD-034 | 38 | Fortress | 9 blackwood + 4 stone + 2 mortar + 5 wood | - | Defence | As required / space allows | Later | H | deferred |
+| BLD-035 | 39 | Helm Smithy | 1 blackwood + 2 stone + 2 mortar + 3 wood + 3 reed | - | 1 helmet; 1 helmet mask; 1 warhelm | As required / space allows | Later |  | deferred |
+| BLD-036 | 40 | Market | 3 blackwood + 5 stone + 3 mortar + 3 wood + 4 reed | - | Physical meeting and exchange location; not automatic trade | Food stalls; notice board; work surfaces | Later | C | deferred |
+| BLD-037 | 41 | Training Camp | 4 gold + 4 stone + 6 mortar + 6 wood + 3 reed | - | Train attack and defence | Training stones; gear storage | Later | EH | deferred |
+| BLD-038 | 42 | Weaving Mill | 2 stone + 5 wood + 2 reed | - | 1 cloth; 1 waste basket; 1 cleaning cloth | As required / space allows | UB |  | staged |
+| BLD-039 | 43 | Citadel | TBD | Fortress | Upgrade Fortress | As required / space allows | Later | FH | deferred |
+| BLD-040 | 44 | Coal Mine | 2 stone + 4 wood | - | 1 coal | As required / space allows | Later |  | deferred |
+| BLD-041 | 45 | Gold Mine | 2 stone + 4 wood | - | 1 gold ore | As required / space allows | Later |  | deferred |
+| BLD-042 | 46 | Granite Mine | 2 stone + 4 wood | - | 1 stone | As required / space allows | Later |  | deferred |
+| BLD-043 | 47 | Iron Mine | 2 stone + 4 wood | - | 1 iron ore | As required / space allows | Later |  | deferred |
+| BLD-044 | 48 | Deep Coal Mine | TBD | Coal Mine | 2 coal | As required / space allows | Later | F | deferred |
+| BLD-045 | 49 | Deep Gold Mine | TBD | Gold Mine | 2 gold ore | As required / space allows | Later | F | deferred |
+| BLD-046 | 50 | Deep Iron Mine | TBD | Iron Mine | 2 iron ore | As required / space allows | Later | F | deferred |
+| BLD-047 | 51 | Deeper Coal Mine | TBD | Deep Coal Mine | 3 coal | As required / space allows | Later | F | deferred |
+| BLD-048 | 52 | Deeper Gold Mine | TBD | Deep Gold Mine | 3 gold ore | As required / space allows | Later | F | deferred |
+| BLD-049 | 53 | Deeper Iron Mine | TBD | Deep Iron Mine | 3 iron ore | As required / space allows | Later | F | deferred |
+| BLD-050 | 54 | Port | 3 blackwood + 2 gold + 5 stone + 2 mortar + 2 iron + 3 wood + 4 reed | - | Berthing, storage, trade and shelter | As required / space allows | Later | C | deferred |
+| BLD-051 | 55 | Clay gatherer's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 clay | Sleeping mat / bed; store; stool | UA-initial | FG | implemented |
+| BLD-052 | 56 | Shepherd's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 sheep | Sleeping mat / bed; store; stool | UA-initial | FG | implemented |
+| BLD-053 | 57 | Hay gatherer's shelter | L1: labour only; L2: 10 wood; L3: 20 wood + 10 stone (draft) | - | 1 hay | Sleeping mat / bed; store; stool | UA-initial | FG | implemented |
+| BLD-054 | 58 | Primitive hearth | 1 stone | - | 1 meat; 1 cooked fish; 1 charcoal; 1 mortar; 1 herbal infusion; 1 flour | Cooking grate; infusion pot; grinding stone | UA-initial | G | implemented |
+| BLD-055 | 59 | Carpenter | 3 wood + 1 stone | - | 2 planks; 1 bread paddle; 1 stone hammer; 1 stone axe; 1 stone pick; 1 wood tongs; 1 bedding; 1 painting board; 1 drink counter; 1 target ball; 1 bed; 1 bedding mat; 1 tally token; 1 record rack; 1 rattle alarm; 1 stool; 1 strategy board; 1 work surface; 1 cradle; 1 jump platform; 1 model hut; 1 storage chest; 1 carved ornament; 1 food stall; 1 climbing frame; 1 medicine box; 1 toy cart; 1 notice board; 1 wall art; 1 drum; 1 cool storage; 1 bench; 1 fire watch; 1 message token; 1 toy; 1 toy box; 1 latrine | Work surface; tool storage | UA-initial | G | implemented |
+| BLD-056 | 60 | Pottery | 3 wood + 2 clay | - | 1 pottery; 2 brick; 1 fish basin; 1 infusion pot; 1 wash basin; 1 water basin; 1 potted plant; 1 unusual plant; 1 water jug | Work surface; storage | UB | G | staged |
+| BLD-057 | 61 | Stone workshop | 2 wood + 2 stone | - | 1 building block; 1 sundial; 1 grinding stone; 1 memorial stone; 1 pigment; 1 target game; 1 bathing pool; 1 story circle; 1 waste pit; 1 training stone | Work surface; tool storage | UB | G | staged |
+| BLD-058 | 62 | Sheep pen | 2 wood | - | 2 wool; 2 raw meat + 1 hide | Animal enclosure; water basin | UB | FG | staged |
+| BLD-059 | 63 | Tannery | 3 wood + 2 stone | - | 1 leather; 1 hide ball | As required / space allows | UB |  | staged |
+| BLD-060 | 64 | Copper Mine | 4 wood + 2 stone | - | 1 copper ore | As required / space allows | Later |  | deferred |
+| BLD-061 | 65 | Primitive forge | 3 stone + 2 clay | - | 1 iron; 1 cooking grate | As required / space allows | Later | G | deferred |
+| BLD-062 | 66 | Settlement | TBD | - | Catan vertex and development area | As required / space allows | UB | AF | staged |
+| BLD-063 | 67 | Road | TBD | - | Between settlement sites; improves walking | As required / space allows | UB | F | staged |
+| BLD-064 | 68 | Seed plot | 2 wood | - | 1 wheat seed | As required / space allows | UB | E | staged |
+| BLD-065 | 69 | Tin Mine | 4 wood + 2 stone | - | 1 tin ore | As required / space allows | Later |  | deferred |
 
 ### 3.3 The UA-initial subset (39 rows) and its closure
 
