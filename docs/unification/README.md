@@ -1,0 +1,5 @@
+# Install the final unification planning inputs
+
+Extract this ZIP at the repository root. It contains `docs/unification/` files, not replacement package implementations. Keep the existing `packages/` directory. Read `LATEST_OWNER_AMENDMENT.md` first; it supersedes conflicting earlier text. Paste `CLAUDE_UPDATE_PLAN_PROMPT.md` into Claude now to reconcile the actual repository planning files. Tomorrow use the reconciled `NEXT_SESSION_PROMPT_UNIFICATION.md` to begin implementation.
+
+The five planning documents were updated using controlling amendments and selected active-text corrections; older detailed sections are retained for traceability. The actual referenced package specs, decision register, contracts and tests have not been edited by this ZIP. Claude must reconcile them before launching agents. Workbook copied unchanged (SHA-256 `f764df01de6b98aa5cc61e612b300446cf87366bda971804428544d9455405a0`); its old permission/ownership language is superseded by the latest amendment. No repository code, tests or training were run. The 18-hour window remains; full catalogue implementation is not promised.

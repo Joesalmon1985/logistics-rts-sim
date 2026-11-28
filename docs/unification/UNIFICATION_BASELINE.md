@@ -303,3 +303,34 @@ D8.15 needs a new group record (objective type, members, required contributions,
 - The number of legal settlement corners on the 30-hex island; where C6 organisation places may be sited relative to HQ circles.
 - Whether older demography conclusions (extinction/fertility, 26 Nov baseline) still hold on the merged code.
 - Headless runner behaviour under `policies.faction = none` with Civ/Orgs/Divinity on (no scenario or test found by search).
+
+## 15. Additional gap assessment against the core catalogue (planning amendment, not a new run)
+
+The earlier audit remains evidence about b297cb0. The new three-tab workbook is proposed design content, not evidence of current functionality. Prior source inspection of `Assets/God/Sim/Learning/Features.cs` (`Drive.Count`, Hunger/Fatigue/Cold/Fear/Pain), `PopulationTuning.cs`, `PopulationSystem.cs` (Body, drive reward, action dispatch), `Learning/Verbs.cs` (VerbTable), `Cognition/Thinker.cs` (BuildCandidates/OfferSensed), `Civ/Work.cs`, `Divinity/DivineActs.cs` and the household/organisation mind hooks establishes the following migration gaps. Recheck these against the actual session head before coding; no fresh build or execution was undertaken for this amendment.
+
+| Gap | Current vs target | Owner |
+|---|---|---|
+| R18 | Single-step high-level candidate verbs are not the proposed 12-control body interface; implicit pathing and separate divine act mappings must converge on primitive execution | UN0/UN6a/UN9 |
+| R19 | Five explicit body drives; social motivations and shelter effects exist but are not independent Social/Comfort channels; Fun, Hygiene, Bladder, Room and Thirst lack core drive entries | UN1/UN6 |
+| R20 | Catalogue has 138 objects and 65 buildings; old numeric ware ranges and hard-coded recipes are too narrow to assume direct migration; durable furnishings/animals need distinct instance representation | UN0/UN7 |
+| R21 | Existing learning and education are not evidence of founder training on motor controls or child imitation of learned sequences. New trainer and held-out experiments needed | UN6t/UN11 |
+| R22 | Shelter/bed counts are properties of old huts or assets, not proof of separately manufactured furniture, finite occupancy, sanitation or leisure effects | UN3/UN7 |
+| R23 | Health gathers herbs from `SourceKind.Roots`; removing old `ResourceSource` without replacement risks disabling treatment. Audit old hut/food dependencies in care, education, divine acts and organisations | UN1/UN3/UN9/UN11 |
+| R24 | Existing asset-store estate ownership defect and group/faction fallback assumptions require regression coverage, including dropped goods and expired reservations | UN3/UN4/UN11 |
+| R25 | New thirst, nutrition, energy and reward interactions may alter viability; assess before activating full need set; no assumption of multi-generation sustainability | UN1/UN6/UN11 |
+
+Reference: [God_of_the_Island_Core_Design.xlsx](God_of_the_Island_Core_Design.xlsx), controlling design §0.2. Existing high-level verbs may be retained for legacy tests and analytics, but must not remain a second autonomous controller in the unified scenario.
+
+
+## 16. Latest migration gaps — emergent property, construction and conflict
+
+This is a planning delta against the existing static audit, not a fresh source run. Recheck exact call sites on the current branch. [LATEST_OWNER_AMENDMENT.md](LATEST_OWNER_AMENDMENT.md) changes the target; previous ownership conclusions are descriptions of legacy code, not requirements for unified mode.
+
+| Gap | Audit required | Package |
+|---|---|---|
+| R26 | `ItemLot.Owner`, `OwnerKind`, `Goods.Move/Produce`, `Assets`, `Ownership`, `UseRight`, store permission checks, candidate visibility and valuation: locate every ownership-dependent branch and neutralise it in unified mode, retain objective holder/provenance and legacy pins | UN0/3/9 |
+| R27 | Households, organisation stores, C3 contracts, estate/group fallback, death and destruction: remove compulsory title/reciprocity or estate transfers, preserve physical lots, care and social memory | UN3/4/8/9/11 |
+| R28 | `Work.FoundSite/Build` and old hut construction: route known designs, actual materials and work through USE, no owner privilege or scripted builder decision | UN3/5/6 |
+| R29 | Abstract military and current flee/threat perception: add persistent-NPC conflict interactions, witness-local fear/pain/claims without faction military policy | UN6/8/9/11 |
+| R30 | M5 offer/accept/handover and promises: audit whether old protocol or filters enforce both legs or require ownership; retain useful communication, actual independent transfers and imperfect beliefs | UN6/8/11 |
+| R31 | Training must establish teacher-free local motor and survival competence with construction and dispute scenarios; no evidence in historical audit proves this | UN6t/11 |

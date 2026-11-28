@@ -1,8 +1,27 @@
-# Owner brief, 28 Nov 2026: Unification of the artificial world (verbatim)
+# Owner brief, 28 Nov 2026: Unification of the artificial world
 
-The owner's two messages that define the unification milestone, kept word for word except that image references (illustrative pictures of buildings and terrain) are omitted. The decisions are recorded as set **D8** in [../civdiv/OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md). **Part B supersedes Part A where they differ**: in particular, raw materials can **not** be collected by hand without a collection building (Part B §1 and §8).
+Parts A and B preserve the previous assistant-authored design recommendations and implementation prompts (not verbatim owner messages). The direct owner instructions and latest catalogue direction are distinguished in Part C below. The prior recommendations remain background where consistent with the owner's decisions. The decisions are recorded as set **D8** in [../civdiv/OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md). **Part B supersedes Part A where they differ**: in particular, raw materials can **not** be collected by hand without a collection building (Part B §1 and §8).
 
 ---
+
+## Part D — Controlling latest owner decisions
+
+Read [LATEST_OWNER_AMENDMENT.md](LATEST_OWNER_AMENDMENT.md) first. It records the direct owner clarification on emergent property and reciprocal giving, and the construction/conflict/training requirements. Parts A–C are historical or subordinate where they assume authoritative ownership or permission. Preserve physical possession, not legal title. Do not force social outcomes.
+
+## Part C — Latest owner direction: embodied NPCs and the core catalogue (controlling amendment)
+
+This amendment takes precedence over Parts A and B on cognition, actions and content. It does not reverse the seven terrain types, building-gated raw collection, labour-only first collection shelters, physical logistics, or the six-tribe start.
+
+**Direct owner requirements (summarised from the conversation, not verbatim quotations):** NPCs have simple movement controls such as turning and stepping, like a Minecraft or Dungeon Master player. Fleeing, foraging and approaching are reasons to use those controls, not extra primitive actions. Manipulation should be generic USE of a good on oneself, another good, a building or another NPC. A Creatures-style brain trained for the founders learns when and how to act; children acquire behaviour through experience, imitation and teaching. Include the Widelands Barbarian economic web and prehistoric equivalents of the supplied Sims 1 objects. NPCs should have at least the eight Sims needs. Buildings can contain furnishings, such as beds in an inn. Use the three-tab catalogue as a key part of the upcoming run.
+
+**Working design reference:** [God_of_the_Island_Core_Design.xlsx](God_of_the_Island_Core_Design.xlsx), tabs `NPC Actions`, `Objects`, `Buildings` (12 controls, 12 proposed needs, 138 object types, 65 building/infrastructure types). This is the authoritative *authoring backlog*, not a statement that every row is implemented or that all values are approved. Existing code and legacy content remain reference evidence, not competing definitions for unified content. The six additional Sims needs and thirst are to be integrated with the five existing drives. The spreadsheet's additional controls, exact recipes, technology prerequisites, quantities, capacities and furnishings are proposed defaults; validate and record changes rather than treating draft values as immutable facts.
+
+**Implementation priority:** one shared primitive action executor for learned policy, possession and controlled test fixtures; one data-defined interaction system; one physical goods and building economy; actual initial brain training and social transmission evidence. Preserve biology, genealogy, divine influence, ownership and institutions. Do not merely rename old behaviours or put a scripted economic planner behind the new controls. Long-term intentions and learned motor sequences may live inside the brain, but cannot bypass physical checks or decide the economy on its behalf.
+
+**Recommended defaults for this run (lead to record as delegated defaults, not owner quotations):** all non-desert hexes including sea receive production numbers; standalone residential hut disabled initially; hall accommodates all 12 founders; varied valid families; infinite forage is time-limited and independent of dice; water must be accessible without a circular tool dependency if thirst is active; repair estate ownership and interrupted collection before industrialising. Keep the 18-hour window; target UA first, continue UB if possible. Do not start Industry simply because a report was written: require credible autonomous primitive survival, production and exchange, or report the blocker and continue unification.
+
+The detailed controlling technical amendment is §0.2 of UNIFICATION_DESIGN.md; package scheduling and acceptance additions are §0 of UNIFICATION_PACKAGE_INDEX.md. The original sections below are retained for traceability. Earlier prescriptive action examples are historical descriptions of outcomes, not the new brain interface.
+
 
 # Part A — Fundamental economic design: unification
 
