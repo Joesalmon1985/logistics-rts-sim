@@ -113,6 +113,18 @@ namespace God.Sim.Divinity
             }
         }
 
+        /// <summary>
+        /// UN2 (LEAD_RULINGS R87, contracts 23.5; additive, unified games only): a <see cref="ControlInputKind.Primitive"/> input of a
+        /// possessed or avatar body is checked by the same physical checks as every origin, <c>Motor.Check</c> (no effect); the result
+        /// is the status <c>Motor.Submit</c> would give. <c>Disabled</c> outside a unified game (the legacy overload above is unchanged).
+        /// </summary>
+        public static Unified.MotorStatus CheckAction(GodState s, ControlKind kind, in Unified.PrimitiveControl c)
+        {
+            if (!Unified.Unified.On(s)) return Unified.MotorStatus.Disabled;
+            if (kind != ControlKind.Possessed && kind != ControlKind.AvatarBody) return Unified.MotorStatus.Invalid;
+            return Unified.Motor.Check(s, in c);
+        }
+
         /// <summary>The object as the body's mind will read it: a lot gets its node and class, a place the class of what grows there.</summary>
         public static DivineTarget Normalise(GodState s, DivineAct act, DivineTarget t)
         {

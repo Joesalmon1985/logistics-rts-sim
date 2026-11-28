@@ -13,7 +13,9 @@ namespace God.Sim.Unified
 
         static partial void PersonTickUN2(GodState s, EventBuffer ev, Npc npc) => Motor.PersonTick(s, ev, npc);
 
-        static partial void CheckPossessedUN2(GodState s, int body, in PrimitiveControl c, ref MotorStatus status) => status = Motor.Check(s, in c);
+        /// <summary>R87: validated by <c>Embodiment.CheckAction</c> (its primitive overload), which is <see cref="Motor.Check"/> for the body's control kind.</summary>
+        static partial void CheckPossessedUN2(GodState s, int body, in PrimitiveControl c, ref MotorStatus status) =>
+            status = God.Sim.Divinity.Embodiment.CheckAction(s, God.Sim.Divinity.Control.Of(s, body), in c);
 
         static partial void SubmitPossessedUN2(GodState s, EventBuffer ev, int body, ControlOrigin origin, in PrimitiveControl c, ref MotorStatus status)
         {

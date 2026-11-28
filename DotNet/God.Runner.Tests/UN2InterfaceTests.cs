@@ -374,7 +374,10 @@ namespace God.Runner.Tests
             Assert.AreEqual(fh.Part("unification"), ff.Part("unification"), "possessed click-to-move = the same fixture stream");
             Assert.AreEqual(fh.Part("population"), ff.Part("population"));
             Assert.AreEqual(fp.Hash(), fh.Hash());
-            Assert.IsFalse(File.ReadAllText(Path.Combine(UN0RunTests.SimRoot(), "Divinity", "Possession.cs")).Contains("Unified."), "Possession.cs untouched (amendment A7)");
+            // R87: Embodiment.CheckAction (primitive overload) is the validation, and it is the motor's own check
+            Assert.AreEqual(Motor.Check(f1.S, in turn), Embodiment.CheckAction(f1.S, ControlKind.Possessed, in turn));
+            Assert.AreEqual(MotorStatus.Invalid, Embodiment.CheckAction(f1.S, ControlKind.Self, in turn), "only a possessed or avatar body");
+            Assert.AreEqual(MotorStatus.Disabled, Embodiment.CheckAction(UN2MotorTests.LegacyGame(), ControlKind.Possessed, in turn), "legacy games: disabled");
             TestContext.WriteLine($"T15: command route Possessed; click-to-move {sent} primitives to node {goal}; equal to the fixture stream {ff.Hash():x16}");
         }
 

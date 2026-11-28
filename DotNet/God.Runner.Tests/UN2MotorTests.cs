@@ -33,6 +33,10 @@ namespace God.Runner.Tests
             return f;
         }
 
+        /// <summary>A legacy (switch-off) game state with a population, for the "disabled outside a unified game" checks.</summary>
+        internal static GodState LegacyGame() =>
+            GodSim.Create(new GameSetup(1, GameSetup.NoHuman, 2) { Population = true, StartNpcsPerFaction = 2, Victory = VictorySpec.SandboxOnly() }).State;
+
         internal static int FarFrom(PrimitiveFixture f, int v)
         {
             var g = f.Grid; int best = -1, bd = -1;
