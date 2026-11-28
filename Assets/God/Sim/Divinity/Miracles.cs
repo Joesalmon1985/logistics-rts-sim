@@ -510,7 +510,7 @@ namespace God.Sim.Divinity
             int into = Goods.Produce(s, ev, pl.Holder, pl.Ware, pl.Count, spoil, uses, pl.Holding, ProduceReason.Miracle, 0, iv);
             if (into == 0) throw new InvalidOperationException("miracle create: no room after the room check");
             DivineLedger.BookCreated(s, ev, c.God, iv, pl.Ware, pl.Count, newLot, into, pl.Holder);
-            if (!pl.Holding.IsNone)
+            if (!pl.Holding.IsNone && !Unified.Unified.On(s)) // UN0 (contracts 23.4): no title in a unified game
                 ev.Add(new OwnershipChanged
                 {
                     AssetKind = OwnershipChanged.AssetLot, Lot = into, Ware = pl.Ware, Count = pl.Count, FromKind = OwnerKind.None, FromId = 0,

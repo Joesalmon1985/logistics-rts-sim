@@ -30,6 +30,9 @@ namespace God.Sim.Population
                 case MoveReason.Drop: case MoveReason.DeathSpill: return Enter;
                 case MoveReason.HandOver: return HandOver;
                 case MoveReason.Deposit: case MoveReason.Withdraw: return Store;
+                // UN0 (contracts 23.4): the unified moves (never made by a legacy game)
+                case MoveReason.Contribute: case MoveReason.Install: case MoveReason.Uninstall: case MoveReason.WorkInput: return Store;
+                case MoveReason.Grab: return Touch;
                 default: return NoActor;
             }
         }

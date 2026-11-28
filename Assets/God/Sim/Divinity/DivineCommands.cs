@@ -126,6 +126,11 @@ namespace God.Sim.Divinity
         public int Node;
         public DivineAct Act;
         public DivineTarget Target;
+        /// <summary>
+        /// UN0 (contracts 23.5, R84): the control of a <see cref="ControlInputKind.Primitive"/> input (its <c>Actor</c> is
+        /// <see cref="Body"/>); null for every other kind, and then not written (so older commands' JSON and pending hash are unchanged).
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)] public Unified.PrimitiveControl? Primitive;
     }
 
     // ---------------- configuration (external only; D1) ----------------

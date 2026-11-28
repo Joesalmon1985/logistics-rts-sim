@@ -11,6 +11,8 @@ namespace God.Sim.Comms
         // ---- F1 (contracts 14): reserved names, no meaning until their package lands them; 28-31 reserved ----
         Teach = 18, Pray = 19, Worship = 20, Demonstrate = 21, RequestService = 22, Report = 23,   // C7, D6, D6, C7, C6, C9
         Thank = 24, Greet = 25, Threaten = 26, Alarm = 27,                                          // C2 signalling acts
+        // ---- UN0 (contracts 23.4, 23.9): a communicated claim (referents in the unified MsgExt); meaning only by learning. 29-31 reserved ----
+        Claim = 28,
     }
 
     /// <summary>What a topic names: a ware, a place (node), a person, an issue (M10), a posting (M6), or a task (reserved, 13.10).</summary>

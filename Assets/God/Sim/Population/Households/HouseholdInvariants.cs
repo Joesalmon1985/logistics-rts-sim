@@ -38,7 +38,11 @@ namespace God.Sim.Population.Households
                 {
                     var b = Goods.BinById(p, h.Bin);
                     if (b == null) bad.Add("household " + h.Id + " store " + h.Bin + " missing");
-                    else if (b.Kind != BinKind.HouseholdStore || b.Owner.Kind != OwnerKind.Household || b.Owner.Id != h.Id) bad.Add("store " + b.Id + " is not household " + h.Id + "'s");
+                    else
+                    {
+                        bool ownerOk = s.Unification != null || b.Owner.Kind == OwnerKind.Household && b.Owner.Id == h.Id; // UN0: no owner in a unified game
+                        if (b.Kind != BinKind.HouseholdStore || !ownerOk) bad.Add("store " + b.Id + " is not household " + h.Id + "'s");
+                    }
                     if (h.Hut == 0) bad.Add("household " + h.Id + " has a store and no hut");
                 }
             }
@@ -59,7 +63,7 @@ namespace God.Sim.Population.Households
                     if (h.Bin != b.Id) bad.Add("store " + b.Id + " is not household " + h.Id + "'s store");
                     else { var hut = p.HutById(h.Hut); if (hut != null && hut.Node != b.Node) bad.Add("store " + b.Id + " is not at its hut"); }
                 }
-                else if (b.Kind == BinKind.Estate)
+                else if (b.Kind == BinKind.Estate && s.Unification == null) // UN0 (contracts 23.11): estate rules in legacy mode only
                 {
                     if (b.Owner.Kind != OwnerKind.Estate || p.Find(b.Owner.Id)?.Life == null) continue;
                     bool open = false;
@@ -97,12 +101,13 @@ namespace God.Sim.Population.Households
             }
             foreach (var kv in ucount) if (kv.Value > ucap) bad.Add("npc " + kv.Key + " holds " + kv.Value + " reproductive relationships (cap " + ucap + ")");
             if (hs.Economic.Count > 0) bad.Add("economic partnerships exist (a stub type in M4)");
+            if (s.Unification == null) // UN0 (contracts 23.11): estate rules in legacy mode only
             foreach (var e in hs.Estates)
                 if (s.Tick > e.DueTick) bad.Add("estate " + e.Deceased + " open past its deadline");
             // C4: lots owned by an estate only while it is open
             void Lot(ItemLot l, string where)
             {
-                if (l.Owner.Kind != OwnerKind.Estate || p.Find(l.Owner.Id)?.Life == null) return;
+                if (s.Unification != null || l.Owner.Kind != OwnerKind.Estate || p.Find(l.Owner.Id)?.Life == null) return; // UN0: legacy only
                 bool open = false;
                 foreach (var e in hs.Estates) if (e.Deceased == l.Owner.Id) { open = true; break; }
                 if (!open) bad.Add("C4: lot " + l.Id + " in " + where + " owned by a settled estate " + l.Owner.Id);

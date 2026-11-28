@@ -112,12 +112,14 @@ namespace God.Sim.Population
         {
             HouseholdHooks.NewMind(s, npc); SocialHooks.NewMind(s, npc);
             CivModule.NewMind(s, npc); OrgModule.NewMind(s, npc); DivinityModule.NewMind(s, npc); // F1.5
+            if (s.Unification != null) Unified.UnifiedHooks.NewPerson(s, npc); // UN0: the person's unified record
         }
         /// <summary>Kill order (contracts 11.4): M4, M5, then Civ, Orgs, Divinity (which releases control first).</summary>
         public static void OnDeath(GodState s, EventBuffer ev, Npc npc)
         {
             HouseholdHooks.OnDeath(s, ev, npc); SocialHooks.OnDeath(s, ev, npc);
             CivHooks.OnDeath(s, ev, npc); OrgHooks.OnDeath(s, ev, npc); DivinityHooks.OnDeath(s, ev, npc); // F1.6
+            if (s.Unification != null) Unified.UnifiedHooks.OnDeath(s, ev, npc); // UN0: last, before the carry spills where the body lies
         }
         public static void Check(GodState s, List<string> bad) { HouseholdHooks.Check(s, bad); SocialHooks.Check(s, bad); }
     }

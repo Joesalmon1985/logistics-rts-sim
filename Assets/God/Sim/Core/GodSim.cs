@@ -34,7 +34,7 @@ namespace God.Sim
         /// </summary>
         public static readonly ReadOnlyArray<string> AllHashPartNames = new ReadOnlyArray<string>(
             "territory", "economy", "military", "factions", "trade", "core", "pending", "population", "cognition", "learning", "household", "social",
-            "civ", "organisations", "divine"); // F1.4: each only with a population and while its state is non-null
+            "civ", "organisations", "divine", "unification"); // F1.4: each only with a population and while its state is non-null; UN0 (contracts 23.14): unification after divine
 
         /// <summary>
         /// The part names of this state, in the order of <see cref="PartsOf"/> (F0.12): the stage 3 parts; the M3 parts with a
@@ -50,6 +50,7 @@ namespace God.Sim
             if (s.Population != null && s.Civ != null) l.Add("civ");                     // F1.4
             if (s.Population != null && s.Organisations != null) l.Add("organisations");
             if (s.Population != null && s.Divinity != null) l.Add("divine");
+            if (s.Population != null && s.Unification != null) l.Add("unification"); // UN0
             return l.ToArray();
         }
 
@@ -101,8 +102,11 @@ namespace God.Sim
                 if (setup.HasHuman) throw new ArgumentOutOfRangeException(nameof(setup), "God-only mode needs Human = NoHuman: every faction is seated by a faction policy.");
                 if ((tuning ?? new SimTuning()).Divinity.Enabled != 1) throw new ArgumentOutOfRangeException(nameof(setup), "God-only mode needs Divinity.Enabled = 1.");
             }
+            // UN0 (contracts 23.1): a unified game needs a population
+            if (Unified.Unified.Requested(tuning) && !setup.Population) throw new ArgumentOutOfRangeException(nameof(setup), "Unification.Enabled = 1 needs a population.");
             ulong seed = setup.Seed;
             var s = new GodState { Seed = seed, Rng = new Rng(seed).Fork("sim"), Setup = setup, Tuning = tuning != null ? tuning.Clone() : new SimTuning() };
+            if (Unified.Unified.Requested(s.Tuning)) s.Unification = Unified.UnifiedModule.NewState(s); // UN0: before any goods exist (founder packs get origins)
             s.Board = BoardGenerator.CreateIslandBoard(seed);
             FactionsModule.StartGame(s);
             TerritoryModule.StartGame(s);
@@ -111,27 +115,43 @@ namespace God.Sim
             TradeModule.StartGame(s);
             Population.PopulationModule.StartGame(s);
             if (s.Population != null) Population.PopulationExtensions.StartGame(s); // F0.13: M4, then M5
-            Civ.CivModule.StartGame(s);               // F1.5: Civ, Orgs, Divinity (each creates its state only when on, with a population)
-            Orgs.OrgModule.StartGame(s);
+            bool unified = Unified.Unified.On(s);
+            if (!unified) Civ.CivModule.StartGame(s);   // F1.5: Civ, Orgs, Divinity (each creates its state only when on, with a population)
+            if (!unified) Orgs.OrgModule.StartGame(s);  // UN0 (contracts 23.3): no Civ or Orgs state in a unified game
             Divinity.DivinityModule.StartGame(s);
+            if (unified) Unified.UnifiedHooks.StartGame(s); // UN0: the unified start seam (packages' start slots)
             var sim = new GodSim(s);
             InstallModules(sim);
             return sim;
         }
 
         /// <summary>Registers every module's handlers and systems. Shared by <see cref="Create(GameSetup, SimTuning)"/> and <see cref="FromState"/>.</summary>
+        /// <remarks>
+        /// UN0 (contracts 23.3): in a unified game the Stage 3 modules (territory and dice, economy, military, trade, factions: VP and
+        /// elimination), the estates (inside M4's install), Civ and Orgs are not installed; their states stay as dealt (hashed, inert).
+        /// Kept: the population (its tick hands each person to <c>UnifiedHooks.PersonTick</c>), the life cycle, M5's social system,
+        /// divinity and miracles; then the unified systems.
+        /// </remarks>
         private static void InstallModules(GodSim sim)
         {
-            TerritoryModule.Install(sim);
-            EconomyModule.Install(sim);
-            MilitaryModule.Install(sim);
-            TradeModule.Install(sim);
-            FactionsModule.Install(sim);
+            bool unified = Unified.Unified.On(sim.State);
+            if (!unified)
+            {
+                TerritoryModule.Install(sim);
+                EconomyModule.Install(sim);
+                MilitaryModule.Install(sim);
+                TradeModule.Install(sim);
+                FactionsModule.Install(sim);
+            }
             Population.PopulationModule.Install(sim);
             if (sim.State.Population != null) Population.PopulationExtensions.Install(sim); // F0.13: M4, then M5
-            Civ.CivModule.Install(sim);               // F1.5
-            Orgs.OrgModule.Install(sim);
+            if (!unified)
+            {
+                Civ.CivModule.Install(sim);           // F1.5
+                Orgs.OrgModule.Install(sim);
+            }
             Divinity.DivinityModule.Install(sim);
+            if (unified) Unified.UnifiedModule.Install(sim);
         }
 
         /// <summary>
@@ -142,6 +162,7 @@ namespace God.Sim
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (state.Tuning == null) state.Tuning = new SimTuning();
+            Unified.UnifiedModule.Loaded(state); // UN0: the widened ledgers of an older save; a unified tuning needs its state
             var sim = new GodSim(state);
             InstallModules(sim);
             state.Military?.IndexBuildings();
@@ -201,6 +222,7 @@ namespace God.Sim
             if (s.Civ != null) { var h = new StateHasher(); s.Civ.AddTo(ref h); parts.Add(h.Value); }
             if (s.Organisations != null) { var h = new StateHasher(); s.Organisations.AddTo(ref h); parts.Add(h.Value); }
             if (s.Divinity != null) { var h = new StateHasher(); s.Divinity.AddTo(ref h); parts.Add(h.Value); }
+            if (s.Unification != null) { var h = new StateHasher(); s.Unification.AddTo(ref h); parts.Add(h.Value); } // UN0 (contracts 23.14)
             return parts.ToArray();
         }
 

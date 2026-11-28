@@ -23,6 +23,8 @@ namespace God.Sim
         // ---- F1.12 (contracts 15.1) ----
         Lending = 36, Organisation = 45, Service = 46,
         Divine = 60, Possession = 61, Avatar = 62, Miracle = 63, Ledger = 64, Commandment = 65, Religion = 66,
+        // ---- UN0 (contracts 23.12): the unified domains, codes 1200-1399 ----
+        UnifiedWorld = 80, Motor = 81, Construction = 82, Interaction = 83, Exchange = 84, Conflict = 85, Brain = 86, Settlement = 87, Groups = 88,
     }
 
     /// <summary>
@@ -146,7 +148,8 @@ namespace God.Sim
         /// (F0.11). Each milestone adds rows only in its own catalogue file.
         /// </summary>
         public static readonly ReadOnlyArray<EventInfo> All = Concat(Core, Population.Households.HouseholdEvents.Catalog, Social.SocialEvents.Catalog,
-            Civ.CivEvents.Catalog, Orgs.OrgEvents.Catalog, Divinity.DivinityEvents.Catalog); // F1.12: then Civ, Orgs, Divinity (empty in F1)
+            Civ.CivEvents.Catalog, Orgs.OrgEvents.Catalog, Divinity.DivinityEvents.Catalog, // F1.12: then Civ, Orgs, Divinity (empty in F1)
+            Unified.UnifiedEvents.Catalog);                                                  // UN0 (contracts 23.12): then the unified rows (empty at UN0)
 
         private static ReadOnlyArray<EventInfo> Concat(params ReadOnlyArray<EventInfo>[] parts)
         {
@@ -193,6 +196,9 @@ namespace God.Sim
                 case TelemetryDomain.Records: case TelemetryDomain.Media: return (600, 699);
                 case TelemetryDomain.Policy: case TelemetryDomain.Kpi: return (700, 799);
                 case TelemetryDomain.Lab: return (900, 999);
+                case TelemetryDomain.UnifiedWorld: case TelemetryDomain.Motor: case TelemetryDomain.Construction: case TelemetryDomain.Interaction:
+                case TelemetryDomain.Exchange: case TelemetryDomain.Conflict: case TelemetryDomain.Brain: case TelemetryDomain.Settlement:
+                case TelemetryDomain.Groups: return (1200, 1399); // UN0 (contracts 23.12)
                 default: return (1, 99);
             }
         }

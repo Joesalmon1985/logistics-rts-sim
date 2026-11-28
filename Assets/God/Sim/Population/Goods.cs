@@ -4,7 +4,9 @@ using God.Sim.Learning;
 namespace God.Sim.Population
 {
     /// <summary>Why a lot moved (10-31 reserved).</summary>
-    public enum MoveReason : byte { PickUp = 1, Drop = 2, Deposit = 3, Withdraw = 4, HandOver = 5, EstateIn = 6, EstateOut = 7, Claim = 8, DeathSpill = 9, Deliver = 10, AvatarDrop = 11, Confiscate = 12 } // F1 (contracts 7.1): 10 C1 haul, 11 D5, 12 C9; 13-31 reserved
+    public enum MoveReason : byte { PickUp = 1, Drop = 2, Deposit = 3, Withdraw = 4, HandOver = 5, EstateIn = 6, EstateOut = 7, Claim = 8, DeathSpill = 9, Deliver = 10, AvatarDrop = 11, Confiscate = 12, // F1 (contracts 7.1): 10 C1 haul, 11 D5, 12 C9
+        // UN0 (contracts 23.4): unified moves; 13 BinTransfer stays contracts 22.3's (industry); 19-31 reserved
+        Contribute = 14, Install = 15, Uninstall = 16, WorkInput = 17, Grab = 18 }
 
     /// <summary>Who owns a moved lot at its destination. A lot on the ground is always ownerless, whatever the rule.</summary>
     public enum OwnerRule : byte { Keep = 0, ToReceiver = 1, ToBinOwner = 2, Set = 3 }
@@ -66,6 +68,11 @@ namespace God.Sim.Population
     /// <para>Merge rules (the M3 rules, plus the owner): carry merges the same ware and owner (tools never), keeping the lower
     /// id and the earlier spoil day; ground merges the same node, ware and spoil day (tools never); a bin merges the same ware,
     /// spoil day and owner (tools never) unless <see cref="MergeRule.Never"/>. Ground lots are always ownerless.</para>
+    /// <para>UN0 (contracts 23.4): in a unified game (<c>Unified.On</c>) goods have no title: every owner is <see cref="Owner.None"/>
+    /// whatever the rule or argument, <see cref="SetOwner"/> refuses, no <see cref="OwnershipChanged"/> is emitted, a hand-over never
+    /// changes an owner, the goods reward pays nothing, lots merge on ware, spoil day and uses (never a unique ware, owner and
+    /// provenance ignored) and the origin table follows every lot (<see cref="Unified.UnifiedGoods"/>). A legacy game takes none of
+    /// these branches.</para>
     /// </summary>
     public static class Goods
     {
@@ -84,18 +91,22 @@ namespace God.Sim.Population
         {
             var p = s.Population;
             if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
-            if (to.Kind == HolderKind.Ground) owner = Owner.None;
-            if (!Fits(s, to, w, count, owner, MergeRule.Merge)) return 0;
+            bool u = Unified.Unified.On(s); // UN0: no title in a unified game
+            if (u || to.Kind == HolderKind.Ground) owner = Owner.None;
+            var probe = new ItemLot { Id = -1, Ware = w, Count = count, SpoilDay = spoilDay, Uses = uses };
+            if (!Fits(s, to, w, count, owner, MergeRule.Merge, in probe)) return 0;
             var lot = PopulationModule.NewLot(s, w, count, spoilDay, uses);
             lot.Owner = owner;
-            Insert(s, to, lot, MergeRule.Merge, out int into, out _);
+            if (u) Unified.UnifiedGoods.Produced(s, lot.Id, actor, why, source);
+            Insert(s, to, lot, MergeRule.Merge, out int into, out int ended);
+            if (u) Unified.UnifiedGoods.Merged(s, into, ended);
             p.Ledger.Produce(why, w, count);
             ev?.Add(new Produced
             {
                 Npc = actor, Source = source, Ware = w, Count = count, Reason = why, WithTool = withTool,
                 Lot = lot.Id, IntoLot = into, OwnerKind = owner.Kind, OwnerId = owner.Id,
             });
-            PayProduce(s, ev, owner, w, count, why);
+            if (!u) PayProduce(s, ev, owner, w, count, why);
             return into;
         }
 
@@ -126,7 +137,8 @@ namespace God.Sim.Population
             if (!InReach(s, actor, from, Reach.Touch)) return false;
             var lot = Read(s, at);
             if (lot.Count < count) return false;
-            if (lot.Count == count) Remove(s, at);
+            bool u = Unified.Unified.On(s);
+            if (lot.Count == count) { Remove(s, at); if (u) Unified.UnifiedGoods.Ended(s, lotId); }
             else { lot.Count -= count; Write(s, at, lot); }
             s.Population.Ledger.Consume(why, lot.Ware, count);
             ev?.Add(new Consumed
@@ -134,7 +146,7 @@ namespace God.Sim.Population
                 Npc = actor, Hut = why == ConsumeReason.Built ? refId : 0, Ware = lot.Ware, Count = count, Reason = why, RefId = refId,
                 Lot = lotId, OwnerKind = lot.Owner.Kind, OwnerId = lot.Owner.Id,
             });
-            if (why == ConsumeReason.Spoiled) PaySpoiled(s, ev, lot.Owner, lotId, lot.Ware, count);
+            if (why == ConsumeReason.Spoiled && !u) PaySpoiled(s, ev, lot.Owner, lotId, lot.Ware, count);
             return true;
         }
 
@@ -170,8 +182,9 @@ namespace God.Sim.Population
             if (reach >= 0 && !InReach(s, actor, from, reach) | !InReach(s, actor, to, reach)) { r.Status = MoveStatus.OutOfReach; return r; }
             var lot = Read(s, at);
             if (count <= 0 || count > lot.Count) { r.Status = MoveStatus.NotEnough; return r; }
-            var after = OwnerAt(s, to, rule, set, lot.Owner, actor);
-            if (!Fits(s, to, lot.Ware, count, after, merge)) { r.Status = MoveStatus.NoRoom; return r; }
+            bool u = Unified.Unified.On(s); // UN0: no title in a unified game (the rule and the set owner are ignored)
+            var after = u ? Owner.None : OwnerAt(s, to, rule, set, lot.Owner, actor);
+            if (!Fits(s, to, lot.Ware, count, after, merge, in lot)) { r.Status = MoveStatus.NoRoom; return r; }
             var p = s.Population;
             int actorNode = p.Find(actor)?.Node ?? -1, fromNode = NodeOf(s, from), toNode = NodeOf(s, to);
             r.Before = lot.Owner; r.After = after;
@@ -183,11 +196,13 @@ namespace God.Sim.Population
                 moved.Count = count;
                 moved.Id = p.NextLotId++;
                 r.ParentLot = lot.Id;
+                if (u) Unified.UnifiedGoods.Split(s, lot.Id, moved.Id);
             }
             else Remove(s, at);
             moved.Owner = after;
             r.Lot = moved.Id;
             Insert(s, to, moved, merge, out r.IntoLot, out r.EndedLot);
+            if (u) Unified.UnifiedGoods.Merged(s, r.IntoLot, r.EndedLot);
             ev?.Add(new ItemMoved
             {
                 Lot = r.Lot, IntoLot = r.IntoLot, EndedLot = r.EndedLot, ParentLot = r.ParentLot, Ware = moved.Ware, Count = count,
@@ -196,7 +211,7 @@ namespace God.Sim.Population
                 OwnerBeforeKind = r.Before.Kind, OwnerBeforeId = r.Before.Id, OwnerAfterKind = after.Kind, OwnerAfterId = after.Id, PurposeRef = purposeRef,
                 Control = actor > 0 ? (byte)God.Sim.Divinity.Control.Of(s, actor) : (byte)0, // R63: Self (0) whenever Divinity is off
             });
-            if (!r.Before.Same(after))
+            if (!u && !r.Before.Same(after))
             {
                 var b = basis != OwnershipBasis.Auto ? basis : BasisOf(why);
                 ev?.Add(new OwnershipChanged
@@ -215,7 +230,7 @@ namespace God.Sim.Population
                     var h = new HandOver
                     {
                         Giver = from.Id, Receiver = to.Id, Ware = moved.Ware, Count = count, Lot = r.IntoLot, PurposeRef = purposeRef, Reason = why,
-                        FromOwner = r.Before, ToOwner = after, OwnerChanged = !r.Before.Same(after),
+                        FromOwner = r.Before, ToOwner = after, OwnerChanged = !u && !r.Before.Same(after),
                     };
                     Social.SocialHooks.OnHandOver(s, ev, in h);
                 }
@@ -226,6 +241,7 @@ namespace God.Sim.Population
         /// <summary>Changes a lot's owner where it lies (no movement). Ground lots stay ownerless (false). Emits <see cref="OwnershipChanged"/>; pays the ownership reward.</summary>
         public static bool SetOwner(GodState s, EventBuffer ev, Holder at, int lotId, Owner to, OwnershipBasis basis, int actor)
         {
+            if (Unified.Unified.On(s)) return false; // UN0 (contracts 23.4): no title in a unified game; nothing changes, nothing is emitted
             if (at.Kind == HolderKind.Ground && !to.IsNone) return false;
             if (!Find(s, at, lotId, out var loc)) return false;
             var lot = Read(s, loc);
@@ -248,6 +264,7 @@ namespace God.Sim.Population
         public static int NewBin(GodState s, BinKind kind, Owner owner, int node, int weightCap)
         {
             var p = s.Population;
+            if (Unified.Unified.On(s)) owner = Owner.None; // UN0: a unified bin has a place and a capacity, never an owner
             var b = new LotBin { Id = p.NextBinId++, Kind = kind, Owner = owner, Node = node, WeightCap = weightCap };
             p.Bins.Add(b); // ids ascend, so the list stays sorted
             return b.Id;
@@ -477,7 +494,8 @@ namespace God.Sim.Population
         private static bool Mergeable(in ItemLot a, Ware w, Owner owner) => !a.Empty && a.Ware == w && w != Ware.Axe && a.Owner.Same(owner);
 
         /// <summary>Room for <paramref name="count"/> units at a holder: weight and, for a carry, a matching or free slot.</summary>
-        private static bool Fits(GodState s, Holder to, Ware w, int count, Owner owner, MergeRule merge)
+        /// <remarks>UN0: <paramref name="probe"/> is the lot that would arrive; in a unified game a carry slot merges by <see cref="Unified.UnifiedGoods.Mergeable"/>.</remarks>
+        private static bool Fits(GodState s, Holder to, Ware w, int count, Owner owner, MergeRule merge, in ItemLot probe)
         {
             var p = s.Population;
             switch (to.Kind)
@@ -488,7 +506,8 @@ namespace God.Sim.Population
                     if (npc == null || !npc.Alive) return false;
                     int free = s.Tuning.Population.CarryWeight - PopulationModule.CarryWeight(npc);
                     if (free / PopulationModule.Weight(w) < count) return false;
-                    foreach (var l in npc.Carry) if (l.Empty || merge == MergeRule.Merge && Mergeable(l, w, owner)) return true;
+                    bool u = Unified.Unified.On(s);
+                    foreach (var l in npc.Carry) if (l.Empty || merge == MergeRule.Merge && (u ? Unified.UnifiedGoods.Mergeable(l, probe) : Mergeable(l, w, owner))) return true;
                     return false;
                 }
                 case HolderKind.Ground: return to.Id >= 0 && to.Id < s.Territory.Grid.Count;
@@ -508,6 +527,7 @@ namespace God.Sim.Population
             var p = s.Population;
             into = lot.Id;
             ended = 0;
+            bool u = Unified.Unified.On(s); // UN0: the unified merge rule (ware, spoil day, uses; never a unique ware)
             switch (to.Kind)
             {
                 case HolderKind.Carry:
@@ -516,7 +536,7 @@ namespace God.Sim.Population
                     // the same ware merges into one lot; a mixed lot rots with its oldest part (the earlier spoil day)
                     if (merge == MergeRule.Merge)
                         for (int i = 0; i < npc.Carry.Length; i++)
-                            if (Mergeable(npc.Carry[i], lot.Ware, lot.Owner))
+                            if (u ? Unified.UnifiedGoods.Mergeable(npc.Carry[i], lot) : Mergeable(npc.Carry[i], lot.Ware, lot.Owner))
                             {
                                 ref var c = ref npc.Carry[i];
                                 c.Count += lot.Count;
@@ -534,7 +554,7 @@ namespace God.Sim.Population
                     lot.Owner = Owner.None;
                     if (merge == MergeRule.Merge)
                         foreach (var g in p.Lots)
-                            if (g.Node == to.Id && g.Lot.Ware == lot.Ware && g.Lot.SpoilDay == lot.SpoilDay && lot.Ware != Ware.Axe)
+                            if (g.Node == to.Id && (u ? Unified.UnifiedGoods.Mergeable(g.Lot, lot) : g.Lot.Ware == lot.Ware && g.Lot.SpoilDay == lot.SpoilDay && lot.Ware != Ware.Axe))
                             {
                                 g.Lot.Count += lot.Count;
                                 if (lot.Id < g.Lot.Id) { ended = g.Lot.Id; g.Lot.Id = lot.Id; } else ended = lot.Id;
@@ -553,7 +573,7 @@ namespace God.Sim.Population
                         for (int i = 0; i < b.Lots.Count; i++)
                         {
                             var l = b.Lots[i];
-                            if (Mergeable(l, lot.Ware, lot.Owner) && l.SpoilDay == lot.SpoilDay)
+                            if (u ? Unified.UnifiedGoods.Mergeable(l, lot) : Mergeable(l, lot.Ware, lot.Owner) && l.SpoilDay == lot.SpoilDay)
                             {
                                 l.Count += lot.Count;
                                 if (lot.Id < l.Id) { ended = l.Id; l.Id = lot.Id; } else ended = lot.Id;

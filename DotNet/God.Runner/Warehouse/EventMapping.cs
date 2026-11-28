@@ -122,6 +122,7 @@ namespace God.Runner.Warehouse
             CivMappings.Register(r);         // F1.15: C1-C5, then C6-C10, then D1-D7 (stubs)
             OrgMappings.Register(r);
             DivinityMappings.Register(r);
+            UnifiedMappings.Register(r);     // UN0 (contracts 23.13): the unified stubs (empty until their packages)
             return r;
         }
     }

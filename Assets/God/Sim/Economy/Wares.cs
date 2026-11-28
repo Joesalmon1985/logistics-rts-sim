@@ -63,6 +63,31 @@ namespace God.Sim
         // ---- F1.17 (contracts 7.1): the one new personal ware of this run (sources and remedy use: C7). 33-39 free for later
         //      appends without another ledger layout change. ----
         Herbs = 32,
+        // ---- 40-71 reserved for industry (contracts 22.3). ----
+        // ---- UN0 (contracts 23.4): the unification block 72-159. UA wares fixed now (catalogue OBJ-nnn in the comments; "u" =
+        //      unique, never merges); 94-159 are appended by UN3a/UB in manifest order. They exist only in unified games. ----
+        Mushroom = 72,        // OBJ-044
+        WildEgg = 73,         // OBJ-046
+        Rabbit = 74,          // OBJ-047
+        WildVeg = 75,         // OBJ-048
+        CactusFruit = 76,     // OBJ-049
+        Seaweed = 77,         // OBJ-050
+        Hay = 78,             // OBJ-043
+        Sheep = 79,           // OBJ-042 (u)
+        Water = 80,           // OBJ-039 (container-only, UB)
+        CookedFish = 81,      // OBJ-054
+        Bedding = 82,         // OBJ-084
+        Bed = 83,             // OBJ-092 (u)
+        Stool = 84,           // OBJ-097 (u)
+        Bench = 85,           // OBJ-127 (u)
+        Toy = 86,             // OBJ-132 (u)
+        CarvedOrnament = 87,  // OBJ-108 (u)
+        StorageChest = 88,    // OBJ-107 (u)
+        Cradle = 89,          // OBJ-103 (u)
+        Latrine = 90,         // OBJ-136 (u)
+        Waste = 91,           // OBJ-114
+        StoneHammer = 92,     // OBJ-068 (u)
+        SleepingMat = 93,     // OBJ-093 (u; founder endowment in UA)
     }
 
     /// <summary>How urgently a consumer wants one input ware. Stop means it asks for none.</summary>
@@ -82,11 +107,37 @@ namespace God.Sim
         /// <summary>
         /// Every ware including the personal goods of the population (M3): the population ledger's array length. 40 since F1.17
         /// (32 before): the population hash keeps the old 32-ware order and adds wares 32-39 only when any of them is non-zero.
+        /// <para>UN0 (contracts 23.4): 160, so the unification block 72-159 fits (40-71 stay reserved for industry). The population
+        /// part hashes wares 40-159 (and ledger reasons 8-15) only when any of them is non-zero, so every older game hashes as before.</para>
         /// </summary>
-        public const int PersonalCount = 40;
+        public const int PersonalCount = 160;
 
         /// <summary>The ledger width the population hash was laid out for before F1.17 (wares 0-31).</summary>
         public const int LegacyPersonalCount = 32;
+
+        /// <summary>
+        /// UN0: the personal-ware width of F1 (wares 0-39): the hash layout of the HERB block and the bound the legacy divine
+        /// targets keep (a Give naming ware 40+ is refused exactly as before).
+        /// </summary>
+        public const int F1PersonalCount = 40;
+
+        /// <summary>UN0 (contracts 23.4): the first and last ware of the unification block.</summary>
+        public const int UnifiedFirst = 72, UnifiedLast = 159;
+
+        /// <summary>
+        /// UN0 (contracts 23.4): a durable object that never merges (count 1 per lot): the axe and every "u" ware of the
+        /// unification block. The legacy merge rule keeps its own test (axe only), so this changes nothing in a legacy game.
+        /// </summary>
+        public static bool IsUnique(Ware w)
+        {
+            switch (w)
+            {
+                case Ware.Axe: case Ware.Sheep: case Ware.Bed: case Ware.Stool: case Ware.Bench: case Ware.Toy: case Ware.CarvedOrnament:
+                case Ware.StorageChest: case Ware.Cradle: case Ware.Latrine: case Ware.StoneHammer: case Ware.SleepingMat:
+                    return true;
+                default: return false;
+            }
+        }
 
         public static bool IsFood(Ware w) => w == Ware.Berries || w == Ware.Roots || w == Ware.Fish || w == Ware.Nightshade;
 
@@ -138,6 +189,29 @@ namespace God.Sim
                 case Ware.Fish: return "fish";
                 case Ware.Nightshade: return "nightshade";
                 case Ware.Herbs: return "herbs";
+                // UN0: the unification block (names for reports; display names come from the catalogue)
+                case Ware.Mushroom: return "mushroom";
+                case Ware.WildEgg: return "wild egg";
+                case Ware.Rabbit: return "rabbit";
+                case Ware.WildVeg: return "wild vegetables";
+                case Ware.CactusFruit: return "cactus fruit";
+                case Ware.Seaweed: return "seaweed";
+                case Ware.Hay: return "hay";
+                case Ware.Sheep: return "sheep";
+                case Ware.Water: return "water";
+                case Ware.CookedFish: return "cooked fish";
+                case Ware.Bedding: return "bedding";
+                case Ware.Bed: return "bed";
+                case Ware.Stool: return "stool";
+                case Ware.Bench: return "bench";
+                case Ware.Toy: return "toy";
+                case Ware.CarvedOrnament: return "carved ornament";
+                case Ware.StorageChest: return "storage chest";
+                case Ware.Cradle: return "cradle";
+                case Ware.Latrine: return "latrine";
+                case Ware.Waste: return "waste";
+                case Ware.StoneHammer: return "stone hammer";
+                case Ware.SleepingMat: return "sleeping mat";
                 default: return "none";
             }
         }

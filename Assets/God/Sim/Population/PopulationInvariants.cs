@@ -71,7 +71,9 @@ namespace God.Sim.Population
                     Lot(p, l, ids, held, "bin " + b.Id, bad);
                 }
             }
-            // C4: nothing stays owned by a person long dead (M4 moves it to the estate at death; M3 spills it)
+            // C4: nothing stays owned by a person long dead (M4 moves it to the estate at death; M3 spills it). UN0 (contracts 23.11):
+            // legacy only; a unified game checks U-C1..U-C6 instead (Unified.UnifiedInvariants)
+            if (s.Unification == null)
             foreach (var n in p.Npcs)
                 if (Bodies.IsPerson(n) && !n.Alive && s.Tick - n.DiedTick > 3 * tpd)
                     CheckNotOwnedBy(p, n.Id, bad);

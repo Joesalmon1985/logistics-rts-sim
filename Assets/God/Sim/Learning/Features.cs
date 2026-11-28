@@ -80,6 +80,11 @@ namespace God.Sim.Learning
         public const int DivinityFirst = 80, DivinityLast = 89, CivFirst = 90, CivLast = 99, OrgsFirst = 100, OrgsLast = 109;
         /// <summary>A consecrated place (D3 creates, D6 gives it meaning), perceived through <c>SenseExtra</c>.</summary>
         public const int Shrine = 80;
+        // ---- UN0 (contracts 23.4): the unified world's classes (inspection and MindView compatibility only; the unified brain
+        //      reads catalogue ids). 138-149 reserved. ----
+        public const int RawNode = 130, ForagePlace = 131, WaterPoint = 132, ConstructionSite = 133, UnifiedBuilding = 134, Fixture = 135,
+            Settlement = 136, Road = 137;
+        public const int UnifiedFirst = 130, UnifiedLast = 149;
     }
 
     /// <summary><see cref="FeatureKind.ObjCategory"/> values (from the item table).</summary>

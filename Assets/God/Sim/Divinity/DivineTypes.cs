@@ -58,6 +58,8 @@ namespace God.Sim.Divinity
     /// <summary>Contracts 4.4: how much of the body a resurrection restores (Health, Nutrition, Injury).</summary>
     public enum ResurrectionVariant : byte { None = 0, Lesser = 1, Full = 2, Restoration = 3 }
 
-    /// <summary>Contracts 11.3: what a <see cref="DivineControlInput"/> carries.</summary>
-    public enum ControlInputKind : byte { None = 0, Heading = 1, MoveTo = 2, Stop = 3, Action = 4 }
+    /// <summary>Contracts 11.3: what a <see cref="DivineControlInput"/> carries.
+    /// <para>UN0 (contracts 23.4, LEAD_RULINGS R84): 5 <c>Primitive</c>, one of the twelve unified controls
+    /// (<c>DivineControlInput.Primitive</c>), accepted only in a unified game and submitted to the same motor as every other origin.</para></summary>
+    public enum ControlInputKind : byte { None = 0, Heading = 1, MoveTo = 2, Stop = 3, Action = 4, Primitive = 5 }
 }

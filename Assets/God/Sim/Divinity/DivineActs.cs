@@ -132,7 +132,7 @@ namespace God.Sim.Divinity
                     var o = p.Find(t.Radius);
                     if (o == null || !Bodies.IsPerson(o)) return DivineReasons.NotAPerson;
                     if (!o.Alive) return DivineReasons.TargetDead;
-                    if (act == DivineAct.Give && (t.Node <= 0 || t.Node >= Wares.PersonalCount)) return DivineReasons.BadTarget;
+                    if (act == DivineAct.Give && (t.Node <= 0 || t.Node >= Wares.F1PersonalCount)) return DivineReasons.BadTarget;
                     return null;
                 }
                 default: return null;
