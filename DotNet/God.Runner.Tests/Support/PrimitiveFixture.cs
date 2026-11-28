@@ -91,6 +91,17 @@ namespace God.Runner.Tests.Support
             Drain(); U.Index.Reset();
         }
 
+        /// <summary>Consumes every ground lot at one node.</summary>
+        public void ClearGroundAt(int node)
+        {
+            for (int i = S.Population.Lots.Count - 1; i >= 0; i--)
+            {
+                var g = S.Population.Lots[i];
+                if (g.Node == node) Assert.IsTrue(Goods.Consume(S, _ev, Holder.Ground(node), g.Lot.Id, g.Lot.Count, ConsumeReason.Wear, 0));
+            }
+            Drain(); U.Index.Reset();
+        }
+
         /// <summary>Sets a body's node and facing directly (test setup, not a control).</summary>
         public void Place(Npc n, int node, byte facing = 0)
         {

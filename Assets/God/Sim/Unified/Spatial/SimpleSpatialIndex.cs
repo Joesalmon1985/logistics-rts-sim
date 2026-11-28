@@ -79,7 +79,14 @@ namespace God.Sim.Unified
                 int at = _count[_tmpNode[i]]++;
                 _kind[at] = _tmpKind[i]; _id[at] = _tmpId[i]; _node[at] = _tmpNode[i];
             }
+            // the ring buffer of the widest query seen so far, at the densest cell: queries never grow it (no allocation in a query)
+            int dense = 0;
+            for (int i = 0; i < _nodes; i++) { int c = _start[i + 1] - _start[i]; if (c > dense) dense = c; }
+            long need = (long)dense * 6 * System.Math.Max(1, _maxRadius);
+            if (need > _ring.Length) _ring = new SpatialHit[(int)System.Math.Min(need, _entries + 64)];
         }
+
+        private int _maxRadius = 10;
 
         private void Add(SpatialKind k, int id, int node)
         {
@@ -126,6 +133,7 @@ namespace God.Sim.Unified
             Ensure(s);
             var g = s.Territory.Grid;
             if (!g.IsValid(node) || into.Length == 0) return 0;
+            if (radius > _maxRadius) _maxRadius = radius; // the next rebuild sizes the ring for it
             int n = 0;
             int ci = g.I(node), cj = g.J(node);
             for (int d = 0; d <= radius && n < into.Length; d++)
