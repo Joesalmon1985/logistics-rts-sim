@@ -37,6 +37,7 @@ namespace God.Train
                 {
                     case "thresholds-hash": { var t = Thresholds.Load(Opt(a, "thresholds")); o.WriteLine(t.Hash); return Ok; }
                     case "env-check": return EnvCheck(a, o, e);
+                    case "probe": return Probe(a, o, e);
                     case "demo": return Demo(a, o, e);
                     case "bc": return Bc(a, o, e);
                     case "es": return Es(a, o, e);
@@ -74,7 +75,8 @@ namespace God.Train
         {
             if (Flag(a, "stub")) return false;
             var why = UnifiedWorld.Unavailable(1);
-            e.WriteLine("unified world unavailable: " + (why ?? "the training seams are not wired yet") + ". Use --stub for the harness self-test (never a result).");
+            if (why == null) return false;
+            e.WriteLine("unified world unavailable: " + why + ". Use --stub for the harness self-test (never a result).");
             return true;
         }
 
@@ -97,14 +99,38 @@ namespace God.Train
             return Ok;
         }
 
+        /// <summary>One real-world episode on a training seed (teacher or untrained), summarised per day: a diagnostic, never a result.</summary>
+        private static int Probe(Dictionary<string, string> a, TextWriter o, TextWriter e)
+        {
+            long seed = Int(a, "seed", 1);
+            var cfg = new UnifiedConfig { Persons = Int(a, "persons", 1), NeedMask = Convert.ToInt32(Opt(a, "mask", "0x033"), 16) };
+            var w = new UnifiedWorld(cfg, seed, Honesty.Layout.Train, null);
+            string which = Opt(a, "actor", "teacher");
+            IActor actor = which == "teacher" ? new Teacher.SurvivalTeacher() : which == "game" ? new GameBrainActor()
+                : new NetActor((Opt(a, "ckpt") != null ? Checkpoint.Load(Opt(a, "ckpt")) : Checkpoint.Untrained(NetShape.Default, 1, "unified")).ToQNet());
+            int days = Int(a, "days", 3);
+            var sw = Stopwatch.StartNew();
+            var ep = Rollout.Run(w, actor, seed, (long)days * w.TicksPerDay, evaluation: false);
+            double sec = sw.Elapsed.TotalSeconds;
+            o.WriteLine($"probe (diagnostic, not a result): seed {seed}, {w.People.Count} persons, actor {which}, {days} days x {w.TicksPerDay} ticks, {sec:0.00} s ({ep.Ticks / Math.Max(sec, 1e-9):0} ticks/s), decisions {ep.Decisions}, accepted {w.Facts.Accepted}/{w.Facts.Submissions}; drinks {w.Drinks}, forages {w.Forages}, sleeps {w.Sleeps}");
+            var line = new System.Text.StringBuilder("  applied by control:");
+            for (int c = 1; c < 13; c++) if (w.Applied[c] + w.Failed[c] > 0) line.Append($" {(God.Sim.Unified.Prim)c} {w.Applied[c]}/{w.Applied[c] + w.Failed[c]}");
+            o.WriteLine(line.ToString());
+            o.WriteLine("  refused: " + string.Join(", ", System.Linq.Enumerable.Select(w.Refused, kv => kv.Key + " " + kv.Value)));
+            foreach (var p in ep.People)
+                o.WriteLine($"  person {p.Person}: adult {p.Adult}, death tick {p.DeathTick} ({p.Cause}), cells {p.CellsVisited}, pain(h|t) {p.PainTicksHungerThirst}/{p.PersonTicks}, return {p.Return}");
+            return Ok;
+        }
+
         private static int Demo(Dictionary<string, string> a, TextWriter o, TextWriter e)
         {
             var seeds = SeedPolicy.ParseSeeds(Opt(a, "seeds", "1-8"));
             SeedPolicy.CheckTraining(seeds);
             if (RealWorldRefused(a, e)) return Unavailable;
             var st = CurriculumData.Load(Opt(a, "stage", "S2"));
-            var demos = Pipeline.Demos(st, seeds, Int(a, "workers", 8));
-            var path = Path.Combine(OutDir(a), "demos.bin");
+            bool stub = Flag(a, "stub");
+            var demos = Pipeline.Demos(st, seeds, Int(a, "workers", 8), -1, stub);
+            var path = Path.Combine(OutDir(a), Opt(a, "name", "demos.bin"));
             DemoFile.Write(path, demos);
             long n = 0; foreach (var s in demos) n += s.Samples.Count;
             o.WriteLine($"teacher demonstrations (TRAINING ONLY, origin Teacher): {demos.Count} sequences, {n} decisions -> {path}");
@@ -119,19 +145,22 @@ namespace God.Train
             var st = CurriculumData.Load(Opt(a, "stage", "S2"));
             int workers = Int(a, "workers", 8);
             var dir = OutDir(a);
-            var demos = Opt(a, "demos") != null ? DemoFile.Read(Opt(a, "demos")) : Pipeline.Demos(st, seeds, workers);
+            bool stub = Flag(a, "stub");
+            List<Sequence> demos;
+            if (Opt(a, "demos") != null) { demos = new List<Sequence>(); foreach (var f in Opt(a, "demos").Split(',')) demos.AddRange(DemoFile.Read(f)); }
+            else demos = Pipeline.Demos(st, seeds, workers, -1, stub);
             var ckPath = Path.Combine(dir, "bc.ckpt");
-            var start = Flag(a, "resume") && File.Exists(ckPath) ? Checkpoint.Load(ckPath) : Checkpoint.Untrained(NetShape.Default, (ulong)Int(a, "init-seed", 1), "stub");
+            var start = Flag(a, "resume") && File.Exists(ckPath) ? Checkpoint.Load(ckPath) : Checkpoint.Untrained(NetShape.Default, (ulong)Int(a, "init-seed", 1), stub ? "stub" : "unified");
             start.Stage = st.Id; start.SeedsText = "demo seeds " + Opt(a, "seeds", "1-8");
             var cfg = new BcConfig { Epochs = Int(a, "epochs", st.BcEpochs), Workers = workers, Batch = Int(a, "batch", 4), Lr = double.Parse(Opt(a, "lr", "0.003"), System.Globalization.CultureInfo.InvariantCulture) };
-            var ck = BehaviourCloning.Train(start, demos, cfg, cfg.Epochs, (ep, loss) => o.WriteLine($"bc epoch {ep}: loss {loss:0.0000}"));
+            var ck = BehaviourCloning.Train(start, demos, cfg, (start.Kind == "bc" ? start.Step : 0) + cfg.Epochs, (ep, loss) => o.WriteLine($"bc epoch {ep}: loss {loss:0.0000}"));
             var net = ck.ToQNet();
             var pn = new long[13]; var pk = new long[13];
             double agree = BehaviourCloning.Agreement(net, demos, pn, pk);
             o.WriteLine($"  float master agreement {BehaviourCloning.FloatAgreement(ck.NetShape, ck.P, demos):0.0000} (quantisation gap check only)");
             for (int c = 1; c < 13; c++) if (pn[c] > 0) o.WriteLine($"  agreement {(Prim)c}: {pk[c]}/{pn[c]}");
-            var val = Pipeline.Validate(st, net, workers);
-            ck.MetricsJson = Pipeline.CriteriaJson(st, CurriculumData.Check(st, val), agree, Pipeline.MeanReturn(val));
+            var val = Pipeline.Validate(st, net, workers, null, stub);
+            ck.MetricsJson = Pipeline.CriteriaJson(st, CurriculumData.Check(st, val), agree, Pipeline.MeanReturn(val), stub);
             ck.Save(ckPath);
             o.WriteLine($"bc: agreement {agree:0.0000} (integer network, teacher-forced); validation {ck.MetricsJson}");
             o.WriteLine($"frozen checkpoint -> {ckPath} (weights {net.WeightsSha256()})");
@@ -149,15 +178,19 @@ namespace God.Train
             var esPath = Path.Combine(dir, "es.ckpt");
             var from = Flag(a, "resume") && File.Exists(esPath) ? esPath : Opt(a, "from", Path.Combine(dir, "bc.ckpt"));
             var start = Checkpoint.Load(from);
-            var cfg = new EsConfig { Pairs = Int(a, "pairs", st.EsPairs), EpisodesPerCandidate = Int(a, "episodes", st.EsEpisodes), Workers = workers, Seeds = seeds, Ticks = Pipeline.Ticks(st),
+            bool stub = Flag(a, "stub");
+            var cfg = new EsConfig { Pairs = Int(a, "pairs", st.EsPairs), EpisodesPerCandidate = Int(a, "episodes", st.EsEpisodes), Workers = workers, Seeds = seeds, Ticks = Pipeline.Ticks(st, stub),
                 Sigma = double.Parse(Opt(a, "sigma", "0.005"), System.Globalization.CultureInfo.InvariantCulture), Lr = double.Parse(Opt(a, "lr", "0.0005"), System.Globalization.CultureInfo.InvariantCulture) };
             int iters = Int(a, "iters", st.EsIterations);
             var sw = Stopwatch.StartNew();
-            var ck = EvolutionStrategies.Train(start, s => Pipeline.Stub(st, s), cfg, (start.Kind == "es" ? start.Step : 0) + iters, (it, mean, best) => o.WriteLine($"es iteration {it}: mean return {mean}, best {best}"));
-            ck.Stage = st.Id; ck.SeedsText = start.SeedsText + "; es seeds " + Opt(a, "seeds", "1-64");
+            var ck = EvolutionStrategies.Train(start, s => Pipeline.World(st, s, stub), cfg, (start.Kind == "es" ? start.Step : 0) + iters, (it, mean, best) => o.WriteLine($"es iteration {it}: mean return {mean}, best {best}"));
+            ck.Stage = st.Id; ck.SeedsText = start.Kind == "es" ? start.SeedsText : start.SeedsText + "; es seeds " + Opt(a, "seeds", "1-64");
             var net = ck.ToQNet();
-            var val = Pipeline.Validate(st, net, workers);
-            ck.MetricsJson = Pipeline.CriteriaJson(st, CurriculumData.Check(st, val), double.NaN, Pipeline.MeanReturn(val));
+            if (!Flag(a, "no-validate"))
+            {
+                var val = Pipeline.Validate(st, net, workers, null, stub);
+                ck.MetricsJson = Pipeline.CriteriaJson(st, CurriculumData.Check(st, val), double.NaN, Pipeline.MeanReturn(val), stub);
+            }
             ck.Save(esPath);
             long rollouts = (long)iters * cfg.Pairs * 2 * cfg.EpisodesPerCandidate;
             o.WriteLine($"es: {rollouts} rollouts in {sw.Elapsed.TotalSeconds:0.0} s ({rollouts / Math.Max(sw.Elapsed.TotalSeconds, 1e-9) / Math.Max(1, workers):0.0} rollouts/s per worker); validation {ck.MetricsJson}");

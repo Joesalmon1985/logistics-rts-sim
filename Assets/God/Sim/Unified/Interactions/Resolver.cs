@@ -52,7 +52,7 @@ namespace God.Sim.Unified
                 case TargetKind.Site: { var x = w.SiteById(id); if (x == null) return false; r.Node = x.Node; r.Cat = x.Design; return true; }
                 case TargetKind.ForagePlace: foreach (var x in w.ForagePlaces) if (x.Id == id) { r.Node = x.Node; r.Cat = book.OfWare((Ware)x.Ware)?.CatId ?? 0; return true; } return false;
                 case TargetKind.RawNode: foreach (var x in w.RawNodes) if (x.Id == id) { r.Node = x.Node; r.Cat = book.OfWare((Ware)x.Ware)?.CatId ?? 0; return true; } return false;
-                case TargetKind.WaterPoint: foreach (var x in w.WaterPoints) if (x.Id == id) { r.Node = x.Node; return true; } return false;
+                case TargetKind.WaterPoint: foreach (var x in w.WaterPoints) if (x.Id == id) { r.Node = x.Node; r.Cat = book.OfWare(Ware.Water)?.CatId ?? 0; return true; } return false; // the catalogue's Water rows (drink, wash); salt is refused by the handler
                 case TargetKind.Lot: case TargetKind.Fixture:
                 {
                     if (!LocateLot(s, id, out var node, out var ware)) return false;

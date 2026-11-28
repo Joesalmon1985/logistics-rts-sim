@@ -29,16 +29,26 @@ namespace God.Train
 
         public static long Ticks(Stage st, StubConfig cfg = null) => (long)st.Days * (cfg ?? new StubConfig()).TicksPerDay;
 
+        /// <summary>A training-side real unified world of a stage (train layout, trainer-visible seeds only).</summary>
+        public static UnifiedWorld Real(Stage st, long seed) => new UnifiedWorld(new UnifiedConfig { Persons = st.Population, NeedMask = st.NeedMask }, seed, Layout.Train, null);
+
+        /// <summary>The world of a stage: the stub (harness self-test) or the real unified world.</summary>
+        public static IWorld World(Stage st, long seed, bool stub) => stub ? (IWorld)Stub(st, seed) : Real(st, seed);
+
+        /// <summary>Episode ticks of a stage in the chosen world (the unified world runs the game's day).</summary>
+        public static long Ticks(Stage st, bool stub) => stub ? Ticks(st) : (long)st.Days * God.Sim.SimCalendar.DefaultTicksPerDay;
+
         /// <summary>Teacher demonstrations on training seeds (labelled <c>Teacher</c>), parallel by seed, merged in seed order.</summary>
-        public static List<Sequence> Demos(Stage st, long[] seeds, int workers, long ticks = -1)
+        public static List<Sequence> Demos(Stage st, long[] seeds, int workers, long ticks = -1, bool stub = true)
         {
             SeedPolicy.CheckTraining(seeds);
             var per = new List<Sequence>[seeds.Length];
-            long n = ticks > 0 ? ticks : Ticks(st);
+            long n = ticks > 0 ? ticks : Ticks(st, stub);
             Parallel.For(0, seeds.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, workers) }, i =>
             {
                 var rec = new List<Sequence>();
-                Rollout.Run(Stub(st, seeds[i]), new StubTeacher(), seeds[i], n, evaluation: false, record: rec);
+                IActor teacher = stub ? new StubTeacher() : (IActor)new SurvivalTeacher();
+                Rollout.Run(World(st, seeds[i], stub), teacher, seeds[i], n, evaluation: false, record: rec);
                 per[i] = rec;
             });
             var all = new List<Sequence>();
@@ -47,16 +57,16 @@ namespace God.Train
         }
 
         /// <summary>Validation episodes of a stage with a network (stochastic, the game's sampling), parallel, in seed order.</summary>
-        public static List<EpisodeStats> Validate(Stage st, QNet net, int workers, long[] seeds = null)
+        public static List<EpisodeStats> Validate(Stage st, QNet net, int workers, long[] seeds = null, bool stub = true)
         {
             var vs = seeds ?? st.ValidationSeedList();
             var res = new EpisodeStats[vs.Length];
             Parallel.For(0, vs.Length, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, workers) }, i =>
-                res[i] = Rollout.Run(Stub(st, vs[i]), new NetActor(net), vs[i], Ticks(st), evaluation: false));
+                res[i] = Rollout.Run(World(st, vs[i], stub), new NetActor(net), vs[i], Ticks(st, stub), evaluation: false));
             return new List<EpisodeStats>(res);
         }
 
-        public static string CriteriaJson(Stage st, List<CriterionResult> cr, double agreement = double.NaN, long meanReturn = 0)
+        public static string CriteriaJson(Stage st, List<CriterionResult> cr, double agreement = double.NaN, long meanReturn = 0, bool stub = true)
         {
             var inv = CultureInfo.InvariantCulture;
             var sb = new StringBuilder("{\"stage\":\"").Append(st.Id).Append("\",\"criteria\":[");
@@ -70,7 +80,7 @@ namespace God.Train
             sb.Append("],\"stageCriteria\":\"").Append(all ? "met" : "criteria not met").Append('"');
             if (!double.IsNaN(agreement)) sb.Append(",\"bcAgreement\":").Append(agreement.ToString("0.0000", inv));
             sb.Append(",\"validationMeanReturn\":").Append(meanReturn);
-            sb.Append(",\"world\":\"stub\",\"label\":\"HARNESS SELF-TEST, not a result\"}");
+            sb.Append(stub ? ",\"world\":\"stub\",\"label\":\"HARNESS SELF-TEST, not a result\"}" : ",\"world\":\"unified\",\"label\":\"validation seeds (training-side; not a held-out result)\"}");
             return sb.ToString();
         }
 
