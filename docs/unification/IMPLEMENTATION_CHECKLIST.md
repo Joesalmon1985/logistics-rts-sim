@@ -1,4 +1,4 @@
-﻿# Implementation checklist (D11)
+# Implementation checklist (D11)
 
 The only plan in force. Decisions: `docs/civdiv/OWNER_DECISION_REGISTER.md` (D9, D11). Design detail: `docs/unification/UNIFICATION_DESIGN.md` §D9 (read only the parts a task needs).
 
@@ -15,7 +15,7 @@ The only plan in force. Decisions: `docs/civdiv/OWNER_DECISION_REGISTER.md` (D9,
 - [x] Real-world training environment (UnifiedWorld) and teacher for eat, drink, sleep
 - [x] Train S1–S3; freeze artifact; evaluate teacher-free on held-out seeds 900001–900020 against the committed thresholds; untrained/frozen controls (S1, S2 trained; S3 not trainable until UN3b's reliefs; `FounderPolicyV1` FAILED-TR01: 12-person T1 0.558, T2 0.236; one person alone 18/20)
 - [x] Headless report: survival days, needs, actions, causes of death (`docs/unification/slice1/`)
-- [ ] Owner: confirm the network input map 2 (derived nearest water/food inputs) or choose another input design
+- [ ] Owner: confirm the network input map 2 (lead default R89: accepted) (derived nearest water/food inputs) or choose another input design
 - [ ] V2 founder policy that finds water from unfamiliar starts in a 12-person tribe (reported beside V1)
 
 ## Later slices (not started; branches kept)
