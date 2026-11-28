@@ -27,7 +27,7 @@ namespace God.Sim.Unified
         }
 
         /// <summary>Lower-case object names and aliases, sorted ordinal; binary-searched by <see cref="ObjectIdOfName"/>.</summary>
-        private static readonly string[] ObjectKeys = new string[]
+        private static readonly ReadOnlyArray<string> ObjectKeys = new ReadOnlyArray<string>(new string[]
         {
             "ball target",
             "bathing pool",
@@ -200,13 +200,13 @@ namespace God.Sim.Unified
         /// <summary>The CatId of a object name or alias (lower case, as written in the catalogue), or <see cref="CatId.None"/>. Binary search, no allocation.</summary>
         public static ushort ObjectIdOfName(string lowerName)
         {
-            int lo = 0, hi = ObjectKeys.Length - 1;
+            int lo = 0, hi = ObjectKeys.Count - 1;
             while (lo <= hi) { int mid = (lo + hi) >> 1; int c = string.CompareOrdinal(ObjectKeys[mid], lowerName); if (c == 0) return ObjectIds[mid]; if (c < 0) lo = mid + 1; else hi = mid - 1; }
             return CatId.None;
         }
 
         /// <summary>Lower-case building names and aliases, sorted ordinal; binary-searched by <see cref="BuildingIdOfName"/>.</summary>
-        private static readonly string[] BuildingKeys = new string[]
+        private static readonly ReadOnlyArray<string> BuildingKeys = new ReadOnlyArray<string>(new string[]
         {
             "ax workshop",
             "bakery",
@@ -288,7 +288,7 @@ namespace God.Sim.Unified
         /// <summary>The CatId of a building name or alias (lower case, as written in the catalogue), or <see cref="CatId.None"/>. Binary search, no allocation.</summary>
         public static ushort BuildingIdOfName(string lowerName)
         {
-            int lo = 0, hi = BuildingKeys.Length - 1;
+            int lo = 0, hi = BuildingKeys.Count - 1;
             while (lo <= hi) { int mid = (lo + hi) >> 1; int c = string.CompareOrdinal(BuildingKeys[mid], lowerName); if (c == 0) return BuildingIds[mid]; if (c < 0) lo = mid + 1; else hi = mid - 1; }
             return CatId.None;
         }
