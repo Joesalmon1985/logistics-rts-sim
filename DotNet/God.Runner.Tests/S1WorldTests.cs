@@ -112,6 +112,22 @@ namespace God.Runner.Tests
         }
 
         [Test]
+        public void S1V2_FounderPolicyV2_LoadsThroughHeaderCheck_NeverTrained()
+        {
+            var a = ArtifactLoader.LoadVerified(2);
+            Assert.That(a.Status, Is.EqualTo(ArtifactLoader.StatusInterim), "TR-01 is not passed (T3, T4, T6 not evaluable): never TRAINED");
+            Assert.That(a.WeightsSha256, Is.EqualTo("26df24c076b168c3af0dc2e456e98a3e6eebfe0043709bdcdd09af5fa814e940"), "the frozen V2 weights");
+            Assert.That(a.InputMap, Is.EqualTo(BrainInput.MapV2));
+            Assert.That(a.NetShape, Is.EqualTo("298,24,32,64,166"));
+            Assert.That(a.ThresholdsHash, Does.StartWith("b4a5136240c7db9e"));
+            Assert.That(ArtifactLoader.LoadVerified(1).Status, Is.EqualTo(ArtifactLoader.StatusFailed), "V1's result stands");
+            var w = new UnifiedWorld(new UnifiedConfig { Persons = 1, BrainKind = BrainKind.Trained, Artifact = 2 }, 21, Layout.Train, null);
+            var ep = Rollout.Run(w, new GameBrainActor(), 21, 600, evaluation: true);
+            Assert.That(ep.Decisions, Is.GreaterThan(0));
+            Assert.That(w.Runtime.Injected, Is.False);
+        }
+
+        [Test]
         public void S1_InputMap_RescalesAndDerives()
         {
             var obs = new short[ObsSchema.Length];
