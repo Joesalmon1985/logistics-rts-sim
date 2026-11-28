@@ -530,12 +530,13 @@ namespace God.Sim.Tests
                 var prim = new DivineControlInput { God = 1, Body = body.Id, Kind = ControlInputKind.Primitive, Primitive = new PrimitiveControl { Control = Prim.TurnLeft, Actor = body.Id } };
                 var heading = new DivineControlInput { God = 1, Body = body.Id, Kind = ControlInputKind.Stop };
                 var rp = handler.Validate(s, prim); var rh = handler.Validate(s, heading);
-                Assert.IsFalse(rp.Ok, "no motor at UN0 (unified) / no unified game (legacy): " + rp.Reason);
-                Assert.AreEqual(Reasons.Disabled, rp.Reason);
+                // UN2 (flagged hunk in UN0's test): the motor answers the seam in a unified game; a legacy game still refuses it
+                if (unified) Assert.IsTrue(rp.Ok, "UN2's motor accepts the primitive: " + rp.Reason);
+                else { Assert.IsFalse(rp.Ok, "no unified game (legacy): " + rp.Reason); Assert.AreEqual(Reasons.Disabled, rp.Reason); }
                 if (unified) { Assert.IsFalse(rh.Ok, "legacy kinds are off in a unified game"); Assert.AreEqual(Reasons.Disabled, rh.Reason); }
                 else Assert.IsTrue(rh.Ok, "legacy kinds unchanged in a legacy game");
-                Assert.AreEqual(unified ? MotorStatus.Disabled : MotorStatus.Disabled, UnifiedHooks.CheckPossessed(s, body.Id, prim.Primitive.Value));
-                Assert.AreEqual(MotorStatus.Disabled, UnifiedHooks.SubmitPossessed(s, ev, body.Id, ControlKind.Possessed, prim.Primitive.Value), "the seam answers Disabled until UN2");
+                Assert.AreEqual(unified ? MotorStatus.Accepted : MotorStatus.Disabled, UnifiedHooks.CheckPossessed(s, body.Id, prim.Primitive.Value));
+                Assert.AreEqual(unified ? MotorStatus.Accepted : MotorStatus.Disabled, UnifiedHooks.SubmitPossessed(s, ev, body.Id, ControlKind.Possessed, prim.Primitive.Value), "the seam answers Disabled outside a unified game");
             }
             // a command without the primitive writes no Primitive field (pending hash of older commands unchanged)
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(new DivineControlInput { God = 1, Kind = ControlInputKind.Stop }, SaveFile.Settings);
