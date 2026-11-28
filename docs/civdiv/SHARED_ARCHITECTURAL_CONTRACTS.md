@@ -996,3 +996,210 @@ These are not frozen files, so I1a does not land them. The **requesting** packag
 | Knowledge, documents, rights, auctions (K1); payments, books, monies (K2a/K2b) | their package in `CivState.K1/K2` and own files | I packages (they call the K1/K2 APIs only) |
 | Rows in another package's owned tables | the requesting package by flagged additive edit after the owner merges (22.9) | I1a |
 | Any shared change not listed here | an amendment row in section 20 by the lead | a package branch |
+
+---
+
+## 23. Unification addendum (D9, 28 Nov 2026)
+
+**Status: binding** for every UN and UB package of the 28 November run. It settles the shared numbers and seams of the D9 architecture ([UNIFICATION_DESIGN §D9](../unification/UNIFICATION_DESIGN.md), "§D9"), implementing owner decisions D9.1–D9.14 and [LATEST_OWNER_AMENDMENT](../unification/LATEST_OWNER_AMENDMENT.md). It overrides the unification numbers proposed in UNIFICATION_DESIGN §13.4–13.6, R72, R75 and R76 where they differ (the lead records this as a ruling). Base: `unity/poc` at `fb6ca85` (save version 6, `MaxCand` 36, `Wares.PersonalCount` 40, `Drive.Count` 5, ledger 8 slots, I1a **not** merged). Paths are relative to `Assets/God/Sim/` unless they start with `DotNet/` or `docs/`. New code lives under `Unified/` (namespace `God.Sim.Unified`).
+
+### 23.0 Who may change what
+
+**Only UN0 and the lead modify frozen surfaces**: shared enums, `GodState`, `GodSim` (system install, hash parts), `SaveFile`, `EventCatalog`/`TelemetryDomain`, `Goods.cs`, `LotBin.cs`, `PopulationState.cs` enums, `Divinity/Control.cs` and `DivineTypes.cs`, `Comms/Message.cs`, `Economy/Wares.cs`, `PopulationSystem` dispatch sites, and the schema files UN0 creates (`Unified/Schema/*`). Every other package adds code in its own folder and partial files (`UnifiedState.UNn.cs`, `UnifiedHooks.UNn.cs`, `EffectHandlers.UNn.cs`, `UNnMappings.cs`). A missing seam is an amendment request to the lead; never a workaround. The save version is the lead's alone.
+
+### 23.1 The unified switch
+
+`SimTuning.Unification` (`UnifiedTuning`, `IOmitWhenDefault`, saved in the game's tuning, read by both hosts):
+
+| Path | Default | Meaning |
+|---|---|---|
+| `Unification.Enabled` | 0 | 1 = unified game: `GodState.Unification` exists; goods have no title (23.4); legacy decision/economy paths off (23.3). **No sub-switch disables these two consequences.** |
+| `World`, `Interactions`, `Construction`, `Exchange`, `Conflict` | 1 | behaviour sub-switches, effective only when `Enabled = 1`; 0 makes the corresponding effect kinds refuse with `Disabled` (for isolated tests) |
+| `Needs.ActiveMask` | `0xFFF` | 12 need channels (23.6) |
+| `Brain.Kind` | 0 | 0 `Untrained`, 1 `Trained`, 2 `Fallback` (always labelled); `Teacher` exists only in `DotNet/God.Train` and test fixtures |
+| `Brain.Artifact` | 0 | artifact version; with `Kind = 1` the sim refuses to start if the embedded artifact hash does not match |
+| `Brain.Planning` | 0 | bounded internal planning (§D9.2 e) |
+| `Settlements`, `Roads`, `Groups` | 0 | UB |
+| `Board.Radius`, `Board.SeaRing`, `Start.Tribes`, `Start.Adults`, `Start.Children`, `Start.SettlementsPerTribe` | 4 (land 3 + sea ring), 1, 6, 7, 5, 1 | scale configuration (§D9.6); never constants in code |
+
+Helper: `Unified.On(GodState s)` (UN0). Every switch-gated site reads only this helper.
+
+### 23.2 Neutrality pins (who lands, who re-runs)
+
+| Pin | Statement | Landed by | Re-run by |
+|---|---|---|---|
+| **U-P1** `Unification_Off_Reproduces_Base` | `Unification.Enabled = 0`: every part hash of `band_6x20`, `m4_families`, `ibs_families`, `watch6`, `demog_*`, the god-only Living Island scenario, seeds 1–3, every checkpoint, equals the base head; Stage 3 smoke hashes `12be0f64cefc59f1`, `4bd54b271857a803`, `0a66415b389d7a87` (`DotNet/God.Runner.Tests/PolicyRunTests.cs:27`) unchanged | UN0 | every package and every merge |
+| P1, P4, P8 (and P2, P3, P5, P9 where present) | existing D5 pins | existing | every merge |
+| **U-P2** `Unification_FoundationOnly_Neutral` | UN0's widened enums, ledger and ware surface with `Enabled = 0` hash like the base (ware 40+ and ledger 8–15 hashed only when non-zero) | UN0 | UN9, UN11a |
+| **U-P3** `Unified_NoLegacyTitle` | static guard: no `.Owner`, `OwnerRelation`, `Permits.`, `StoreAccess`, `RightOn`, `Truth(` reference in any file under `Unified/` or in a unified branch of a shared file; runtime: a unified 10-day run emits no `OwnershipChanged`, `TheftCommitted`, `UseRightGranted`, `EstateTransfer` | UN0 (static), UN9 (runtime) | UN11a |
+| **U-P4** `Unified_OriginNeutral` (QA-01) | an identical primitive stream applied with origins Policy, Possessed and Fixture gives identical physical state hashes (`unification`, `population` parts) | UN2 | UN6, UN9, UN11a |
+| **U-P5** `Unified_Recording_Neutral` | Off/Summary/Full recording of domains 80–88 gives one hash | UN11a | UN11a |
+| **U-P6** `Unified_SaveReplay_Exact` | save at a mid-state (site half built, reservation open, held-out lot, strike in progress, person asleep in a bed) → load → continue equals the uninterrupted run; a replay of a unified run equals it at every checkpoint | UN2 (stub), UN11a (full) | every UN package with state |
+
+Hashes move only at declared re-pins recorded in DEV_LOG by the lead.
+
+### 23.3 Legacy isolation (unified mode)
+
+With `Unified.On(s)`: `GodSim.InstallModules` skips `DiceSystem`, `EconomySystem`, `MilitarySystem`, `TradeSystem`, `FactionSystem` (VP, elimination), `EstateSystem`, `CivSystem`, `OrganisationSystem` (UN0); `PopulationSystem` runs `Body()` and then calls `UnifiedHooks.PersonTick(s, ev, npc)` instead of `Thinker.Think`/policy/`Act` (UN0 lands the site; UN6 fills it); `GodBootstrap.StartAi`/`AiHost` never attach a faction policy to a unified game (UN9); M4 estates, executor, `StoreAccess`, `SenseBins` filters and household economic verbs, M5 `Held`/own-lot filters and title basis, C1/C3/C6/C7 paths, `Ownership.Classify`, lost property and divine own-lot filters are unreachable (UN9 audit with the call-site list of [D9_CODE_CONFLICT_AUDIT](../unification/D9_CODE_CONFLICT_AUDIT.md) §8). Kept: `DivinitySystem`, `MiraclesSystem`, `LifeCycleSystem` (biology), `SocialSystem` memory/trust (fed by unified perception), `GodDirector`. Legacy events and warehouse tables keep their definitions and are simply not emitted (registry tests unchanged).
+
+### 23.4 Physical goods without title (UN0 lands, inside `Goods.cs` behind `Unified.On`)
+
+| Item | Unified behaviour |
+|---|---|
+| `Goods.OwnerAt` | always `Owner.None` |
+| `Goods.Produce(…, owner, …)` | owner argument ignored (`None`) |
+| `Goods.SetOwner` | returns false, emits nothing |
+| `OwnershipChanged` | never emitted; `HandOver.OwnerChanged` always false; `FromOwner`/`ToOwner` `None` |
+| `Goods.Mergeable` | ware, spoil day and uses equal and `!Wares.IsUnique(w)`; owner and provenance ignored |
+| `PayOwnerChange`, `PayProduce`, `PaySpoiled` | pay nothing (no learning reward from goods or title) |
+| Provenance | `UnifiedState.Origins`: sorted list of `LotOrigin { int Lot; int Producer; byte Reason; long Tick; byte SourceKind; int SourceId; bool Mixed }`, written by `Produce`, merged on `Insert` (Mixed, earliest tick), removed when the lot ends; hashed in the `unification` part |
+| Legacy fields | `ItemLot.Owner`, `LotBin.Owner`, `OwnerKind`, `OwnershipBasis`, `UseRight` kept for legacy serialisation only; always `None`/empty in unified state |
+
+**Ids landed by UN0** (all hashed only when non-zero, so U-P2 holds):
+
+| Space | Values |
+|---|---|
+| `Ware` (int enum) | **Unification block 72–159**; `Wares.PersonalCount` 40 → **160**; 40–71 stay reserved for industry (§22.3). UA wares fixed now: 72 `Mushroom` (OBJ-044), 73 `WildEgg` (046), 74 `Rabbit` (047), 75 `WildVeg` (048), 76 `CactusFruit` (049), 77 `Seaweed` (050), 78 `Hay` (043), 79 `Sheep` (042, unique), 80 `Water` (039, container-only, UB), 81 `CookedFish` (054), 82 `Bedding` (084), 83 `Bed` (092, u), 84 `Stool` (097, u), 85 `Bench` (127, u), 86 `Toy` (132, u), 87 `CarvedOrnament` (108, u), 88 `StorageChest` (107, u), 89 `Cradle` (103, u), 90 `Latrine` (136, u), 91 `Waste` (114), 92 `StoneHammer` (068, u), 93 `SleepingMat` (093, u; founder endowment in UA). Reused existing: `Log` 1 (OBJ-024 Wood), `Clay` 2 (041), `Stone` 5 (016), `Plank` 7 (063), `Axe` 20 (069 Stone axe; NPC tool only in unified mode), `Roots` 29 (045), `Fish` 30 (012, raw, nutrition 0 in unified), `Herbs` 32 (075). 94–159 allocated by UN3a/UB in manifest order (append only). `Wares.IsUnique` covers `Axe` and every "u" ware. |
+| Catalogue ids | `CatId` (ushort): objects `1000 + nnn` (OBJ-nnn), buildings `2000 + nnn` (BLD-nnn); immutable; aliases map names to ids; a `CatId` is a definition id, never an instance id |
+| `ProduceReason` (ledger 16 slots, §22.3 layout) | 10 `Collected` (raw via a collection building), 11 `Drawn` (water into a container, UB), 12 `Excreted` (latrine waste); 6–9 keep §22.3's industry meanings and are unused here |
+| `ConsumeReason` | 8 `ProcessInput` (§22.3 meaning: recipe input), 14 `Drunk` (UB), 15 `Washed` (UB); `Built` 2 for site materials at completion; `Eaten` 0 |
+| `BinKind` | 7 `Storage` (building store), 8 `Site`, 9 `Fixtures` (installed furnishings), 10 `WorkInput`, 11 `WorkOutput`, 12 `Container` (inside an installed chest); 13–15 reserved |
+| `MoveReason` | 14 `Contribute` (carry → site), 15 `Install`, 16 `Uninstall`, 17 `WorkInput`, 18 `Grab` (from an incapacitated holder); `PickUp` 1, `Drop` 2, `Deposit` 3, `Withdraw` 4, `HandOver` 5, `DeathSpill` 9 keep their meaning; 13 `BinTransfer` stays §22.3's; 19–31 reserved |
+| `ObjClass` | 130 `RawNode`, 131 `ForagePlace`, 132 `WaterPoint`, 133 `ConstructionSite`, 134 `UnifiedBuilding`, 135 `Fixture`, 136 `Settlement`, 137 `Road`; 138–149 reserved (inspection and `MindView` compatibility only) |
+| `GestureAct` | 28 `Claim`; existing `Offer 2`, `Promise 8`, `Accept 3`, `Refuse 4`, `Want 1`, `Surrender 11` (submission), `Accuse 13` (protest), `Threaten 26`, `Teach 18`, `Demonstrate 21`, `Greet 25`, `Thank 24` are given meaning only by learning; 29–31 reserved |
+| `ControlInputKind` | 5 `Primitive` (carries a `PrimitiveControl`; amendment to the F1 seam, landed by UN0) |
+| Not added | **no learning `Verb` rows, no `NpcVerb` rows, no `MaxCand` change** (stays 36), no `SelfFeature`/`SituationKind`/episode-key rows: the unified brain does not use the legacy candidate path (R81). R72's 128–139 / 220–229 and R76's `MaxCand` 40 are withdrawn. |
+
+### 23.5 Primitive control set and executor API (owner UN2; types frozen by UN0)
+
+```csharp
+namespace God.Sim.Unified
+public enum Prim : byte { None = 0, TurnLeft = 1, TurnRight = 2, StepForward = 3, StepBack = 4, StepLeft = 5, StepRight = 6,
+                          Take = 7, Drop = 8, Use = 9, Gesture = 10, Sleep = 11, Wait = 12 }
+public enum TargetKind : byte { None = 0, Self = 1, Npc = 2, Lot = 3, Node = 4, Facing = 5, Building = 6, Site = 7,
+                                Fixture = 8, ForagePlace = 9, RawNode = 10, WaterPoint = 11, Placement = 12 }
+public struct TargetRef { public TargetKind Kind; public int Id; }          // Placement: Id = node, design in Design
+public struct Referent  { public byte Kind; public int Id; public short Ware; }   // ware, lot, person, place
+public struct PrimitiveControl {
+    public Prim Control; public int Actor;
+    public int SourceLot;                 // 0 = empty hand; else a lot the actor carries or has equipped
+    public TargetRef Target; public byte Slot;        // interaction slot 0-3 (0 = first matching row)
+    public ushort Design;                 // CatId of a known design (USE placement)
+    public byte Gesture; public Referent R1, R2; public short Quantity;   // GESTURE (quantity 0-999)
+    public uint Corr;                     // optional correlation id (exchange); never enforced
+}
+public enum ControlOrigin : byte { Policy = 0, Possessed = 1, Compelled = 2, Avatar = 3, Fixture = 4, Teacher = 5 }
+public enum MotorStatus : byte { Accepted = 0, Busy, Invalid, Dead, Asleep, OutOfReach, Blocked, NoRoom, NotEnough,
+                                 NoInteraction, NotKnown, BadSite, Occupied, Full, Resisted, Disabled }
+public static class Motor {   // UN2
+    public static MotorStatus Submit(GodState s, EventBuffer ev, in PrimitiveControl c, ControlOrigin origin);
+    public static void Tick(GodState s, EventBuffer ev);            // advances action progress, ascending actor id
+    public static bool Busy(GodState s, int actor);
+    public static void Interrupt(GodState s, EventBuffer ev, int actor, byte reason);  // pain, collapse, strike, death
+    public static void Legal(GodState s, int actor, in Percept p, ref ActMask mask);   // physical legality only
+}
+```
+
+Rules: one action in progress per body; durations in ticks from data; the result of every submission is an observable proprioceptive input for the actor's next decision (`ControlFailed` 1221 for failures); origin changes nothing physical and is recorded on events; possession input `ControlInputKind.Primitive` is validated by `Embodiment.CheckAction` against the same `Motor.Submit` (a host may expand a click-to-move into step primitives labelled `Possessed`; the sim never paths for an NPC). `TAKE` covers ground, storage, workstation output, container, a person's **held-out** lot, and a person who is asleep, unconscious or dead (`MoveReason.Grab`); from an awake person's ordinary carry it returns `Resisted` and is perceived by that person.
+
+### 23.6 Observation/action interface for the brain (owner UN2; schema frozen by UN0)
+
+- `Unified/Schema/ObsSchema.cs` and `ActSchema.cs` (UN0): version constants (`Obs v1`, `Act v1`), field order, lengths, fixed-point scale (×1000) and a schema hash (`SchemaHash`, SHA-256 of the canonical layout text), exactly as §D9.2 a. A change takes a new version and a new hash and invalidates artifacts.
+- `Percept.Encode(GodState s, int actor, ref Percept p)` and `Percept.ToVector(in Percept p, short[] obs)` (UN2): local only, through `ISpatialIndex` (UN0 interface; UN2 ships a correct simple implementation; UNP may replace it behind the interface); no truth query beyond what the person can perceive; no owner field.
+- `IPrimitivePolicy { PrimitiveControl Decide(in Percept p, short[] obs, ref BrainState b, in ActMask m, ref Rng rng); }` (UN0 interface; UN6 implements inference, overlay and fallbacks; UN6t produces artifacts). `BrainState` is per person: recurrent state (64 × int16), memory slots (8 places, 4 people, claims ring of 8), knowledge bitsets (designs, recipes, interactions over `CatId` indices), skills, overlay store id; bounded (≤ 4 KB).
+- **Needs extension:** `UnifiedNpc { short[7] Needs /* Thirst, Hygiene, Bladder, Social, Fun, Comfort, Room */; … }` in `UnifiedState.People` (sorted by NpcId; hashed in `unification`), alongside the existing five drives; the encoder exposes all 12 in the order Hunger, Energy, Warmth, Safety, Pain, Thirst, Hygiene, Bladder, Social, Fun, Comfort, Room.
+- Knowledge acquisition, teaching and overlay updates are UN6's; claims records are written by UN7 through `Brain.AddClaim(...)` (UN6 API frozen at UN6 merge).
+
+### 23.7 Interaction data schema and catalogue (schema UN0; content and generator UN3a)
+
+- Reviewed source: `docs/unification/catalogue/catalogue.json` (every one of the 12 controls, 12 needs, 138 objects, 65 buildings with `id` OBJ-/BLD-, `catId`, name, aliases, workbook row, workbook SHA-256 `f764df01…05a0`, `stage` UA-initial/UB/Later/Superseded, `fix` codes, status implemented/staged/deferred/rejected, reason). Only UA-initial rows with their corrections applied become active content in UA.
+- Generator and validator: `DotNet/God.Catalogue` (no external dependency) → `Unified/Catalogue/Generated/*.g.cs` (deterministic tables); test `Catalogue_GeneratedMatchesSource` fails on drift; `Catalogue_WorkbookShaPinned`; `Catalogue_UAClosure` (every UA input is UA, forage or a dice raw); `Catalogue_NoCycleWithoutBootstrap`; CATALOG-1 coverage report.
+- Records (UN0, `Unified/Schema/CatalogueDefs.cs`): `ObjectDef { CatId; Ware; Unique; Weight; Nutrition; StrikeAttack; Defence; ToolMultiplier[]; Interactions[] }`, `BuildingDef { CatId; Levels[] { Labour; Materials[]; Storage; SleepSpots; FixtureSlots; CollectWare; CollectRadius }; Placement rule; Capabilities; Interactions[]; Recipes[] }`, `RecipeDef { Id; Station CatId; Inputs[]; Outputs[]; LabourTicks; ToolBonus }`, `InteractionDef { TargetKind; TargetCat; Slot; SourceReq (EmptyHand | Ware | Class | Tool); Reach; Ticks; Effects[] }`, `EffectDef { EffectKind Kind; short A, B, C }`.
+- `EffectKind` (byte, UN0, append-only): 1 `Forage`, 2 `DrinkWash`, 3 `Eat`, 4 `NeedRelief`, 5 `CollectRaw`, 6 `Deposit`, 7 `Install`, 8 `Occupy`, 9 `WorkInput`, 10 `RecipeWork`, 11 `Fuel`, 12 `PlaceSite`, 13 `Contribute`, 14 `Labour`, 15 `HoldOut`, 16 `Strike`, 17 `Equip`, 18 `Treat`, 19 `Relieve`, 20 `Play`; 21–63 reserved. Handlers register through `EffectRegistry.Register(kind, handler)` in fixed registration order (UN0 dispatch). Owners: UN1 (1, 2), UN3b (3–11, 19, 20), UN4 (12–14), UN7 (15), UN8a (16–18).
+
+### 23.8 Construction site, building and world entities (record shapes frozen by UN0)
+
+```csharp
+public sealed class ConstructionSite { public int Id; public ushort Design; public byte Level; public int Node; public byte Facing;
+    public int Bin;            // BinKind.Site: delivered materials, consumed (Built) only at completion
+    public int LabourDone, LabourNeed; public int UpgradeOf;      // building id for an upgrade, else 0
+    public int Founder; public long Placed, LastWork; public List<Contribution> Contributors; }   // provenance, bounded 16
+public struct Contribution { public int Npc; public int Labour; public short Ware; public short Units; public long Last; }
+public sealed class Building { public int Id; public ushort Cat; public byte Level; public int Node; public byte Facing;
+    public int Condition; public int Storage, Fixtures, WorkIn, WorkOut;   // bin ids (0 = none)
+    public List<int> Occupants; public int Founder; public List<Contribution> Contributors; public long Completed; }
+public struct Reservation { public int Building; public int Npc; public short Units; public long Expires; }
+public sealed class RawNode { public int Id, Hex, Node; public short Ware; public int Stock, Cap; }
+public sealed class ForagePlace { public int Id, Node; public short Ware; public int Ticks; }
+public sealed class WaterPoint { public int Id, Node; public bool Fresh; public int Building; }
+```
+
+All in `GodState.Unification` (`UnifiedState`, partial; sub-lists sorted by id; ids from `UnifiedState` counters, never reused). Owners: `Buildings`/`Reservations` behaviour UN3b, `Sites` UN4, `RawNodes`/`ForagePlaces`/`WaterPoints`/allowances UN1, `People` needs UN1 (rates) and UN6 (brain state), `Exchange` UN7, `Conflict` UN8a. Creation only through `Buildings.Create`, `Sites.Place`, `World.*` APIs of the owners. No record has an owner, right or permission field.
+
+### 23.9 Exchange correlation and claims
+
+- `UnifiedState.MessageExt`: `MsgExt { int Message; Referent R1, R2; short Quantity; uint Corr; }` for every unified `GESTURE` (the M5 `Message` layout is unchanged; `DealId` is not used in unified mode).
+- Hold-out: `HoldOut { int Npc; int Lot; int To /* 0 = anyone */; uint Corr; long Expires; }`; a receiver's `TAKE` of a held-out lot completes `Goods.Move(MoveReason.HandOver)`; expiry leaves the lot in the giver's carry. Each actual transfer is recorded independently (`HandedOver` 1281 with `Corr`).
+- `Corr` (uint, allocated by the first gesture's speaker as `UnifiedState.NextCorr++`) correlates messages and hand-overs for memory and analytics only; nothing reads it to lock, settle, enforce or award.
+- Claims are brain records (`Claim { Claimant; SubjectKind; SubjectId; Source (Own, Observed, Told); Confidence; Tick; Expiry }`), communicated by `GestureAct.Claim` with referents; contradictory claims coexist; no claim is world state.
+
+### 23.10 Strike and injury events (owner UN8a)
+
+A strike is `USE` (empty hand or a strike-capable held lot) on a reachable person, slot `strike`: duration and fatigue from data; hit/block/damage by `Military/Duel.Resolve` on `SoldierStats` built from the body (strength trait, fatigue, injury, held attack, equipped defence) with a new `Rng` seeded by a fixed hash of (game seed, "strike", tick, actor, target) (UN8a adds the helper; no shared stream is advanced, so order cannot change results); damage by `Bodies.Damage(s, ev, victim, micro, DamageCause.Violence, actor, 0)`. Events: 1300 `StrikeAttempted` (actor, target, held ware), 1301 `StrikeResolved` (result, damage), 1302 `StrikeWitnessed` (Full: witness, actor if perceived else 0, victim), 1303 `FearFromViolence` (HV), 1304 `RemedyApplied`. The victim's memory names the actor only if the actor was perceived. No theft, crime, guilt or reputation fact is emitted.
+
+### 23.11 Invariants (unified mode; UN0 lands U-C1–U-C6, owners extend)
+
+U-C1 ledger conservation `Σ produced − Σ consumed = Σ (carry + ground + all bins)` per ware (existing C1, extended to 160 wares and 16 reasons); U-C2 one holder per unit; U-C3 no bin over capacity, no carry over weight (existing C5); U-C4 (replaces C4) **no lot is deleted or moved without an event**, a dead person holds nothing, nothing teleports; U-C5 every `Owner` field is `None`; U-C6 site bin contents ≤ the design's requirement, reservations ≤ storage room and each expires. Legacy C4, `HouseholdInvariants` estate rules, ORG4, CIV1, CIV3 run only in legacy mode.
+
+### 23.12 Events and telemetry domains
+
+`TelemetryDomain` 80 `UnifiedWorld`, 81 `Motor`, 82 `Construction`, 83 `Interaction`, 84 `Exchange`, 85 `Conflict`, 86 `Brain`, 87 `Settlement` (UB), 88 `Groups` (UB) → `RangeOf` **1200–1399** (after industry's 1000–1199; no collision). Each block belongs to one package's partial catalogue array:
+
+| Codes | Owner | Events |
+|---|---|---|
+| 1200–1219 | UN1 (1206–1207 UN5) | 1200 `ForageCollected` (HV), 1201 `AllowanceGranted`, 1202 `AllowanceWasted`, 1203 `RawMaterialised` (HV), 1204 `WaterUsed` (HV), 1205 `UnifiedDay`, 1206 `TribeStarted`, 1207 `FounderEndowment` |
+| 1220–1239 | UN2 | 1220 `ControlApplied` (Full: actor, control, origin, status), 1221 `ControlFailed` (HV: reason), 1222 `ActionInterrupted`, 1223 `Equipped`, 1224 `Unequipped` |
+| 1240–1259 | UN4 (1250–1251 UN3b) | 1240 `SitePlaced`, 1241 `SitePlaceFailed`, 1242 `MaterialContributed` (HV), 1243 `LabourContributed` (HV), 1244 `BuildingCompleted`, 1245 `UpgradeSitePlaced`, 1246 `UpgradeCompleted`, 1247 `BuildingDamaged`, 1248 `BuildingDestroyed`, 1249 `SiteContentsDropped`, 1250 `FixtureInstalled`, 1251 `FixtureRemoved` |
+| 1260–1279 | UN3b | 1260 `InteractionStarted` (HV), 1261 `InteractionCompleted` (HV), 1262 `RawCollected`, 1263 `Deposited`, 1264 `ReservationOpened`, 1265 `ReservationExpired`, 1266 `RecipeCompleted`, 1267 `OccupancyChanged`, 1268 `NeedRelieved` (Full), 1269 `WasteProduced` |
+| 1280–1299 | UN7 | 1280 `HeldOut`, 1281 `HandedOver` (giver, receiver, lot, count, corr), 1282 `HoldOutLapsed`, 1283 `TakeResisted`, 1284 `Grabbed`, 1285 `ClaimCommunicated`, 1286 `ClaimFormed` (Full, analytics of beliefs) |
+| 1300–1319 | UN8a | as 23.10 |
+| 1320–1339 | UN6 (1320 UN6t) | 1320 `BrainAttached` (artifact version, hash, kind), 1321 `KnowledgeAcquired` (what, source own/observed/taught), 1322 `DemonstrationObserved` (HV), 1323 `TeachingGesture` |
+| 1340–1359 | UB1 | settlements and roads |
+| 1360–1379 | UN8b | groups |
+| 1380–1399 | reserved | |
+
+Every unified action event carries `Origin` (`ControlOrigin`) so warehouse `control_code` columns fill from the event. SAC §8 rules apply (own partial array, own mapper, codes never reused, changed meaning → new code, added field → `Version` bump).
+
+### 23.13 Warehouse migrations (UN11 owns all; extends 18.2 and 22.7)
+
+`0044_unification_core.sql` (world, motor, interactions, construction, needs day rows), `0045_unification_social.sql` (exchange, claims, conflict: separate tables for **events** (objective moves, strikes), **observations** (who perceived what) and **claims/promises** (beliefs and communications); no legitimate-owner or theft fact), `0046_unification_brain.sql` (artifact, training and evaluation metadata, knowledge spells, TR-01/TR-02 results), `0047` reserved for UB (settlements, roads, groups). `0048`–`0049` stay free. Per-package mappers in `DotNet/God.Runner/Warehouse/UNnMappings.cs` are written by the event-owning package as stubs and completed by UN11a; `fact_theft`, `fact_ownership_spell`, `fact_use_right`, `fact_inheritance` are labelled legacy-only.
+
+### 23.14 Hash part and save
+
+- Hash part `"unification"` appended after `"divine"` in `GodSim.AllHashPartNames`, present only when `GodState.Unification != null` (`industry` goes after it when I1a lands). The `population` part hashes wares 40–159 and ledger slots 8–15 only when non-zero.
+- **Save plan (lead only):** `SaveFile.CurrentVersion` 6 → **7 once, in the merge commit of checkpoint UA-mech** (`GodState.Unification`, unified tuning, `UnifiedNpc`, brain state); v6 refused as today. UB → 8 only if UB state shapes change. Brain weights are not in the save (the artifact version and hash are). No package edits `SaveFile.cs`; UN0 only makes `FromJson` accept a null `Unification`.
+
+### 23.15 Frozen surface → owner
+
+| Surface | Owner |
+|---|---|
+| `UnifiedTuning`, `Unified.On`, `GodState.Unification` container, hash part, system-install gates, `PopulationSystem` → `UnifiedHooks.PersonTick` site, `Goods` unified branch, origin table, all ids of 23.4, `ControlInputKind.Primitive`, schema files (`ObsSchema`, `ActSchema`, `CatalogueDefs`, `EffectKind`, entity records 23.8), `ISpatialIndex`, `IPrimitivePolicy`, `EffectRegistry` dispatch, U-C1–U-C6, U-P1–U-P3 static | **UN0** |
+| `SaveFile` version, re-pins, R-rulings, merge-time amendments | **lead** |
+| `Motor`, `Percept`, `ActMask`, possession adapter, fixture harness | UN2 |
+| world entities and their APIs | UN1 |
+| catalogue source, generator, generated tables | UN3a |
+| buildings, reservations, workstation/recipe effects | UN3b |
+| sites and construction effects | UN4 |
+| start generator, hall endowment | UN5 |
+| brain runtime, `BrainState`, overlay, knowledge, `Brain.AddClaim` | UN6 |
+| `DotNet/God.Train`, artifacts `Unified/Brain/Artifacts/*.g.cs`, thresholds file | UN6t |
+| exchange records | UN7 |
+| conflict effects | UN8a |
+| host bootstrap, legacy call-site gates, compulsion goal driver | UN9 |
+| views | UN10a/b |
+| migrations 0044–0047, unified mappings completion, reports | UN11a/b |
+| spatial index implementation, benchmarks `DotNet/God.Bench` | UNP |
+
+### 23.16 Required shared tests
+
+`Unification_Off_Reproduces_Base` (U-P1), `Unification_FoundationOnly_Neutral` (U-P2), `Unified_NoLegacyTitle_Static` (U-P3), `Wares_LayoutNeutral`, `Ledger_WideningNeutral`, `Unified_GoodsNoTitle` (produce, move, hand-over, merge, death spill: owner always `None`, no `OwnershipChanged`, no reward on transfer), `Unified_Invariants_UC1_UC6`, `Motor_OriginNeutral` (U-P4), `Unified_SaveLoadParity` (U-P6), `Schema_HashStable`, `Catalogue_*` (23.7), each package's `*_EventsRoundTrip`.

@@ -168,3 +168,11 @@ Sources: [../unification/LATEST_OWNER_AMENDMENT.md](../unification/LATEST_OWNER_
 | D9.12 | *Default (brief Part C):* all non-desert hexes including sea receive production numbers; standalone residential hut disabled initially; each tribe's hall accommodates all 12 founders (supersedes R80's 8 beds); varied valid families; water accessible without a circular tool dependency if thirst is a need. |
 | D9.13 | *Default:* legacy Owner/UseRight/estate/permission fields stay only for legacy serialisation and regression, neutral in unified physical logic; every reader and writer is audited; no adapter recreates title or access control. Death leaves goods where they physically are; no automatic succession. |
 | D9.14 | *Default:* industry (I1a…) stays deferred until UB plus credible autonomous primitive viability, unless the owner decides otherwise. Run constraints unchanged: 18-hour window, six-agent limit, worktrees, Opus/Sonnet (no Fable), determinism, legacy hash pins, no main changes without the owner, final build and assurance window. |
+
+## D10: Scale target (owner, 28 Nov 2026)
+
+| Id | Decision |
+|---|---|
+| D10.1 | **Long-term target:** six fully functioning factions, each with 3–4 settlements made of collections of different buildings, **100–200 NPCs per faction** (owner correction, 28 Nov 2026; about 600–1,200 in total), with back-and-forth conflict between factions emerging from individuals and groups (no faction AI). |
+| D10.2 | **The island may be made bigger** so it does not run out of space: island size, hex count and settlement sites are configurable and must scale. |
+| D10.3 | *Lead default:* this is a later checkpoint (**UC "Scale"** (6 factions × 100–200 NPCs)) after UB; UA and UB keep their scope, but every unification package must avoid blocking it (bounded per-NPC brain cost, spatial indexing, decision staggering by sim state never by camera, no all-pairs scans, geometry not assuming 30 hexes). A performance package runs alongside where it does not touch the same files. |

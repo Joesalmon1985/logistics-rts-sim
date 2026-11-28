@@ -1,10 +1,12 @@
-# Unification package index (owner D8, 28 Nov 2026)
+# Unification package index (owner D8 and D9, 28 Nov 2026)
 
-The list of work packages for the **Unification milestone**: making the artificial world one simulation (owner decisions D8.1–D8.18 in [../civdiv/OWNER_DECISION_REGISTER.md](../civdiv/OWNER_DECISION_REGISTER.md)). It follows the design ([UNIFICATION_DESIGN.md](UNIFICATION_DESIGN.md), "the design") and the code audit ([UNIFICATION_BASELINE.md](UNIFICATION_BASELINE.md), "the audit") and is operated by the lead exactly as [../civdiv/CIVILISATION_AND_DIVINITY_RUNBOOK.md](../civdiv/CIVILISATION_AND_DIVINITY_RUNBOOK.md) says (worktrees, merge strategy, concurrency, gates). The owner's text is [OWNER_BRIEF_2026-11-28_UNIFICATION.md](OWNER_BRIEF_2026-11-28_UNIFICATION.md) (Part B supersedes Part A: no raw material is collected without an operational collection building; level 1 costs only labour and time). One self-contained spec per package is in [packages/](packages/); the start prompt is [NEXT_SESSION_PROMPT_UNIFICATION.md](NEXT_SESSION_PROMPT_UNIFICATION.md); the acceptance rows are section D8 of [../stage4/ACCEPTANCE_TESTS.md](../stage4/ACCEPTANCE_TESTS.md).
+The work packages for the **Unification milestone** under the controlling D9 architecture ([UNIFICATION_DESIGN.md §D9](UNIFICATION_DESIGN.md), "§D9") and its binding contracts ([SHARED_ARCHITECTURAL_CONTRACTS §23](../civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md), "§23"). Precedence: [LATEST_OWNER_AMENDMENT.md](LATEST_OWNER_AMENDMENT.md) and owner decisions D9.1–D9.14 ([OWNER_DECISION_REGISTER](../civdiv/OWNER_DECISION_REGISTER.md)), then §D9 and §23, then the owner-added text kept verbatim below, then this index's §1 onwards. The lead operates the run as [CIVILISATION_AND_DIVINITY_RUNBOOK.md](../civdiv/CIVILISATION_AND_DIVINITY_RUNBOOK.md) says (worktrees, `--no-ff` merges, at most 6 package agents, at most 3 full `dotnet test` suites, at most 2 Unity runs, Opus/Sonnet, never Fable, never `main`). The workbook mapping is [CATALOGUE_MANIFEST.md](CATALOGUE_MANIFEST.md); the call-site evidence is [D9_CODE_CONFLICT_AUDIT.md](D9_CODE_CONFLICT_AUDIT.md); the code audit is [UNIFICATION_BASELINE.md](UNIFICATION_BASELINE.md).
 
-**Prefix.** The prefix is **UN** because U1–U6 are already UI packages. Branch `unity/<id>` (lower case, for example `unity/un3`), worktree `wt-lrs-<id>` (for example `wt-lrs-un3`). A package with two checkpoints (a, b) continues on the same worktree with a new branch cut from `unity/poc` after its `a` part merged (`unity/un3b`).
+**Prefix and names.** `UN` (U1–U6 are UI packages). Branch `unity/<id>` lower case (`unity/un3b`, `unity/un6t`), worktree `wt-lrs-<id>`. The package specs in [packages/](packages/) are rewritten from §2 below by the lead's Sonnet helpers before launch; where a spec and this index disagree, this index wins.
 
-**Status of the base.** `unity/poc` at `b297cb0`. The industry foundation **I1a has not merged**; D8.18 puts the whole industrial run (I1a, I1–I6, K1, K2) **after Checkpoint UB**. UN0 therefore lands, in the exact layout of contracts §22.3, the part of I1a's goods-surface widening that unification needs, so I1a later adds content only (section 7).
+**Base.** `unity/poc` at `fb6ca85` (after `33a09e4`): save version 6, `MaxCand` 36, `PersonalCount` 40, five drives, I1a not merged; nothing of D9 is implemented. The old package list (UN0–UN11 of the D8 plan with UN6 "planner" and the D8 graph) is **obsolete** and replaced by §2–§5.
+
+**The text from "Latest controlling package changes" to the end of §0.3 is owner-added and kept verbatim.** It uses the earlier package names; the mapping to the new set is §1.
 
 ---
 
@@ -70,277 +72,266 @@ Use CATALOG-1, MOTOR-1/2, TRAIN-1/2, NEED-1, ECON-1/2 from design §0.2.5. UN11 
 Before UN0 merges: reconcile R75 with actual catalogue ID needs (no blind 96-slot cap); U-P2 only neutral foundation/all behavioral changes off; U2 excludes founder lots; sea gets numbers; hall accommodates all 12; standalone Hut off; varied families; fix estate/group ownership; interruptible storage reservation; no direct high-level verbs in unified policy; explicit user/brain control equivalence; keep all requested needs, activate only reachable relief; secondary sources validated separately from Catan raws. Record owner requirements vs proposed defaults, including unresolved values. Update the original acceptance mapping rather than delete U1–U14/B1–B11. This is a targeted amendment; retain the runbook's branch, merge, safety and push policies.
 
 
-## 1. The ten principles the packages protect (all from D8)
 
-1. **One simulation:** no faction-level AI plays the economy; NPCs are the only source of ordinary economic decisions and labour (UN9 enforces, UN11 proves).
-2. **Foraging sustains life:** infinite, rate-limited, no building (UN1).
-3. **Raw materials are physical and only collectable through an operational building** (UN2, UN3); never straight into an inventory.
-4. **Labour creates initial capital:** level 1 costs only labour and time; levels 2–3 cost materials and never change the natural supply (UN3).
-5. **One building architecture** (capabilities, levels, five distinct rights); collection shelters are also sleeping shelters (UN3); no separate housing system (R73).
-6. **Individuals plan** across multiple steps, bounded and interruptible, on the learner (UN6).
-7. **Specialisation, trade and employment emerge**; no professions (UN3, UN6, UN7, measured by UN11).
-8. **Informal groups before institutions**; refusal, withdrawal and free-riding are possible; no automatic organisations (UN8).
-9. **Catan settlement and road rules; no flags or carriers; roads only speed walking** (UN5).
-10. **Stage 3 is kept compiled and pinned as an isolated regression scenario**; the normal game never depends on it (UN9).
+---
 
-## 2. Summary table
+## 1. From the owner-added names to the D9 package set
 
-Tier A = needed for **Checkpoint UA "Primitive society"**; Tier B = needed for **UB "Expanding society"**. Effort is agent-hours (estimates, not promises).
+| Owner-added name (above) | D9 package(s) | Note |
+|---|---|---|
+| UN0 | **UN0** | plus system-level legacy isolation, physical goods without title, schemas for executor, observation and interactions |
+| UN1/2 (geography, raw materialisation, needs) | **UN1** | one Sonnet package: world, forage, water, dice materialisation, need rates |
+| UN3a/b (buildings, construction) | **UN3a** catalogue, **UN3b** interactions and buildings, **UN4** construction | the catalogue loader is separated so it starts at once |
+| UN4a/b (population start) | **UN5** | |
+| UN5a/b (settlements, roads) | **UB1** | UB; the six founding settlements are UN5 |
+| UN6a (shared controller) | **UN2** | executor and observation/action interface |
+| UN6b (learned sequences, social learning) | **UN6** | brain runtime, overlay, knowledge, cultural transmission |
+| UN6t | **UN6t** | unchanged role; critical path |
+| UN7 (catalogue mapping, domestic slice) | **UN3a** (mapping) + **UN3b** (domestic interactions) + **UB2** (breadth) | |
+| UN8 → UN8a / UN8b | **UN7** exchange and communication, **UN8a** conflict slice, **UN8b** groups (UB) | the owner-added UN8a "claims, offers, promises, giving" is UN7 here |
+| UN9a/b | **UN9** | one package |
+| UN10a/b | **UN10a**, **UN10b** | |
+| UN11a/b | **UN11a**, **UN11b** | |
+| (new, owner 28 Nov scale target) | **UNP** performance, **UC** checkpoint | lower urgency; never delays UA |
 
-| ID | Title | Tier | Agent | Hard prerequisites | Soft prerequisites | Effort | Branch / worktree | Checkpoint | Spec |
-|---|---|---|---|---|---|---|---|---|---|
-| **UN0** | Unification foundation (behaviour-neutral shared surface) | A | **Opus** | `unity/poc` green at `b297cb0` or successor | | 4 | `unity/un0` / `wt-lrs-un0` | UA | [UN0](packages/UN0.md) |
-| **UN1** | Geography (seven hex types, sea ring) and infinite forage | A | Sonnet | UN0 | | 3 (1a 1.5, 1b 1.5) | `unity/un1` / `wt-lrs-un1` | UA | [UN1](packages/UN1.md) |
-| **UN2** | Raw-material materialisation (allowance, gradual lots, perception) | A | Sonnet | UN0 | UN1 (merge after) | 3 | `unity/un2` / `wt-lrs-un2` | UA | [UN2](packages/UN2.md) |
-| **UN3** | Building architecture and the six collection shelters with levels | A | **Opus** | UN0 | UN2 (`RawNodes.Take`), UN1 | 6 (3a 3.5, 3b 2.5) | `unity/un3`, `unity/un3b` / `wt-lrs-un3` | UA | [UN3](packages/UN3.md) |
-| **UN4** | Starting population, communal building, founding settlements | A | Sonnet | 4a: UN0; 4b: UN1, UN3a | UN9 (`TribeOrder`) | 4 (4a 2.5, 4b 1.5) | `unity/un4`, `unity/un4b` / `wt-lrs-un4` | UA | [UN4](packages/UN4.md) |
-| **UN5** | Settlements and roads by NPCs (Catan rules, development areas, planned routes) | B | **Opus** | UN0 | UN1 (merge after), UN3, UN4b | 5 (5a 2, 5b 3) | `unity/un5` / `wt-lrs-un5` | UB (5a feeds UA) | [UN5](packages/UN5.md) |
-| **UN6** | Individual multi-step planning | A | **Opus** | UN0, UN3a | UN2, UN4a, UN5, UN7, UN8 (register goal rules) | 6 (6a 3, 6b 3) | `unity/un6` / `wt-lrs-un6` | UA | [UN6](packages/UN6.md) |
-| **UN7** | Production recipes (D8.12) and workshops | B | Sonnet | UN0, UN3a | UN2, UN4a, UN6 | 3 | `unity/un7` / `wt-lrs-un7` | UB | [UN7](packages/UN7.md) |
-| **UN8** | Informal groups (propose, join, contribute, withdraw, free-ride; projects) | B | **Opus** | UN0, UN3, UN4b, UN5, UN6a | UN7 | 5 (8a 3, 8b 2) | `unity/un8` / `wt-lrs-un8` | UB | [UN8](packages/UN8.md) |
-| **UN9** | Decouple Stage 3 from the normal game; Stage 3 as regression scenario | A | **Opus** | UN0; 9b: UN4 | UN1, UN2, UN3, UN6 | 4 (9a 2, 9b 2) | `unity/un9`, `unity/un9b` / `wt-lrs-un9` | UA | [UN9](packages/UN9.md) |
-| **UN10** | Presentation (landscape, shelters, forage and raw lots, roads, settlements, groups, HUD) | A (10a), B (10b) | Sonnet (holds the Unity token) | 10a: UN1, UN2, UN3, UN9a; 10b: UN10a, UN5, UN8 | UN4, UN6, UN7 | 5 (10a 3, 10b 2) | `unity/un10a`, `unity/un10b` / `wt-lrs-un10` | UA / UB | [UN10](packages/UN10.md) |
-| **UN11** | Assurance and analytics (warehouse, reconciliation, replay, D8.18 long run, V1–V7) | A (11a), B (11b) | Sonnet | 11a: UN0, UN1, UN2, UN3, UN4, UN6, UN9; 11b: UN11a, UN5, UN7, UN8 | UN10 | 5 (11a 2.5, 11b 2.5) | `unity/un11a`, `unity/un11b` / `wt-lrs-un11` | UA / UB | [UN11](packages/UN11.md) |
+## 2. Package set
 
-Total about 53 agent-hours. **No package uses Fable.** Opus: UN0, UN3, UN5, UN6, UN8, UN9 (hard simulation, frozen surfaces, cognition, rule fidelity). Sonnet: UN1, UN2, UN4, UN7, UN10, UN11 (bounded data, rules on an existing mechanism, presentation, testing and reporting). A Sonnet package that hits its first stated risk hands the finding to the lead, who may reassign it to Opus (named in UN1 and UN4).
+Tier **UA** = needed for the UA checkpoints; **UB** = expanding society; **UC** = scale. Effort = agent-hours (estimates). "Hard" prerequisites must be **merged** before the package starts; "merge-after" packages may start earlier but merge only after the named package. Owned areas are the only files a package may change (plus flagged additive hunks named in its spec); frozen surfaces belong to UN0 and the lead (§23.0, §23.15).
 
-**Boundaries chosen** (changes from the brief's starting list, all to make parallel work safe): (1) **UN4 is split** into 4a (generator, needs only UN0) and 4b (hall, founding group, settlements), so the largest data task starts in Wave 1; (2) the **`Group` record is declared by UN4b** (the founding community group) and extended by UN8; (3) **UN3 has an interim hand-back UN3a** so UN4b, UN6, UN7 and UN10a can start at about hour 8 instead of waiting for upgrades and rights; (4) **UN5 contains the development-area predicate**, UN0 only the neutral seam; (5) **UN0 lands data shapes** (`BuildingDef`, `RecipeDef`, `Settlement`, `GoalRules` registry) so packages register rows in their own partial files and never edit each other's; (6) **warehouse tables and reconciliation are UN11's**, while each package ships its own mapper stub, catalogue and `*_EventsRoundTrip` test (one migration owner avoids migration-number races); (7) the **exchange** acceptance (U7, B10) has no package of its own: M5 barter and C3 employment are unchanged, each package appends valuation rows for its wares through the `ValuationPriors` seam, UN3 tests the physical hand-over, UN11 runs the scenario.
+| ID | Objective | Tier | Agent | Hard prerequisites | Merge-after | Owned areas | Effort |
+|---|---|---|---|---|---|---|---|
+| **UN0** | Foundation, behaviour-neutral when off: `Unification` switch block and `Unified.On`; `GodState.Unification`; hash part; save null-acceptance; every id of §23.4 (wares 72–93, `PersonalCount` 160, ledger 16 slots, reasons, `BinKind`, `MoveReason`, `ObjClass`, `GestureAct.Claim`, `ControlInputKind.Primitive`, domains 80–88); **physical goods without title** inside `Goods` (§23.4) with origin table; system-install gates and the `PersonTick` site (§23.3); schemas (`ObsSchema`, `ActSchema`, `CatalogueDefs`, `EffectKind`, entity records §23.8, `ISpatialIndex`, `IPrimitivePolicy`, `EffectRegistry`); invariants U-C1–U-C6; pins U-P1, U-P2, U-P3 (static) | UA | **Opus** | `unity/poc` green baseline | — | all frozen files of §23.15 row 1; `Unified/Schema/*`, `Unified/UnifiedState.cs`, `Unified/UnifiedHooks.cs`, `Unified/Invariants.cs`; tests `UN0*` | 3.7 |
+| **UN1** | World: seven terrains and sea ring (54-hex default, radius configurable; spike first), coast nodes; forage places (seven foods, infinite, time-limited, rabbit ×3), herbs; fresh-water points and salt water (§D9.5 G3); dice allowance → gradual materialisation on raw nodes incl. sea fish; environment books; the seven new need channels' rates and decay; effect handlers `Forage`, `DrinkWash`; world queries through `ISpatialIndex` | UA | Sonnet | UN0 | — | `Unified/World/*`, `Unified/Needs/*`, `EffectHandlers.UN1.cs`, `UnifiedState.UN1.cs`, flagged additive hunk in `Board/BoardGenerator.cs`; scenario `unif_world`; tests `UN1*` | 3.5 |
+| **UN2** | Primitive executor for the 12 controls (`Motor`, §23.5): facing, steps, TAKE/DROP rules incl. held-out, `Resisted`, grab from the incapacitated; SLEEP, WAIT, GESTURE (`Messages.Emit` + `MsgExt`); USE resolver over catalogue `InteractionDef` rows with durations, progress, interruption; legality masks; observation encoder `Percept` (`Obs v1`) with a simple `ISpatialIndex`; possession adapter (`ControlInputKind.Primitive` hook); fixture harness for scripted primitive streams; QA-01, MOTOR-1 | UA | **Opus** | UN0 | — | `Unified/Motor/*`, `Unified/Percept/*`, `Unified/Spatial/SimpleSpatialIndex.cs`, `UnifiedHooks.UN2.cs`, `DotNet/God.Runner.Tests/Support/PrimitiveFixture.cs`; tests `UN2*`, `Motor_*` | 4.0 |
+| **UN3a** | Catalogue: reviewed `docs/unification/catalogue/catalogue.json` (all 12 + 12 + 138 + 65 rows with stage, fix codes and status; UA-initial 39 rows with corrections N1/A–I applied and §D9.5 numbers); dependency-free generator/validator `DotNet/God.Catalogue`; generated tables; closure, cycle and reachability audit; CATALOG-1 report | UA | Sonnet | UN0 | — | `docs/unification/catalogue/*`, `DotNet/God.Catalogue/*`, `Unified/Catalogue/Generated/*`, status columns of `CATALOGUE_MANIFEST.md`; tests `Catalogue_*` | 2.5 |
+| **UN3b** | Interactions and buildings: `Building` capabilities (storage, sleeping spots, fixtures, workstation in/out, condition, occupancy); effects `Eat`, `NeedRelief`, `CollectRaw` (physical gate + reservations with expiry), `Deposit`, `Install`, `Occupy`, `WorkInput`, `RecipeWork`, `Fuel`, `Relieve`, `Play`; hearth, well, carpenter, latrine, hall capabilities; EP-01, EP-02 mechanical, NEED-1 relief, ECON-1 mechanical (shelter → collect → carpenter → stool/bed → install → occupy → measured benefit) | UA | **Opus** | UN0 | UN1, UN3a | `Unified/Buildings/*`, `Unified/Interactions/Effects.UN3b.cs`, `UnifiedState.UN3b.cs`; tests `UN3b*`, `EP01*`, `EP02*`, `Need1*`, `Econ1*` | 4.0 |
+| **UN4** | Construction: `Sites.Place` by `USE` with a known design on a valid placement (row rules, coast/terrain, footprint, development area), `Contribute`, `Labour` (tool multipliers), cooperation, interruption and resumption, completion → `Buildings.Create`, upgrades L2/L3 as upgrade sites, damage/destruction drops contents; provenance only; EC-01; EP-05 site parts | UA | **Opus** | UN0 | UN3b | `Unified/Construction/*`, `EffectHandlers.UN4.cs`, `UnifiedState.UN4.cs`; tests `UN4*`, `EC01*` | 3.0 |
+| **UN5** | Population start: six tribes × (7 adults + 5 children), deterministic varied families (Founders generator "Tribal"), temperaments, founder knowledge sets and skills (§D9.5 Start), six founding settlements on Catan vertices, completed hall per tribe with the founder endowment ledger, founder food; `TribeOrder` display table; U1 | UA | Sonnet | UN0, UN1 | UN3b | `Unified/Start/*`, `Population/Founders.Tribal.cs` (new file), scenarios `unif_start*`; tests `UN5*` | 3.0 |
+| **UN6** | Brain runtime: deterministic integer inference (int16, ≤ 20k MAC, ≤ 4 KB state), artifact loader with hash check, `BrainState` (recurrent state, memory, knowledge, skills), `IPrimitivePolicy` implementations (Untrained, Trained, labelled Fallback), decision at action completion, per-person associative overlay on `AssociationStore`/`Learner` with need-based credit, knowledge acquisition by own success, observation and teaching, children's start state, optional bounded planning (off), `Brain.AddClaim` API; fills `UnifiedHooks.PersonTick` | UA | **Opus** | UN0 | UN2 | `Unified/Brain/*` except `Artifacts/`, `UnifiedHooks.UN6.cs`; tests `UN6*`, `Brain_*` | 3.5 |
+| **UN6t** | Founder training: (a) harness from H4.6 on stubs: `DotNet/God.Train` (vectorised headless envs on the real sim, curriculum S1–S8, teacher labelled and training-only, behaviour cloning + evolution strategies, quantised evaluation), evaluation harness, **thresholds file committed before any held-out run** (§D9.2 c); (b) training against merged effects, artifact `FounderPolicyV1.g.cs` (+ V2 if S7–S8 land), held-out evaluation with untrained and frozen controls, TR-01 report; TR-02 initial child experiment | UA (critical path) | **Opus** | (a) UN0; (b) UN1, UN2, UN3b, UN6 | (b) S5 needs UN4; S7 UN7; S8 UN8a | `DotNet/God.Train/*`, `Unified/Brain/Artifacts/*`, `docs/unification/TRAINING_THRESHOLDS.md`, `docs/runs/TRAINING_REPORT.md`; tests `TR01*`, `TR02*` | 3 + 7 (incl. ~4 h compute) |
+| **UN7** | Exchange and communication: GESTURE referents and correlation id (`MsgExt`), `HoldOut` effect and hand-over completion by `TAKE`, lapse, `TakeResisted`/`Grabbed` events, claims as beliefs and their communication, observer belief, trust and reputation updates from perception only (feeding M5 `SocialMemory` without its `Held`/title paths); EP-03, EP-04 mechanical | UA | **Opus** | UN0 | UN2, UN6 | `Unified/Exchange/*`, `EffectHandlers.UN7.cs`, `UnifiedState.UN7.cs`; tests `UN7*`, `EP03*`, `EP04*` | 3.0 |
+| **UN8a** | Conflict slice: `Strike` (Duel maths on NPC stats, `Bodies.Damage` Violence), `Equip` (generic defence), `Treat` (herbs → `Bodies.Heal`), fatigue cost, pain, witness-local fear and observation records, victim memory only of a perceived actor, identity-neutral; CF-01 mechanical; CF-02 measurement harness (aggression, avoidance, retaliation, non-retaliation, response to betrayal) | UA | **Opus** | UN0 | UN2 | `Unified/Conflict/*`, `EffectHandlers.UN8a.cs`, `UnifiedState.UN8a.cs`; tests `UN8a*`, `CF01*`, `CF02*` | 2.5 |
+| **UN9** | Legacy isolation and decoupling: hosts (`GodBootstrap`, `AiHost`, menu "Living island (you as a god)" = unified once UA-mech passes), no faction AI/VP/HQ elimination/stockpiles/circles in unified games; M4 estates, executor, `StoreAccess`, `SenseBins`, household economic verbs; M5 `Held`/own-lot filters; C1/C3/C6/C7; `Ownership.Classify`, lost property; divine own-lot filters; compulsion through a labelled `CompulsionDriver` on `Motor`; Stage 3 regression scenario and pins; warehouse legacy-only labels; U-P3 runtime; EP-05 death conservation | UA | **Opus** | UN0 | UN2 | `Game/Boot/*`, `Game/Menu/GameMenu.cs`, flagged gate hunks in the files of the audit §8 (named in its spec), `Unified/Legacy/*`, Stage 3 regression scenario files; tests `UN9*`, `EP05*`, `Unified_NoStage3*` | 3.0 |
+| **UN10a** | Presentation: continuous terrain (7 terrains, coast, sea), forage, water and raw nodes, buildings, sites (progress), fixtures, carried and held-out items, primitive animation (turn, step, use, gesture, sleep, strike), 12-need panel, possession HUD with all 12 controls incl. design placement and strike, brain badge (artifact version or **UNTRAINED FALLBACK**); no omniscient UI shown as NPC knowledge | UA | Sonnet (Unity token) | UN1, UN2, UN3b, UN4 | UN9 | `Assets/God/Game/Unified/*`, PlayMode tests | 4.0 |
+| **UN11a** | Assurance and analytics: migrations 0044–0046, unified mappings, facts separating events, observations and claims (QA-02), reconciliation, unified save/replay parity (U-P6) and U-P5, the EC/EP/CF/TR/QA/CATALOG/MOTOR/NEED/ECON matrix as runnable tests, `unif_*` runs (72 people, seeds 1–3, 20 days), benchmarks at 72/600/1,200, `docs/runs/UA_REPORT.md` with separate mechanical, learned and long-run columns | UA | Sonnet | prep: UN0; UA-mech gate: UN1–UN5, UN7, UN8a, UN9; UA-learned gate: + UN6, UN6t, UN10a | — | `DotNet/God.Runner/Warehouse/Migrations/0044–0046`, `UNnMappings.cs` completion, `DotNet/God.Runner/Scenarios/unif_*`, `DotNet/God.Runner.Tests/UA*`, `docs/runs/UA_*` | 3.5 |
+| **UNP** | Performance (scale rule, lower urgency): `DotNet/God.Bench` (72/600/1,200/2,000 people, legacy and unified), profile, a grid `ISpatialIndex` implementation, decision staggering by sim state, allocation removal on unified hot paths; legacy think-loop work only if hash-neutral | UC (runs in UA window if a slot is free) | **Opus** | UN0, UN2 | UN6 | `DotNet/God.Bench/*`, `Unified/Spatial/GridSpatialIndex.cs`, `docs/runs/PERF_*`; hash-neutral hunks named in its spec | 3.5 |
+| **UB1** | Settlements and roads: settlement placement (Catan vertex, distance rule, development areas) and road edges between existing settlements only, both as construction sites with real materials and labour (§D9.5 G11); planned routes as claims; walking speed on roads | UB | **Opus** | UN4, UN5 | — | `Unified/Settlements/*`, `Unified/Roads/*` | 3.0 |
+| **UB2** | Catalogue breadth: UB object and building rows in dependency order (reed yard, seed plot, pottery, stone workshop, tannery, weaving mill, sheep pen, charcoal kiln, lime kiln, water jug, soft armour, stone spear), furnishings and leisure interactions; ware ids 94+ | UB | Sonnet | UN3a, UN3b | — | `docs/unification/catalogue/*` additions, generated tables, `Effects.UB2.cs` | 3.0 |
+| **UN8b** | Informal groups on D9 rules: proposal by gesture and referents, voluntary joining, real contributions, withdrawal and free-riding, group raids and defence as group behaviour, no power over goods, no automatic organisation | UB | **Opus** | UN7, UB1 | — | `Unified/Groups/*` | 3.0 |
+| **UN6t2** | Training increment V2/V3: curriculum for roads, settlements, groups and contested multi-group encounters; re-evaluation | UB | **Opus** | UN6t, UB1, UN8b | — | as UN6t | 4.0 |
+| **UN10b** | Views for settlements, roads, groups, conflict at scale | UB | Sonnet (token) | UN10a, UB1 | UN8b | `Assets/God/Game/Unified/*` (UB files) | 2.0 |
+| **UN11b** | UB assurance: long run (seeds 1–3, 30 sim years, no god), V-experiments, 20-seed demographic evaluation, `UB_REPORT.md` | UB | Sonnet | UN11a, UB1, UB2, UN8b | — | as UN11a (UB files), migration 0047 | 3.0 |
+| **UC1** | Scale start: large island (radius 6+), 3–4 settlements per tribe, 100–200 people per tribe, sustained inter-tribe conflict experiments | UC | Sonnet (+ Opus review) | UNP, UB1, UN8b, UN6t2 | — | `Unified/Start/*` (UC files), scenarios `unif_scale*` | 3.0 |
 
-## 3. Dependency graph
+Opus: UN0, UN2, UN3b, UN4, UN6, UN6t, UN7, UN8a, UN9, UNP, UB1, UN8b, UN6t2. Sonnet: UN1, UN3a, UN5, UN10a, UN11a, UB2, UN10b, UN11b, UC1. **No package uses Fable.** UA total ≈ 55 agent-hours over at most six slots.
+
+## 3. Dependency graph (acyclic)
 
 ```mermaid
 flowchart TD
   UN0[UN0 foundation]
-  UN1[UN1 geography + forage]
-  UN2[UN2 raw materialisation]
-  UN3a[UN3a buildings core]
-  UN3b[UN3b upgrades + rights]
-  UN4a[UN4a tribal generator]
-  UN4b[UN4b hall + settlements start]
-  UN5a[UN5a settlement rules + area]
-  UN5b[UN5b founding + roads]
-  UN6a[UN6a planner core]
-  UN6b[UN6b upgrade/stock/trade goals]
-  UN7[UN7 recipes]
-  UN8[UN8 groups]
-  UN9a[UN9a decouple sim]
-  UN9b[UN9b bootstrap + menu]
-  UN10a[UN10a landscape + buildings view]
-  UN10b[UN10b roads/groups view]
-  UN11a[UN11a assurance UA]
+  UN1[UN1 world]
+  UN2[UN2 executor + obs/act]
+  UN3a[UN3a catalogue]
+  UN3b[UN3b interactions + buildings]
+  UN4[UN4 construction]
+  UN5[UN5 population start]
+  UN6[UN6 brain runtime]
+  UN6ta[UN6t-a training harness]
+  UN6tb[UN6t-b training + held-out eval]
+  UN7[UN7 exchange]
+  UN8a[UN8a conflict]
+  UN9[UN9 legacy isolation]
+  UN10a[UN10a presentation]
+  UN11a[UN11a assurance]
+  UNP[UNP performance]
+  UAM{{UA-mech}}
+  UAL{{UA-learned}}
+  UB1[UB1 settlements + roads]
+  UB2[UB2 catalogue breadth]
+  UN8b[UN8b groups]
+  UN6t2[UN6t2 training v2]
+  UN10b[UN10b views UB]
   UN11b[UN11b assurance UB]
-  UA{{Checkpoint UA Primitive society}}
-  UB{{Checkpoint UB Expanding society}}
+  UB{{UB}}
+  UC1[UC1 scale start]
+  UC{{UC Scale}}
 
-  UN0 --> UN1 & UN2 & UN3a & UN4a & UN5a & UN9a
-  UN1 -.merge before.-> UN2
-  UN1 --> UN4b
-  UN3a --> UN4b & UN6a & UN7 & UN3b
-  UN3a --> UN10a
-  UN1 --> UN10a
-  UN2 --> UN10a
-  UN9a --> UN10a
-  UN4b --> UN9b
-  UN4a --> UN4b
-  UN5a --> UN5b
-  UN6a --> UN6b
-  UN3b --> UN6b
-  UN5b --> UN8
-  UN4b --> UN8
-  UN6a --> UN8
-  UN3b --> UN8
-  UN10a --> UN10b
-  UN8 --> UN10b
-  UN5b --> UN10b
-  UN9b --> UN11a
-  UN6b --> UN11a
-  UN3b --> UN11a
-  UN2 --> UN11a
-  UN4b --> UN11a
-  UN11a --> UN11b
-  UN5b --> UN11b
-  UN7 --> UN11b
-  UN8 --> UN11b
-  UN11a --> UA
-  UN10a --> UA
-  UN11b --> UB
-  UN10b --> UB
-  UA --> UB
+  UN0 --> UN1 & UN2 & UN3a & UN3b & UN4 & UN6 & UN6ta & UN7 & UN8a & UN9 & UN11a
+  UN1 --> UN5
+  UN1 --> UN6tb
+  UN2 --> UN6tb
+  UN3b --> UN6tb
+  UN6 --> UN6tb
+  UN6ta --> UN6tb
+  UN1 & UN2 & UN3b & UN4 --> UN10a
+  UN0 & UN2 --> UNP
+  UN1 & UN2 & UN3a & UN3b & UN4 & UN5 & UN7 & UN8a & UN9 --> UAM
+  UN11a --> UAM
+  UAM --> UAL
+  UN6 & UN6tb & UN10a --> UAL
+  UN4 & UN5 --> UB1
+  UN3a & UN3b --> UB2
+  UN7 & UB1 --> UN8b
+  UN6tb & UB1 & UN8b --> UN6t2
+  UN10a & UB1 --> UN10b
+  UN11a & UB1 & UB2 & UN8b --> UN11b
+  UAL --> UB
+  UN11b & UN10b & UN6t2 --> UB
+  UNP & UB1 & UN8b & UN6t2 --> UC1
+  UB & UC1 --> UC
+  UN3a -.merge before.-> UN3b
+  UN1 -.merge before.-> UN3b
+  UN3b -.merge before.-> UN4
+  UN3b -.merge before.-> UN5
+  UN2 -.merge before.-> UN6
+  UN2 -.merge before.-> UN7
+  UN6 -.merge before.-> UN7
+  UN2 -.merge before.-> UN8a
+  UN2 -.merge before.-> UN9
+  UN9 -.merge before.-> UN10a
+  UN4 -.stage S5.-> UN6tb
+  UN7 -.stage S7.-> UN6tb
+  UN8a -.stage S8.-> UN6tb
 ```
 
-Prerequisite table (hard unless marked soft; "x" means the row waits for the column's merge):
+Adjacency table (H = hard prerequisite, must be merged before start; M = merge-after; S = curriculum stage waits; blank = none). Every edge points from an earlier to a later row: the graph is acyclic.
 
-| Package | UN0 | UN1 | UN2 | UN3a | UN3b | UN4a | UN4b | UN5a | UN5b | UN6a | UN6b | UN7 | UN8 | UN9a | UN9b | UN10a |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| UN1 | x | | | | | | | | | | | | | | | |
-| UN2 | x | soft | | | | | | | | | | | | | | |
-| UN3a | x | soft | soft | | | | | | | | | | | | | |
-| UN3b | x | | soft | x | | | | soft (area rule) | | | | | | | | |
-| UN4a | x | | | | | | | | | | | | | | | |
-| UN4b | x | x | | x | | x | | | | | | | | | | |
-| UN5a | x | soft | | | | | | | | | | | | | | |
-| UN5b | x | | | soft | | | soft | x | | | | | | | | |
-| UN6a | x | | soft | x | | soft | | | | | | | | | | |
-| UN6b | x | | | | x | | | | | x | | | | | | |
-| UN7 | x | | soft | x | | soft | | | | soft | | | | | | |
-| UN8 | x | | | | x | | x | | x | x | | soft | | | | |
-| UN9a | x | | | | | | | | | | | | | | | |
-| UN9b | x | | | | | | x | | | | | | | x | | |
-| UN10a | x | x | x | x | soft (cards) | | soft | | | soft | | | | x | | |
-| UN10b | x | | | | | | | | x | | | soft | x | | | x |
-| UN11a | x | x | x | x | x | x | x | soft | | x | x | | | x | x | soft |
-| UN11b | x | | | | | | | | x | | | x | x | | | |
+| Package | UN0 | UN1 | UN2 | UN3a | UN3b | UN4 | UN5 | UN6 | UN6t-a | UN7 | UN8a | UN9 | UN10a | UN11a | UB1 | UB2 | UN8b |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| UN1 | H | | | | | | | | | | | | | | | | |
+| UN2 | H | | | | | | | | | | | | | | | | |
+| UN3a | H | | | | | | | | | | | | | | | | |
+| UN3b | H | M | | M | | | | | | | | | | | | | |
+| UN4 | H | | | | M | | | | | | | | | | | | |
+| UN5 | H | H | | | M | | | | | | | | | | | | |
+| UN6 | H | | M | | | | | | | | | | | | | | |
+| UN6t-a | H | | | | | | | | | | | | | | | | |
+| UN6t-b | H | H | H | | H | S | | H | H | S | S | | | | | | |
+| UN7 | H | | M | | | | | M | | | | | | | | | |
+| UN8a | H | | M | | | | | | | | | | | | | | |
+| UN9 | H | | M | | | | | | | | | | | | | | |
+| UN10a | H | H | H | | H | H | | | | | | M | | | | | |
+| UN11a (UA-mech gate) | H | H | H | H | H | H | H | | | H | H | H | | | | | |
+| UN11a (UA-learned gate) | as above + UN6, UN6t-b, UN10a | | | | | | | | | | | | | | | | |
+| UNP | H | | H | | | | | M | | | | | | | | | |
+| UB1 | H | | | | | H | H | | | | | | | | | | |
+| UB2 | H | | | H | H | | | | | | | | | | | | |
+| UN8b | H | | | | | | | | | H | | | | | H | | |
+| UN6t2 | UN6t-b, UB1, UN8b (H) | | | | | | | | | | | | | | | | |
+| UN10b | UN10a, UB1 (H); UN8b (M) | | | | | | | | | | | | | | | | |
+| UN11b | UN11a, UB1, UB2, UN8b (H) | | | | | | | | | | | | | | | | |
+| UC1 | UNP, UB1, UN8b, UN6t2 (H) | | | | | | | | | | | | | | | | |
 
-(UN11b also requires UN11a.) UN3b is also a soft prerequisite of UN10a for the building cards: UN10a may start on UN3a and merge after UN3b.
+## 4. Waves within the 18-hour window
 
-## 4. Waves and what runs in parallel
+Hours are elapsed from the start of the run (H0) and are planning estimates; position is found from git and DEV_LOG, not the clock. Slots never exceed six package agents; the lead is not counted. **Unity token** (one package agent at a time, plus the lead's `wt-lrs-ckpt`): UN0 (about H3.4–H4.0, batch compile and EditMode only), UN9 (H10.6–H11.1, batch smoke of both hosts), UN10a (H11.6–H14.8). Full `dotnet test` suites: at most three at once, the lead's merge suite first; UN6t's training rollouts use the runner, not the suite.
 
-The waves are dependency-driven, not clock barriers (runbook, graph §4). Hours are estimates from the efforts above and the critical path, not promises.
+| Wave | Window | Slot 1 | Slot 2 | Slot 3 | Slot 4 | Slot 5 | Slot 6 |
+|---|---|---|---|---|---|---|---|
+| W0 | H0.0–H4.6 | **UN0** (H0.3–H4.0; merge gate H4.0–H4.6) | — | — | — | — | — |
+| W1 | H4.6–H8.6 | **UN2** (→H8.6) | **UN6** (→H8.1) | **UN1** (→H8.1) | **UN3b** (→H8.6) | **UN3a** (→H7.1), then **UN4** (H7.4→H10.4) | **UN6t-a** (→H8.0, keeps the slot) |
+| W2 | H8.1–H11.6 | UN2 → **UN7** (H8.6→H11.6) | UN6 → **UN9** (H8.1→H11.1) | UN1 → **UN5** (H8.5→H11.5) | UN3b → **UN8a** (H8.6→H11.1) | UN4 (→H10.4), then **UN10a** (H10.8→H14.8) | **UN6t-b** training from H9.5 |
+| W3 | H11.1–H15.4 | UN7 (→H11.6), then free (UB1 only if UA-learned is safe; default: not started) | UN9 → **UN11a** (H11.1→H16.0) | UN5 (→H11.5), then free | UN8a → **UNP** (H11.1→H14.6; first to cut) | UN10a | UN6t-b: freeze H14.0, held-out eval H14.0–H15.0, merge H15.0–H15.4 |
+| W4 | H15.4–H18.0 | UA-learned gate H15.4–H16.0; **protected final window H16.0–H18.0** (no new package; fixes for red gates only) | | | | | |
 
-| Wave | Starts when | Packages | Run in parallel |
-|---|---|---|---|
-| **W0 Baseline and foundation** | the lead has run the baseline (`dotnet test`, compile check, Stage 3 hashes) and recorded R75 and the lead decisions of section 9 | **UN0** (UN0a then UN0b), lead review of every frozen-file hunk, contracts §23 | UN0 alone; the lead prepares worktrees |
-| **W1 Independent foundations** | UN0 merged | **UN1**, **UN2**, **UN3** (3a first), **UN4a**, **UN5a**, **UN9a** | all six at once (the cap of 6 package agents); at most 3 full suites at once, the lead's merge suite first; no Unity runs (no Unity token held) |
-| **W2 Core functions** | UN3a merged (and UN1, UN2 for those that need them) | **UN3b**, **UN4b** (after UN1 and UN3a), **UN6a** then **UN6b**, **UN7**, **UN5b** (after UN5a), **UN9b** (after UN4b), **UN10a** (after UN1, UN2, UN3a, UN9a; holds the Unity token) | up to six at a time as slots free; UN6 is the UA critical path: launch it the moment UN3a merges |
-| **UA gate** | the UA set merged | **UN11a** (starts when UN9b, UN6b and UN3b are in; may start its warehouse part earlier on UN1–UN4) | UN11a with UN10a's finish and UN5b/UN7 continuing |
-| **W3 Expansion** | UN3b, UN4b, UN5b, UN6a merged | **UN8** (8a then 8b), **UN10b** (after UN8a for groups, UN5b for roads), **UN11b** (after UN5b, UN7, UN8) | UN8 with UN7's tail and UN10b's start |
-| **UB gate** | all merged | the long run and the reports (inside UN11b) | UN11b runs in the background while the lead prepares the checkpoint |
+**Training timeline inside UN6t-b:** S1–S4 from H9.5 (after UN1, UN2, UN3b and UN6 merge); S5–S6 from H10.8 (UN4 merged); S8 from H11.6 (UN8a); S7 from H12.3 (UN7). Artifact freeze **H14.0** whatever its state; held-out evaluation H14.0–H15.0 (20 small seeds × trained/frozen/untrained, 3 full 72-person seeds × 20 days); `TRAINING_REPORT.md` H15.0. S7–S8 untrained at freeze are reported as not trained; T7 and CF-02 learned are then "not evaluated", not passed.
 
-Critical path to UA (estimated): UN0 (4 h) → UN3a (3.5 h) → UN6a (3 h) → UN6b (3 h) → UN11a (2.5 h) ≈ 16 h of agent time on the chain, with waves 1 and 2 otherwise parallel (about 17–20 hours elapsed including merging and gates). UB adds UN5b/UN8/UN11b on top (a further ≈ 8–10 h elapsed). These are planning numbers; position is found from git and DEV_LOG, not the clock.
+## 5. Critical path (estimated)
 
-**Concurrency limits** (runbook §3): at most 6 package agents, 3 full `dotnet test` suites at once (the lead's first), 2 Unity runs (the lead's checkpoint folder plus one package agent holding the Unity token: UN0 briefly at its end, UN9b for its batch smoke, UN10a/UN10b while running). Separate worktrees do not make shared-surface edits safe: that is why UN0 lands the shared surface first and why every later package owns only partial files (section 8).
+UN0 (H0.3 → H4.6 merged) → UN2 (H4.6 → H9.0 merged) → UN3b and UN6 merged (H9.5) → **UN6t-b training** (H9.5 → H14.0) → held-out evaluation (H14.0 → H15.0) → artifact merge (H15.4) → **UA-learned gate** (H15.4 → H16.0) → **final build and assurance window** (H16.0 → H18.0). Slack is about zero; the training freeze at H14.0 and the window at H16.0 are fixed. Near-critical: UN4 (S5 needs it by about H11) and UN10a (needed for the UA-learned gate by H15.2).
 
-## 5. Merge order and gates
+## 6. Merge order and gates
 
-The lead merges in `wt-lrs` into `unity/poc` with `--no-ff`, one commit per package (or part), batching **at most two packages with disjoint files** per suite run (runbook §5). Order (a later item may be merged before an earlier one only if the earlier is not its prerequisite):
+The lead merges in `wt-lrs` into `unity/poc` with `--no-ff`, at most two packages with disjoint files per suite run.
 
-| # | Merge | Gate beyond the standard gate |
+| # | Merge (≈ hour) | Gate beyond the standard gate |
 |---|---|---|
-| 1 | **UN0** | review of every frozen-file diff; U-P1 exact (all base hashes, three Stage 3 smoke hashes, population smoke); `Wares_LayoutNeutral`, `Ledger_WideningNeutral`, `VerbMax_Neutral`; Unity batch EditMode; bench within 3 %; contracts §23 and R75 recorded; **no save version bump yet** |
-| 2 | **UN1** (1a, then 1b) | board spike result reviewed; M3 learning pins untouched; `Forage_Survive_NoDice` |
-| 3 | **UN2** | `Geo-1/2` exact; `Dice_Stage3_Unchanged` |
-| 4 | **UN3a** | C1 tests unchanged with `Buildings.Enabled = 0`; flagged additive C1 edits reviewed; B2–B7 green |
-| 5 | **UN9a**, **UN4a**, **UN5a** (any order, two per suite) | `Unified_NoStage3EconomySystem`; Stage 3 pins; U-P1 |
-| 6 | **UN3b** | B8–B9, rights mutation test |
-| 7 | **UN4b**, **UN6a**, **UN7** | UN4b: U1 and hall ownership; UN6a: `Plan_NeverActs`, `Plan_ShelterExample`; UN7: U6 |
-| 8 | **UN6b**, **UN9b**, **UN10a** | UN9b: both hosts equal hash, menu wording agreed; UN10a: PlayMode green, screenshots |
-| 9 | **UN11a** → **UA GATE** (section 6) | |
-| 10 | **UN5b**, then **UN8a**, **UN8b** | UN5b: U10 and road tests; UN8: U9, U12, no-auto-org |
-| 11 | **UN10b**, **UN11b** → **UB GATE** (section 6) | |
+| 1 | **UN0** (H4.6) | lead reads every frozen-file hunk; U-P1 exact (all base parts, three Stage 3 hashes, P1/P4/P8); U-P2; U-P3 static; `Wares_LayoutNeutral`, `Ledger_WideningNeutral`, `Unified_GoodsNoTitle`, U-C1–U-C6 in a stub unified run; Unity batch compile 0 errors and EditMode green; bench within 3 %; §23 recorded as ruling; **no save bump** |
+| 2 | **UN3a** (H7.4) | catalogue tests; CATALOG-1 report; workbook SHA pinned |
+| 3 | **UN1** (H8.5) | board spike reviewed (54 hexes and radius 6 generate); forage/water reachability; dice allowance conservation; U-P1 |
+| 4 | **UN2** (H9.0) | MOTOR-1, U-P4 (origin neutrality), U-P6 stub, possession adapter test, no `NodePather` in unified decision path (static) |
+| 5 | **UN6** + **UN3b** (H9.5) | UN6: inference determinism and budget test, artifact hash refusal, Untrained/Fallback labelled; UN3b: EP-01, EP-02, NEED-1 relief, ECON-1 mechanical |
+| 6 | **UN4** (H10.8) | EC-01 (multiple contributors, interruption, conservation, no output before completion) |
+| 7 | **UN9** + **UN8a** (H11.6) | UN9: `Unified_NoStage3*`, U-P3 runtime, EP-05, both hosts give equal hashes, Stage 3 regression pins; UN8a: CF-01 |
+| 8 | **UN5** (H11.9) | U1 composition, families valid, hall sleeps 12, endowment ledgered, U-C1 from tick 0 |
+| 9 | **UN7** (H12.3) | EP-03 mechanical (fulfil, partial, defect; no second leg), EP-04 |
+| 10 | **UN11a (mechanical part)** → **UA-mech** (H13.0–H13.5) | §7 UA-mech list; lead bumps save version 6 → 7 in this merge commit with DEV_LOG re-pin; tag `unif-ua-mech` |
+| 11 | **UNP** (≈ H14.8, only if neutral) | bench report; hash-neutral; otherwise left on its branch |
+| 12 | **UN10a** (H15.2) | PlayMode green in `wt-lrs-ckpt`; screenshots; badge shows artifact or fallback |
+| 13 | **UN6t** (H15.4) | lead re-runs two held-out seeds independently and checks the thresholds file hash predates the evaluation commit; artifact hash, `Obs`/`Act` schema hash and catalogue hash match `unity/poc`; set `Brain.Kind = 1` in `unif_*` only if TR-01 passed, else `Kind = 2` labelled |
+| 14 | **UN11a (learned part)** → **UA-learned** (H15.4–H16.0) | §7 UA-learned list; tag `unif-ua` only if green |
 
-**Standard gate for every merge** (runbook §5 and §9): the branch has merged current `unity/poc`; the agent's own counts are in its DEV_LOG record; `git diff --stat unity/poc...unity/<id>` touches only the spec's owned files plus its declared flagged hunks; full `dotnet test DotNet -c Release` green; `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1` 0 errors; pins P1, P4, P8, U-P1 and the three Stage 3 smoke hashes of `DotNet/God.Runner.Tests/PolicyRunTests.cs:27` unchanged; the headline acceptance test of the package **re-run by the lead independently**. A red baseline is fixed before anything merges. Saves: `SaveFile.cs` and the version belong to the lead, bumped **once at Checkpoint UA** (and again at UB if state shapes changed) with a re-pin recorded in DEV_LOG.
+**Standard gate for every merge** (runbook §5): the branch has merged current `unity/poc`; the agent's counts in its DEV_LOG record; `git diff --stat unity/poc...unity/<id>` inside its owned areas plus declared flagged hunks; `AgentScripts/check-game-compile.ps1` 0 errors; `dotnet test DotNet -c Release` green; U-P1, P1, P4, P8 and the three Stage 3 hashes unchanged; the package's headline test re-run by the lead. A red baseline is fixed before anything merges.
 
-## 6. Checkpoints
+## 7. Checkpoints
 
-### UA "Primitive society" (no faction AI)
+### UA-mech "Primitive society, mechanical evidence"
 
-**Packages:** UN0, UN1, UN2, UN3 (a+b), UN4 (a+b), UN6 (a+b), UN9 (a+b), UN10a, UN11a.
+Packages UN0–UN5, UN7, UN8a, UN9, UN11a (mechanical part). Evidence is from scripted primitive streams and fixtures (labelled `Fixture`), never presented as autonomous behaviour: EC-01, EP-01, EP-02, EP-03 (mechanical), EP-04, EP-05, CF-01, QA-01, QA-02, CATALOG-1, MOTOR-1, MOTOR-2, NEED-1, ECON-1 (mechanical), ECON-2 regressions, U1, U-P1–U-P6; 72-person unified start runs 20 days deterministically with the untrained brain (outcome reported, not judged); save v7 round trip. Tag `unif-ua-mech`.
 
-**What must be demonstrable (headless on seeds 1–3, and in Unity batch smoke, never windowed in automation; the owner's windowed look is manual):**
+### UA-learned "Primitive society, trained founders"
 
-1. Six tribes start with exactly 7 adults and 5 children each; hall owned by a founding community group, not the tribe (U1).
-2. People **survive by foraging** the seven foods, independent of dice (U2, B1); forage never runs out.
-3. Dice produce **gradual physical raw material** (U3); nobody can pick it up by hand (B2).
-4. An individual, without any command, **builds a first collection shelter for labour and time only** (U4, B3, B4), **collects, carries and deposits** within storage limits (B5, B6), and **sleeps** in it (B7).
-5. **Upgrades** consume wood and labour and give measurable benefit without changing the supply (B8, B9); the planner derives the multi-step objective itself (U8).
-6. **Exchange** between individuals by physical hand-over (U7, B10), and specialisation is **measured** (U5), not asserted.
-7. **No faction AI, stockpile, walker, flag, construction, VP or circle** in the normal game (U11, U13, B11); Stage 3 unchanged as a regression scenario.
-8. Deterministic, replayable, reconcilable (U14); V1 viability, V2, V3, V5 reported.
+Adds UN6, UN6t, UN10a. Requires **TR-01 passed honestly** against the thresholds committed before evaluation (§D9.2 c), plus EC-02 (autonomous design and site choice, held-out layouts, no fixed sequence), EP-03 learned (reported), CF-02 evaluation report (strategies measured, never required), TR-02 initial experiment (reported, failures included), QA-01 for trained actors, Unity EditMode/PlayMode, the unified Windows player build (batchmode), `docs/runs/UA_REPORT.md` with separate **mechanical**, **learned/autonomous** and **long-run viability** columns. Tag `unif-ua`; the lead pushes tested `unity/poc` and package branches (never `main`).
 
-**Gate:** full `dotnet test` green; compile check 0 errors; Unity EditMode and PlayMode green in `wt-lrs-ckpt`; `unif_normal` 20-day run; `docs/runs/UA_REPORT.md` with every row passed, failed or **not run**; U-P1…U-P6 real; tag `unif-ua`; the lead pushes tested `unity/poc` and the package branches (never `main`). The report states plainly what did not pass; **UB work may continue to address failures**, but an incomplete UA is labelled as such; viability failures are escalated, and Industry is gated on credible autonomous viability (§0).
+**A failed training gate means UA-learned is not green.** It is reported as "UA-learned: not passed" with the metrics, the artifact and the cause; the game may ship with `Brain.Kind = Fallback` **visibly labelled** in the save, the HUD badge and every report; a scripted controller or a primitive wrapper around old `Eat/Flee/Build` rules is never reported as trained. UA-mech may still be green.
 
 ### UB "Expanding society"
 
-**Adds:** UN5 (settlements, roads, planned sites), UN7 (recipes), UN8 (groups), UN10b, UN11b.
+UB1, UB2, UN8b, UN6t2, UN10b, UN11b: settlements and roads built by people between existing settlements, broader recipes and furnishings, informal groups, trained use of them, long run (seeds 1–3, 30 sim years, no god), 20-seed demography. Industry (I1a…) stays deferred until UB plus credible autonomous primitive viability, unless the owner decides otherwise (D9.14).
 
-**What must be demonstrable:** manufacturing through real recipes with knowledge, labour, materials, capability and level (U6); an informal group that **emerges from individual participation** (U12); a **cooperatively built road** with measurable walking benefit and recorded free-riding (U9); an NPC-founded **new settlement** (U10); goods carried directly by NPCs with no flags or carriers (U11); and the **D8.18 long run**: seeds 1–3 for 30 sim years with `Divinity.Enabled = 0` and no commands, replayable, with a report of when (or whether) the first collection building, upgrade, exchange, recipe run, group, road, new settlement and member-founded organisation appeared; V4, V6, V7 reported.
+### UC "Scale" (owner decision D10, after UB)
 
-**Gate:** as UA plus `Unified_LongRun`, `docs/runs/UB_REPORT.md`, tag `unif-ub`, push (never `main` without the owner). The outcome of the long run is a finding, not a guaranteed outcome; a credible autonomous viable society is a separate gate to Industry (§0).
+Six tribes, 3–4 settlements each, 100–200 people per tribe (600–1,200 total) on an enlarged island with sustained back-and-forth conflict emerging from individuals and groups (no faction AI). Gate (L): 1,200 people with trained-brain inference at ≥ 100 ticks/s headless and ≥ 20 ticks/s in the player; long run with inter-tribe conflict measured. **What every UA package does now so UC is not blocked:** UN0 sizes nothing by tribe count, board size or population (lists, configuration paths of §23.1); UN1 generates any radius (tested 4 and 6) and multiple settlement corners per tribe; UN2 perceives only through `ISpatialIndex`, cost O(persons) per tick, no all-pairs scan; UN3b/UN4 process only active sites, reservations and workstations; UN5 generator takes tribe count, sizes and settlements per tribe from configuration; UN6 keeps the inference and state budget and decides only on action completion (staggering by sim state, never the camera); UN7/UN8a find witnesses through the spatial index; UN10a draws with instancing and level of detail; UN11a tracks benchmarks at 72, 600 and 1,200 people from UA on (baseline before trained-brain inference: about 1,080 ticks/s at 500 and 384 ticks/s at 1,000).
 
-### Industry and further institutions resume only after UB
+## 8. Cut plan by hour
 
-**The Industry run (I1a, I1–I6, K1, K2, and the further institutions, divine and military extensions that depend on them) resumes only after Checkpoint UB** (D8.18). Nothing in this index starts an industrial package; I1a will land on top of UN0 (section 7) and reuse `BuildingDef`, `RecipeDef`, the `Unification` ids and the unified world, not a parallel economy. Existing institutional, divine, industrial, energy, patent and monetary work is kept, not discarded.
+Never cut: training honesty (thresholds committed before evaluation, held-out seeds, untrained and frozen controls, honest failure reporting), determinism (U-P1, Stage 3 pins, save and replay exactness) and the protected final window H16.0–H18.0.
 
-## 7. Shared ids landed by UN0 (provisional per R72, corrected against contracts §22)
+| Hour | If behind | Drop or shrink (in this order) |
+|---|---|---|
+| any | — | UB and UC packages never start in this run unless UA-learned is green before H14 |
+| H6.0 | UN0 not merged | UNP is cut; UN10a shrinks to hex-coloured terrain, people, sites, buildings, HUD badge and primitive possession |
+| H9.5 | UN2/UN3b/UN6 not merged | UN3b drops `Play` and `Fun` relief content (Fun channel inactive, recorded); UN8a drops `Equip`; UN7 drops claims communication (hold-out and referents stay) |
+| H11.0 | training not started | S7–S8 dropped from artifact V1 (T7, EP-03 learned, CF-02 learned reported "not evaluated"); TR-02 reduced to one matched-pair experiment |
+| H12.5 | UN5 or UN7 not merged | UN5 families simplified to fixed valid patterns; UN7 merges hold-out only; UA-mech proceeds without the missing rows marked "not run" |
+| H14.0 | — | **artifact freeze**; no further training in this run |
+| H14.5 | UN10a not merged | merge what works behind a flag; PlayMode limited to boot, possession and badge |
+| H15.0 | held-out evaluation not finished | evaluate the 20 small seeds only; T6 "not run" ⇒ UA-learned not green |
+| H16.0 | anything | no merges except fixes for red gates; build, full suite, pins, replay, reports |
 
-R72 accepted the design's proposed numbers **provisionally** "after checking collisions with the industry addendum". The check found the following collisions, resolved in UN0 (the lead records the resolutions as ruling R75 and amends §22.3 before UN0 merges):
+## 9. Neutrality pins
 
-| Space | Design proposal | Conflict | UN0 value |
-|---|---|---|---|
-| Wares | 40 `Mushroom` … 54 `Hammer`, `PersonalCount` 96 | contracts §22.3 gives 40–71 to industry (`IronOre`…`Paper`/`Coin`, `PersonalCount` 72 at I1a) | **72–86** (72 `Mushroom`, 73 `WildEgg`, 74 `Rabbit`, 75 `WildVeg`, 76 `CactusFruit`, 77 `Seaweed`, 78 `Hay`, 79 `Sheep`, 80 `Wool`, 81 `Meat`, 82 `Hide`, 83 `BuildingBlock`, 84 `Bedding`, 85 `PreparedFood`, 86 `Hammer`); 87–95 spare; **`PersonalCount` 96 now**; 40–71 left empty for I1a (hash-only-when-non-zero) |
-| Ledger | `ProduceReason.Collected = 6`, 8 slots | §22.3 assigns 6 `Extracted`, 7 `Processed`, 8 `Discarded`, 9 `Salvaged` and widens to 16 slots | ledger widened to 16 slots now (slots 8–15 hashed only when non-zero); **`Collected` = 10** |
-| `MaxCand` | 40 → 44 | code has 36; §22 raises to 40 for Industry | 36 → **40** for Unification; the lead sets 44 if I1a has landed first |
-| Hash part | `unification` after `divine` | §22.1 appends `industry` after `divine` | `unification` after `divine`; `industry` after `unification` when I1a lands |
-| Verb `Max` | 128 → 160, rows 128–139 | none (§22.5 leaves rows above 127 free) | as proposed: 128 `Collect`, 129 `AdoptGoal`, 130 `ProposeGroup`, 131 `JoinGroup`, 132 `ContributeGroup`, 133 `LeaveGroup`, 134 `ProposeRoad`, 135 `RoadWork`, 136 `ProposeSettlement`, 137 `Upgrade`, 138 `Repair`, 139 spare |
-| `NpcVerb` | 220–229 | none (K block ends 219) | 220 `Collect`, 221 `RoadWork`, 222 `Propose`, 223 `JoinGroup`, 224 `Contribute`, sentinel 229 |
-| `ObjClass` | 130–149 | none (industry 110–122, spare 123–129) | 130 `RawNode`, 131 `ForagePlace`, 132 `Settlement`, 133 `Road`, 134 `GroupSite`, 135 `Goal`, 136–149 building rows |
-| `SelfFeature` / `SituationKind` / episode keys | 88–95 / 152–159 / 48–55 | none | as proposed |
-| `UseKind` / `TelemetryDomain` | `Sleep = 5` / 80–83 → events 1200–1299 | none (domains 70–79 are industry's) | as proposed |
-| Migration | one "unification" migration | §22.7 lists 0044–0049 free | `0044_unification.sql`, `0045_unification_groups.sql` (UN11; the lead allocates) |
-
-**Who edits what.** Only UN0 and the lead change frozen surfaces. Every other package adds data and logic in its own **partial files** named `…UNn.cs` (`UnificationState.UN3.cs`, `UnificationHooks.UN6.cs`, `GoalRules.UN7.cs`, `ValuationPriors.UN3.cs`, `UN5Mappings.cs`, …), and the few additive, switch-gated edits to existing non-frozen files (`Civ/Assets.cs`, `Civ/Work.cs`, `Civ/Ownership.cs`, `Population/NodePather.cs`, `Territory/TerritoryState.cs`, `Board/BoardGenerator.cs`, `Game/Boot/*`, `Game/Menu/GameMenu.cs`) are **named in the spec and in the hand-back** for the lead's diff review. A missing seam is an amendment request to the lead; a package never works around one.
-
-## 8. Neutrality pins (design §13.2) and who keeps them
-
-| Pin | Statement | Landed by | Re-run by |
-|---|---|---|---|
-| U-P1 `Unification_Off_Reproduces_Base` | every unification switch 0: every part hash of every existing scenario (seeds 1–3, every checkpoint) equals the base head's; the three Stage 3 smoke hashes unchanged | UN0 | **every** package and merge |
-| U-P2 `Unification_Idle_Neutral` | neutral foundation only, all behaviour-changing switches off, legacy start: legacy hashes equal U-P1 | UN0 (guarding form) | UN4, UN9, UN11 |
-| U-P3 `Forage_SubSwitch_Isolated` | only `Forage.Enabled = 1` in a Stage 3 faction game: Stage 3 parts unchanged | UN1 | UN9, UN11 |
-| U-P4 `Planning_Off_Neutral` | `Planning.Enabled = 0` in a unified run equals the run with plan terms zero | UN6 | UN8, UN11 |
-| U-P5 `Recording_Neutral` | Off/Summary/Full recording of the new domains gives one hash | UN11 | UN11 |
-| U-P6 `Switch_Matrix` | each sub-switch alone, pairwise, all on | UN0 (stub), UN11 (real) | UN11 |
-| P1, P4, P8 and P2, P3, P5, P9 where present; `PolicyRunTests.cs:27` hashes `12be0f64cefc59f1`, `4bd54b271857a803`, `0a66415b389d7a87` | existing pins | existing | every package |
-
-Hashes move only at declared re-pins, each recorded in DEV_LOG by the lead (the UA save version bump is one).
-
-## 9. Inconsistencies found between the design, the audit, the contracts and the code (and what the specs do about them)
-
-1. **Ware and ledger ids collide with the industry addendum** (design §13.4 versus contracts §22.3): resolved in UN0 (section 7); lead ruling R75 needed.
-2. **R73 versus the design's `Hut` row** (design §5.5, §10.7, §15.4 keep a plain hut; R73: no separate hut by default): UN3 builds the row but disabled (`Buildings.HutRow = 0`); the planner's `Shelter` goal resolves to collection shelters and the communal hall; an owner question remains.
-3. **Hall capacity** (design §9.5: 8 beds): 7 adults and 5 children at half a bed need 9.5, so the hall cannot house a tribe; superseded by §0: provide full initial occupancy with basic comfort (UN4 T9 tests sufficient capacity).
-4. **Tribe order and names**: D8.9 lists Amber, Crimson, Azure, Jade, Violet, Ivory; the code has `F1 = Azure`, `F2 = Crimson` (audit §5, `Faction.cs:27`). UN9 keeps enum ids and Stage 3 names and adds a `TribeOrder` display table; an enum rename is a lead decision.
-5. **The design omits victory points and HQ-loss elimination** (audit S13, R6): `FactionSystem` would eliminate a tribe with no HQ; UN9 removes VP and elimination in unified mode.
-6. **The design's rule U-1 ("`SimBuilder` skips the systems") does not cover the player path** (audit R4: `GodBootstrap.StartAi` attaches the AI outside the sim): UN9 makes unified mode a sim/tuning flag honoured by both hosts and saved with the game.
-7. **`MaxCand`**: the design assumes 40 → 44 (after I1a), the code has 36: UN0 sets 40.
-8. **Board size**: the design's sea ring (radius 4) enlarges the board from 30 hexes (audit §4.1: `Meadow` "rim of a larger board" never exercised) to 54; topology, start corners, camera and views were not exercised on it. UN1 must spike this first; fallback needs a lead decision.
-9. **Raw-hex arithmetic**: the design §4.3 estimates "about 24 raw hexes" for the 30-hex island, but with the default deal (3 desert) 27 land hexes yield raws, plus the Sea ring's fish nodes; expected supply is higher than the quoted 190 units a day; UN11 V4 measures it.
-10. **Fish**: D8.2 makes fish a raw material; the code treats `Fish` (30) as food (`FishNutrition`); the design is silent: UN1 adds `Forage.RawFishNutrition` default 0 (not edible raw); cooked fish is UN7 R8.
-11. **Valuation covers only food, log and axe** (audit R13): the design assumes barter of new raws works; each package appends valuation priors for its wares through the `ValuationPriors` seam; whether trade then arises is measured (U7, B10), not assumed.
-12. **Demography results are stale** (audit R8, §14: older conclusions unverified on merged code and for 72 people instead of 120): no package asserts viability; UN11 V1 measures it first.
-13. **Stage 3 population scenarios implicitly include the AI** (audit R15: `band_6x20`, `civ_assets`, …): none is edited; unified equivalents are new `unif_*` files.
-14. **Stage 3 read paths unverified**: HUD, telemetry, KPIs and divine code may read `EconomyState`, `Hq` or VP; the audit did not run anything: UN9 finds them by test.
-15. **Group record split**: the design places groups in one package (§12); the founding community group needs the record at tick 0, so UN4b declares it and UN8 extends it (a coupling the specs state).
-16. **Intent origin probe** (U13: "no intent has an origin other than an NPC mind"): the audit did not establish whether the intent path carries an origin tag; UN9 adds the probe and escalates if the tag is missing.
-17. **Design says "Axe (20) is kept"; audit R9** (axe is NPC tool and Stage 3 armour ware): UN7 uses it only as the NPC tool in unified mode.
-
-**Lead decisions to take before UN0 merges** (each has the default the specs use): R75 (ware, ledger, `MaxCand`, hash-part order); the Hut-row default (R73: off); tribe-order mechanism (display table); the menu wording of the normal start ("Living Island" = unified); migration numbers 0044/0045; whether UA bumps the save version (default yes, once).
+As §23.2: U-P1 (every package and merge), U-P2 (UN0; re-run UN9, UN11a), U-P3 (UN0 static, UN9 runtime), U-P4 (UN2; re-run UN6, UN9, UN11a), U-P5 (UN11a), U-P6 (UN2 stub, UN11a full), P1, P4, P8 and present P2/P3/P5/P9, Stage 3 hashes `12be0f64cefc59f1`, `4bd54b271857a803`, `0a66415b389d7a87`. Hashes move only at declared re-pins (UA-mech save bump is one), recorded by the lead.
 
 ## 10. Acceptance map
 
-| Row | Statement (short) | Owning packages |
-|---|---|---|
-| U1 | six tribes, 7 adults and 5 children | UN4 |
-| U2 | survive by forage, no dice | UN1 (+ UN4b, UN11) |
-| U3 | rolls make gradual physical materials | UN2 |
-| U4 | collect and build a productive building | UN3, UN6 (+ UN11) |
-| U5 | another individual specialises | UN6, UN3 (measured by UN11) |
-| U6 | production by recipes | UN7 |
-| U7 | physical exchange | UN3 (M5 unchanged), UN11 |
-| U8 | multi-step construction objective | UN6 |
-| U9 | cooperative road | UN8, UN5 |
-| U10 | founding a new settlement | UN5 (+ UN8) |
-| U11 | goods carried by NPCs, no flags or carriers | UN9 (+ UN3, UN5) |
-| U12 | informal group emerges | UN8 |
-| U13 | no faction AI, no divine intervention needed | UN9 |
-| U14 | deterministic, replayable, reconcilable | UN11 (+ every package's save parity) |
-| B1–B9 | forage without building; no raw collection without building; level 1 labour only; labour and time; collect-carry-deposit; storage cap; sleeping; upgrade costs; upgrade benefit | B1 UN1; B2–B9 UN3 |
-| B10 | cooperation, trade and specialisation around buildings | UN3, UN6, UN11 |
-| B11 | no faction-level economic AI | UN9 |
-| D8.18 | the long run and viability experiments V1–V7 | UN11 |
+| Row | Short statement | Owner (evidence) | Checkpoint |
+|---|---|---|---|
+| EC-01 | L1 shelters: zero materials, real work, no output before completion, contributors and interruptions conserve | UN4 (UN11a) | UA-mech |
+| EC-02 | known designs and own site choice, held-out layouts, no fixed sequence | UN6t (UN11a) | UA-learned |
+| EP-01 | take from any accessible container regardless of legacy fields; physical constraints hold | UN3b, UN9 | UA-mech |
+| EP-02 | shared hall/shelter, concealed cache unknown to others, contested claims coexist, no owner veto, full/expired destination retains goods | UN3b, UN7 | UA-mech |
+| EP-03 | offer/promise + one hand-over; fulfil, partial, defect; no second leg | UN7 (mech), UN6t (learned) | UA-mech and UA-learned |
+| EP-04 | unwitnessed removal hides the actor; differing interpretations and claims stay separate | UN7, UN8a | UA-mech |
+| EP-05 | death, abandoned site, damage, interruption, disputed container conserve goods and locations | UN9, UN4, UN3b | UA-mech |
+| CF-01 | persistent person can attack same/other tribe by USE; pain, injury, death; retreat; no faction command | UN8a | UA-mech |
+| CF-02 | contested-resource encounters measured on held-out seeds; variants compared; no scripted strategy | UN8a harness, UN6t | UA evaluation (reported); UB |
+| TR-01 | versioned artifact; teacher-free survival and basic construction/collection/interaction on held-out maps vs predeclared thresholds and controls | UN6t | UA-learned |
+| TR-02 | exposed vs matched children; transfer and retention without copying memories; failures reported | UN6, UN6t | UA (initial), UB |
+| QA-01 | identical primitive streams give identical physics for autonomous, possessed and test actors; legacy hashes; replay/save exact | UN2, UN11a | UA, UB |
+| QA-02 | analytics separate events, observations, claims, promises and disputes; no theft or legitimate-owner fact | UN11a, UN9 | UA, UB |
+| CATALOG-1 | every workbook row mapped with status; deterministic export; checks | UN3a | UA-mech |
+| MOTOR-1/2 | every act is a validated primitive; distinct goods/targets for eat, collect/deposit, build/upgrade, produce/install, occupy, wash, sanitation | UN2, UN3b | UA-mech |
+| NEED-1 | 12 channels defined, bounded, exercised; enabled channels have reachable relief | UN1, UN3b | UA-mech |
+| ECON-1 | shelter → tool or furniture → exchange → install → measured benefit; no injected goods except founder endowment | UN3b, UN7 (mech); UN6t (learned, reported) | UA-mech; UA-learned reported |
+| ECON-2 | legacy regressions and divine/possession in unified mode | UN9 | UA-mech |
+| U1–U14, B1–B11 | kept, read through the rows above (§D9.8) | as above | as above |
 
-The rows are written into [../stage4/ACCEPTANCE_TESTS.md](../stage4/ACCEPTANCE_TESTS.md) section D8 with kind, measurable criterion, owning document, suite and package.
+## 11. Explicitly deferred
 
-## 11. Explicitly deferred (kept in the long-term design, not in this milestone)
+Industry, knowledge, money, electricity, vehicles, boats, waste chains beyond the latrine, patents, formal institutions, courts and policing, faction military, recipe invention, animal biology and breeding, new pair formation (UB), standalone family hut (owner question, R73), deletion of Stage 3 code.
 
-Industry (I1a…I6), knowledge and money (K1, K2), electricity, vehicles and boats, waste, patents, the military and defence mechanics beyond recording a group objective (`Defence` is inert), formal institutions beyond what emerges by member acts, tolls and road ownership, recipe invention, detailed water infrastructure beyond initial safe needs relief, breeding of sheep (`SheepBreedPermille` 0), hay feeding, and deletion of Stage 3 code (only after U-P1 holds, the regression passes on its own tuning and the owner agrees; design §13.8).
+## 12. Lead decisions recorded with this index (defaults; see §D9 and §23)
+
+R75/R76 numbering withdrawn in favour of §23.4 (wares 72–159, `PersonalCount` 160, no `MaxCand` change, no new verbs); unification events 1200–1399 and domains 80–88; migrations 0044–0047 to UN11; save 6 → 7 at UA-mech; C# trainer primary; held-out seeds 900001–900020; thresholds T1–T7; artifact embedded as generated C#; hall endowment G6; natural water G3; settlement and road costs G11; scale target UC with 100–200 people per tribe. Owner-level open questions: §D9.7 (inheritance of the trained network; standalone hut).
