@@ -33,5 +33,16 @@ namespace God.Sim.Unified
 
         // ---- reach audit ----
         public int StartReachMaxEdges = 30;
+        /// <summary>Herb places (Herbs 32, an infinite forage-like place, G5) per Forest and Mountain hex.</summary>
+        public int HerbPlacesPerHex = 1;
+
+        // ---- need rates (G15): the seven channels Thirst, Hygiene, Bladder, Social, Fun, Comfort, Room; pressure points (0-1000) per day ----
+        public int[] NeedRatesPerDay = { 800, 250, 600, 200, 250, 150, 100 };
+        /// <summary>Per-person rate variation bound (permille of the rate: hash and temperament halves) and the age factors (permille added for children and elders, Bladder and Thirst).</summary>
+        public int NeedVariationPermille = 200, ChildExtraPermille = 300, ElderExtraPermille = 200;
+        /// <summary>Rates while asleep, permille of the awake rate (Comfort and Room run at full rate).</summary>
+        public int NeedSleepPermille = 500;
+        /// <summary>Thirst health coupling (D9.4 d): from this pressure, health falls by this many micro per day (health is 1,000,000).</summary>
+        public int ThirstDamageAt = 900, ThirstLossPerDay = 500000;
     }
 }

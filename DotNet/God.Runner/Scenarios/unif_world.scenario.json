@@ -1,0 +1,17 @@
+{
+  "scenarioVersion": 1,
+  "name": "unif_world",
+  "description": "UN1 world demonstration: the unified game (61-hex disc, 30 land hexes in seven types plus sea, infinite forage and water places, dice allowance materialising gradually on raw nodes, the seven extension need channels). Six start halls with three founders each, no brain and no collection buildings yet, so nothing eats, collects or builds by itself; the people only age in their needs. Used with --days 20.",
+  "setup": {
+    "factionCount": 6,
+    "human": -1,
+    "population": true,
+    "startNpcsPerFaction": 3,
+    "victory": [ { "kind": "sandbox" } ]
+  },
+  "tuning": {
+    "Unification.Enabled": 1
+  },
+  "record": { "level": "full" },
+  "stop": { "maxDays": 20 }
+}
