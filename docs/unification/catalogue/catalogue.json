@@ -30,11 +30,11 @@
     },
     {
       "key": "Forage",
-      "text": "A ware, B units"
+      "text": "A ware, B units; the row Ticks equal UN1 ForageTicks (the executor counts the row Ticks); spoil days stay in Unification.UN1 ForageSpoilDays because ObjectDef has no spoil field"
     },
     {
       "key": "DrinkWash",
-      "text": "A channel relieved, B relief permille, C 1 = fresh water only (drink), 0 = any water (wash)"
+      "text": "A 0 drink (fresh water only, relieves Thirst), 1 wash (any water, relieves Hygiene) as UN1's handler reads it; B relief in pressure points 0-1000 (UN1 currently takes the amount from Unification.UN1 DrinkRelief and WashRelief, default 400, the same number)"
     },
     {
       "key": "Eat",
@@ -120,11 +120,11 @@
     },
     {
       "key": "durations",
-      "text": "Forage 60 ticks (rabbit 180 = 3x, G9; roots and herbs 90), collect 60 (stone 90, sheep 120), drink and wash 20, eat 20, strike 12, labour chunk 30, deliver 10"
+      "text": "Forage ticks are UN1's defaults: mushroom 30, roots 45, wild egg 40, rabbit 90 (3x the mushroom, G9), wild vegetable 30, cactus fruit 40, seaweed 35, herbs 30; collect 60 (stone 90, sheep 120), drink and wash 20, eat 20, strike 12, labour chunk 30, deliver 10"
     },
     {
       "key": "relief",
-      "text": "Water 800 permille, bed energy 300 + comfort 150 per 100 ticks, mat 200 + 100, shelter and hall floor energy 120 + warmth 40 + comfort 30, stool and bench comfort 100, cradle 250 + 150, ornament room 150, chest room 80, toy fun 300, herbs pain 500"
+      "text": "Drink and wash 400 (UN1), bed energy 300 + comfort 150 per 100 ticks, mat 200 + 100, shelter and hall floor energy 120 + warmth 40 + comfort 30, stool and bench comfort 100, cradle 250 + 150, ornament room 150, chest room 80, toy fun 300, herbs pain 500"
     },
     {
       "key": "weights",
@@ -136,11 +136,11 @@
     },
     {
       "key": "nutrition",
-      "text": "Hunger relief permille: mushroom 150, roots 200, wild egg 250, rabbit 350, wild vegetable 150, cactus fruit 120, seaweed 100, cooked fish 400, raw fish 0"
+      "text": "Hunger relief in pressure points (UN1 ForageNutrition): mushroom 120, roots 200, wild egg 180, rabbit 350, wild vegetable 160, cactus fruit 100, seaweed 90, herbs 0; cooked fish 400, raw fish 0"
     },
     {
       "key": "terrainWetland",
-      "text": "Clay shelter and clay raw use the legacy terrain Hills (the legacy clay terrain) until UN1 adds a wetland terrain"
+      "text": "The clay shelter stands on the stored terrain Hills, which UN1 maps to the Wetland hex type (HexTypes.OfTerrain)"
     },
     {
       "key": "endowment",
@@ -1653,9 +1653,8 @@
             "effects": [
               {
                 "kind": "DrinkWash",
-                "a": "Thirst",
-                "b": 800,
-                "c": 1
+                "a": 0,
+                "b": 400
               }
             ]
           },
@@ -1670,9 +1669,8 @@
             "effects": [
               {
                 "kind": "DrinkWash",
-                "a": "Hygiene",
-                "b": 800,
-                "c": 0
+                "a": 1,
+                "b": 400
               }
             ]
           }
@@ -1719,7 +1717,7 @@
       "fixApplied": [],
       "corrections": [],
       "status": "implemented",
-      "reason": "Raw clay from the clay gatherer's shelter (wetland dice stock; legacy terrain Hills until UN1 adds wetland)",
+      "reason": "Raw clay from the clay gatherer's shelter (wetland dice stock; stored as terrain Hills, which UN1 maps to Wetland)",
       "def": {
         "ware": "Clay",
         "weight": 3,
@@ -1885,7 +1883,7 @@
       "def": {
         "ware": "Mushroom",
         "weight": 1,
-        "nutrition": 150,
+        "nutrition": 120,
         "strikeAttack": 0,
         "defence": 0,
         "role": "forage",
@@ -1899,7 +1897,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 60,
+            "ticks": 30,
             "effects": [
               {
                 "kind": "Forage",
@@ -1969,7 +1967,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 90,
+            "ticks": 45,
             "effects": [
               {
                 "kind": "Forage",
@@ -2025,7 +2023,7 @@
       "def": {
         "ware": "WildEgg",
         "weight": 1,
-        "nutrition": 250,
+        "nutrition": 180,
         "strikeAttack": 0,
         "defence": 0,
         "role": "forage",
@@ -2039,7 +2037,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 60,
+            "ticks": 40,
             "effects": [
               {
                 "kind": "Forage",
@@ -2091,7 +2089,7 @@
         "C: an offer is a gesture; a hand-over is a separate physical transfer; foods differ only by edibility"
       ],
       "status": "implemented",
-      "reason": "Pasture forage: three times the mushroom forage time, edible raw; the hunter's hut is UB (G9)",
+      "reason": "Pasture forage: three times the mushroom forage time (90 against 30), edible raw; the hunter's hut is UB (G9)",
       "def": {
         "ware": "Rabbit",
         "weight": 2,
@@ -2109,7 +2107,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 180,
+            "ticks": 90,
             "effects": [
               {
                 "kind": "Forage",
@@ -2165,7 +2163,7 @@
       "def": {
         "ware": "WildVeg",
         "weight": 1,
-        "nutrition": 150,
+        "nutrition": 160,
         "strikeAttack": 0,
         "defence": 0,
         "role": "forage",
@@ -2179,7 +2177,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 60,
+            "ticks": 30,
             "effects": [
               {
                 "kind": "Forage",
@@ -2235,7 +2233,7 @@
       "def": {
         "ware": "CactusFruit",
         "weight": 1,
-        "nutrition": 120,
+        "nutrition": 100,
         "strikeAttack": 0,
         "defence": 0,
         "role": "forage",
@@ -2249,7 +2247,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 60,
+            "ticks": 40,
             "effects": [
               {
                 "kind": "Forage",
@@ -2305,7 +2303,7 @@
       "def": {
         "ware": "Seaweed",
         "weight": 1,
-        "nutrition": 100,
+        "nutrition": 90,
         "strikeAttack": 0,
         "defence": 0,
         "role": "forage",
@@ -2319,7 +2317,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 60,
+            "ticks": 35,
             "effects": [
               {
                 "kind": "Forage",
@@ -3033,7 +3031,7 @@
             "slot": 1,
             "source": "EmptyHand",
             "reach": 1,
-            "ticks": 90,
+            "ticks": 30,
             "effects": [
               {
                 "kind": "Forage",
@@ -7123,7 +7121,7 @@
         "G: names normalised by alias; L1 shelters have basic sleeping spots only; listed furnishings are craft options"
       ],
       "status": "implemented",
-      "reason": "Collection shelter L1-L3 for clay; stands on wetland (legacy terrain Hills); same numbers as the other five",
+      "reason": "Collection shelter L1-L3 for clay; stands on wetland (stored as terrain Hills, which UN1 maps to Wetland); same numbers as the other five",
       "def": {
         "founder": false,
         "placement": "Terrain",

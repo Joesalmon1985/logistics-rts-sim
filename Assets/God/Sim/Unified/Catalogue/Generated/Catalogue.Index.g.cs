@@ -8,7 +8,7 @@ namespace God.Sim.Unified
     public static partial class Catalogue
     {
         /// <summary>The SHA-256 of the canonical active-row JSON (catalogue.json, rows sorted by CatId); recorded by UN6t's artifact header.</summary>
-        public const string CatalogueHash = "6dda890c915cde65e20b88277175371d969b231de930c5b71b284f8d20aa212b";
+        public const string CatalogueHash = "23b9f4c330475cba7d8e3828df2de2c9e97a5f1f60ffa25119e0d5ac52bedb70";
 
         /// <summary>The strike attack of an empty hand (manifest fix E); held objects carry their own <c>ObjectDef.StrikeAttack</c>.</summary>
         public const int EmptyHandStrikeAttack = 1;
@@ -178,9 +178,9 @@ namespace God.Sim.Unified
             "wood tongs",
             "wool",
             "work surface",
-        };
+        });
 
-        private static readonly ushort[] ObjectIds = new ushort[]
+        private static readonly ReadOnlyArray<ushort> ObjectIds = new ReadOnlyArray<ushort>(new ushort[]
         {
             1091, 1129, 1001, 1092, 1084, 1093, 1003, 1127, 1080, 1004, 1078, 1029,
             1005, 1082, 1065, 1006, 1061, 1007, 1066, 1049, 1108, 1072, 1051, 1041,
@@ -195,7 +195,7 @@ namespace God.Sim.Unified
             1094, 1091, 1125, 1060, 1059, 1132, 1133, 1119, 1135, 1120, 1123, 1037,
             1038, 1104, 1114, 1113, 1134, 1039, 1112, 1112, 1137, 1040, 1052, 1046,
             1048, 1024, 1071, 1056, 1102,
-        };
+        });
 
         /// <summary>The CatId of a object name or alias (lower case, as written in the catalogue), or <see cref="CatId.None"/>. Binary search, no allocation.</summary>
         public static ushort ObjectIdOfName(string lowerName)
@@ -273,9 +273,9 @@ namespace God.Sim.Unified
             "well",
             "wood hardener",
             "woodcutter's shelter",
-        };
+        });
 
-        private static readonly ushort[] BuildingIds = new ushort[]
+        private static readonly ReadOnlyArray<ushort> BuildingIds = new ReadOnlyArray<ushort>(new ushort[]
         {
             2026, 2011, 2012, 2013, 2031, 2027, 2028, 2055, 2032, 2014, 2039, 2051,
             2040, 2001, 2060, 2044, 2045, 2046, 2047, 2048, 2049, 2033, 2015, 2002,
@@ -283,7 +283,7 @@ namespace God.Sim.Unified
             2018, 2050, 2056, 2061, 2054, 2007, 2019, 2063, 2008, 2064, 2009, 2062,
             2058, 2052, 2020, 2021, 2057, 2006, 2059, 2022, 2065, 2023, 2037, 2030,
             2024, 2038, 2010, 2025, 2005,
-        };
+        });
 
         /// <summary>The CatId of a building name or alias (lower case, as written in the catalogue), or <see cref="CatId.None"/>. Binary search, no allocation.</summary>
         public static ushort BuildingIdOfName(string lowerName)

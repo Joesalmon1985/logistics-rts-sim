@@ -158,8 +158,8 @@ namespace God.Catalogue
             N(c, "slots", "Slot 0 means the first matching row; 1-3 disambiguate rows with the same target and source. Names used: deposit/install/input/occupy/drink/place/work 1-3 as listed per row; the slot only selects the row, the effect kind defines the behaviour");
             N(c, "sourceArg", "Source Ware: SourceArg is the ware (name in this file, enum value in the table); Source Tool: SourceArg is the tool's object CatId; Source Any: any carried lot; EmptyHand: SourceArg unused");
             N(c, "targetCat", "ForagePlace, RawNode and WaterPoint rows carry the CatId of the object they yield; Fixture rows the CatId of the furnishing; Site, Placement and Building rows the CatId of the building design; Self and Npc rows carry none");
-            N(c, "Forage", "A ware, B units");
-            N(c, "DrinkWash", "A channel relieved, B relief permille, C 1 = fresh water only (drink), 0 = any water (wash)");
+            N(c, "Forage", "A ware, B units; the row Ticks equal UN1 ForageTicks (the executor counts the row Ticks); spoil days stay in Unification.UN1 ForageSpoilDays because ObjectDef has no spoil field");
+            N(c, "DrinkWash", "A 0 drink (fresh water only, relieves Thirst), 1 wash (any water, relieves Hygiene) as UN1's handler reads it; B relief in pressure points 0-1000 (UN1 currently takes the amount from Unification.UN1 DrinkRelief and WashRelief, default 400, the same number)");
             N(c, "Eat", "A channel (Hunger); the amount is ObjectDef.Nutrition of the eaten lot (permille of the Hunger range)");
             N(c, "NeedRelief", "A channel, B relief permille; in a row with Occupy it applies every Ticks of occupancy, otherwise once at completion");
             N(c, "CollectRaw", "A ware, B units, C the CatId of the collection building that must stand within its radius of the node; a Tool source only shortens Ticks by ToolMultiplier");
@@ -181,12 +181,12 @@ namespace God.Catalogue
             N(d, "provisional", "Every number in this file is a configurable provisional default, not an owner fact (brief Part C); D9.4 b and D9.5 values are marked in the manifest");
             N(d, "fixtureSlots", "Collection shelter fixture slots 0/2/4 at L1/L2/L3 (L1 has basic sleeping spots only, G14); hall 15 (12 mats, 2 benches, 1 chest)");
             N(d, "carpenterLabour", "Carpenter labour 300 ticks (the workbook gives no number); recipe labour 60-180 ticks per product");
-            N(d, "durations", "Forage 60 ticks (rabbit 180 = 3x, G9; roots and herbs 90), collect 60 (stone 90, sheep 120), drink and wash 20, eat 20, strike 12, labour chunk 30, deliver 10");
-            N(d, "relief", "Water 800 permille, bed energy 300 + comfort 150 per 100 ticks, mat 200 + 100, shelter and hall floor energy 120 + warmth 40 + comfort 30, stool and bench comfort 100, cradle 250 + 150, ornament room 150, chest room 80, toy fun 300, herbs pain 500");
+            N(d, "durations", "Forage ticks are UN1's defaults: mushroom 30, roots 45, wild egg 40, rabbit 90 (3x the mushroom, G9), wild vegetable 30, cactus fruit 40, seaweed 35, herbs 30; collect 60 (stone 90, sheep 120), drink and wash 20, eat 20, strike 12, labour chunk 30, deliver 10");
+            N(d, "relief", "Drink and wash 400 (UN1), bed energy 300 + comfort 150 per 100 ticks, mat 200 + 100, shelter and hall floor energy 120 + warmth 40 + comfort 30, stool and bench comfort 100, cradle 250 + 150, ornament room 150, chest room 80, toy fun 300, herbs pain 500");
             N(d, "weights", "Carry weights: forage and hay 1, fish 2, wood and clay 3, stone 4, sheep 10, bed and chest 12, latrine 15 (the carry limit is UN3b/Goods)");
             N(d, "toolMultipliers", "Tools are duration multipliers, never gates (G13): stone axe 0.6 on wood collection, stone hammer 0.7 on construction labour, stone pick 0.7 on stone collection (the pick is UB: defined with OBJ-070); strike attack 2 for held stone tools, 1 for an empty hand");
-            N(d, "nutrition", "Hunger relief permille: mushroom 150, roots 200, wild egg 250, rabbit 350, wild vegetable 150, cactus fruit 120, seaweed 100, cooked fish 400, raw fish 0");
-            N(d, "terrainWetland", "Clay shelter and clay raw use the legacy terrain Hills (the legacy clay terrain) until UN1 adds a wetland terrain");
+            N(d, "nutrition", "Hunger relief in pressure points (UN1 ForageNutrition): mushroom 120, roots 200, wild egg 180, rabbit 350, wild vegetable 160, cactus fruit 100, seaweed 90, herbs 0; cooked fish 400, raw fish 0");
+            N(d, "terrainWetland", "The clay shelter stands on the stored terrain Hills, which UN1 maps to the Wetland hex type (HexTypes.OfTerrain)");
             N(d, "endowment", "OBJ-093 Sleeping mat stays stage UB (reed, G7) and is generated as an endowment-only definition for the founder hall (G6)");
         }
 

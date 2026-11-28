@@ -23,7 +23,7 @@ namespace God.Catalogue
         static readonly Dictionary<string, ArgType[]> Args = new Dictionary<string, ArgType[]>
         {
             ["Forage"] = new[] { ArgType.Ware, ArgType.Int, ArgType.Unused },
-            ["DrinkWash"] = new[] { ArgType.Channel, ArgType.Permille, ArgType.Flag },
+            ["DrinkWash"] = new[] { ArgType.Flag, ArgType.Permille, ArgType.Unused },
             ["Eat"] = new[] { ArgType.Channel, ArgType.Unused, ArgType.Unused },
             ["NeedRelief"] = new[] { ArgType.Channel, ArgType.Permille, ArgType.Unused },
             ["CollectRaw"] = new[] { ArgType.Ware, ArgType.Int, ArgType.Cat },
@@ -102,7 +102,10 @@ namespace God.Catalogue
             int v;
             switch (e.Kind)
             {
-                case "NeedRelief": case "DrinkWash": case "Treat": case "Relieve": case "Eat":
+                case "DrinkWash":
+                    if (Resolve(e.A, ArgType.Flag, doc, wares, out v, out _)) yield return v == 0 ? 5 : 6;
+                    break;
+                case "NeedRelief": case "Treat": case "Relieve": case "Eat":
                     if (Resolve(e.A, ArgType.Channel, doc, wares, out v, out _)) yield return v;
                     break;
                 case "Fuel": yield return 2; break;

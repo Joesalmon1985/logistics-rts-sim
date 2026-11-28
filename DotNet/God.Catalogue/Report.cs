@@ -89,7 +89,7 @@ namespace God.Catalogue
                 "Effect argument meanings (catalogue.json `conventions`) are UN3a's defaults; UN1, UN3b, UN4 and UN8a confirm or request a change (the schema is frozen, so a change is a regenerate).",
                 "Hall hearth: the hall has no WorkIn bin, so its cook row reads the inputs from the Storage bin (UN3b).",
                 "OBJ-093 Sleeping mat stays stage UB (reed) but has an endowment-only definition so the hall's 12 mats can be installed and occupied (G6, G7); the lead may instead promote it in the manifest.",
-                "Wetland has no terrain in the legacy `Terrain` enum: the clay shelter and clay raw use `Hills` until UN1 adds wetland.",
+                "Wetland: the clay shelter is placed on stored terrain `Hills`, which UN1 maps to the Wetland hex type; UN1 should confirm its placement check reads the stored terrain.",
                 "Fixture slots of the collection shelters (0/2/4) and the carpenter labour (300 ticks) are defaults not given by the workbook or D9.",
                 "Empty-hand strike attack 1 is the generated constant `Catalogue.EmptyHandStrikeAttack` (the schema has no row for an unarmed strike); UN8a reads it.",
                 "Ware ids 94-159 and the reuse of ten legacy ids (section 5) need a lead-run edit of `Economy/Wares.cs`.",

@@ -43,9 +43,9 @@ namespace God.Sim.Unified
                     new InteractionDef[]
                     {
                         new InteractionDef(TargetKind.WaterPoint, 1039, 1, SourceReq.EmptyHand, 0, 1, 20,
-                            new EffectDef(EffectKind.DrinkWash, (short)5, (short)800, (short)1)),
+                            new EffectDef(EffectKind.DrinkWash, (short)0, (short)400, (short)0)),
                         new InteractionDef(TargetKind.WaterPoint, 1039, 2, SourceReq.EmptyHand, 0, 1, 20,
-                            new EffectDef(EffectKind.DrinkWash, (short)6, (short)800, (short)0))
+                            new EffectDef(EffectKind.DrinkWash, (short)1, (short)400, (short)0))
                     }),
                 // OBJ-041 Clay
                 new ObjectDef(1041, Ware.Clay, false, 3, 0, 0, 0,
@@ -72,11 +72,11 @@ namespace God.Sim.Unified
                             new EffectDef(EffectKind.CollectRaw, (short)Ware.Hay, (short)1, (short)2053))
                     }),
                 // OBJ-044 Mushrooms
-                new ObjectDef(1044, Ware.Mushroom, false, 1, 150, 0, 0,
+                new ObjectDef(1044, Ware.Mushroom, false, 1, 120, 0, 0,
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1044, 1, SourceReq.EmptyHand, 0, 1, 60,
+                        new InteractionDef(TargetKind.ForagePlace, 1044, 1, SourceReq.EmptyHand, 0, 1, 30,
                             new EffectDef(EffectKind.Forage, (short)Ware.Mushroom, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.Mushroom, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
@@ -86,17 +86,17 @@ namespace God.Sim.Unified
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1045, 1, SourceReq.EmptyHand, 0, 1, 90,
+                        new InteractionDef(TargetKind.ForagePlace, 1045, 1, SourceReq.EmptyHand, 0, 1, 45,
                             new EffectDef(EffectKind.Forage, (short)Ware.Roots, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.Roots, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
                     }),
                 // OBJ-046 Wild eggs
-                new ObjectDef(1046, Ware.WildEgg, false, 1, 250, 0, 0,
+                new ObjectDef(1046, Ware.WildEgg, false, 1, 180, 0, 0,
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1046, 1, SourceReq.EmptyHand, 0, 1, 60,
+                        new InteractionDef(TargetKind.ForagePlace, 1046, 1, SourceReq.EmptyHand, 0, 1, 40,
                             new EffectDef(EffectKind.Forage, (short)Ware.WildEgg, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.WildEgg, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
@@ -106,37 +106,37 @@ namespace God.Sim.Unified
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1047, 1, SourceReq.EmptyHand, 0, 1, 180,
+                        new InteractionDef(TargetKind.ForagePlace, 1047, 1, SourceReq.EmptyHand, 0, 1, 90,
                             new EffectDef(EffectKind.Forage, (short)Ware.Rabbit, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.Rabbit, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
                     }),
                 // OBJ-048 Wild vegetables
-                new ObjectDef(1048, Ware.WildVeg, false, 1, 150, 0, 0,
+                new ObjectDef(1048, Ware.WildVeg, false, 1, 160, 0, 0,
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1048, 1, SourceReq.EmptyHand, 0, 1, 60,
+                        new InteractionDef(TargetKind.ForagePlace, 1048, 1, SourceReq.EmptyHand, 0, 1, 30,
                             new EffectDef(EffectKind.Forage, (short)Ware.WildVeg, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.WildVeg, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
                     }),
                 // OBJ-049 Cactus fruit
-                new ObjectDef(1049, Ware.CactusFruit, false, 1, 120, 0, 0,
+                new ObjectDef(1049, Ware.CactusFruit, false, 1, 100, 0, 0,
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1049, 1, SourceReq.EmptyHand, 0, 1, 60,
+                        new InteractionDef(TargetKind.ForagePlace, 1049, 1, SourceReq.EmptyHand, 0, 1, 40,
                             new EffectDef(EffectKind.Forage, (short)Ware.CactusFruit, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.CactusFruit, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
                     }),
                 // OBJ-050 Seaweed
-                new ObjectDef(1050, Ware.Seaweed, false, 1, 100, 0, 0,
+                new ObjectDef(1050, Ware.Seaweed, false, 1, 90, 0, 0,
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1050, 1, SourceReq.EmptyHand, 0, 1, 60,
+                        new InteractionDef(TargetKind.ForagePlace, 1050, 1, SourceReq.EmptyHand, 0, 1, 35,
                             new EffectDef(EffectKind.Forage, (short)Ware.Seaweed, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Self, 0, 1, SourceReq.Ware, (int)Ware.Seaweed, 0, 20,
                             new EffectDef(EffectKind.Eat, (short)0, (short)0, (short)0))
@@ -176,7 +176,7 @@ namespace God.Sim.Unified
                     new ToolMul[] {  },
                     new InteractionDef[]
                     {
-                        new InteractionDef(TargetKind.ForagePlace, 1075, 1, SourceReq.EmptyHand, 0, 1, 90,
+                        new InteractionDef(TargetKind.ForagePlace, 1075, 1, SourceReq.EmptyHand, 0, 1, 30,
                             new EffectDef(EffectKind.Forage, (short)Ware.Herbs, (short)1, (short)0)),
                         new InteractionDef(TargetKind.Npc, 0, 3, SourceReq.Ware, (int)Ware.Herbs, 1, 60,
                             new EffectDef(EffectKind.Treat, (short)4, (short)500, (short)1)),

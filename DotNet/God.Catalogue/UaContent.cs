@@ -60,19 +60,19 @@ namespace God.Catalogue
             d["OBJ-043"] = O("Hay", 1, 0, "raw", Collect("OBJ-043", "Hay", 60, "BLD-053"));
             // water: a fresh-water point (natural or well); drink and wash are separate slots (E, G3)
             d["OBJ-039"] = O("Water", 1, 0, "water",
-                I("drink", "WaterPoint", "OBJ-039", 1, "EmptyHand", null, 1, 20, E("DrinkWash", "Thirst", 800, 1)),
-                I("wash", "WaterPoint", "OBJ-039", 2, "EmptyHand", null, 1, 20, E("DrinkWash", "Hygiene", 800, 0)));
+                I("drink", "WaterPoint", "OBJ-039", 1, "EmptyHand", null, 1, 20, E("DrinkWash", 0, 400)),
+                I("wash", "WaterPoint", "OBJ-039", 2, "EmptyHand", null, 1, 20, E("DrinkWash", 1, 400)));
             // the seven forages: infinite, time-limited, edible raw; offers are gestures (C)
-            d["OBJ-044"] = O("Mushroom", 1, 150, "forage", Forage("OBJ-044", "Mushroom", 60), Eat("Mushroom"));
-            d["OBJ-045"] = O("Roots", 1, 200, "forage", Forage("OBJ-045", "Roots", 90), Eat("Roots"));
-            d["OBJ-046"] = O("WildEgg", 1, 250, "forage", Forage("OBJ-046", "WildEgg", 60), Eat("WildEgg"));
-            d["OBJ-047"] = O("Rabbit", 2, 350, "forage", Forage("OBJ-047", "Rabbit", 180), Eat("Rabbit"));
-            d["OBJ-048"] = O("WildVeg", 1, 150, "forage", Forage("OBJ-048", "WildVeg", 60), Eat("WildVeg"));
-            d["OBJ-049"] = O("CactusFruit", 1, 120, "forage", Forage("OBJ-049", "CactusFruit", 60), Eat("CactusFruit"));
-            d["OBJ-050"] = O("Seaweed", 1, 100, "forage", Forage("OBJ-050", "Seaweed", 60), Eat("Seaweed"));
+            d["OBJ-044"] = O("Mushroom", 1, 120, "forage", Forage("OBJ-044", "Mushroom", 30), Eat("Mushroom"));
+            d["OBJ-045"] = O("Roots", 1, 200, "forage", Forage("OBJ-045", "Roots", 45), Eat("Roots"));
+            d["OBJ-046"] = O("WildEgg", 1, 180, "forage", Forage("OBJ-046", "WildEgg", 40), Eat("WildEgg"));
+            d["OBJ-047"] = O("Rabbit", 2, 350, "forage", Forage("OBJ-047", "Rabbit", 90), Eat("Rabbit"));
+            d["OBJ-048"] = O("WildVeg", 1, 160, "forage", Forage("OBJ-048", "WildVeg", 30), Eat("WildVeg"));
+            d["OBJ-049"] = O("CactusFruit", 1, 100, "forage", Forage("OBJ-049", "CactusFruit", 40), Eat("CactusFruit"));
+            d["OBJ-050"] = O("Seaweed", 1, 90, "forage", Forage("OBJ-050", "Seaweed", 35), Eat("Seaweed"));
             d["OBJ-054"] = O("CookedFish", 1, 400, "food", Eat("CookedFish"));
             // herbs: forage-like source (G5); a remedy used on a reachable person or on self; no flag, the person may walk away (D)
-            d["OBJ-075"] = O("Herbs", 1, 0, "remedy", Forage("OBJ-075", "Herbs", 90),
+            d["OBJ-075"] = O("Herbs", 1, 0, "remedy", Forage("OBJ-075", "Herbs", 30),
                 I("treat", "Npc", null, 3, "Ware", "Herbs", 1, 60, E("Treat", "Pain", 500, 1)),
                 I("treat-self", "Self", null, 3, "Ware", "Herbs", 0, 60, E("Treat", "Pain", 500, 1)));
             // processed inputs (recipe inputs only)
@@ -235,13 +235,13 @@ namespace God.Catalogue
             ["OBJ-016"] = "Raw stone from the stonecutter's shelter (mountain dice stock); the granite mine is Later (no bootstrap path)",
             ["OBJ-024"] = "Raw wood from the woodcutter's shelter (forest dice stock); the stone axe only shortens the collection (G13)",
             ["OBJ-039"] = "Water: natural fresh-water points plus the well; drink and wash are separate slots, no lot is created (G3)",
-            ["OBJ-041"] = "Raw clay from the clay gatherer's shelter (wetland dice stock; legacy terrain Hills until UN1 adds wetland)",
+            ["OBJ-041"] = "Raw clay from the clay gatherer's shelter (wetland dice stock; stored as terrain Hills, which UN1 maps to Wetland)",
             ["OBJ-042"] = "Sheep from the shepherd's shelter (pasture dice stock); a unique live animal, never a stack",
             ["OBJ-043"] = "Raw hay from the hay gatherer's shelter (fields dice stock)",
             ["OBJ-044"] = "Forest forage: infinite, time-limited, edible raw",
             ["OBJ-045"] = "Mountain forage: infinite, time-limited, edible raw",
             ["OBJ-046"] = "Wetland forage: infinite, time-limited, edible raw",
-            ["OBJ-047"] = "Pasture forage: three times the mushroom forage time, edible raw; the hunter's hut is UB (G9)",
+            ["OBJ-047"] = "Pasture forage: three times the mushroom forage time (90 against 30), edible raw; the hunter's hut is UB (G9)",
             ["OBJ-048"] = "Fields forage: infinite, time-limited, edible raw",
             ["OBJ-049"] = "Desert forage: infinite, time-limited, edible raw",
             ["OBJ-050"] = "Coast forage (shore nodes only, G1): infinite, time-limited, edible raw",
@@ -265,7 +265,7 @@ namespace God.Catalogue
             ["BLD-005"] = "Collection shelter L1-L3 for wood; stands on forest; same numbers as the other five",
             ["BLD-006"] = "Collection shelter L1-L3 for stone; stands on mountain; same numbers as the other five",
             ["BLD-010"] = "Well: 4 wood + 300 ticks; creates a fresh-water point where it stands (G3)",
-            ["BLD-051"] = "Collection shelter L1-L3 for clay; stands on wetland (legacy terrain Hills); same numbers as the other five",
+            ["BLD-051"] = "Collection shelter L1-L3 for clay; stands on wetland (stored as terrain Hills, which UN1 maps to Wetland); same numbers as the other five",
             ["BLD-052"] = "Collection shelter L1-L3 for sheep; stands on pasture; same numbers as the other five",
             ["BLD-053"] = "Collection shelter L1-L3 for hay; stands on fields; same numbers as the other five",
             ["BLD-054"] = "Primitive hearth: 1 stone + 120 ticks; cooked fish only in UA (meat, charcoal, mortar, infusion, flour are UB); fuel 1 wood per 1,200 ticks, warms within 2 nodes",

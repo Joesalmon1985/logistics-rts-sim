@@ -410,10 +410,10 @@ namespace God.Runner.Tests
             Assert.Greater(Cat.Object(1054).Nutrition, 0);
             foreach (var f in new[] { 1044, 1045, 1046, 1047, 1048, 1049, 1050 }) Assert.Greater(Cat.Object((ushort)f).Nutrition, 0, f.ToString());
             Assert.AreEqual(3 * Cat.Object(1044).Interactions.First(i => i.Effects[0].Kind == EffectKind.Forage).Ticks, Cat.Object(1047).Interactions.First(i => i.Effects[0].Kind == EffectKind.Forage).Ticks);
-            // water: drink and wash are separate slots; the drink slot needs fresh water
+            // water: drink and wash are separate slots; UN1 reads A 0 as drink (fresh water only) and A 1 as wash
             var water = Cat.Object(1039);
             var drink = water.Interactions.First(i => i.Slot == 1).Effects[0]; var wash = water.Interactions.First(i => i.Slot == 2).Effects[0];
-            Assert.AreEqual(EffectKind.DrinkWash, drink.Kind); Assert.AreEqual(5, drink.A); Assert.AreEqual(1, drink.C); Assert.AreEqual(6, wash.A); Assert.AreEqual(0, wash.C);
+            Assert.AreEqual(EffectKind.DrinkWash, drink.Kind); Assert.AreEqual(0, drink.A, "UN1: A 0 = drink"); Assert.AreEqual(1, wash.A, "UN1: A 1 = wash"); Assert.AreEqual(400, drink.B); Assert.AreEqual(400, wash.B);
             // herbs treat pain on another person or on self; no flag
             Assert.IsTrue(Cat.Object(1075).Interactions.Any(i => i.TargetKind == TargetKind.Npc && i.Effects[0].Kind == EffectKind.Treat));
             Assert.IsTrue(Cat.Object(1075).Interactions.Any(i => i.TargetKind == TargetKind.Self && i.Effects[0].Kind == EffectKind.Treat));
@@ -468,6 +468,37 @@ namespace God.Runner.Tests
             // the manifest status column equals the report's status
             var csv = Store.ReadLf(p.Json.Replace("catalogue.json", "catalogue.csv")).Split('\n', StringSplitOptions.RemoveEmptyEntries);
             Assert.AreEqual(1 + 138 + 65, csv.Length);
+        }
+
+
+        // ---------- reconciliation with UN1's world and needs (merged on unity/poc) ----------
+        [Test]
+        public void Catalogue_MatchesUN1Defaults()
+        {
+            var t = new UN1Tuning();
+            var foods = new[] { (Ware.Mushroom, 1044), (Ware.Roots, 1045), (Ware.WildEgg, 1046), (Ware.Rabbit, 1047), (Ware.WildVeg, 1048), (Ware.CactusFruit, 1049), (Ware.Seaweed, 1050), (Ware.Herbs, 1075) };
+            foreach (var (ware, id) in foods)
+            {
+                int idx = HexTypes.ForageIndex(ware);
+                var o = Cat.Object((ushort)id);
+                Assert.AreEqual(ware, o.Ware);
+                var row = o.Interactions.First(i => i.Effects[0].Kind == EffectKind.Forage);
+                Assert.AreEqual(t.ForageTicks[idx], row.Ticks, ware + " forage ticks equal UN1's default");
+                Assert.AreEqual(t.ForageNutrition[idx], o.Nutrition, ware + " nutrition equals UN1's default");
+                Assert.AreEqual((short)ware, row.Effects[0].A); Assert.AreEqual(TargetKind.ForagePlace, row.TargetKind);
+            }
+            var water = Cat.Object(1039);
+            Assert.AreEqual(t.DrinkTicks, water.Interactions.First(i => i.Slot == 1).Ticks); Assert.AreEqual(t.WashTicks, water.Interactions.First(i => i.Slot == 2).Ticks);
+            Assert.AreEqual(t.DrinkRelief, water.Interactions.First(i => i.Slot == 1).Effects[0].B); Assert.AreEqual(t.WashRelief, water.Interactions.First(i => i.Slot == 2).Effects[0].B);
+            // the raws of UN1's hex types are the wares of the collection shelters
+            foreach (var (h, shelter) in new[] { (HexType.Forest, 2005), (HexType.Mountain, 2006), (HexType.Wetland, 2051), (HexType.Pastures, 2052), (HexType.Fields, 2053), (HexType.Sea, 2002) })
+                Assert.AreEqual(HexTypes.RawOf(h), Cat.Building((ushort)shelter).Levels[0].CollectWare, h.ToString());
+            // the terrain a shelter stands on is the stored terrain of its hex type
+            Assert.AreEqual((byte)HexTypes.TerrainOf(HexType.Wetland), Cat.Building(2051).PlacementArg);
+            Assert.AreEqual((byte)HexTypes.TerrainOf(HexType.Forest), Cat.Building(2005).PlacementArg);
+            Assert.AreEqual((byte)HexTypes.TerrainOf(HexType.Pastures), Cat.Building(2052).PlacementArg);
+            // every need channel a row names exists in UN1's NeedChannel order
+            foreach (var n in Doc().Needs) Assert.AreEqual(n.Name == "Freedom from pain" ? "Pain" : n.Name, ((NeedChannel)n.Channel).ToString());
         }
 
         // ---------- the command line ----------

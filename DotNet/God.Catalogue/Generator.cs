@@ -161,10 +161,10 @@ namespace God.Catalogue
                 sb.Append("        /// <summary>Lower-case ").Append(kind.ToLowerInvariant()).Append(" names and aliases, sorted ordinal; binary-searched by <see cref=\"").Append(kind).Append("IdOfName\"/>.</summary>\n");
                 sb.Append("        private static readonly ReadOnlyArray<string> ").Append(kind).Append("Keys = new ReadOnlyArray<string>(new string[]\n        {\n");
                 foreach (var a in aliases) sb.Append("            \"").Append(a.Key.Replace("\\", "\\\\").Replace("\"", "\\\"")).Append("\",\n");
-                sb.Append("        };\n\n        private static readonly ushort[] ").Append(kind).Append("Ids = new ushort[]\n        {\n");
+                sb.Append("        });\n\n        private static readonly ReadOnlyArray<ushort> ").Append(kind).Append("Ids = new ReadOnlyArray<ushort>(new ushort[]\n        {\n");
                 for (int i = 0; i < aliases.Count; i += 12)
                     sb.Append("            ").Append(string.Join(", ", aliases.Skip(i).Take(12).Select(a => N(a.Value)))).Append(",\n");
-                sb.Append("        };\n\n");
+                sb.Append("        });\n\n");
                 sb.Append("        /// <summary>The CatId of a ").Append(kind.ToLowerInvariant()).Append(" name or alias (lower case, as written in the catalogue), or <see cref=\"CatId.None\"/>. Binary search, no allocation.</summary>\n");
                 sb.Append("        public static ushort ").Append(kind).Append("IdOfName(string lowerName)\n        {\n");
                 sb.Append("            int lo = 0, hi = ").Append(kind).Append("Keys.Count - 1;\n");
