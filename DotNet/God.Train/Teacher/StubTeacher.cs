@@ -40,7 +40,6 @@ namespace God.Train.Teacher
             if (energy >= TiredAt) return ActionChoice.Of(Prim.Sleep);
             if (thirst >= NeedAt) { var a = Towards(sw, p, StubWorld.ClassWater, in m); if (a.HasValue) return a.Value; }
             if (hunger >= NeedAt && food < 0) { var a = Towards(sw, p, StubWorld.ClassForage, in m); if (a.HasValue) return a.Value; }
-            if (food < 0 && forageSlot >= 0 && room >= 0) return Use(forageSlot, Heads.SourceEmpty);
             return ActionChoice.Of(Prim.Wait);
         }
 
@@ -52,6 +51,20 @@ namespace God.Train.Teacher
 
         /// <summary>The path oracle: first step of a shortest true path to a cell within reach of the nearest wanted thing.</summary>
         private static ActionChoice? Towards(StubWorld sw, StubWorld.Person p, int cls, in ActMask m)
+        {
+            // the nearest perceived wanted thing: step or turn towards its sector when that step is free; else the path oracle
+            foreach (var x in sw.Slots)
+            {
+                if (x.cell < 0 || x.cls != cls || (cls == StubWorld.ClassForage && x.stock <= 0)) continue;
+                int rel = sw.Sector(p, x.cell);
+                if (rel != 0) return ActionChoice.Of(rel <= 3 ? Prim.TurnRight : Prim.TurnLeft);
+                if (ActMask.Allows(m.Control, (int)Prim.StepForward)) return ActionChoice.Of(Prim.StepForward);
+                break;
+            }
+            return Oracle(sw, p, cls);
+        }
+
+        private static ActionChoice? Oracle(StubWorld sw, StubWorld.Person p, int cls)
         {
             int n = sw.CellQ.Length;
             var goal = new bool[n];

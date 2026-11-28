@@ -97,7 +97,40 @@ namespace God.Train.Learn
         /// Action agreement of the quantised network with the labels, teacher-forced along each sequence (greedy, integer
         /// inference): a decision agrees when the control and every head that control uses are equal.
         /// </summary>
-        public static double Agreement(QNet net, List<Sequence> data)
+        public static double Agreement(QNet net, List<Sequence> data) => Agreement(net, data, null, null);
+
+        /// <summary>Agreement of the float master network (greedy), for the quantisation gap; never used as a result.</summary>
+        public static double FloatAgreement(NetShape s, float[] p, List<Sequence> data)
+        {
+            var c = new FCache(s); long ok = 0, n = 0;
+            foreach (var seq in data)
+            {
+                var h = new float[s.Rec];
+                foreach (var x in seq.Samples)
+                {
+                    FloatNet.Recur(s, p, x.Obs, h, c);
+                    int ctl = Greedy(s, p, Heads.Control, x.Mask.Control & ~1UL, c);
+                    bool same = ctl == x.Label.Control;
+                    int used = Heads.UsedBy(x.Label.Control);
+                    for (int hd = 1; same && hd < Heads.Count; hd++) if ((used & (1 << hd)) != 0 && Greedy(s, p, hd, Heads.MaskOf(x.Mask, hd), c) != x.Label.Get(hd)) same = false;
+                    if (same) ok++;
+                    n++;
+                }
+            }
+            return n == 0 ? 0 : (double)ok / n;
+        }
+
+        private static int Greedy(NetShape s, float[] p, int head, ulong legal, FCache c)
+        {
+            if (legal == 0) return -1;
+            FloatNet.Logits(s, p, head, c);
+            int best = -1; float bl = float.NegativeInfinity;
+            for (int k = 0; k < Heads.Size[head]; k++) if ((legal & (1UL << k)) != 0 && c.Logit[k] > bl) { bl = c.Logit[k]; best = k; }
+            return best;
+        }
+
+        /// <summary>As <see cref="Agreement(QNet, List{Sequence})"/>, also counting decisions and agreements per labelled control.</summary>
+        public static double Agreement(QNet net, List<Sequence> data, long[] perControlN, long[] perControlOk)
         {
             var sc = new QScratch(net.Shape); long ok = 0, n = 0;
             foreach (var seq in data)
@@ -111,6 +144,7 @@ namespace God.Train.Learn
                     for (int hd = 1; same && hd < Heads.Count; hd++) if ((used & (1 << hd)) != 0 && a.Get(hd) != x.Label.Get(hd)) same = false;
                     if (same) ok++;
                     n++;
+                    if (perControlN != null) { perControlN[x.Label.Control]++; if (same) perControlOk[x.Label.Control]++; }
                 }
             }
             return n == 0 ? 0 : (double)ok / n;
@@ -120,7 +154,7 @@ namespace God.Train.Learn
     public sealed class EsConfig
     {
         public int Pairs = 8, EpisodesPerCandidate = 2, Workers = 1;
-        public double Sigma = 0.02, Lr = 0.02;
+        public double Sigma = 0.005, Lr = 0.0005;
         public long Ticks = 200;
         public long[] Seeds = { 1 };
         public ulong NoiseSeed = 7;

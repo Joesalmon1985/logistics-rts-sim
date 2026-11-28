@@ -14,6 +14,7 @@ namespace God.Train.Env
         public int Radius = 5, Persons = 4, NeedMask = 0x033, TicksPerDay = 200, Forages = 6, Waters = 3, Rocks = 8, Sight = 4;
         public int HungerPerTick = 2, ThirstPerTick = 3, EnergyPerTick = 1;
         public int PainBand = 800;
+        public int WaitTicks = 20;
     }
 
     /// <summary>
@@ -43,6 +44,8 @@ namespace God.Train.Env
             public bool[] Visited;
             public int Visits;
             public BrainState Brain = new BrainState();
+            /// <summary>Things this person has perceived (by thing id), its place memory.</summary>
+            public bool[] Seen = new bool[64];
             public int SleepTicks;
         }
 
@@ -202,6 +205,18 @@ namespace God.Train.Env
                 obs[o + rel * 4 + 2] = (short)(w ? 1000 : 0); obs[o + rel * 4 + 3] = (short)(f ? 1000 : 0);
             }
             int n = Perceive(p, Slots);
+            // place memory (the person's own: only things it has perceived): slot 0 the nearest remembered water point, slot 1 the
+            // nearest remembered forage place that had stock when last seen; class, sector, distance
+            for (int k = 0; k < n; k++) if (Slots[k].cls == ClassWater || Slots[k].cls == ClassForage) p.Seen[Slots[k].id] = true;
+            o = ObsSchema.OffsetOf("places");
+            for (int slot = 0; slot < 2; slot++)
+            {
+                int cls = slot == 0 ? ClassWater : ClassForage, best = -1, bestD = int.MaxValue;
+                foreach (var t in Things)
+                    if (t.Class == cls && p.Seen[t.Id] && (cls == ClassWater || t.Stock > 0)) { int d = Dist(p.Cell, t.Cell); if (d < bestD) { bestD = d; best = t.Cell; } }
+                if (best < 0) continue;
+                obs[o + slot * 3] = (short)(cls * 250); obs[o + slot * 3 + 1] = (short)(Sector(p, best) * 200); obs[o + slot * 3 + 2] = (short)(bestD * 250);
+            }
             o = ObsSchema.OffsetOf("entities");
             ulong targets = 0; bool useOk = carrying, takeOk = false;
             for (int k = 0; k < n; k++)
@@ -318,7 +333,7 @@ namespace God.Train.Env
                 }
                 case Prim.Gesture: ticks = 3; break;
                 case Prim.Sleep: p.Asleep = true; p.SleepTicks = 0; p.Action = Prim.Sleep; return MotorStatus.Accepted;
-                case Prim.Wait: ticks = 5; break;
+                case Prim.Wait: ticks = Config.WaitTicks; break;
                 default: return MotorStatus.Invalid;
             }
             p.Action = c.Control; p.TicksLeft = ticks; p.Pending = c;

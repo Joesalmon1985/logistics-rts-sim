@@ -123,10 +123,13 @@ namespace God.Train
             var ckPath = Path.Combine(dir, "bc.ckpt");
             var start = Flag(a, "resume") && File.Exists(ckPath) ? Checkpoint.Load(ckPath) : Checkpoint.Untrained(NetShape.Default, (ulong)Int(a, "init-seed", 1), "stub");
             start.Stage = st.Id; start.SeedsText = "demo seeds " + Opt(a, "seeds", "1-8");
-            var cfg = new BcConfig { Epochs = Int(a, "epochs", st.BcEpochs), Workers = workers, Batch = Int(a, "batch", 8) };
+            var cfg = new BcConfig { Epochs = Int(a, "epochs", st.BcEpochs), Workers = workers, Batch = Int(a, "batch", 4), Lr = double.Parse(Opt(a, "lr", "0.003"), System.Globalization.CultureInfo.InvariantCulture) };
             var ck = BehaviourCloning.Train(start, demos, cfg, cfg.Epochs, (ep, loss) => o.WriteLine($"bc epoch {ep}: loss {loss:0.0000}"));
             var net = ck.ToQNet();
-            double agree = BehaviourCloning.Agreement(net, demos);
+            var pn = new long[13]; var pk = new long[13];
+            double agree = BehaviourCloning.Agreement(net, demos, pn, pk);
+            o.WriteLine($"  float master agreement {BehaviourCloning.FloatAgreement(ck.NetShape, ck.P, demos):0.0000} (quantisation gap check only)");
+            for (int c = 1; c < 13; c++) if (pn[c] > 0) o.WriteLine($"  agreement {(Prim)c}: {pk[c]}/{pn[c]}");
             var val = Pipeline.Validate(st, net, workers);
             ck.MetricsJson = Pipeline.CriteriaJson(st, CurriculumData.Check(st, val), agree, Pipeline.MeanReturn(val));
             ck.Save(ckPath);
@@ -146,7 +149,8 @@ namespace God.Train
             var esPath = Path.Combine(dir, "es.ckpt");
             var from = Flag(a, "resume") && File.Exists(esPath) ? esPath : Opt(a, "from", Path.Combine(dir, "bc.ckpt"));
             var start = Checkpoint.Load(from);
-            var cfg = new EsConfig { Pairs = Int(a, "pairs", st.EsPairs), EpisodesPerCandidate = Int(a, "episodes", st.EsEpisodes), Workers = workers, Seeds = seeds, Ticks = Pipeline.Ticks(st) };
+            var cfg = new EsConfig { Pairs = Int(a, "pairs", st.EsPairs), EpisodesPerCandidate = Int(a, "episodes", st.EsEpisodes), Workers = workers, Seeds = seeds, Ticks = Pipeline.Ticks(st),
+                Sigma = double.Parse(Opt(a, "sigma", "0.005"), System.Globalization.CultureInfo.InvariantCulture), Lr = double.Parse(Opt(a, "lr", "0.0005"), System.Globalization.CultureInfo.InvariantCulture) };
             int iters = Int(a, "iters", st.EsIterations);
             var sw = Stopwatch.StartNew();
             var ck = EvolutionStrategies.Train(start, s => Pipeline.Stub(st, s), cfg, (start.Kind == "es" ? start.Step : 0) + iters, (it, mean, best) => o.WriteLine($"es iteration {it}: mean return {mean}, best {best}"));
