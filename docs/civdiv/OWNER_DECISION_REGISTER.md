@@ -176,3 +176,13 @@ Sources: [../unification/LATEST_OWNER_AMENDMENT.md](../unification/LATEST_OWNER_
 | D10.1 | **Long-term target:** six fully functioning factions, each with 3–4 settlements made of collections of different buildings, **100–200 NPCs per faction** (owner correction, 28 Nov 2026; about 600–1,200 in total), with back-and-forth conflict between factions emerging from individuals and groups (no faction AI). |
 | D10.2 | **The island may be made bigger** so it does not run out of space: island size, hex count and settlement sites are configurable and must scale. |
 | D10.3 | *Lead default:* this is a later checkpoint (**UC "Scale"** (6 factions × 100–200 NPCs)) after UB; UA and UB keep their scope, but every unification package must avoid blocking it (bounded per-NPC brain cost, spatial indexing, decision staggering by sim state never by camera, no all-pairs scans, geometry not assuming 30 hexes). A performance package runs alongside where it does not touch the same files. |
+
+## D11: Refocus on the headless artificial life (owner, 28 Nov 2026)
+
+| Id | Decision |
+|---|---|
+| D11.1 | **Build the artificial life simulation first; the game around it afterwards.** Focus on five systems only: world, objects, buildings, NPC bodies, NPC brains, run headless. |
+| D11.2 | **Vertical slices, each proven before extending the next:** (1) one trained NPC survives independently; (2) one NPC builds and uses a collection shelter; (3) two NPCs communicate, exchange and respond to aggression; (4) twelve form a community; (5) children learn from adults; (6) six communities interact and expand; (7) larger populations and settlements. |
+| D11.3 | **Defer:** Unity visuals and UI, god mode and possession UI, HUDs, institutions, courts, industrialisation, full catalogue, heavy performance work. Existing functionality stays compiled and regression-tested but is not extended. |
+| D11.4 | **Token discipline:** one or two agents on the critical path; integrate existing work rather than restart; no further planning rewrites; one short checklist (`docs/unification/IMPLEMENTATION_CHECKLIST.md`) plus this register; targeted tests during development, full suites at checkpoints; test output to files, summaries only. |
+| D11.5 | **Evidence:** a training harness is not intelligence. Each slice is demonstrated by learned behaviour in the real headless simulation on unseen seeds. No scripted survival, construction, trade or community behaviour described as emergence. |
