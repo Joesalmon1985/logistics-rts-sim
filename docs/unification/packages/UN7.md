@@ -1,125 +1,133 @@
-# UN7: Production recipes (D8.12 data rows, workshops through the building architecture)
+# UN7: Exchange and communication (offer, promise, hand-over, claims as beliefs)
 
-Package spec for the Unification milestone (owner D8; owner brief §40 field set). Self-contained. Binding sources, in order: [OWNER_DECISION_REGISTER.md](../../civdiv/OWNER_DECISION_REGISTER.md) D8.12, D8.14, D8.17; [SHARED_ARCHITECTURAL_CONTRACTS.md](../../civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md) §7, §22.3; [LEAD_RULINGS.md](../../civdiv/LEAD_RULINGS.md) R58, R72; [UNIFICATION_DESIGN.md](../UNIFICATION_DESIGN.md) §8, §4.5 (sheep); [UNIFICATION_BASELINE.md](../UNIFICATION_BASELINE.md) §8, R9, R13; [docs/civdiv/DEVELOPMENT_PACKAGES/C1.md](../../civdiv/DEVELOPMENT_PACKAGES/C1.md) §22; [UNIFICATION_PACKAGE_INDEX.md](../UNIFICATION_PACKAGE_INDEX.md); this file. Paths are under `Assets/God/Sim/` unless they start with `Assets/`, `DotNet/` or `docs/`.
+Package spec for the Unification milestone (owner D9, 28 Nov 2026; owner brief §40 field set). Self-contained. Binding sources, in order: [LATEST_OWNER_AMENDMENT.md](../LATEST_OWNER_AMENDMENT.md), owner decisions D9.1–D9.14 and D10 in [OWNER_DECISION_REGISTER.md](../../civdiv/OWNER_DECISION_REGISTER.md), [LEAD_RULINGS.md](../../civdiv/LEAD_RULINGS.md) R72–R84, [UNIFICATION_DESIGN.md §D9](../UNIFICATION_DESIGN.md) ("§D9", controlling), [SHARED_ARCHITECTURAL_CONTRACTS.md §23](../../civdiv/SHARED_ARCHITECTURAL_CONTRACTS.md) ("§23", binding numbers and ownership), [UNIFICATION_PACKAGE_INDEX.md](../UNIFICATION_PACKAGE_INDEX.md) ("the index"; where this spec and the index disagree, the index wins), this file. Supporting: [CATALOGUE_MANIFEST.md](../CATALOGUE_MANIFEST.md) and [D9_CODE_CONFLICT_AUDIT.md](../D9_CODE_CONFLICT_AUDIT.md) ("the audit"). **D9 in one line:** hard-code physics and biology, never behaviour or social convention: no title, permission, automatic reciprocity or scripted strategy; the twelve primitive controls and twelve needs only. Paths are under `Assets/God/Sim/` unless they start with `Assets/`, `DotNet/` or `docs/`; new code lives under `Unified/` (namespace `God.Sim.Unified`).
 
 | Field | Value |
 |---|---|
-| Package identifier | **UN7** (Tier B, Wave 2, Checkpoint UB) |
-| Branch / worktree | `unity/un7` in `C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-un7`, from `unity/poc` after **UN0** and **UN3a** merged |
-| Effort | 3 agent-hours |
-| Status | Not started |
-| Recommended agent | **Sonnet** (data rows on an existing mechanism, knowledge and tool terms). Never Fable |
+| Package identifier | **UN7** (Tier UA, Wave 2, Checkpoint UA-mech; training stage S7 of UN6t-b) |
+| Branch / worktree | `unity/un7` in `C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-un7`, from `unity/poc` after **UN0** merged |
+| Effort | 3.0 agent-hours (planned H8.6–H11.6; merge H12.3 after UN2 and UN6) |
+| Status | Not started. Replaces the D8 "UN7 catalogue and recipes" spec (catalogue mapping is UN3a, recipes and furnishings UN3b, breadth UB2) |
+| Recommended agent | **Opus** (communication seam, perception and belief rules). Never Fable |
 
 ## 1. Objective
-The initial Widelands production chains exist as **data rows** run by NPCs through the building architecture: wood to planks, stone to building blocks, clay to pottery, clay to bricks, shearing and slaughter, wool to cloth, hay to bedding, fish to prepared food, wood and stone to axe and hammer. Each transformation needs actual materials, **knowledge**, **labour time**, the right **building capability and level**, and where the row says so a **tool**; nothing is produced from nothing.
+Make exchange exactly what D9.5 says it is: **communication plus separate voluntary hand-overs**. `GESTURE` carries an act (`Offer`, `Promise`, `Want`, `Accept`, `Refuse`, `Claim`, …) with referents (ware or lot, quantity, person, place) and an optional correlation id; a transfer is the generic physical hand-over (giver `USE` lot on person, slot *hold out*, then the receiver's `TAKE`); nothing is atomic, locked, enforced, owed or titled. Claims are beliefs held by people and communicated by gesture; observers update belief and trust from what they perceive, never from a ledger.
 
 ## 2. User-facing outcome
-A person with the know-how and a level-2 shelter or a workshop turns logs into planks, fish into food that keeps better and feeds more, wool into cloth; they may sell or use the product. Specialisation can follow (UN11 measures whether it did).
+Two persons can signal an offer, hand goods across and (or not) hand something back, each leg a separate physical event the player can watch; a person can refuse, delay, short-change or keep both. The person card (UN10a) later shows the person's own beliefs, never "who owns what". The world has no trade object, deal ledger or debt.
 
-## 3. Relevant design documents
-Design §8.1–8.4 (recipe rows, the first rows R1–R9, reuse and replace of Stage 3 data, tests), §4.5 (sheep: shear keeps head, slaughter), §5.1–5.2 (production capability and slots), §11.2, §14.1 U6; owner brief §6; audit §8 (the table of D8.12 chains versus Stage 3 data), R9 (ware overload), R13 (valuation); `docs/stage4/INDUSTRIAL_RESOURCES_AND_PRODUCTION_DESIGN.md` §3.4–3.5 (the later extension of the same table).
+## 3. Design anchors
+- Amendment §4 (trade is not a primitive or atomic transaction; receiver's cooperation; optional protocol id only for memory and analytics; agreements subjective; no auto enforcement), §3 (claims as local beliefs or communicated propositions; contradictory claims valid; observers cannot query truth), §5 (a theft is someone's interpretation of a `TAKE`, not an engine offence).
+- §D9.1 b item 5, §D9.5 rows A–D (no rights; offer is a gesture; hand-over is hold-out plus `TAKE`; no consent flag), §D9.2 d.
+- §23.4 (`GestureAct` 28 `Claim`; `MoveReason.HandOver` 5, `Grab` 18), §23.5 (`TAKE` of a held-out lot, `Resisted`, `Grab`), §23.9 (`MsgExt`, `HoldOut`, `Corr`, claims), §23.12 (events 1280–1299), R81, R82.
+- Audit §1.5, §2, §4.5 (call sites), §8 "Exchange".
 
 ## 4. Relevant existing source files (verified)
-- C1 recipe machinery: `Civ/Assets.cs` (`Recipe`, `AssetDef.Recipe`, `WorkTicks`), `Civ/Work.cs` (`Operate` ~143–190, `Speed` 35–47), `Civ/Employment.cs`, `Civ/SkillStore.cs`, `Population/PopulationState.cs` (`ProduceReason.Crafted`, `ConsumeReason.Built`, `Wear`), `Population/Goods.cs`, `Population/LotBin.cs`.
-- Stage 3 data (read only, seed for numbers): `Economy/BuildingDefs.cs` (processors 130–160), `Economy/EconomyDefs.cs`, `Economy/Wares.cs` (`Plank` 7, `Brick` 9, `Pottery` 14, `Cloth` 17, `Axe` 20).
-- Valuation and nutrition: `Social/Valuation.cs` (food, log, axe only, 22–41), `Population/PopulationModule.cs` (`SpoilDays`, `Nutrition` ~210–232), UN0's `ValuationPriors`.
-- UN0 seams you fill: `RecipeDef`, `RecipeTable` (`AddRowsUN7`), `BuildingTable.AddRowsUN7` (workshop kinds 30–36), UN0 ware ids 80–86, `UnificationState.UN7.cs`, `UnificationTuning.UN7.cs`, `UnificationHooks.UN7.cs`, `UnificationMindHooks.UN7.cs`, `UnificationEvents.UN7.cs`, `ValuationPriors.UN7.cs`, `UN7Mappings.cs`, `Verb.Craft` 13 (existing), `NpcVerb`s already defined.
-- UN3a: `BuildingTable` rows, the collection and construction code, production-slot fields; UN4a knowledge bits.
-- Tests to model on: `Assets/God/Tests/EditMode/Civ/C1*.cs` (workshop recipe tests), `Support/UnifiedFixtures.cs`.
+- Communication: `Comms/Messages.cs` (`Composed` at `:14`, `Emit` at `:64`, perceive/noise path from `:137`; **quantity is clamped to 0–9 at `:48`**, which is why unified quantity lives in `MsgExt`; `DealId` at `:23`, `:48`), `Comms/Message.cs` (`GestureAct` incl. `Offer 2`, `Promise 8`, `Accept 3`, `Refuse 4`, `Want 1`, `Surrender 11`, `Accuse 13`, `Teach 18`, `Threaten 26`; `DealId` at `:47`), `Comms/CommsRange.cs`, `Comms/CommsTuning.cs`.
+- Social memory and deal memory (to feed, never to enforce): `Social/SocialMemory.cs` (`HasOpenDeal` at `:39`), `Social/SocialSim.cs` (`CheckDeals` at `:431`, `OpenTrace` `:518`, `CloseTrace` `:536`, the hand-over act around `:704`; **own-lot filter `l.Owner.Kind == OwnerKind.Npc …` at `:708`** is a legacy title path to avoid), `Social/SocialCandidates.cs` (`Held` at `:42`, `InDealWith` `:320`: legacy candidates, not used in unified mode), `Social/SocialMind.cs`, `Social/SocialSystem.cs`, `Social/Valuation.cs` (own valuation, read-only).
+- Goods: `Population/Goods.cs` (`Move` with `MoveReason.HandOver`, `Fits`, `InReach`; unified branch landed by UN0), `Population/Reach.cs` (`Reach.HandOver = 1` at `:18`, mapping at `:31`).
+- Tests to model on: `DotNet/God.Runner.Tests/M5BarterTests.cs` (defection already supported: `:25`), `M5NeutralityTests.cs`, `M5NaturalTests.cs`, `Assets/God/Tests/EditMode/CommsTests.cs`.
+- Landed by UN0/UN2/UN6 (read): `Unified/Schema/*` (`Referent`, `PrimitiveControl`, `EffectKind.HoldOut 15`, `MsgExt` shape), `Unified/Motor/*` (`GESTURE` path through `Messages.Emit`, `TAKE` of held-out lots), `Brain.AddClaim` (UN6).
 
 ## 5. Allowed scope
-1. **`RecipeDef` rows** (`Recipes/RecipeRows.UN7.cs`, all values configurable in `UnificationTuning.UN7`): R1 sawing (1 `Log` → 1 `Plank`, 80 ticks), R2 stonecutting (1 `Stone` → 1 `BuildingBlock`, 100), R3 potting (2 `Clay` → 1 `Pottery`, 90), R4 firing (2 `Clay` + 1 `Log` → 2 `Brick`, 120), R5 shearing (1 sheep kept alive → 1 `Wool`, 40, once per `ShearIntervalDays` 3), R5b slaughter (1 sheep → 3 `Meat` + 1 `Hide`, 60), R6 weaving (2 `Wool` → 1 `Cloth`, 100), R7 bedding (2 `Hay` → 1 `Bedding`, 40), R8 cooking (1 `Fish` → 2 `PreparedFood`, 40), R9 toolmaking (1 `Log` + 1 `Stone` → 1 `Axe` or `Hammer`, 120). Fields: `Inputs[]`, `Outputs[]`, `LabourTicks`, `Knowledge` (a `NpcMind.Unif.Known` bit), `Skill` (`SkillClass`), `Tool` (ware + min uses, none allowed), `Needs` (a `BuildingDef` capability flag and minimum level), `Reason` (`Crafted`).
-2. **Workshop rows** in `BuildingTable` (`AddRowsUN7`): kinds 30 `Carpentry`, 31 `Stonecutting`, 32 `Pottery`, 33 `Kiln`, 34 `Weaver`, 35 `Hearth`, 36 `Toolmaker`, each Production + Storage, level 1 labour only (the same rule as the collection shelters) except where the row's data adds a material cost; plus "any shelter of level ≥ 2 with Storage" as host for R7 and R8 and "the level-3 collection shelter hosts one recipe" (the design's production slot): all by data (`ProductionSlots`, recipe lists), never by an enum switch.
-3. **The recipe act** by generalising C1's `Work.Operate` through the row (flagged additive edit): inputs consumed from the building's store or the worker's carry with `ConsumeReason.Built` (R58: until I1a's `Production` reason exists), outputs by `Goods.Produce(..., ProduceReason.Crafted, actor)` into the store **owned by the asset's owner** (C1 rule); the act is refused with reasons `NoKnowledge`, `NoTool`, `NoCapability`, `NoInput`, `NoSlot`; labour adds at `Work.Speed` (skill and tool factors: an axe gives +25 % on R1, a hammer +25 % on R2; both optional); tools wear through `ConsumeReason.Wear` per `Uses`.
-4. **Sheep** (design §4.5): enclosure acts R5 and R5b operate on UN3's `Enclosure` register (sheep count is a living stock in the ledger: `Σ intake − Σ slaughtered = enclosure heads`); shearing leaves the head count unchanged; meat and hide are lots.
-5. **Wares behaviour**: nutrition, spoilage and weight rows for `Meat`, `PreparedFood` (better nutrition and spoilage than raw fish), `Bedding` (raises sleep recovery when stored in a shelter bin of a building with beds: data `BeddingRecoveryBonusPermille` default 100), `Wool`, `Hide`, `BuildingBlock`, `Hammer`, `Pottery` (storage capacity +`PotteryStoreBonus` default 5 in a building store), `Cloth`; `Axe` stays unique and keeps its existing role (R9 ware overload resolved by using it only as the NPC tool in unified mode: no Axesmith).
-6. **Candidates** (UN7's share of the Unification quota): `Operate(recipe)` at a building the NPC may use when inputs are present or believed obtainable; the planner (UN6) produces `Craft` and `Stock` goals through `GoalRules.UN7.cs` (this package registers the `Craft` rule: trigger a learned want for the product or an observed demand; expansion obtains inputs and capability). Valuation priors for the new wares so M5 barter can price them (rows in `ValuationPriors.UN7.cs`), and instinct priors that make a hungry NPC treat `PreparedFood` and `Meat` as food.
-7. **Events:** 1233 `RecipeRun` (HV: asset, worker, recipe, outputs), 1234 `SheepSheared`, 1235 `SheepSlaughtered`; and refusal reasons on a `RecipeRefused` field of 1233's sibling code 1236 (spare, appended).
+1. **GESTURE referents and correlation:** the `MsgExt { Message; R1; R2; Quantity (0–999); Corr }` side table (`UnifiedState.MessageExt`, sorted by message id) written when UN2's `GESTURE` primitive emits; `Corr` allocated by the first gesture's speaker from `UnifiedState.NextCorr++`; **nothing ever reads `Corr` to lock, settle, enforce or reward**; the M5 `Message` layout and `DealId` are untouched (`DealId` unused in unified mode).
+2. **Hold-out and hand-over** (`EffectKind.HoldOut` handler in `EffectHandlers.UN7.cs`): `USE` a carried lot on a reachable person (slot *hold out*, optional intended receiver `To`, 0 = anyone) creates `HoldOut { Npc; Lot; To; Corr; Expires }`; the receiver's `TAKE` of that held-out lot completes `Goods.Move(MoveReason.HandOver)` (the same generic move any gift uses); expiry or the giver moving away leaves the lot in the giver's carry (`HoldOutLapsed` 1282); each completed transfer emits `HandedOver` 1281 (giver, receiver, lot, count, corr) independently. The receiver may decline simply by not taking; there is no consent flag and no automatic completion.
+3. **`TAKE` from a person:** only a held-out lot, or any carried lot of a person who is asleep, unconscious or dead (`MoveReason.Grab`, `Grabbed` 1284); from an awake person's ordinary carry `TAKE` returns `Resisted` and the victim perceives it (`TakeResisted` 1283). (The motor rule is UN2's; UN7 owns the events, the hold-out table and the perception.)
+4. **Claims as beliefs:** `GestureAct.Claim` 28 with referents communicates a claim (`ClaimCommunicated` 1285); a listener that perceives it may form a `Claim` record through `Brain.AddClaim` (Source = Told), a witness of a physical act forms one (Source = Observed); `ClaimFormed` 1286 (Full, for analytics of beliefs). Contradictory claims coexist; there is no resolution, no veto and no function returning the "true" owner.
+5. **Observer belief, trust and reputation from perception only:** extend `SocialSystem` fed inputs so that who handed what to whom and who did not return anything, **as perceived**, updates `SocialMemory` trust and grudges (reuse its subjective deal memory; remove the `Held`/own-lot basis and any title filter from the unified path); an unseen act reveals nothing to anyone (EP-04); the victim of an unwitnessed removal learns the loss, not the actor; two witnesses may interpret the same act differently (their beliefs are separate records).
+6. **Misunderstanding is allowed:** perception noise from `CommsRange`/`Messages` may garble a referent; the listener acts on what it perceived. No correction channel exists.
+7. **Optional protocol correlation for memory and analytics:** `Corr` is stored on hold-outs, hand-overs, claims and gestures so UN11a can reconstruct "an offer followed by a hand-over followed by a return (or not)" and measure fulfil, partial, delayed, defect and keep-both patterns; these are measured patterns, never policy classes.
+8. **Mechanical fixtures:** scripted primitive streams (`ControlOrigin.Fixture`, UN2 harness) for the exchange scenarios of EP-03 and EP-04, labelled mechanical evidence.
+9. Events 1280–1286, mapper stub `UN7Mappings.cs`.
 
 ## 6. Explicitly excluded scope
-Invention of recipes (only defined rows); the industrial rows (coal, oil, metal, electricity, vehicles: I1…); the ten Stage 3 processed wares not named by D8.12 (`Mortar`, `Bronze`, `Iron`, `Steel`, `Bread`, `Leather`); armouries and barracks; money; knowledge acquisition and teaching systems beyond the existing bits and C7 teaching; the building architecture itself (UN3); the planner (UN6); presentation (UN10b).
+An atomic trade, deal object, escrow, lock on goods, debt, obligation, enforced promise, automatic second leg, change of title, price list, market, currency; legacy M5 `Exchanged`/`Gift` title basis and own-goods filters in the unified path; M7/C2 loans and C3 wages as engine mechanisms (they are later social interpretations of separate transfers and labour, UB); a "theft" or "crime" event; reputation as a global score; group agreements with power over goods (UN8b, UB); new primitive verbs; edits to `Comms/Message.cs` or `Messages.cs` layouts (frozen; use the side table).
 
 ## 7. Dependencies
-Hard: **UN0**, **UN3a** (building table, store, owner, production-slot fields). Soft: UN2 (raw inputs from nodes), UN6 (goal rules: merge order UN6 before UN7 not required; rules registered when both present), UN4a (knowledge bits). Downstream: UN10b, UN11b (recipe scenarios, long run).
+- **Hard (merged first):** UN0.
+- **Merge-after:** UN2 (executor, `GESTURE`, `TAKE`), UN6 (claims API); may start earlier on the frozen interfaces with stubs.
+- **Downstream:** UN6t-b stage S7 (needs UN7 merged: H12.3), UN8b, UN11a (EP-03, EP-04, QA-02), UN10a.
 
 ## 8. Shared contracts
-**Read:** `Goods` (frozen API), `Bodies`, `Reach`, `Work.Speed`, `BuildingTable` and `Enclosure` (UN3), UN0 ids. **Modify (own files and one flagged additive edit):** `Recipes/*`, UN7 partials, `ValuationPriors.UN7.cs`, `Civ/Work.cs` (`Operate` through `RecipeDef`, gated by `Buildings.Enabled`). **Never** edit `Wares.cs`, `Goods.cs`, `PopulationState.cs`, enum files, `GodSim`, `SaveFile`.
+- **R:** §23.4, §23.5, §23.9, `Goods` (unified branch; never write title), `Messages.Emit`, `SocialMemory` (feed through public update calls only), `Brain.AddClaim` (UN6).
+- **M (own partials only):** `UnifiedState.UN7` (hold-outs, `MessageExt`, `NextCorr`), `EffectHandlers.UN7.cs`, events 1280–1299, `UN7Mappings.cs`. **Never** edit `Goods.cs`, `Message.cs`, `Messages.cs`, `GodSim`, `SaveFile`.
 
 ## 9. Files and modules owned
-`Unification/Recipes/RecipeRows.UN7.cs`, `Recipes/RecipeRun.cs`, `Recipes/Tools.cs`, `Recipes/SheepActs.cs`, `Unification/Buildings/BuildingRows.UN7.cs`, `Unification/Plan/GoalRules.UN7.cs`, `Unification/UnificationState.UN7.cs`, `UnificationTuning.UN7.cs`, `UnificationHooks.UN7.cs`, `UnificationMindHooks.UN7.cs`, `UnificationEvents.UN7.cs`, `ValuationPriors.UN7.cs`, `DotNet/God.Runner/Warehouse/UN7Mappings.cs`, `DotNet/God.Runner/Scenarios/unif_recipes.scenario.json`, `Assets/God/Tests/EditMode/Unification/UN7*.cs` (commit `.meta`), `DotNet/God.Runner.Tests/UN7*.cs`.
+`Unified/Exchange/*`, `Unified/Interactions/EffectHandlers.UN7.cs`, `Unified/UnifiedState.UN7.cs`, `Unified/Exchange/Events.UN7.cs`, `DotNet/God.Runner/Warehouse/UN7Mappings.cs` (stub; UN11a completes), tests `DotNet/God.Runner.Tests/UN7*.cs`, `EP03*.cs`, `EP04*.cs`, scenario `DotNet/God.Runner/Scenarios/unif_exchange.scenario.json`.
 
 ## 10. Required domain events
-`1233 RecipeRun (HV) { Asset, Worker, Recipe, InputUnits, OutputUnits, Owner, Control }`; `1234 SheepSheared { Asset, Worker, Wool }`; `1235 SheepSlaughtered { Asset, Worker, Meat, Hide }`; `1236 RecipeRefused { Asset, Worker, Recipe, Reason }`.
+`HeldOut` 1280, `HandedOver` 1281 (giver, receiver, lot, count, corr, origin), `HoldOutLapsed` 1282, `TakeResisted` 1283, `Grabbed` 1284, `ClaimCommunicated` 1285, `ClaimFormed` 1286 (Full). Every action event carries `Origin`. No event names a debt, owner, theft or settlement.
 
 ## 11. Save/load implications
-Saved: per-asset open recipe run (progress ticks, claimed inputs), `Enclosure.LastShearDay`, tool `Uses` on tool lots. Test `UN7_SaveLoadParity`: save mid-recipe (inputs consumed, half the labour done) and mid-shear; load; continue equals the straight run.
+Saved and hashed in the `unification` part: open hold-outs (with expiry), `MessageExt` rows (bounded: oldest pruned after a fixed window (L) while keeping rows referenced by open hold-outs), `NextCorr`. Test `UN7_SaveLoadParity` (U-P6): save with a hold-out open and a half-heard gesture, load, continue: equal to the straight run. The save version is the lead's.
 
 ## 12. Warehouse implications
-Mapper `UN7Mappings.cs` for 1233–1236; `UN7_EventsRoundTrip`. UN11 defines `recipe_run` and extends the ledger tables to the new wares and reads the existing `Crafted` reason.
+Mapper stub for 1280–1286; UN11a's `0045_unification_social.sql` keeps **separate tables for events (moves, hand-overs), observations (who perceived what) and claims or promises (beliefs and communications)**; no legitimate-owner or theft fact. Reconciliation (UN11a): every `HandedOver` row has exactly one `ItemMoved` and no ownership row.
 
 ## 13. Acceptance tests
-| Id | Test (behavioural) | Pass |
-|---|---|---|
-| UN7-T1 | `Unification_Off_Reproduces_Base` (U-P1), `C1_Workshop_Unchanged` | Stage 3 and C1 workshop tests and hashes unchanged with switches 0 |
-| UN7-T2 | `Recipe_Run` (U6) | an NPC with the knowledge, the inputs and a building of the right capability and level runs R1: inputs consumed exactly (`Built`), output `Plank` produced (`Crafted`), owned by the building's owner, in the store; ledger balances; labour ticks ≈ `LabourTicks × 1000 / Work.Speed` |
-| UN7-T3 | `Recipe_RefusedWithout` (U6) | refused with `NoKnowledge`, `NoInput`, `NoCapability` (level too low), `NoSlot`, and `NoTool` for a row that requires one; each reason tested separately; no goods created on refusal |
-| UN7-T4 | `Recipe_NoGoodsFromNothing` | over a 10-day fixture with every row exercised, for each ware `Σ Produced − Σ Consumed = Σ holdings` and each output equals the row's outputs per completed run |
-| UN7-T5 | `Recipe_DeterministicLabour` | same seed, same completion ticks; skill and tool factors integer and exact |
-| UN7-T6 | `Sheep_ShearKeepsHead_SlaughterConsumes` | R5 yields wool at most once per `ShearIntervalDays` and leaves the head count; R5b reduces heads by 1 and yields 3 meat + 1 hide; the sheep ledger conserves |
-| UN7-T7 | `Cooking_FishToFood` | raw fish is not edible by default (UN1 setting); R8 yields `PreparedFood` with higher nutrition per unit than the forage foods in the table by the configured ratio and longer spoilage |
-| UN7-T8 | `Tools_Optional_SpeedUp_AndWear` | an axe speeds R1 by the configured permille and loses `Uses`; without it the run is slower, never refused |
-| UN7-T9 | `Craft_Goal_FromDemand` (Mech) | an NPC with the knowledge adopts a `Craft` goal when a buyer's offer shows demand (fixture), obtains inputs by collection or trade and runs the recipe, no command |
-| UN7-T10 | `Production_DoesNotBranchOnOwnerKind`, `Recipes_DataOnly` | static: `Unification/Recipes` has no branch on `OwnerKind` and no `switch` on recipe id; adding a row in a test needs no code change |
-| UN7-T11 | `UN7_SaveLoadParity`, `UN7_EventsRoundTrip` | as sections 11 and 12 |
+| Id | Test (behavioural) | Maps to | Pass |
+|---|---|---|---|
+| UN7-T1 | **EP-03** `Offer_Promise_OneHandover`: A gestures `Offer` (wood, 3) and `Promise` (stone, 2), then hands 3 wood to B (hold-out, `TAKE`); one `ItemMoved(HandOver)` and one `HandedOver`; no second move happens by itself; B may then fulfil (2 stone), partially fulfil (1), delay, refuse or keep both: five fixture variants, each leaving goods exactly where the physical moves put them; ledger U-C1 holds | EP-03 (mech), U7 (D9 wording) | exact |
+| UN7-T2 | `HoldOut_Lapse_NoDelete`: hold-out expires or giver walks away: the lot stays in the giver's carry; if the giver's carry is full at lapse nothing is lost (U-C4) | EP-03, EP-05 | exact |
+| UN7-T3 | `Receiver_Cooperation`: with no receiver `TAKE` the lot never moves; a third party's `TAKE` of a hold-out addressed to `To = B` is allowed or not by the same physics (reach), never by a title (an unaddressed hold-out may be taken by anyone in reach) | amendment §4 | exact |
+| UN7-T4 | **EP-04** `Unwitnessed_NoActor`: a lot removed from a container while no person perceives the actor: the removal is an objective event; no person's memory names the actor; the container's usual user learns only that the lot is gone | EP-04 | exact |
+| UN7-T5 | `Differing_Interpretations`: two witnesses of one `TAKE` form different claim records (one "she stole it", one "she was given it"); both persist; no engine verdict; a communicated claim reaches a listener as `Told` with garbling per `CommsRange` | EP-04, EP-02, QA-02 | exact |
+| UN7-T6 | `Grab_AsleepDead_Resisted_Awake`: `TAKE` from a sleeping, unconscious or dead person succeeds (`Grab`); from an awake carrier it returns `Resisted` and is perceived by the carrier; a held-out lot is takeable | EP-01 support | exact |
+| UN7-T7 | `Corr_NeverEnforces`: static and run-time: `Corr` is read only by analytics and memory code; changing or dropping every `Corr` leaves every physical hash unchanged | amendment §4 | exact |
+| UN7-T8 | `NoTitle_NoReward`: hand-overs produce no `OwnershipChanged`, no ownership field, no learner reward for the transfer; U-P3 static clean for `Unified/Exchange` | D9.1 d, U-P3 | exact |
+| UN7-T9 | `Trust_FromPerception`: a witness who sees A give and B not return updates trust in B; one who sees nothing does not; reputation differs between persons | EP-03, EP-04 | exact |
+| UN7-T10 | `UN7_SaveLoadParity`, `UN7_EventsRoundTrip`, `Exchange_NoSecondLeg` (over 20 seeded fixture runs no automatic transfer follows any hand-over) | QA-01, U-P6 | exact |
+| UN7-P | pins: U-P1, P1, P4, P8, Stage 3 hashes (M5 barter tests unchanged with the switch off) | all | exact |
+
+D8 ids: **U7** (two individuals physically exchange) is covered by UN7-T1 with D9 wording (no ownership change); EP-03 learned is reported by UN6t-b (T7).
 
 ## 14. Headless demonstration
 ```
-dotnet test DotNet -c Release --filter "FullyQualifiedName~UN7|FullyQualifiedName~C1|FullyQualifiedName~Neutrality"
-dotnet run --project DotNet/God.Runner -c Release -- run --scenario unif_recipes --seed 3 --days 12 --record full --sqlite --out <scratch>\un7
+dotnet test DotNet -c Release --filter "FullyQualifiedName~UN7|FullyQualifiedName~EP03|FullyQualifiedName~EP04|FullyQualifiedName~Neutrality"
+dotnet run --project DotNet/God.Runner -c Release -- run --scenario unif_exchange --seed 1 --days 2 --record full --sqlite --out <scratch>\un7
 ```
-Report per recipe: runs, inputs, outputs, labour, refusals by reason, owner of outputs; and the ledger for each new ware.
+Then `SELECT code, COUNT(*) FROM event WHERE code BETWEEN 1280 AND 1286 GROUP BY 1;` (table names per UN11a's mapping) and a fixture trace showing offer, hand-over and the three kinds of return.
 
 ## 15. Unity demonstration
-None here (UN10b). Compile check required if types read by `God.Game` changed (ware enum, asset records): `check-game-compile.ps1` 0 errors.
+Compile check only (events and types `God.Game` reads): `AgentScripts/check-game-compile.ps1` 0 errors. UN10a draws gestures and carried items; the lead's checkpoint shows a hold-out and hand-over in the player.
 
-## 16. Performance considerations
-One open recipe run per asset slot; per-tick cost O(active runs); bounded by `ProductionSlots`. Report with 72 NPCs. No per-tick scan of the recipe table (index by building kind at start).
+## 16. Performance considerations (D10)
+Witnesses and listeners are found through `ISpatialIndex` (no all-pairs scan); hold-outs live in a small sorted list processed per tick only when non-empty; `MessageExt` pruned by a rolling window; per-person belief records bounded by UN6's ring of 8; cost O(active gestures + open hold-outs) per tick.
 
 ## 17. Integration procedure
-1. The lead creates the worktree: `git -C C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs worktree add ..\wt-lrs-un7 -b unity/un7 unity/poc` (after UN0 and UN3a merged), then `robocopy C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs\Library C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs-un7\Library /E /MT:16` (0–7 = success; source editor closed).
-2. Sim and EditMode tests first.
-3. Before hand-back `git merge unity/poc`; conflicts only in your own files.
-4. Neutrality pins that must hold: **P1, P4, P8**, `C1-T1`, U-P1, the three Stage 3 smoke hashes of `PolicyRunTests.cs:27`.
-5. Full `dotnet test DotNet -c Release` green.
-6. `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1` 0 errors before any Unity run.
-7. "UN7 record" in `docs/stage4/DEV_LOG.md` on the branch. Hand back; never push; never merge into `unity/poc`.
+1. `git -C C:\Users\joesa\Documents\Cursor\RhytmDrama\wt-lrs worktree add ..\wt-lrs-un7 -b unity/un7 <unity/poc SHA at which the hard prerequisites are merged>`. Copy `Library` only with `robocopy ...\wt-lrs\Library ...\wt-lrs-un7\Library /E /MT:16` (0–7 = success; source editor closed) and only if this package holds the Unity token (index §4).
+2. Sim code and its EditMode and `DotNet/God.Runner.Tests` tests first, then runner scenarios, then (only if the package has views) `Assets/God/Game`. Run the package's focused filters after every commit.
+3. Before hand-back: `git merge unity/poc` (also after every prerequisite or merge-after package lands); resolve conflicts only in your own files; a conflict in or need to edit a frozen file (§23.0, §23.15) means stop and send the lead an amendment request; never work around it.
+4. **Neutrality with the switch off (byte-identical):** with `Unification.Enabled = 0` pin **U-P1** (every part hash of `band_6x20`, `m4_families`, `ibs_families`, `watch6`, `demog_*`, the god-only Living Island scenario, seeds 1–3, every checkpoint, equals the base head), **P1, P4, P8** (and P2, P3, P5, P9 where present) and the three Stage 3 hashes `12be0f64cefc59f1`, `4bd54b271857a803`, `0a66415b389d7a87` must be unchanged; U-P2 and U-P3 (static) re-run as the index §9 says. No hash moves except at a re-pin the lead declares.
+5. Full `dotnet test DotNet -c Release` green on the branch after merging `unity/poc`, including the package's `*_SaveLoadParity` (U-P6 stub or full) and `*_EventsRoundTrip`.
+6. **Compile check before any Unity step:** `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1` must show 0 errors (it compiles `God.Game`, Editor and every test assembly without Unity). Required whenever a type `God.Game` reads changed; only then may the editor be opened in batch mode (and only by the package that holds the Unity token).
+7. Write "un7 record" in `docs/stage4/DEV_LOG.md` on the branch (what ran with counts, what did not, hashes, design decisions taken as lead defaults) and hand back to the lead. **Never push; never merge into `unity/poc`; never touch `main`.** The lead merges with `--no-ff` and runs the gates of index §6.
+Package-specific: re-run `M5BarterTests` and `M5NeutralityTests` with the switch off (unchanged); EP-03 and EP-04 are re-run by the lead (index §6 merge 9); no new `Message` layout field.
 
 ## 18. Risks
-- **Knowledge, skill and tool must stay distinct fields** (owner brief §7): do not collapse knowledge into skill.
-- Rows referencing a collection shelter level as the host (R2, R3) depend on UN3's production slots: check the L3 data before relying on it.
-- Nutrition, spoilage and weight rows for new wares are easy to forget: T4's all-wares ledger check catches missing rows.
-- `Axe` is unique (`IsUnique`) and not mergeable; tools must not break lot merging.
-- Valuation priors can distort barter (R13); keep them derived from labour, not invented.
+- Legacy `SocialSim` title paths (`Held`, own-lot filter at `:708`) leaking into unified exchange: static test over `Unified/Exchange` and review of every call into `Social/*`.
+- Quantity clamp 0–9 in `Messages.cs:48` silently capping referents: all unified quantities go through `MsgExt` (0–999); a test sends 500.
+- Accidental automatic reciprocity through the M5 deal checker: it runs only as subjective memory in unified mode; test `Exchange_NoSecondLeg`.
+- Perception leaks the actor of an unseen act: EP-04 test plus a review of every event that names an actor.
+- `Corr` growing into an enforcement tool: the read-only test.
 
 ## 19. Definition of done
-UN7-T1…T11 green; pins unchanged; compile check 0 errors; "UN7 record" lists what ran and the defaults taken; handed back.
+UN7-T1…T10 and UN7-P green under `dotnet test`; EP-03 (mech) and EP-04 shown in fixture traces; compile check 0 errors; mapper stub present; "UN7 record" in DEV_LOG lists what ran, the defaults taken (hold-out expiry ticks, `MessageExt` window) and any amendment requests; handed back.
 
 ## 20. Smaller checkpoints
-- **UN7a** (≈1.5 h): recipe table, run act, R1–R4 and R7, workshop rows, T1–T5, T10.
-- **UN7b** (≈1.5 h): sheep, cooking, tools, goal rule, priors and nutrition rows, T6–T9, T11.
+- **UN7a** (≈ 1.5 h): `MsgExt`, hold-out, hand-over, lapse, `Grab`/`Resisted`, events, T1–T3, T6, T7, T10 (enough for S7 training to start).
+- **UN7b** (≈ 1.5 h): claims as beliefs, observer trust, unwitnessed and differing interpretations, T4, T5, T8, T9. Cut-plan fallback (index §8 H9.5): UN7 merges hold-out only; claims communication is dropped and recorded.
 
 ## 21. Recommended agent
-**Sonnet.**
+**Opus**. Never Fable.
 
-## 22. Used later by industry (keep the interfaces general)
-The industrial runner (I1) appends recipe rows 21+ and facility kinds to the same tables; keep `RecipeDef` open to several inputs and outputs and non-ware terms later (fuel, electricity) without changing existing rows.
-
-## 23. Agent working rules
-- Follow `CLAUDE.md`: `Assets/God/Sim` is pure deterministic C# (integers, seeded/keyed `Rng` with new labels unique per call site, no wall clock, no unordered enumeration; bots and people use the same commands); `Assets/God/Game` only reads state, sends commands and animates events; sim code and EditMode tests before views; tests pass under `dotnet test DotNet`; never commit `Library/`, `Temp/`, `Builds/`, `Logs/`, `UserSettings/`, `*.csproj`/`*.sln` outside `DotNet/`, `LocalData/`, `docs/stage4.zip` or anything Sims-2-derived; no third-party art or audio; never copy from `Assets/Bedsit`, `Assets/Characters`, `Assets/RomanVillage`, `Assets/ThirdParty`; one Unity editor per folder, batch mode, close it when done; never run the built player windowed.
-- **Before any Unity open or test run:** `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1` must show 0 errors.
-- Commit messages: write the message to an ASCII file in your scratch directory and run `git commit -F <file>`; end it with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. `git status` before every commit; add paths explicitly, never `git add -A`.
-- Commit as you go so work survives an interruption; never bare `git stash`, use a WIP commit.
-- Never push; never merge into `unity/poc`; never touch `main`.
-- Report exactly which tests and runs happened (counts, hashes) and plainly what did not run or did not pass.
+## 22. Agent working rules
+- Follow `CLAUDE.md`: `Assets/God/Sim` is pure deterministic C# (integers, seeded or keyed `Rng` with a label unique per call site, no wall clock, no unordered enumeration, no allocation in per-tick hot paths; bots, people, possessed bodies and test fixtures use the same primitives); `Assets/God/Game` only reads state, sends commands and animates events; sim code and EditMode tests before views; tests pass under `dotnet test DotNet`; never commit `Library/`, `Temp/`, `Builds/`, `Logs/`, `UserSettings/`, `*.csproj`/`*.sln` outside `DotNet/`, `LocalData/`, `Assets/InitTestScene*` or anything Sims-2-derived; no third-party art or audio; never copy from `Assets/Bedsit`, `Assets/Characters`, `Assets/RomanVillage`, `Assets/ThirdParty`; one Unity editor per folder, batch mode, close it when done.
+- **D9 rules, always:** no owner, title, permission, use right, theft or legitimate-owner fact in unified code (static guard U-P3); no scripted build order, profession, strategy, retaliation or moral judgement; no new primitive verb (the twelve controls only); every game-visible fact is physical (holder, location, quantity, condition, occupancy, barrier) or a belief held by a person; origin (policy, possessed, fixture, teacher) never changes a physical result; no hidden oracle (`NodePather`, truth queries) on the unified decision path. Every scale-sensitive structure is configurable (tribes, radius, settlements per tribe) and every per-tick cost is O(active entities), never all-pairs (D10).
+- **Before any Unity open or test run** (CLAUDE.md): `powershell -NoProfile -ExecutionPolicy Bypass -File AgentScripts/check-game-compile.ps1` must show 0 errors. Only then open the editor (batch mode) and confirm a clean console.
+- Commit messages: write the message to an ASCII file in your scratch directory and run `git commit -F <file>`; end it with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Run `git status` before every commit; add paths explicitly, never `git add -A`.
+- Commit as you go so work survives a cut-off; never bare `git stash` (shared stash stack), use a WIP commit.
+- Never push; never merge into `unity/poc`; never touch `main`. Never use or suggest Fable.
+- Report exactly which tests and runs happened and plainly what did not run. A fixture-driven result is labelled mechanical; it is never presented as autonomous behaviour.
 - Keep context lean: read only the cited sections; grep for symbols; send long output to files and read the failures.
-- Contradiction with the contracts or the code: stop and ask the lead for an amendment row; never edit a frozen file or work around a missing seam. Minor reversible choices: take a configurable default and record it in "UN7 record".
+- Contradiction with §23 or the code: stop and ask the lead for an amendment; never edit a frozen file. Minor reversible choices: take a default, make it configurable, and record it in "UN7 record" under "Design decisions taken during implementation".

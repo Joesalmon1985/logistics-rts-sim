@@ -231,3 +231,74 @@ The owner asked to keep working until a finished playable game: **the run does n
 3. After G, keep going towards a **finished playable game** (master plan §5): the remaining Tier 2 items, then Tier 3 in the reverse order of the cut ladder (C9 justice, C4/M9 soldiers as people, C8 banking, C5 politics, advanced religion and M11 culture, more miracles, deeper analytics), then U6 (tutorial rewrite and presentation polish) and sandbox balance (M14). Each completed vertical slice is a tagged, pushed release (`civdiv-h`, …) via section 12.
 4. Write new package specs for post-G work in `docs/civdiv/DEVELOPMENT_PACKAGES/` in the same format (or delegate the spec to an Opus agent), add their rows to the index and graph, then launch.
 5. Stop only when the owner says so, or when the game is finished and released by section 12; before any stop, DEV_LOG "Current status" and "Instructions for the next session" must say exactly where to resume, and [NEXT_SESSION_PROMPT.md](NEXT_SESSION_PROMPT.md) must still be correct.
+
+
+---
+
+## 14. Unification run addendum (D9)
+
+**Applies from 28 Nov 2026** to the Unification run (owner decisions D8, **D9** and **D10**). Sections 1–13 above still govern the lead's role, worktrees, merge strategy, test cadence, escalation, pitfalls and release procedure; this addendum replaces only the package set, the waves, the checkpoints and the run-specific rules. Where it conflicts with sections 1–13, this addendum wins for the Unification run. Binding sources, in order: [LATEST_OWNER_AMENDMENT.md](../unification/LATEST_OWNER_AMENDMENT.md), owner decisions D9.1–D9.14 and D10 ([OWNER_DECISION_REGISTER.md](OWNER_DECISION_REGISTER.md)), rulings R72–R84 ([LEAD_RULINGS.md](LEAD_RULINGS.md)), [UNIFICATION_DESIGN.md §D9](../unification/UNIFICATION_DESIGN.md), [SHARED_ARCHITECTURAL_CONTRACTS.md §23](SHARED_ARCHITECTURAL_CONTRACTS.md), [UNIFICATION_PACKAGE_INDEX.md](../unification/UNIFICATION_PACKAGE_INDEX.md) (packages, prerequisites, waves, critical path, merge order, checkpoints, cut plan), [CATALOGUE_MANIFEST.md](../unification/CATALOGUE_MANIFEST.md), [D9_CODE_CONFLICT_AUDIT.md](../unification/D9_CODE_CONFLICT_AUDIT.md), the package specs in [../unification/packages/](../unification/packages/), and the acceptance rows in `docs/stage4/ACCEPTANCE_TESTS.md` "D9. Unification acceptance". The copy-ready session prompt is [NEXT_SESSION_PROMPT_UNIFICATION.md](../unification/NEXT_SESSION_PROMPT_UNIFICATION.md). The Industry run (`NEXT_SESSION_PROMPT.md`, I1a onwards) resumes only after Checkpoint UB plus credible autonomous primitive viability, or an explicit owner decision (D9.14).
+
+### 14.1 What the lead does differently
+
+1. **Position is found from git, DEV_LOG and the worktree list** (section 2 step 2), not from the clock. UN0 may already be running or merged: `git worktree list` may show `wt-lrs-un0`; `git log --oneline unity/poc..unity/un0`; read its DEV_LOG record on the branch.
+2. **Package ids, branches and worktrees:** `unity/<id>` (lower case) and `wt-lrs-<id>` for UN0–UN11a, UN6t (one branch for UN6t-a and UN6t-b), UN8a, UN8b, UNP, UB1, UB2, UN6t2, UN10b, UN11b, UC1. The specs in `docs/unification/packages/` are the agents' instructions; where a spec and the index disagree, the index wins.
+3. **No Fable, ever.** Opus: UN0, UN2, UN3b, UN4, UN6, UN6t, UN7, UN8a, UN9, UNP, UB1, UN8b, UN6t2. Sonnet: UN1, UN3a, UN5, UN10a, UN11a, UB2, UN10b, UN11b, UC1 (Opus review).
+4. **Frozen surfaces** belong to UN0 and the lead (§23.0, §23.15). A package that needs a missing seam sends an amendment request; the lead commits an amendment (and a ruling when it resolves a conflict), the agent merges `unity/poc` and continues. The save version bump and every re-pin are the lead's alone.
+
+### 14.2 Waves (hours are planning estimates from H0; position by merges, not by the clock)
+
+| Wave | Window | What runs | Gate to leave the wave |
+|---|---|---|---|
+| **W0** | H0.0–H4.6 | **UN0** only (H0.3–H4.0; merge gate H4.0–H4.6). Meanwhile the lead runs the baseline suite and the compile check, applies any pending amendments and, if the machine is quiet, a benchmark baseline | merge 1 of the index §6: U-P1 exact, U-P2, U-P3 static, `Wares_LayoutNeutral`, `Ledger_WideningNeutral`, `Unified_GoodsNoTitle`, U-C1–U-C6, Unity batch compile and EditMode, bench within 3 %, §23 recorded as a ruling, **no save bump** |
+| **W1** | H4.6–H8.6 | UN2, UN6, UN1, UN3b, UN3a (then UN4), UN6t-a | UN3a (H7.4), UN1 (H8.5), UN2 (H9.0), UN6 + UN3b (H9.5) merge in that order |
+| **W2** | H8.1–H11.6 | UN7, UN9, UN5, UN8a, UN4 → UN10a, UN6t-b training from H9.5 | UN4 (H10.8), UN9 + UN8a (H11.6), UN5 (H11.9), UN7 (H12.3) |
+| **W3** | H11.1–H15.4 | UN11a (preparation then gates), UNP if a slot is free (first to cut), UN10a, UN6t-b (freeze H14.0, held-out evaluation H14.0–H15.0, merge H15.0–H15.4); UB1 only if UA-learned is safe (default: not started) | **UA-mech** (H13.0–H13.5), UN10a (H15.2), UN6t (H15.4) |
+| **W4** | H15.4–H18.0 | UA-learned gate H15.4–H16.0; **protected final window H16.0–H18.0**: no new package; fixes for red gates only; build, full suite, pins, replay, reports | UA-learned, final release procedure (section 12) |
+
+UB (UB1, UB2, UN8b, UN6t2, UN10b, UN11b) and UC (UC1) never start in this run unless UA-learned is green before H14 (index §8, first row). The critical path is UN0 → UN2 → UN3b/UN6 merged → **UN6t-b training** (H9.5–H14.0) → held-out evaluation (H14.0–H15.0) → artifact merge (H15.4) → UA-learned gate → final window. Slack is about zero: the training freeze at H14.0 and the window at H16.0 are fixed.
+
+### 14.3 Concurrency
+
+- **At most 6 package agents** at once; the lead and its `wt-lrs-ckpt` are not counted. Use the free slots in the order of the index §4 table; UNP and UB packages take a slot only when no UA package is waiting.
+- **Full `dotnet test` suites: at most 3 at once**, the lead's merge suite first. UN6t-b's training rollouts use `god-train` and the runner (not the suite) with `--workers` so that the lead's merge suite still gets the machine (default 8; ask before raising).
+- **Unity runs: at most 2** (one package agent plus the lead's `wt-lrs-ckpt`). **Unity token order** (one package agent at a time): UN0 (about H3.4–H4.0, batch compile and EditMode only), UN9 (H10.6–H11.1, batch smoke of both hosts), UN10a (H11.6–H14.8), then UN10b if UB runs. One editor per folder; close it when done; never run a built player windowed; the compile check (`AgentScripts/check-game-compile.ps1`, 0 errors) precedes every Unity open.
+- Agents' commits and records on their branches; no agent pushes or merges into `unity/poc`; the lead merges with `--no-ff` in `wt-lrs`.
+
+### 14.4 Merge gates
+
+Merge order and per-merge gates are index §6 (rows 1–14). **Standard gate for every merge** (section 5, adapted): the branch has merged current `unity/poc`; the agent's counts are in its DEV_LOG record; `git diff --stat unity/poc...unity/<id>` shows only the spec's owned areas plus declared flagged hunks; `AgentScripts/check-game-compile.ps1` 0 errors; `dotnet test DotNet -c Release` green; **U-P1, P1, P4, P8 and the three Stage 3 hashes `12be0f64cefc59f1`, `4bd54b271857a803`, `0a66415b389d7a87` unchanged with `Unification.Enabled = 0`** (byte-identical); the package's headline test re-run by the lead. At most two packages with disjoint files per suite run. A red baseline is fixed before anything merges; a gate failing twice reverts to the last green head. Additional pins by package (index §9): U-P2 and U-P3 static at UN0, U-P3 runtime at UN9, U-P4 at UN2 (re-run UN6, UN9, UN11a), U-P5 and full U-P6 at UN11a. Hashes move only at declared re-pins (the save bump at UA-mech is one), each recorded in DEV_LOG with why every moved hash moved. A package that touched a frozen file it does not own is refused. The lead reads every frozen-file hunk of UN0, every gate hunk of UN9 (against audit §8) and the thresholds-file commit order of UN6t.
+
+### 14.5 Checkpoint procedure for UA-mech and UA-learned
+
+Both checkpoints use section 10's steps with these specifics; the checkpoint's content is index §7.
+
+**UA-mech (H13.0–H13.5), tag `unif-ua-mech`**
+1. Merges 1–10 of the index §6 are in; the mechanical matrix runs headless by UN11a (EC-01, EP-01…EP-05, CF-01, QA-01, QA-02, CATALOG-1, MOTOR-1/2, NEED-1, ECON-1 mechanical, ECON-2, U1, U-P1…U-P6, invariants U-C1…U-C6); the 72-person unified start runs 20 days deterministically on seeds 1–3 with the **untrained** brain (outcome reported, not judged). Evidence from scripted primitive streams and fixtures is labelled `Fixture` and is never presented as autonomous behaviour.
+2. In the UN11a mechanical merge commit the lead bumps `SaveFile.CurrentVersion` 6 → **7** (once) and re-pins in DEV_LOG; the v7 round trip passes and v6 is refused.
+3. The lead flips the single menu flag of UN9 so that "Living island (you as a god)" starts the unified game (it shows the UNTRAINED badge until UA-learned).
+4. Compile check 0 errors; Unity EditMode in `wt-lrs-ckpt` if the token is free (not a UA-mech gate); no Windows build is required at this checkpoint.
+5. Tag `unif-ua-mech`; DEV_LOG (results, hashes, what did not run); **push** `unity/poc` and the tag (the owner authorised pushing tested changes to `unity/poc` and feature branches; **never `main`**).
+
+**UA-learned (H15.4–H16.0), tag `unif-ua` only if green**
+1. Merges 11–14 are in (UNP only if neutral; UN10a; UN6t; UN11a learned part). The lead **re-runs two held-out seeds independently**, checks that the thresholds file's commit predates the evaluation commit, and that the artifact hash, `Obs`/`Act` schema hash and catalogue hash match `unity/poc`.
+2. `Brain.Kind = 1` is set in `unif_*` **only if TR-01 passed** against the predeclared thresholds; otherwise `Brain.Kind = 2` (labelled Fallback) and the checkpoint is reported "UA-learned: not passed".
+3. Section 10 steps 2–4 on the frozen head in `wt-lrs-ckpt`: compile check; Unity EditMode and PlayMode (UN10a's screenshots, badge showing the artifact or UNTRAINED FALLBACK); the **unified Windows player build** (`-batchmode -nographics` only); smokes: Stage 3 `-godsmoke 60000 -godseed 2` hash `4bd54b271857a803`, population, god-only, and a unified game booting with the artifact; copy the build to `Builds\unif-ua\` (never committed).
+4. `docs/runs/UA_REPORT.md` with separate **mechanical**, **learned/autonomous** and **long-run viability** columns, a "did not run" section and the training verdict first; DEV_LOG results; the lead checks every figure.
+5. Tag `unif-ua` **only if every UA-learned item is green**; if anything failed, apply no green tag (use `unif-ua-incomplete` (L) on the tested commit), say so plainly, and push the tested `unity/poc` and package branches (never `main`). Then the protected window (section 12) runs to H18.0.
+
+### 14.6 Training-honesty rule (never cut)
+
+A trained-founder claim is valid only if: the numerical survival and competence thresholds (T1–T7) were **committed with their hash before any held-out run**; evaluation used **held-out seeds (900001–900020) and held-out layouts** the trainer cannot load; **untrained and frozen controls** were run; the **artifact is versioned with a content hash** (schema and catalogue hashes verified at load); evaluation was teacher-free, god-free and without a path oracle; the result is reported as it came. A fallback brain is labelled `Brain.Kind = 2` in the save, the HUD badge and every report and is **never counted as trained**; a scripted controller or the old `Eat/Flee/Build` rules behind primitives is never called trained. **A failed TR-01 means UA-learned is not green**: keep the artifact, metrics and cause; do not adjust thresholds after seeing results, do not re-evaluate until it passes, do not move the freeze. Social outcomes (Hawk/Dove proportions, cooperation, growth, new settlements) are measured, never thresholds.
+
+### 14.7 Cut plan
+
+[UNIFICATION_PACKAGE_INDEX.md](../unification/UNIFICATION_PACKAGE_INDEX.md) §8 is the cut plan by hour (H6.0 UN0 not merged: UNP cut and UN10a shrinks; H9.5: UN3b drops `Play`/`Fun`, UN8a drops `Equip`, UN7 drops claims communication; H11.0 training not started: S7–S8 dropped from V1; H12.5: UN5 families simplified, UN7 hold-out only; H14.0 artifact freeze; H14.5 UN10a behind a flag; H15.0 held-out evaluation limited to the 20 small seeds (T6 "not run" means UA-learned not green); H16.0 fixes only). **Never cut:** training honesty, determinism (U-P1, Stage 3 pins, save and replay exactness) and the protected final window H16.0–H18.0. A dropped package or stage goes to DEV_LOG "Outstanding work" and "Deviations from plan"; nothing leaves the design.
+
+### 14.8 Scale rules (owner decision D10; every UA package, checked at review)
+
+Board radius, hex count, settlement corners per tribe, tribe count and persons per tribe are **configuration, never constants** (generators tested at radius 4 and 6); perception and witnesses use `ISpatialIndex` (no all-pairs scans); executor, interaction resolution and materialisation cost O(active persons + changed nodes + open sites) per tick; brain inference ≤ 20,000 multiply-accumulates and ≤ 4 KB state per person, with decisions only when a primitive completes, fails or is interrupted; staggering and level of detail depend on sim state, never on the camera; no per-tick allocation in hot paths; views use instancing and distance LOD. Benchmarks at 72, 600 and 1,200 people are recorded from UA on (UN11a; baseline before trained inference about 1,080 ticks/s at 500 and 384 ticks/s at 1,000 people). The UC gate (lead default) is 1,200 people with trained inference at ≥ 100 ticks/s headless and ≥ 20 ticks/s in the player; UNP and UC1 own it, and neither delays UA.
+
+### 14.9 Continuation
+
+After UA-learned, if the window allows and UA-learned is green, UB packages launch in the order of the index (UB1 and UB2 first, then UN8b, UN6t2, UN10b, UN11b) under the same rules; UC1 after UB. If the run is cut off, DEV_LOG "Current status" and "Instructions for the next session" and [NEXT_SESSION_PROMPT_UNIFICATION.md](../unification/NEXT_SESSION_PROMPT_UNIFICATION.md) must say exactly where to resume.

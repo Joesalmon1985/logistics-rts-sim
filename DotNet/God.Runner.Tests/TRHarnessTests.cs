@@ -130,6 +130,27 @@ namespace God.Runner.Tests
             Assert.That(NetShape.Default.In, Is.EqualTo(ObsSchema.Length)); Assert.That(NetShape.Default.Act, Is.EqualTo(ActSchema.Length));
         }
 
+        /// <summary>After the UN1 merge: the real body reading (needs, health) of a unified game, and the probe names what is still missing.</summary>
+        [Test]
+        public void UN6ta_UnifiedWorld_BodyReading_UN1()
+        {
+            var sim = UnifiedWorld.Create(5, 0xFFF);
+            Assert.That(sim.State.Unification, Is.Not.Null);
+            int npc = sim.State.Unification.People[0].Npc;
+            var before = new BodyReading(); var after = new BodyReading();
+            UnifiedWorld.ReadBody(sim.State, npc, before);
+            sim.Step(sim.State.Setup.TicksPerDay / 2);
+            UnifiedWorld.ReadBody(sim.State, npc, after);
+            Assert.That(after.Alive, Is.True); Assert.That(after.Health, Is.GreaterThan(0));
+            Assert.That(after.Needs[(int)NeedChannel.Thirst], Is.GreaterThan(before.Needs[(int)NeedChannel.Thirst]), "UN1 thirst rises");
+            Assert.That(Returns.Tick(before, after, 0xFFF, 0), Is.LessThan(0));
+            var masked = UnifiedWorld.Create(5, 0x01F); var r = new BodyReading();
+            masked.Step(100);
+            UnifiedWorld.ReadBody(masked.State, masked.State.Unification.People[0].Npc, r);
+            for (int c = NeedChannels.FirstExtension; c < NeedChannels.Count; c++) Assert.That(r.Needs[c], Is.EqualTo(0), "inactive channel " + c);
+            Assert.That(UnifiedWorld.Unavailable(1), Is.Not.Null.And.Contains("UN2"), "the trainer refuses the unified world until UN2 merges");
+        }
+
         // ---------------- T2 ----------------
 
         [Test]

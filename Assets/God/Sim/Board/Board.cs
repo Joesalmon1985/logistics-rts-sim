@@ -9,6 +9,8 @@ namespace God.Sim
         Hexagon = 0,
         /// <summary>The six-player Catan island: rows of 3/4/5/6/5/4/3 hexes, 30 in all, at radius 3.</summary>
         SixPlayer = 1,
+        /// <summary>UN1 (R85): the unified board: every hex of the disc is in the topology (radius 4: 61 hexes), only the land layout (<see cref="UnifiedBoard.IsLandHex"/>) has land nodes; every other hex is Sea (no land node, unwalkable). Never used by a legacy game.</summary>
+        UnifiedIsland = 2,
     }
 
     /// <summary>

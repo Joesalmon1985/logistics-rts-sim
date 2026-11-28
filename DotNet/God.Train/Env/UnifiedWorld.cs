@@ -1,5 +1,7 @@
 using System;
 using God.Sim;
+using God.Sim.Learning;
+using God.Sim.Population;
 using God.Sim.Unified;
 using God.Train.Honesty;
 
@@ -22,14 +24,41 @@ namespace God.Train.Env
         /// Probes the merged simulation: builds a unified game and asks the executor for a legality mask. Returns null when every
         /// surface answers, else the reason it cannot run yet (the trainer then refuses to produce any result on it).
         /// </summary>
+        /// <summary>
+        /// A unified game shaped like UN1's <c>unif_world</c> scenario (six factions of three founders, watch mode, population on,
+        /// <c>Unification.Enabled = 1</c>, the given need mask). UN5's 12-person and 72-person starts replace the population numbers.
+        /// </summary>
+        public static GodSim Create(ulong seed, int needMask, int foundersPerFaction = 3)
+        {
+            SeedPolicy.Check((long)seed, Layout.Train, null);
+            var tuning = new SimTuning();
+            tuning.Unification.Enabled = 1;
+            tuning.Unification.Needs.ActiveMask = needMask;
+            var setup = new GameSetup(seed, GameSetup.NoHuman, 6) { Population = true, StartNpcsPerFaction = foundersPerFaction };
+            return GodSim.Create(setup, tuning);
+        }
+
+        /// <summary>
+        /// The body reading of a real person (UN1 needs): the five drives (Hunger, Energy = Fatigue, Warmth = Cold, Safety = Fear, Pain;
+        /// R86 mapping) as permille, the seven extension pressures, health permille, alive. Inactive channels read 0.
+        /// </summary>
+        public static void ReadBody(GodState s, int npc, BodyReading into)
+        {
+            var n = s.Population.Find(npc);
+            System.Array.Clear(into.Needs, 0, into.Needs.Length);
+            if (n == null) { into.Alive = false; into.Health = 0; return; }
+            into.Alive = n.Alive; into.Health = n.HealthPermille;
+            int[] drive = { Drive.Hunger, Drive.Fatigue, Drive.Cold, Drive.Fear, Drive.Pain };
+            for (int c = 0; c < NeedChannels.FirstExtension; c++) if (Unified.NeedActive(s, (NeedChannel)c)) into.Needs[c] = (short)Math.Min(1000, n.DriveOf(drive[c]));
+            for (int c = NeedChannels.FirstExtension; c < NeedChannels.Count; c++) if (Unified.NeedActive(s, (NeedChannel)c)) into.Needs[c] = (short)Needs.Pressure(s, npc, (NeedChannel)c);
+        }
+
         public static string Unavailable(ulong seed)
         {
             SeedPolicy.Check((long)seed, Layout.Train, null);
             try
             {
-                var tuning = new SimTuning();
-                tuning.Unification.Enabled = 1;
-                var sim = GodSim.Create(new GameSetup(seed), tuning);
+                var sim = Create(seed, 0xFFF);
                 if (sim.State.Unification == null) return "GodSim.Create did not create the unified state";
                 if (sim.State.Unification.People.Count == 0) return "the unified start has no persons (UN5/UN1 not merged)";
                 var p = default(Percept); var m = default(ActMask);
