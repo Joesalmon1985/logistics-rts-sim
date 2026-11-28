@@ -48,6 +48,13 @@ namespace God.Sim
         /// <summary>True for a 6 or an 8.</summary>
         public static bool IsRed(int number) => number == 6 || number == 8;
 
+        /// <summary>
+        /// UN1 (R85): the board of a game: the unified 61-hex disc (<see cref="UnifiedBoard"/>) when the tuning asks for a unified game,
+        /// else the Stage 3 island exactly as before. The one flagged hunk of this file.
+        /// </summary>
+        public static Board CreateBoard(ulong seed, SimTuning tuning) =>
+            God.Sim.Unified.Unified.Requested(tuning) ? UnifiedBoard.Create(seed, tuning.Unification) : CreateIslandBoard(seed);
+
         /// <summary>The island for a seed: 30 hexes, terrain and hidden numbers dealt.</summary>
         public static Board CreateIslandBoard(ulong seed)
         {
@@ -108,7 +115,17 @@ namespace God.Sim
         public static List<int> LandCorners(Board b, BoardTopology topo)
         {
             var list = new List<int>();
-            foreach (int v in topo.Corners) if (topo.VertexHexes(v).Count == 3) list.Add(v);
+            foreach (int v in topo.Corners)
+            {
+                if (topo.VertexHexes(v).Count != 3) continue;
+                if (b.Shape == BoardShape.UnifiedIsland) // UN1: a corner of the unified disc is a land corner only when all three hexes are land
+                {
+                    bool sea = false;
+                    foreach (int h in topo.VertexHexes(v)) if (b.HexTerrain[h] == Terrain.Meadow) sea = true;
+                    if (sea) continue;
+                }
+                list.Add(v);
+            }
             return list;
         }
     }

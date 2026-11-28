@@ -83,6 +83,7 @@ namespace God.Sim
             for (int h = 0; h < t.HexCount; h++)
             {
                 _hexCentreNode[h] = Id(cI[h], cJ[h]);
+                if (shape == BoardShape.UnifiedIsland && !UnifiedBoard.IsLandHex(t.Hex(h), radius)) continue; // UN1: a Sea hex owns no node (water)
                 for (int di = -NodesPerHexEdge; di <= NodesPerHexEdge; di++)
                     for (int dj = -NodesPerHexEdge; dj <= NodesPerHexEdge; dj++)
                     {

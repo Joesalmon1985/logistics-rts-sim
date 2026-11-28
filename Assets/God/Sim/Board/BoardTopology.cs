@@ -115,7 +115,7 @@ namespace God.Sim
         public static bool InShape(int q, int r, int radius, BoardShape shape)
         {
             if (Math.Abs(q) > radius || Math.Abs(r) > radius || Math.Abs(q + r) > radius) return false;
-            if (shape == BoardShape.Hexagon) return true;
+            if (shape != BoardShape.SixPlayer) return true; // Hexagon and UnifiedIsland (UN1): the whole disc
             int n = 2 * radius - Math.Abs(r);
             int qMin = (2 - n - r) / 2;
             return q >= qMin && q < qMin + n;
