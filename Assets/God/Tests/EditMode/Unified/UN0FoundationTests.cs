@@ -466,7 +466,7 @@ namespace God.Sim.Tests
             for (int k = 1; k <= 20; k++) Assert.IsNotNull(EffectRegistry.OwnerOf((EffectKind)k), "owner of kind " + k);
             Assert.IsNull(EffectRegistry.OwnerOf((EffectKind)21));
             Assert.AreEqual(MotorStatus.Disabled, EffectRegistry.Validate(s, in call), "the game's table is empty at UN0");
-            Assert.IsTrue(Catalogue.IsEmpty, "the catalogue is empty at UN0");
+            Assert.AreEqual(Catalogue.Objects.Count == 0 && Catalogue.Buildings.Count == 0, Catalogue.IsEmpty, "IsEmpty agrees with the tables (UN3a fills them)");
         }
 
         // ---------------------------------------------------------------- telemetry (23.12)

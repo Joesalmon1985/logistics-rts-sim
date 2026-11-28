@@ -1,0 +1,204 @@
+id,cat_id,name,kind,stage,status,fix
+OBJ-001,1001,Battle axe,object,Later,deferred,H
+OBJ-002,1002,Heavy battle axe,object,Later,deferred,H
+OBJ-003,1003,Beer,object,Later,deferred,
+OBJ-004,1004,Blackwood,object,Later,deferred,
+OBJ-005,1005,Bread paddle,object,Later,deferred,F
+OBJ-006,1006,Broad axe,object,Later,deferred,H
+OBJ-007,1007,Bronze axe,object,Later,deferred,H
+OBJ-008,1008,Cloth,object,UB,staged,F
+OBJ-009,1009,Coal,object,Later,deferred,F
+OBJ-010,1010,Felling axe,object,Later,deferred,E
+OBJ-011,1011,Fire tongs,object,Later,deferred,E
+OBJ-012,1012,Fish,object,UA-initial,implemented,E
+OBJ-013,1013,Fishing rod,object,Later,deferred,E
+OBJ-014,1014,Gold,object,Later,deferred,
+OBJ-015,1015,Gold ore,object,Later,deferred,F
+OBJ-016,1016,Stone,object,UA-initial,implemented,F
+OBJ-017,1017,Mortar,object,UB,staged,F
+OBJ-018,1018,Hammer,object,Later,deferred,E
+OBJ-019,1019,Helmet,object,Later,deferred,H
+OBJ-020,1020,Hunting spear,object,Later,deferred,E
+OBJ-021,1021,Iron,object,Later,deferred,
+OBJ-022,1022,Iron ore,object,Later,deferred,F
+OBJ-023,1023,Kitchen tools,object,Later,deferred,E
+OBJ-024,1024,Wood,object,UA-initial,implemented,
+OBJ-025,1025,Helmet mask,object,Later,deferred,H
+OBJ-026,1026,Meal,object,Later,deferred,C
+OBJ-027,1027,Meat,object,UB,staged,C
+OBJ-028,1028,Pick,object,Later,deferred,E
+OBJ-029,1029,Bread,object,Later,deferred,C
+OBJ-030,1030,Ration,object,Later,deferred,C
+OBJ-031,1031,Reed,object,UB,staged,
+OBJ-032,1032,Scythe,object,Later,deferred,E
+OBJ-033,1033,Sharp axe,object,Later,deferred,H
+OBJ-034,1034,Shovel,object,Later,deferred,E
+OBJ-035,1035,Snack,object,Later,deferred,C
+OBJ-036,1036,Strong beer,object,Later,deferred,
+OBJ-037,1037,Warhelm,object,Later,deferred,H
+OBJ-038,1038,Warriors axe,object,Later,deferred,H
+OBJ-039,1039,Water,object,UA-initial,implemented,E
+OBJ-040,1040,Wheat,object,Later,deferred,
+OBJ-041,1041,Clay,object,UA-initial,implemented,
+OBJ-042,1042,Sheep,object,UA-initial,implemented,E
+OBJ-043,1043,Hay,object,UA-initial,implemented,
+OBJ-044,1044,Mushrooms,object,UA-initial,implemented,C
+OBJ-045,1045,Roots,object,UA-initial,implemented,C
+OBJ-046,1046,Wild eggs,object,UA-initial,implemented,C
+OBJ-047,1047,Rabbit,object,UA-initial,implemented,C
+OBJ-048,1048,Wild vegetables,object,UA-initial,implemented,C
+OBJ-049,1049,Cactus fruit,object,UA-initial,implemented,C
+OBJ-050,1050,Seaweed,object,UA-initial,implemented,C
+OBJ-051,1051,Charcoal,object,UB,staged,
+OBJ-052,1052,Wheat seed,object,UB,staged,F
+OBJ-053,1053,Raw meat,object,UB,staged,F
+OBJ-054,1054,Cooked fish,object,UA-initial,implemented,C
+OBJ-055,1055,Hide,object,UB,staged,F
+OBJ-056,1056,Wool,object,UB,staged,F
+OBJ-057,1057,Copper ore,object,Later,deferred,
+OBJ-058,1058,Copper,object,Later,deferred,
+OBJ-059,1059,Tin ore,object,Later,deferred,
+OBJ-060,1060,Tin,object,Later,deferred,
+OBJ-061,1061,Bronze,object,Later,deferred,
+OBJ-062,1062,Steel,object,Later,deferred,
+OBJ-063,1063,Planks,object,UA-initial,implemented,
+OBJ-064,1064,Pottery,object,UB,staged,
+OBJ-065,1065,Brick,object,UB,staged,
+OBJ-066,1066,Building block,object,UB,staged,
+OBJ-067,1067,Leather,object,UB,staged,
+OBJ-068,1068,Stone hammer,object,UA-initial,implemented,E
+OBJ-069,1069,Stone axe,object,UA-initial,implemented,E
+OBJ-070,1070,Stone pick,object,UB,staged,E
+OBJ-071,1071,Wood tongs,object,UB,staged,E
+OBJ-072,1072,Cattle,object,Later,deferred,F
+OBJ-073,1073,Ferry,object,Later,deferred,I
+OBJ-074,1074,Ship,object,Later,deferred,I
+OBJ-075,1075,Herbs,object,UA-initial,implemented,D
+OBJ-076,1076,Sword,object,Later,deferred,H
+OBJ-077,1077,Spear,object,Later,deferred,H
+OBJ-078,1078,Bow,object,UB,staged,F
+OBJ-079,1079,Sling,object,UB,staged,F
+OBJ-080,1080,Big shield,object,Later,deferred,F
+OBJ-081,1081,Small shield,object,UB,staged,F
+OBJ-082,1082,Breastplate,object,Later,deferred,H
+OBJ-083,1083,Light armour,object,UB,staged,F
+OBJ-084,1084,Bedding,object,UA-initial,implemented,
+OBJ-085,1085,Painting board / easel,object,UB,staged,G
+OBJ-086,1086,Fish basin,object,Later,deferred,
+OBJ-087,1087,Living display fish,object,Later,deferred,F
+OBJ-088,1088,Drink counter,object,UB,staged,E
+OBJ-089,1089,Cooking grate,object,Later,deferred,
+OBJ-090,1090,Hide ball,object,UB,staged,
+OBJ-091,1091,Hoop / ball target,object,UB,staged,G
+OBJ-092,1092,Bed,object,UA-initial,implemented,A
+OBJ-093,1093,Sleeping mat,object,UB,staged,AG
+OBJ-094,1094,Tally token,object,UB,staged,C
+OBJ-095,1095,Record rack,object,UB,staged,E
+OBJ-096,1096,Rattle alarm,object,UB,staged,
+OBJ-097,1097,Stool,object,UA-initial,implemented,
+OBJ-098,1098,Strategy board,object,UB,staged,D
+OBJ-099,1099,Sun marker,object,Later,deferred,G
+OBJ-100,1100,Infusion pot,object,UB,staged,
+OBJ-101,1101,Herbal infusion,object,UB,staged,
+OBJ-102,1102,Work surface,object,UB,staged,
+OBJ-103,1103,Cradle,object,UA-initial,implemented,A
+OBJ-104,1104,Wash basin,object,UB,staged,
+OBJ-105,1105,Low jump platform,object,UB,staged,G
+OBJ-106,1106,Model hut,object,UB,staged,
+OBJ-107,1107,Storage chest,object,UA-initial,implemented,A
+OBJ-108,1108,Carved ornament,object,UA-initial,implemented,
+OBJ-109,1109,Grinding stone,object,UB,staged,
+OBJ-110,1110,Flour,object,UB,staged,
+OBJ-111,1111,Food stall,object,Later,deferred,C
+OBJ-112,1112,Water feature,object,Later,deferred,G
+OBJ-113,1113,Waste basket,object,UB,staged,A
+OBJ-114,1114,Waste,object,UA-initial,implemented,E
+OBJ-115,1115,Memorial stone,object,UB,staged,
+OBJ-116,1116,Potted plant,object,Later,deferred,
+OBJ-117,1117,Climbing frame,object,UB,staged,
+OBJ-118,1118,Medicine box,object,UB,staged,A
+OBJ-119,1119,Toy cart,object,UB,staged,
+OBJ-120,1120,Unusual plant,object,Later,deferred,
+OBJ-121,1121,Notice board,object,UB,staged,E
+OBJ-122,1122,Pigment,object,UB,staged,
+OBJ-123,1123,Wall art,object,UB,staged,
+OBJ-124,1124,Drum,object,UB,staged,
+OBJ-125,1125,Target game,object,UB,staged,
+OBJ-126,1126,Cool storage chest,object,UB,staged,AG
+OBJ-127,1127,Bench,object,UA-initial,implemented,
+OBJ-128,1128,Fire warning station,object,Later,deferred,IG
+OBJ-129,1129,Bathing pool,object,Later,deferred,
+OBJ-130,1130,Message token,object,UB,staged,E
+OBJ-131,1131,Story circle,object,UB,staged,
+OBJ-132,1132,Toy,object,UA-initial,implemented,
+OBJ-133,1133,Toy box,object,UB,staged,A
+OBJ-134,1134,Waste pit,object,UB,staged,
+OBJ-135,1135,Training stone,object,UB,staged,
+OBJ-136,1136,Latrine,object,UA-initial,implemented,A
+OBJ-137,1137,Water jug,object,UB,staged,
+OBJ-138,1138,Cleaning cloth,object,UB,staged,
+BLD-001,2001,Communal hall,building,UA-initial,implemented,AF
+BLD-002,2002,Fisher's shelter,building,UA-initial,implemented,FG
+BLD-003,2003,Gamekeeper's Hut,building,Later,deferred,E
+BLD-004,2004,Hunter's Hut,building,UB,staged,
+BLD-005,2005,Woodcutter's shelter,building,UA-initial,implemented,FG
+BLD-006,2006,Stonecutter's shelter,building,UA-initial,implemented,FG
+BLD-007,2007,Ranger's Hut,building,Later,deferred,E
+BLD-008,2008,Scout's Hut,building,Later,deferred,E
+BLD-009,2009,Sentry,building,Later,deferred,EH
+BLD-010,2010,Well,building,UA-initial,implemented,E
+BLD-011,2011,Bakery,building,Later,deferred,
+BLD-012,2012,Barracks,building,Later,deferred,BH
+BLD-013,2013,Barrier,building,Later,deferred,H
+BLD-014,2014,Charcoal Kiln,building,UB,staged,
+BLD-015,2015,Ferry Yard,building,Later,deferred,
+BLD-016,2016,Lime Kiln,building,UB,staged,
+BLD-017,2017,Metal Workshop,building,Later,deferred,FG
+BLD-018,2018,Micro Brewery,building,Later,deferred,
+BLD-019,2019,Reed Yard,building,UB,staged,
+BLD-020,2020,Shipyard,building,Later,deferred,
+BLD-021,2021,Smelting Works,building,Later,deferred,
+BLD-022,2022,Tavern,building,Later,deferred,BF
+BLD-023,2023,Tower,building,Later,deferred,H
+BLD-024,2024,Warehouse,building,Later,deferred,A
+BLD-025,2025,Wood Hardener,building,UB,staged,
+BLD-026,2026,Ax Workshop,building,Later,deferred,F
+BLD-027,2027,Big Inn,building,Later,deferred,BF
+BLD-028,2028,Brewery,building,Later,deferred,F
+BLD-029,2029,Inn,building,Later,deferred,BF
+BLD-030,2030,War Mill,building,Later,deferred,F
+BLD-031,2031,Battle Arena,building,Later,deferred,EH
+BLD-032,2032,Cattle Farm,building,Later,deferred,E
+BLD-033,2033,Farm,building,Later,deferred,G
+BLD-034,2034,Fortress,building,Later,deferred,H
+BLD-035,2035,Helm Smithy,building,Later,deferred,
+BLD-036,2036,Market,building,Later,deferred,C
+BLD-037,2037,Training Camp,building,Later,deferred,EH
+BLD-038,2038,Weaving Mill,building,UB,staged,
+BLD-039,2039,Citadel,building,Later,deferred,FH
+BLD-040,2040,Coal Mine,building,Later,deferred,
+BLD-041,2041,Gold Mine,building,Later,deferred,
+BLD-042,2042,Granite Mine,building,Later,deferred,
+BLD-043,2043,Iron Mine,building,Later,deferred,
+BLD-044,2044,Deep Coal Mine,building,Later,deferred,F
+BLD-045,2045,Deep Gold Mine,building,Later,deferred,F
+BLD-046,2046,Deep Iron Mine,building,Later,deferred,F
+BLD-047,2047,Deeper Coal Mine,building,Later,deferred,F
+BLD-048,2048,Deeper Gold Mine,building,Later,deferred,F
+BLD-049,2049,Deeper Iron Mine,building,Later,deferred,F
+BLD-050,2050,Port,building,Later,deferred,C
+BLD-051,2051,Clay gatherer's shelter,building,UA-initial,implemented,FG
+BLD-052,2052,Shepherd's shelter,building,UA-initial,implemented,FG
+BLD-053,2053,Hay gatherer's shelter,building,UA-initial,implemented,FG
+BLD-054,2054,Primitive hearth,building,UA-initial,implemented,G
+BLD-055,2055,Carpenter,building,UA-initial,implemented,G
+BLD-056,2056,Pottery,building,UB,staged,G
+BLD-057,2057,Stone workshop,building,UB,staged,G
+BLD-058,2058,Sheep pen,building,UB,staged,FG
+BLD-059,2059,Tannery,building,UB,staged,
+BLD-060,2060,Copper Mine,building,Later,deferred,
+BLD-061,2061,Primitive forge,building,Later,deferred,G
+BLD-062,2062,Settlement,building,UB,staged,AF
+BLD-063,2063,Road,building,UB,staged,F
+BLD-064,2064,Seed plot,building,UB,staged,E
+BLD-065,2065,Tin Mine,building,Later,deferred,

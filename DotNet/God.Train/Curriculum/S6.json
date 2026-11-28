@@ -1,0 +1,36 @@
+{
+  "id": "S6",
+  "curriculum": "founder-v1",
+  "content": "raw collection and deposit, simple recipes (cooked fish, planks, bed, stool)",
+  "generator": "small_island",
+  "population": 6,
+  "needMask": 4095,
+  "days": 8,
+  "waitsFor": [
+    "UN4"
+  ],
+  "stubSupported": false,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "seeds_with_raw_collected_deposited_share",
+      "op": ">=",
+      "value": 0.5
+    },
+    {
+      "kind": "seeds_with_recipe_share",
+      "op": ">=",
+      "value": 0.25
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "S8",
+  "curriculum": "founder-v1",
+  "content": "aggression, avoidance, retaliation, contested goods, childcare and observation",
+  "generator": "small_island",
+  "population": 12,
+  "needMask": 4095,
+  "days": 5,
+  "waitsFor": [
+    "UN8a"
+  ],
+  "stubSupported": false,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "adults_alive_share_pooled",
+      "op": ">=",
+      "value": 0.85
+    }
+  ]
+}
