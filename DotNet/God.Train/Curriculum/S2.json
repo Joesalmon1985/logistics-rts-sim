@@ -1,0 +1,39 @@
+{
+  "id": "S2",
+  "curriculum": "founder-v1",
+  "content": "food, water, sleep",
+  "generator": "small_island",
+  "population": 4,
+  "needMask": 51,
+  "days": 3,
+  "waitsFor": [
+    "UN1",
+    "UN2",
+    "UN3b",
+    "UN6"
+  ],
+  "stubSupported": true,
+  "validation": {
+    "seeds": 16,
+    "from": 500001
+  },
+  "budget": {
+    "demoSeeds": 64,
+    "bcEpochs": 30,
+    "esIterations": 200,
+    "esPairs": 16,
+    "esEpisodes": 2
+  },
+  "criteria": [
+    {
+      "kind": "adults_alive_share_pooled",
+      "op": ">=",
+      "value": 0.95
+    },
+    {
+      "kind": "pain_band_share_hunger_or_thirst",
+      "op": "<=",
+      "value": 0.15
+    }
+  ]
+}
